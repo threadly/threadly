@@ -8,6 +8,10 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
+test {
+    testResultsDir = file("$buildDir/test-results/xml")
+}
+
 version = '0.1-SNAPSHOT'
 jar {
     manifest {
