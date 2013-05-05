@@ -11,36 +11,50 @@ package org.threadly.util;
  * frequency with which accurateTime() is called.
  */
 public class Clock {
-  private static final boolean UPDATE_CLOCK_AUTOMATICALLY = true;
+  protected static final boolean UPDATE_CLOCK_AUTOMATICALLY = true;
+  protected static final int AUTOMATIC_UPDATE_FREQUENCY_IN_MS = 100;
   
+  private static final Object UPDATE_LOCK = new Object();
   private static volatile long now = System.currentTimeMillis();
   private static volatile boolean updateClock = false;
   
   static {
     if (UPDATE_CLOCK_AUTOMATICALLY) {
-      runClockUpdateThread();
+      startClockUpdateThread();
     }
   }
   
-  private static void runClockUpdateThread() {
-    if (updateClock) {
-      return;
-    } else {
-      updateClock = true;
-      
-      Thread thread = new Thread() {
-          public void run() {
-            while (updateClock) {
-              try {
-                accurateTime();
-                Thread.sleep(100);
-              } catch (InterruptedException ignored) { }
+  protected static void startClockUpdateThread() {
+    synchronized (UPDATE_LOCK) {
+      if (updateClock) {
+        return;
+      } else {
+        updateClock = true;
+        
+        Thread thread = new Thread() {
+            public void run() {
+              synchronized (UPDATE_LOCK) {
+                while (updateClock) {
+                  try {
+                    accurateTime();
+                    UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
+                  } catch (InterruptedException ignored) { }
+                }
+              }
             }
-          }
-        };
+          };
+    
+        thread.setDaemon(true);
+        thread.start();
+      }
+    }
+  }
   
-      thread.setDaemon(true);
-      thread.start();
+  protected static void stopClockUpdateThread() {
+    synchronized (UPDATE_LOCK) {
+      updateClock = false;
+      
+      UPDATE_LOCK.notifyAll();
     }
   }
 
