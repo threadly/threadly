@@ -1,0 +1,16 @@
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+version = '0.1-SNAPSHOT'
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Threadly', 'Implementation-Version': version
+    }
+}
