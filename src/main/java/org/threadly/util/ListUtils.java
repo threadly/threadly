@@ -7,11 +7,32 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 public class ListUtils {
+  /**
+   * This function uses the binary search and adds a small amount of logic
+   * such that it determines the placement index for a given item.  It is 
+   * designed to always place the item after any existing items that match the 
+   * key's delay.
+   * 
+   * @param list List to search entries for placement
+   * @param key key for searching placement of
+   * @return the index to insert the key into the list
+   */
   public static int getInsertionEndIndex(List<? extends Delayed> list, 
-                                 Delayed key) {
+                                         Delayed key) {
     return getInsertionEndIndex(list, key, list instanceof RandomAccess);
   }
   
+  /**
+   * This function uses the binary search and adds a small amount of logic
+   * such that it determines the placement index for a given item.  It is 
+   * designed to always place the item after any existing items that match the 
+   * key's delay.
+   * 
+   * @param list List to search entries for placement
+   * @param key key for searching placement of
+   * @param randomAccessList boolean for optimization with binary search
+   * @return the index to insert the key into the list
+   */
   public static int getInsertionEndIndex(List<? extends Delayed> list, 
                                          Delayed key, boolean randomAccessList) {
     int searchResult = binarySearch(list, key, 
@@ -48,6 +69,14 @@ public class ListUtils {
   }
   
   /**
+   * A faster binary search algorithm for sorting a list.
+   * This algorithm works by actually knowing the values 
+   * and making smart decisions about how far to jump in 
+   * the list based on those values.  Which is why this
+   * can not take in a comparable interface like Collections
+   * does.  This was adapted from code posted from this 
+   * blog post: http://ochafik.com/blog/?p=106
+   * 
    * @param list to be searched through
    * @param key delay value to search for
    * @param randomAccessList boolean representing if optimizations should be done for list that have cheap random access

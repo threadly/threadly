@@ -24,6 +24,9 @@ public class Clock {
     }
   }
   
+  /**
+   * Starts the clock updating automatically (used for testing)
+   */
   public static void startClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
       if (updateClock) {
@@ -49,7 +52,10 @@ public class Clock {
       }
     }
   }
-  
+
+  /**
+   * Stops the clock from updating automatically (used for testing)
+   */
   public static void stopClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
       updateClock = false;
@@ -58,10 +64,17 @@ public class Clock {
     }
   }
 
+  /**
+   * @return last known time in milliseconds
+   */
   public static long lastKnownTimeMillis() {
     return now;
   }
 
+  /**
+   * Updates the clock and returns the accurate time
+   * @return accurate time in milliseconds
+   */
   public static long accurateTime() {
     return now = System.currentTimeMillis();
   }

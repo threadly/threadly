@@ -27,4 +27,16 @@ public class ClockTest {
     // verify we get the new time again
     assertEquals(newTime, Clock.lastKnownTimeMillis());
   }
+  
+  @Test
+  public void verifyAutomaticUpdate() {
+    long before = Clock.lastKnownTimeMillis();
+    
+    Clock.startClockUpdateThread();
+
+    TestUtil.sleep(Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS + 
+                   (Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS / 2));
+    
+    assertTrue(Clock.lastKnownTimeMillis() > before);
+  }
 }
