@@ -4,18 +4,17 @@ import java.util.Queue;
 import java.util.concurrent.Delayed;
 
 public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
+  public Object getLock();
   
-  public abstract Object getLock();
+  public void sortQueue();
   
-  public abstract void sortQueue();
+  public void reposition(T e);
   
-  public abstract void reposition(T e);
+  public void addLast(T e);
   
-  public abstract void addLast(T e);
+  public T take() throws InterruptedException;
   
-  public abstract T take() throws InterruptedException;
-  
-  public abstract ConsumerIterator<T> consumeIterator() throws InterruptedException;
+  public ConsumerIterator<T> consumeIterator() throws InterruptedException;
   
   public interface ConsumerIterator<E> {
     public boolean hasNext();
