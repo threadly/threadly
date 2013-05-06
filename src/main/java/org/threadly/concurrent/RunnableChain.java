@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -7,7 +8,18 @@ public class RunnableChain implements Runnable {
   private final boolean exceptionStopsChain;
   private final List<? extends Runnable> toRun;
   
-  public RunnableChain(boolean exceptionStopsChain, List<? extends Runnable> toRun) {
+  /**
+   * Constructs a runnable chain with a provided list of runnables to iterate over.
+   * 
+   * @param exceptionStopsChain - true if a runnables uncaught exception stops the chain from getting called
+   * @param toRun - List of runnables to call
+   */
+  public RunnableChain(boolean exceptionStopsChain, 
+                       List<? extends Runnable> toRun) {
+    if (toRun == null) {
+      toRun = new ArrayList<Runnable>(0);
+    }
+    
     this.exceptionStopsChain = exceptionStopsChain;
     this.toRun = toRun;
   }

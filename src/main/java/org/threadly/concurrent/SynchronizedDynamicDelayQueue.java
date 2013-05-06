@@ -26,6 +26,10 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
   }
   
   public SynchronizedDynamicDelayQueue(Object queueLock) {
+    if (queueLock == null) {
+      throw new IllegalArgumentException("Must provided queue lock");
+    }
+    
     queue = new LinkedList<T>();
     randomAccessQueue = ((Object)queue instanceof RandomAccess);
     this.queueLock = queueLock;
