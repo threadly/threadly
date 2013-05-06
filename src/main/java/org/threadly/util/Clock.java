@@ -24,7 +24,7 @@ public class Clock {
     }
   }
   
-  protected static void startClockUpdateThread() {
+  public static void startClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
       if (updateClock) {
         return;
@@ -50,7 +50,7 @@ public class Clock {
     }
   }
   
-  protected static void stopClockUpdateThread() {
+  public static void stopClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
       updateClock = false;
       
