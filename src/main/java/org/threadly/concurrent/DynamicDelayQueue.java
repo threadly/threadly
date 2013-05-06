@@ -3,6 +3,9 @@ package org.threadly.concurrent;
 import java.util.Queue;
 import java.util.concurrent.Delayed;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
   /**
    * Returns the object that will be called with .wait during .wait.  

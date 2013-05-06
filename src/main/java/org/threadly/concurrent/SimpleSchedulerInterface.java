@@ -2,8 +2,10 @@ package org.threadly.concurrent;
 
 import java.util.concurrent.Executor;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public interface SimpleSchedulerInterface extends Executor {
-
   /**
    * Schedule a recurring task to run.  The recurring delay time will be
    * from the point where execution finished.

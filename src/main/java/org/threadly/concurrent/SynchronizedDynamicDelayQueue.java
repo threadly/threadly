@@ -13,6 +13,9 @@ import java.util.concurrent.TimeUnit;
 
 import org.threadly.util.ListUtils;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public class SynchronizedDynamicDelayQueue<T extends Delayed> implements DynamicDelayQueue<T> {
   private static final Logger log = Logger.getLogger(SynchronizedDynamicDelayQueue.class.getSimpleName());
   private static final boolean VERBOSE = false;

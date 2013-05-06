@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public class RunnableChain implements Runnable {
   private final boolean exceptionStopsChain;
   private final List<? extends Runnable> toRun;

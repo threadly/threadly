@@ -1,5 +1,8 @@
 package org.threadly.concurrent;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
   /**
    * Executes the task as soon as possible with the given priority.

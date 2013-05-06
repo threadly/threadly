@@ -9,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public class NoThreadScheduler implements SimpleSchedulerInterface {
   private final boolean threadSafe;
   private final List<RunnableContainer> taskQueue;

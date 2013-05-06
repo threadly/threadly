@@ -5,6 +5,9 @@ import java.util.logging.Logger;
 
 import org.threadly.util.Clock;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public class ClockWrapper {
   private static final Logger log = Logger.getLogger(ClockWrapper.class.getSimpleName());
   

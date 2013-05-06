@@ -6,6 +6,9 @@ import java.util.RandomAccess;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public class ListUtils {
   /**
    * This function uses the binary search and adds a small amount of logic

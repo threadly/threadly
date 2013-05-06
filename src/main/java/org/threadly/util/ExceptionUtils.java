@@ -1,5 +1,8 @@
 package org.threadly.util;
 
+/**
+ * @author jent - Mike Jensen
+ */
 public class ExceptionUtils {
   /**
    * Makes a runtime exception if necessary.  If provided exception

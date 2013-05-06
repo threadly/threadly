@@ -9,6 +9,8 @@ package org.threadly.util;
  * System.currentTimeMillis() as of the last call to Clock.accurateTime().
  * This means lastKnownTimeMillis() will only be as accurate as the
  * frequency with which accurateTime() is called.
+ * 
+ * @author jent - Mike Jensen
  */
 public class Clock {
   protected static final boolean UPDATE_CLOCK_AUTOMATICALLY = true;
