@@ -41,6 +41,8 @@ public class ClockWrapperTest {
   public void getLastKnownTimeAndUpdateTest() {
     long originalTime;
     assertEquals(originalTime = Clock.lastKnownTimeMillis(), ClockWrapper.getLastKnownTime());
+
+    TestUtil.sleep(10);
     
     long updateTime = ClockWrapper.updateClock();
     assertTrue(originalTime != updateTime);
