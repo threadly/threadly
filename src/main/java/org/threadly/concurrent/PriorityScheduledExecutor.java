@@ -33,9 +33,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected static final boolean USE_DAEMON_THREADS = true;
   
   protected final TaskPriority defaultPriority;
-  protected final Object highPriorityLock;
-  protected final Object lowPriorityLock;
-  protected final Object workersLock;
+  protected final VirtualLock highPriorityLock;
+  protected final VirtualLock lowPriorityLock;
+  protected final VirtualLock workersLock;
   protected final DynamicDelayQueue<TaskWrapper> highPriorityQueue;
   protected final DynamicDelayQueue<TaskWrapper> lowPriorityQueue;
   protected final Deque<Worker> availableWorkers;        // is locked around workersLock
@@ -99,9 +99,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     this.defaultPriority = defaultPriority;
-    highPriorityLock = new Object();
-    lowPriorityLock = new Object();
-    workersLock = new Object();
+    highPriorityLock = makeLock();
+    lowPriorityLock = makeLock();
+    workersLock = makeLock();
     highPriorityQueue = new SynchronizedDynamicDelayQueue<TaskWrapper>(highPriorityLock);
     lowPriorityQueue = new SynchronizedDynamicDelayQueue<TaskWrapper>(lowPriorityLock);
     availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
@@ -237,7 +237,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       }
       
       if (startedThreads) {
-        workersLock.notifyAll();
+        workersLock.signalAll();
       }
     }
   }
@@ -475,12 +475,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       long waitTime = maxWaitForLowPriorityInMs;
       while (availableWorkers.isEmpty() && waitTime > 0) {
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
-          workersLock.wait();
+          workersLock.await();
         } else {
           long elapsedTime = ClockWrapper.getAccurateTime() - startTime;
           waitTime = maxWaitForLowPriorityInMs - elapsedTime;
-          if (waitTime > 10) {  // we will spin lock if it is less than 10ms, because .wait() will take too long
-            workersLock.wait(waitTime);
+          if (waitTime > 10) {  // we will spin lock if it is less than 10ms, because .await() will take too long
+            workersLock.await(waitTime);
           }
         }
       }
@@ -496,7 +496,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   protected Worker makeNewWorker() {
     synchronized (workersLock) {
-      Worker w = new Worker(threadFactory);
+      Worker w = new Worker();
       currentPoolSize++;
       w.start();
       if (VERBOSE) {
@@ -596,7 +596,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       
         lookForExpiredWorkers();
             
-        workersLock.notifyAll();
+        workersLock.signalAll();
       }
     }
   }
@@ -608,14 +608,14 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   protected class TaskConsumer implements Runnable {
     private final DynamicDelayQueue<TaskWrapper> workQueue;
-    private final Object queueLock;
+    private final VirtualLock queueLock;
     private final TaskAcceptor acceptor;
     private volatile boolean started;
     private volatile boolean stopped;
     private volatile Thread runningThread;
     
     protected TaskConsumer(DynamicDelayQueue<TaskWrapper> workQueue, 
-                           Object queueLock, TaskAcceptor acceptor) {
+                           VirtualLock queueLock, TaskAcceptor acceptor) {
       this.workQueue = workQueue;
       this.queueLock = queueLock;
       this.acceptor = acceptor;
@@ -689,14 +689,14 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   protected class Worker implements Runnable {
-    private final Object taskNotifyLock;
+    private final VirtualLock taskNotifyLock;
     private final Thread thread;
     private volatile long lastRunTime;
     private boolean running;
     private volatile TaskWrapper nextTask;
     
-    protected Worker(ThreadFactory threadFactory) {
-      this.taskNotifyLock = new Object();
+    protected Worker() {
+      this.taskNotifyLock = makeLock();
       thread = threadFactory.newThread(this);
       running = true;
       lastRunTime = ClockWrapper.getLastKnownTime();
@@ -707,7 +707,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       synchronized (taskNotifyLock) {
         running = false;
         
-        taskNotifyLock.notifyAll();
+        taskNotifyLock.signalAll();
       }
     }
 
@@ -732,7 +732,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         }
         
         nextTask = task;
-        taskNotifyLock.notifyAll();
+        taskNotifyLock.signalAll();
       }
     }
     
@@ -743,7 +743,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       
       synchronized (taskNotifyLock) {
         while (nextTask == null && running) {
-          taskNotifyLock.wait();
+          taskNotifyLock.await();
         }
       }
     }
