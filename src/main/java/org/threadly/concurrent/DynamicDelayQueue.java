@@ -4,7 +4,14 @@ import java.util.Queue;
 import java.util.concurrent.Delayed;
 
 /**
+ * This queue is very similar to java.util.concurrent.DelayQueue but has one major
+ * difference.  This queue is designed around the idea that items can change their delay.
+ * This is needed in the PriorityScheduledExecutor in order to ensure that task removal requests
+ * can always be found in the queue.  Items enter the queue with Long.MAX_VALUE delay, and then
+ * will just call reposition once they know when their next execution time is.
+ * 
  * @author jent - Mike Jensen
+ * @param <T> Parameter to indicate what type of item is contained in the queue
  */
 public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
   /**
@@ -41,7 +48,7 @@ public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
    * Takes the next item in the queue.  Call will block until next item delay is <= 0
    * 
    * @return next item ready to be consumed
-   * @throws InterruptedException
+   * @throws InterruptedException Thrown when thread is interrupted
    */
   public T take() throws InterruptedException;
   
@@ -49,10 +56,16 @@ public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
    * Returns an iterator that consumes the queue as it is progressed.
    * 
    * @return ConsumerIterator for queue
-   * @throws InterruptedException
+   * @throws InterruptedException Thrown when thread is interrupted
    */
   public ConsumerIterator<T> consumeIterator() throws InterruptedException;
   
+  /**
+   * Iterator which automatically consumes the queue as it is iterated over.
+   * 
+   * @author jent - Mike Jensen
+   * @param <E> Parameter for types of item to be returned by next() and peek()
+   */
   public interface ConsumerIterator<E> {
     /**
      * @return true if there is another item in the queue

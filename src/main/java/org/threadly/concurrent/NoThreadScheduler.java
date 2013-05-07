@@ -10,16 +10,31 @@ import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
+ * Executor which has no threads itself.  This can be useful for testing.
+ * It is similar to TestablePriorityScheduler except it is much less advanced.
+ * It has the same semantics that it only progressed forward with .tick(), but
+ * since it is running on the calling thread, calls to .wait() and .sleep() will
+ * block (possibly forever).
+ * 
  * @author jent - Mike Jensen
  */
 public class NoThreadScheduler implements SimpleSchedulerInterface {
   private final boolean threadSafe;
   private final List<RunnableContainer> taskQueue;
 
+  /**
+   * Constructs a new thread safe scheduler
+   */
   public NoThreadScheduler() {
     this(true);
   }
   
+  /**
+   * Constructs a new thread scheduler.  Making scheduler thread safe causes
+   * some small additional performance reductions (for when that is important).
+   * 
+   * @param makeThreadSafe Make scheduler able to accept executions from multiple threads
+   */
   public NoThreadScheduler(boolean makeThreadSafe) {
     taskQueue = new LinkedList<RunnableContainer>();
     threadSafe = makeThreadSafe;

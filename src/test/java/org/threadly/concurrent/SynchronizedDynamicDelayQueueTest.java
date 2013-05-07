@@ -14,6 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.DynamicDelayQueue.ConsumerIterator;
 
+@SuppressWarnings("javadoc")
 public class SynchronizedDynamicDelayQueueTest {
   private static final int TEST_QTY = 100;
   

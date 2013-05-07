@@ -1,6 +1,9 @@
 package org.threadly.concurrent;
 
 /**
+ * This interface represents schedulers which can not only execute
+ * and schedule tasks, but run based off a given priority as well.
+ * 
  * @author jent - Mike Jensen
  */
 public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
@@ -32,4 +35,11 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
    */
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority);
+  
+  /**
+   * Get the default priority for the scheduler.
+   * 
+   * @return the set default task priority
+   */
+  public TaskPriority getDefaultPriority();
 }

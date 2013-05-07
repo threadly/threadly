@@ -3,11 +3,11 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Test;
 
+@SuppressWarnings("javadoc")
 public class RunnableChainTest {
   private static final int RUNNABLE_COUNT = 5;
   private static final int FAIL_INDEX = 2;

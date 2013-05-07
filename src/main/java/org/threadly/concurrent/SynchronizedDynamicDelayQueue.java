@@ -14,7 +14,11 @@ import java.util.concurrent.TimeUnit;
 import org.threadly.util.ListUtils;
 
 /**
+ * This is a DynamicDelayQueue that is thread safe by strict
+ * usage of synchronization.
+ * 
  * @author jent - Mike Jensen
+ * @param <T> Parameter to indicate what type of item is contained in the queue
  */
 public class SynchronizedDynamicDelayQueue<T extends Delayed> implements DynamicDelayQueue<T> {
   private static final Logger log = Logger.getLogger(SynchronizedDynamicDelayQueue.class.getSimpleName());
@@ -24,10 +28,20 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
   private final boolean randomAccessQueue;
   private final Object queueLock;
   
+  /**
+   * Constructs a new queue
+   */
   public SynchronizedDynamicDelayQueue() {
     this(new Object());
   }
   
+  /**
+   * Constructs a queue, providing the lock that will be called 
+   * on with .wait().  Thus it allows you to synchronize around
+   * the .take() and have the lock released while the thread blocks.
+   * 
+   * @param queueLock - lock that is used internally
+   */
   public SynchronizedDynamicDelayQueue(Object queueLock) {
     if (queueLock == null) {
       throw new IllegalArgumentException("Must provided queue lock");

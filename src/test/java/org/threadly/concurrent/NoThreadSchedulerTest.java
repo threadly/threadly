@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+@SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
   private static final int TEST_QTY = 10;
   

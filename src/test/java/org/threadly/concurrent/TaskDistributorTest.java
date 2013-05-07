@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.TestUtil;
 
+@SuppressWarnings("javadoc")
 public class TaskDistributorTest {
   private static final int PARALLEL_LEVEL = 100;
   private static final int RUNNABLE_COUNT_PER_LEVEL = 5000;
