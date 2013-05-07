@@ -12,9 +12,8 @@ import org.junit.Test;
 import org.threadly.test.TestUtil;
 
 public class TaskDistributorTest {
-  private static final int PARALLEL_LEVEL = 1;
-  private static final int RUNNABLE_COUNT_PER_LEVEL = 1000;
-  private static final int DELAY_EXECTION_TIME = 1000;
+  private static final int PARALLEL_LEVEL = 100;
+  private static final int RUNNABLE_COUNT_PER_LEVEL = 5000;
   
   private volatile boolean ready;
   private PriorityScheduledExecutor scheduler;
@@ -42,7 +41,11 @@ public class TaskDistributorTest {
     ready = false;
   }
   
-  /* commented out because this currently does not work
+  @Test
+  public void testGetExecutor() {
+    assertTrue(scheduler == distributor.getExecutor());
+  }
+  
   @Test
   public void testExecutes() {
     final List<TestRunnable> runs = new ArrayList<TestRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
@@ -50,6 +53,7 @@ public class TaskDistributorTest {
     scheduler.execute(new Runnable() {
       @Override
       public void run() {
+        // hold agent lock to prevent execution till ready
         synchronized (agentLock) {
           long startTime = System.currentTimeMillis();
 
@@ -63,21 +67,16 @@ public class TaskDistributorTest {
             }
           }
           
-            while (System.currentTimeMillis() - startTime < DELAY_EXECTION_TIME) {
-            // spin
-          }
           ready = true;
-          System.out.println("ready");
         }
       }
     });
-    
-    TestUtil.sleep(DELAY_EXECTION_TIME);
     
     while (! ready) {
       // spin
     }
     
+    // sleep for a little time to give time for the runnables to execute
     TestUtil.sleep(100);
     
     Iterator<TestRunnable> it = runs.iterator();
@@ -86,7 +85,7 @@ public class TaskDistributorTest {
       assertEquals(tr.ranCount, 1);
       assertTrue(tr.threadTracker.threadConsistent);
     }
-  }*/
+  }
   
   private class TestRunnable implements Runnable {
     private final ThreadContainer threadTracker;
@@ -108,7 +107,6 @@ public class TaskDistributorTest {
     private boolean threadConsistent = true;
     
     public synchronized void running() {
-      System.out.println(this + " - " + Thread.currentThread());
       if (runningThread == null) {
         runningThread = Thread.currentThread();
       } else {

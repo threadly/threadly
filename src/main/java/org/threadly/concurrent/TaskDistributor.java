@@ -80,8 +80,8 @@ public class TaskDistributor {
     synchronized (agentLock) {
       TaskQueueWorker worker = taskWorkers.get(threadKey);
       if (worker == null) {
-        System.out.println("adding: " + threadKey.hashCode() + " - new woker");
         worker = new TaskQueueWorker(threadKey);
+        taskWorkers.put(threadKey, worker);
         worker.add(task);
         executor.execute(worker);
       } else {
@@ -122,7 +122,6 @@ public class TaskDistributor {
       while (true) {
         List<Runnable> nextList;
         synchronized (agentLock) {
-          System.out.println("Starting");
           nextList = next();
           
           if (nextList == null) {
