@@ -14,6 +14,14 @@ public abstract class VirtualLock {
   public abstract void await() throws InterruptedException;
   
   /**
+   * Equivalent to Object.wait(long) but for injectable VirtualLock implementation.
+   * 
+   * @param waitTimeInMs time to wait on lock
+   * @throws InterruptedException Thrown when thread is interrupted
+   */
+  public abstract void await(long waitTimeInMs) throws InterruptedException;
+  
+  /**
    * Equivalent to Object.notify() but for injectable VirtualLock implementation.
    */
   public abstract void signal();
@@ -35,10 +43,19 @@ public abstract class VirtualLock {
    * Calls .await() but ignores any InterruptedExceptions that may be thrown
    */
   public void awaitUninterruptibly() {
+    awaitUninterruptibly(Long.MAX_VALUE);
+  }
+  
+  /**
+   * Calls .await(long) but ignores any InterruptedExceptions that may be thrown
+   * 
+   * @param waitTimeInMs Time to wait on lock
+   */
+  public void awaitUninterruptibly(long waitTimeInMs) {
     boolean done = false;
     while (! done) {
       try {
-        await();
+        await(waitTimeInMs);
         done = true;
       } catch (InterruptedException e) {
         // ignored

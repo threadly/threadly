@@ -31,6 +31,11 @@ public class TestableLock extends VirtualLock {
   }
 
   @Override
+  public void await(long waitTimeInMs) throws InterruptedException {
+    scheduler.waiting(this, waitTimeInMs);
+  }
+
+  @Override
   public void signal() {
     scheduler.signal(this);
   }

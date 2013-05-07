@@ -194,6 +194,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
 
+  public void waiting(TestableLock testableLock, long waitTimeInMs) {
+    // TODO Auto-generated method stub
+    
+  }
+
   /**
    * should only be called from TestableVirtualLock
    * 

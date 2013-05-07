@@ -17,6 +17,11 @@ public class NativeLock extends VirtualLock {
   public void await() throws InterruptedException {
     this.wait();
   }
+  
+  @Override
+  public void await(long waitTimeInMs) throws InterruptedException {
+    this.wait(waitTimeInMs);
+  }
 
   @Override
   public void signal() {
