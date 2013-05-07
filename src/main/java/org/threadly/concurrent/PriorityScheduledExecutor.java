@@ -10,6 +10,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.threadly.concurrent.lock.LockFactory;
+import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.VirtualLock;
+
 /**
  * Executor to run tasks, schedule tasks.  Unlike java.util.concurrent.ScheduledThreadPoolExecutor
  * this scheduled executor's pool size can grow and shrink based off usage.  It also has the benifit
@@ -19,7 +23,8 @@ import java.util.logging.Logger;
  * 
  * @author jent - Mike Jensen
  */
-public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
+public class PriorityScheduledExecutor implements PrioritySchedulerInterface, 
+                                                  LockFactory {
   private static final Logger log = Logger.getLogger(PriorityScheduledExecutor.class.getSimpleName());
   private static final boolean VERBOSE = false;
   
@@ -594,6 +599,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         workersLock.notifyAll();
       }
     }
+  }
+
+  @Override
+  public VirtualLock makeLock() {
+    return new NativeLock();
   }
   
   protected class TaskConsumer implements Runnable {
