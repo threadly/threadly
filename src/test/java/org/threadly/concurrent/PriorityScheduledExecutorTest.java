@@ -2,6 +2,8 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.NoSuchElementException;
+
 import org.junit.Test;
 import org.threadly.test.TestUtil;
 
@@ -39,10 +41,31 @@ public class PriorityScheduledExecutorTest {
     scheduler.shutdown();
   }
   
-  /*@Test
-  public void getAndSetCorePoolSizeFail() {
-    // TODO
-  }*/
+  @Test
+  public void setCorePoolSizeFail() {
+    int corePoolSize = 1;
+    int maxPoolSize = 10;
+    // first construct a valid scheduler
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(corePoolSize, 
+                                                                        maxPoolSize, 1000);
+    
+    // verify no negative values
+    try {
+      scheduler.setCorePoolSize(-1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException expected) {
+      // ignored
+    }
+    // verify can't be set higher than max size
+    try {
+      scheduler.setCorePoolSize(maxPoolSize + 1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException expected) {
+      // ignored
+    }
+    
+    scheduler.shutdown();
+  }
   
   @Test
   public void getAndSetMaxPoolSizeTest() {
@@ -59,10 +82,17 @@ public class PriorityScheduledExecutorTest {
     scheduler.shutdown();
   }
   
-  /*@Test
-  public void getAndSetMaxPoolSizeFail() {
-    // TODO
-  }*/
+  @Test (expected = IllegalArgumentException.class)
+  public void setMaxPoolSizeFail() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    
+    try {
+      scheduler.setMaxPoolSize(-1); // should throw exception for negative value
+      fail("Exception should have been thrown");
+    } finally {
+      scheduler.shutdown();
+    }
+  }
   
   @Test
   public void getAndSetKeepAliveTimeTest() {
@@ -78,10 +108,17 @@ public class PriorityScheduledExecutorTest {
     scheduler.shutdown();
   }
   
-  /*@Test
+  @Test (expected = IllegalArgumentException.class)
   public void setKeepAliveTimeFail() {
-    // TODO
-  }*/
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    
+    try {
+      scheduler.setKeepAliveTime(-1L); // should throw exception for negative value
+      fail("Exception should have been thrown");
+    } finally {
+      scheduler.shutdown();
+    }
+  }
   
   @Test
   public void getCurrentPoolSizeTest() {
