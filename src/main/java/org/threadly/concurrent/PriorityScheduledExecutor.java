@@ -167,6 +167,15 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
+   * @return The current worker count
+   */
+  public int getCurrentPoolSize() {
+    synchronized (workersLock) {
+      return currentPoolSize;
+    }
+  }
+  
+  /**
    * Change the set core pool size.
    * 
    * @param corePoolSize New pool size.  Must be >= 1 and <= the set max pool size.
