@@ -80,8 +80,8 @@ public class TaskDistributorTest {
     Iterator<TestRunnable> it = runs.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      assertEquals(tr.ranCount, 1);
-      assertTrue(tr.threadTracker.threadConsistent);
+      assertEquals(tr.ranCount, 1); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
     }
   }
   
