@@ -174,7 +174,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   /**
    * should only be called from TestableVirtualLock
    * 
-   * @param lock - lock referencing calling into scheduler
+   * @param lock lock referencing calling into scheduler
    * @throws InterruptedException
    */
   @SuppressWarnings("javadoc")
@@ -194,15 +194,35 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
 
-  public void waiting(TestableLock testableLock, long waitTimeInMs) {
-    // TODO Auto-generated method stub
+  /**
+   * should only be called from TestableVirtualLock
+   * 
+   * @param lock lock referencing calling into scheduler
+   * @param waitTimeInMs time to wait on lock
+   * @throws InterruptedException
+   */
+  @SuppressWarnings("javadoc")
+  public void waiting(final TestableLock lock, 
+                      long waitTimeInMs) throws InterruptedException {
+    final boolean[] notified = new boolean[] { false };
+    // schedule runnable to wake up in case not signaled
+    schedule(new Runnable() {
+      @Override
+      public void run() {
+        if (! notified[0]) {
+          signal(lock);
+        }
+      }
+    }, waitTimeInMs);
     
+    waiting(lock);
+    notified[0] = true;
   }
 
   /**
    * should only be called from TestableVirtualLock
    * 
-   * @param lock - lock referencing calling into scheduler
+   * @param lock lock referencing calling into scheduler
    */
   public void signal(TestableLock lock) {
     synchronized (lock) {
@@ -216,7 +236,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   /**
    * should only be called from TestableVirtualLock
    * 
-   * @param lock - lock referencing calling into scheduler
+   * @param lock lock referencing calling into scheduler
    */
   public void signalAll(TestableLock lock) {
     Iterator<TestableLock> it = waitingThreads.iterator();
@@ -231,7 +251,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * should only be called from TestableVirtualLock or 
    * the running thread inside the scheduler
    * 
-   * @param sleepTime 
+   * @param sleepTime time for thread to sleep
    * @throws InterruptedException
    */
   @SuppressWarnings("javadoc")
