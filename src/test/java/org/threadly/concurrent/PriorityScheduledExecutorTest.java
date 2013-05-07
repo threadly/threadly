@@ -2,8 +2,6 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.util.NoSuchElementException;
-
 import org.junit.Test;
 import org.threadly.test.TestUtil;
 
