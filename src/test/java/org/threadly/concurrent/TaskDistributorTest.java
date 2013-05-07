@@ -55,8 +55,6 @@ public class TaskDistributorTest {
       public void run() {
         // hold agent lock to prevent execution till ready
         synchronized (agentLock) {
-          long startTime = System.currentTimeMillis();
-
           for (int i = 0; i < PARALLEL_LEVEL; i++) {
             Object key = new Object();
             ThreadContainer tc = new ThreadContainer();
