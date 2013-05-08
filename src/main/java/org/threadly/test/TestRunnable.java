@@ -85,7 +85,11 @@ public class TestRunnable implements Runnable {
       firstRunTime = System.currentTimeMillis();
     }
     
-    handleRun();
+    try {
+      handleRun();
+    } catch (InterruptedException e) {
+      // ignored
+    }
   }
   
   /**
@@ -95,9 +99,10 @@ public class TestRunnable implements Runnable {
    * 
    * This is also the last call to be made in the runnable,
    * so if you were to simulate an exception, this gives 
-   * you the oportunity to do so.
+   * you the opportunity to do so.
+   * @throws InterruptedException - only InterruptedExceptions will be swallowed
    */
-  public void handleRun() {
+  public void handleRun() throws InterruptedException {
     // nothing in default implementation
   }
 }
