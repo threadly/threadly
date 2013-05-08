@@ -2,8 +2,12 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.junit.Test;
-import org.threadly.test.TestUtil;
+import org.threadly.test.TestCondition;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorTest {
@@ -124,19 +128,120 @@ public class PriorityScheduledExecutorTest {
     // verify nothing at the start
     assertEquals(scheduler.getCurrentPoolSize(), 0);
     
-    scheduler.execute(new TestRunnable());
+    TestRunnable tr = new TestRunnable();
+    scheduler.execute(tr);
     
-    TestUtil.sleep(100);  // wait for execution
+    tr.blockTillRun();  // wait for execution
     
     assertEquals(scheduler.getCurrentPoolSize(), 1);
+    
+    scheduler.shutdown();
   }
   
-  private class TestRunnable implements Runnable {
-    private int ranCount = 0;
+  @Test
+  public void executionTest() {
+    int runnableCount = 10;
+    
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(runnableCount, runnableCount, 1000);
+    
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+    for (int i = 0; i < runnableCount; i++) {
+      TestRunnable tr = new TestRunnable();
+      scheduler.execute(tr);
+      runnables.add(tr);
+    }
+    
+    // verify execution
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      TestRunnable tr = it.next();
+      tr.blockTillRun();
+      
+      assertEquals(tr.ranCount, 1);
+    }
+    
+    // run one more time now that all workers are already running
+    it = runnables.iterator();
+    while (it.hasNext()) {
+      scheduler.execute(it.next());
+    }
+    
+    // verify second execution
+    it = runnables.iterator();
+    while (it.hasNext()) {
+      TestRunnable tr = it.next();
+      tr.blockTillRun(2);
+      
+      assertEquals(tr.ranCount, 2);
+    }
+    
+    scheduler.shutdown();
+  }
+  
+  @Test
+  public void scheduleExecutionTest() {
+    int runnableCount = 10;
+    int scheduleDelay = 200;
+    
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(runnableCount, runnableCount, 1000);
+
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+    for (int i = 0; i < runnableCount; i++) {
+      TestRunnable tr = new TestRunnable();
+      scheduler.schedule(tr, scheduleDelay);
+      runnables.add(tr);
+    }
+    
+    // verify execution and execution times
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      TestRunnable tr = it.next();
+      long executionDelay = tr.executionDelay();
+      assertTrue(executionDelay >= scheduleDelay);
+      // should be very timely with a core pool size that matches runnable count
+      assertTrue(executionDelay <= (scheduleDelay + 100));  
+      assertEquals(tr.ranCount, 1);
+    }
+    
+    scheduler.shutdown();
+  }
+  
+  private class TestRunnable extends TestCondition implements Runnable {
+    private final long createTime;
+    private long lastRunTime;
+    private int expectedRunCount;
+    private int ranCount;
+    
+    private TestRunnable() {
+      createTime = System.currentTimeMillis();
+      lastRunTime = -1;
+      expectedRunCount = 1;
+      ranCount = 0;
+    }
+    
+    public long executionDelay() {
+      blockTillRun();
+      return lastRunTime - createTime;
+    }
     
     @Override
     public void run() {
+      lastRunTime = System.currentTimeMillis();
       ranCount++;
+    }
+
+    @Override
+    public boolean get() {
+      return ranCount >= expectedRunCount;
+    }
+    
+    private void blockTillRun() {
+      blockTillRun(1);
+    }
+    
+    private void blockTillRun(int totalCount) {
+      expectedRunCount = totalCount;
+      blockTillTrue();
     }
   }
 }
