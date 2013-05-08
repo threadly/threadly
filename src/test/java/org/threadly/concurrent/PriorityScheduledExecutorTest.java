@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.test.TestCondition;
+import org.threadly.test.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorTest {
@@ -157,7 +157,7 @@ public class PriorityScheduledExecutorTest {
       TestRunnable tr = it.next();
       tr.blockTillRun();
       
-      assertEquals(tr.ranCount, 1);
+      assertEquals(tr.getRunCount(), 1);
     }
     
     // run one more time now that all workers are already running
@@ -172,7 +172,7 @@ public class PriorityScheduledExecutorTest {
       TestRunnable tr = it.next();
       tr.blockTillRun(2);
       
-      assertEquals(tr.ranCount, 2);
+      assertEquals(tr.getRunCount(), 2);
     }
     
     scheduler.shutdown();
@@ -196,52 +196,13 @@ public class PriorityScheduledExecutorTest {
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      long executionDelay = tr.executionDelay();
+      long executionDelay = tr.getDelayTillFirstRun();
       assertTrue(executionDelay >= scheduleDelay);
       // should be very timely with a core pool size that matches runnable count
       assertTrue(executionDelay <= (scheduleDelay + 100));  
-      assertEquals(tr.ranCount, 1);
+      assertEquals(tr.getRunCount(), 1);
     }
     
     scheduler.shutdown();
-  }
-  
-  private class TestRunnable extends TestCondition implements Runnable {
-    private final long createTime;
-    private long lastRunTime;
-    private int expectedRunCount;
-    private int ranCount;
-    
-    private TestRunnable() {
-      createTime = System.currentTimeMillis();
-      lastRunTime = -1;
-      expectedRunCount = 1;
-      ranCount = 0;
-    }
-    
-    public long executionDelay() {
-      blockTillRun();
-      return lastRunTime - createTime;
-    }
-    
-    @Override
-    public void run() {
-      lastRunTime = System.currentTimeMillis();
-      ranCount++;
-    }
-
-    @Override
-    public boolean get() {
-      return ranCount >= expectedRunCount;
-    }
-    
-    private void blockTillRun() {
-      blockTillRun(1);
-    }
-    
-    private void blockTillRun(int totalCount) {
-      expectedRunCount = totalCount;
-      blockTillTrue();
-    }
   }
 }

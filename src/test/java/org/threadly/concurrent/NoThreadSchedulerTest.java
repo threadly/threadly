@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.test.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
@@ -48,7 +49,7 @@ public class NoThreadSchedulerTest {
     
     it = runnables.iterator();
     while (it.hasNext()) {
-      assertEquals(it.next().ranCount, 1);
+      assertEquals(it.next().getRunCount(), 1);
     }
     
     // verify no more run after a second tick
@@ -56,7 +57,7 @@ public class NoThreadSchedulerTest {
     
     it = runnables.iterator();
     while (it.hasNext()) {
-      assertEquals(it.next().ranCount, 1);
+      assertEquals(it.next().getRunCount(), 1);
     }
   }
   
@@ -73,12 +74,12 @@ public class NoThreadSchedulerTest {
     long startTime = System.currentTimeMillis();
     scheduler.tick(startTime);
 
-    assertEquals(executeRun.ranCount, 1);   // should have run
-    assertEquals(scheduleRun.ranCount, 0);  // should NOT have run yet
+    assertEquals(executeRun.getRunCount(), 1);   // should have run
+    assertEquals(scheduleRun.getRunCount(), 0);  // should NOT have run yet
     
     scheduler.tick(startTime + scheduleDelay);
-    assertEquals(executeRun.ranCount, 1);   // should NOT have run again
-    assertEquals(scheduleRun.ranCount, 1);  // should have run
+    assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
+    assertEquals(scheduleRun.getRunCount(), 1);  // should have run
   }
   
   @Test
@@ -94,16 +95,16 @@ public class NoThreadSchedulerTest {
     long startTime = System.currentTimeMillis();
     scheduler.tick(startTime);
     
-    assertEquals(immediateRun.ranCount, 1);   // should have run
-    assertEquals(initialDelay.ranCount, 0);  // should NOT have run yet
+    assertEquals(immediateRun.getRunCount(), 1);   // should have run
+    assertEquals(initialDelay.getRunCount(), 0);  // should NOT have run yet
 
     scheduler.tick(startTime + delay);
-    assertEquals(immediateRun.ranCount, 2);   // should have run again
-    assertEquals(initialDelay.ranCount, 1);  // should have run for the first time
+    assertEquals(immediateRun.getRunCount(), 2);   // should have run again
+    assertEquals(initialDelay.getRunCount(), 1);  // should have run for the first time
     
     scheduler.tick(startTime + (delay * 2));
-    assertEquals(immediateRun.ranCount, 3);   // should have run again
-    assertEquals(initialDelay.ranCount, 2);  // should have run for the first time
+    assertEquals(immediateRun.getRunCount(), 3);   // should have run again
+    assertEquals(initialDelay.getRunCount(), 2);  // should have run for the first time
   }
   
   @Test
@@ -124,23 +125,14 @@ public class NoThreadSchedulerTest {
     long startTime = System.currentTimeMillis();
     scheduler.tick(startTime);
     
-    assertEquals(immediateRun.ranCount, 1);   // should have run
-    assertEquals(initialDelay.ranCount, 0);  // should NOT have run yet
+    assertEquals(immediateRun.getRunCount(), 1);   // should have run
+    assertEquals(initialDelay.getRunCount(), 0);  // should NOT have run yet
     
     assertTrue(scheduler.remove(immediateRun));
     
     scheduler.tick(startTime + delay);
     
-    assertEquals(immediateRun.ranCount, 1);   // should NOT have run again
-    assertEquals(initialDelay.ranCount, 1);  // should have run
-  }
-  
-  private class TestRunnable implements Runnable {
-    private int ranCount = 0;
-    
-    @Override
-    public void run() {
-      ranCount++;
-    }
+    assertEquals(immediateRun.getRunCount(), 1);   // should NOT have run again
+    assertEquals(initialDelay.getRunCount(), 1);  // should have run
   }
 }

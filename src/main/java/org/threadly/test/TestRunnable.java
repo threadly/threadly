@@ -46,9 +46,7 @@ public class TestRunnable implements Runnable {
    * @return the amount of time between construction and run being called
    */
   public long getDelayTillFirstRun() {
-    if (runCount < 0) {
-      throw new IllegalStateException("has not run yet");
-    }
+    blockTillRun();
     
     return firstRunTime - creationTime;
   }
