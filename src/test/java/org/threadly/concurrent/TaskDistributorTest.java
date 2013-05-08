@@ -60,10 +60,13 @@ public class TaskDistributorTest {
           for (int i = 0; i < PARALLEL_LEVEL; i++) {
             Object key = new Object();
             ThreadContainer tc = new ThreadContainer();
+            TDRunnable previous = null;
             for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDRunnable tr = new TDRunnable(tc);
+              TDRunnable tr = new TDRunnable(tc, previous);
               runs.add(tr);
               distributor.addTask(key, tr);
+              
+              previous = tr;
             }
           }
           
@@ -87,20 +90,32 @@ public class TaskDistributorTest {
         tr.blockTillRun();
         assertEquals(tr.getRunCount(), 1); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
     }
   }
   
   private class TDRunnable extends TestRunnable {
+    private final TDRunnable previousRunnable;
     private final ThreadContainer threadTracker;
+    private boolean previousRanFirst;
     
-    private TDRunnable(ThreadContainer threadTracker) {
+    private TDRunnable(ThreadContainer threadTracker, 
+                       TDRunnable previousRunnable) {
       this.threadTracker = threadTracker;
+      this.previousRunnable = previousRunnable;
+      previousRanFirst = false;
     }
     
     @Override
     public void handleRun() {
       threadTracker.running();
+      
+      if (previousRunnable != null) {
+        previousRanFirst = previousRunnable.ranOnce();
+      } else {
+        previousRanFirst = true;
+      }
     }
   }
   
