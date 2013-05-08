@@ -33,6 +33,7 @@ public abstract class VirtualRunnable implements Runnable {
       this.factory = null;
     }
   }
+  
   /**
    * Returns a virtual lock for the runnable that makes sense for the 
    * processing thread pool.
