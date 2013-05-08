@@ -21,6 +21,9 @@ public class VirtualRunnableTest {
     assertTrue(tr.runCalled);
     assertEquals(tr.returnedLock, tlf);
     assertEquals(tr.factoryAtRunTime, tlf);
+    
+    assertEquals(tlf.makeLockCallCount, 2); // 2 calls, one for lock request, one for sleep
+    assertEquals(tlf.sleepCount, 1);
   }
   
   private class TestRunnable extends VirtualRunnable {
