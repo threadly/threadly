@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
+import org.threadly.test.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class RunnableChainTest {
@@ -16,7 +17,7 @@ public class RunnableChainTest {
   public void exceptionStopsChainTest() {
     List<TestRunnable> list = new ArrayList<TestRunnable>(RUNNABLE_COUNT);
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
-      list.add(new TestRunnable(i == FAIL_INDEX));
+      list.add(new ChainRunnable(i == FAIL_INDEX));
     }
 
     RunnableChain chain = new RunnableChain(true, list);
@@ -29,9 +30,9 @@ public class RunnableChainTest {
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = list.get(i);
       if (i > FAIL_INDEX) {
-        assertEquals(tr.ranCount, 0);
+        assertEquals(tr.getRunCount(), 0);
       } else {
-        assertEquals(tr.ranCount, 1);
+        assertEquals(tr.getRunCount(), 1);
       }
     }
   }
@@ -40,7 +41,7 @@ public class RunnableChainTest {
   public void runAllProvidedTest() {
     List<TestRunnable> list = new ArrayList<TestRunnable>(RUNNABLE_COUNT);
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
-      list.add(new TestRunnable(i == FAIL_INDEX));
+      list.add(new ChainRunnable(i == FAIL_INDEX));
     }
 
     RunnableChain chain = new RunnableChain(false, list);
@@ -52,23 +53,19 @@ public class RunnableChainTest {
 
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = list.get(i);
-      assertEquals(tr.ranCount, 1);
+      assertEquals(tr.getRunCount(), 1);
     }
   }
   
-  private class TestRunnable implements Runnable {
+  private class ChainRunnable extends TestRunnable {
     private final boolean fail;
-    private int ranCount;
     
-    private TestRunnable(boolean fail) {
+    private ChainRunnable(boolean fail) {
       this.fail = fail;
-      ranCount = 0;
     }
     
     @Override
-    public void run() {
-      ranCount++;
-      
+    public void handleRun() {
       if (fail) {
         throw new RuntimeException("Test failure exception");
       }

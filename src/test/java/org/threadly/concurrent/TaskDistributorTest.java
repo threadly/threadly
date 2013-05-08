@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.TestCondition;
+import org.threadly.test.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class TaskDistributorTest {
@@ -49,7 +50,7 @@ public class TaskDistributorTest {
   
   @Test
   public void testExecutes() {
-    final List<TestRunnable> runs = new ArrayList<TestRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
 
     scheduler.execute(new Runnable() {
       @Override
@@ -60,7 +61,7 @@ public class TaskDistributorTest {
             Object key = new Object();
             ThreadContainer tc = new ThreadContainer();
             for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TestRunnable tr = new TestRunnable(tc);
+              TDRunnable tr = new TDRunnable(tc);
               runs.add(tr);
               distributor.addTask(key, tr);
             }
@@ -79,38 +80,31 @@ public class TaskDistributorTest {
       }
     }.blockTillTrue();
 
-    final TestRunnable lastRunnable;
+    final TDRunnable lastRunnable;
     synchronized (agentLock) {
       lastRunnable = runs.get(runs.size() - 1);
     }
     
     // block till last runnable is run
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return lastRunnable.ranCount >= 1;
-      }
-    }.blockTillTrue();
+    lastRunnable.blockTillRun();
     
-    Iterator<TestRunnable> it = runs.iterator();
+    Iterator<TDRunnable> it = runs.iterator();
     while (it.hasNext()) {
-      TestRunnable tr = it.next();
-      assertEquals(tr.ranCount, 1); // verify each only ran once
+      TDRunnable tr = it.next();
+      assertEquals(tr.getRunCount(), 1); // verify each only ran once
       assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
     }
   }
   
-  private class TestRunnable implements Runnable {
+  private class TDRunnable extends TestRunnable {
     private final ThreadContainer threadTracker;
-    private int ranCount = 0;
     
-    private TestRunnable(ThreadContainer threadTracker) {
+    private TDRunnable(ThreadContainer threadTracker) {
       this.threadTracker = threadTracker;
     }
     
     @Override
-    public void run() {
-      ranCount++;
+    public void handleRun() {
       threadTracker.running();
     }
   }
