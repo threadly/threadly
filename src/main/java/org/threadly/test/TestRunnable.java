@@ -1,11 +1,13 @@
 package org.threadly.test;
 
+import org.threadly.concurrent.VirtualRunnable;
+
 /**
  * Runnable that can be used in unit tests for verifying execution occurred
  * 
  * @author jent - Mike Jensen
  */
-public class TestRunnable implements Runnable {
+public class TestRunnable extends VirtualRunnable {
   private final TestCondition runCondition;
   private final long creationTime;
   private volatile int expectedRunCount;
