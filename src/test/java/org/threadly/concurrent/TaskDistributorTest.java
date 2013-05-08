@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.test.TestCondition;
 import org.threadly.test.TestUtil;
 
 @SuppressWarnings("javadoc")
@@ -71,12 +72,26 @@ public class TaskDistributorTest {
       }
     });
     
-    while (! ready) {
-      // spin
+    // block till thread starts and runs is populated
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return ready;
+      }
+    }.blockTillTrue();
+
+    final TestRunnable lastRunnable;
+    synchronized (agentLock) {
+      lastRunnable = runs.get(runs.size() - 1);
     }
     
-    // sleep for a little time to give time for the runnables to execute
-    TestUtil.sleep(100);
+    // block till last runnable is run
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return lastRunnable.ranCount >= 1;
+      }
+    }.blockTillTrue();
     
     Iterator<TestRunnable> it = runs.iterator();
     while (it.hasNext()) {

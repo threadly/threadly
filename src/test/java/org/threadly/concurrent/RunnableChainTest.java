@@ -29,9 +29,9 @@ public class RunnableChainTest {
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = list.get(i);
       if (i > FAIL_INDEX) {
-        assertFalse(tr.ran);
+        assertEquals(tr.ranCount, 0);
       } else {
-        assertTrue(tr.ran);
+        assertEquals(tr.ranCount, 1);
       }
     }
   }
@@ -52,22 +52,22 @@ public class RunnableChainTest {
 
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = list.get(i);
-      assertTrue(tr.ran);
+      assertEquals(tr.ranCount, 1);
     }
   }
   
   private class TestRunnable implements Runnable {
     private final boolean fail;
-    private boolean ran;
+    private int ranCount;
     
     private TestRunnable(boolean fail) {
       this.fail = fail;
-      ran = false;
+      ranCount = 0;
     }
     
     @Override
     public void run() {
-      ran = true;
+      ranCount++;
       
       if (fail) {
         throw new RuntimeException("Test failure exception");

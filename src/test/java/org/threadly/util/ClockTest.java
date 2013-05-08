@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.TestUtil;
 
+@SuppressWarnings("javadoc")
 public class ClockTest {
   @Before
   public void setup() {

@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 
+@SuppressWarnings("javadoc")
 public class ListUtilsTest {
   private static final int BINARY_SEARCH_RANDOM_SIZE = 100;
   private static final int INCREMENTAL_SEARCH_COUNT = 100;
