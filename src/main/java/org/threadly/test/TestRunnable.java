@@ -55,7 +55,7 @@ public class TestRunnable implements Runnable {
    * Blocks until run has been called at least once
    */
   public void blockTillRun() {
-    blockTillRun(1000, 1);
+    blockTillRun(2000, 1);
   }
 
   /**
