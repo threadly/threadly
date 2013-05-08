@@ -1,7 +1,7 @@
 package org.threadly.test;
 
 /**
- * Tools to be used in unit testing
+ * Generic tools to be used in unit testing.
  * 
  * @author jent - Mike Jensen
  */
