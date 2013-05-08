@@ -1,4 +1,9 @@
 apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+group 'org.threadly'
+version = '0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -12,9 +17,25 @@ test {
     testResultsDir = file("$buildDir/test-results/xml")
 }
 
-version = '0.1-SNAPSHOT'
 jar {
     manifest {
         attributes 'Implementation-Title': 'Threadly', 'Implementation-Version': version
     }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from 'build/docs/javadoc'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+artifacts {
+    archives jar
+
+    archives javadocJar
+    archives sourcesJar
 }

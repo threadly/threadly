@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
+ * A class to chain multiple runnables and thus run them all
+ * in the same thread.
+ * 
  * @author jent - Mike Jensen
  */
 public class RunnableChain implements Runnable {
