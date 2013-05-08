@@ -10,7 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.TestCondition;
-import org.threadly.test.TestUtil;
 
 @SuppressWarnings("javadoc")
 public class TaskDistributorTest {
