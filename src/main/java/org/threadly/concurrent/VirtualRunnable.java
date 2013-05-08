@@ -15,7 +15,7 @@ import org.threadly.concurrent.lock.VirtualLock;
  * @author jent - Mike Jensen
  */
 public abstract class VirtualRunnable implements Runnable {
-  private LockFactory factory = null;
+  protected LockFactory factory = null;
   
   /**
    * This is the run call that will be called for schedulers aware of 
