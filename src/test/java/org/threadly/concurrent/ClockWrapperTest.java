@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.test.TestUtil;
+import org.threadly.test.TestCondition;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
@@ -16,9 +16,9 @@ public class ClockWrapperTest {
   
   @Test
   public void getAccurateTimeTest() {
-    long startTime = ClockWrapper.getAccurateTime();
+    final long startTime = ClockWrapper.getAccurateTime();
     
-    TestUtil.sleep(10);
+    new TimeChangeCondition(startTime).blockTillTrue();
     
     long updateTime;
     // verify getting updates
@@ -27,7 +27,7 @@ public class ClockWrapperTest {
     // request stop to updates
     ClockWrapper.stopForcingUpdate();
 
-    TestUtil.sleep(10);
+    new TimeChangeCondition(updateTime).blockTillTrue();
     
     // verify no longer getting updates
     assertEquals(updateTime, ClockWrapper.getAccurateTime());
@@ -43,11 +43,29 @@ public class ClockWrapperTest {
     long originalTime;
     assertEquals(originalTime = Clock.lastKnownTimeMillis(), ClockWrapper.getLastKnownTime());
 
-    TestUtil.sleep(10);
+    new TimeChangeCondition(originalTime).blockTillTrue();
     
     long updateTime = ClockWrapper.updateClock();
     assertTrue(originalTime != updateTime);
     assertEquals(Clock.lastKnownTimeMillis(), ClockWrapper.getLastKnownTime());
     assertEquals(updateTime, ClockWrapper.getLastKnownTime());
+  }
+  
+  private class TimeChangeCondition extends TestCondition {
+    private final long time;
+    
+    private TimeChangeCondition(long time) {
+      this.time = time;
+    }
+    
+    @Override
+    public boolean get() {
+      return System.currentTimeMillis() != time;
+    }
+    
+    @Override
+    public void blockTillTrue() {
+      blockTillTrue(100, 1);
+    }
   }
 }
