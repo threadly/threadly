@@ -162,6 +162,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     synchronized (actionLock) {
       scheduler.execute(nextTask);
       
+      // TODO - we are never woken up here after the task finishes
       actionLock.wait();
     }
   }
