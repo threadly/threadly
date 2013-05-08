@@ -72,7 +72,7 @@ public class TaskDistributorTest {
       }
     });
     
-    // block till thread starts and runs is populated
+    // block till ready to ensure other thread got lock
     new TestCondition() {
       @Override
       public boolean get() {
@@ -80,19 +80,14 @@ public class TaskDistributorTest {
       }
     }.blockTillTrue();
 
-    final TDRunnable lastRunnable;
     synchronized (agentLock) {
-      lastRunnable = runs.get(runs.size() - 1);
-    }
-    
-    // block till last runnable is run
-    lastRunnable.blockTillRun();
-    
-    Iterator<TDRunnable> it = runs.iterator();
-    while (it.hasNext()) {
-      TDRunnable tr = it.next();
-      assertEquals(tr.getRunCount(), 1); // verify each only ran once
-      assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+      Iterator<TDRunnable> it = runs.iterator();
+      while (it.hasNext()) {
+        TDRunnable tr = it.next();
+        tr.blockTillRun();
+        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+      }
     }
   }
   
