@@ -2,7 +2,8 @@ package org.threadly.test;
 
 /**
  * TestCondition in unit test, designed to check a condition
- * for something that is happening in a different thread.
+ * for something that is happening in a different thread.  Allowing a 
+ * test to efficiently block till the testable action has finished.
  * 
  * @author jent - Mike Jensen
  */

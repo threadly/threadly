@@ -1,7 +1,8 @@
 package org.threadly.test;
 
 /**
- * Runnable that can be used in unit tests for verifying execution occurred
+ * Generic runnable implementation that can be used in 
+ * unit tests for verifying execution occurred
  * 
  * @author jent - Mike Jensen
  */

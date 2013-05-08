@@ -3,6 +3,8 @@ package org.threadly.concurrent;
 import java.util.concurrent.Executor;
 
 /**
+ * A simple thread pool that accepts scheduling.
+ * 
  * @author jent - Mike Jensen
  */
 public interface SimpleSchedulerInterface extends Executor {
