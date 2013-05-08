@@ -101,7 +101,7 @@ public class TaskDistributorTest {
   private class TDRunnable extends TestRunnable {
     private final TDRunnable previousRunnable;
     private final ThreadContainer threadTracker;
-    private boolean previousRanFirst;
+    private volatile boolean previousRanFirst;
     
     private TDRunnable(ThreadContainer threadTracker, 
                        TDRunnable previousRunnable) {
