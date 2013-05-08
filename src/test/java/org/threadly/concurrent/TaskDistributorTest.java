@@ -14,8 +14,8 @@ import org.threadly.test.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class TaskDistributorTest {
-  private static final int PARALLEL_LEVEL = 10;
-  private static final int RUNNABLE_COUNT_PER_LEVEL = 10;
+  private static final int PARALLEL_LEVEL = 100;
+  private static final int RUNNABLE_COUNT_PER_LEVEL = 1000;
   
   private volatile boolean ready;
   private PriorityScheduledExecutor scheduler;
@@ -48,9 +48,9 @@ public class TaskDistributorTest {
     assertTrue(scheduler == distributor.getExecutor());
   }
   
-  /* TODO - Disabling this test for now...will see if it is still failing after we get access to m1.large build machines
   @Test
   public void testExecutes() {
+    final Object testLock = new Object();
     final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
 
     scheduler.execute(new Runnable() {
@@ -58,20 +58,22 @@ public class TaskDistributorTest {
       public void run() {
         // hold agent lock to prevent execution till ready
         synchronized (agentLock) {
-          for (int i = 0; i < PARALLEL_LEVEL; i++) {
-            Object key = new Object();
-            ThreadContainer tc = new ThreadContainer();
-            TDRunnable previous = null;
-            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDRunnable tr = new TDRunnable(tc, previous);
-              runs.add(tr);
-              distributor.addTask(key, tr);
-              
-              previous = tr;
+          synchronized (testLock) {
+            for (int i = 0; i < PARALLEL_LEVEL; i++) {
+              Object key = new Object();
+              ThreadContainer tc = new ThreadContainer();
+              TDRunnable previous = null;
+              for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+                TDRunnable tr = new TDRunnable(tc, previous);
+                runs.add(tr);
+                distributor.addTask(key, tr);
+                
+                previous = tr;
+              }
             }
+            
+            ready = true;
           }
-          
-          ready = true;
         }
       }
     });
@@ -84,17 +86,17 @@ public class TaskDistributorTest {
       }
     }.blockTillTrue();
 
-    synchronized (agentLock) {
+    synchronized (testLock) {
       Iterator<TDRunnable> it = runs.iterator();
       while (it.hasNext()) {
         TDRunnable tr = it.next();
-        tr.blockTillRun(1000 * 10);
+        tr.blockTillRun(1000);
         assertEquals(tr.getRunCount(), 1); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
     }
-  }*/
+  }
   
   private class TDRunnable extends TestRunnable {
     private final TDRunnable previousRunnable;
