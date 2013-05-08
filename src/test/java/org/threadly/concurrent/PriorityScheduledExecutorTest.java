@@ -170,7 +170,7 @@ public class PriorityScheduledExecutorTest {
     it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      tr.blockTillRun(2);
+      tr.blockTillRun(1000, 2);
       
       assertEquals(tr.getRunCount(), 2);
     }

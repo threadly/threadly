@@ -60,10 +60,13 @@ public class TaskDistributorTest {
           for (int i = 0; i < PARALLEL_LEVEL; i++) {
             Object key = new Object();
             ThreadContainer tc = new ThreadContainer();
+            TDRunnable previous = null;
             for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDRunnable tr = new TDRunnable(tc);
+              TDRunnable tr = new TDRunnable(tc, previous);
               runs.add(tr);
               distributor.addTask(key, tr);
+              
+              previous = tr;
             }
           }
           
@@ -72,7 +75,7 @@ public class TaskDistributorTest {
       }
     });
     
-    // block till thread starts and runs is populated
+    // block till ready to ensure other thread got lock
     new TestCondition() {
       @Override
       public boolean get() {
@@ -80,32 +83,39 @@ public class TaskDistributorTest {
       }
     }.blockTillTrue();
 
-    final TDRunnable lastRunnable;
     synchronized (agentLock) {
-      lastRunnable = runs.get(runs.size() - 1);
-    }
-    
-    // block till last runnable is run
-    lastRunnable.blockTillRun();
-    
-    Iterator<TDRunnable> it = runs.iterator();
-    while (it.hasNext()) {
-      TDRunnable tr = it.next();
-      assertEquals(tr.getRunCount(), 1); // verify each only ran once
-      assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+      Iterator<TDRunnable> it = runs.iterator();
+      while (it.hasNext()) {
+        TDRunnable tr = it.next();
+        tr.blockTillRun();
+        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
+      }
     }
   }
   
   private class TDRunnable extends TestRunnable {
+    private final TDRunnable previousRunnable;
     private final ThreadContainer threadTracker;
+    private boolean previousRanFirst;
     
-    private TDRunnable(ThreadContainer threadTracker) {
+    private TDRunnable(ThreadContainer threadTracker, 
+                       TDRunnable previousRunnable) {
       this.threadTracker = threadTracker;
+      this.previousRunnable = previousRunnable;
+      previousRanFirst = false;
     }
     
     @Override
     public void handleRun() {
       threadTracker.running();
+      
+      if (previousRunnable != null) {
+        previousRanFirst = previousRunnable.ranOnce();
+      } else {
+        previousRanFirst = true;
+      }
     }
   }
   
