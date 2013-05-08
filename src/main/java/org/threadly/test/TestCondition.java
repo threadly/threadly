@@ -48,10 +48,12 @@ public abstract class TestCondition {
     long startTime = System.currentTimeMillis();
     while (! get() && 
            System.currentTimeMillis() - startTime < timeout) {
-      try {
-        Thread.sleep(pollInterval);
-      } catch (InterruptedException e) {
-        // ignored
+      if (pollInterval > 10) { // might as well spin if < 10
+        try {
+          Thread.sleep(pollInterval);
+        } catch (InterruptedException e) {
+          // ignored
+        }
       }
     }
     
