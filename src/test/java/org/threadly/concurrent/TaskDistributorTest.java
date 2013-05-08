@@ -15,7 +15,7 @@ import org.threadly.test.TestRunnable;
 @SuppressWarnings("javadoc")
 public class TaskDistributorTest {
   private static final int PARALLEL_LEVEL = 100;
-  private static final int RUNNABLE_COUNT_PER_LEVEL = 1000;
+  private static final int RUNNABLE_COUNT_PER_LEVEL = 100;
   
   private volatile boolean ready;
   private PriorityScheduledExecutor scheduler;
