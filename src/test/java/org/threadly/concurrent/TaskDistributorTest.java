@@ -87,7 +87,7 @@ public class TaskDistributorTest {
       Iterator<TDRunnable> it = runs.iterator();
       while (it.hasNext()) {
         TDRunnable tr = it.next();
-        tr.blockTillRun();
+        tr.blockTillRun(1000 * 10);
         assertEquals(tr.getRunCount(), 1); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
