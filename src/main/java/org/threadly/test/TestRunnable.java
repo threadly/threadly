@@ -111,13 +111,13 @@ public class TestRunnable extends VirtualRunnable {
   
   @Override
   public final void run() {
-    runCount++;
-    runTime.add(System.currentTimeMillis());
-    
     try {
       handleRun();
     } catch (InterruptedException e) {
       // ignored
+    } finally {
+      runTime.add(System.currentTimeMillis());
+      runCount++;
     }
   }
   
@@ -126,10 +126,11 @@ public class TestRunnable extends VirtualRunnable {
    * if more data or operations need to happen at the 
    * run point.  
    * 
-   * This is also the last call to be made in the runnable,
-   * so if you were to simulate an exception, this gives 
-   * you the opportunity to do so.
-   * @throws InterruptedException - only InterruptedExceptions will be swallowed
+   * This is also the first call to be made in the runnable,
+   * but all necessary TestRunnable actions are in a finally block
+   * so it is safe to throw any exceptions necessary here.
+   * 
+   * @throws InterruptedException only InterruptedExceptions will be swallowed
    */
   public void handleRun() throws InterruptedException {
     // nothing in default implementation
