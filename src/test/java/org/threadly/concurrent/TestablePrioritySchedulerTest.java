@@ -29,12 +29,10 @@ public class TestablePrioritySchedulerTest {
   @After
   public void tearDown() {
     testScheduler = null;
-    parentScheduler = null;
     parentScheduler.shutdown();
+    parentScheduler = null;
   }
   
-  
-  /*  commented out because it currently does not work
   @Test
   public void executeTest() {
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(RUNNABLE_COUNT);
@@ -57,5 +55,5 @@ public class TestablePrioritySchedulerTest {
     while (it.hasNext()) {
       assertEquals(it.next().getRunCount(), 1);
     }
-  }*/
+  }
 }

@@ -153,7 +153,9 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         }
       }
       
-      taskQueue.removeFirst();
+      if (firstResult != null) {
+        taskQueue.removeFirst();
+      }
       return firstResult;
     }
   }
@@ -332,6 +334,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       } else {
         runnable.run();
       }
+
+      synchronized (actionLock) {
+        actionLock.notify();
+      }
     }
 
     @Override
@@ -370,6 +376,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         synchronized (queueLock) {
           taskQueue.add(this);
         }
+      }
+      
+      synchronized (actionLock) {
+        actionLock.notify();
       }
     }
 
