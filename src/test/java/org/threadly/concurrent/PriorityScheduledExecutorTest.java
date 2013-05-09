@@ -276,7 +276,7 @@ public class PriorityScheduledExecutorTest {
         assertTrue(executionDelay >= recurringDelay);
         // should be very timely with a core pool size that matches runnable count
         assertTrue(executionDelay <= (recurringDelay + 100));  
-        assertTrue(tr.getRunCount() == ((System.currentTimeMillis() - startTime) / recurringDelay) + 1);
+        assertEquals(tr.getRunCount(), ((System.currentTimeMillis() - startTime) / recurringDelay) + 1);
       }
     } finally {
       scheduler.shutdown();
