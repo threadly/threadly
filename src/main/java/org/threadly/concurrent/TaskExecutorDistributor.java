@@ -22,7 +22,7 @@ import java.util.concurrent.Executor;
  * 
  * @author jent - Mike Jensen
  */
-public class TaskDistributor {
+public class TaskExecutorDistributor {
   private final Executor executor;
   private final Object agentLock;
   private final Map<Object, TaskQueueWorker> taskWorkers;
@@ -33,7 +33,7 @@ public class TaskDistributor {
    * @param expectedParallism Expected number of keys that will be used in parallel
    * @param maxThreadCount Max thread count (and thus maximum number of keys which can be processed in parallel)
    */
-  public TaskDistributor(int expectedParallism, int maxThreadCount) {
+  public TaskExecutorDistributor(int expectedParallism, int maxThreadCount) {
     this(new PriorityScheduledExecutor(expectedParallism, 
                                        maxThreadCount, 
                                        1000 * 10, 
@@ -46,14 +46,14 @@ public class TaskDistributor {
    *                 Ideally has as many possible threads as keys that 
    *                 will be used in parallel. 
    */
-  public TaskDistributor(Executor executor) {
+  public TaskExecutorDistributor(Executor executor) {
     this(executor, new Object());
   }
   
   /**
    * used for testing, so that agentLock can be held and prevent execution
    */
-  protected TaskDistributor(Executor executor, Object agentLock) {
+  protected TaskExecutorDistributor(Executor executor, Object agentLock) {
     if (executor == null) {
       throw new IllegalArgumentException("executor can not be null");
     }
@@ -77,6 +77,12 @@ public class TaskDistributor {
    * @param task Task to be executed.
    */
   public void addTask(Object threadKey, Runnable task) {
+    if (threadKey == null) {
+      throw new IllegalArgumentException("Must provide thread key");
+    } else if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
     synchronized (agentLock) {
       TaskQueueWorker worker = taskWorkers.get(threadKey);
       if (worker == null) {
@@ -132,7 +138,11 @@ public class TaskDistributor {
         
         Iterator<Runnable> it = nextList.iterator();
         while (it.hasNext()) {
-          it.next().run();
+          try {
+            it.next().run();
+          } catch (Throwable t) {
+            Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), t);
+          }
         }
       }
     }

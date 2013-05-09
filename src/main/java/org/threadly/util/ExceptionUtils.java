@@ -1,6 +1,8 @@
 package org.threadly.util;
 
 /**
+ * Utilities for doing basic things with exceptions.
+ * 
  * @author jent - Mike Jensen
  */
 public class ExceptionUtils {

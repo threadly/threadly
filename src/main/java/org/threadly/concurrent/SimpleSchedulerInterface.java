@@ -3,9 +3,20 @@ package org.threadly.concurrent;
 import java.util.concurrent.Executor;
 
 /**
+ * A simple thread pool that accepts scheduling.
+ * 
  * @author jent - Mike Jensen
  */
 public interface SimpleSchedulerInterface extends Executor {
+  /**
+   * Schedule a task with a given delay.
+   * 
+   * @param task Task to execute
+   * @param delayInMs Time to wait to execute task
+   */
+  public void schedule(Runnable task, 
+                       long delayInMs);
+  
   /**
    * Schedule a recurring task to run.  The recurring delay time will be
    * from the point where execution finished.
@@ -17,13 +28,11 @@ public interface SimpleSchedulerInterface extends Executor {
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 
                                      long recurringDelay);
-  
+
   /**
-   * Schedule a task with a given delay.
+   * Function to check if the thread pool is currently accepting and handling tasks.
    * 
-   * @param task Task to execute
-   * @param delayInMs Time to wait to execute task
+   * @return true if thread pool is running
    */
-  public void schedule(Runnable task, 
-                       long delayInMs);
+  public boolean isShutdown();
 }

@@ -1,17 +1,21 @@
 package org.threadly.test;
 
 import org.threadly.concurrent.VirtualRunnable;
+import java.util.LinkedList;
 
 /**
- * Runnable that can be used in unit tests for verifying execution occurred
+ * Generic runnable implementation that can be used in 
+ * unit tests for verifying execution occurred
  * 
  * @author jent - Mike Jensen
  */
 public class TestRunnable extends VirtualRunnable {
+  private static final int DEFAULT_TIMEOUT_PER_RUN = 2000;
+  
   private final TestCondition runCondition;
   private final long creationTime;
   private volatile int expectedRunCount;
-  private volatile long firstRunTime;
+  private volatile LinkedList<Long> runTime;
   private volatile int runCount;
 
   /**
@@ -19,7 +23,7 @@ public class TestRunnable extends VirtualRunnable {
    */
   public TestRunnable() {
     creationTime = System.currentTimeMillis();
-    firstRunTime = -1;
+    runTime = new LinkedList<Long>();
     expectedRunCount = -1;
     runCount = 0;
     runCondition = new TestCondition() {
@@ -45,19 +49,44 @@ public class TestRunnable extends VirtualRunnable {
   }
   
   /**
+   * This function blocks till 
+   * 
    * @return the amount of time between construction and run being called
    */
   public long getDelayTillFirstRun() {
-    blockTillRun();
+    return getDelayTillRun(1);
+  }
+  
+  /**
+   * This function blocks till the run provided, and 
+   * then gets the time between creation and a given run.
+   * 
+   * @param runNumber the run count to get delay to
+   * @return the amount of time between construction and run being called
+   */
+  public long getDelayTillRun(int runNumber) {
+    return getDelayTillRun(DEFAULT_TIMEOUT_PER_RUN * runNumber, runNumber);
+  }
+  
+  /**
+   * This function blocks till the run provided, and 
+   * then gets the time between creation and a given run.
+   * 
+   * @param timeout timeout to wait for given run count to finish
+   * @param runNumber the run count to get delay to
+   * @return the amount of time between construction and run being called
+   */
+  public long getDelayTillRun(int timeout, int runNumber) {
+    blockTillRun(timeout, runNumber);
     
-    return firstRunTime - creationTime;
+    return runTime.get(runNumber - 1) - creationTime;
   }
   
   /**
    * Blocks until run has been called at least once
    */
   public void blockTillRun() {
-    blockTillRun(2000, 1);
+    blockTillRun(DEFAULT_TIMEOUT_PER_RUN, 1);
   }
 
   /**
@@ -83,9 +112,7 @@ public class TestRunnable extends VirtualRunnable {
   @Override
   public final void run() {
     runCount++;
-    if (firstRunTime < 0) {
-      firstRunTime = System.currentTimeMillis();
-    }
+    runTime.add(System.currentTimeMillis());
     
     try {
       handleRun();

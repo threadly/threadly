@@ -7,7 +7,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A class of utilities for working with lists
+ * A collection of utilities for working with lists.
  * 
  * @author jent - Mike Jensen
  */

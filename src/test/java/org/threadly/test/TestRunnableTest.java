@@ -30,6 +30,7 @@ public class TestRunnableTest {
   @Test
   public void runTest() {
     TestTestRunnable ttr = new TestTestRunnable();
+    long start = System.currentTimeMillis();
     
     TestUtil.blockTillClockAdvances();
     
@@ -39,6 +40,13 @@ public class TestRunnableTest {
     assertTrue(ttr.ranOnce());
     assertEquals(ttr.getRunCount(), 1);
     assertTrue(ttr.getDelayTillFirstRun() > 0);
+
+    TestUtil.blockTillClockAdvances();
+    
+    ttr.run();
+    long now = System.currentTimeMillis();
+    assertTrue(ttr.getDelayTillRun(2) <= now - start);
+    assertTrue(ttr.getDelayTillRun(2) > ttr.getDelayTillFirstRun());
   }
   
   @Test

@@ -92,6 +92,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       taskQueue.add(insertionIndex, runnable);
     }
   }
+
+  @Override
+  public boolean isShutdown() {
+    return false;
+  }
   
   /**
    * This ticks forward one step based off the current time of calling.  
