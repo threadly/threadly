@@ -9,6 +9,15 @@ import java.util.concurrent.Executor;
  */
 public interface SimpleSchedulerInterface extends Executor {
   /**
+   * Schedule a task with a given delay.
+   * 
+   * @param task Task to execute
+   * @param delayInMs Time to wait to execute task
+   */
+  public void schedule(Runnable task, 
+                       long delayInMs);
+  
+  /**
    * Schedule a recurring task to run.  The recurring delay time will be
    * from the point where execution finished.
    * 
@@ -19,13 +28,4 @@ public interface SimpleSchedulerInterface extends Executor {
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 
                                      long recurringDelay);
-  
-  /**
-   * Schedule a task with a given delay.
-   * 
-   * @param task Task to execute
-   * @param delayInMs Time to wait to execute task
-   */
-  public void schedule(Runnable task, 
-                       long delayInMs);
 }

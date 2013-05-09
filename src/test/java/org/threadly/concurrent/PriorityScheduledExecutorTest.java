@@ -203,7 +203,7 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void scheduleExecutionTest() {
     int runnableCount = 10;
-    int scheduleDelay = 200;
+    int scheduleDelay = 50;
     
     PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(runnableCount, runnableCount, 1000);
     
@@ -242,6 +242,65 @@ public class PriorityScheduledExecutorTest {
       }
       try {
         scheduler.schedule(new TestRunnable(), -1);
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void recurringExecutionTest() {
+    int runnableCount = 10;
+    int recurringDelay = 50;
+    
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(runnableCount, runnableCount, 1000);
+
+    try {
+      long startTime = System.currentTimeMillis();
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+      for (int i = 0; i < runnableCount; i++) {
+        TestRunnable tr = new TestRunnable();
+        scheduler.scheduleWithFixedDelay(tr, 0, recurringDelay);
+        runnables.add(tr);
+      }
+      
+      // verify execution and execution times
+      Iterator<TestRunnable> it = runnables.iterator();
+      while (it.hasNext()) {
+        TestRunnable tr = it.next();
+        tr.blockTillRun(runnableCount * recurringDelay + 200, 2);
+        long executionDelay = tr.getDelayTillRun(2);
+        assertTrue(executionDelay >= recurringDelay);
+        // should be very timely with a core pool size that matches runnable count
+        assertTrue(executionDelay <= (recurringDelay + 100));  
+        assertTrue(tr.getRunCount() == ((System.currentTimeMillis() - startTime) / recurringDelay) + 1);
+      }
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void recurringExecutionFail() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    try {
+      try {
+        scheduler.scheduleWithFixedDelay(null, 1000, 1000);
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        scheduler.scheduleWithFixedDelay(new TestRunnable(), -1, 1000);
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        scheduler.scheduleWithFixedDelay(new TestRunnable(), 1000, -1);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected
