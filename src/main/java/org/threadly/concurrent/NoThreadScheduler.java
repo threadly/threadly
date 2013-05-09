@@ -108,9 +108,11 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   /**
    * Progresses tasks for the current time.  This will block as it runs
    * as many scheduled or waiting tasks as possible.
+   * 
+   * @return qty of steps taken forward.  Returns zero if no events to run.
    */
-  public void tick() {
-    tick(Clock.accurateTime());
+  public int tick() {
+    return tick(Clock.accurateTime());
   }
   
   /**
@@ -118,10 +120,13 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
    * used in testing by providing a possible time in the future (to execute future tasks).
    * 
    * @param currentTime - Time to provide for looking at task run time
+   * @return qty of steps taken forward.  Returns zero if no events to run.
    */
-  public void tick(long currentTime) {
+  public int tick(long currentTime) {
+    int tasks = 0;
     RunnableContainer nextTask = next();
     while (nextTask != null && nextTask.getDelay(currentTime, TimeUnit.MILLISECONDS) <= 0) {
+      tasks++;
       if (threadSafe) {
         synchronized (taskQueue) {
           taskQueue.remove(nextTask); // remove the last peeked item
@@ -133,6 +138,8 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
       nextTask.run(currentTime);
       nextTask = next();
     }
+    
+    return tasks;
   }
   
   private RunnableContainer next() {
