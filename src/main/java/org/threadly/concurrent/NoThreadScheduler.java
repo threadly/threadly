@@ -99,6 +99,11 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     
     return false;
   }
+
+  @Override
+  public boolean isShutdown() {
+    return false;
+  }
   
   /**
    * Progresses tasks for the current time.  This will block as it runs

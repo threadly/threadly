@@ -256,12 +256,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     allowCorePoolTimeout = value;    
   }
 
-  /**
-   * Function to check if the thread pool is currently handling tasks.
-   * 
-   * @return true if thread pool is running
-   */
-  public boolean isThreadPoolShutdown() {
+  @Override
+  public boolean isShutdown() {
     return ! running;
   }
   
