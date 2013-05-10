@@ -130,7 +130,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     
     RunnableContainer nextTask = getNextTask(currentTime);
     while (nextTask != null) {
-      System.out.println("Running task: " + nextTask);
       ranTasks++;
       try {
         handleTask(nextTask);
@@ -139,8 +138,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       }
       nextTask = getNextTask(currentTime);
     }
-    System.out.println("nextTask: " + taskQueue.peek() + 
-                         (taskQueue.peek() == null ? "" : ", next delay: " + taskQueue.peek().getDelay(TimeUnit.MILLISECONDS)));
     
     return ranTasks;
   }
@@ -274,15 +271,15 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   @SuppressWarnings("javadoc")
   public void sleep(long sleepTime) throws InterruptedException {
-    synchronized (actionLock) {
-      Object sleepLock = new Object();
-      add(new WakeUpThread(sleepLock, sleepTime));
-
-      synchronized (sleepLock) {
-        actionLock.notify();
+    Object sleepLock = new Object();
+    synchronized (sleepLock) {
+      synchronized (actionLock) {
+        add(new WakeUpThread(sleepLock, sleepTime));
         
-        sleepLock.wait();
+        actionLock.notify();
       }
+      
+      sleepLock.wait();
     }
   }
 

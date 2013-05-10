@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.test.TestCondition;
 import org.threadly.test.TestRunnable;
 import org.threadly.test.TestUtil;
 
@@ -144,5 +145,71 @@ public class TestablePrioritySchedulerTest {
     
     testScheduler.tick(now - 1);
     fail("Exception should have been thrown");
+  }
+  
+  /* commented out because it does not consistently pass
+   * I don't understand why the st.running is sometimes false while sleeping
+  @Test
+  public void sleepThreadTest() {
+    int sleepTime = 100;
+    long now = System.currentTimeMillis();
+    
+    for (int i = 0; i < sleepTime; i++) {
+      final SleepThread st = new SleepThread(i);
+      testScheduler.execute(st);
+      
+      if (i == 0) {
+        assertEquals(testScheduler.tick(now), 2);
+      
+        // should quickly transition to not running
+        new TestCondition() {
+          @Override
+          public boolean get() {
+            return ! st.running;
+          }
+        }.blockTillTrue(10);
+      
+        assertEquals(testScheduler.tick(now), 0);
+      } else {
+        assertEquals(testScheduler.tick(now), 1);
+
+        assertTrue(st.running);
+        
+        // Not sure why this should be necessary....so commented out for now
+        //final long newTickTime = now += i;
+        //// should quickly transition to not running
+        //new TestCondition() {
+        //  boolean result = false;
+        //  @Override
+        //  public boolean get() {
+        //    return result || (result = testScheduler.tick(newTickTime) == 1);
+        //  }
+        //}.blockTillTrue(100);
+        //
+        //assertEquals(testScheduler.tick(now += i), 0);
+        
+        assertEquals(testScheduler.tick(now += i), 1);
+      }
+    }
+  }*/
+  
+  private class SleepThread extends TestRunnable {
+    private final int sleepTime;
+    private volatile boolean running = false;
+    
+    private SleepThread(int sleepTime) {
+      this.sleepTime = sleepTime;
+    }
+    
+    @Override
+    public void handleRunStart() throws InterruptedException {
+      running = true;
+      sleep(sleepTime);
+    }
+    
+    @Override
+    public void handleRunFinish() {
+      running = false;
+    }
   }
 }
