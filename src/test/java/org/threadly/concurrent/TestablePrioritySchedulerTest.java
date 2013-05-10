@@ -179,16 +179,49 @@ public class TestablePrioritySchedulerTest {
         //final long newTickTime = now += i;
         //// should quickly transition to not running
         //new TestCondition() {
-        //  boolean result = false;
         //  @Override
         //  public boolean get() {
-        //    return result || (result = testScheduler.tick(newTickTime) == 1);
+        //    return result = testScheduler.tick(newTickTime) == 1;
         //  }
         //}.blockTillTrue(100);
         //
         //assertEquals(testScheduler.tick(now += i), 0);
         
         assertEquals(testScheduler.tick(now += i), 1);
+      }
+    }
+  }*/
+  
+  /* this also is not working consistently
+  @Test
+  public void waitThreadTest() {
+    int waitTime = 100;
+    long now = System.currentTimeMillis();
+    
+    for (int i = 0; i < waitTime; i++) {
+      final WaitThread st = new WaitThread(i);
+      testScheduler.execute(st);
+      
+      if (i == 0) {
+        assertEquals(testScheduler.tick(now), 3);
+      
+        // should quickly transition to not running
+        new TestCondition() {
+          @Override
+          public boolean get() {
+            return ! st.running;
+          }
+        }.blockTillTrue(10);
+      
+        assertEquals(testScheduler.tick(now), 0);
+      } else {
+        assertEquals(testScheduler.tick(now), 1);
+
+        assertTrue(st.running);
+        
+        assertEquals(testScheduler.tick(now += i), 2);
+        
+        assertTrue(st.wokenUp);
       }
     }
   }*/
@@ -209,6 +242,28 @@ public class TestablePrioritySchedulerTest {
     
     @Override
     public void handleRunFinish() {
+      running = false;
+    }
+  }
+  
+  private class WaitThread extends TestRunnable {
+    private final int waitTime;
+    private volatile boolean running = false;
+    private volatile boolean wokenUp = false;
+    
+    private WaitThread(int waitTime) {
+      this.waitTime = waitTime;
+    }
+    
+    @Override
+    public void handleRunStart() throws InterruptedException {
+      running = true;
+      makeLock().await(waitTime);
+    }
+    
+    @Override
+    public void handleRunFinish() {
+      wokenUp = true;
       running = false;
     }
   }
