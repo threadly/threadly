@@ -147,14 +147,13 @@ public class TestablePrioritySchedulerTest {
     fail("Exception should have been thrown");
   }
   
-  /* commented out because it does not consistently pass
-   * I don't understand why the st.running is sometimes false while sleeping
   @Test
   public void sleepThreadTest() {
-    int sleepTime = 100;
+    int sleepTime = 10000;
     long now = System.currentTimeMillis();
     
-    for (int i = 0; i < sleepTime; i++) {
+    for (int i = 1; i < sleepTime; i++) {
+      System.out.println("---> testing sleep with time: " + i);
       final SleepThread st = new SleepThread(i);
       testScheduler.execute(st);
       
@@ -190,7 +189,7 @@ public class TestablePrioritySchedulerTest {
         assertEquals(testScheduler.tick(now += i), 1);
       }
     }
-  }*/
+  }
   
   /* this also is not working consistently
   @Test
@@ -238,6 +237,7 @@ public class TestablePrioritySchedulerTest {
     public void handleRunStart() throws InterruptedException {
       running = true;
       sleep(sleepTime);
+      System.out.println("Done sleeping: " + sleepTime);
     }
     
     @Override
