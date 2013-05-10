@@ -29,6 +29,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private final LinkedList<TestableLock> waitingThreads;
   private final Object queueLock;
   private final Object actionLock;
+  private long nowInMillis;
 
   /**
    * Constructs a new TestablePriorityScheduler with the backed thread pool.
@@ -47,6 +48,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     waitingThreads = new LinkedList<TestableLock>();
     queueLock = new Object();
     actionLock = new Object();
+    nowInMillis = Clock.accurateTime();
   }
   
   @Override
@@ -118,10 +120,13 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * @return qty of steps taken forward.  Returns zero if no events to run for provided time.
    */
   public int tick(long currentTime) {
+    nowInMillis = currentTime;
+    
     int ranTasks = 0;
     
     RunnableContainer nextTask = getNextTask(currentTime);
     while (nextTask != null) {
+      System.out.println("Running task: " + nextTask);
       ranTasks++;
       try {
         handleTask(nextTask);
@@ -130,6 +135,8 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       }
       nextTask = getNextTask(currentTime);
     }
+    System.out.println("nextTask: " + taskQueue.peek() + 
+                         (taskQueue.peek() == null ? "" : ", next delay: " + taskQueue.peek().getDelay(TimeUnit.MILLISECONDS)));
     
     return ranTasks;
   }
@@ -142,7 +149,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       Iterator<RunnableContainer> it = taskQueue.iterator();
       while (it.hasNext() && nextDelay <= 0) {
         RunnableContainer next = it.next();
-        nextDelay = next.getDelay(nowInMs, TimeUnit.MILLISECONDS);
+        nextDelay = next.getDelay(TimeUnit.MILLISECONDS);
         if (nextDelay <= 0) {
           if (firstResult == null) {
             if (next.priority == TaskPriority.Low) {
@@ -169,7 +176,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     synchronized (actionLock) {
       scheduler.execute(nextTask);
       
-      // TODO - we are never woken up here after the task finishes
       actionLock.wait();
     }
   }
@@ -309,13 +315,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         }
       }
     }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return getDelay(Clock.accurateTime(), unit);
-    }
-    
-    public abstract long getDelay(long nowInMs, TimeUnit timeUnit);
     
     public abstract void run(LockFactory scheduler);
   }
@@ -328,7 +327,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
                             TaskPriority priority) {
       super(priority);
       
-      this.runTime = Clock.accurateTime() + delay;
+      this.runTime = nowInMillis + delay;
       this.runnable = runnable;
     }
     
@@ -346,8 +345,8 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
 
     @Override
-    public long getDelay(long nowInMs, TimeUnit timeUnit) {
-      return timeUnit.convert(runTime - nowInMs, 
+    public long getDelay(TimeUnit timeUnit) {
+      return timeUnit.convert(runTime - nowInMillis, 
                               TimeUnit.MILLISECONDS);
     }
   }
@@ -365,7 +364,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       
       this.recurringDelay = recurringDelay;
       this.runnable = runnable;
-      nextRunTime = Clock.accurateTime() + initialDelay;
+      nextRunTime = nowInMillis + initialDelay;
     }
     
     @Override
@@ -377,7 +376,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
           runnable.run();
         }
       } finally {
-        nextRunTime = Clock.accurateTime() + recurringDelay;
+        nextRunTime = nowInMillis + recurringDelay;
         synchronized (queueLock) {
           taskQueue.add(this);
         }
@@ -389,8 +388,8 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
 
     @Override
-    public long getDelay(long nowInMs, TimeUnit timeUnit) {
-      return timeUnit.convert(nextRunTime - nowInMs, 
+    public long getDelay(TimeUnit timeUnit) {
+      return timeUnit.convert(nextRunTime - nowInMillis, 
                               TimeUnit.MILLISECONDS);
     }
   }

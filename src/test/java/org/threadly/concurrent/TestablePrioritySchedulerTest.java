@@ -79,7 +79,6 @@ public class TestablePrioritySchedulerTest {
     assertEquals(scheduleRun.getRunCount(), 1);  // should have run
   }
   
-  /* this is currently failing, need to investigate why
   @Test
   public void testRecurring() {
     long delay = 1000 * 10;
@@ -105,5 +104,5 @@ public class TestablePrioritySchedulerTest {
     
     assertEquals(immediateRun.getRunCount(), 3);  // should have run again
     assertEquals(initialDelay.getRunCount(), 2);  // should have run again
-  }*/
+  }
 }
