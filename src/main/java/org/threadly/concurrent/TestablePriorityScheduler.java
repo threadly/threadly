@@ -120,6 +120,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * @return qty of steps taken forward.  Returns zero if no events to run for provided time.
    */
   public int tick(long currentTime) {
+    if (currentTime < nowInMillis) {
+      throw new IllegalArgumentException("Can not go backwards in time");
+    }
+    
     nowInMillis = currentTime;
     
     int ranTasks = 0;

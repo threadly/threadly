@@ -81,6 +81,11 @@ public class NoThreadSchedulerTest {
     
     assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
     assertEquals(scheduleRun.getRunCount(), 1);  // should have run
+    
+    assertEquals(scheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
+    
+    assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
+    assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
   }
   
   @Test
@@ -108,6 +113,11 @@ public class NoThreadSchedulerTest {
     
     assertEquals(immediateRun.getRunCount(), 3);  // should have run again
     assertEquals(initialDelay.getRunCount(), 2);  // should have run again
+    
+    assertEquals(scheduler.tick(startTime + (delay * 2)), 0); // should not execute anything
+    
+    assertEquals(immediateRun.getRunCount(), 3);  // should NOT have run again
+    assertEquals(initialDelay.getRunCount(), 2);  // should NOT have run again
   }
   
   @Test
@@ -137,5 +147,19 @@ public class NoThreadSchedulerTest {
     
     assertEquals(immediateRun.getRunCount(), 1);   // should NOT have run again
     assertEquals(initialDelay.getRunCount(), 1);  // should have run
+    
+    assertEquals(scheduler.tick(startTime + delay), 0); // should not execute anything
+    
+    assertEquals(immediateRun.getRunCount(), 1);   // should NOT have run
+    assertEquals(initialDelay.getRunCount(), 1);  // should NOT have run
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void tickFail() {
+    long now;
+    scheduler.tick(now = System.currentTimeMillis());
+    
+    scheduler.tick(now - 1);
+    fail("Exception should have been thrown");
   }
 }

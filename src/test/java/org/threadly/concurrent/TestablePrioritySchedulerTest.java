@@ -10,6 +10,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.TestRunnable;
+import org.threadly.test.TestUtil;
 
 @SuppressWarnings("javadoc")
 public class TestablePrioritySchedulerTest {
@@ -58,7 +59,7 @@ public class TestablePrioritySchedulerTest {
   }
   
   @Test
-  public void testSchedule() {
+  public void scheduleExecuteTest() {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable executeRun = new TestRunnable();
@@ -77,10 +78,15 @@ public class TestablePrioritySchedulerTest {
     
     assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
     assertEquals(scheduleRun.getRunCount(), 1);  // should have run
+    
+    assertEquals(testScheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
+    
+    assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
+    assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
   }
   
   @Test
-  public void testRecurring() {
+  public void recurringExecuteTest() {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
@@ -104,5 +110,39 @@ public class TestablePrioritySchedulerTest {
     
     assertEquals(immediateRun.getRunCount(), 3);  // should have run again
     assertEquals(initialDelay.getRunCount(), 2);  // should have run again
+    
+    assertEquals(testScheduler.tick(startTime + (delay * 2)), 0); // should not execute anything
+    
+    assertEquals(immediateRun.getRunCount(), 3);  // should NOT have run again
+    assertEquals(initialDelay.getRunCount(), 2);  // should NOT have run again
+  }
+  
+  @Test
+  public void tickTimeNoProgressTest() {
+    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+      TestRunnable tr = new TestRunnable();
+      testScheduler.execute(tr);
+    }
+
+    long now;
+    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), RUNNABLE_COUNT); // should execute all
+    
+    TestUtil.blockTillClockAdvances();
+    
+    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+      TestRunnable tr = new TestRunnable();
+      testScheduler.execute(tr);
+    }
+    
+    assertEquals(testScheduler.tick(now), RUNNABLE_COUNT); // should execute all again
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void tickFail() {
+    long now;
+    testScheduler.tick(now = System.currentTimeMillis());
+    
+    testScheduler.tick(now - 1);
+    fail("Exception should have been thrown");
   }
 }
