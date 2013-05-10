@@ -127,7 +127,7 @@ public class TaskExecutorDistributorTest {
     }
     
     @Override
-    public void handleRun() {
+    public void handleRunStart() {
       threadTracker.running();
       
       if (previousRunnable != null) {
