@@ -47,7 +47,8 @@ public abstract class TestCondition {
    */
   public void blockTillTrue(int timeout, int pollInterval) {
     long startTime = System.currentTimeMillis();
-    while (! get() && 
+    boolean lastResult;
+    while (! (lastResult = get()) && 
            System.currentTimeMillis() - startTime < timeout) {
       if (pollInterval > 10) { // might as well spin if < 10
         try {
@@ -58,7 +59,7 @@ public abstract class TestCondition {
       }
     }
     
-    if (! get()) {
+    if (! lastResult) {
       throw new TimeoutException("Still false after " + 
                                    (System.currentTimeMillis() - startTime) + "ms");
     }
