@@ -194,7 +194,7 @@ public class TestablePrioritySchedulerTest {
   
   /* this also is not working consistently
   @Test
-  public void waitThreadTest() {
+  public void waitWithoutNotifyThreadTest() {
     int waitTime = 100;
     long now = System.currentTimeMillis();
     
