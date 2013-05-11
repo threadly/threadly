@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.test.TestRunnable;
+import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class RunnableChainTest {

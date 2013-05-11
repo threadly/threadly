@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.test.TestRunnable;
+import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {

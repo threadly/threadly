@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
-import org.threadly.test.TestRunnable;
-import org.threadly.test.TestUtil;
+import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtil;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")

@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.test.concurrent;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -10,9 +10,13 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.PrioritySchedulerInterface;
+import org.threadly.concurrent.TaskPriority;
+import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.lock.LockFactory;
-import org.threadly.concurrent.lock.TestableLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.test.concurrent.lock.TestableLock;
 import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
@@ -64,7 +68,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       throw new IllegalArgumentException("Must provide backing scheduler");
     }
     if (defaultPriority == null) {
-      defaultPriority = PriorityScheduledExecutor.GLOBAL_DEFAULT_PRIORITY;
+      defaultPriority = TaskPriority.High;
     }
     
     this.executor = executor;

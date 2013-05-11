@@ -1,4 +1,4 @@
-package org.threadly.test;
+package org.threadly.test.concurrent;
 
 /**
  * Generic tools to be used in unit testing.

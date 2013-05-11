@@ -1,8 +1,9 @@
-package org.threadly.test;
+package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.test.concurrent.TestUtil;
 
 @SuppressWarnings("javadoc")
 public class TestUtilTest {
