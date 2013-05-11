@@ -129,10 +129,14 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return false;
   }
   
-  private void wantToRun(boolean mainThread) {
+  private void wantToRun(boolean mainThread, Runnable runBeforeBlocking) {
     synchronized (tickLock) {
       System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " waiting for thread count: " + waitingForThreadCount);
-      while (mainThread && waitingForThreadCount > 0) {
+      waitingForThreadCount++;
+      if (runBeforeBlocking != null) {
+        runBeforeBlocking.run();
+      }
+      while (mainThread && waitingForThreadCount > 1) {
         System.out.println(System.nanoTime() + " - waiting for other threads: " + waitingForThreadCount);
         // give others a chance
         try {
@@ -144,7 +148,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       if (mainThread) {
         System.out.println(System.nanoTime() + " - other threads now finished");
       }
-      waitingForThreadCount++;
     }
     try {
       System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " attempting to take runningLock");
@@ -202,7 +205,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       throw new IllegalArgumentException("Can not go backwards in time");
     }
     
-    wantToRun(true);
+    wantToRun(true, null);
     
     nowInMillis = currentTime;
     int ranTasks = 0;
@@ -275,7 +278,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     yielding(); // yield to new task
     nextTask.blockTillStarted();
     
-    wantToRun(true);  // wait till we can run again
+    wantToRun(true, null);  // wait till we can run again
   }
 
   @Override
@@ -398,7 +401,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
 
     @Override
     public void run() {
-      wantToRun(false);  // must become running thread
+      wantToRun(false, null);  // must become running thread
       running = true;
       try {
         run(TestablePriorityScheduler.this);
@@ -511,7 +514,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
             lock.wakeUp();
           }
           
-          lock.waitForWantingToRun();
+          try {
+            lock.waitForWantingToRun();
+          } catch (InterruptedException e1) {
+            Thread.currentThread().interrupt();
+          }
           
           yielding();
           
@@ -553,7 +560,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       }
     }
     
-    public void waitForWantingToRun() {
+    public void waitForWantingToRun() throws InterruptedException {
       while (! wantingToRun) {
         // spin
       }
@@ -578,8 +585,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
             
             obj.wait();
           } finally {
-            wantingToRun = true;
-            wantToRun(false);
+            wantToRun(false, new Runnable() {
+              @Override
+              public void run() {
+                wantingToRun = true;
+              }
+            });
             
             awake = true;
             this.notify();
