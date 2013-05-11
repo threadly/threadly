@@ -32,6 +32,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private final LinkedList<RunnableContainer> taskQueue;
   private final LinkedList<TestableLock> waitingThreads;
   private final Object queueLock;
+  private final Object tickLock;
   private final BlockingQueue<Object> threadQueue;
   private volatile int waitingForThreadCount;
   private volatile Object runningLock;
@@ -69,6 +70,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     taskQueue = new LinkedList<RunnableContainer>();
     waitingThreads = new LinkedList<TestableLock>();
     queueLock = new Object();
+    tickLock = new Object();
     threadQueue = new ArrayBlockingQueue<Object>(1, true);
     threadQueue.offer(new Object());
     waitingForThreadCount = 0;
@@ -126,12 +128,25 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
   
   private void wantToRun(boolean mainThread) {
-    while (mainThread && waitingForThreadCount > 0) {
-      // give others a chance
+    synchronized (tickLock) {
+      while (mainThread && waitingForThreadCount > 0) {
+        System.out.println(System.nanoTime() + " - waiting for other threads: " + waitingForThreadCount);
+        // give others a chance
+        try {
+          tickLock.wait();
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }
+      if (mainThread) {
+        System.out.println(System.nanoTime() + " - other threads now finished");
+      }
+      waitingForThreadCount++;
     }
     try {
-      waitingForThreadCount++;
+      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " attempting to take runningLock");
       Object runningLock = threadQueue.take();
+      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " thread now has lock");
       if (this.runningLock != null) {
         throw new IllegalStateException("Running lock already set: " + this.runningLock);
       } else {
@@ -146,10 +161,17 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     if (runningLock == null) {
       throw new IllegalStateException("No running lock to provide");
     }
-    waitingForThreadCount--;
+    synchronized (tickLock) {
+      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " decrementing waiting count");
+      waitingForThreadCount--;
+      
+      tickLock.notify();
+    }
     Object runningLock = this.runningLock;
     this.runningLock = null;
+    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " returning runningLock");
     threadQueue.offer(runningLock);
+    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " lock now returned");
   }
   
   /**
@@ -203,9 +225,9 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       // ignored
     }*/
     if (threadQueue.size() != 1) {
-      throw new IllegalStateException("Someone took the lock before we returned: " + threadQueue.size() + " - " + waitingForThreadCount);
+      throw new IllegalStateException(System.nanoTime() + " - Someone took the lock before we returned: " + threadQueue.size() + " - " + waitingForThreadCount);
     } else if (waitingForThreadCount != 0) {
-      throw new IllegalStateException("still threads waiting to run: " + waitingForThreadCount);
+      throw new IllegalStateException(System.nanoTime() + " - Still threads waiting to run: " + waitingForThreadCount);
     }
     
     return ranTasks;

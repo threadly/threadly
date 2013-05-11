@@ -152,7 +152,7 @@ public class TestablePrioritySchedulerTest {
     int sleepTime = 10000;
     long now = System.currentTimeMillis();
     
-    for (int i = 1; i < sleepTime; i++) {
+    for (int i = 0; i < sleepTime; i++) {
       System.out.println(System.nanoTime() + " ---> testing sleep with time: " + i);
       final SleepThread st = new SleepThread(i);
       testScheduler.execute(st);
