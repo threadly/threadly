@@ -9,14 +9,15 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.TestCondition;
 import org.threadly.test.TestRunnable;
 import org.threadly.test.TestUtil;
 
 @SuppressWarnings("javadoc")
 public class TestablePrioritySchedulerTest {
-  private static final int RUNNABLE_COUNT = 10;
-  private static final int THREAD_COUNT = 100;
+  private static final int RUNNABLE_COUNT = 50;
+  private static final int THREAD_COUNT = 1000;
   
   private PriorityScheduledExecutor parentScheduler;
   private TestablePriorityScheduler testScheduler;
@@ -149,7 +150,7 @@ public class TestablePrioritySchedulerTest {
   
   @Test
   public void sleepThreadTest() {
-    int sleepTime = 100;
+    int sleepTime = 50;
     long now = System.currentTimeMillis();
     
     for (int i = 0; i < sleepTime; i++) {
@@ -159,14 +160,6 @@ public class TestablePrioritySchedulerTest {
       
       if (i == 0) {
         assertEquals(testScheduler.tick(now), 2);
-      
-        // should quickly transition to not running
-        new TestCondition() {
-          @Override
-          public boolean get() {
-            return ! st.running;
-          }
-        }.blockTillTrue(10);
       
         assertEquals(testScheduler.tick(now), 0);
       } else {
@@ -182,7 +175,7 @@ public class TestablePrioritySchedulerTest {
   
   @Test
   public void waitWithoutNotifyThreadTest() {
-    int waitTime = 100;
+    int waitTime = 50;
     long now = System.currentTimeMillis();
     
     for (int i = 0; i < waitTime; i++) {
@@ -191,14 +184,6 @@ public class TestablePrioritySchedulerTest {
       
       if (i == 0) {
         assertEquals(testScheduler.tick(now), 3);
-      
-        // should quickly transition to not running
-        new TestCondition() {
-          @Override
-          public boolean get() {
-            return ! st.running;
-          }
-        }.blockTillTrue(10);
       
         assertEquals(testScheduler.tick(now), 0);
       } else {
@@ -211,6 +196,67 @@ public class TestablePrioritySchedulerTest {
         assertTrue(st.wokenUp);
       }
     }
+  }
+  
+  @Test
+  public void waitAndNotifyThreadTest() {
+    long now = System.currentTimeMillis();
+    
+    List<WaitThread> toWake = new ArrayList<WaitThread>((RUNNABLE_COUNT / 2) + 1);
+    List<WaitThread> ignored = new ArrayList<WaitThread>((RUNNABLE_COUNT / 2) + 1);
+    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+      WaitThread wt = new WaitThread(Integer.MAX_VALUE);
+      testScheduler.execute(wt);
+      if (i % 2 == 0) {
+        toWake.add(wt);
+      } else {
+        ignored.add(wt);
+      }
+    }
+    
+    assertEquals(testScheduler.tick(now), RUNNABLE_COUNT);
+    
+    Iterator<WaitThread> it = toWake.iterator();
+    while (it.hasNext()) {
+      assertTrue(it.next().running);
+    }
+    it = ignored.iterator();
+    while (it.hasNext()) {
+      assertTrue(it.next().running);
+    }
+    
+    TestUtil.blockTillClockAdvances();
+    
+    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), 0);
+    
+    it = toWake.iterator();
+    while (it.hasNext()) {
+      final VirtualLock lock = it.next().lock;
+      testScheduler.execute(new Runnable() {
+        @Override
+        public void run() {
+          if (lock.hashCode() % 2 == 0) {
+            lock.signal();
+          } else {
+            lock.signalAll();
+          }
+        }
+      });
+    }
+    
+    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), toWake.size() * 2);
+    
+    it = toWake.iterator(); // should have all been woken up
+    while (it.hasNext()) {
+      assertTrue(it.next().wokenUp);
+    }
+    it = ignored.iterator();  // should not be woken up
+    while (it.hasNext()) {
+      assertFalse(it.next().wokenUp);
+    }
+    
+    // nothing more should be left to run
+    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), 0);
   }
   
   private class SleepThread extends TestRunnable {
@@ -238,6 +284,7 @@ public class TestablePrioritySchedulerTest {
   
   private class WaitThread extends TestRunnable {
     private final int waitTime;
+    private volatile VirtualLock lock;
     private volatile boolean running = false;
     private volatile boolean wokenUp = false;
     
@@ -247,8 +294,11 @@ public class TestablePrioritySchedulerTest {
     
     @Override
     public void handleRunStart() throws InterruptedException {
+      lock = makeLock();
       running = true;
-      makeLock().await(waitTime);
+      synchronized (lock) {
+        lock.await(waitTime);
+      }
     }
     
     @Override
