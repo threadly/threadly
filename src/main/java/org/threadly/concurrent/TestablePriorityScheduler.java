@@ -295,8 +295,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       no = new NotifyObject(lock);
       waitingThreads.put(lock, no);
     }
-
-    yielding();
     
     no.yield();
     
@@ -364,18 +362,15 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   @SuppressWarnings("javadoc")
   public void sleep(long sleepTime) throws InterruptedException {
     NotifyObject sleepLock = new NotifyObject(new Object());
-    synchronized (sleepLock) {
-      add(new WakeUpThread(sleepLock, false, sleepTime));
-      
-      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
-      yielding();
-      
-      sleepLock.yield();
-      
-      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " " + sleepLock + " woken up, about to wait for control");
-      
-      wantToRun(false);
-    }
+    add(new WakeUpThread(sleepLock, false, sleepTime));
+    
+    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
+    
+    sleepLock.yield();
+    
+    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " " + sleepLock + " woken up, about to wait for control");
+    
+    wantToRun(false);
   }
 
   @Override
@@ -516,6 +511,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
           } else {
             lock.wakeUp();
           }
+          
+          try {
+            lock.waitForWakeup();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
         }
       }, delay, TaskPriority.High);
     }
@@ -541,9 +542,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       }
     }
     
-    public synchronized void waitForWakeup() throws InterruptedException {
-      while (! awake) {
-        wait();
+    public void waitForWakeup() throws InterruptedException {
+      synchronized (this) {
+        while (! awake) {
+          wait();
+        }
       }
     }
     
@@ -551,6 +554,9 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       synchronized (obj) {
         try {
           awake = false;
+          
+          yielding();
+          
           obj.wait();
         } finally {
           awake = true;
