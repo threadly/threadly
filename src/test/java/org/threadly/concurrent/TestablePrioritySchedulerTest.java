@@ -172,6 +172,7 @@ public class TestablePrioritySchedulerTest {
       } else {
         assertEquals(testScheduler.tick(now), 1);
 
+        System.out.println(System.nanoTime() + " - running: " + st.running);
         assertTrue(st.running);
         
         // Not sure why this should be necessary....so commented out for now
@@ -235,7 +236,9 @@ public class TestablePrioritySchedulerTest {
     
     @Override
     public void handleRunStart() throws InterruptedException {
+      System.out.println(System.nanoTime() + " - about to set running: " + sleepTime);
       running = true;
+      System.out.println(System.nanoTime() + " - about to sleep: " + sleepTime);
       sleep(sleepTime);
       System.out.println(System.nanoTime() + " - Done sleeping: " + sleepTime);
     }

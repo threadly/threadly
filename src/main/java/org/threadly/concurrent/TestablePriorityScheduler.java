@@ -1,6 +1,5 @@
 package org.threadly.concurrent;
 
-import java.lang.Thread.State;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -34,6 +33,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private final LinkedList<TestableLock> waitingThreads;
   private final Object queueLock;
   private final BlockingQueue<Object> threadQueue;
+  private volatile int waitingForThreadCount;
   private volatile Object runningLock;
   private long nowInMillis;
 
@@ -69,8 +69,9 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     taskQueue = new LinkedList<RunnableContainer>();
     waitingThreads = new LinkedList<TestableLock>();
     queueLock = new Object();
-    threadQueue = new ArrayBlockingQueue<Object>(1);
+    threadQueue = new ArrayBlockingQueue<Object>(1, true);
     threadQueue.offer(new Object());
+    waitingForThreadCount = 0;
     runningLock = null;
     nowInMillis = Clock.accurateTime();
   }
@@ -124,8 +125,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return false;
   }
   
-  private void wantToRun() {
+  private void wantToRun(boolean mainThread) {
+    while (mainThread && waitingForThreadCount > 0) {
+      // give others a chance
+    }
     try {
+      waitingForThreadCount++;
       Object runningLock = threadQueue.take();
       if (this.runningLock != null) {
         throw new IllegalStateException("Running lock already set: " + this.runningLock);
@@ -141,6 +146,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     if (runningLock == null) {
       throw new IllegalStateException("No running lock to provide");
     }
+    waitingForThreadCount--;
     Object runningLock = this.runningLock;
     this.runningLock = null;
     threadQueue.offer(runningLock);
@@ -171,7 +177,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       throw new IllegalArgumentException("Can not go backwards in time");
     }
     
-    wantToRun();
+    wantToRun(true);
     
     nowInMillis = currentTime;
     int ranTasks = 0;
@@ -191,13 +197,15 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     yielding();
     
     // TODO - remove check
-    try {
-      Thread.sleep(1000);
+    /*try {
+      Thread.sleep(10);
     } catch (InterruptedException e) {
       // ignored
-    }
+    }*/
     if (threadQueue.size() != 1) {
-      throw new IllegalStateException("Someone took the lock before we returned");
+      throw new IllegalStateException("Someone took the lock before we returned: " + threadQueue.size() + " - " + waitingForThreadCount);
+    } else if (waitingForThreadCount != 0) {
+      throw new IllegalStateException("still threads waiting to run: " + waitingForThreadCount);
     }
     
     return ranTasks;
@@ -236,11 +244,13 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   private void handleTask(RunnableContainer nextTask) throws InterruptedException {
     System.out.println(System.nanoTime() + " - " + "Handling task: " + nextTask + " - " + nextTask.runnable);
+    nextTask.prepareForExcute();
     executor.execute(nextTask);
     
     yielding(); // yield to new task
+    nextTask.blockTillStarted();
     
-    wantToRun();  // wait till we can run again
+    wantToRun(true);  // wait till we can run again
   }
 
   @Override
@@ -264,7 +274,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         
         lock.wait();
         
-        wantToRun();
+        wantToRun(false);
       } finally {
         waitingThreads.remove(lock);
       }
@@ -344,7 +354,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       
       System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " " + sleepLock + " woken up, about to wait for control");
       
-      wantToRun();
+      wantToRun(false);
     }
   }
 
@@ -357,16 +367,29 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     protected final Runnable runnable;
     protected final TaskPriority priority;
     protected final Exception creationStack;
+    private volatile boolean running;
     
     protected RunnableContainer(Runnable runnable, TaskPriority priority) {
       this.runnable = runnable;
       this.priority = priority;
       creationStack = new Exception();
+      running = false;
     }
     
+    public void blockTillStarted() {
+      while (! running) {
+        // spin
+      }
+    }
+
+    public void prepareForExcute() {
+      running = false;
+    }
+
     @Override
     public void run() {
-      wantToRun();  // must become running thread
+      wantToRun(false);  // must become running thread
+      running = true;
       try {
         run(TestablePriorityScheduler.this);
       } finally {
