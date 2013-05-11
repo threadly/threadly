@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.test.concurrent;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
