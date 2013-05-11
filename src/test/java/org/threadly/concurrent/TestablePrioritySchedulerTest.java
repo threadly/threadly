@@ -149,7 +149,7 @@ public class TestablePrioritySchedulerTest {
   
   @Test
   public void sleepThreadTest() {
-    int sleepTime = 10000;
+    int sleepTime = 100;
     long now = System.currentTimeMillis();
     
     for (int i = 0; i < sleepTime; i++) {
@@ -175,24 +175,11 @@ public class TestablePrioritySchedulerTest {
         System.out.println(System.nanoTime() + " - running: " + st.running);
         assertTrue(st.running);
         
-        // Not sure why this should be necessary....so commented out for now
-        //final long newTickTime = now += i;
-        //// should quickly transition to not running
-        //new TestCondition() {
-        //  @Override
-        //  public boolean get() {
-        //    return result = testScheduler.tick(newTickTime) == 1;
-        //  }
-        //}.blockTillTrue(100);
-        //
-        //assertEquals(testScheduler.tick(now += i), 0);
-        
         assertEquals(testScheduler.tick(now += i), 1);
       }
     }
   }
   
-  /* this also is not working consistently
   @Test
   public void waitWithoutNotifyThreadTest() {
     int waitTime = 100;
@@ -224,7 +211,7 @@ public class TestablePrioritySchedulerTest {
         assertTrue(st.wokenUp);
       }
     }
-  }*/
+  }
   
   private class SleepThread extends TestRunnable {
     private final int sleepTime;

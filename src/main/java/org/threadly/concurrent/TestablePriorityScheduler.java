@@ -224,12 +224,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     // we must yield right before we return so next tick can run
     yielding();
     
-    // TODO - remove check
-    /*try {
-      Thread.sleep(10);
-    } catch (InterruptedException e) {
-      // ignored
-    }*/
     if (threadQueue.size() != 1) {
       throw new IllegalStateException(System.nanoTime() + " - Someone took the lock before we returned: " + threadQueue.size() + " - " + waitingForThreadCount);
     } else if (waitingForThreadCount != 0) {
