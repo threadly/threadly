@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
 
@@ -9,10 +9,13 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.TestablePriorityScheduler.OneTimeRunnable;
+import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.test.TestRunnable;
-import org.threadly.test.TestUtil;
+import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestablePriorityScheduler;
+import org.threadly.test.concurrent.TestablePriorityScheduler.OneTimeRunnable;
 
 @SuppressWarnings("javadoc")
 public class TestablePrioritySchedulerTest {

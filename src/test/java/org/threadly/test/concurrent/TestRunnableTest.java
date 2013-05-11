@@ -1,11 +1,13 @@
-package org.threadly.test;
+package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.test.TestCondition.TimeoutException;
+import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestCondition.TimeoutException;
 
 @SuppressWarnings("javadoc")
 public class TestRunnableTest {

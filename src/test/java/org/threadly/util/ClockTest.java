@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.test.TestUtil;
+import org.threadly.test.concurrent.TestUtil;
 
 @SuppressWarnings("javadoc")
 public class ClockTest {

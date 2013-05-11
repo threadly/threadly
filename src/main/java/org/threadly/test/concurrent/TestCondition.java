@@ -1,4 +1,4 @@
-package org.threadly.test;
+package org.threadly.test.concurrent;
 
 /**
  * TestCondition in unit test, designed to check a condition
