@@ -131,6 +131,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   private void wantToRun(boolean mainThread) {
     synchronized (tickLock) {
+      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " waiting for thread count: " + waitingForThreadCount);
       while (mainThread && waitingForThreadCount > 0) {
         System.out.println(System.nanoTime() + " - waiting for other threads: " + waitingForThreadCount);
         // give others a chance
@@ -297,8 +298,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
     
     no.yield();
-    
-    wantToRun(false);
   }
 
   /**
@@ -367,10 +366,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
     
     sleepLock.yield();
-    
-    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " " + sleepLock + " woken up, about to wait for control");
-    
-    wantToRun(false);
   }
 
   @Override
@@ -408,8 +403,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       try {
         run(TestablePriorityScheduler.this);
       } finally {
-        yielding();
+        handleDone();
       }
+    }
+    
+    protected void handleDone() {
+      yielding();
     }
     
     @Override
@@ -512,6 +511,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
             lock.wakeUp();
           }
           
+          lock.waitForWantingToRun();
+          
+          yielding();
+          
           try {
             lock.waitForWakeup();
           } catch (InterruptedException e) {
@@ -520,14 +523,22 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         }
       }, delay, TaskPriority.High);
     }
+    
+    @Override
+    protected void handleDone() {
+      // prevent yield call in super class, since we already yielded
+    }
   }
   
   private class NotifyObject {
     private final Object obj;
+    private volatile boolean wantingToRun;
     private boolean awake;
     
     private NotifyObject(Object obj) {
       this.obj = obj;
+      wantingToRun = false;
+      awake = false;
     }
     
     public void wakeUpAll() {
@@ -539,6 +550,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     public void wakeUp() {
       synchronized (obj) {
         obj.notify();
+      }
+    }
+    
+    public void waitForWantingToRun() {
+      while (! wantingToRun) {
+        // spin
       }
     }
     
@@ -555,11 +572,15 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         synchronized (obj) {
           try {
             awake = false;
+            wantingToRun = false;
             
             yielding();
             
             obj.wait();
           } finally {
+            wantingToRun = true;
+            wantToRun(false);
+            
             awake = true;
             this.notify();
           }
