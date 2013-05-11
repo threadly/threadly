@@ -1,7 +1,9 @@
 package org.threadly.concurrent;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Delayed;
@@ -30,7 +32,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private final Executor executor;
   private final TaskPriority defaultPriority;
   private final LinkedList<RunnableContainer> taskQueue;
-  private final LinkedList<TestableLock> waitingThreads;
+  private final Map<TestableLock, NotifyObject> waitingThreads;
   private final Object queueLock;
   private final Object tickLock;
   private final BlockingQueue<Object> threadQueue;
@@ -68,7 +70,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     this.executor = executor;
     this.defaultPriority = defaultPriority;
     taskQueue = new LinkedList<RunnableContainer>();
-    waitingThreads = new LinkedList<TestableLock>();
+    waitingThreads = new HashMap<TestableLock, NotifyObject>();
     queueLock = new Object();
     tickLock = new Object();
     threadQueue = new ArrayBlockingQueue<Object>(1, true);
@@ -288,19 +290,17 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   @SuppressWarnings("javadoc")
   public void waiting(TestableLock lock) throws InterruptedException {
-    synchronized (lock) {
-      try {
-        waitingThreads.addLast(lock);
-        
-        yielding();
-        
-        lock.wait();
-        
-        wantToRun(false);
-      } finally {
-        waitingThreads.remove(lock);
-      }
+    NotifyObject no = waitingThreads.get(lock);
+    if (no == null) {
+      no = new NotifyObject(lock);
+      waitingThreads.put(lock, no);
     }
+
+    yielding();
+    
+    no.yield();
+    
+    wantToRun(false);
   }
 
   /**
@@ -334,11 +334,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * @param lock lock referencing calling into scheduler
    */
   public void signal(TestableLock lock) {
-    synchronized (lock) {
-      if (waitingThreads.contains(lock)) {
-        // schedule task to wake up other thread
-        add(new WakeUpThread(lock, 0));
-      }
+    NotifyObject no = waitingThreads.get(lock);
+    if (no != null) {
+      // schedule task to wake up other thread
+      add(new WakeUpThread(no, false, 0));
     }
   }
 
@@ -348,11 +347,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * @param lock lock referencing calling into scheduler
    */
   public void signalAll(TestableLock lock) {
-    Iterator<TestableLock> it = waitingThreads.iterator();
-    while (it.hasNext()) {
-      if (it.next().equals(lock)) {
-        add(new WakeUpThread(lock, 0));
-      }
+    NotifyObject no = waitingThreads.get(lock);
+    if (no != null) {
+      // schedule task to wake up other thread
+      add(new WakeUpThread(no, true, 0));
     }
   }
 
@@ -365,14 +363,14 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   @SuppressWarnings("javadoc")
   public void sleep(long sleepTime) throws InterruptedException {
-    Object sleepLock = new Object();
+    NotifyObject sleepLock = new NotifyObject(new Object());
     synchronized (sleepLock) {
-      add(new WakeUpThread(sleepLock, sleepTime));
+      add(new WakeUpThread(sleepLock, false, sleepTime));
       
       System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
       yielding();
       
-      sleepLock.wait();
+      sleepLock.yield();
       
       System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " " + sleepLock + " woken up, about to wait for control");
       
@@ -507,15 +505,58 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
   
   private class WakeUpThread extends OneTimeRunnable {
-    private WakeUpThread(final Object lock, long delay) {
+    private WakeUpThread(final NotifyObject lock, 
+                         final boolean notifyAll, 
+                         long delay) {
       super(new Runnable() {
         @Override
         public void run() {
-          synchronized (lock) {
-            lock.notify();
+          if (notifyAll) {
+            lock.wakeUpAll();
+          } else {
+            lock.wakeUp();
           }
         }
       }, delay, TaskPriority.High);
+    }
+  }
+  
+  private class NotifyObject {
+    private final Object obj;
+    private boolean awake;
+    
+    private NotifyObject(Object obj) {
+      this.obj = obj;
+    }
+    
+    public void wakeUpAll() {
+      synchronized (obj) {
+        obj.notifyAll();
+      }
+    }
+
+    public void wakeUp() {
+      synchronized (obj) {
+        obj.notify();
+      }
+    }
+    
+    public synchronized void waitForWakeup() throws InterruptedException {
+      while (! awake) {
+        wait();
+      }
+    }
+    
+    public synchronized void yield() throws InterruptedException {
+      synchronized (obj) {
+        try {
+          awake = false;
+          obj.wait();
+        } finally {
+          awake = true;
+          notify();
+        }
+      }
     }
   }
 }
