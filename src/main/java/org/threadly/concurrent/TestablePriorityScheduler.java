@@ -545,22 +545,24 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     public void waitForWakeup() throws InterruptedException {
       synchronized (this) {
         while (! awake) {
-          wait();
+          this.wait();
         }
       }
     }
     
-    public synchronized void yield() throws InterruptedException {
-      synchronized (obj) {
-        try {
-          awake = false;
-          
-          yielding();
-          
-          obj.wait();
-        } finally {
-          awake = true;
-          notify();
+    public void yield() throws InterruptedException {
+      synchronized (this) {
+        synchronized (obj) {
+          try {
+            awake = false;
+            
+            yielding();
+            
+            obj.wait();
+          } finally {
+            awake = true;
+            this.notify();
+          }
         }
       }
     }
