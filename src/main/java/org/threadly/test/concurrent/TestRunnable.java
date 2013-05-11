@@ -1,4 +1,4 @@
-package org.threadly.test;
+package org.threadly.test.concurrent;
 
 import org.threadly.concurrent.VirtualRunnable;
 import java.util.LinkedList;

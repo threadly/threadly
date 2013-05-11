@@ -1,6 +1,7 @@
-package org.threadly.concurrent.lock;
+package org.threadly.test.concurrent.lock;
 
-import org.threadly.concurrent.TestablePriorityScheduler;
+import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 /**
  * Lock which is used for a testable scheduler which may not want
