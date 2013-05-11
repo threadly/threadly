@@ -40,6 +40,17 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * Because this only simulates threads running in a single threaded way, 
    * it must have a sufficiently large thread pool to back that.
    * 
+   * @param scheduler Scheduler which will be used to execute new threads are necessary
+   */
+  public TestablePriorityScheduler(PriorityScheduledExecutor scheduler) {
+    this(scheduler, scheduler.getDefaultPriority());
+  }
+
+  /**
+   * Constructs a new TestablePriorityScheduler with the backed thread pool.
+   * Because this only simulates threads running in a single threaded way, 
+   * it must have a sufficiently large thread pool to back that.
+   * 
    * @param executor Executor which will be used to execute new threads are necessary
    * @param defaultPriority Default priority for tasks where it is not provided
    */
@@ -131,12 +142,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   private void setRunningThread() {
     if (runningThread != null) {
-      Exception e = new Exception("Stack for currently runningThread");
+      Exception e = new Exception(System.nanoTime() + " - Stack for currently runningThread");
       e.setStackTrace(runningThread.getStackTrace());
       e.printStackTrace();
-      throw new IllegalStateException(System.nanoTime() + " - " + "Another thread is already running: " + runningThread);
+      throw new IllegalStateException(System.nanoTime() + " - Another thread is already running: " + runningThread);
     }
-    new Exception(System.nanoTime() + " - " + "Thread is now running: " + Thread.currentThread()).printStackTrace();
+    new Exception(System.nanoTime() + " - Thread is now running: " + Thread.currentThread()).printStackTrace();
     runningThread = Thread.currentThread();
   }
   
