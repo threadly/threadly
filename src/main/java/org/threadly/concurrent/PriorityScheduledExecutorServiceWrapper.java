@@ -28,7 +28,8 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecutorService {
+public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecutorService, 
+                                                                PrioritySchedulerInterface {
   private final PriorityScheduledExecutor scheduler;
   
   /**
@@ -247,6 +248,38 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     scheduler.addToQueue(rtw);
     
     return new ScheduledFutureRunnable<Object>(taskFuture, rtw);
+  }
+
+  @Override
+  public void schedule(Runnable task, long delayInMs) {
+    scheduler.schedule(task, delayInMs);
+  }
+
+  @Override
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay,
+                                     long recurringDelay) {
+    scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay);
+  }
+
+  @Override
+  public void execute(Runnable task, TaskPriority priority) {
+    scheduler.execute(task);
+  }
+
+  @Override
+  public void schedule(Runnable task, long delayInMs, TaskPriority priority) {
+    scheduler.schedule(task, delayInMs, priority);
+  }
+
+  @Override
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay,
+                                     long recurringDelay, TaskPriority priority) {
+    scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay);
+  }
+
+  @Override
+  public TaskPriority getDefaultPriority() {
+    return scheduler.getDefaultPriority();
   }
   
   protected class FutureRunnable<T> implements Runnable, Future<T> {
