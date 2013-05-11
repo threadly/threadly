@@ -3,6 +3,8 @@ package org.threadly.concurrent;
 import java.lang.Thread.State;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -31,9 +33,8 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private final LinkedList<RunnableContainer> taskQueue;
   private final LinkedList<TestableLock> waitingThreads;
   private final Object queueLock;
-  private final Object actionLock;
-  private volatile Thread yieldingThread;
-  private volatile Thread runningThread;
+  private final BlockingQueue<Object> threadQueue;
+  private volatile Object runningLock;
   private long nowInMillis;
 
   /**
@@ -68,9 +69,9 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     taskQueue = new LinkedList<RunnableContainer>();
     waitingThreads = new LinkedList<TestableLock>();
     queueLock = new Object();
-    actionLock = new Object();
-    yieldingThread = null;
-    runningThread = null;
+    threadQueue = new ArrayBlockingQueue<Object>(1);
+    threadQueue.offer(new Object());
+    runningLock = null;
     nowInMillis = Clock.accurateTime();
   }
   
@@ -123,57 +124,26 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return false;
   }
   
-  private void waitForThreadToAccept() {
-    Thread currentThread = Thread.currentThread();
-    System.out.println(System.nanoTime() + " - Yielding: " + currentThread);
-    yieldingThread = currentThread;
-    /*while (runningThread == currentThread) {
-      // spin
-    }*/
-  }
-  
-  private void waitForThreadToIdle() {
-    if (runningThread == null) {
-      throw new IllegalStateException(System.nanoTime() + " - " + "No set running thread");
-    }
-    
-    while (yieldingThread == null) {
-      new Exception(System.nanoTime() + " - Waiting for thread to yield: " + runningThread).printStackTrace();
-      // spin
-    }
-    yieldingThread = null;
-    
-    new Exception(System.nanoTime() + " - " + "Unsetting running thread: " + runningThread).printStackTrace();
-    Thread previousRunningThread = runningThread;
-    runningThread = null;
-    
-    while (previousRunningThread.isAlive() && 
-        previousRunningThread.getState() != State.WAITING) {
-      System.out.println(System.nanoTime() + "...Waiting for previous thread to go to wait: " + 
-                           previousRunningThread.getState() + " - " + previousRunningThread);
-      /*if (previousRunningThread.getState() == State.BLOCKED) {
-        new Exception().printStackTrace();
-        Exception e = new Exception(":" + Thread.holdsLock(actionLock));
-        e.setStackTrace(previousRunningThread.getStackTrace());
-        e.printStackTrace();
-      }*/
+  private void wantToRun() {
+    try {
+      Object runningLock = threadQueue.take();
+      if (this.runningLock != null) {
+        throw new IllegalStateException("Running lock already set: " + this.runningLock);
+      } else {
+        this.runningLock = runningLock;
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
   }
   
-  private void setRunningThread() {
-    if (runningThread != null) {
-      Exception e = new Exception(System.nanoTime() + " - Stack for currently runningThread");
-      e.setStackTrace(runningThread.getStackTrace());
-      e.printStackTrace();
-      throw new IllegalStateException(System.nanoTime() + " - Another thread is already running: " + runningThread);
+  private void yielding() {
+    if (runningLock == null) {
+      throw new IllegalStateException("No running lock to provide");
     }
-    new Exception(System.nanoTime() + " - Thread is now running: " + Thread.currentThread()).printStackTrace();
-    runningThread = Thread.currentThread();
-  }
-  
-  private void switchToRunningThread() {
-    waitForThreadToIdle();  // wait for previous thread to idle
-    setRunningThread(); // take control
+    Object runningLock = this.runningLock;
+    this.runningLock = null;
+    threadQueue.offer(runningLock);
   }
   
   /**
@@ -201,7 +171,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       throw new IllegalArgumentException("Can not go backwards in time");
     }
     
-    setRunningThread(); // the calling thread takes control
+    wantToRun();
     
     nowInMillis = currentTime;
     int ranTasks = 0;
@@ -217,15 +187,18 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       nextTask = getNextTask(currentTime);
     }
     
-    /* At this point we have to manually set runningThread to null.
-     * This should be the only point where we have to do it.  We have
-     * to do it here because running thread should be us, and we will 
-     * go to a wait sleep before we return.
-     */
-    if (runningThread != Thread.currentThread()) {
-      throw new IllegalStateException("Done running, but not the current running thread: " + runningThread);
+    // we must yield right before we return so next tick can run
+    yielding();
+    
+    // TODO - remove check
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      // ignored
     }
-    runningThread = null;
+    if (threadQueue.size() != 1) {
+      throw new IllegalStateException("Someone took the lock before we returned");
+    }
     
     return ranTasks;
   }
@@ -263,15 +236,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   private void handleTask(RunnableContainer nextTask) throws InterruptedException {
     System.out.println(System.nanoTime() + " - " + "Handling task: " + nextTask + " - " + nextTask.runnable);
-    synchronized (actionLock) {
-      executor.execute(nextTask);
-
-      System.out.println(System.nanoTime() + " - " + nextTask.runnable + "called about to wait on actionLock");
-      waitForThreadToAccept();
-      actionLock.wait();
-      System.out.println(System.nanoTime() + " - " + "handle task woken up" + " - " + nextTask.runnable);
-    }
-    switchToRunningThread();
+    executor.execute(nextTask);
+    
+    yielding(); // yield to new task
+    
+    wantToRun();  // wait till we can run again
   }
 
   @Override
@@ -287,25 +256,19 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   @SuppressWarnings("javadoc")
   public void waiting(TestableLock lock) throws InterruptedException {
-    if (Thread.currentThread() != runningThread) {
-      throw new IllegalStateException("Only running thread should call into here");
-    }
     synchronized (lock) {
-      // maybe start a new task
-      synchronized (actionLock) {
-        //System.out.println("About to notify action lock for wait");
-        actionLock.notify();
-      }
-      
       try {
         waitingThreads.addLast(lock);
-        waitForThreadToAccept();
+        
+        yielding();
+        
         lock.wait();
+        
+        wantToRun();
       } finally {
         waitingThreads.remove(lock);
       }
     }
-    switchToRunningThread();
   }
 
   /**
@@ -370,23 +333,18 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   @SuppressWarnings("javadoc")
   public void sleep(long sleepTime) throws InterruptedException {
-    if (Thread.currentThread() != runningThread) {
-      throw new IllegalStateException("Only running thread should call into here");
-    }
     Object sleepLock = new Object();
     synchronized (sleepLock) {
-      synchronized (actionLock) {
-        add(new WakeUpThread(sleepLock, sleepTime));
-        
-        System.out.println(System.nanoTime() + " - " + "About to notify actionLock for sleep");
-        actionLock.notify();
-      }
+      add(new WakeUpThread(sleepLock, sleepTime));
       
       System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
-      waitForThreadToAccept();
+      yielding();
+      
       sleepLock.wait();
+      
       System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " " + sleepLock + " woken up, about to wait for control");
-      switchToRunningThread();
+      
+      wantToRun();
     }
   }
 
@@ -408,9 +366,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     
     @Override
     public void run() {
-      switchToRunningThread();  // must become running thread
-      
-      run(TestablePriorityScheduler.this);
+      wantToRun();  // must become running thread
+      try {
+        run(TestablePriorityScheduler.this);
+      } finally {
+        yielding();
+      }
     }
     
     @Override
@@ -447,19 +408,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     public void run(LockFactory scheduler) {
       System.out.println(System.nanoTime() + " - " + "Starting: " + this + " - " + runnable);
       //creationStack.printStackTrace();
-      try {
-        if (runnable instanceof VirtualRunnable) {
-          ((VirtualRunnable)runnable).run(scheduler);
-        } else {
-          runnable.run();
-        }
-      } finally {
-        synchronized (actionLock) {
-          if (Thread.currentThread() != runningThread) {
-            throw new IllegalStateException("Only running thread should call into here");
-          }
-          actionLock.notify();
-        }
+      if (runnable instanceof VirtualRunnable) {
+        ((VirtualRunnable)runnable).run(scheduler);
+      } else {
+        runnable.run();
       }
     }
 
@@ -499,13 +451,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         synchronized (queueLock) {
           taskQueue.add(this);
         }
-      }
-      
-      synchronized (actionLock) {
-        if (Thread.currentThread() != runningThread) {
-          throw new IllegalStateException("Only running thread should call into here");
-        }
-        actionLock.notify();
       }
     }
 
