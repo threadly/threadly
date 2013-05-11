@@ -131,13 +131,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   private void wantToRun(boolean mainThread, Runnable runBeforeBlocking) {
     synchronized (tickLock) {
-      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " waiting for thread count: " + waitingForThreadCount);
       waitingForThreadCount++;
       if (runBeforeBlocking != null) {
         runBeforeBlocking.run();
       }
       while (mainThread && waitingForThreadCount > 1) {
-        System.out.println(System.nanoTime() + " - waiting for other threads: " + waitingForThreadCount);
+        //System.out.println(System.nanoTime() + " - waiting for other threads: " + waitingForThreadCount);
         // give others a chance
         try {
           tickLock.wait();
@@ -145,14 +144,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
           Thread.currentThread().interrupt();
         }
       }
-      if (mainThread) {
-        System.out.println(System.nanoTime() + " - other threads now finished");
-      }
     }
     try {
-      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " attempting to take runningLock");
       Object runningLock = threadQueue.take();
-      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " thread now has lock");
+      //System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " thread now has lock");
       if (this.runningLock != null) {
         throw new IllegalStateException("Running lock already set: " + this.runningLock);
       } else {
@@ -168,16 +163,14 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       throw new IllegalStateException("No running lock to provide");
     }
     synchronized (tickLock) {
-      System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " decrementing waiting count");
       waitingForThreadCount--;
       
       tickLock.notify();
     }
     Object runningLock = this.runningLock;
     this.runningLock = null;
-    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " returning runningLock");
+    //System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " returning runningLock");
     threadQueue.offer(runningLock);
-    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " lock now returned");
   }
   
   /**
@@ -200,7 +193,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * @return qty of steps taken forward.  Returns zero if no events to run for provided time.
    */
   public int tick(long currentTime) {
-    System.out.println(System.nanoTime() + " - " + "Tick called with time: " + currentTime);
+    //System.out.println(System.nanoTime() + " - " + "Tick called with time: " + currentTime);
     if (currentTime < nowInMillis) {
       throw new IllegalArgumentException("Can not go backwards in time");
     }
@@ -265,7 +258,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
   
   private void handleTask(RunnableContainer nextTask) throws InterruptedException {
-    System.out.println(System.nanoTime() + " - " + "Handling task: " + nextTask + " - " + nextTask.runnable);
+    //System.out.println(System.nanoTime() + " - " + "Handling task: " + nextTask + " - " + nextTask.runnable);
     nextTask.prepareForExcute();
     executor.execute(nextTask);
     
@@ -360,7 +353,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     NotifyObject sleepLock = new NotifyObject(new Object());
     add(new WakeUpThread(sleepLock, false, sleepTime));
     
-    System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
+    //System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
     
     sleepLock.yield();
   }
@@ -373,13 +366,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private abstract class RunnableContainer implements Runnable, Delayed {
     protected final Runnable runnable;
     protected final TaskPriority priority;
-    protected final Exception creationStack;
     private volatile boolean running;
     
     protected RunnableContainer(Runnable runnable, TaskPriority priority) {
       this.runnable = runnable;
       this.priority = priority;
-      creationStack = new Exception();
       running = false;
     }
     
@@ -440,8 +431,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     
     @Override
     public void run(LockFactory scheduler) {
-      System.out.println(System.nanoTime() + " - " + "Starting: " + this + " - " + runnable);
-      //creationStack.printStackTrace();
       if (runnable instanceof VirtualRunnable) {
         ((VirtualRunnable)runnable).run(scheduler);
       } else {
@@ -472,8 +461,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     
     @Override
     public void run(LockFactory scheduler) {
-      System.out.println("Starting: " + this);
-      //creationStack.printStackTrace();
       try {
         if (runnable instanceof VirtualRunnable) {
           ((VirtualRunnable)runnable).run(scheduler);

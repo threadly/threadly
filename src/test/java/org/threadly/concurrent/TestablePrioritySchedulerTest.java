@@ -10,13 +10,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.test.TestCondition;
 import org.threadly.test.TestRunnable;
 import org.threadly.test.TestUtil;
 
 @SuppressWarnings("javadoc")
 public class TestablePrioritySchedulerTest {
-  private static final int RUNNABLE_COUNT = 50;
+  private static final int RUNNABLE_COUNT = 100;
   private static final int THREAD_COUNT = 1000;
   
   private PriorityScheduledExecutor parentScheduler;
@@ -150,11 +149,10 @@ public class TestablePrioritySchedulerTest {
   
   @Test
   public void sleepThreadTest() {
-    int sleepTime = 50;
+    int sleepTime = 100;
     long now = System.currentTimeMillis();
     
     for (int i = 0; i < sleepTime; i++) {
-      System.out.println(System.nanoTime() + " ---> testing sleep with time: " + i);
       final SleepThread st = new SleepThread(i);
       testScheduler.execute(st);
       
@@ -165,7 +163,6 @@ public class TestablePrioritySchedulerTest {
       } else {
         assertEquals(testScheduler.tick(now), 1);
 
-        System.out.println(System.nanoTime() + " - running: " + st.running);
         assertTrue(st.running);
         
         assertEquals(testScheduler.tick(now += i), 1);
@@ -175,7 +172,7 @@ public class TestablePrioritySchedulerTest {
   
   @Test
   public void waitWithoutNotifyThreadTest() {
-    int waitTime = 50;
+    int waitTime = 100;
     long now = System.currentTimeMillis();
     
     for (int i = 0; i < waitTime; i++) {
@@ -269,11 +266,9 @@ public class TestablePrioritySchedulerTest {
     
     @Override
     public void handleRunStart() throws InterruptedException {
-      System.out.println(System.nanoTime() + " - about to set running: " + sleepTime);
       running = true;
-      System.out.println(System.nanoTime() + " - about to sleep: " + sleepTime);
+      
       sleep(sleepTime);
-      System.out.println(System.nanoTime() + " - Done sleeping: " + sleepTime);
     }
     
     @Override
