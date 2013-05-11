@@ -628,6 +628,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       stopped = false;
       runningThread = null;
     }
+
+    public boolean isRunning() {
+      return started && ! stopped;
+    }
     
     public void maybeStart() {
       // this looks like a double check but due to being volatile and only changing one direction should be safe
