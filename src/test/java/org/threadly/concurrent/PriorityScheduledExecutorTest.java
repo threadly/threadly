@@ -7,7 +7,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.junit.Test;
+import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.test.TestRunnable;
+import org.threadly.test.TestUtil;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorTest {
@@ -305,6 +308,121 @@ public class PriorityScheduledExecutorTest {
       } catch (IllegalArgumentException e) {
         // expected
       }
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void shutdownTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    
+    scheduler.shutdown();
+    
+    assertTrue(scheduler.isShutdown());
+    
+    try {
+      scheduler.execute(new TestRunnable());
+      fail("Execption should have been thrown");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+    
+    try {
+      scheduler.schedule(new TestRunnable(), 1000);
+      fail("Execption should have been thrown");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+    
+    try {
+      scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
+      fail("Execption should have been thrown");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void addToQueueTest() {
+    long taskDelay = 1000 * 10; // make it long to prevent it from getting consumed from the queue
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    try {
+      // verify before state
+      assertFalse(scheduler.highPriorityConsumer.isRunning());
+      assertFalse(scheduler.lowPriorityConsumer.isRunning());
+      
+      scheduler.addToQueue(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
+                                                            TaskPriority.High, 
+                                                            taskDelay));
+
+      assertEquals(scheduler.highPriorityQueue.size(), 1);
+      assertEquals(scheduler.lowPriorityQueue.size(), 0);
+      assertTrue(scheduler.highPriorityConsumer.isRunning());
+      assertFalse(scheduler.lowPriorityConsumer.isRunning());
+      
+      scheduler.addToQueue(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
+                                                            TaskPriority.Low, 
+                                                            taskDelay));
+
+      assertEquals(scheduler.highPriorityQueue.size(), 1);
+      assertEquals(scheduler.lowPriorityQueue.size(), 1);
+      assertTrue(scheduler.highPriorityConsumer.isRunning());
+      assertTrue(scheduler.lowPriorityConsumer.isRunning());
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void getExistingWorkerTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    try {
+      // add an idle worker
+      Worker testWorker = scheduler.makeNewWorker();
+      scheduler.workerDone(testWorker);
+      
+      assertEquals(scheduler.availableWorkers.size(), 1);
+      
+      try {
+        Worker returnedWorker = scheduler.getExistingWorker(100);
+        assertTrue(returnedWorker == testWorker);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void lookForExpiredWorkersTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 0);
+    try {
+      // add an idle worker
+      Worker testWorker = scheduler.makeNewWorker();
+      scheduler.workerDone(testWorker);
+      
+      assertEquals(scheduler.availableWorkers.size(), 1);
+      
+      TestUtil.blockTillClockAdvances();
+      Clock.accurateTime(); // update clock so scheduler will see it
+      
+      scheduler.lookForExpiredWorkers();
+      
+      // should not have collected yet due to core size == 1
+      assertEquals(scheduler.availableWorkers.size(), 1);
+
+      scheduler.allowCoreThreadTimeOut(true);
+      
+      TestUtil.blockTillClockAdvances();
+      Clock.accurateTime(); // update clock so scheduler will see it
+      
+      scheduler.lookForExpiredWorkers();
+      
+      // verify collected now
+      assertEquals(scheduler.availableWorkers.size(), 0);
     } finally {
       scheduler.shutdown();
     }
