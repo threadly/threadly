@@ -7,8 +7,6 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
@@ -25,9 +23,6 @@ import org.threadly.concurrent.lock.VirtualLock;
  */
 public class PriorityScheduledExecutor implements PrioritySchedulerInterface, 
                                                   LockFactory {
-  private static final Logger log = Logger.getLogger(PriorityScheduledExecutor.class.getSimpleName());
-  private static final boolean VERBOSE = false;
-  
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT = 500;  // set to Long.MAX_VALUE to never create threads for low priority tasks
   protected static final TaskPriority GLOBAL_DEFAULT_PRIORITY = TaskPriority.High;
   protected static final boolean USE_DAEMON_THREADS = true;
@@ -394,10 +389,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    if (VERBOSE) {
-      log.info("Adding one time task: " + task + 
-                 ", delay: " + delayInMs + ", with priority: " + priority);
-    }
     addToQueue(new OneTimeTaskWrapper(task, priority, delayInMs));
   }
 
@@ -437,11 +428,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    if (VERBOSE) {
-      log.info("Adding recurring task: " + task + ", " + 
-                 initialDelay + ", " + recurringDelay + 
-                 ", with priority: " + priority);
-    }
     addToQueue(new RecurringTaskWrapper(task, priority, initialDelay, recurringDelay));
   }
   
@@ -504,9 +490,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       Worker w = new Worker();
       currentPoolSize++;
       w.start();
-      if (VERBOSE) {
-        log.info("Created new worker: " + w);
-      }
   
       // will be added to available workers when done with first task
       return w;
@@ -515,9 +498,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
-    if (VERBOSE) {
-      log.info("Getting or making worker to run task: " + task);
-    }
     synchronized (workersLock) {
       if (running) {
         if (currentPoolSize >= maxPoolSize) {
@@ -540,9 +520,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
-    if (VERBOSE) {
-      log.info("Getting worker to run task: " + task);
-    }
     Worker w = null;
     synchronized (workersLock) {
       if (running) {
@@ -585,9 +562,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   private void killWorker(Worker w) {
     synchronized (workersLock) {
-      if (VERBOSE) {
-        log.info("Shutting down worker: " + w);
-      }
       w.stop();
       currentPoolSize--;
     }
@@ -689,7 +663,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         } catch (Throwable t) {
-          log.log(Level.SEVERE, "Exception when getting task", t);
+          Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), t);
         }
       }
     }
@@ -737,10 +711,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } else if (nextTask != null) {
           throw new IllegalStateException("Already has a task");
         }
-
-        if (VERBOSE) {
-          log.info("Worker " + this + " provided task: " + task);
-        }
         
         nextTask = task;
         taskNotifyLock.signalAll();
@@ -766,10 +736,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           blockTillNextTask();
           
           if (nextTask != null) {
-            if (VERBOSE) {
-              log.info("Worker " + this + " running task: " + nextTask);
-            }
-            
             nextTask.run();
           }
         } catch (Throwable t) {
@@ -777,7 +743,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
               t instanceof OutOfMemoryError) {
             killWorker(this);  // this will stop the worker, and thus prevent it from calling workerDone
           }
-          log.log(Level.WARNING, "Exception running task", t);
         } finally {
           nextTask = null;
           if (running) {

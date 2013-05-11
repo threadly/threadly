@@ -6,7 +6,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
 import java.util.RandomAccess;
-import java.util.logging.Logger;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -23,9 +22,6 @@ import org.threadly.util.ListUtils;
  * @param <T> Parameter to indicate what type of item is contained in the queue
  */
 public class SynchronizedDynamicDelayQueue<T extends Delayed> implements DynamicDelayQueue<T> {
-  private static final Logger log = Logger.getLogger(SynchronizedDynamicDelayQueue.class.getSimpleName());
-  private static final boolean VERBOSE = false;
-
   private final LinkedList<T> queue; 
   private final boolean randomAccessQueue;
   private final VirtualLock queueLock;
@@ -167,20 +163,11 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
   protected void blockTillAvailable() throws InterruptedException {
     synchronized (queueLock) {
       while (queue.isEmpty()) {
-        if (VERBOSE) {
-          log.info("Queue is empty, waiting");
-        }
-
         queueLock.await();
       }
       long nextDelay = -1;
       while ((nextDelay = queue.getFirst().getDelay(TimeUnit.MILLISECONDS)) > 0) {
         if (nextDelay > 5) {  // spin lock if delay is < 5
-          if (VERBOSE) {
-            log.info("Next items delay is: " + nextDelay + 
-                       "...waiting for: " + queue.getFirst());
-          }
-
           queueLock.await(nextDelay);
         }
       }
@@ -195,11 +182,7 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
       
       next = queue.removeFirst();
     }
-   
-    if (VERBOSE) {
-      log.info("Returning next item: " + next + 
-                 ", delay is: " + next.getDelay(TimeUnit.MILLISECONDS));
-    }
+    
     return next;
   }
 
