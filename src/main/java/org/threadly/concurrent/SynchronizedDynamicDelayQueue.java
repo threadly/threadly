@@ -11,6 +11,8 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.ListUtils;
 
 /**
@@ -26,23 +28,23 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
 
   private final LinkedList<T> queue; 
   private final boolean randomAccessQueue;
-  private final Object queueLock;
+  private final VirtualLock queueLock;
   
   /**
    * Constructs a new queue
    */
   public SynchronizedDynamicDelayQueue() {
-    this(new Object());
+    this(new NativeLock());
   }
   
   /**
    * Constructs a queue, providing the lock that will be called 
-   * on with .wait().  Thus it allows you to synchronize around
+   * on with .await().  Thus it allows you to synchronize around
    * the .take() and have the lock released while the thread blocks.
    * 
-   * @param queueLock - lock that is used internally
+   * @param queueLock lock that is used internally
    */
-  public SynchronizedDynamicDelayQueue(Object queueLock) {
+  public SynchronizedDynamicDelayQueue(VirtualLock queueLock) {
     if (queueLock == null) {
       throw new IllegalArgumentException("Must provided queue lock");
     }
@@ -62,7 +64,7 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
     synchronized (queueLock) {
       Collections.sort(queue);
       
-      queueLock.notifyAll();
+      queueLock.signalAll();
     }
   }
 
@@ -77,7 +79,7 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
       
       queue.add(insertionIndex, e);
       
-      queueLock.notifyAll();
+      queueLock.signalAll();
     }
     
     return true;
@@ -169,7 +171,7 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
           log.info("Queue is empty, waiting");
         }
 
-        queueLock.wait();
+        queueLock.await();
       }
       long nextDelay = -1;
       while ((nextDelay = queue.getFirst().getDelay(TimeUnit.MILLISECONDS)) > 0) {
@@ -179,7 +181,7 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
                        "...waiting for: " + queue.getFirst());
           }
 
-          queueLock.wait(nextDelay);
+          queueLock.await(nextDelay);
         }
       }
     }

@@ -65,7 +65,7 @@ public class RunnableChainTest {
     }
     
     @Override
-    public void handleRun() {
+    public void handleRunStart() {
       if (fail) {
         throw new RuntimeException("Test failure exception");
       }
