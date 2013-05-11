@@ -36,7 +36,9 @@ public class TestRunnableTest {
     
     ttr.run();
     
-    assertTrue(ttr.handleRunCalled);
+    assertTrue(ttr.handleRunStartCalled);
+    assertTrue(ttr.handleRunFinishCalled);
+    assertTrue(ttr.startCalledBeforeFinish);
     assertTrue(ttr.ranOnce());
     assertEquals(ttr.getRunCount(), 1);
     assertTrue(ttr.getDelayTillFirstRun() > 0);
@@ -57,7 +59,7 @@ public class TestRunnableTest {
       private boolean firstRun = true;
       
       @Override
-      public void handleRun() throws InterruptedException {
+      public void handleRunStart() throws InterruptedException {
         if (firstRun) {
           firstRun = false;
           TestUtil.sleep(delay);
@@ -82,11 +84,19 @@ public class TestRunnableTest {
   }
   
   private class TestTestRunnable extends TestRunnable {
-    private boolean handleRunCalled = false;
+    private boolean handleRunStartCalled = false;
+    private boolean handleRunFinishCalled = false;
+    private boolean startCalledBeforeFinish = false;
     
     @Override
-    public void handleRun() {
-      handleRunCalled = true;
+    public void handleRunStart() {
+      handleRunStartCalled = true;
+    }
+    
+    @Override
+    public void handleRunFinish() {
+      handleRunFinishCalled = true;
+      startCalledBeforeFinish = handleRunStartCalled;
     }
   }
 }

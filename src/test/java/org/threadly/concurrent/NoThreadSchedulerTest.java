@@ -45,7 +45,7 @@ public class NoThreadSchedulerTest {
     }
     
     // all should run now
-    scheduler.tick();
+    assertEquals(scheduler.tick(), TEST_QTY);
     
     it = runnables.iterator();
     while (it.hasNext()) {
@@ -53,7 +53,7 @@ public class NoThreadSchedulerTest {
     }
     
     // verify no more run after a second tick
-    scheduler.tick();
+    assertEquals(scheduler.tick(), 0);
     
     it = runnables.iterator();
     while (it.hasNext()) {
@@ -72,14 +72,20 @@ public class NoThreadSchedulerTest {
     scheduler.execute(executeRun);
 
     long startTime = System.currentTimeMillis();
-    scheduler.tick(startTime);
+    assertEquals(scheduler.tick(startTime), 1);
 
     assertEquals(executeRun.getRunCount(), 1);   // should have run
     assertEquals(scheduleRun.getRunCount(), 0);  // should NOT have run yet
     
-    scheduler.tick(startTime + scheduleDelay);
+    assertEquals(scheduler.tick(startTime + scheduleDelay), 1);
+    
     assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
     assertEquals(scheduleRun.getRunCount(), 1);  // should have run
+    
+    assertEquals(scheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
+    
+    assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
+    assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
   }
   
   @Test
@@ -93,18 +99,25 @@ public class NoThreadSchedulerTest {
     scheduler.scheduleWithFixedDelay(initialDelay, delay, delay);
 
     long startTime = System.currentTimeMillis();
-    scheduler.tick(startTime);
+    assertEquals(scheduler.tick(startTime), 1);
     
-    assertEquals(immediateRun.getRunCount(), 1);   // should have run
+    assertEquals(immediateRun.getRunCount(), 1);  // should have run
     assertEquals(initialDelay.getRunCount(), 0);  // should NOT have run yet
 
-    scheduler.tick(startTime + delay);
-    assertEquals(immediateRun.getRunCount(), 2);   // should have run again
+    assertEquals(scheduler.tick(startTime + delay), 2);
+    
+    assertEquals(immediateRun.getRunCount(), 2);  // should have run again
     assertEquals(initialDelay.getRunCount(), 1);  // should have run for the first time
     
-    scheduler.tick(startTime + (delay * 2));
-    assertEquals(immediateRun.getRunCount(), 3);   // should have run again
-    assertEquals(initialDelay.getRunCount(), 2);  // should have run for the first time
+    assertEquals(scheduler.tick(startTime + (delay * 2)), 2);
+    
+    assertEquals(immediateRun.getRunCount(), 3);  // should have run again
+    assertEquals(initialDelay.getRunCount(), 2);  // should have run again
+    
+    assertEquals(scheduler.tick(startTime + (delay * 2)), 0); // should not execute anything
+    
+    assertEquals(immediateRun.getRunCount(), 3);  // should NOT have run again
+    assertEquals(initialDelay.getRunCount(), 2);  // should NOT have run again
   }
   
   @Test
@@ -123,16 +136,30 @@ public class NoThreadSchedulerTest {
     scheduler.scheduleWithFixedDelay(initialDelay, delay, delay);
     
     long startTime = System.currentTimeMillis();
-    scheduler.tick(startTime);
+    assertEquals(scheduler.tick(startTime), 1);
     
     assertEquals(immediateRun.getRunCount(), 1);   // should have run
     assertEquals(initialDelay.getRunCount(), 0);  // should NOT have run yet
     
     assertTrue(scheduler.remove(immediateRun));
     
-    scheduler.tick(startTime + delay);
+    assertEquals(scheduler.tick(startTime + delay), 1);
     
     assertEquals(immediateRun.getRunCount(), 1);   // should NOT have run again
     assertEquals(initialDelay.getRunCount(), 1);  // should have run
+    
+    assertEquals(scheduler.tick(startTime + delay), 0); // should not execute anything
+    
+    assertEquals(immediateRun.getRunCount(), 1);   // should NOT have run
+    assertEquals(initialDelay.getRunCount(), 1);  // should NOT have run
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void tickFail() {
+    long now;
+    scheduler.tick(now = System.currentTimeMillis());
+    
+    scheduler.tick(now - 1);
+    fail("Exception should have been thrown");
   }
 }

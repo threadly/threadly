@@ -21,6 +21,7 @@ import org.threadly.util.ListUtils;
 public class NoThreadScheduler implements SimpleSchedulerInterface {
   private final boolean threadSafe;
   private final List<RunnableContainer> taskQueue;
+  private long nowInMillis;
 
   /**
    * Constructs a new thread safe scheduler
@@ -38,6 +39,7 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   public NoThreadScheduler(boolean makeThreadSafe) {
     taskQueue = new LinkedList<RunnableContainer>();
     threadSafe = makeThreadSafe;
+    nowInMillis = Clock.accurateTime();
   }
   
   @Override
@@ -108,9 +110,11 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   /**
    * Progresses tasks for the current time.  This will block as it runs
    * as many scheduled or waiting tasks as possible.
+   * 
+   * @return qty of steps taken forward.  Returns zero if no events to run.
    */
-  public void tick() {
-    tick(Clock.accurateTime());
+  public int tick() {
+    return tick(Clock.accurateTime());
   }
   
   /**
@@ -118,10 +122,18 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
    * used in testing by providing a possible time in the future (to execute future tasks).
    * 
    * @param currentTime - Time to provide for looking at task run time
+   * @return qty of steps taken forward.  Returns zero if no events to run.
    */
-  public void tick(long currentTime) {
+  public int tick(long currentTime) {
+    if (nowInMillis > currentTime) {
+      throw new IllegalArgumentException("Time can not go backwards");
+    }
+    nowInMillis = currentTime;
+    
+    int tasks = 0;
     RunnableContainer nextTask = next();
-    while (nextTask != null && nextTask.getDelay(currentTime, TimeUnit.MILLISECONDS) <= 0) {
+    while (nextTask != null && nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
+      tasks++;
       if (threadSafe) {
         synchronized (taskQueue) {
           taskQueue.remove(nextTask); // remove the last peeked item
@@ -133,6 +145,8 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
       nextTask.run(currentTime);
       nextTask = next();
     }
+    
+    return tasks;
   }
   
   private RunnableContainer next() {
@@ -152,8 +166,6 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
       this.runnable = runnable;
     }
     
-    public abstract long getDelay(long nowInMs, TimeUnit timeUnit);
-    
     @Override
     public int compareTo(Delayed o) {
       if (this == o) {
@@ -172,11 +184,6 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     }
     
     public abstract void run(long nowInMs);
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return getDelay(Clock.accurateTime(), unit);
-    }
   }
   
   private class OneTimeRunnable extends RunnableContainer {
@@ -185,7 +192,7 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     private OneTimeRunnable(Runnable runnable, long delay) {
       super(runnable);
       
-      this.runTime = Clock.accurateTime() + delay;
+      this.runTime = nowInMillis + delay;
     }
     
     @Override
@@ -194,8 +201,8 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     }
 
     @Override
-    public long getDelay(long nowInMs, TimeUnit timeUnit) {
-      return timeUnit.convert(runTime - nowInMs, 
+    public long getDelay(TimeUnit timeUnit) {
+      return timeUnit.convert(runTime - nowInMillis, 
                               TimeUnit.MILLISECONDS);
     }
   }
@@ -222,8 +229,8 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     }
 
     @Override
-    public long getDelay(long nowInMs, TimeUnit timeUnit) {
-      return timeUnit.convert(nextRunTime - nowInMs, 
+    public long getDelay(TimeUnit timeUnit) {
+      return timeUnit.convert(nextRunTime - nowInMillis, 
                               TimeUnit.MILLISECONDS);
     }
   }
