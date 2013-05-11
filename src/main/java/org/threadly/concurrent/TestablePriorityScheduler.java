@@ -4,6 +4,7 @@ import java.lang.Thread.State;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.Delayed;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.lock.LockFactory;
@@ -25,7 +26,8 @@ import org.threadly.util.ListUtils;
  */
 public class TestablePriorityScheduler implements PrioritySchedulerInterface, 
                                                   LockFactory {
-  private final PrioritySchedulerInterface scheduler;
+  private final Executor executor;
+  private final TaskPriority defaultPriority;
   private final LinkedList<RunnableContainer> taskQueue;
   private final LinkedList<TestableLock> waitingThreads;
   private final Object queueLock;
@@ -38,14 +40,19 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * Because this only simulates threads running in a single threaded way, 
    * it must have a sufficiently large thread pool to back that.
    * 
-   * @param scheduler scheduler which will be used as new threads are necessary
+   * @param executor Executor which will be used to execute new threads are necessary
+   * @param defaultPriority Default priority for tasks where it is not provided
    */
-  public TestablePriorityScheduler(PrioritySchedulerInterface scheduler) {
-    if (scheduler == null) {
+  public TestablePriorityScheduler(Executor executor, TaskPriority defaultPriority) {
+    if (executor == null) {
       throw new IllegalArgumentException("Must provide backing scheduler");
     }
+    if (defaultPriority == null) {
+      defaultPriority = PriorityScheduledExecutor.GLOBAL_DEFAULT_PRIORITY;
+    }
     
-    this.scheduler = scheduler;
+    this.executor = executor;
+    this.defaultPriority = defaultPriority;
     taskQueue = new LinkedList<RunnableContainer>();
     waitingThreads = new LinkedList<TestableLock>();
     queueLock = new Object();
@@ -56,7 +63,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   @Override
   public void execute(Runnable task) {
-    schedule(task, 0, scheduler.getDefaultPriority());
+    schedule(task, 0, defaultPriority);
   }
 
   @Override
@@ -66,7 +73,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
 
   @Override
   public void schedule(Runnable task, long delayInMs) {
-    schedule(task, delayInMs, scheduler.getDefaultPriority());
+    schedule(task, delayInMs, defaultPriority);
   }
 
   @Override
@@ -80,7 +87,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
                                      long initialDelay, 
                                      long recurringDelay) {
     scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
-                           scheduler.getDefaultPriority());
+                           defaultPriority);
   }
 
   @Override
@@ -226,7 +233,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private void handleTask(RunnableContainer nextTask) throws InterruptedException {
     System.out.println(System.nanoTime() + " - " + "Handling task: " + nextTask + " - " + nextTask.runnable);
     synchronized (actionLock) {
-      scheduler.execute(nextTask);
+      executor.execute(nextTask);
 
       System.out.println(System.nanoTime() + " - " + nextTask.runnable + "called about to wait on actionLock");
       actionLock.wait();
@@ -351,7 +358,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
 
   @Override
   public TaskPriority getDefaultPriority() {
-    return scheduler.getDefaultPriority();
+    return defaultPriority;
   }
   
   private abstract class RunnableContainer implements Runnable, Delayed {

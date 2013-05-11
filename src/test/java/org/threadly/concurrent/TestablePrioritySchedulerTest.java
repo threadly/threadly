@@ -153,7 +153,7 @@ public class TestablePrioritySchedulerTest {
     long now = System.currentTimeMillis();
     
     for (int i = 1; i < sleepTime; i++) {
-      System.out.println("---> testing sleep with time: " + i);
+      System.out.println(System.nanoTime() + " ---> testing sleep with time: " + i);
       final SleepThread st = new SleepThread(i);
       testScheduler.execute(st);
       
@@ -237,7 +237,7 @@ public class TestablePrioritySchedulerTest {
     public void handleRunStart() throws InterruptedException {
       running = true;
       sleep(sleepTime);
-      System.out.println("Done sleeping: " + sleepTime);
+      System.out.println(System.nanoTime() + " - Done sleeping: " + sleepTime);
     }
     
     @Override
