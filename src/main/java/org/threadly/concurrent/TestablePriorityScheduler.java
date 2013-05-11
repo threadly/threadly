@@ -29,9 +29,9 @@ import org.threadly.util.ListUtils;
  */
 public class TestablePriorityScheduler implements PrioritySchedulerInterface, 
                                                   LockFactory {
-  private final Executor executor;
-  private final TaskPriority defaultPriority;
-  private final LinkedList<RunnableContainer> taskQueue;
+  protected final Executor executor;
+  protected final TaskPriority defaultPriority;
+  protected final LinkedList<RunnableContainer> taskQueue;
   private final Map<TestableLock, NotifyObject> waitingThreads;
   private final Object queueLock;
   private final Object tickLock;
@@ -116,7 +116,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
                               recurringDelay, priority));
   }
   
-  private void add(RunnableContainer runnable) {
+  protected void add(RunnableContainer runnable) {
     synchronized (queueLock) {
       int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable);
       
@@ -184,6 +184,14 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return tick(Clock.accurateTime());
   }
   
+  protected void updateTime(long currentTime) {
+    if (currentTime < nowInMillis) {
+      throw new IllegalArgumentException("Can not go backwards in time");
+    }
+    
+    nowInMillis = currentTime;
+  }
+  
   /**
    * This ticks forward one step based off the current time of calling.  
    * It runs as many events are ready for the time provided, and will block
@@ -194,16 +202,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   public int tick(long currentTime) {
     //System.out.println(System.nanoTime() + " - " + "Tick called with time: " + currentTime);
-    if (currentTime < nowInMillis) {
-      throw new IllegalArgumentException("Can not go backwards in time");
-    }
+    updateTime(currentTime);
     
     wantToRun(true, null);
     
-    nowInMillis = currentTime;
     int ranTasks = 0;
-    
-    RunnableContainer nextTask = getNextTask(currentTime);
+    RunnableContainer nextTask = getNextTask();
     while (nextTask != null) {
       ranTasks++;
       try {
@@ -211,7 +215,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
-      nextTask = getNextTask(currentTime);
+      nextTask = getNextTask();
     }
     
     // we must yield right before we return so next tick can run
@@ -226,7 +230,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return ranTasks;
   }
   
-  private RunnableContainer getNextTask(long nowInMs) {
+  protected RunnableContainer getNextTask() {
     synchronized (queueLock) {
       RunnableContainer firstResult = null;
       
@@ -363,7 +367,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return defaultPriority;
   }
   
-  private abstract class RunnableContainer implements Runnable, Delayed {
+  protected abstract class RunnableContainer implements Runnable, Delayed {
     protected final Runnable runnable;
     protected final TaskPriority priority;
     private volatile boolean running;
@@ -419,11 +423,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     public abstract void run(LockFactory scheduler);
   }
   
-  private class OneTimeRunnable extends RunnableContainer {
+  protected class OneTimeRunnable extends RunnableContainer {
     private final long runTime;
     
-    private OneTimeRunnable(Runnable runnable, long delay, 
-                            TaskPriority priority) {
+    protected OneTimeRunnable(Runnable runnable, long delay, 
+                              TaskPriority priority) {
       super(runnable, priority);
       
       this.runTime = nowInMillis + delay;
@@ -445,14 +449,14 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
   
-  private class RecurringRunnable extends RunnableContainer {
+  protected class RecurringRunnable extends RunnableContainer {
     private final long recurringDelay;
     private long nextRunTime;
     
-    public RecurringRunnable(Runnable runnable, 
-                             long initialDelay, 
-                             long recurringDelay, 
-                             TaskPriority priority) {
+    protected RecurringRunnable(Runnable runnable, 
+                                long initialDelay, 
+                                long recurringDelay, 
+                                TaskPriority priority) {
       super(runnable, priority);
       
       this.recurringDelay = recurringDelay;
@@ -482,10 +486,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
   
-  private class WakeUpThread extends OneTimeRunnable {
-    private WakeUpThread(final NotifyObject lock, 
-                         final boolean notifyAll, 
-                         long delay) {
+  protected class WakeUpThread extends OneTimeRunnable {
+    protected WakeUpThread(final NotifyObject lock, 
+                           final boolean notifyAll, 
+                           long delay) {
       super(new Runnable() {
         @Override
         public void run() {
@@ -518,12 +522,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
   
-  private class NotifyObject {
+  protected class NotifyObject {
     private final Object obj;
     private volatile boolean wantingToRun;
     private boolean awake;
     
-    private NotifyObject(Object obj) {
+    protected NotifyObject(Object obj) {
       this.obj = obj;
       wantingToRun = false;
       awake = false;

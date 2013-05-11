@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.TestablePriorityScheduler.OneTimeRunnable;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.TestRunnable;
 import org.threadly.test.TestUtil;
@@ -254,6 +255,48 @@ public class TestablePrioritySchedulerTest {
     
     // nothing more should be left to run
     assertEquals(testScheduler.tick(now = System.currentTimeMillis()), 0);
+  }
+  
+  @Test
+  public void testAddAndGet() {
+    long now = System.currentTimeMillis();
+    testScheduler.tick(now);  // tick once so now matches
+    
+    int secondDelay = 10;
+    OneTimeRunnable second = testScheduler.new OneTimeRunnable(new TestRunnable(), secondDelay, 
+                                                               TaskPriority.High);
+    testScheduler.add(second);
+    assertEquals(testScheduler.taskQueue.size(), 1);
+
+    int thirdDelay = secondDelay * 10;
+    OneTimeRunnable third = testScheduler.new OneTimeRunnable(new TestRunnable(), thirdDelay, 
+                                                              TaskPriority.High);
+    testScheduler.add(third);
+    assertEquals(testScheduler.taskQueue.size(), 2);
+    assertEquals(testScheduler.taskQueue.get(0), second);
+    assertEquals(testScheduler.taskQueue.get(1), third);
+
+    OneTimeRunnable first = testScheduler.new OneTimeRunnable(new TestRunnable(), 0, 
+                                                              TaskPriority.High);
+    testScheduler.add(first);
+    assertEquals(testScheduler.taskQueue.size(), 3);
+    assertEquals(testScheduler.taskQueue.get(0), first);
+    assertEquals(testScheduler.taskQueue.get(1), second);
+    assertEquals(testScheduler.taskQueue.get(2), third);
+    
+    // should be returned in name order
+    assertEquals(testScheduler.getNextTask(), first);
+    assertEquals(testScheduler.taskQueue.size(), 2);
+    assertEquals(testScheduler.getNextTask(), null);
+    assertEquals(testScheduler.taskQueue.size(), 2);
+    testScheduler.updateTime(now += secondDelay);
+    assertEquals(testScheduler.getNextTask(), second);
+    assertEquals(testScheduler.taskQueue.size(), 1);
+    assertEquals(testScheduler.getNextTask(), null);
+    assertEquals(testScheduler.taskQueue.size(), 1);
+    testScheduler.updateTime(now += thirdDelay);
+    assertEquals(testScheduler.getNextTask(), third);
+    assertEquals(testScheduler.taskQueue.size(), 0);
   }
   
   private class SleepThread extends TestRunnable {
