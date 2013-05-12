@@ -356,13 +356,13 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
           this.wait(waitTime);
         }
         
-        if (! hasRun) {
-          throw new TimeoutException();
-        } else if (isCancelled) {
+        if (isCancelled) {
           throw new CancellationException();
         } else if (thrownException != null) {
           throw new ExecutionException(thrownException);
-        }
+        } else if (! hasRun) {
+          throw new TimeoutException();
+        } 
       }
       
       return result;
