@@ -112,11 +112,12 @@ public class TestRunnable extends VirtualRunnable {
   @Override
   public final void run() {
     try {
+      runTime.add(System.currentTimeMillis());
+      
       handleRunStart();
     } catch (InterruptedException e) {
       // ignored
     } finally {
-      runTime.add(System.currentTimeMillis());
       runCount++;
       
       handleRunFinish();
