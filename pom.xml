@@ -22,4 +22,12 @@
     <developerConnection>scm:git:git@github.com:jentfoo/threadly.git</developerConnection>
     <url>git@github.com:jentfoo/threadly.git</url>
   </scm>
+
+  <developers>
+    <developer>
+      <id>jent</id>
+      <name>Mike Jensen</name>
+      <email>jentfoo@gmail.com</email>
+    </developer>
+  </developers>
 </project>
