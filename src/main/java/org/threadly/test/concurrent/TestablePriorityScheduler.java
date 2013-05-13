@@ -503,14 +503,18 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
             lock.wakeUp();
           }
           
+          // wait for waiting thread to be notified and now waiting to take lock
           try {
             lock.waitForWantingToRun();
           } catch (InterruptedException e1) {
             Thread.currentThread().interrupt();
           }
           
-          yielding();
+          yielding(); // yield this thread so the signaled thread can wake up
           
+          /* we must wait for new task to start before we return or
+           * the main tick thread may think all tasks are done
+           */
           try {
             lock.waitForWakeup();
           } catch (InterruptedException e) {
@@ -529,7 +533,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   protected class NotifyObject {
     private final Object obj;
     private volatile boolean wantingToRun;
-    private boolean awake;
+    private volatile boolean awake;
     
     protected NotifyObject(Object obj) {
       this.obj = obj;
@@ -556,34 +560,29 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
     
     public void waitForWakeup() throws InterruptedException {
-      synchronized (this) {
-        while (! awake) {
-          this.wait();
-        }
+      while (! awake) {
+        // spin
       }
     }
     
     public void yield() throws InterruptedException {
-      synchronized (this) {
-        synchronized (obj) {
-          try {
-            awake = false;
-            wantingToRun = false;
-            
-            yielding();
-            
-            obj.wait();
-          } finally {
-            wantToRun(false, new Runnable() {
-              @Override
-              public void run() {
-                wantingToRun = true;
-              }
-            });
-            
-            awake = true;
-            this.notify();
-          }
+      synchronized (obj) {
+        try {
+          awake = false;
+          wantingToRun = false;
+          
+          yielding();
+          
+          obj.wait();
+        } finally {
+          wantToRun(false, new Runnable() {
+            @Override
+            public void run() {
+              wantingToRun = true;
+            }
+          });
+          
+          awake = true;
         }
       }
     }
