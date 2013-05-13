@@ -201,11 +201,12 @@ public class TestablePrioritySchedulerTest {
   
   @Test
   public void waitAndNotifyThreadTest() {
+    int runCount = RUNNABLE_COUNT / 5;  // we do less here because of the higher complexity for this test
     long now = System.currentTimeMillis();
     
-    List<WaitThread> toWake = new ArrayList<WaitThread>((RUNNABLE_COUNT / 2) + 1);
-    List<WaitThread> ignored = new ArrayList<WaitThread>((RUNNABLE_COUNT / 2) + 1);
-    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+    List<WaitThread> toWake = new ArrayList<WaitThread>((runCount / 2) + 1);
+    List<WaitThread> ignored = new ArrayList<WaitThread>((runCount / 2) + 1);
+    for (int i = 0; i < runCount; i++) {
       WaitThread wt = new WaitThread(Integer.MAX_VALUE);
       testScheduler.execute(wt);
       if (i % 2 == 0) {
@@ -215,7 +216,7 @@ public class TestablePrioritySchedulerTest {
       }
     }
     
-    assertEquals(testScheduler.tick(now), RUNNABLE_COUNT);
+    assertEquals(testScheduler.tick(now), runCount);
     
     Iterator<WaitThread> it = toWake.iterator();
     while (it.hasNext()) {
