@@ -17,14 +17,14 @@ public class ClockWrapper {
   private static AtomicInteger requestsToStopUpdatingTime = new AtomicInteger();
   
   /**
-   * A call here causes getAccurateTime to use the last known time
+   * A call here causes getAccurateTime to use the last known time.
    */
   protected static void stopForcingUpdate() {
     requestsToStopUpdatingTime.incrementAndGet();
   }
   
   /**
-   * This resumes updating the clock for calls to getAccurateTime
+   * This resumes updating the clock for calls to getAccurateTime.
    */
   protected static void resumeForcingUpdate() {
     int newVal = requestsToStopUpdatingTime.decrementAndGet();
@@ -36,7 +36,7 @@ public class ClockWrapper {
   
   /**
    * Returns an accurate time based on if it has been requested to 
-   * stop updating from system clock temporarly or not
+   * stop updating from system clock temporarily or not.
    */
   protected static long getAccurateTime() {
     if (requestsToStopUpdatingTime.get() > 0) {
@@ -47,7 +47,8 @@ public class ClockWrapper {
   }
   
   /**
-   * Forces an update to the clock
+   * Forces an update to the clock.
+   * 
    * @return the current time in millis
    */
   protected static long updateClock() {

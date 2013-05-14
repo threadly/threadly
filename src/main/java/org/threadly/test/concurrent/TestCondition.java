@@ -10,6 +10,7 @@ package org.threadly.test.concurrent;
 public abstract class TestCondition {
   private static final int DEFAULT_POLL_INTERVAL = 20;
   private static final int DEFAULT_TIMEOUT = 1000 * 10;
+  private static final int SPIN_THRESHOLD = 10;
   
   /**
    * @return condition state
@@ -50,7 +51,7 @@ public abstract class TestCondition {
     boolean lastResult;
     while (! (lastResult = get()) && 
            System.currentTimeMillis() - startTime < timeout) {
-      if (pollInterval > 10) { // might as well spin if < 10
+      if (pollInterval > SPIN_THRESHOLD) {
         try {
           Thread.sleep(pollInterval);
         } catch (InterruptedException e) {
@@ -66,7 +67,7 @@ public abstract class TestCondition {
   }
   
   /**
-   * Thrown if condition is still false after a given timeout
+   * Thrown if condition is still false after a given timeout.
    * 
    * @author jent - Mike Jensen
    */
@@ -74,14 +75,14 @@ public abstract class TestCondition {
     private static final long serialVersionUID = 7445447193772617274L;
     
     /**
-     * Constructor for new TimeoutException
+     * Constructor for new TimeoutException.
      */
     public TimeoutException() {
       super();
     }
     
     /**
-     * Constructor for new TimeoutException
+     * Constructor for new TimeoutException.
      * 
      * @param msg Exception message
      */

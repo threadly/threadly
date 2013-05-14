@@ -40,14 +40,14 @@ public abstract class VirtualLock {
   public abstract void sleep(long timeInMs) throws InterruptedException;
   
   /**
-   * Calls .await() but ignores any InterruptedExceptions that may be thrown
+   * Calls .await() but ignores any InterruptedExceptions that may be thrown.
    */
   public void awaitUninterruptibly() {
     awaitUninterruptibly(Long.MAX_VALUE);
   }
   
   /**
-   * Calls .await(long) but ignores any InterruptedExceptions that may be thrown
+   * Calls .await(long) but ignores any InterruptedExceptions that may be thrown.
    * 
    * @param waitTimeInMs Time to wait on lock
    */
@@ -64,7 +64,7 @@ public abstract class VirtualLock {
   }
 
   /**
-   * Calls .sleep(long) but ignores any InterruptedExceptions that may be thrown
+   * Calls .sleep(long) but ignores any InterruptedExceptions that may be thrown.
    * 
    * @param timeInMs time in milliseconds to wait before resuming execution
    */

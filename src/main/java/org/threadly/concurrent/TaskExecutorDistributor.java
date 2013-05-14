@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -23,20 +24,22 @@ import java.util.concurrent.Executor;
  * @author jent - Mike Jensen
  */
 public class TaskExecutorDistributor {
+  protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;
+  
   private final Executor executor;
   private final Object agentLock;
   private final Map<Object, TaskQueueWorker> taskWorkers;
   
   /**
-   * Constructor which creates executor based off provided values
+   * Constructor which creates executor based off provided values.
    * 
    * @param expectedParallism Expected number of keys that will be used in parallel
-   * @param maxThreadCount Max thread count (and thus maximum number of keys which can be processed in parallel)
+   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
    */
   public TaskExecutorDistributor(int expectedParallism, int maxThreadCount) {
     this(new PriorityScheduledExecutor(expectedParallism, 
                                        maxThreadCount, 
-                                       1000 * 10, 
+                                       DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT));
   }
@@ -51,7 +54,7 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * used for testing, so that agentLock can be held and prevent execution
+   * used for testing, so that agentLock can be held and prevent execution.
    */
   protected TaskExecutorDistributor(Executor executor, Object agentLock) {
     if (executor == null) {
@@ -96,6 +99,12 @@ public class TaskExecutorDistributor {
     }
   }
   
+  /**
+   * Worker which will consume through a given queue of tasks.
+   * Each key is represented by one worker at any given time.
+   * 
+   * @author jent - Mike Jensen
+   */
   private class TaskQueueWorker implements Runnable {
     private final Object mapKey;
     private LinkedList<Runnable> queue;
@@ -141,7 +150,8 @@ public class TaskExecutorDistributor {
           try {
             it.next().run();
           } catch (Throwable t) {
-            Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), t);
+            UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
+            ueh.uncaughtException(Thread.currentThread(), t);
           }
         }
       }

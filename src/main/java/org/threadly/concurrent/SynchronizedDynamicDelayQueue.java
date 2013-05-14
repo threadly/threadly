@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.RandomAccess;
 import java.util.NoSuchElementException;
+import java.util.RandomAccess;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +27,7 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
   private final VirtualLock queueLock;
   
   /**
-   * Constructs a new queue
+   * Constructs a new queue.
    */
   public SynchronizedDynamicDelayQueue() {
     this(new NativeLock());
@@ -89,7 +89,9 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
     
     synchronized (queueLock) {
       boolean found = false;
-      // we search backwards because the most common case will be items at the end that need to be repositioned forward
+      /* we search backwards because the most common case 
+       * will be items at the end that need to be repositioned forward
+       */
       ListIterator<T> it = queue.listIterator(queue.size());
       while (it.hasPrevious()) {
         if (it.previous().equals(e)) {

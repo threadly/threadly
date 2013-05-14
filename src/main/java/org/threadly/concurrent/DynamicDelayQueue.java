@@ -38,7 +38,7 @@ public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
   
   /**
    * Adds an item to the end of the queue, used as an optimization from add(T e)
-   * when it is known the item will be at the end of the queue
+   * when it is known the item will be at the end of the queue.
    * 
    * @param e item to add to queue
    */
@@ -81,7 +81,7 @@ public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
     public E peek();
     
     /**
-     * Removes and returns the next available item in the queue
+     * Removes and returns the next available item in the queue.
      * 
      * @return next item with delay <= 0
      */

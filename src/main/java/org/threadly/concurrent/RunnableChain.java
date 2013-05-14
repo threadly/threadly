@@ -17,8 +17,8 @@ public class RunnableChain implements Runnable {
   /**
    * Constructs a runnable chain with a provided list of runnables to iterate over.
    * 
-   * @param exceptionStopsChain - true if a runnables uncaught exception stops the chain from getting called
-   * @param toRun - List of runnables to call
+   * @param exceptionStopsChain true for uncaught exception stops the execution of the chain
+   * @param toRun List of runnables to call
    */
   public RunnableChain(boolean exceptionStopsChain, 
                        List<? extends Runnable> toRun) {

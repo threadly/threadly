@@ -2,7 +2,7 @@ package org.threadly.concurrent;
 
 /**
  * This is a class which is more full featured than TaskExecutorDistributor, 
- * but it does require a scheduler implementation in order to be able to perform scheduling
+ * but it does require a scheduler implementation in order to be able to perform scheduling.
  * 
  * @author jent - Mike Jensen
  */
@@ -14,12 +14,12 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * featured task distributor, it allows scheduling and recurring tasks
    * 
    * @param expectedParallism Expected number of keys that will be used in parallel
-   * @param maxThreadCount Max thread count (and thus maximum number of keys which can be processed in parallel)
+   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
    */
   public TaskSchedulerDistributor(int expectedParallism, int maxThreadCount) {
     this(new PriorityScheduledExecutor(expectedParallism, 
                                        maxThreadCount, 
-                                       1000 * 10, 
+                                       DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT));
   }
@@ -34,7 +34,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * used for testing, so that agentLock can be held and prevent execution
+   * used for testing, so that agentLock can be held and prevent execution.
    */
   protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, Object agentLock) {
     super(scheduler, agentLock);
@@ -93,6 +93,12 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                        initialDelay);
   }
   
+  /**
+   * Task which will run delayed to add a task
+   * into the queue when ready.
+   * 
+   * @author jent - Mike Jensen
+   */
   private class AddTask implements Runnable {
     private final Object key;
     private final Runnable task;
@@ -108,6 +114,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     }
   }
   
+  /**
+   * Repeating task container.
+   * 
+   * @author jent - Mike Jensen
+   */
   private class RecrringTask implements Runnable {
     private final Object key;
     private final Runnable task;

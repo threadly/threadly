@@ -33,7 +33,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   private final PriorityScheduledExecutor scheduler;
   
   /**
-   * Constructs a new wrapper to adhere to the ScheduledExecutorService interface
+   * Constructs a new wrapper to adhere to the ScheduledExecutorService interface.
    * 
    * @param scheduler scheduler implementation to rely on
    */
@@ -152,7 +152,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   /**
-   * Not implemented yet, will always throw UnsupportedOperationException
+   * Not implemented yet, will always throw UnsupportedOperationException.
    * 
    * throws UnsupportedOperationException not yet implemented
    */
@@ -163,7 +163,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   /**
-   * Not implemented yet, will always throw UnsupportedOperationException
+   * Not implemented yet, will always throw UnsupportedOperationException.
    * 
    * throws UnsupportedOperationException not yet implemented
    */
@@ -218,7 +218,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   /**
-   * Not implemented yet, will always throw UnsupportedOperationException
+   * Not implemented yet, will always throw UnsupportedOperationException.
    * 
    * throws UnsupportedOperationException not yet implemented
    */
@@ -282,6 +282,13 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     return scheduler.getDefaultPriority();
   }
   
+  /**
+   * FutureRunnable to be returned for scheduled calls.
+   * 
+   * @author jent - Mike Jensen
+   *
+   * @param <T> generic for callable result
+   */
   protected class FutureRunnable<T> implements Runnable, Future<T> {
     private final Callable<T> task;
     private final Runnable toRun;
@@ -370,7 +377,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
 
     @Override
     public void run() {
-      boolean run = false;;
+      boolean run = false;
       try {
         if (! isCancelled) {
           run = true;
@@ -393,8 +400,15 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
       }
     }
   }
-  
-  private class ScheduledFutureRunnable<T> implements ScheduledFuture<T> {
+
+  /**
+   * ScheduledFutureRunnable to be returned for recurring scheduled calls.
+   * 
+   * @author jent - Mike Jensen
+   *
+   * @param <T> generic for callable result
+   */
+  protected class ScheduledFutureRunnable<T> implements ScheduledFuture<T> {
     private final FutureRunnable<T> taskFuture;
     private final TaskWrapper scheduledTask;
     

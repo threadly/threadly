@@ -140,7 +140,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         runBeforeBlocking.run();
       }
       while (mainThread && waitingForThreadCount > 1) {
-        //System.out.println(System.nanoTime() + " - waiting for other threads: " + waitingForThreadCount);
         // give others a chance
         try {
           tickLock.wait();
@@ -151,7 +150,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
     try {
       Object runningLock = threadQueue.take();
-      //System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " thread now has lock");
       if (this.runningLock != null) {
         throw new IllegalStateException("Running lock already set: " + this.runningLock);
       } else {
@@ -173,7 +171,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
     Object runningLock = this.runningLock;
     this.runningLock = null;
-    //System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " returning runningLock");
     threadQueue.offer(runningLock);
   }
   
@@ -205,7 +202,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    * @return qty of steps taken forward.  Returns zero if no events to run for provided time.
    */
   public int tick(long currentTime) {
-    //System.out.println(System.nanoTime() + " - " + "Tick called with time: " + currentTime);
     updateTime(currentTime);
     
     wantToRun(true, null);
@@ -226,9 +222,10 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     yielding();
     
     if (threadQueue.size() != 1) {
-      throw new IllegalStateException(System.nanoTime() + " - Someone took the lock before we returned: " + threadQueue.size() + " - " + waitingForThreadCount);
+      throw new IllegalStateException("Someone took the lock before we returned: " + 
+                                        threadQueue.size() + " - " + waitingForThreadCount);
     } else if (waitingForThreadCount != 0) {
-      throw new IllegalStateException(System.nanoTime() + " - Still threads waiting to run: " + waitingForThreadCount);
+      throw new IllegalStateException("Still threads waiting to run: " + waitingForThreadCount);
     }
     
     return ranTasks;
@@ -266,7 +263,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
   
   private void handleTask(RunnableContainer nextTask) throws InterruptedException {
-    //System.out.println(System.nanoTime() + " - " + "Handling task: " + nextTask + " - " + nextTask.runnable);
     nextTask.prepareForExcute();
     executor.execute(nextTask);
     
@@ -282,7 +278,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   /**
-   * should only be called from TestableVirtualLock
+   * should only be called from TestableVirtualLock.
    * 
    * @param lock lock referencing calling into scheduler
    * @throws InterruptedException
@@ -299,7 +295,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   /**
-   * should only be called from TestableVirtualLock
+   * should only be called from TestableVirtualLock.
    * 
    * @param lock lock referencing calling into scheduler
    * @param waitTimeInMs time to wait on lock
@@ -324,7 +320,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   /**
-   * should only be called from TestableVirtualLock
+   * should only be called from TestableVirtualLock.
    * 
    * @param lock lock referencing calling into scheduler
    */
@@ -337,7 +333,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   /**
-   * should only be called from TestableVirtualLock
+   * should only be called from TestableVirtualLock.
    * 
    * @param lock lock referencing calling into scheduler
    */
@@ -351,7 +347,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
 
   /**
    * should only be called from TestableVirtualLock or 
-   * the running thread inside the scheduler
+   * the running thread inside the scheduler.
    * 
    * @param sleepTime time for thread to sleep
    * @throws InterruptedException
@@ -361,8 +357,6 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     NotifyObject sleepLock = new NotifyObject(new Object());
     add(new WakeUpThread(sleepLock, false, sleepTime));
     
-    //System.out.println(System.nanoTime() + " - " + Thread.currentThread() + " about to sleep on: " + sleepLock);
-    
     sleepLock.yield();
   }
 
@@ -371,6 +365,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return defaultPriority;
   }
   
+  /**
+   * Container to hold some general logic that must happen
+   * for anything submitted to the thread pool.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected abstract class RunnableContainer implements Runnable, Delayed {
     protected final Runnable runnable;
     protected final TaskPriority priority;
@@ -427,6 +427,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     public abstract void run(LockFactory scheduler);
   }
   
+  /**
+   * Runnables which are only run once.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class OneTimeRunnable extends RunnableContainer {
     private final long runTime;
     
@@ -453,6 +458,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
   
+  /**
+   * Container for runnables which will run multiple times.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class RecurringRunnable extends RunnableContainer {
     private final long recurringDelay;
     private long nextRunTime;
@@ -490,6 +500,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
   
+  /**
+   * Runnable which handles notifying for locks.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class WakeUpThread extends OneTimeRunnable {
     protected WakeUpThread(final NotifyObject lock, 
                            final boolean notifyAll, 
@@ -530,6 +545,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
   
+  /**
+   * Object abstraction which notifying occurs through.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class NotifyObject {
     private final Object obj;
     private volatile boolean wantingToRun;
