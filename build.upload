@@ -1,12 +1,17 @@
 apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'checkstyle'
 
 group 'org.threadly'
 version = '0.1-SNAPSHOT'
 
 repositories {
     mavenCentral()
+}
+
+plugins.withType(JavaPlugin) {
+   checkstyle.sourceSets = [sourceSets.main]
 }
 
 dependencies {
