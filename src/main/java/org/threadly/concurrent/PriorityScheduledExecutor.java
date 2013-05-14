@@ -470,9 +470,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } else {
           long elapsedTime = ClockWrapper.getAccurateTime() - startTime;
           waitTime = maxWaitForLowPriorityInMs - elapsedTime;
-          if (waitTime > 10) {  // we will spin lock if it is less than 10ms, because .await() will take too long
-            workersLock.await(waitTime);
-          }
+          workersLock.await(waitTime);
         }
       }
       
