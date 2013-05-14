@@ -162,13 +162,35 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
   
   protected void blockTillAvailable() throws InterruptedException {
     synchronized (queueLock) {
-      while (queue.isEmpty()) {
-        queueLock.await();
-      }
-      long nextDelay = -1;
-      while ((nextDelay = queue.getFirst().getDelay(TimeUnit.MILLISECONDS)) > 0) {
-        if (nextDelay > 5) {  // spin lock if delay is < 5
+      while (true) { // will break out when ready
+        if (queue.isEmpty()) {
+          queueLock.await();
+        }
+        T next = queue.getFirst();
+        long nextDelay = next.getDelay(TimeUnit.MILLISECONDS);
+        if (nextDelay > 5) {
           queueLock.await(nextDelay);
+        } else if (nextDelay > 0) {
+          // TODO - not positive if this is what I want to do or not yet
+          /* slight optimization here to just spin lock if possible
+           * and wait for the next item to be ready.  Of course since
+           * we are holding the queueLock we are not allowing other items
+           * from injecting ahead of us during this time
+           */
+          long startTime = ClockWrapper.getAccurateTime();
+          long startDelay = nextDelay;
+          while ((nextDelay = next.getDelay(TimeUnit.MILLISECONDS)) > 0 && 
+                 (nextDelay != startDelay || ClockWrapper.getAccurateTime() < startTime + 5)) {
+            // spin
+          }
+          if (nextDelay > 0) {
+            /* clock is advancing but delay is not, so since this is not 
+             * a real time delay we just need to wait
+             */
+            queueLock.await(nextDelay);
+          }
+        } else {
+          return;
         }
       }
     }
