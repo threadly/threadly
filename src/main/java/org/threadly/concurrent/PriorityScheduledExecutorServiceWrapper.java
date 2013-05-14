@@ -30,6 +30,8 @@ import org.threadly.util.ExceptionUtils;
  */
 public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecutorService, 
                                                                 PrioritySchedulerInterface {
+  private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_MS = 100;
+  
   private final PriorityScheduledExecutor scheduler;
   
   /**
@@ -80,7 +82,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long waitTimeInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
     while (! isTerminated() && 
            Clock.accurateTime() - startTime < waitTimeInMs) {
-      Thread.sleep(100);
+      Thread.sleep(AWAIT_TERMINATION_POLL_INTERVAL_IN_MS);
     }
     
     return isTerminated();

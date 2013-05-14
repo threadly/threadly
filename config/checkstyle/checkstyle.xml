@@ -72,9 +72,7 @@
       <property name="illegalClassNames" value="java.lang.Throwable, java.lang.Error, java.lang.RuntimeException,java.lang.Exception"/>
     </module>
     <module name="MagicNumber">
-      <property name="severity" value="ignore"/>
       <property name="ignoreNumbers" value="-2, -1, 0, 1, 2"/>
-      <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
     </module>
     <module name="MissingSwitchDefault"/>
     <module name="NoFinalizer"/>
