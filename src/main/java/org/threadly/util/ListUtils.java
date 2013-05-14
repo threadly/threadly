@@ -12,6 +12,8 @@ import java.util.concurrent.TimeUnit;
  * @author jent - Mike Jensen
  */
 public class ListUtils {
+  private static final int MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
+  
   /**
    * This function uses the binary search and adds a small amount of logic
    * such that it determines the placement index for a given item.  It is 
@@ -84,7 +86,7 @@ public class ListUtils {
    * 
    * @param list to be searched through
    * @param key delay value to search for
-   * @param randomAccessList boolean representing if optimizations should be done for list that have cheap random access
+   * @param randomAccessList true to optimize for list that have cheap random access
    * @return index where found, or -(insertion point) - 1 if not found
    */
   public static int binarySearch(List<? extends Delayed> list, 
@@ -112,11 +114,12 @@ public class ListUtils {
       
       int pivot;
       // A typical binarySearch algorithm uses pivot = (min + max) / 2.
-      // The pivot we use here tries to be smarter and to choose a pivot close to the expected location of the key.
-      // This reduces dramatically the number of steps needed to get to the key.
-      // However, it does not work well with a logaritmic distribution of values.
-      // When the key is not found quickly the smart way, we switch to the standard pivot.
-      if (nPreviousSteps > 5) {
+      // The pivot we use here tries to be smarter and to choose a pivot 
+      // close to the expected location of the key. This reduces dramatically 
+      // the number of steps needed to get to the key.  However, it does not 
+      // work well with a logaritmic distribution of values. When the key is 
+      // not found quickly the smart way, we switch to the standard pivot.
+      if (nPreviousSteps > MAX_STEPS_TILL_B_SEARCH_SWITCH) {
         pivot = (min + max) >> 1;
         // stop increasing nPreviousSteps from now on
       } else {

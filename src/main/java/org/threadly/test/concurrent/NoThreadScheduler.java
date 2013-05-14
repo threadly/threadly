@@ -25,7 +25,7 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   private long nowInMillis;
 
   /**
-   * Constructs a new thread safe scheduler
+   * Constructs a new thread safe scheduler.
    */
   public NoThreadScheduler() {
     this(true);
@@ -160,6 +160,11 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     }
   }
   
+  /**
+   * Container abstraction to hold runnables for scheduler.
+   * 
+   * @author jent - Mike Jensen
+   */
   private abstract class RunnableContainer implements Delayed {
     protected final Runnable runnable;
     
@@ -187,6 +192,12 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     public abstract void run(long nowInMs);
   }
   
+  /**
+   * Runnable container for runnables that only run once
+   * with an optional delay.
+   * 
+   * @author jent - Mike Jensen
+   */
   private class OneTimeRunnable extends RunnableContainer {
     private final long runTime;
     
@@ -208,6 +219,11 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
     }
   }
   
+  /**
+   * Container for runnables which run multiple times.
+   * 
+   * @author jent - Mike Jensen
+   */
   private class RecurringRunnable extends RunnableContainer {
     private final long recurringDelay;
     private long nextRunTime;

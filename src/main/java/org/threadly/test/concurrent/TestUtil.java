@@ -8,7 +8,7 @@ package org.threadly.test.concurrent;
 public class TestUtil {
   /**
    * Since sleeps are sometimes necessary, this makes
-   * an easy way to ignore InterruptedException's,
+   * an easy way to ignore InterruptedException's.
    * 
    * @param time time in milliseconds to make the thread to sleep
    */
@@ -21,10 +21,13 @@ public class TestUtil {
   }
   
   /**
-   * Blocks until the System clock advances at least 1 millisecond
+   * Blocks until the System clock advances at least 1 millisecond.
    */
   public static void blockTillClockAdvances() {
     new TestCondition() {
+      private static final int TIMEOUT_IN_MS = 100;
+      private static final int POLL_INTERVAL_IN_MS = 1;
+      
       private final long startTime = System.currentTimeMillis();
       
       @Override
@@ -34,7 +37,7 @@ public class TestUtil {
       
       @Override
       public void blockTillTrue() {
-        blockTillTrue(100, 1);
+        blockTillTrue(TIMEOUT_IN_MS, POLL_INTERVAL_IN_MS);
       }
     }.blockTillTrue();
   }

@@ -5,8 +5,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.ListIterator;
-import java.util.RandomAccess;
 import java.util.NoSuchElementException;
+import java.util.RandomAccess;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
@@ -27,7 +27,7 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
   private final VirtualLock queueLock;
   
   /**
-   * Constructs a new queue
+   * Constructs a new queue.
    */
   public SynchronizedDynamicDelayQueue() {
     this(new NativeLock());
@@ -89,7 +89,9 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
     
     synchronized (queueLock) {
       boolean found = false;
-      // we search backwards because the most common case will be items at the end that need to be repositioned forward
+      /* we search backwards because the most common case 
+       * will be items at the end that need to be repositioned forward
+       */
       ListIterator<T> it = queue.listIterator(queue.size());
       while (it.hasPrevious()) {
         if (it.previous().equals(e)) {
@@ -162,13 +164,16 @@ public class SynchronizedDynamicDelayQueue<T extends Delayed> implements Dynamic
   
   protected void blockTillAvailable() throws InterruptedException {
     synchronized (queueLock) {
-      while (queue.isEmpty()) {
-        queueLock.await();
-      }
-      long nextDelay = -1;
-      while ((nextDelay = queue.getFirst().getDelay(TimeUnit.MILLISECONDS)) > 0) {
-        if (nextDelay > 5) {  // spin lock if delay is < 5
+      while (true) { // will break out when ready
+        if (queue.isEmpty()) {
+          queueLock.await();
+        }
+        T next = queue.getFirst();
+        long nextDelay = next.getDelay(TimeUnit.MILLISECONDS);
+        if (nextDelay > 0) {
           queueLock.await(nextDelay);
+        } else {
+          return;
         }
       }
     }

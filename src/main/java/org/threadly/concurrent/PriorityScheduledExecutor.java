@@ -13,17 +13,21 @@ import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
- * Executor to run tasks, schedule tasks.  Unlike java.util.concurrent.ScheduledThreadPoolExecutor
- * this scheduled executor's pool size can grow and shrink based off usage.  It also has the benifit
- * that you can provide "low priority" tasks which will attempt to use existing workers and not instantly
- * create new threads on demand.  Thus allowing you to better take the benefits of a thread pool for tasks
- * which specific execution time is less important.
+ * Executor to run tasks, schedule tasks.  
+ * Unlike java.util.concurrent.ScheduledThreadPoolExecutor
+ * this scheduled executor's pool size can grow and shrink 
+ * based off usage.  It also has the benefit that you can 
+ * provide "low priority" tasks which will attempt to use 
+ * existing workers and not instantly create new threads on 
+ * demand.  Thus allowing you to better take the benefits 
+ * of a thread pool for tasks which specific execution time 
+ * is less important.
  * 
  * @author jent - Mike Jensen
  */
 public class PriorityScheduledExecutor implements PrioritySchedulerInterface, 
                                                   LockFactory {
-  protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT = 500;  // set to Long.MAX_VALUE to never create threads for low priority tasks
+  protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT = 500;
   protected static final TaskPriority GLOBAL_DEFAULT_PRIORITY = TaskPriority.High;
   protected static final boolean USE_DAEMON_THREADS = true;
   
@@ -219,7 +223,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * will have no impact for the current low priority task attempting to get 
    * a worker.
    * 
-   * @param maxWaitForLowPriorityInMs New time for waiting for a thread in milliseconds.  Must be >= 0.
+   * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds.  Must be >= 0.
    */
   public void setMaxWaitForLowPriorityInMs(long maxWaitForLowPriorityInMs) {
     if (maxWaitForLowPriorityInMs < 0) {
@@ -339,7 +343,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   /**
-   * Executes a task as soon as possible with the default priority
+   * Executes a task as soon as possible with the default priority.
    * 
    * @param task Task to execute
    */
@@ -470,9 +474,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } else {
           long elapsedTime = ClockWrapper.getAccurateTime() - startTime;
           waitTime = maxWaitForLowPriorityInMs - elapsedTime;
-          if (waitTime > 10) {  // we will spin lock if it is less than 10ms, because .await() will take too long
-            workersLock.await(waitTime);
-          }
+          workersLock.await(waitTime);
         }
       }
       
@@ -587,6 +589,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     return new NativeLock();
   }
   
+  /**
+   * Runnable which will consume tasks from the appropriate 
+   * and given the provided implementation to get a worker 
+   * and execute consumed tasks.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class TaskConsumer implements Runnable {
     private final DynamicDelayQueue<TaskWrapper> workQueue;
     private final VirtualLock queueLock;
@@ -610,7 +619,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     public void maybeStart() {
-      // this looks like a double check but due to being volatile and only changing one direction should be safe
+      /* this looks like a double check but 
+       * due to being volatile and only changing 
+       * one direction should be safe
+       */
       if (started) {
         return;
       }
@@ -629,7 +641,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     public void stop() {
-      // this looks like a double check but due to being volatile and only changing one direction should be safe
+      /* this looks like a double check but 
+       * due to being volatile and only changing 
+       * one direction should be safe
+       */
       if (stopped || ! started) {
         return;
       }
@@ -651,7 +666,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       while (! stopped) {
         try {
           TaskWrapper task;
-          synchronized (queueLock) {  // must lock as same lock for removal to ensure that task can be found for removal
+          /* must lock as same lock for removal to 
+           * ensure that task can be found for removal
+           */
+          synchronized (queueLock) {
             task = workQueue.take();
             task.executing();  // for recurring tasks this will put them back into the queue
           }
@@ -669,10 +687,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
   }
   
+  /**
+   * Interface for an implementation which can accept
+   * consumed tasks.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected interface TaskAcceptor {
     public void acceptTask(TaskWrapper task) throws InterruptedException;
   }
   
+  /**
+   * Runnable which will run on pool threads.  It 
+   * accepts runnables to run, and tracks usage.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class Worker implements Runnable {
     private final VirtualLock taskNotifyLock;
     private final Thread thread;
@@ -741,7 +771,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } catch (Throwable t) {
           if (t instanceof InterruptedException || 
               t instanceof OutOfMemoryError) {
-            killWorker(this);  // this will stop the worker, and thus prevent it from calling workerDone
+           // this will stop the worker, and thus prevent it from calling workerDone
+            killWorker(this);
           }
         } finally {
           nextTask = null;
@@ -758,8 +789,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
   }
   
+  /**
+   * Behavior for task after it finishes completion.
+   * 
+   * @author jent - Mike Jensen
+   */
   private enum TaskType {OneTime, Recurring};
   
+  /**
+   * Abstract implementation for all tasks handled by this pool.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected abstract class TaskWrapper implements Delayed, Runnable {
     public final TaskType taskType;
     public final TaskPriority priority;
@@ -804,6 +845,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
   }
   
+  /**
+   * Wrapper for tasks which only executes once.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class OneTimeTaskWrapper extends TaskWrapper {
     private final long runTime;
     
@@ -831,6 +877,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
   }
   
+  /**
+   * Wrapper for tasks which reschedule after completion.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class RecurringTaskWrapper extends TaskWrapper {
     private final long recurringDelay;
     //private volatile long maxExpectedRuntime;

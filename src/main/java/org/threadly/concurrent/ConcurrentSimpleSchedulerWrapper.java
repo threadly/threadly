@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * This is a wrapper for the java.util.concurrent.ScheduledThreadPoolExecutor
- * to use that implementation with the SimpleSchedulerInterface
+ * to use that implementation with the SimpleSchedulerInterface.
  * 
  * @author jent - Mike Jensen
  */
@@ -21,7 +21,7 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   private final ScheduledExecutorService scheduler;
   
   /**
-   * Constructs a new wrapper with the provided scheduler implementation
+   * Constructs a new wrapper with the provided scheduler implementation.
    * 
    * @param scheduler ScheduledExecutorService implementor
    */
