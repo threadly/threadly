@@ -26,8 +26,7 @@ public class Clock {
     }
   }
   
-  /**
-   * Starts the clock updating automatically (used for testing)
+  /** Starts the clock updating automatically (used for testing).
    */
   public static void startClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
@@ -55,8 +54,7 @@ public class Clock {
     }
   }
 
-  /**
-   * Stops the clock from updating automatically (used for testing)
+  /**Stops the clock from updating automatically (used for testing).
    */
   public static void stopClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
@@ -73,8 +71,8 @@ public class Clock {
     return now;
   }
 
-  /**
-   * Updates the clock and returns the accurate time
+  /**Updates the clock and returns the accurate time.
+   * 
    * @return accurate time in milliseconds
    */
   public static long accurateTime() {
