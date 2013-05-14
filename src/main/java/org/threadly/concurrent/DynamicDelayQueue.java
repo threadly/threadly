@@ -17,6 +17,7 @@ public interface DynamicDelayQueue<T extends Delayed> extends Queue<T> {
   /**
    * Returns the object that will be called with .wait during .wait.  
    * And must be synchronized on while using the iterator.
+   * 
    * @return object synchronized on internally
    */
   public Object getLock();
