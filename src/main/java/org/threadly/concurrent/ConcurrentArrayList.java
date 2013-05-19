@@ -817,7 +817,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         
         if (newIndex == dataStartIndex) {
           System.arraycopy(dataArray, dataStartIndex, 
-                           newData, 1, PADDING_AMMOUNT + origCurrentIndex);
+                           newData, PADDING_AMMOUNT + 1, origCurrentIndex);
           System.arraycopy(dataArray, currentIndex + 1, 
                            newData, PADDING_AMMOUNT + origCurrentIndex + 1, 
                            dataEndIndex - currentIndex - 1);
