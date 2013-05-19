@@ -39,13 +39,15 @@ import org.threadly.concurrent.lock.VirtualLock;
  * @param <T> type of object to retain
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
-  private enum DataSetType { RightSized };
+  private enum DataSetType { RightSized, Padded };
   private static final DataSetType DATA_SET_TYPE = DataSetType.RightSized;
   
   protected static <E> DataSet<E> makeDataSet(Object[] data, int startPosition, int endPosition) {
     switch (DATA_SET_TYPE) {
       case RightSized:
         return new RightSizedDataSet<E>(data, startPosition, endPosition);
+      case Padded:
+        return new PaddedDataSet<E>(data, startPosition, endPosition);
       default:
         throw new UnsupportedOperationException("Can not make dataset type: " + DATA_SET_TYPE);
     }
