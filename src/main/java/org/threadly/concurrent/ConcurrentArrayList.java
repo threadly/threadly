@@ -40,7 +40,7 @@ import org.threadly.concurrent.lock.VirtualLock;
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   private enum DataSetType { RightSized, Padded };
-  private static final DataSetType DATA_SET_TYPE = DataSetType.RightSized;
+  private static final DataSetType DATA_SET_TYPE = DataSetType.Padded;
   
   protected static <E> DataSet<E> makeDataSet(Object[] data, int startPosition, int endPosition) {
     switch (DATA_SET_TYPE) {
@@ -783,8 +783,63 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
     @Override
     public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
-      // TODO - need to implement for padding
-      throw new UnsupportedOperationException();
+      int currentIndex = origCurrentIndex + dataStartIndex;
+      int newIndex = origNewIndex + dataStartIndex;
+      
+      if (newIndex > currentIndex) {  // move right
+        Object[] newData = new Object[size() + (2 * PADDING_AMMOUNT)];
+        
+        if (newIndex == dataEndIndex) {
+          System.arraycopy(dataArray, dataStartIndex, 
+                           newData, PADDING_AMMOUNT, origCurrentIndex);
+          System.arraycopy(dataArray, currentIndex + 1, 
+                           newData, PADDING_AMMOUNT + origCurrentIndex, 
+                           size() - origCurrentIndex - 1);
+        } else {
+          //work backwards
+          // shift end for placement of new item
+          System.arraycopy(dataArray, newIndex,   // write from new position to end
+                           newData, PADDING_AMMOUNT + origNewIndex, 
+                           size() - origNewIndex);
+          System.arraycopy(dataArray, currentIndex + 1, // write from removed position to new position
+                           newData, PADDING_AMMOUNT + origCurrentIndex, 
+                           origNewIndex - origCurrentIndex);
+          System.arraycopy(dataArray, dataStartIndex, // write from start to removed position
+                           newData, PADDING_AMMOUNT, 
+                           origCurrentIndex);
+        }
+        
+        newData[PADDING_AMMOUNT + origNewIndex - 1] = dataArray[currentIndex];
+        
+        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else if (newIndex < currentIndex) { // move left
+        Object[] newData = new Object[size() + (2 * PADDING_AMMOUNT)];
+        
+        if (newIndex == dataStartIndex) {
+          System.arraycopy(dataArray, dataStartIndex, 
+                           newData, 1, PADDING_AMMOUNT + origCurrentIndex);
+          System.arraycopy(dataArray, currentIndex + 1, 
+                           newData, PADDING_AMMOUNT + origCurrentIndex + 1, 
+                           dataEndIndex - currentIndex - 1);
+        } else {
+          System.arraycopy(dataArray, dataStartIndex,   // write from start to new position
+                           newData, PADDING_AMMOUNT, origNewIndex);
+          System.arraycopy(dataArray, newIndex,   // write from new position to current position
+                           newData, PADDING_AMMOUNT + origNewIndex + 1, 
+                           origCurrentIndex - origNewIndex);
+          if (origCurrentIndex < size() - 1) {
+            System.arraycopy(dataArray, currentIndex + 1, // write from current position to end
+                             newData, PADDING_AMMOUNT + origCurrentIndex + 1, 
+                             size() - origCurrentIndex - 1);
+          }
+        }
+        
+        newData[PADDING_AMMOUNT + origNewIndex] = dataArray[currentIndex];
+        
+        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else {  // equal
+        return this;
+      }
     }
     
     private Object[] getArrayCopy(int newSize) {
@@ -831,13 +886,37 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
     @Override
     public DataSet<T> add(T e) {
-      return add(size(), e);
+      Object[] newData = getArrayCopy(size() + 1);
+      newData[PADDING_AMMOUNT + size()] = e;
+      
+      return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
     }
 
     @Override
     public DataSet<T> add(int origIndex, T element) {
-      // TODO - need to implement for padding
-      throw new UnsupportedOperationException();
+      Object[] newData;
+      if (origIndex == 0) {
+        // add to front
+        newData = new Object[size() + 1 + (2 * PADDING_AMMOUNT)];
+        newData[PADDING_AMMOUNT] = element;
+        System.arraycopy(dataArray, dataStartIndex, 
+                         newData, PADDING_AMMOUNT + 1, 
+                         size());
+      } else if (origIndex == size()) {
+        // add to end
+        newData = getArrayCopy(size() + 1);
+        newData[PADDING_AMMOUNT + origIndex] = element;
+      } else {
+        newData = new Object[size() + 1 + (2 * PADDING_AMMOUNT)];
+        System.arraycopy(dataArray, dataStartIndex, 
+                         newData, PADDING_AMMOUNT, origIndex);
+        newData[origIndex] = element;
+        System.arraycopy(dataArray, dataStartIndex + origIndex, 
+                         newData, PADDING_AMMOUNT + origIndex + 1, 
+                         size() - origIndex);
+      }
+      
+      return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
     }
 
     @Override
@@ -847,8 +926,32 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
     @Override
     public DataSet<T> addAll(int origIndex, Collection<? extends T> c) {
-      // TODO - need to implement for padding
-      throw new UnsupportedOperationException();
+      Object[] toAdd = c.toArray();
+      if (origIndex == 0) {
+        // add to front
+        Object[] newData = new Object[size() + toAdd.length + (2 * PADDING_AMMOUNT)];
+        
+        System.arraycopy(toAdd, 0, newData, PADDING_AMMOUNT, toAdd.length);
+        System.arraycopy(dataArray, dataStartIndex, newData, PADDING_AMMOUNT + toAdd.length, size());
+        
+        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else if (origIndex == size()) {
+        Object[] newData = getArrayCopy(size() + toAdd.length);
+        System.arraycopy(toAdd, 0, newData, size() + PADDING_AMMOUNT, toAdd.length);
+        
+        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else {
+        Object[] newData = new Object[size() + toAdd.length];
+        
+        System.arraycopy(dataArray, dataStartIndex, 
+                         newData, PADDING_AMMOUNT, origIndex);
+        System.arraycopy(toAdd, 0, 
+                         newData, PADDING_AMMOUNT + origIndex, toAdd.length);
+        sac(dataArray, dataStartIndex + origIndex, 
+                         newData, PADDING_AMMOUNT + origIndex + toAdd.length, size() - origIndex);
+        
+        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      }
     }
     
     @Override
@@ -886,12 +989,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
       int currentIndex = origCurrentIndex + dataStartIndex;
       int newIndex = origNewIndex + dataStartIndex;
-      
-      /* I don't exactly like this implementation, I feel like it has a lot more
-       * complicated math, and variations between the cases than I would prefer.
-       * 
-       *  But it seems to work for now.
-       */
       
       if (newIndex > currentIndex) {  // move right
         Object[] newData = new Object[size()];
@@ -1033,11 +1130,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
     @Override
     public DataSet<T> addAll(Collection<? extends T> c) {
-      Object[] toAdd = c.toArray();
-      Object[] newData = getArrayCopy(size() + toAdd.length);
-      System.arraycopy(toAdd, 0, newData, size(), toAdd.length);
-      
-      return new RightSizedDataSet<T>(newData, 0, newData.length);
+      return addAll(size(), c);
     }
 
     @Override
@@ -1051,9 +1144,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         System.arraycopy(dataArray, dataStartIndex, newData, toAdd.length, size());
         
         return new RightSizedDataSet<T>(newData, 0, newData.length);
-      } else if (origIndex == size() - 1) {
-        // add to end
-        return addAll(c);
+      } else if (origIndex == size()) {
+        Object[] newData = getArrayCopy(size() + toAdd.length);
+        System.arraycopy(toAdd, 0, newData, size(), toAdd.length);
+        
+        return new RightSizedDataSet<T>(newData, 0, newData.length);
       } else {
         Object[] newData = new Object[size() + toAdd.length];
         

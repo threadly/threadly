@@ -100,7 +100,6 @@ public class ConcurrentArrayListDataSetTest {
                                              "9-9223372036854775807;1d209d56"
             
     };
-    System.out.println("---> " + result);
     assertTrue(result.equals(ConcurrentArrayListDataSetTest.<String>getDataSet(expectedResult, 0, expectedResult.length)));
   }
   
@@ -121,6 +120,7 @@ public class ConcurrentArrayListDataSetTest {
     // move middle to start
     DataSet<Integer> result = orderedNormal.reposition(1, 0);
     Integer[] expectedResult = new Integer[]{ 1, 0, 2, 3, 4, 5, 6, 7, 8, 9 };
+    System.out.println(result);
     assertTrue(result.equals(getDataSet(expectedResult, 0, expectedResult.length)));
     // move middle to middle right
     result = orderedNormal.reposition(1, 5);
