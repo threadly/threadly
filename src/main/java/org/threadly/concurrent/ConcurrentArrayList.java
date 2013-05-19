@@ -1096,11 +1096,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       Iterator<?> it = c.iterator();
       while (it.hasNext()) {
         Object o = it.next();
-        int index = indexOf(o);
+        int index = result.indexOf(o);
         while (index >= 0) {
           result = result.remove(index);
           
-          index = indexOf(o);
+          index = result.indexOf(o);
         }
       }
       
