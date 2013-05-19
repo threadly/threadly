@@ -101,8 +101,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     highPriorityLock = makeLock();
     lowPriorityLock = makeLock();
     workersLock = makeLock();
-    highPriorityQueue = new SynchronizedDynamicDelayQueue<TaskWrapper>(highPriorityLock);
-    lowPriorityQueue = new SynchronizedDynamicDelayQueue<TaskWrapper>(lowPriorityLock);
+    highPriorityQueue = new ConcurrentDynamicDelayQueue<TaskWrapper>(highPriorityLock);
+    lowPriorityQueue = new ConcurrentDynamicDelayQueue<TaskWrapper>(lowPriorityLock);
     availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
     threadFactory = new ThreadFactory() {
       private final ThreadFactory defaultFactory = Executors.defaultThreadFactory();

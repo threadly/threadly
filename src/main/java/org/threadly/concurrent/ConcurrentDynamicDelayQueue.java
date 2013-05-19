@@ -17,6 +17,8 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
   private static final Logger log = Logger.getLogger(ConcurrentDynamicDelayQueue.class.getSimpleName());
   private static final boolean VERBOSE = false; // TODO - remove debug logging
 
+  private static final int SPIN_LOCK_THRESHOLD = 5;
+  
   private final boolean randomAccessQueue;
   private final VirtualLock queueLock;
   private final ConcurrentArrayList<T> queue;
@@ -148,7 +150,7 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
       
       long nextDelay = next.getDelay(TimeUnit.MILLISECONDS);
       if (nextDelay > 0) {
-        if (nextDelay > 10) {
+        if (nextDelay > SPIN_LOCK_THRESHOLD) {
           synchronized (queueLock) {
             if (queue.peek() == next) {
               queueLock.await(nextDelay);
@@ -161,7 +163,8 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
           long startDelay = nextDelay;
           while ((next = queue.peek()) != null && 
                  (nextDelay = next.getDelay(TimeUnit.MILLISECONDS)) > 0 && 
-                 (nextDelay != startDelay || ClockWrapper.getAccurateTime() < startTime + 5)) {
+                 (nextDelay != startDelay || 
+                    ClockWrapper.getAccurateTime() < startTime + SPIN_LOCK_THRESHOLD)) {
             // spin
           }
           if (nextDelay <= 0) {
