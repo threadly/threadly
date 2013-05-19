@@ -159,6 +159,20 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       currentData.rearPadding = rearPadding;
     }
   }
+  
+  /**
+   * @return current amount to added padding to the front of new buffers
+   */
+  public int getFrontPadding() {
+    return currentData.frontPadding;
+  }
+
+  /**
+   * @return current amount to added padding to the rear of new buffers
+   */
+  public int getRearPadding() {
+    return currentData.rearPadding;
+  }
 
   @Override
   public int size() {
