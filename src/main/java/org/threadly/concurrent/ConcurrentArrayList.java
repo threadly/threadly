@@ -781,8 +781,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     protected final int dataStartIndex; // inclusive
     protected final int dataEndIndex;   // exclusive
     protected final int size;
-    private volatile int frontPadding;
-    private volatile int rearPadding;
+    private int frontPadding; // locked around modificationLock
+    private int rearPadding; // locked around modificationLock
     
     protected DataSet(Object[] dataArray, 
                       int dataStartIndex, 
