@@ -1,9 +1,11 @@
 package org.threadly.concurrent;
 
 import java.util.Collection;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +38,7 @@ import org.threadly.concurrent.lock.VirtualLock;
  *
  * @param <T> type of object to retain
  */
-public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
+public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   private enum DataSetType { RightSized };
   private static final DataSetType DATA_SET_TYPE = DataSetType.RightSized;
   
@@ -125,7 +127,7 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
   @Override
   public <E> E[] toArray(E[] a) {
     Object[] toCopyArray = currentData.dataArray;
-    if (a.length < toCopyArray.length) {  // TODO - we should implement this
+    if (a.length < toCopyArray.length) {  // TODO - need to implement this
       throw new UnsupportedOperationException("need " + toCopyArray.length + ", provided " + a.length);
     }
     
@@ -149,16 +151,7 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
 
   @Override
   public boolean remove(Object o) {
-    if (o == null) {
-      return false;
-    }
-    
-    synchronized (modificationLock) {
-      DataSet<T> originalSet = currentData;
-      currentData = currentData.remove(o);
-      
-      return originalSet != currentData;
-    }
+    return removeFirstOccurrence(o);
   }
 
   @Override
@@ -245,8 +238,104 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
                                 0, 0);
     }
   }
+  
+  @Override
+  public void addFirst(T e) {
+    add(0, e);
+  }
 
+  @Override
+  public void addLast(T e) {
+    add(e);
+  }
+
+  @Override
+  public boolean offerFirst(T e) {
+    addFirst(e);
+      
+    // this implementation has no capacity limit
+    return true;
+  }
+
+  @Override
+  public boolean offerLast(T e) {
+    addLast(e);
+      
+    // this implementation has no capacity limit
+    return true;
+  }
+
+  @Override
+  public T removeFirst() {
+    T result = pollFirst();
+    if (result == null) {
+      throw new NoSuchElementException();
+    }
+    
+    return result;
+  }
+
+  @Override
+  public T removeLast() {
+    T result = pollLast();
+    if (result == null) {
+      throw new NoSuchElementException();
+    }
+    
+    return result;
+  }
+
+  @Override
+  public T pollFirst() {
+    synchronized (modificationLock) {
+      T result = peekFirst();
+      if (result != null) {
+        currentData = currentData.remove(size() - 1);
+      }
+      
+      return result;
+    }
+  }
+
+  @Override
+  public T pollLast() {
+    synchronized (modificationLock) {
+      T result = peekLast();
+      if (result != null) {
+        currentData = currentData.remove(size() - 1);
+      }
+      
+      return result;
+    }
+  }
+
+  @Override
+  public T getFirst() {
+    T result = peekFirst();
+    if (result == null) {
+      throw new NoSuchElementException();
+    }
+    
+    return result;
+  }
+
+  @Override
+  public T getLast() {
+    T result = peekLast();
+    if (result == null) {
+      throw new NoSuchElementException();
+    }
+    
+    return result;
+  }
+
+  @Override
   public T peek() {
+    return peekFirst();
+  }
+
+  @Override
+  public T peekFirst() {
     DataSet<T> set = currentData;
     if (set.size() > 0) {
       return set.get(0);
@@ -255,6 +344,101 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
     }
   }
 
+  @Override
+  public T peekLast() {
+    DataSet<T> set = currentData;
+    if (set.size() > 0) {
+      return set.get(set.size() - 1);
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public boolean removeFirstOccurrence(Object o) {
+    if (o == null) {
+      return false;
+    }
+    
+    synchronized (modificationLock) {
+      int index = currentData.indexOf(o);
+      if (index < 0) {
+        return false;
+      } else {
+        currentData = currentData.remove(index);
+        return true;
+      }
+    }
+  }
+
+  @Override
+  public boolean removeLastOccurrence(Object o) {
+    if (o == null) {
+      return false;
+    }
+    
+    synchronized (modificationLock) {
+      int index = currentData.lastIndexOf(o);
+      if (index < 0) {
+        return false;
+      } else {
+        currentData = currentData.remove(index);
+        return true;
+      }
+    }
+  }
+
+  @Override
+  public boolean offer(T e) {
+    return offerLast(e);
+  }
+
+  @Override
+  public T remove() {
+    return removeFirst();
+  }
+
+  @Override
+  public T poll() {
+    return pollFirst();
+  }
+
+  @Override
+  public T element() {
+    return getFirst();
+  }
+
+  @Override
+  public void push(T e) {
+    addFirst(e);
+  }
+
+  @Override
+  public T pop() {
+    return removeFirst();
+  }
+
+  @Override
+  public Iterator<T> descendingIterator() {
+    final ListIterator<T> li = listIterator(size());
+    return new Iterator<T>() {
+      @Override
+      public boolean hasNext() {
+        return li.hasPrevious();
+      }
+
+      @Override
+      public T next() {
+        return li.previous();
+      }
+
+      @Override
+      public void remove() {
+        li.remove();
+      }
+    };
+  }
+  
   @Override
   public T get(int index) {
     return currentData.get(index);
@@ -495,8 +679,6 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
 
     public abstract DataSet<T> addAll(int origIndex, Collection<? extends T> c);
 
-    public abstract DataSet<T> remove(Object o);
-
     public abstract DataSet<T> remove(int origIndex);
 
     public abstract DataSet<T> removeAll(Collection<?> c);
@@ -572,9 +754,11 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
           result.append('S');
         }
         if (dataArray[i] instanceof Delayed) {
-          result.append(i + "-" + ((Delayed)dataArray[i]).getDelay(TimeUnit.MILLISECONDS) + ";" + dataArray[i]);
+          result.append(i).append('-')
+                .append(((Delayed)dataArray[i]).getDelay(TimeUnit.MILLISECONDS))
+                .append(';').append(dataArray[i]);
         } else {
-          result.append(dataArray[i]);
+          result.append(i).append('-').append(dataArray[i]);
         }
         if (i == dataEndIndex - 1) {
           result.append('E');
@@ -881,16 +1065,6 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
         return new RightSizedDataSet<T>(newData, 0, newData.length);
       }
     }
-
-    @Override
-    public DataSet<T> remove(Object o) {
-      int index = indexOf(o);
-      if (index >= 0) {
-        return remove(index);
-      } else {
-        return this;
-      }
-    }
     
     @Override
     public DataSet<T> remove(int origIndex) {
@@ -919,7 +1093,13 @@ public class ConcurrentArrayList<T> implements List<T>, RandomAccess {
       
       Iterator<?> it = c.iterator();
       while (it.hasNext()) {
-        result = result.remove(it.next());
+        Object o = it.next();
+        int index = indexOf(o);
+        while (index >= 0) {
+          result = result.remove(index);
+          
+          index = indexOf(o);
+        }
       }
       
       return result;
