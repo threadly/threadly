@@ -811,7 +811,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         
         newData[PADDING_AMMOUNT + origNewIndex - 1] = dataArray[currentIndex];
         
-        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
       } else if (newIndex < currentIndex) { // move left
         Object[] newData = new Object[size() + (2 * PADDING_AMMOUNT)];
         
@@ -836,7 +836,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         
         newData[PADDING_AMMOUNT + origNewIndex] = dataArray[currentIndex];
         
-        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
       } else {  // equal
         return this;
       }
@@ -858,28 +858,24 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       int newIndex;
       Object[] newData;
       if (index == size()) {
-        if (dataArray.length < index || dataArray[index] != null) {
+        if (dataArray.length - 1 < index || dataArray[index] != null) {
           newData = getArrayCopy(index + 1);
           newDataStartIndex = PADDING_AMMOUNT;
-          newDataEndIndex = index + 1;
+          newDataEndIndex = PADDING_AMMOUNT + index + 1;
         } else {
           newData = dataArray;  // there is space in the current array
           newDataStartIndex = dataStartIndex;
           newDataEndIndex = dataEndIndex + 1;
         }
       } else {
-        if (index == 0 && dataStartIndex > 0 && dataArray[dataStartIndex - 1] == null) {
-          newData = dataArray;  // there is space in the current array
-          newDataStartIndex = dataStartIndex - 1;
-          newDataEndIndex = dataEndIndex;
-        } else {
-          newData = getArrayCopy(size());
-          newDataStartIndex = PADDING_AMMOUNT;
-          newDataEndIndex = size();
-        }
+        newData = getArrayCopy(size());
+        newDataStartIndex = PADDING_AMMOUNT;
+        newDataEndIndex = PADDING_AMMOUNT + size();
       }
       newIndex = index + newDataStartIndex;
+      //System.out.println(new PaddedDataSet<T>(newData, newDataStartIndex, newDataEndIndex) + ", " + newIndex);
       newData[newIndex] = element;
+      //System.out.println(new PaddedDataSet<T>(newData, newDataStartIndex, newDataEndIndex));
       
       return new PaddedDataSet<T>(newData, newDataStartIndex, newDataEndIndex);
     }
@@ -889,7 +885,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       Object[] newData = getArrayCopy(size() + 1);
       newData[PADDING_AMMOUNT + size()] = e;
       
-      return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
     }
 
     @Override
@@ -916,7 +912,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
                          size() - origIndex);
       }
       
-      return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
     }
 
     @Override
@@ -934,23 +930,25 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         System.arraycopy(toAdd, 0, newData, PADDING_AMMOUNT, toAdd.length);
         System.arraycopy(dataArray, dataStartIndex, newData, PADDING_AMMOUNT + toAdd.length, size());
         
-        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
       } else if (origIndex == size()) {
         Object[] newData = getArrayCopy(size() + toAdd.length);
+        
         System.arraycopy(toAdd, 0, newData, size() + PADDING_AMMOUNT, toAdd.length);
         
-        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
       } else {
-        Object[] newData = new Object[size() + toAdd.length];
+        Object[] newData = new Object[size() + toAdd.length + (2 * PADDING_AMMOUNT)];
         
         System.arraycopy(dataArray, dataStartIndex, 
                          newData, PADDING_AMMOUNT, origIndex);
         System.arraycopy(toAdd, 0, 
                          newData, PADDING_AMMOUNT + origIndex, toAdd.length);
-        sac(dataArray, dataStartIndex + origIndex, 
-                         newData, PADDING_AMMOUNT + origIndex + toAdd.length, size() - origIndex);
+        System.arraycopy(dataArray, dataStartIndex + origIndex, 
+                         newData, PADDING_AMMOUNT + origIndex + toAdd.length, 
+                         size() - origIndex);
         
-        return new RightSizedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
       }
     }
     
@@ -970,10 +968,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         System.arraycopy(dataArray, index + 1, 
                          newData, PADDING_AMMOUNT + origIndex, 
                          size() - origIndex - 1);
-        int newDataStartIndex = PADDING_AMMOUNT;
-        int newDataEndIndex = size() - 1;
         
-        return new PaddedDataSet<T>(newData, newDataStartIndex, newDataEndIndex);
+        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
       }
     }
   }
@@ -1207,5 +1203,15 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       // TODO Auto-generated method stub
       throw new UnsupportedOperationException();
     }
+  }
+  
+  private static void sac(Object[] src, int srcPos, 
+                          Object[] dest, int destPos, 
+                          int length) {
+    System.out.println("srcL:" + src.length + ", srcP:" + srcPos + 
+                         ", dstL:" + dest.length + ", dstP:" + destPos + 
+                         ", l:" + length);
+    
+    System.arraycopy(src, srcPos, dest, destPos, length);
   }
 }
