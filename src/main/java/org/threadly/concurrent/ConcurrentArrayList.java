@@ -906,7 +906,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         newData = new Object[size() + 1 + (2 * PADDING_AMMOUNT)];
         System.arraycopy(dataArray, dataStartIndex, 
                          newData, PADDING_AMMOUNT, origIndex);
-        newData[origIndex] = element;
+        newData[PADDING_AMMOUNT + origIndex] = element;
         System.arraycopy(dataArray, dataStartIndex + origIndex, 
                          newData, PADDING_AMMOUNT + origIndex + 1, 
                          size() - origIndex);
