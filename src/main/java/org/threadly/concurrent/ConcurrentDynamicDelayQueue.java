@@ -93,7 +93,7 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
       return;
     }
 
-    synchronized (queueLock) {  // must hold queueLock to prevent queue writes in parallel
+    synchronized (queueLock) {
       int insertionIndex = ListUtils.getInsertionEndIndex(queue, e, randomAccessQueue);
       
       /* provide the option to search backwards since the item 
