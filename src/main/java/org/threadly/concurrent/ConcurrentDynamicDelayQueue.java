@@ -7,26 +7,40 @@ import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.ListUtils;
 
+/**
+ * This is a DynamicDelayQueue that is thread safe by use of the 
+ * ConcurrentArrayList.  It currently is better performing in most 
+ * cases compared to the SynchronizedDynamicDelayQueue.
+ * 
+ * @author jent - Mike Jensen
+ * @param <T> Parameter to indicate what type of item is contained in the queue
+ */
 public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDelayQueue<T> {
-  private static final Logger log = Logger.getLogger(ConcurrentDynamicDelayQueue.class.getSimpleName());
-  private static final boolean VERBOSE = false; // TODO - remove debug logging
-
   private static final int SPIN_LOCK_THRESHOLD = 5;
   
   private final boolean randomAccessQueue;
   private final VirtualLock queueLock;
   private final ConcurrentArrayList<T> queue;
-  
+
+  /**
+   * Constructs a new concurrent queue.
+   */
   public ConcurrentDynamicDelayQueue() {
     this(new NativeLock());
   }
-  
+
+  /**
+   * Constructs a queue, providing the lock that will be called 
+   * on with .await().  Thus it allows you to synchronize around
+   * the .take() and have the lock released while the thread blocks.
+   * 
+   * @param queueLock lock that is used internally
+   */
   protected ConcurrentDynamicDelayQueue(VirtualLock queueLock) {
     queue = new ConcurrentArrayList<T>(queueLock);
     randomAccessQueue = (queue instanceof RandomAccess);
@@ -78,6 +92,8 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
     synchronized (queueLock) {  // must hold queueLock to prevent queue writes in parallel
       int insertionIndex = ListUtils.getInsertionEndIndex(queue, e, randomAccessQueue);
       
+      /* provide the option to search backwards since the item 
+       * will most likely be towards the back of the queue */
       queue.reposition(insertionIndex, e, true);
       
       queueLock.signalAll();
@@ -200,10 +216,6 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
       }
     }
    
-    if (VERBOSE) {
-      log.info("Returning next item: " + next + 
-                 ", delay is: " + next.getDelay(TimeUnit.MILLISECONDS));
-    }
     return next;
   }
 
