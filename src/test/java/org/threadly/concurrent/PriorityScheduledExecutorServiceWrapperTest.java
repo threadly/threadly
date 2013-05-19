@@ -142,14 +142,14 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   }
   
   @Test
-  public void scheduleCallablCancelTest() {
+  public void scheduleCallableCancelTest() {
     TestCallable tcDelay = new TestCallable(0);
     ScheduledFuture<Object> delayF = wrapper.schedule(tcDelay, 10, TimeUnit.MILLISECONDS);
     long delay = delayF.getDelay(TimeUnit.MILLISECONDS);
     delayF.cancel(true);
     
     assertTrue(delay > 0);
-    assertTrue(delay <= 10);
+    assertTrue(delay <= 20);
     assertTrue(delayF.isCancelled());
     
     TestUtil.sleep(10); // verify it wont run after we wait past the delay
@@ -184,7 +184,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       long executionDelay = tr.getDelayTillRun(waitCount);
       assertTrue(executionDelay >= recurringDelay * waitCount);
       
-      assertTrue(executionDelay <= ((recurringDelay * waitCount) + 10));
+      assertTrue(executionDelay <= ((recurringDelay * waitCount) + 20));
       int expectedRunCount = (int)((System.currentTimeMillis() - startTime) / recurringDelay);
       assertTrue(tr.getRunCount() >= expectedRunCount && expectedRunCount <= expectedRunCount + 2);
       
