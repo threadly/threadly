@@ -29,8 +29,9 @@ public class ConcurrentArrayListDataSetTest {
     removedFromBoth = makeDataSet(dataArray, 1, dataArray.length - 1);
   }
   
-  private static <T> DataSet<T> makeDataSet(Object[] dataArray, int startPosition, int endPosition) {
-    return new DataSet<T>(dataArray, startPosition, endPosition);
+  private static <T> DataSet<T> makeDataSet(Object[] dataArray, 
+                                            int startPosition, int endPosition) {
+    return new DataSet<T>(dataArray, startPosition, endPosition, 0, 0);
   }
   
   // little unit test that was made for a very hard to find failure case

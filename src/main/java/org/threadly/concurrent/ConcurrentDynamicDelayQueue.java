@@ -22,6 +22,8 @@ import org.threadly.util.ListUtils;
  */
 public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDelayQueue<T> {
   private static final int SPIN_LOCK_THRESHOLD = 5;
+  private static final int QUEUE_FRONT_PADDING = 0;
+  private static final int QUEUE_REAR_PADDING = 0;
   
   private final boolean randomAccessQueue;
   private final VirtualLock queueLock;
@@ -42,7 +44,9 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
    * @param queueLock lock that is used internally
    */
   protected ConcurrentDynamicDelayQueue(VirtualLock queueLock) {
-    queue = new ConcurrentArrayList<T>(queueLock);
+    queue = new ConcurrentArrayList<T>(queueLock, 
+                                       QUEUE_FRONT_PADDING, 
+                                       QUEUE_REAR_PADDING);
     randomAccessQueue = (queue instanceof RandomAccess);
     this.queueLock = queueLock;
   }
