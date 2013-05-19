@@ -96,6 +96,21 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   public boolean isEmpty() {
     return currentData.size == 0;
   }
+  
+  @Override
+  public T get(int index) {
+    return currentData.get(index);
+  }
+
+  @Override
+  public int indexOf(Object o) {
+    return currentData.indexOf(o);
+  }
+
+  @Override
+  public int lastIndexOf(Object o) {
+    return currentData.lastIndexOf(o);
+  }
 
   @Override
   public boolean contains(Object o) {
@@ -103,8 +118,20 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   @Override
-  public Iterator<T> iterator() {
-    return listIterator();
+  public boolean containsAll(Collection<?> c) {
+    if (c == null || c.isEmpty()) {
+      return true;
+    }
+    
+    DataSet<T> workingSet = currentData;
+    Iterator<?> it = c.iterator();
+    while (it.hasNext()) {
+      if (workingSet.indexOf(it.next()) < 0) {
+        return false;
+      }
+    }
+    
+    return true;
   }
 
   @Override
@@ -147,26 +174,16 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   @Override
-  public boolean containsAll(Collection<?> c) {
-    if (c == null || c.isEmpty()) {
-      return true;
-    }
-    
-    DataSet<T> workingSet = currentData;
-    Iterator<?> it = c.iterator();
-    while (it.hasNext()) {
-      if (workingSet.indexOf(it.next()) < 0) {
-        return false;
-      }
-    }
-    
-    return true;
-  }
-
-  @Override
   public boolean addAll(Collection<? extends T> c) {
     if (c == null || c.isEmpty()) {
       return false;
+    }
+    
+    Iterator<? extends T> it = c.iterator();
+    while (it.hasNext()) {
+      if (it.next() == null) {
+        it.remove();
+      }
     }
 
     synchronized (modificationLock) {
@@ -180,6 +197,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   public boolean addAll(int index, Collection<? extends T> c) {
     if (c == null || c.isEmpty()) {
       return false;
+    }
+    
+    Iterator<? extends T> it = c.iterator();
+    while (it.hasNext()) {
+      if (it.next() == null) {
+        it.remove();
+      }
     }
 
     synchronized (modificationLock) {
@@ -429,11 +453,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     };
   }
-  
-  @Override
-  public T get(int index) {
-    return currentData.get(index);
-  }
 
   @Override
   public T set(int index, T element) {
@@ -481,15 +500,81 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     
     return originalSet.get(index);
   }
-
-  @Override
-  public int indexOf(Object o) {
-    return currentData.indexOf(o);
+  
+  /**
+   * Move a stored item to a new index.  By default 
+   * a forward search will happen to find the item.
+   * 
+   * @param item item to be moved
+   * @param newIndex new index for placement
+   */
+  public void reposition(T item, int newIndex) {
+    reposition(item, newIndex, false);
+  }
+  
+  /**
+   * Move a stored item to a new index.  If you have
+   * an idea if it is closer to the start or end of the list
+   * you can specify which end to start the search on.
+   * 
+   * @param item item to be moved
+   * @param newIndex new index for placement
+   * @param searchBackwards true to start from the end and search backwards
+   */
+  public void reposition(T item, int newIndex, boolean searchBackwards) {
+    synchronized (modificationLock) {
+      if (newIndex > size()) {
+        throw new IndexOutOfBoundsException(newIndex + " is beyond the array's length: " + (size() - 1));
+      }
+      
+      int index;
+      if (searchBackwards) {
+        index = lastIndexOf(item);
+      } else {
+        index = indexOf(item);
+      }
+      
+      if (index < 0) {
+        throw new RuntimeException("Could not find item: " + item);
+      }
+      
+      reposition(index, newIndex);
+    }
+  }
+  
+  /**
+   * Move a stored item located at an index to a new index.  
+   * Provide the size for newIndex to move the item to the end of 
+   * the list.  Otherwise all items after the new index will 
+   * be shifted right.
+   * 
+   * @param originalIndex index for item to be moved to.
+   * @param newIndex new index location for item.
+   */
+  public void reposition(int originalIndex, int newIndex) {
+    if (newIndex < 0) {
+      throw new IndexOutOfBoundsException("new index can not be negative");
+    } else if (originalIndex < 0) {
+      throw new IndexOutOfBoundsException("original index can not be negative");
+    }
+    
+    synchronized (modificationLock) {
+      if (newIndex > size()) {
+        throw new IndexOutOfBoundsException("new index " + newIndex + 
+                                              " is beyond the array's length: " + (size() - 1));
+      } else if (originalIndex > size()) {
+        throw new IndexOutOfBoundsException("original index " + originalIndex + 
+                                              " is beyond the array's length: " + (size() - 1));
+      }
+      
+      currentData = currentData.reposition(originalIndex, newIndex);
+    }
+    
   }
 
   @Override
-  public int lastIndexOf(Object o) {
-    return currentData.lastIndexOf(o);
+  public Iterator<T> iterator() {
+    return listIterator();
   }
 
   @Override
@@ -521,52 +606,18 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
                                       modificationLock);
   }
   
-  /**
-   * Move a stored item to a new index.  By default 
-   * a forward search will happen to find the item.
-   * 
-   * @param newIndex new index for placement
-   * @param item item to be moved
-   */
-  public void reposition(int newIndex, T item) {
-    reposition(newIndex, item, false);
-  }
-  
-  /**
-   * Move a stored item to a new index.  If you have
-   * an idea if it is closer to the start or end of the list
-   * you can specify which end to start the search on.
-   * 
-   * @param newIndex new index for placement
-   * @param item item to be moved
-   * @param searchBackwards true to start from the end and search backwards
-   */
-  public void reposition(int newIndex, T item, boolean searchBackwards) {
-    synchronized (modificationLock) {
-      if (newIndex > size()) {
-        throw new IndexOutOfBoundsException(newIndex + " is beyond the array's length: " + (size() - 1));
-      }
-      
-      int index;
-      if (searchBackwards) {
-        index = lastIndexOf(item);
-      } else {
-        index = indexOf(item);
-      }
-      
-      if (index < 0) {
-        throw new RuntimeException("Could not find item: " + item);
-      }
-      
-      currentData = currentData.reposition(index, newIndex);
-    }
-  }
-  
   @Override
   public String toString() {
     return currentData.toString();
   }
   
+  /**
+   * This is an iterator implementation that is designed to
+   * iterate over a given dataSet.  Modifiable actions will attempt
+   * to make changes to the parent class.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class DataSetListIterator implements ListIterator<T> {
     private final DataSet<T> dataSet;
     private int currentIndex;
@@ -637,6 +688,18 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
   }
   
+  /**
+   * This is designed to be an immutable version of the list.  
+   * Modifiable actions will return a new instance that is based 
+   * off this one.  Because the array may change in areas outside
+   * of the scope of this dataArray, it is expected that the
+   * modificationLock is held while any modifiable operations 
+   * are happening.
+   * 
+   * @author jent - Mike Jensen
+   * 
+   * @param <T> type of object that is held
+   */
   protected static class DataSet<T> {
     private static final int FRONT_PADDING_AMOUNT = 0;
     private static final int REAR_PADDING_AMOUNT = 0;

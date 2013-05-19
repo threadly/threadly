@@ -94,7 +94,7 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
       
       /* provide the option to search backwards since the item 
        * will most likely be towards the back of the queue */
-      queue.reposition(insertionIndex, e, true);
+      queue.reposition(e, insertionIndex, true);
       
       queueLock.signalAll();
     }
