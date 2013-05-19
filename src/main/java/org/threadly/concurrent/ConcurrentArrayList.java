@@ -39,18 +39,8 @@ import org.threadly.concurrent.lock.VirtualLock;
  * @param <T> type of object to retain
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
-  private enum DataSetType { RightSized, Padded };
-  private static final DataSetType DATA_SET_TYPE = DataSetType.Padded;
-  
-  protected static <E> DataSet<E> makeDataSet(Object[] data, int startPosition, int endPosition) {
-    switch (DATA_SET_TYPE) {
-      case RightSized:
-        return new RightSizedDataSet<E>(data, startPosition, endPosition);
-      case Padded:
-        return new PaddedDataSet<E>(data, startPosition, endPosition);
-      default:
-        throw new UnsupportedOperationException("Can not make dataset type: " + DATA_SET_TYPE);
-    }
+  protected static <E> DataSet<E> makeEmptyDataSet() {
+      return new DataSet<E>(new Object[0], 0, 0);
   }
   
   protected final VirtualLock modificationLock;
@@ -71,7 +61,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @param modificationLock lock to synchronize on internally
    */
   public ConcurrentArrayList(VirtualLock modificationLock) {
-    this(ConcurrentArrayList.<T>makeDataSet(new Object[0], 0, 0), modificationLock);
+    this(ConcurrentArrayList.<T>makeEmptyDataSet(), modificationLock);
   }
   
   protected ConcurrentArrayList(DataSet<T> startSet, VirtualLock modificationLock) {
@@ -99,12 +89,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public int size() {
-    return currentData.size();
+    return currentData.size;
   }
 
   @Override
   public boolean isEmpty() {
-    return currentData.size() == 0;
+    return currentData.size == 0;
   }
 
   @Override
@@ -236,8 +226,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public void clear() {
     synchronized (modificationLock) {
-      currentData = makeDataSet(new Object[0], 
-                                0, 0);
+      currentData = makeEmptyDataSet();
     }
   }
   
@@ -339,7 +328,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public T peekFirst() {
     DataSet<T> set = currentData;
-    if (set.size() > 0) {
+    if (set.size > 0) {
       return set.get(0);
     } else {
       return null;
@@ -349,8 +338,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public T peekLast() {
     DataSet<T> set = currentData;
-    if (set.size() > 0) {
-      return set.get(set.size() - 1);
+    if (set.size > 0) {
+      return set.get(set.size - 1);
     } else {
       return null;
     }
@@ -523,10 +512,10 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public List<T> subList(int fromIndex, int toIndex) {
     DataSet<T> workingData = currentData;
-    DataSet<T> newSet = ConcurrentArrayList.<T>makeDataSet(workingData.dataArray, 
-                                                           workingData.dataStartIndex + fromIndex, 
-                                                           workingData.dataEndIndex - 
-                                                             (workingData.dataEndIndex - toIndex));
+    DataSet<T> newSet = new DataSet<T>(workingData.dataArray, 
+                                       workingData.dataStartIndex + fromIndex, 
+                                       workingData.dataEndIndex - 
+                                         (workingData.dataEndIndex - toIndex));
     // TODO - do we want to return an unmodifiable list?
     return new ConcurrentArrayList<T>(newSet, 
                                       modificationLock);
@@ -589,7 +578,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
     @Override
     public boolean hasNext() {
-      return currentIndex + 1 < dataSet.size();
+      return currentIndex + 1 < dataSet.size;
     }
 
     @Override
@@ -648,44 +637,250 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
   }
   
-  protected static abstract class DataSet<T> {
+  protected static class DataSet<T> {
+    private static final int PADDING_AMMOUNT = 0;
+    
     protected final Object[] dataArray;
     protected final int dataStartIndex; // inclusive
     protected final int dataEndIndex;   // exclusive
+    protected final int size;
     
-    protected DataSet(Object[] dataArray, int dataStartIndex, int dataEndIndex) {
+    protected DataSet(Object[] dataArray, 
+                      int dataStartIndex, 
+                      int dataEndIndex) {
       this.dataArray = dataArray;
       this.dataStartIndex = dataStartIndex;
       this.dataEndIndex = dataEndIndex;
+      this.size = dataEndIndex - dataStartIndex;
     }
 
-    public int size() {
-      return dataEndIndex - dataStartIndex;
+    public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
+      int currentIndex = origCurrentIndex + dataStartIndex;
+      int newIndex = origNewIndex + dataStartIndex;
+      
+      if (newIndex > currentIndex) {  // move right
+        Object[] newData = new Object[size + (2 * PADDING_AMMOUNT)];
+        
+        if (newIndex == dataEndIndex) {
+          System.arraycopy(dataArray, dataStartIndex, 
+                           newData, PADDING_AMMOUNT, origCurrentIndex);
+          System.arraycopy(dataArray, currentIndex + 1, 
+                           newData, PADDING_AMMOUNT + origCurrentIndex, 
+                           size - origCurrentIndex - 1);
+        } else {
+          //work backwards
+          // shift end for placement of new item
+          System.arraycopy(dataArray, newIndex,   // write from new position to end
+                           newData, PADDING_AMMOUNT + origNewIndex, 
+                           size - origNewIndex);
+          System.arraycopy(dataArray, currentIndex + 1, // write from removed position to new position
+                           newData, PADDING_AMMOUNT + origCurrentIndex, 
+                           origNewIndex - origCurrentIndex);
+          System.arraycopy(dataArray, dataStartIndex, // write from start to removed position
+                           newData, PADDING_AMMOUNT, 
+                           origCurrentIndex);
+        }
+        
+        newData[PADDING_AMMOUNT + origNewIndex - 1] = dataArray[currentIndex];
+        
+        return new DataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else if (newIndex < currentIndex) { // move left
+        Object[] newData = new Object[size + (2 * PADDING_AMMOUNT)];
+        
+        if (newIndex == dataStartIndex) {
+          System.arraycopy(dataArray, dataStartIndex, 
+                           newData, PADDING_AMMOUNT + 1, origCurrentIndex);
+          System.arraycopy(dataArray, currentIndex + 1, 
+                           newData, PADDING_AMMOUNT + origCurrentIndex + 1, 
+                           dataEndIndex - currentIndex - 1);
+        } else {
+          System.arraycopy(dataArray, dataStartIndex,   // write from start to new position
+                           newData, PADDING_AMMOUNT, origNewIndex);
+          System.arraycopy(dataArray, newIndex,   // write from new position to current position
+                           newData, PADDING_AMMOUNT + origNewIndex + 1, 
+                           origCurrentIndex - origNewIndex);
+          if (origCurrentIndex < size - 1) {
+            System.arraycopy(dataArray, currentIndex + 1, // write from current position to end
+                             newData, PADDING_AMMOUNT + origCurrentIndex + 1, 
+                             size - origCurrentIndex - 1);
+          }
+        }
+        
+        newData[PADDING_AMMOUNT + origNewIndex] = dataArray[currentIndex];
+        
+        return new DataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else {  // equal
+        return this;
+      }
     }
-
-    public abstract T get(int index);
-
-    public abstract int indexOf(Object o);
-
-    public abstract int lastIndexOf(Object o);
     
-    public abstract DataSet<T> reposition(int origCurrentIndex, int origNewIndex);
+    private Object[] getArrayCopy(int newSize) {
+      Object[] newData = new Object[newSize + (PADDING_AMMOUNT * 2)];
 
-    public abstract DataSet<T> set(int index, T element);
+      System.arraycopy(dataArray, dataStartIndex, 
+                       newData, PADDING_AMMOUNT, Math.min(size, newSize));
+      
+      return newData;
+    }
 
-    public abstract DataSet<T> add(T e);
+    @SuppressWarnings("unchecked")
+    public T get(int index) {
+      index += dataStartIndex;
+      
+      return (T)dataArray[index];
+    }
 
-    public abstract DataSet<T> add(int origIndex, T element);
+    public int indexOf(Object o) {
+      for (int i = dataStartIndex; i < dataEndIndex; i++) {
+        if (dataArray[i].equals(o)) {
+          return i - dataStartIndex;
+        }
+      }
+      
+      return -1;
+    }
 
-    public abstract DataSet<T> addAll(Collection<? extends T> c);
+    public int lastIndexOf(Object o) {
+      for (int i = dataEndIndex - 1; i >= dataStartIndex; i--) {
+        if (dataArray[i].equals(o)) {
+          return i - dataStartIndex;
+        }
+      }
+      
+      return -1;
+    }
 
-    public abstract DataSet<T> addAll(int origIndex, Collection<? extends T> c);
+    public DataSet<T> set(int index, T element) {
+      if (index == size) {
+        return add(element);
+      } else {
+        Object[] newData = getArrayCopy(size);
+        int newDataStartIndex = PADDING_AMMOUNT;
+        int newDataEndIndex = PADDING_AMMOUNT + size;
+        newData[index + newDataStartIndex] = element;
+      
+        return new DataSet<T>(newData, newDataStartIndex, newDataEndIndex);
+      }
+    }
 
-    public abstract DataSet<T> remove(int origIndex);
+    public DataSet<T> add(T e) {
+      int index = size;
+      if (dataArray.length - 1 < index || dataArray[index] != null) {
+        Object[] newData = getArrayCopy(index + 1);
+        
+        newData[index + PADDING_AMMOUNT] = e;
+        
+        return new DataSet<T>(newData, PADDING_AMMOUNT, PADDING_AMMOUNT + index + 1);
+      } else {
+        // there is space in the current array
+        dataArray[index] = e;
+        
+        return new DataSet<T>(dataArray, dataStartIndex, dataEndIndex + 1);
+      }
+    }
 
-    public abstract DataSet<T> removeAll(Collection<?> c);
+    public DataSet<T> add(int origIndex, T element) {
+      Object[] newData;
+      if (origIndex == 0) {
+        // add to front
+        newData = new Object[size + 1 + (2 * PADDING_AMMOUNT)];
+        newData[PADDING_AMMOUNT] = element;
+        System.arraycopy(dataArray, dataStartIndex, 
+                         newData, PADDING_AMMOUNT + 1, 
+                         size);
+      } else if (origIndex == size) {
+        // add to end
+        return add(element);
+      } else {
+        newData = new Object[size + 1 + (2 * PADDING_AMMOUNT)];
+        System.arraycopy(dataArray, dataStartIndex, 
+                         newData, PADDING_AMMOUNT, origIndex);
+        newData[PADDING_AMMOUNT + origIndex] = element;
+        System.arraycopy(dataArray, dataStartIndex + origIndex, 
+                         newData, PADDING_AMMOUNT + origIndex + 1, 
+                         size - origIndex);
+      }
+      
+      return new DataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+    }
 
-    public abstract DataSet<T> retainAll(Collection<?> c);
+    public DataSet<T> addAll(Collection<? extends T> c) {
+      return addAll(size, c);
+    }
+
+    public DataSet<T> addAll(int origIndex, Collection<? extends T> c) {
+      Object[] toAdd = c.toArray();
+      if (origIndex == 0) {
+        // add to front
+        Object[] newData = new Object[size + toAdd.length + (2 * PADDING_AMMOUNT)];
+        
+        System.arraycopy(toAdd, 0, newData, PADDING_AMMOUNT, toAdd.length);
+        System.arraycopy(dataArray, dataStartIndex, newData, PADDING_AMMOUNT + toAdd.length, size);
+        
+        return new DataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else if (origIndex == size) {
+        Object[] newData = getArrayCopy(size + toAdd.length);
+        
+        System.arraycopy(toAdd, 0, newData, size + PADDING_AMMOUNT, toAdd.length);
+        
+        return new DataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      } else {
+        Object[] newData = new Object[size + toAdd.length + (2 * PADDING_AMMOUNT)];
+        
+        System.arraycopy(dataArray, dataStartIndex, 
+                         newData, PADDING_AMMOUNT, origIndex);
+        System.arraycopy(toAdd, 0, 
+                         newData, PADDING_AMMOUNT + origIndex, toAdd.length);
+        System.arraycopy(dataArray, dataStartIndex + origIndex, 
+                         newData, PADDING_AMMOUNT + origIndex + toAdd.length, 
+                         size - origIndex);
+        
+        return new DataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      }
+    }
+    
+    public DataSet<T> remove(int origIndex) {
+      int index = origIndex + dataStartIndex;
+      
+      if (index == dataStartIndex) {
+        return new DataSet<T>(dataArray, dataStartIndex + 1, dataEndIndex);
+      } else if (index == dataEndIndex - 1) {
+        return new DataSet<T>(dataArray, dataStartIndex, dataEndIndex - 1);
+      } else {
+        Object[] newData = new Object[size - 1 + (2 * PADDING_AMMOUNT)];
+        
+        System.arraycopy(dataArray, dataStartIndex, 
+                         newData, PADDING_AMMOUNT, origIndex);
+        System.arraycopy(dataArray, index + 1, 
+                         newData, PADDING_AMMOUNT + origIndex, 
+                         size - origIndex - 1);
+        
+        return new DataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
+      }
+    }
+
+    // TODO - this can be optimized
+    public DataSet<T> removeAll(Collection<?> c) {
+      DataSet<T> result = this;
+      
+      Iterator<?> it = c.iterator();
+      while (it.hasNext()) {
+        Object o = it.next();
+        int index = result.indexOf(o);
+        while (index >= 0) {
+          result = result.remove(index);
+          
+          index = result.indexOf(o);
+        }
+      }
+      
+      return result;
+    }
+
+    public DataSet<T> retainAll(Collection<?> c) {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException();
+    }
     
     @Override
     public boolean equals(Object o) {
@@ -702,11 +897,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     
     @SuppressWarnings("rawtypes")
     public boolean equalsEquivelent(DataSet ds) {
-      if (this.size() != ds.size()) {
+      if (this.size != ds.size) {
         return false;
       }
       
-      for (int i = 0; i < size(); i++) {
+      for (int i = 0; i < size; i++) {
         Object thisItem = this.get(i);
         Object thatItem = ds.get(i);
         if ((thisItem == null && thatItem != null) || 
@@ -770,448 +965,5 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       
       return result.toString();
     }
-  }
-  
-  protected static class PaddedDataSet<T> extends RightSizedDataSet<T> {
-    private static final int PADDING_AMMOUNT = 2;
-    
-    protected PaddedDataSet(Object[] dataArray, 
-                            int dataStartIndex, 
-                            int dataEndIndex) {
-      super(dataArray, dataStartIndex, dataEndIndex);
-    }
-
-    @Override
-    public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
-      int currentIndex = origCurrentIndex + dataStartIndex;
-      int newIndex = origNewIndex + dataStartIndex;
-      
-      if (newIndex > currentIndex) {  // move right
-        Object[] newData = new Object[size() + (2 * PADDING_AMMOUNT)];
-        
-        if (newIndex == dataEndIndex) {
-          System.arraycopy(dataArray, dataStartIndex, 
-                           newData, PADDING_AMMOUNT, origCurrentIndex);
-          System.arraycopy(dataArray, currentIndex + 1, 
-                           newData, PADDING_AMMOUNT + origCurrentIndex, 
-                           size() - origCurrentIndex - 1);
-        } else {
-          //work backwards
-          // shift end for placement of new item
-          System.arraycopy(dataArray, newIndex,   // write from new position to end
-                           newData, PADDING_AMMOUNT + origNewIndex, 
-                           size() - origNewIndex);
-          System.arraycopy(dataArray, currentIndex + 1, // write from removed position to new position
-                           newData, PADDING_AMMOUNT + origCurrentIndex, 
-                           origNewIndex - origCurrentIndex);
-          System.arraycopy(dataArray, dataStartIndex, // write from start to removed position
-                           newData, PADDING_AMMOUNT, 
-                           origCurrentIndex);
-        }
-        
-        newData[PADDING_AMMOUNT + origNewIndex - 1] = dataArray[currentIndex];
-        
-        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-      } else if (newIndex < currentIndex) { // move left
-        Object[] newData = new Object[size() + (2 * PADDING_AMMOUNT)];
-        
-        if (newIndex == dataStartIndex) {
-          System.arraycopy(dataArray, dataStartIndex, 
-                           newData, PADDING_AMMOUNT + 1, origCurrentIndex);
-          System.arraycopy(dataArray, currentIndex + 1, 
-                           newData, PADDING_AMMOUNT + origCurrentIndex + 1, 
-                           dataEndIndex - currentIndex - 1);
-        } else {
-          System.arraycopy(dataArray, dataStartIndex,   // write from start to new position
-                           newData, PADDING_AMMOUNT, origNewIndex);
-          System.arraycopy(dataArray, newIndex,   // write from new position to current position
-                           newData, PADDING_AMMOUNT + origNewIndex + 1, 
-                           origCurrentIndex - origNewIndex);
-          if (origCurrentIndex < size() - 1) {
-            System.arraycopy(dataArray, currentIndex + 1, // write from current position to end
-                             newData, PADDING_AMMOUNT + origCurrentIndex + 1, 
-                             size() - origCurrentIndex - 1);
-          }
-        }
-        
-        newData[PADDING_AMMOUNT + origNewIndex] = dataArray[currentIndex];
-        
-        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-      } else {  // equal
-        return this;
-      }
-    }
-    
-    private Object[] getArrayCopy(int newSize) {
-      Object[] newData = new Object[newSize + (PADDING_AMMOUNT * 2)];
-
-      System.arraycopy(dataArray, dataStartIndex, 
-                       newData, PADDING_AMMOUNT, Math.min(size(), newSize));
-      
-      return newData;
-    }
-
-    @Override
-    public DataSet<T> set(int index, T element) {
-      int newDataStartIndex;
-      int newDataEndIndex;
-      int newIndex;
-      Object[] newData;
-      if (index == size()) {
-        if (dataArray.length - 1 < index || dataArray[index] != null) {
-          newData = getArrayCopy(index + 1);
-          newDataStartIndex = PADDING_AMMOUNT;
-          newDataEndIndex = PADDING_AMMOUNT + index + 1;
-        } else {
-          newData = dataArray;  // there is space in the current array
-          newDataStartIndex = dataStartIndex;
-          newDataEndIndex = dataEndIndex + 1;
-        }
-      } else {
-        newData = getArrayCopy(size());
-        newDataStartIndex = PADDING_AMMOUNT;
-        newDataEndIndex = PADDING_AMMOUNT + size();
-      }
-      newIndex = index + newDataStartIndex;
-      //System.out.println(new PaddedDataSet<T>(newData, newDataStartIndex, newDataEndIndex) + ", " + newIndex);
-      newData[newIndex] = element;
-      //System.out.println(new PaddedDataSet<T>(newData, newDataStartIndex, newDataEndIndex));
-      
-      return new PaddedDataSet<T>(newData, newDataStartIndex, newDataEndIndex);
-    }
-
-    @Override
-    public DataSet<T> add(T e) {
-      Object[] newData = getArrayCopy(size() + 1);
-      newData[PADDING_AMMOUNT + size()] = e;
-      
-      return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-    }
-
-    @Override
-    public DataSet<T> add(int origIndex, T element) {
-      Object[] newData;
-      if (origIndex == 0) {
-        // add to front
-        newData = new Object[size() + 1 + (2 * PADDING_AMMOUNT)];
-        newData[PADDING_AMMOUNT] = element;
-        System.arraycopy(dataArray, dataStartIndex, 
-                         newData, PADDING_AMMOUNT + 1, 
-                         size());
-      } else if (origIndex == size()) {
-        // add to end
-        newData = getArrayCopy(size() + 1);
-        newData[PADDING_AMMOUNT + origIndex] = element;
-      } else {
-        newData = new Object[size() + 1 + (2 * PADDING_AMMOUNT)];
-        System.arraycopy(dataArray, dataStartIndex, 
-                         newData, PADDING_AMMOUNT, origIndex);
-        newData[PADDING_AMMOUNT + origIndex] = element;
-        System.arraycopy(dataArray, dataStartIndex + origIndex, 
-                         newData, PADDING_AMMOUNT + origIndex + 1, 
-                         size() - origIndex);
-      }
-      
-      return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-    }
-
-    @Override
-    public DataSet<T> addAll(Collection<? extends T> c) {
-      return addAll(size(), c);
-    }
-
-    @Override
-    public DataSet<T> addAll(int origIndex, Collection<? extends T> c) {
-      Object[] toAdd = c.toArray();
-      if (origIndex == 0) {
-        // add to front
-        Object[] newData = new Object[size() + toAdd.length + (2 * PADDING_AMMOUNT)];
-        
-        System.arraycopy(toAdd, 0, newData, PADDING_AMMOUNT, toAdd.length);
-        System.arraycopy(dataArray, dataStartIndex, newData, PADDING_AMMOUNT + toAdd.length, size());
-        
-        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-      } else if (origIndex == size()) {
-        Object[] newData = getArrayCopy(size() + toAdd.length);
-        
-        System.arraycopy(toAdd, 0, newData, size() + PADDING_AMMOUNT, toAdd.length);
-        
-        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-      } else {
-        Object[] newData = new Object[size() + toAdd.length + (2 * PADDING_AMMOUNT)];
-        
-        System.arraycopy(dataArray, dataStartIndex, 
-                         newData, PADDING_AMMOUNT, origIndex);
-        System.arraycopy(toAdd, 0, 
-                         newData, PADDING_AMMOUNT + origIndex, toAdd.length);
-        System.arraycopy(dataArray, dataStartIndex + origIndex, 
-                         newData, PADDING_AMMOUNT + origIndex + toAdd.length, 
-                         size() - origIndex);
-        
-        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-      }
-    }
-    
-    @Override
-    public DataSet<T> remove(int origIndex) {
-      int index = origIndex + dataStartIndex;
-      
-      if (index == dataStartIndex) {
-        return new PaddedDataSet<T>(dataArray, dataStartIndex + 1, dataEndIndex);
-      } else if (index == dataEndIndex - 1) {
-        return new PaddedDataSet<T>(dataArray, dataStartIndex, dataEndIndex - 1);
-      } else {
-        Object[] newData = new Object[size() - 1 + (2 * PADDING_AMMOUNT)];
-        
-        System.arraycopy(dataArray, dataStartIndex, 
-                         newData, PADDING_AMMOUNT, origIndex);
-        System.arraycopy(dataArray, index + 1, 
-                         newData, PADDING_AMMOUNT + origIndex, 
-                         size() - origIndex - 1);
-        
-        return new PaddedDataSet<T>(newData, PADDING_AMMOUNT, newData.length - PADDING_AMMOUNT);
-      }
-    }
-  }
-  
-  protected static class RightSizedDataSet<T> extends DataSet<T> {
-    protected RightSizedDataSet(Object[] dataArray, 
-                                int dataStartIndex, 
-                                int dataEndIndex) {
-      super(dataArray, dataStartIndex, dataEndIndex);
-    }
-
-    @Override
-    public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
-      int currentIndex = origCurrentIndex + dataStartIndex;
-      int newIndex = origNewIndex + dataStartIndex;
-      
-      if (newIndex > currentIndex) {  // move right
-        Object[] newData = new Object[size()];
-        
-        if (newIndex == dataEndIndex) {
-          System.arraycopy(dataArray, dataStartIndex, 
-                           newData, 0, origCurrentIndex);
-          System.arraycopy(dataArray, currentIndex + 1, 
-                           newData, origCurrentIndex, size() - origCurrentIndex - 1);
-        } else {
-          //work backwards
-          // shift end for placement of new item
-          System.arraycopy(dataArray, newIndex,   // write from new position to end
-                           newData, origNewIndex, 
-                           size() - origNewIndex);
-          System.arraycopy(dataArray, currentIndex + 1, // write from removed position to new position
-                           newData, origCurrentIndex, 
-                           origNewIndex - origCurrentIndex);
-          System.arraycopy(dataArray, dataStartIndex, // write from start to removed position
-                           newData, 0, 
-                           origCurrentIndex);
-        }
-        
-        newData[origNewIndex - 1] = dataArray[currentIndex];
-        
-        return new RightSizedDataSet<T>(newData, 0, newData.length);
-      } else if (newIndex < currentIndex) { // move left
-        Object[] newData = new Object[size()];
-        
-        if (newIndex == dataStartIndex) {
-          System.arraycopy(dataArray, dataStartIndex, 
-                           newData, 1, origCurrentIndex);
-          System.arraycopy(dataArray, currentIndex + 1, 
-                           newData, origCurrentIndex + 1, dataEndIndex - currentIndex - 1);
-        } else {
-          System.arraycopy(dataArray, dataStartIndex,   // write from start to new position
-                           newData, 0, origNewIndex);
-          System.arraycopy(dataArray, newIndex,   // write from new position to current position
-                           newData, origNewIndex + 1, 
-                           origCurrentIndex - origNewIndex);
-          if (origCurrentIndex < size() - 1) {
-            System.arraycopy(dataArray, currentIndex + 1, // write from current position to end
-                             newData, origCurrentIndex + 1, 
-                             size() - origCurrentIndex - 1);
-          }
-        }
-        
-        newData[origNewIndex] = dataArray[currentIndex];
-        
-        return new RightSizedDataSet<T>(newData, 0, newData.length);
-      } else {  // equal
-        return this;
-      }
-    }
-    
-    private Object[] getArrayCopy(int newSize) {
-      Object[] newData = new Object[newSize];
-
-      System.arraycopy(dataArray, dataStartIndex, 
-                       newData, 0, Math.min(size(), newSize));
-      
-      return newData;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public T get(int index) {
-      index += dataStartIndex;
-      
-      return (T)dataArray[index];
-    }
-
-    @Override
-    public int indexOf(Object o) {
-      for (int i = dataStartIndex; i < dataEndIndex; i++) {
-        if (dataArray[i].equals(o)) {
-          return i - dataStartIndex;
-        }
-      }
-      
-      return -1;
-    }
-
-    @Override
-    public int lastIndexOf(Object o) {
-      for (int i = dataEndIndex - 1; i >= dataStartIndex; i--) {
-        if (dataArray[i].equals(o)) {
-          return i - dataStartIndex;
-        }
-      }
-      
-      return -1;
-    }
-
-    @Override
-    public DataSet<T> set(int index, T element) {
-      Object[] newData;
-      if (index == size()) {
-        newData = getArrayCopy(index + 1);
-      } else {
-        newData = getArrayCopy(size());
-      }
-      newData[index] = element;
-      
-      return new RightSizedDataSet<T>(newData, 0, newData.length);
-    }
-
-    @Override
-    public DataSet<T> add(T e) {
-      Object[] newData = getArrayCopy(size() + 1);
-      newData[size()] = e;
-      
-      return new RightSizedDataSet<T>(newData, 0, newData.length);
-    }
-
-    @Override
-    public DataSet<T> add(int origIndex, T element) {
-      Object[] newData;
-      if (origIndex == 0) {
-        // add to front
-        newData = new Object[size() + 1];
-        newData[0] = element;
-        System.arraycopy(dataArray, dataStartIndex, newData, 1, size());
-      } else if (origIndex == size()) {
-        // add to end
-        newData = getArrayCopy(size() + 1);
-        newData[origIndex] = element;
-      } else {
-        newData = new Object[size() + 1];
-        System.arraycopy(dataArray, dataStartIndex, 
-                         newData, 0, origIndex);
-        newData[origIndex] = element;
-        System.arraycopy(dataArray, dataStartIndex + origIndex, 
-                         newData, origIndex + 1, size() - origIndex);
-      }
-      
-      return new RightSizedDataSet<T>(newData, 0, newData.length);
-    }
-
-    @Override
-    public DataSet<T> addAll(Collection<? extends T> c) {
-      return addAll(size(), c);
-    }
-
-    @Override
-    public DataSet<T> addAll(int origIndex, Collection<? extends T> c) {
-      Object[] toAdd = c.toArray();
-      if (origIndex == 0) {
-        // add to front
-        Object[] newData = new Object[size() + toAdd.length];
-        
-        System.arraycopy(toAdd, 0, newData, 0, toAdd.length);
-        System.arraycopy(dataArray, dataStartIndex, newData, toAdd.length, size());
-        
-        return new RightSizedDataSet<T>(newData, 0, newData.length);
-      } else if (origIndex == size()) {
-        Object[] newData = getArrayCopy(size() + toAdd.length);
-        System.arraycopy(toAdd, 0, newData, size(), toAdd.length);
-        
-        return new RightSizedDataSet<T>(newData, 0, newData.length);
-      } else {
-        Object[] newData = new Object[size() + toAdd.length];
-        
-        System.arraycopy(dataArray, dataStartIndex, 
-                         newData, 0, origIndex);
-        System.arraycopy(toAdd, 0, 
-                         newData, origIndex, toAdd.length);
-        System.arraycopy(dataArray, dataStartIndex + origIndex, 
-                         newData, origIndex + toAdd.length, size() - origIndex);
-        
-        return new RightSizedDataSet<T>(newData, 0, newData.length);
-      }
-    }
-    
-    @Override
-    public DataSet<T> remove(int origIndex) {
-      int index = origIndex + dataStartIndex;
-      
-      if (index == dataStartIndex) {
-        return new RightSizedDataSet<T>(dataArray, dataStartIndex + 1, dataEndIndex);
-      } else if (index == dataEndIndex - 1) {
-        return  new RightSizedDataSet<T>(dataArray, dataStartIndex, dataEndIndex - 1);
-      } else {
-        Object[] newData = new Object[size() - 1];
-        
-        System.arraycopy(dataArray, dataStartIndex, 
-                         newData, 0, origIndex);
-        System.arraycopy(dataArray, index + 1, 
-                         newData, origIndex, size() - origIndex - 1);
-        
-        return new RightSizedDataSet<T>(newData, 0, newData.length);
-      }
-    }
-
-    // TODO - this can be optimized
-    @Override
-    public DataSet<T> removeAll(Collection<?> c) {
-      DataSet<T> result = this;
-      
-      Iterator<?> it = c.iterator();
-      while (it.hasNext()) {
-        Object o = it.next();
-        int index = result.indexOf(o);
-        while (index >= 0) {
-          result = result.remove(index);
-          
-          index = result.indexOf(o);
-        }
-      }
-      
-      return result;
-    }
-
-    @Override
-    public DataSet<T> retainAll(Collection<?> c) {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException();
-    }
-  }
-  
-  private static void sac(Object[] src, int srcPos, 
-                          Object[] dest, int destPos, 
-                          int length) {
-    System.out.println("srcL:" + src.length + ", srcP:" + srcPos + 
-                         ", dstL:" + dest.length + ", dstP:" + destPos + 
-                         ", l:" + length);
-    
-    System.arraycopy(src, srcPos, dest, destPos, length);
   }
 }
