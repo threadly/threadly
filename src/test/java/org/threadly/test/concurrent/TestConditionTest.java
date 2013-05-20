@@ -19,7 +19,7 @@ public class TestConditionTest {
     long endTime = System.currentTimeMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
-    assertTrue(endTime - startTime <= DELAY_TIME + (pollInterval * 2));
+    assertTrue(endTime - startTime <= DELAY_TIME + (pollInterval * 5));
     
     startTime = System.currentTimeMillis();
     dc.blockTillTrue(); // should return immediately
