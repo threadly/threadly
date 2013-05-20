@@ -225,7 +225,7 @@ public class PriorityScheduledExecutorTest {
         long executionDelay = tr.getDelayTillFirstRun();
         assertTrue(executionDelay >= scheduleDelay);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (scheduleDelay + 100));  
+        assertTrue(executionDelay <= (scheduleDelay + 200));  
         assertEquals(tr.getRunCount(), 1);
       }
     } finally {
