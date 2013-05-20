@@ -147,7 +147,6 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     long delay = delayF.getDelay(TimeUnit.MILLISECONDS);
     delayF.cancel(true);
     
-    assertTrue(delay > 0);
     assertTrue(delay <= 20);
     assertTrue(delayF.isCancelled());
     
