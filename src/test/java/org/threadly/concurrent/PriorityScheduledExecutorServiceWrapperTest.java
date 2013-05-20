@@ -180,14 +180,16 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     while (it.hasNext()) {
       // verify runnable
       TestRunnable tr = it.next();
+      
       tr.blockTillRun(runnableCount * recurringDelay + 200, waitCount);
       long executionDelay = tr.getDelayTillRun(waitCount);
       assertTrue(executionDelay >= recurringDelay * waitCount);
       
       assertTrue(executionDelay <= ((recurringDelay * waitCount) + 50));
       int expectedRunCount = (int)((System.currentTimeMillis() - startTime) / recurringDelay);
-      assertTrue(tr.getRunCount() >= expectedRunCount && expectedRunCount <= expectedRunCount + 2);
-      
+      assertTrue(tr.getRunCount() >= expectedRunCount - 1);
+      assertTrue(tr.getRunCount() <= expectedRunCount + 1);
+
       // verify future
       ScheduledFuture<?> sf = fIt.next();
       assertTrue(sf.isDone());
