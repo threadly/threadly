@@ -274,13 +274,14 @@ public class PriorityScheduledExecutorTest {
       Iterator<TestRunnable> it = runnables.iterator();
       while (it.hasNext()) {
         TestRunnable tr = it.next();
-        tr.blockTillRun(runnableCount * recurringDelay + 200, 2);
+        tr.blockTillRun(runnableCount * recurringDelay + 500, 2);
         long executionDelay = tr.getDelayTillRun(2);
         assertTrue(executionDelay >= recurringDelay);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (recurringDelay + 100));
+        assertTrue(executionDelay <= (recurringDelay + 500));
         int expectedRunCount = (int)((System.currentTimeMillis() - startTime) / recurringDelay);
-        assertTrue(tr.getRunCount() >= expectedRunCount && tr.getRunCount() <= expectedRunCount + 2);
+        assertTrue(tr.getRunCount() >= expectedRunCount - 2);
+        assertTrue(tr.getRunCount() <= expectedRunCount + 2);
       }
     } finally {
       scheduler.shutdown();
