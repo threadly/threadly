@@ -185,6 +185,7 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
           long startDelay = nextDelay;
           while ((next = queue.peek()) != null && 
                  (nextDelay = next.getDelay(TimeUnit.MILLISECONDS)) > 0 && 
+                 nextDelay <= SPIN_LOCK_THRESHOLD &&  // in case next changes while spinning
                  (nextDelay != startDelay || 
                     Clock.accurateTime() < startTime + SPIN_LOCK_THRESHOLD)) {
             // spin
