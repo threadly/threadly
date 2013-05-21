@@ -6,6 +6,9 @@ apply plugin: 'checkstyle'
 group 'org.threadly'
 version = '0.3-SNAPSHOT'
 
+sourceCompatibility = 1.5
+targetCompatibility = 1.5
+
 repositories {
     mavenCentral()
 }
