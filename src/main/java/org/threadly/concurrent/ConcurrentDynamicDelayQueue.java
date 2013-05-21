@@ -159,7 +159,7 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
     }
   }
   
-  protected T blockTillAvailable() throws InterruptedException {
+  protected T blockTillAvailable(boolean allowSpin) throws InterruptedException {
     while (true) { // will break out when ready
       T next = queue.peek();
       if (next == null) {
@@ -172,7 +172,7 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
       
       long nextDelay = next.getDelay(TimeUnit.MILLISECONDS);
       if (nextDelay > 0) {
-        if (nextDelay > SPIN_LOCK_THRESHOLD) {
+        if (nextDelay > SPIN_LOCK_THRESHOLD || ! allowSpin) {
           synchronized (queueLock) {
             if (queue.peek() == next) {
               queueLock.await(nextDelay);
@@ -182,12 +182,10 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
           }
         } else {
           long startTime = Clock.accurateTime();
-          long startDelay = nextDelay;
           while ((next = queue.peek()) != null && 
                  (nextDelay = next.getDelay(TimeUnit.MILLISECONDS)) > 0 && 
                  nextDelay <= SPIN_LOCK_THRESHOLD &&  // in case next changes while spinning
-                 (nextDelay != startDelay || 
-                    Clock.accurateTime() < startTime + SPIN_LOCK_THRESHOLD)) {
+                 Clock.accurateTime() - startTime < SPIN_LOCK_THRESHOLD * 2) {
             // spin
           }
           if (nextDelay <= 0) {
@@ -213,12 +211,12 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
 
   @Override
   public T take() throws InterruptedException {
-    T next = blockTillAvailable();
+    T next = blockTillAvailable(true);
     synchronized (queueLock) {
       if (next == queue.peek()) {
         queue.remove(0);
       } else {
-        next = blockTillAvailable();
+        next = blockTillAvailable(false);
         queue.remove(0);
       }
     }
@@ -284,7 +282,7 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
       throw new IllegalStateException("Must have lock in order to get iterator");
     }
     
-    blockTillAvailable();
+    blockTillAvailable(true);
     
     return new ConsumerIterator<T>() {
       private T next = null;
