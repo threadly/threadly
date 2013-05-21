@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+
 /**
  * A thread safe list implementation with an array back end.  Make sure
  * to read the java docs carefully, as many functions behave subtly different

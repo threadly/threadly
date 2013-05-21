@@ -18,12 +18,13 @@ import org.threadly.util.ListUtils;
  * cases compared to the SynchronizedDynamicDelayQueue.
  * 
  * @author jent - Mike Jensen
+ * 
  * @param <T> Parameter to indicate what type of item is contained in the queue
  */
 public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDelayQueue<T> {
   private static final int SPIN_LOCK_THRESHOLD = 5;
   private static final int QUEUE_FRONT_PADDING = 0;
-  private static final int QUEUE_REAR_PADDING = 0;
+  private static final int QUEUE_REAR_PADDING = 1;
   
   private final boolean randomAccessQueue;
   private final VirtualLock queueLock;
