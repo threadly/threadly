@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
@@ -180,12 +181,12 @@ public class ConcurrentDynamicDelayQueue<T extends Delayed> implements DynamicDe
             }
           }
         } else {
-          long startTime = ClockWrapper.getAccurateTime();
+          long startTime = Clock.accurateTime();
           long startDelay = nextDelay;
           while ((next = queue.peek()) != null && 
                  (nextDelay = next.getDelay(TimeUnit.MILLISECONDS)) > 0 && 
                  (nextDelay != startDelay || 
-                    ClockWrapper.getAccurateTime() < startTime + SPIN_LOCK_THRESHOLD)) {
+                    Clock.accurateTime() < startTime + SPIN_LOCK_THRESHOLD)) {
             // spin
           }
           if (nextDelay <= 0) {
