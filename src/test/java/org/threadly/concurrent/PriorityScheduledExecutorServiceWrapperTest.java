@@ -67,16 +67,16 @@ public class PriorityScheduledExecutorServiceWrapperTest {
         Thread.sleep(sleepTime);
       }
     };
+    long start = System.currentTimeMillis();
     wrapper.execute(tr);
     
     TestUtil.sleep(10);
     wrapper.shutdown();
 
-    long start = System.currentTimeMillis();
     wrapper.awaitTermination(1000, TimeUnit.MILLISECONDS);
     long stop = System.currentTimeMillis();
     
-    assertTrue(stop - start >= sleepTime - 10 - 10);
+    assertTrue(stop - start >= sleepTime - 10);
   }
   
   @Test
