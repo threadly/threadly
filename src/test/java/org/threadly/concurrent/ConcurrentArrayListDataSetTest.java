@@ -608,42 +608,42 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addNormalTest() {
-    DataSet<Integer> result = orderedNormal.add(100);
+    DataSet<Integer> result = orderedNormal.addToEnd(100);
     Integer[] expectedResult = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 100 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
   }
   
   @Test
   public void addFrontRemovedTest() {
-    DataSet<Integer> result = removedFromFront.add(100);
+    DataSet<Integer> result = removedFromFront.addToEnd(100);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 100 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
   }
   
   @Test
   public void addFront2RemovedTest() {
-    DataSet<Integer> result = removed2FromFront.add(100);
+    DataSet<Integer> result = removed2FromFront.addToEnd(100);
     Integer[] expectedResult = new Integer[]{ 2, 3, 4, 5, 6, 7, 8, 9, 100 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
   }
   
   @Test
   public void addEndRemovedTest() {
-    DataSet<Integer> result = removedFromEnd.add(100);
+    DataSet<Integer> result = removedFromEnd.addToEnd(100);
     Integer[] expectedResult = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 100 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
   }
   
   @Test
   public void addEnd2RemovedTest() {
-    DataSet<Integer> result = removed2FromEnd.add(100);
+    DataSet<Integer> result = removed2FromEnd.addToEnd(100);
     Integer[] expectedResult = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 100 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
   }
   
   @Test
   public void addBothRemovedTest() {
-    DataSet<Integer> result = removedFromBoth.add(100);
+    DataSet<Integer> result = removedFromBoth.addToEnd(100);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 5, 6, 7, 8, 100 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
   }
