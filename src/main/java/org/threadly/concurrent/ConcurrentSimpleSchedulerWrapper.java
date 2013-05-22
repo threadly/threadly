@@ -35,17 +35,35 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   
   @Override
   public void execute(Runnable command) {
+    if (command == null) {
+      throw new IllegalArgumentException("Runnable can not be null");
+    }
+    
     scheduler.execute(command);
   }
 
   @Override
   public void schedule(Runnable task, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Runnable can not be null");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    
     scheduler.schedule(task, delayInMs, TimeUnit.MILLISECONDS);
   }
 
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
+    if (task == null) {
+      throw new IllegalArgumentException("Runnable can not be null");
+    } else if (initialDelay < 0) {
+      throw new IllegalArgumentException("initialDelay must be >= 0");
+    } else if (recurringDelay < 0) {
+      throw new IllegalArgumentException("recurringDelay must be >= 0");
+    }
+    
     scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
                                      TimeUnit.MILLISECONDS);
   }

@@ -9,7 +9,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
-import org.threadly.concurrent.PrioritySchedulerInterfaceTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtil;
 import org.threadly.util.Clock;
@@ -158,7 +158,7 @@ public class PriorityScheduledExecutorTest {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      PrioritySchedulerInterfaceTest.executionTest(sf);
+      SimpleSchedulerInterfaceTest.executionTest(sf);
     } finally {
       sf.shutdown();
     }
@@ -169,7 +169,7 @@ public class PriorityScheduledExecutorTest {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      PrioritySchedulerInterfaceTest.executeTestFail(sf);
+      SimpleSchedulerInterfaceTest.executeTestFail(sf);
     } finally {
       sf.shutdown();
     }
@@ -180,7 +180,7 @@ public class PriorityScheduledExecutorTest {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      PrioritySchedulerInterfaceTest.scheduleExecutionTest(sf);
+      SimpleSchedulerInterfaceTest.scheduleExecutionTest(sf);
     } finally {
       sf.shutdown();
     }
@@ -191,7 +191,7 @@ public class PriorityScheduledExecutorTest {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      PrioritySchedulerInterfaceTest.scheduleExecutionFail(sf);
+      SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
     } finally {
       sf.shutdown();
     }
@@ -202,7 +202,7 @@ public class PriorityScheduledExecutorTest {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      PrioritySchedulerInterfaceTest.recurringExecutionTest(sf);
+      SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
     } finally {
       sf.shutdown();
     }
@@ -213,7 +213,7 @@ public class PriorityScheduledExecutorTest {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      PrioritySchedulerInterfaceTest.recurringExecutionFail(sf);
+      SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
     } finally {
       sf.shutdown();
     }
@@ -342,18 +342,12 @@ public class PriorityScheduledExecutorTest {
     }
     
     @Override
-    public PrioritySchedulerInterface make(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs) {
-      return new PriorityScheduledExecutor(corePoolSize, maxPoolSize, keepAliveTimeInMs);
-    }
-
-    @Override
-    public PrioritySchedulerInterface make(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs,
-                                           TaskPriority defaultPriority,
-                                           long maxWaitForLowPriorityInMs) {
-      return new PriorityScheduledExecutor(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-                                           defaultPriority, maxWaitForLowPriorityInMs);
+    public SimpleSchedulerInterface make(int poolSize) {
+      PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
+                                                                       1000);
+      executors.add(result);
+      
+      return result;
     }
     
     private void shutdown() {

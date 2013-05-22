@@ -9,11 +9,11 @@ import java.util.List;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class PrioritySchedulerInterfaceTest {
+public class SimpleSchedulerInterfaceTest {
   public static void executionTest(PrioritySchedulerFactory factory) {
     int runnableCount = 10;
     
-    PrioritySchedulerInterface scheduler = factory.make(runnableCount, runnableCount, 1000);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
@@ -48,7 +48,7 @@ public class PrioritySchedulerInterfaceTest {
   }
   
   public static void executeTestFail(PrioritySchedulerFactory factory) {
-    PrioritySchedulerInterface scheduler = factory.make(1, 1, 1000);
+    SimpleSchedulerInterface scheduler = factory.make(1);
     
     scheduler.execute(null);
   }
@@ -57,7 +57,7 @@ public class PrioritySchedulerInterfaceTest {
     int runnableCount = 10;
     int scheduleDelay = 50;
     
-    PrioritySchedulerInterface scheduler = factory.make(runnableCount, runnableCount, 1000);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
@@ -79,7 +79,7 @@ public class PrioritySchedulerInterfaceTest {
   }
   
   public static void scheduleExecutionFail(PrioritySchedulerFactory factory) {
-    PrioritySchedulerInterface scheduler = factory.make(1, 1, 1000);
+    SimpleSchedulerInterface scheduler = factory.make(1);
     try {
       scheduler.schedule(null, 1000);
       fail("Exception should have been thrown");
@@ -98,7 +98,7 @@ public class PrioritySchedulerInterfaceTest {
     int runnableCount = 10;
     int recurringDelay = 50;
     
-    PrioritySchedulerInterface scheduler = factory.make(runnableCount, runnableCount, 1000);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
 
     long startTime = System.currentTimeMillis();
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
@@ -124,7 +124,7 @@ public class PrioritySchedulerInterfaceTest {
   }
   
   public static void recurringExecutionFail(PrioritySchedulerFactory factory) {
-    PrioritySchedulerInterface scheduler = factory.make(1, 1, 1000);
+    SimpleSchedulerInterface scheduler = factory.make(1);
     try {
       scheduler.scheduleWithFixedDelay(null, 1000, 1000);
       fail("Exception should have been thrown");
@@ -146,11 +146,6 @@ public class PrioritySchedulerInterfaceTest {
   }
   
   public interface PrioritySchedulerFactory {
-    public PrioritySchedulerInterface make(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs);
-    
-    public PrioritySchedulerInterface make(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                           long maxWaitForLowPriorityInMs);
+    public SimpleSchedulerInterface make(int poolSize);
   }
 }
