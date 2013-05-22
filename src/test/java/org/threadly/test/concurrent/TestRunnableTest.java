@@ -48,6 +48,9 @@ public class TestRunnableTest {
     TestUtil.blockTillClockAdvances();
     
     ttr.run();
+    
+    TestUtil.blockTillClockAdvances();
+    
     long now = System.currentTimeMillis();
     assertTrue(ttr.getDelayTillRun(2) <= now - start);
     assertTrue(ttr.getDelayTillRun(2) > ttr.getDelayTillFirstRun());
