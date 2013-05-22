@@ -12,13 +12,17 @@ public class NativeLockTest {
   public void awaitTimeoutTest() {
     final long waitTimeInMs = 10;
     
-    long start = System.currentTimeMillis();
-    try {
-      lock.await(waitTimeInMs);
-    } catch (InterruptedException e) {
-      fail("Exception: " + e);
+    long start;
+    long resume;
+    synchronized (lock) {
+      start = System.currentTimeMillis();
+      try {
+        lock.await(waitTimeInMs);
+      } catch (InterruptedException e) {
+        fail("Exception: " + e);
+      }
+      resume = System.currentTimeMillis();
     }
-    long resume = System.currentTimeMillis();
     
     assertTrue(resume - start >= waitTimeInMs);
     assertTrue(resume - start < waitTimeInMs + 50);
@@ -27,10 +31,14 @@ public class NativeLockTest {
   @Test
   public void awaitUninterruptiblyTimeoutTest() {
     final long waitTimeInMs = 10;
-    
-    long start = System.currentTimeMillis();
-    lock.awaitUninterruptibly(waitTimeInMs);
-    long resume = System.currentTimeMillis();
+
+    long start;
+    long resume;
+    synchronized (lock) {
+      start = System.currentTimeMillis();
+      lock.awaitUninterruptibly(waitTimeInMs);
+      resume = System.currentTimeMillis();
+    }
     
     assertTrue(resume - start >= waitTimeInMs);
     assertTrue(resume - start < waitTimeInMs + 50);
