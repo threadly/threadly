@@ -1,24 +1,33 @@
 package org.threadly.concurrent;
 
+import static org.junit.Assert.*;
+
 import java.security.SecureRandom;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
-
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.threadly.concurrent.DynamicDelayQueue.ConsumerIterator;
 
 @SuppressWarnings("javadoc")
 public class DynamicDelayQueueTest {
   private static final int TEST_QTY = 10;
   
-  public static void testSize(DynamicDelayQueue<TestDelayed> testQueue) {
-    for (int i = 0; i < TEST_QTY; i++) {
-      testQueue.add(new TestDelayed(i));
-      assertEquals(i+1, testQueue.size());
-    }
+  private DynamicDelayQueue<TestDelayed> testQueue;
+  
+  @Before
+  public void setup() {
+    testQueue = new DynamicDelayQueue<TestDelayed>();
+  }
+  
+  @After
+  public void teardown() {
+    testQueue = null;
   }
   
   private static void populatePositive(DynamicDelayQueue<TestDelayed> testQueue) {
@@ -40,7 +49,29 @@ public class DynamicDelayQueueTest {
     }
   }
   
-  public static void testIterator(DynamicDelayQueue<TestDelayed> testQueue) {
+  private static void verifyQueueOrder(DynamicDelayQueue<TestDelayed> testQueue) {
+    synchronized (testQueue.getLock()) {
+      long lastDelay = Long.MIN_VALUE;
+      Iterator<TestDelayed> it = testQueue.iterator();
+      while (it.hasNext()) {
+        TestDelayed td = it.next();
+        long delay = td.getDelay(TimeUnit.MILLISECONDS);
+        assertTrue(delay >= lastDelay);
+        lastDelay = delay;
+      }
+    }
+  }
+  
+  @Test
+  public void testSize() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      testQueue.add(new TestDelayed(i));
+      assertEquals(i+1, testQueue.size());
+    }
+  }
+  
+  @Test
+  public void testIterator() {
     synchronized (testQueue.getLock()) {
       populatePositive(testQueue);
       
@@ -59,7 +90,8 @@ public class DynamicDelayQueueTest {
     }
   }
   
-  public static void testConsumerIterator(DynamicDelayQueue<TestDelayed> testQueue) throws InterruptedException {
+  @Test
+  public void testConsumerIterator() throws InterruptedException {
     synchronized (testQueue.getLock()) {
       populateNegative(testQueue);
       
@@ -75,21 +107,9 @@ public class DynamicDelayQueueTest {
       assertEquals(removed, TEST_QTY);
     }
   }
-  
-  private static void verifyQueueOrder(DynamicDelayQueue<TestDelayed> testQueue) {
-    synchronized (testQueue.getLock()) {
-      long lastDelay = Long.MIN_VALUE;
-      Iterator<TestDelayed> it = testQueue.iterator();
-      while (it.hasNext()) {
-        TestDelayed td = it.next();
-        long delay = td.getDelay(TimeUnit.MILLISECONDS);
-        assertTrue(delay >= lastDelay);
-        lastDelay = delay;
-      }
-    }
-  }
-  
-  public static void testSort(DynamicDelayQueue<TestDelayed> testQueue) {
+   
+  @Test
+  public void testSort() {
     populateRandom(testQueue);
     verifyQueueOrder(testQueue);
     // add unsorted data
@@ -103,14 +123,16 @@ public class DynamicDelayQueueTest {
     verifyQueueOrder(testQueue);
   }
   
-  public static void testClear(DynamicDelayQueue<TestDelayed> testQueue) {
+  @Test
+  public void testClear() {
     populatePositive(testQueue);
     assertEquals(TEST_QTY, testQueue.size());
     testQueue.clear();
     assertEquals(0, testQueue.size());
   }
-  
-  public static void testPeek(DynamicDelayQueue<TestDelayed> testQueue){
+     
+  @Test
+  public void testPeek() {
     TestDelayed item = new TestDelayed(100);
     testQueue.add(item);
     assertTrue(testQueue.peek() == null); // assert peek in future is null
@@ -122,7 +144,8 @@ public class DynamicDelayQueueTest {
     }
   }
   
-  public static void testPoll(DynamicDelayQueue<TestDelayed> testQueue) {
+  @Test
+  public void testPoll() {
     populateRandom(testQueue);
     
     TestDelayed prev = testQueue.poll();
@@ -133,12 +156,15 @@ public class DynamicDelayQueueTest {
     }
   }
   
-  public static void testRemoveFail(DynamicDelayQueue<TestDelayed> testQueue) {
+  @Test (expected = NoSuchElementException.class)
+  public void testRemoveFail() {
     testQueue.remove();
+    
     fail("Exception should have been thrown");
   }
   
-  public static void testIteratorNextFail(DynamicDelayQueue<TestDelayed> testQueue) {
+  @Test (expected = NoSuchElementException.class)
+  public void testIteratorNextFail() {
     populatePositive(testQueue);
     synchronized (testQueue.getLock()) {
       Iterator<TestDelayed> it = testQueue.iterator();
@@ -146,10 +172,12 @@ public class DynamicDelayQueueTest {
         it.next();
       }
     }
+    
     fail("Exception should have been thrown");
   }
-  
-  public static void testIteratorRemoveFail(DynamicDelayQueue<TestDelayed> testQueue) {
+   
+   @Test (expected = IllegalStateException.class)
+   public void testIteratorRemoveFail() {
     boolean thrown = false;
     Iterator<TestDelayed> it = testQueue.iterator();
     try {
@@ -169,9 +197,10 @@ public class DynamicDelayQueueTest {
     it.remove();
     
     fail("Exception should have been thrown");
-  }
-  
-  public static void testConsumerIteratorFail(DynamicDelayQueue<TestDelayed> testQueue) throws InterruptedException {
+   }
+   
+   @Test (expected = NoSuchElementException.class)
+   public void testConsumerIteratorFail() throws InterruptedException {
     synchronized (testQueue.getLock()) {
       populateNegative(testQueue);
       
@@ -184,7 +213,7 @@ public class DynamicDelayQueueTest {
       
       fail("Exception should have been thrown");
     }
-  }
+   }
   
   protected static class TestDelayed implements Delayed {
     private final long delayInMs;
