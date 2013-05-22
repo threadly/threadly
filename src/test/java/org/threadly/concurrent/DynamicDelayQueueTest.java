@@ -135,7 +135,7 @@ public class DynamicDelayQueueTest {
   public void testPeek() {
     TestDelayed item = new TestDelayed(100);
     testQueue.add(item);
-    assertTrue(testQueue.peek() == null); // assert peek in future is null
+    assertNull(testQueue.peek()); // assert peek in future is null
     
     for (int i = 0; i < TEST_QTY; i++) {
       item = new TestDelayed(i * - 1);

@@ -32,7 +32,7 @@ public class TestableLockFactoryTest {
     
     VirtualLock testResult = tlf.makeLock();
     
-    assertTrue(testResult != null);
+    assertNotNull(testResult);
     assertTrue(testResult instanceof TestableLock);
   }
 }

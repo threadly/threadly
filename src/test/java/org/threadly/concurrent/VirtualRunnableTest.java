@@ -14,9 +14,9 @@ public class VirtualRunnableTest {
     TestLockFactory tlf = new TestLockFactory();
     TestRunnable tr = new TestRunnable();
     
-    assertEquals(tr.factory, null); // null before run
+    assertNull(tr.factory); // null before run
     tr.run(tlf);
-    assertEquals(tr.factory, null); // null after run
+    assertNull(tr.factory); // null after run
     
     assertTrue(tr.runCalled);
     assertEquals(tr.returnedLock, tlf);

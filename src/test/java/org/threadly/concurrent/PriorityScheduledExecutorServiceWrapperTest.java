@@ -135,7 +135,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     TestRunnable tc = new TestRunnable();
     ScheduledFuture<?> f = wrapper.schedule(tc, 0, TimeUnit.MILLISECONDS);
     assertTrue(f.getDelay(TimeUnit.MILLISECONDS) <= 0);
-    assertTrue(f.get() == null);
+    assertNull(f.get());
     
     assertTrue(f.isDone());
   }

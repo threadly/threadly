@@ -11,7 +11,7 @@ public class NativeLockFactoryTest {
     NativeLockFactory nlf = new NativeLockFactory();
     VirtualLock lock = nlf.makeLock();
     
-    assertTrue(lock != null);
+    assertNotNull(lock);
     assertTrue(lock instanceof NativeLock);
   }
 }

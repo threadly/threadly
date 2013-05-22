@@ -291,12 +291,12 @@ public class TestablePrioritySchedulerTest {
     // should be returned in name order
     assertEquals(testScheduler.getNextTask(), first);
     assertEquals(testScheduler.taskQueue.size(), 2);
-    assertEquals(testScheduler.getNextTask(), null);
+    assertNull(testScheduler.getNextTask());
     assertEquals(testScheduler.taskQueue.size(), 2);
     testScheduler.updateTime(now += secondDelay);
     assertEquals(testScheduler.getNextTask(), second);
     assertEquals(testScheduler.taskQueue.size(), 1);
-    assertEquals(testScheduler.getNextTask(), null);
+    assertNull(testScheduler.getNextTask());
     assertEquals(testScheduler.taskQueue.size(), 1);
     testScheduler.updateTime(now += thirdDelay);
     assertEquals(testScheduler.getNextTask(), third);
