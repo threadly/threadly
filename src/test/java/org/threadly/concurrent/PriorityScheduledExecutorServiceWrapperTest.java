@@ -131,6 +131,16 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   }
   
   @Test
+  public void scheduleRunnableTest() throws InterruptedException, ExecutionException {
+    TestRunnable tc = new TestRunnable();
+    ScheduledFuture<?> f = wrapper.schedule(tc, 0, TimeUnit.MILLISECONDS);
+    assertTrue(f.getDelay(TimeUnit.MILLISECONDS) <= 0);
+    assertTrue(f.get() == null);
+    
+    assertTrue(f.isDone());
+  }
+  
+  @Test
   public void scheduleCallableTest() throws InterruptedException, ExecutionException {
     TestCallable tc = new TestCallable(0);
     ScheduledFuture<Object> f = wrapper.schedule(tc, 0, TimeUnit.MILLISECONDS);
@@ -191,6 +201,31 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       // verify future
       ScheduledFuture<?> sf = fIt.next();
       assertTrue(sf.isDone());
+    }
+  }
+  
+  @Test
+  public void scheduleWithFixedDelayFail() {
+    try {
+      wrapper.scheduleWithFixedDelay(null, 0, 10, 
+                                     TimeUnit.MILLISECONDS);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      wrapper.scheduleWithFixedDelay(new TestRunnable(), -100, 10, 
+                                     TimeUnit.MILLISECONDS);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      wrapper.scheduleWithFixedDelay(new TestRunnable(), 100, -10, 
+                                     TimeUnit.MILLISECONDS);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
     }
   }
   
