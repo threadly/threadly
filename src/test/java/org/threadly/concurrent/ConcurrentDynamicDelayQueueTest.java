@@ -8,12 +8,12 @@ import org.junit.Test;
 import org.threadly.concurrent.DynamicDelayQueueTest.TestDelayed;
 
 @SuppressWarnings("javadoc")
-public class SynchronizedDynamicDelayQueueTest {
+public class ConcurrentDynamicDelayQueueTest {
   private DynamicDelayQueue<TestDelayed> testQueue;
   
   @Before
   public void setup() {
-    testQueue = new SynchronizedDynamicDelayQueue<TestDelayed>();
+    testQueue = new ConcurrentDynamicDelayQueue<TestDelayed>();
   }
   
   @After

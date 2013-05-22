@@ -187,6 +187,10 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   
   @Override
   public T get(int index) {
+    if (index < 0 || index >= size()) {
+      throw new IndexOutOfBoundsException();
+    }
+    
     return currentData.get(index);
   }
 
@@ -224,10 +228,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public Object[] toArray() {
-    Object[] toCopyArray = currentData.dataArray;
-    Object[] resultArray = new Object[toCopyArray.length];
-    System.arraycopy(toCopyArray, 0, resultArray, 0, resultArray.length);
-    
+    DataSet<T> workingSet = currentData;
+    Object[] resultArray = new Object[workingSet.size];
+    System.arraycopy(workingSet.dataArray, workingSet.dataStartIndex, 
+                     resultArray, 0, resultArray.length);
+
     return resultArray;
   }
 
@@ -680,7 +685,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public ListIterator<T> listIterator() {
-    return listIterator(0);
+    return listIterator(-1);
   }
 
   @Override
@@ -722,7 +727,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @author jent - Mike Jensen
    */
   protected class DataSetListIterator implements ListIterator<T> {
-    private final DataSet<T> dataSet;
+    private DataSet<T> dataSet;
     private int currentIndex;
 
     public DataSetListIterator(DataSet<T> dataSet, int index) {
@@ -738,6 +743,10 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     @Override
     public T next() {
       currentIndex++;
+
+      if (currentIndex < 0 || currentIndex >= dataSet.size) {
+        throw new NoSuchElementException();
+      }
       
       return dataSet.get(currentIndex);
     }
@@ -766,16 +775,33 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
     @Override
     public void remove() {
-      // you can not cause concurrent modification exceptions with this implementation
-      ConcurrentArrayList.this.remove(dataSet.get(currentIndex));
+      synchronized (modificationLock) {
+        // you can not cause concurrent modification exceptions with this implementation
+        if (currentData == dataSet) {
+          ConcurrentArrayList.this.remove(currentIndex);
+          
+          dataSet = currentData;
+          currentIndex--;
+        } else {
+          int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(currentIndex));
+          if (globalIndex >= 0) {
+            ConcurrentArrayList.this.remove(globalIndex);
+          }
+        }
+      }
     }
 
     @Override
     public void set(T e) {
       synchronized (modificationLock) {
-        int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(currentIndex));
-        if (globalIndex >= 0) {
-          ConcurrentArrayList.this.set(globalIndex, e);
+        if (currentData == dataSet) {
+          ConcurrentArrayList.this.set(currentIndex, e);
+          dataSet = currentData;
+        } else {
+          int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(currentIndex));
+          if (globalIndex >= 0) {
+            ConcurrentArrayList.this.set(globalIndex, e);
+          }
         }
       }
     }
