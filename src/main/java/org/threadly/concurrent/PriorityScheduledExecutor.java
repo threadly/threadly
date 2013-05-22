@@ -27,9 +27,9 @@ import org.threadly.concurrent.lock.VirtualLock;
  */
 public class PriorityScheduledExecutor implements PrioritySchedulerInterface, 
                                                   LockFactory {
+  protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT = 500;
-  protected static final TaskPriority GLOBAL_DEFAULT_PRIORITY = TaskPriority.High;
-  protected static final boolean USE_DAEMON_THREADS = true;
+  protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   
   protected final TaskPriority defaultPriority;
   protected final VirtualLock highPriorityLock;
@@ -53,7 +53,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * Constructs a new thread pool, though no threads will be started 
    * till it accepts it's first request.  This constructs a default 
    * priority of high (which makes sense for most use cases).  
-   * It also defaults low priority worker wait as 500ms.
+   * It also defaults low priority worker wait as 500ms.  It also  
+   * defaults to all newly created threads being daemon threads.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -62,7 +63,26 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         GLOBAL_DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT);
+         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT, 
+         DEFAULT_NEW_THREADS_DAEMON);
+  }
+  
+  /**
+   * Constructs a new thread pool, though no threads will be started 
+   * till it accepts it's first request.  This constructs a default 
+   * priority of high (which makes sense for most use cases).  
+   * It also defaults low priority worker wait as 500ms.
+   * 
+   * @param corePoolSize pool size that should be maintained
+   * @param maxPoolSize maximum allowed thread count
+   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
+   * @param useDaemonThreads boolean for if newly created threads should be daemon
+   */
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
+                                   long keepAliveTimeInMs, boolean useDaemonThreads) {
+    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT, 
+         useDaemonThreads);
   }
 
   /**
@@ -83,6 +103,67 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                    long maxWaitForLowPriorityInMs) {
+    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+         defaultPriority, maxWaitForLowPriorityInMs, 
+         DEFAULT_NEW_THREADS_DAEMON);
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started 
+   * till it accepts it's first request.  This provides the extra
+   * parameters to tune what tasks submitted without a priority will be 
+   * scheduled as.  As well as the maximum wait for low priority tasks.
+   * The longer low priority tasks wait for a worker, the less chance they will
+   * have to make a thread.  But it also makes low priority tasks execution time
+   * less predictable.
+   * 
+   * @param corePoolSize pool size that should be maintained
+   * @param maxPoolSize maximum allowed thread count
+   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param useDaemonThreads boolean for if newly created threads should be daemon
+   */
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
+                                   long keepAliveTimeInMs, TaskPriority defaultPriority, 
+                                   long maxWaitForLowPriorityInMs, 
+                                   final boolean useDaemonThreads) {
+    
+    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+         defaultPriority, maxWaitForLowPriorityInMs, 
+         new ThreadFactory() {
+           private final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+          
+           @Override
+           public Thread newThread(Runnable runnable) {
+             Thread thread = defaultFactory.newThread(runnable);
+             
+             thread.setDaemon(useDaemonThreads);
+             
+             return thread;
+           }
+         });
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started 
+   * till it accepts it's first request.  This provides the extra
+   * parameters to tune what tasks submitted without a priority will be 
+   * scheduled as.  As well as the maximum wait for low priority tasks.
+   * The longer low priority tasks wait for a worker, the less chance they will
+   * have to make a thread.  But it also makes low priority tasks execution time
+   * less predictable.
+   * 
+   * @param corePoolSize pool size that should be maintained
+   * @param maxPoolSize maximum allowed thread count
+   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
+                                   long keepAliveTimeInMs, TaskPriority defaultPriority, 
+                                   long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     if (corePoolSize < 1) {
       throw new IllegalArgumentException("corePoolSize must be >= 1");
     } else if (maxPoolSize < corePoolSize) {
@@ -94,7 +175,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     if (defaultPriority == null) {
-      defaultPriority = GLOBAL_DEFAULT_PRIORITY;
+      defaultPriority = DEFAULT_PRIORITY;
+    }
+    if (threadFactory == null) {
+      threadFactory = Executors.defaultThreadFactory();
     }
     
     this.defaultPriority = defaultPriority;
@@ -104,18 +188,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     highPriorityQueue = new DynamicDelayQueue<TaskWrapper>(highPriorityLock);
     lowPriorityQueue = new DynamicDelayQueue<TaskWrapper>(lowPriorityLock);
     availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
-    threadFactory = new ThreadFactory() {
-      private final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
-    
-      @Override
-      public Thread newThread(Runnable runnable) {
-        Thread thread = defaultFactory.newThread(runnable);
-        
-        thread.setDaemon(USE_DAEMON_THREADS);
-        
-        return thread;
-      }
-    };
+    this.threadFactory = threadFactory;
     highPriorityConsumer = new TaskConsumer(highPriorityQueue, highPriorityLock, 
                                             new TaskAcceptor() {
       @Override
@@ -474,7 +547,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } else {
           long elapsedTime = ClockWrapper.getAccurateTime() - startTime;
           waitTime = maxWaitForLowPriorityInMs - elapsedTime;
-          workersLock.await(waitTime);
+          if (waitTime > 0) {
+            workersLock.await(waitTime);
+          }
         }
       }
       
@@ -633,8 +708,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         }
 
         started = true;
-        runningThread = new Thread(this);
-        runningThread.setDaemon(USE_DAEMON_THREADS);
+        runningThread = threadFactory.newThread(this);
+        runningThread.setDaemon(true);
         runningThread.setName("ScheduledExecutor task consumer thread");
         runningThread.start();
       }

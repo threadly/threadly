@@ -25,7 +25,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * @param scheduler A multi-threaded scehduler to distribute tasks to.  
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
    *                  will be used in parallel. 
    */
