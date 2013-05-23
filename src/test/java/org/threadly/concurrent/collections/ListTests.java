@@ -38,6 +38,11 @@ public class ListTests {
     assertTrue(testList.isEmpty());
   }
   
+  public static void addAllTest(List<String> testList) {
+    // TODO - implement
+    throw new UnsupportedOperationException();
+  }
+  
   public static void getTest(List<String> testList) {
     List<String> comparisionList = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
