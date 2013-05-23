@@ -78,11 +78,9 @@ public class DynamicDelayQueueTest {
     assertTrue(testQueue.isEmpty());
     testQueue.add(new TestDelayed(0));
     assertFalse(testQueue.isEmpty());
-    testQueue.add(new TestDelayed(0));
-    assertFalse(testQueue.isEmpty());
-    testQueue.remove(0);
-    assertFalse(testQueue.isEmpty());
-    testQueue.remove(0);
+
+    testQueue.take();
+
     assertTrue(testQueue.isEmpty());
   }
   
