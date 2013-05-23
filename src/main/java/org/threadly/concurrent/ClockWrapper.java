@@ -30,7 +30,8 @@ public class ClockWrapper {
     int newVal = requestsToStopUpdatingTime.decrementAndGet();
     
     if (newVal < 0) {
-      throw new IllegalStateException("Should have never become negative");
+      boolean ableToCorrect = requestsToStopUpdatingTime.compareAndSet(newVal, 0);
+      throw new IllegalStateException("Should have never become negative...corrected: " + ableToCorrect);
     }
   }
   

@@ -38,6 +38,11 @@ public class ClockWrapperTest {
     assertTrue(updateTime != ClockWrapper.getAccurateTime());
   }
   
+  @Test (expected = IllegalStateException.class)
+  public void resumeFail() {
+    ClockWrapper.resumeForcingUpdate();
+  }
+  
   @Test
   public void getLastKnownTimeAndUpdateTest() {
     long originalTime;
