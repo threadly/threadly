@@ -185,9 +185,9 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   @Override
   public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
     if (command == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      delay = 0;
     }
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
@@ -205,9 +205,9 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay,
                                          TimeUnit unit) {
     if (callable == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      delay = 0;
     }
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
@@ -238,11 +238,11 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                                                    long initialDelay,
                                                    long delay, TimeUnit unit) {
     if (command == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
-      throw new IllegalArgumentException("delay must be >= 0");
+      delay = 0;
     } else if (initialDelay < 0) {
-      throw new IllegalArgumentException("initialDelay must be >= 0");
+      initialDelay = 0;
     }
     
     long initialDelayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);

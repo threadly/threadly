@@ -106,7 +106,7 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
 
   @Override
   public Future<?> submit(Runnable task) {
-    return submit(task);
+    return scheduler.submit(task);
   }
 
   @Override

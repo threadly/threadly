@@ -2,7 +2,6 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
