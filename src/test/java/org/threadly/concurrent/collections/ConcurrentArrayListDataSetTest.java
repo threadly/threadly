@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.collections;
 
 import static org.junit.Assert.*;
 
@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.concurrent.ConcurrentArrayList.DataSet;
+import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 
 @SuppressWarnings("javadoc")
 public class ConcurrentArrayListDataSetTest {

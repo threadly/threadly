@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.collections;
 
 import java.util.Collection;
 import java.util.Deque;

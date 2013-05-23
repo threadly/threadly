@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.collections;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +50,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
    * 
    * @param queueLock lock that is used internally
    */
-  protected DynamicDelayQueue(VirtualLock queueLock) {
+  public DynamicDelayQueue(VirtualLock queueLock) {
     queue = new ConcurrentArrayList<T>(queueLock, 
                                        QUEUE_FRONT_PADDING, 
                                        QUEUE_REAR_PADDING);

@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.collections;
 
 import static org.junit.Assert.*;
 
@@ -12,7 +12,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.DynamicDelayQueue.ConsumerIterator;
+import org.threadly.concurrent.collections.DynamicDelayQueue;
+import org.threadly.concurrent.collections.DynamicDelayQueue.ConsumerIterator;
 
 @SuppressWarnings("javadoc")
 public class DynamicDelayQueueTest {
