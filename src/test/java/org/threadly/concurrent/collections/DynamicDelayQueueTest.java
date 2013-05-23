@@ -74,7 +74,7 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
-  public void isEmptyTest() {
+  public void isEmptyTest() InterruptedException {
     assertTrue(testQueue.isEmpty());
     testQueue.add(new TestDelayed(0));
     assertFalse(testQueue.isEmpty());
