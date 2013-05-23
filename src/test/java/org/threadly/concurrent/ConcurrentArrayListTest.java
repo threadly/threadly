@@ -113,4 +113,121 @@ public class ConcurrentArrayListTest {
       assertEquals(testList.get(i), comparisionList.get(i));
     }
   }
+  
+  @Test
+  public void indexOfTest() {
+    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      comparisionList.add(str);
+      comparisionList.add(str);
+      testList.add(str);
+      testList.add(str);
+    }
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      assertEquals(testList.indexOf(str), comparisionList.indexOf(str));
+    }
+    
+    assertEquals(testList.indexOf("foobar"), -1);
+  }
+  
+  @Test
+  public void lastIndexOfTest() {
+    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      comparisionList.add(str);
+      comparisionList.add(str);
+      testList.add(str);
+      testList.add(str);
+    }
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      assertEquals(testList.lastIndexOf(str), comparisionList.lastIndexOf(str));
+    }
+    
+    assertEquals(testList.lastIndexOf("foobar"), -1);
+  }
+  
+  @Test
+  public void containsTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(str);
+    }
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      assertTrue(testList.contains(str));
+    }
+    for (int i = TEST_QTY + 1; i < TEST_QTY * 2; i++) {
+      String str = Integer.toString(i);
+      assertFalse(testList.contains(str));
+    }
+  }
+  
+  @Test
+  public void containsAllTest() {
+    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    assertTrue(testList.containsAll(comparisionList));
+    comparisionList.add("bar");
+    assertFalse(testList.containsAll(comparisionList));
+    testList.add("bar");
+    assertTrue(testList.containsAll(comparisionList));
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      comparisionList.add(str);
+      assertFalse(testList.containsAll(comparisionList));
+      testList.add(str);
+      assertTrue(testList.containsAll(comparisionList));
+    }
+    
+    testList.add("foobar");
+    assertTrue(testList.containsAll(comparisionList));
+  }
+  
+  @Test
+  public void toArrayTest() {
+    assertArrayEquals(testList.toArray(), new String[0]);
+    
+    String[] compare = new String[TEST_QTY];
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      compare[i] = str;
+      testList.add(str);
+    }
+    
+    assertArrayEquals(testList.toArray(), compare);
+  }
+  
+  @Test
+  public void clearTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(str);
+    }
+    
+    assertEquals(testList.size(), TEST_QTY);
+    testList.clear();
+    assertEquals(testList.size(), 0);
+    assertNull(testList.peek());
+  }
+  
+  @Test
+  public void addFirstTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.addFirst(str);
+      assertEquals(testList.getFirst(), str);
+    }
+  }
+  
+  @Test
+  public void addLastTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.addLast(str);
+      assertEquals(testList.getLast(), str);
+    }
+  }
 }
