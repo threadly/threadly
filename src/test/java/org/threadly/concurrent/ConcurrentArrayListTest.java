@@ -230,4 +230,22 @@ public class ConcurrentArrayListTest {
       assertEquals(testList.getLast(), str);
     }
   }
+  
+  @Test
+  public void peekFirstTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.addFirst(str);
+      assertEquals(testList.peekFirst(), str);
+    }
+  }
+  
+  @Test
+  public void peekLastTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.addLast(str);
+      assertEquals(testList.peekLast(), str);
+    }
+  }
 }
