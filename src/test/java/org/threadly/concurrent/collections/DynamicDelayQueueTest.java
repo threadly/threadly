@@ -206,6 +206,34 @@ public class DynamicDelayQueueTest {
     }
   }
   
+  @Test
+  public void removeAllTest() {
+    List<TestDelayed> toRemoveList = new ArrayList<TestDelayed>(TEST_QTY);
+    List<TestDelayed> comparisonList = new ArrayList<TestDelayed>(TEST_QTY);
+    boolean flip = false;
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestDelayed item = new TestDelayed(i);
+      testQueue.add(item);
+      comparisonList.add(item);
+      if (flip) {
+        toRemoveList.add(item);
+        flip = false;
+      } else {
+        flip = true;
+      }
+    }
+    
+    testQueue.removeAll(toRemoveList);
+    assertEquals(testQueue.size(), TEST_QTY - toRemoveList.size());
+    Iterator<TestDelayed> it = toRemoveList.iterator();
+    while (it.hasNext()) {
+      assertFalse(testQueue.contains(it.next()));
+    }
+    
+    comparisonList.removeAll(toRemoveList);  // do operation on comparison list
+    assertTrue(testQueue.containsAll(comparisonList));  // verify nothing additional was removed
+  }
+  
   @Test (expected = NoSuchElementException.class)
   public void removeFail() {
     testQueue.remove();
@@ -263,7 +291,26 @@ public class DynamicDelayQueueTest {
       
       fail("Exception should have been thrown");
     }
-   }
+  }
+   
+  @Test
+  public void remainingCapacityTest() {
+    assertEquals(testQueue.remainingCapacity(), Integer.MAX_VALUE);
+  }
+  
+  @Test
+  public void toArrayTest() {
+    assertArrayEquals(testQueue.toArray(), new TestDelayed[0]);
+    
+    TestDelayed[] compare = new TestDelayed[TEST_QTY];
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestDelayed td = new TestDelayed(i);
+      compare[i] = td;
+      testQueue.add(td);
+    }
+    
+    assertArrayEquals(testQueue.toArray(), compare);
+  }
   
   protected static class TestDelayed implements Delayed {
     private final long delayInMs;

@@ -148,6 +148,10 @@ public class ListTests {
     assertEquals(testList.size(), 0);
   }
   
+  public static void removeObjectTest(List<String> testList) {
+    // TODO - implement
+  }
+  
   public static void removeAllTest(List<String> testList) {
     List<String> toRemoveList = new ArrayList<String>(TEST_QTY);
     List<String> comparisonList = new ArrayList<String>(TEST_QTY);
