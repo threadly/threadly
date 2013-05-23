@@ -262,11 +262,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   @Override
-  public boolean remove(Object o) {
-    return removeFirstOccurrence(o);
-  }
-
-  @Override
   public boolean addAll(Collection<? extends T> c) {
     if (c == null || c.isEmpty()) {
       return false;
@@ -310,20 +305,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
     
     return true;
-  }
-
-  @Override
-  public boolean removeAll(Collection<?> c) {
-    if (c == null || c.isEmpty()) {
-      return false;
-    }
-
-    synchronized (modificationLock) {
-      DataSet<T> originalSet = currentData;
-      currentData = currentData.removeAll(c);
-      
-      return currentData != originalSet;
-    }
   }
 
   @Override
@@ -476,6 +457,25 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   @Override
+  public boolean remove(Object o) {
+    return removeFirstOccurrence(o);
+  }
+
+  @Override
+  public boolean removeAll(Collection<?> c) {
+    if (c == null || c.isEmpty()) {
+      return false;
+    }
+
+    synchronized (modificationLock) {
+      DataSet<T> originalSet = currentData;
+      currentData = currentData.removeAll(c);
+      
+      return currentData != originalSet;
+    }
+  }
+
+  @Override
   public boolean removeFirstOccurrence(Object o) {
     if (o == null) {
       return false;
@@ -510,6 +510,23 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   @Override
+  public T remove(int index) {
+    DataSet<T> originalSet;
+    synchronized (modificationLock) {
+      if (index > size() - 1) {
+        throw new IndexOutOfBoundsException("Index is beyond the array max index: " + index);
+      } else if (index < 0) {
+        throw new IndexOutOfBoundsException("Index can not be negative");
+      }
+      
+      originalSet = currentData;
+      currentData = currentData.remove(index);
+    }
+    
+    return originalSet.get(index);
+  }
+
+  @Override
   public boolean offer(T e) {
     return offerLast(e);
   }
@@ -540,27 +557,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   @Override
-  public Iterator<T> descendingIterator() {
-    final ListIterator<T> li = listIterator(size());
-    return new Iterator<T>() {
-      @Override
-      public boolean hasNext() {
-        return li.hasPrevious();
-      }
-
-      @Override
-      public T next() {
-        return li.previous();
-      }
-
-      @Override
-      public void remove() {
-        li.remove();
-      }
-    };
-  }
-
-  @Override
   public T set(int index, T element) {
     DataSet<T> originalSet;
     synchronized (modificationLock) {
@@ -588,23 +584,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       
       currentData = currentData.add(index, element);
     }
-  }
-
-  @Override
-  public T remove(int index) {
-    DataSet<T> originalSet;
-    synchronized (modificationLock) {
-      if (index > size() - 1) {
-        throw new IndexOutOfBoundsException("Index is beyond the array max index: " + index);
-      } else if (index < 0) {
-        throw new IndexOutOfBoundsException("Index can not be negative");
-      }
-      
-      originalSet = currentData;
-      currentData = currentData.remove(index);
-    }
-    
-    return originalSet.get(index);
   }
   
   /**
@@ -691,6 +670,27 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public ListIterator<T> listIterator(int index) {
     return new DataSetListIterator(currentData, index);
+  }
+
+  @Override
+  public Iterator<T> descendingIterator() {
+    final ListIterator<T> li = listIterator(size());
+    return new Iterator<T>() {
+      @Override
+      public boolean hasNext() {
+        return li.hasPrevious();
+      }
+
+      @Override
+      public T next() {
+        return li.previous();
+      }
+
+      @Override
+      public void remove() {
+        li.remove();
+      }
+    };
   }
 
   /**
