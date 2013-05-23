@@ -2,6 +2,9 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,6 +13,8 @@ import org.threadly.concurrent.lock.VirtualLock;
 
 @SuppressWarnings("javadoc")
 public class ConcurrentArrayListTest {
+  private static final int TEST_QTY = 10;
+  
   private ConcurrentArrayList<String> testList;
   
   @Before
@@ -68,15 +73,13 @@ public class ConcurrentArrayListTest {
 
   @Test
   public void sizeTest() {
-    int testQty = 10;
-
-    for (int i = 0; i < testQty; i++) {
+    for (int i = 0; i < TEST_QTY; i++) {
       assertEquals(testList.size(), i);
       testList.add("testStr");
       assertEquals(testList.size(), i + 1);
     }
 
-    for (int i = testQty; i >= 0; i--) {
+    for (int i = TEST_QTY; i >= 0; i--) {
       assertEquals(testList.size(), i);
       if (i != 0) {
         testList.removeFirst();
@@ -95,5 +98,19 @@ public class ConcurrentArrayListTest {
     assertFalse(testList.isEmpty());
     testList.removeFirst();
     assertTrue(testList.isEmpty());
+  }
+  
+  @Test
+  public void getTest() {
+    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      comparisionList.add(str);
+      testList.add(str);
+      assertEquals(testList.get(i), str);
+    }
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(testList.get(i), comparisionList.get(i));
+    }
   }
 }
