@@ -1,5 +1,9 @@
 package org.threadly.util;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 /**
  * Utilities for doing basic things with exceptions.
  * 
@@ -30,6 +34,35 @@ public class ExceptionUtils {
       result.setStackTrace(newStack);
       
       return result;
+    }
+  }
+  
+  /**
+   * Convert throwable's stack and message into a 
+   * simple string.
+   * 
+   * @param t throwable which contains stack
+   * @return string which contains the throwable stack trace
+   */
+  public static String stackToString(Throwable t) {
+    if (t == null) {
+      return "";
+    }
+    
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    try {
+      t.printStackTrace(pw);
+      String result = sw.toString();
+      return result;
+    } finally {
+      try {
+        sw.close();
+      } catch (IOException e) {
+        throw makeRuntime(e);
+      } finally {
+        pw.close();
+      }
     }
   }
 }
