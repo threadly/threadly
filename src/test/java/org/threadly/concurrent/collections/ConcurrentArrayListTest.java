@@ -256,6 +256,26 @@ public class ConcurrentArrayListTest {
     testList.removeFirst();
   }
   
+  @Test
+  public void removeLastTest() {
+    LinkedList<String> compareList = new LinkedList<String>();
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      compareList.add(str);
+      testList.add(str);
+    }
+    
+    Iterator<String> it = compareList.descendingIterator();
+    int removed = 0;
+    while (it.hasNext()) {
+      String next = it.next();
+      assertTrue(testList.removeLast() == next);
+      removed++;
+      assertEquals(testList.size(), TEST_QTY - removed);
+      assertFalse(testList.peekLast() == next);
+    }
+  }
+  
   @Test (expected = NoSuchElementException.class)
   public void removeLastFail() {
     testList.removeLast();
