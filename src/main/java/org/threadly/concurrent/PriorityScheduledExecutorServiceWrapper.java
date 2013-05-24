@@ -130,6 +130,10 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
       Iterator<? extends Callable<T>> it = tasks.iterator();
       while (it.hasNext()) {
         Callable<T> c = it.next();
+        if (c == null) {
+          throw new NullPointerException();
+        }
+        
         FutureRunnable<T> fr = new FutureRunnable<T>(c);
         resultList.add(fr);
         scheduler.execute(fr);

@@ -10,6 +10,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.util.ExceptionUtils;
+
 /**
  * This is a wrapper for the java.util.concurrent.ScheduledThreadPoolExecutor
  * to use that implementation with the SimpleSchedulerInterface.
@@ -123,7 +125,12 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   @Override
   public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException,
                                                                          ExecutionException {
-    return invokeAny(tasks);
+    try {
+      return invokeAny(tasks, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    } catch (TimeoutException e) {
+      // should not happen
+      throw ExceptionUtils.makeRuntime(e);
+    }
   }
 
   @Override
@@ -131,7 +138,7 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
                          long timeout, TimeUnit unit) throws InterruptedException,
                                                              ExecutionException, 
                                                              TimeoutException {
-    return invokeAny(tasks, timeout, unit);
+    throw new UnsupportedOperationException();  // TODO - need to implement
   }
 
   @Override

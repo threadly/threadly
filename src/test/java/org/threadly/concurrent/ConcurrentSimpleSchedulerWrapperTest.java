@@ -234,6 +234,30 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   }
   
   @Test
+  public void invokeAllTest() throws InterruptedException, ExecutionException {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(10);
+    ScheduledExecutorService wrapper = new ConcurrentSimpleSchedulerWrapper(executor);
+    
+    try {
+      ScheduledExecutorServiceTest.invokeAllTest(wrapper);
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
+  @Test (expected = NullPointerException.class)
+  public void invokeAllFail() throws InterruptedException, ExecutionException {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(10);
+    ScheduledExecutorService wrapper = new ConcurrentSimpleSchedulerWrapper(executor);
+    
+    try {
+      ScheduledExecutorServiceTest.invokeAllFail(wrapper);
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
+  @Test
   public void shutdownTest() {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     ConcurrentSimpleSchedulerWrapper wrapper = new ConcurrentSimpleSchedulerWrapper(executor);

@@ -1,9 +1,6 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -192,8 +189,30 @@ public class ScheduledExecutorServiceTest {
     fail("Exception should have been thrown");
   }
   
-  public static void invokeAllTest(ScheduledExecutorService scheduler) {
-    // TODO - implement
+  public static void invokeAllTest(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                              ExecutionException {
+    int callableQty = 10;
+    
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+    for (int i = 0; i < callableQty; i++) {
+      toInvoke.add(new TestCallable(0));
+    }
+    List<Future<Object>> result = scheduler.invokeAll(toInvoke);
+    
+    assertEquals(result.size(), toInvoke.size());
+    Iterator<TestCallable> it = toInvoke.iterator();
+    Iterator<Future<Object>> resultIt = result.iterator();
+    while (it.hasNext()) {
+      assertTrue(resultIt.next().get() == it.next().result);
+    }
+  }
+  
+  public static void invokeAllFail(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                              ExecutionException {
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(2);
+    toInvoke.add(new TestCallable(0));
+    toInvoke.add(null);
+    scheduler.invokeAll(toInvoke);
   }
   
   private static class TestCallable extends TestCondition 
