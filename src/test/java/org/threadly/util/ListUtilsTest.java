@@ -61,37 +61,46 @@ public class ListUtilsTest {
     TestDelayed zero = new TestDelayed(0);
     
     // verify against an empty list
+    assertTrue(ListUtils.binarySearch(list, zero) == -1);
     assertTrue(ListUtils.binarySearch(list, zero, false) == -1);
     assertTrue(ListUtils.binarySearch(list, zero, true) == -1);
     
     // add one and verify both contains and missing
     TestDelayed negativeOne = new TestDelayed(-1);
     list.add(negativeOne);
-    
+
+    assertTrue(ListUtils.binarySearch(list, zero) == -2);
     assertTrue(ListUtils.binarySearch(list, zero, false) == -2);
     assertTrue(ListUtils.binarySearch(list, zero, true) == -2);
-    
+
+    assertTrue(ListUtils.binarySearch(list, negativeOne) == 0);
     assertTrue(ListUtils.binarySearch(list, negativeOne, false) == 0);
     assertTrue(ListUtils.binarySearch(list, negativeOne, true) == 0);
     
     // add one more and verify both contains and missing
     TestDelayed ten = new TestDelayed(10);
     list.add(ten);
-    
+
+    assertTrue(ListUtils.binarySearch(list, zero) == -2);
     assertTrue(ListUtils.binarySearch(list, zero, false) == -2);
     assertTrue(ListUtils.binarySearch(list, zero, true) == -2);
-    
+
+    assertTrue(ListUtils.binarySearch(list, negativeOne) == 0);
     assertTrue(ListUtils.binarySearch(list, negativeOne, false) == 0);
     assertTrue(ListUtils.binarySearch(list, negativeOne, true) == 0);
+    
+    assertTrue(ListUtils.binarySearch(list, ten) == 1);
     assertTrue(ListUtils.binarySearch(list, ten, false) == 1);
     assertTrue(ListUtils.binarySearch(list, ten, true) == 1);
     
     // add a duplicate entry and verify both contains and missing
     list.add(ten);
-    
+
+    assertTrue(ListUtils.binarySearch(list, zero) == -2);
     assertTrue(ListUtils.binarySearch(list, zero, false) == -2);
     assertTrue(ListUtils.binarySearch(list, zero, true) == -2);
-    
+
+    assertTrue(ListUtils.binarySearch(list, negativeOne) == 0);
     assertTrue(ListUtils.binarySearch(list, negativeOne, false) == 0);
     assertTrue(ListUtils.binarySearch(list, negativeOne, true) == 0);
     long index = ListUtils.binarySearch(list, ten, false);
