@@ -870,20 +870,20 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  private enum TaskType {OneTime, Recurring};
+  protected enum TaskType {OneTime, Recurring};
   
   /**
    * Abstract implementation for all tasks handled by this pool.
    * 
    * @author jent - Mike Jensen
    */
-  protected abstract class TaskWrapper implements Delayed, Runnable {
+  protected static abstract class TaskWrapper implements Delayed, Runnable {
     public final TaskType taskType;
     public final TaskPriority priority;
     protected final Runnable task;
     protected volatile boolean canceled;
     
-    protected TaskWrapper(TaskType taskType, 
+    public TaskWrapper(TaskType taskType, 
                           Runnable task, 
                           TaskPriority priority) {
       this.taskType = taskType;
