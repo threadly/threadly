@@ -73,6 +73,14 @@ public class ScheduledExecutorServiceTest {
     assertTrue(f.get() == tc.result);
   }
   
+  public static void submitWithResultTest(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                                     ExecutionException {
+    Object expectedResult = new Object();
+    Future<Object> f = scheduler.submit(new TestRunnable(), expectedResult);
+    
+    assertTrue(f.get() == expectedResult);
+  }
+  
   public static void futureGetTimeoutFail(ScheduledExecutorService scheduler) throws InterruptedException, 
                                                                                      ExecutionException, 
                                                                                      TimeoutException {

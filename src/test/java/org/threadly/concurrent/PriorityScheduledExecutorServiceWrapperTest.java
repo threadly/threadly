@@ -52,6 +52,19 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     }
   }
   
+  @Test
+  public void submitWithResultTest() throws InterruptedException, 
+                                            ExecutionException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.submitWithResultTest(wrapper);
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
   @Test (expected = TimeoutException.class)
   public void futureGetTimeoutFail() throws InterruptedException, 
                                             ExecutionException, 

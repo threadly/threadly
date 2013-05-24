@@ -116,6 +116,19 @@ public class ConcurrentSimpleSchedulerWrapperTest {
     }
   }
   
+  @Test
+  public void submitWithResultTest() throws InterruptedException, 
+                                            ExecutionException {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(10);
+    ScheduledExecutorService wrapper = new ConcurrentSimpleSchedulerWrapper(executor);
+    
+    try {
+      ScheduledExecutorServiceTest.submitWithResultTest(wrapper);
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
   @Test (expected = TimeoutException.class)
   public void futureGetTimeoutFail() throws InterruptedException, 
                                             ExecutionException, 
