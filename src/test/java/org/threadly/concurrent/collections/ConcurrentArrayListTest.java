@@ -48,7 +48,7 @@ public class ConcurrentArrayListTest {
     
     // make some modifications
     testList.add("foo");
-    testList.add("bar");
+    testList.offer("bar");
     testList.remove(0);
     
     assertEquals(testList.getFrontPadding(), 1);
@@ -66,7 +66,7 @@ public class ConcurrentArrayListTest {
     
     // make some modifications
     testList.add("foo");
-    testList.add("bar");
+    testList.offer("bar");
     testList.remove(0);
     
     assertEquals(testList.getRearPadding(), 1);
@@ -203,7 +203,7 @@ public class ConcurrentArrayListTest {
         String str2 = Integer.toString(i);
         secondStr.add(str2);
         testList.add(str1);
-        testList.add(str2);
+        assertTrue(testList.offer(str2));
       }
     
     
@@ -231,7 +231,7 @@ public class ConcurrentArrayListTest {
       String str2 = Integer.toString(i);
       secondStr.add(str2);
       testList.add(str1);
-      testList.add(str2);
+      assertTrue(testList.offer(str2));
     }
     
     
@@ -358,7 +358,7 @@ public class ConcurrentArrayListTest {
       firstStr.add(str1);
       String str2 = Integer.toString(i);
       secondStr.add(str2);
-      testList.add(str1);
+      assertTrue(testList.offer(str1));
       testList.add(str2);
     }
 
@@ -386,7 +386,7 @@ public class ConcurrentArrayListTest {
       firstStr.add(str1);
       String str2 = Integer.toString(i);
       secondStr.add(str2);
-      testList.add(str1);
+      assertTrue(testList.offer(str1));
       testList.add(str2);
     }
 
