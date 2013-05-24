@@ -1,5 +1,7 @@
 package org.threadly.concurrent;
 
+import static org.junit.Assert.*;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -219,7 +221,7 @@ public class ConcurrentSimpleSchedulerWrapperTest {
     }
   }
   
-  @Test
+  @Test (expected = NullPointerException.class)
   public void scheduleWithFixedDelayFail() {
     ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(10);
     ScheduledExecutorService wrapper = new ConcurrentSimpleSchedulerWrapper(executor);
@@ -229,6 +231,17 @@ public class ConcurrentSimpleSchedulerWrapperTest {
     } finally {
       executor.shutdown();
     }
+  }
+  
+  @Test
+  public void shutdownTest() {
+    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    ConcurrentSimpleSchedulerWrapper wrapper = new ConcurrentSimpleSchedulerWrapper(executor);
+    
+    wrapper.shutdownNow();
+    
+    assertTrue(wrapper.isShutdown());
+    assertTrue(executor.isShutdown());
   }
 
   private class SchedulerFactory implements PrioritySchedulerFactory {

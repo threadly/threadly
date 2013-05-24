@@ -187,13 +187,13 @@ public class ScheduledExecutorServiceTest {
   }
   
   public static void scheduleWithFixedDelayFail(ScheduledExecutorService scheduler) {
-    try {
-      scheduler.scheduleWithFixedDelay(null, 0, 10, 
-                                       TimeUnit.MILLISECONDS);
-      fail("Exception should have been thrown");
-    } catch (NullPointerException e) {
-      // expected
-    }
+    scheduler.scheduleWithFixedDelay(null, 0, 10, 
+                                     TimeUnit.MILLISECONDS);
+    fail("Exception should have been thrown");
+  }
+  
+  public static void invokeAllTest(ScheduledExecutorService scheduler) {
+    // TODO - implement
   }
   
   private static class TestCallable extends TestCondition 

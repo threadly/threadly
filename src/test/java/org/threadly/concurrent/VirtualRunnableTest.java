@@ -26,6 +26,14 @@ public class VirtualRunnableTest {
     assertEquals(tlf.sleepCount, 1);
   }
   
+  @Test
+  public void makeWithoutFactoryTest() {
+    TestRunnable tr = new TestRunnable();
+    VirtualLock vl = tr.makeLock();
+    assertNotNull(vl);
+    assertTrue(tr.makeLock() != vl);
+  }
+  
   private class TestRunnable extends VirtualRunnable {
     private boolean runCalled = false;
     private LockFactory factoryAtRunTime = null;

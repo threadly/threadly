@@ -1,5 +1,8 @@
 package org.threadly.concurrent;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
+import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorServiceWrapperTest {
@@ -155,7 +159,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     }
   }
   
-  @Test
+  @Test (expected = NullPointerException.class)
   public void scheduleWithFixedDelayFail() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
                                                                        KEEP_ALIVE_TIME);
@@ -230,6 +234,38 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
     } finally {
       sf.shutdown();
+    }
+  }
+  
+  @Test
+  public void shutdownTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
+    PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+    
+    wrapper.shutdownNow();
+    
+    assertTrue(wrapper.isShutdown());
+    assertTrue(executor.isShutdown());
+    
+    try {
+      wrapper.execute(new TestRunnable());
+      fail("Execption should have been thrown");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+    
+    try {
+      wrapper.schedule(new TestRunnable(), 1000);
+      fail("Execption should have been thrown");
+    } catch (IllegalStateException e) {
+      // expected
+    }
+    
+    try {
+      wrapper.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
+      fail("Execption should have been thrown");
+    } catch (IllegalStateException e) {
+      // expected
     }
   }
 
