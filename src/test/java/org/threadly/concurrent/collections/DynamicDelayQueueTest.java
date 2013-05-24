@@ -34,21 +34,42 @@ public class DynamicDelayQueueTest {
   }
   
   private static void populatePositive(DynamicDelayQueue<TestDelayed> testQueue) {
+    boolean flip = true;
     for (int i = 0; i < TEST_QTY; i++) {
-      testQueue.add(new TestDelayed(i));
+      if (flip) {
+        testQueue.add(new TestDelayed(i));
+        flip = false;
+      } else {
+        testQueue.offer(new TestDelayed(i));
+        flip = true;
+      }
     }
   }
   
   private static void populateNegative(DynamicDelayQueue<TestDelayed> testQueue) {
+    boolean flip = true;
     for (int i = TEST_QTY * -1; i < 0; i++) {
-      testQueue.add(new TestDelayed(i));
+      if (flip) {
+        testQueue.add(new TestDelayed(i));
+        flip = false;
+      } else {
+        testQueue.offer(new TestDelayed(i), Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        flip = true;
+      }
     }
   }
   
   private static void populateRandom(DynamicDelayQueue<TestDelayed> testQueue) {
     Random random = new SecureRandom();
+    boolean flip = true;
     for (int i = 0; i < TEST_QTY; i++) {
+      if (flip) {
       testQueue.add(new TestDelayed(random.nextInt()));
+      flip = false;
+    } else {
+      testQueue.addLast(new TestDelayed(random.nextInt()));
+      flip = true;
+    }
     }
   }
   
