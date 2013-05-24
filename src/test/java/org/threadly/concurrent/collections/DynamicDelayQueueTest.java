@@ -40,7 +40,7 @@ public class DynamicDelayQueueTest {
         testQueue.add(new TestDelayed(i));
         flip = false;
       } else {
-        testQueue.offer(new TestDelayed(i));
+        testQueue.addLast(new TestDelayed(i));
         flip = true;
       }
     }
@@ -64,12 +64,12 @@ public class DynamicDelayQueueTest {
     boolean flip = true;
     for (int i = 0; i < TEST_QTY; i++) {
       if (flip) {
-      testQueue.add(new TestDelayed(random.nextInt()));
-      flip = false;
-    } else {
-      testQueue.addLast(new TestDelayed(random.nextInt()));
-      flip = true;
-    }
+        testQueue.add(new TestDelayed(random.nextInt()));
+        flip = false;
+      } else {
+        testQueue.offer(new TestDelayed(random.nextInt()));
+        flip = true;
+      }
     }
   }
   
