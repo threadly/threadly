@@ -1084,22 +1084,18 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
 
-    // TODO - this can be optimized
     public DataSet<T> removeAll(Collection<?> c) {
-      DataSet<T> result = this;
-      
-      Iterator<?> it = c.iterator();
-      while (it.hasNext()) {
-        Object o = it.next();
-        int index = result.indexOf(o);
-        while (index >= 0) {
-          result = result.remove(index);
-          
-          index = result.indexOf(o);
+      Object[] resultArray = new Object[size + frontPadding + rearPadding];
+      int i = frontPadding;
+      for (int currentIndex = 0; currentIndex < size; currentIndex++) {
+        Object currItem = this.get(currentIndex);
+        if (! c.contains(currItem)) {
+          resultArray[i++] = currItem;
         }
       }
       
-      return result;
+      return new DataSet<T>(resultArray, frontPadding, i, 
+                            frontPadding, rearPadding);
     }
 
     public DataSet<T> retainAll(Collection<?> c) {
