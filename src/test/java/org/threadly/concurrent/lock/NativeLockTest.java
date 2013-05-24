@@ -41,7 +41,7 @@ public class NativeLockTest {
     }
     
     assertTrue(resume - start >= waitTimeInMs);
-    assertTrue(resume - start < waitTimeInMs + 50);
+    assertTrue(resume - start < waitTimeInMs + 200);
   }
   
   @Test
