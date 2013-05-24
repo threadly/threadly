@@ -877,7 +877,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  protected static abstract class TaskWrapper implements Delayed, Runnable {
+  protected abstract static class TaskWrapper implements Delayed, Runnable {
     public final TaskType taskType;
     public final TaskPriority priority;
     protected final Runnable task;
