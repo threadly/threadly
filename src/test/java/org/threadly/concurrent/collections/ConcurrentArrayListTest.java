@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -228,6 +229,36 @@ public class ConcurrentArrayListTest {
     while (it.hasNext()) {
       assertTrue(testIt.next() == it.next());
     }
+  }
+  
+  @Test
+  public void removeFirstTest() {
+    List<String> compareList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      compareList.add(str);
+      testList.add(str);
+    }
+    
+    Iterator<String> it = compareList.iterator();
+    int removed = 0;
+    while (it.hasNext()) {
+      String next = it.next();
+      assertTrue(testList.removeFirst() == next);
+      removed++;
+      assertEquals(testList.size(), TEST_QTY - removed);
+      assertFalse(testList.peek() == next);
+    }
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void removeFirstFail() {
+    testList.removeFirst();
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void removeLastFail() {
+    testList.removeLast();
   }
   
   @Test

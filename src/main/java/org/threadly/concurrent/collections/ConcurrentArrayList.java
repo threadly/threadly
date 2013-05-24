@@ -392,7 +392,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     synchronized (modificationLock) {
       T result = peekFirst();
       if (result != null) {
-        currentData = currentData.remove(size() - 1);
+        currentData = currentData.remove(0);
       }
       
       return result;
