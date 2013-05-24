@@ -57,7 +57,7 @@ public class NativeLockTest {
     long resume = System.currentTimeMillis();
     
     assertTrue(resume - start >= sleepTimeInMs);
-    assertTrue(resume - start < sleepTimeInMs + 50);
+    assertTrue(resume - start < sleepTimeInMs + 200);
   }
   
   @Test
