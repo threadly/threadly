@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
+import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.VirtualLock;
+
 /**
  * TaskDistributor is designed to take a multi threaded pool
  * and add tasks with a given key such that those tasks will
@@ -27,7 +30,7 @@ public class TaskExecutorDistributor {
   protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;
   
   private final Executor executor;
-  private final Object agentLock;
+  private final VirtualLock agentLock;
   private final Map<Object, TaskQueueWorker> taskWorkers;
   
   /**
@@ -50,13 +53,13 @@ public class TaskExecutorDistributor {
    *                 will be used in parallel. 
    */
   public TaskExecutorDistributor(Executor executor) {
-    this(executor, new Object());
+    this(executor, new NativeLock());
   }
   
   /**
    * used for testing, so that agentLock can be held and prevent execution.
    */
-  protected TaskExecutorDistributor(Executor executor, Object agentLock) {
+  protected TaskExecutorDistributor(Executor executor, VirtualLock agentLock) {
     if (executor == null) {
       throw new IllegalArgumentException("executor can not be null");
     }

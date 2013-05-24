@@ -1,5 +1,8 @@
 package org.threadly.concurrent;
 
+import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.VirtualLock;
+
 /**
  * This is a class which is more full featured than TaskExecutorDistributor, 
  * but it does require a scheduler implementation in order to be able to perform scheduling.
@@ -30,13 +33,13 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    *                  will be used in parallel. 
    */
   public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler) {
-    this(scheduler, new Object());
+    this(scheduler, new NativeLock());
   }
   
   /**
    * used for testing, so that agentLock can be held and prevent execution.
    */
-  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, Object agentLock) {
+  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, VirtualLock agentLock) {
     super(scheduler, agentLock);
     
     this.scheduler = scheduler;
