@@ -121,6 +121,28 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
+  public void addAllTest() {
+    List<TestDelayed> toAddList = new ArrayList<TestDelayed>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestDelayed td = new TestDelayed(i);
+      toAddList.add(td);
+    }
+    
+    testQueue.addAll(toAddList);
+    
+    assertEquals(testQueue.size(), TEST_QTY);
+    assertTrue(testQueue.containsAll(toAddList));
+    
+    synchronized (testQueue.getLock()) {
+      Iterator<TestDelayed> it = toAddList.iterator();
+      Iterator<TestDelayed> testIt = testQueue.iterator();
+      while (it.hasNext()) {
+        assertTrue(it.next() == testIt.next());
+      }
+    }
+  }
+  
+  @Test
   public void iteratorTest() {
     synchronized (testQueue.getLock()) {
       populatePositive(testQueue);
