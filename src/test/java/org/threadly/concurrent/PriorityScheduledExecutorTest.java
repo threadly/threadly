@@ -155,11 +155,25 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void executionTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);;
     try {
       SimpleSchedulerInterfaceTest.executionTest(sf);
+      
+      TestRunnable tr1 = new TestRunnable();
+      TestRunnable tr2 = new TestRunnable();
+      scheduler.execute(tr1, TaskPriority.High);
+      scheduler.execute(tr2, TaskPriority.Low);
+      scheduler.execute(tr1, TaskPriority.High);
+      scheduler.execute(tr2, TaskPriority.Low);
+      
+      tr1.blockTillRun(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillRun(1000 * 10, 2); // throws exception if fails
     } finally {
-      sf.shutdown();
+      try {
+        sf.shutdown();
+      } finally {
+        scheduler.shutdown();
+      }
     }
   }
   
