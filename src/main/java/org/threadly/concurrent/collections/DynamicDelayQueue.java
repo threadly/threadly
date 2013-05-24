@@ -431,6 +431,10 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
 
   @Override
   public int drainTo(Collection<? super T> c, int maxElements) {
+    if (maxElements <= 0) {
+      return 0;
+    }
+    
     // TODO - this can be optimized
     int addedElements = 0;
     T next = poll();
