@@ -142,6 +142,11 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void addAllTest() {
+    ListTests.addAllTest(testList);
+  }
+  
+  @Test
   public void peekFirstTest() {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
@@ -218,6 +223,11 @@ public class ConcurrentArrayListTest {
     while (it.hasNext()) {
       assertTrue(testIt.next() == it.next());
     }
+  }
+  
+  @Test
+  public void removeObjectTest() {
+    ListTests.removeObjectTest(testList);
   }
   
   @Test
@@ -299,7 +309,6 @@ public class ConcurrentArrayListTest {
     assertEquals(testList.get(6), expectedNext);
     
     testList.reposition(1, 3);  // swap 1 to 2
-    System.out.println(testList);
     assertEquals(testList.get(1), Integer.toString(2));
     assertEquals(testList.get(2), Integer.toString(1));
   }

@@ -39,8 +39,22 @@ public class ListTests {
   }
   
   public static void addAllTest(List<String> testList) {
-    // TODO - implement
-    throw new UnsupportedOperationException();
+    List<String> toAddList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      toAddList.add(str);
+    }
+    
+    testList.addAll(toAddList);
+    
+    assertEquals(testList.size(), TEST_QTY);
+    assertTrue(testList.containsAll(toAddList));
+    
+    Iterator<String> it = toAddList.iterator();
+    Iterator<String> testIt = testList.iterator();
+    while (it.hasNext()) {
+      assertTrue(it.next() == testIt.next());
+    }
   }
   
   public static void getTest(List<String> testList) {
@@ -149,7 +163,26 @@ public class ListTests {
   }
   
   public static void removeObjectTest(List<String> testList) {
-    // TODO - implement
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(str);
+    }
+    
+    boolean flip = false;
+    int removed = 0;
+    for (int i = 0; i < TEST_QTY; i++) {
+      if (flip) {
+        String str = Integer.toString(i);
+        assertTrue(testList.remove(str));
+        assertFalse(testList.contains(str));
+        removed++;
+        flip = false;
+      } else {
+        flip = true;
+      }
+    }
+    
+    assertEquals(testList.size(), TEST_QTY - removed);
   }
   
   public static void removeAllTest(List<String> testList) {
