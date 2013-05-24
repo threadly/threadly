@@ -14,6 +14,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
@@ -158,6 +159,16 @@ public class ConcurrentArrayListTest {
       assertTrue(testList.offerLast(str));
       assertEquals(testList.getLast(), str);
     }
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void getFirstFail() {
+    testList.getFirst();
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void getLastFail() {
+    testList.getLast();
   }
   
   @Test
@@ -490,5 +501,25 @@ public class ConcurrentArrayListTest {
       assertTrue(testIt.hasNext());
       assertEquals(clIt.next(), testIt.next());
     }
+  }
+  
+  @Test
+  public void makeEmptyDataSetTest() {
+    DataSet<String> ds = ConcurrentArrayList.makeEmptyDataSet(0, 0);
+    
+    assertEquals(ds.size, 0);
+    
+    ds = ConcurrentArrayList.makeEmptyDataSet(10, 10);
+    assertEquals(ds.size, 0);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void makeEmptyDataSetFrontFail() {
+    ConcurrentArrayList.makeEmptyDataSet(-1, 0);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void makeEmptyDataSetRearFail() {
+    ConcurrentArrayList.makeEmptyDataSet(0, -1);
   }
 }
