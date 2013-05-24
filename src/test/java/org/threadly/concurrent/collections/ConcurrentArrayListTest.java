@@ -350,6 +350,11 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void retainAllTest() {
+    ListTests.retainAllTest(testList);
+  }
+  
+  @Test
   public void repositionSearchForwardTest() {
     List<String> firstStr = new ArrayList<String>(TEST_QTY);
     List<String> secondStr = new ArrayList<String>(TEST_QTY);

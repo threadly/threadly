@@ -310,7 +310,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public boolean retainAll(Collection<?> c) {
     if (c == null || c.isEmpty()) {
-      return false;
+      if (isEmpty()) {
+        return false;
+      } else {
+        clear();
+        
+        return true;
+      }
     }
 
     synchronized (modificationLock) {
@@ -1097,8 +1103,17 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     public DataSet<T> retainAll(Collection<?> c) {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException();
+      Object[] resultArray = new Object[size + frontPadding + rearPadding];
+      int i = frontPadding;
+      for (int currentIndex = 0; currentIndex < size; currentIndex++) {
+        Object currItem = this.get(currentIndex);
+        if (c.contains(currItem)) {
+          resultArray[i++] = currItem;
+        }
+      }
+      
+      return new DataSet<T>(resultArray, frontPadding, i, 
+                            frontPadding, rearPadding);
     }
     
     @Override

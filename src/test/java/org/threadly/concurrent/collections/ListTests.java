@@ -254,6 +254,25 @@ public class ListTests {
     }
   }
   
+  public static void retainAllTest(List<String> testList) {
+    populateIntStrings(testList, TEST_QTY);
+    
+    assertTrue(testList.retainAll(new ArrayList<String>(0)));
+    
+    assertEquals(testList.size(), 0);
+    
+    populateIntStrings(testList, TEST_QTY);
+    
+    List<String> toRetainList = new ArrayList<String>(TEST_QTY / 2);
+    populateIntStrings(toRetainList, TEST_QTY / 2);
+    
+    assertTrue(testList.retainAll(toRetainList));
+    
+    assertEquals(testList.size(), TEST_QTY / 2);
+    
+    assertTrue(toRetainList.containsAll(testList));
+  }
+  
   public static void testIterator(List<String> testList) {
     List<String> comparisionList = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
