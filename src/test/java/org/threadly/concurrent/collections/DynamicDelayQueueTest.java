@@ -284,6 +284,32 @@ public class DynamicDelayQueueTest {
     fail("Exception should have been thrown");
   }
   
+  @Test
+  public void retainAllTest() {
+    populatePositive(testQueue);
+    
+    assertTrue(testQueue.retainAll(new ArrayList<TestDelayed>(0)));
+    
+    assertEquals(testQueue.size(), 0);
+    
+    populatePositive(testQueue);
+    
+    assertFalse(testQueue.retainAll(testQueue));
+    
+    List<TestDelayed> toRetainList = new ArrayList<TestDelayed>(TEST_QTY / 2);
+    for (int i = 0; i < TEST_QTY / 2; i++) {
+      toRetainList.add(new TestDelayed(i));
+    }
+    
+    assertTrue(testQueue.retainAll(toRetainList));
+    
+    assertEquals(testQueue.size(), TEST_QTY / 2);
+    
+    synchronized (testQueue.getLock()) {
+      assertTrue(toRetainList.containsAll(testQueue));
+    }
+  }
+  
   @Test (expected = NoSuchElementException.class)
   public void iteratorNextFail() {
     populatePositive(testQueue);
