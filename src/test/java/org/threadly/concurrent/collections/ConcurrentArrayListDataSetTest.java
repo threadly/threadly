@@ -105,6 +105,98 @@ public class ConcurrentArrayListDataSetTest {
   }
   
   @Test
+  public void equalsEquivelentTest() {
+    assertTrue(orderedNormal.equalsEquivelent(orderedNormal));
+    assertTrue(removedFromFront.equalsEquivelent(removedFromFront));
+    assertTrue(removed2FromFront.equalsEquivelent(removed2FromFront));
+    assertTrue(removedFromEnd.equalsEquivelent(removedFromEnd));
+    assertTrue(removed2FromEnd.equalsEquivelent(removed2FromEnd));
+    assertTrue(removedFromBoth.equalsEquivelent(removedFromBoth));
+    
+    Integer[] dataArray = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    
+    assertTrue(orderedNormal.equalsEquivelent(makeDataSet(dataArray, 0, dataArray.length)));
+    assertTrue(removedFromFront.equalsEquivelent(makeDataSet(dataArray, 1, dataArray.length)));
+    assertTrue(removed2FromFront.equalsEquivelent(makeDataSet(dataArray, 2, dataArray.length)));
+    assertTrue(removedFromEnd.equalsEquivelent(makeDataSet(dataArray, 0, dataArray.length - 1)));
+    assertTrue(removed2FromEnd.equalsEquivelent(makeDataSet(dataArray, 0, dataArray.length - 2)));
+    assertTrue(removedFromBoth.equalsEquivelent(makeDataSet(dataArray, 1, dataArray.length - 1)));
+
+    assertTrue(removedFromFront.equalsEquivelent(makeDataSet(dataArray, 1, dataArray.length)
+                                                   .addToFront(-1)
+                                                   .remove(0)));
+    assertTrue(removed2FromFront.equalsEquivelent(makeDataSet(dataArray, 2, dataArray.length)
+                                                    .addToFront(-1)
+                                                    .remove(0)));
+    assertTrue(removedFromEnd.equalsEquivelent(makeDataSet(dataArray, 0, dataArray.length - 1)
+                                                 .addToFront(-1)
+                                                 .remove(0)));
+    assertTrue(removed2FromEnd.equalsEquivelent(makeDataSet(dataArray, 0, dataArray.length - 2)
+                                                  .addToFront(-1)
+                                                  .remove(0)));
+    assertTrue(removedFromBoth.equalsEquivelent(makeDataSet(dataArray, 1, dataArray.length - 1)
+                                                  .addToFront(-1)
+                                                  .remove(0)));
+    
+    assertFalse(orderedNormal.equalsEquivelent(removedFromFront));
+    assertFalse(orderedNormal.equalsEquivelent(removed2FromFront));
+    assertFalse(orderedNormal.equalsEquivelent(removedFromEnd));
+    assertFalse(orderedNormal.equalsEquivelent(removed2FromEnd));
+    assertFalse(orderedNormal.equalsEquivelent(removedFromBoth));
+    
+    assertTrue(removedFromFront.equalsEquivelent(orderedNormal.remove(0)));
+    assertTrue(removed2FromFront.equalsEquivelent(orderedNormal.remove(0).remove(0)));
+    assertTrue(removedFromEnd.equalsEquivelent(orderedNormal.remove(orderedNormal.size - 1)));
+    assertTrue(removedFromBoth.equalsEquivelent(orderedNormal.remove(orderedNormal.size - 1).remove(0)));
+  }
+  
+  @Test
+  public void equalsExactlyTest() {
+    assertTrue(orderedNormal.equalsExactly(orderedNormal));
+    assertTrue(removedFromFront.equalsExactly(removedFromFront));
+    assertTrue(removed2FromFront.equalsExactly(removed2FromFront));
+    assertTrue(removedFromEnd.equalsExactly(removedFromEnd));
+    assertTrue(removed2FromEnd.equalsExactly(removed2FromEnd));
+    assertTrue(removedFromBoth.equalsExactly(removedFromBoth));
+    
+    Integer[] dataArray = new Integer[]{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    
+    assertTrue(orderedNormal.equalsExactly(makeDataSet(dataArray, 0, dataArray.length)));
+    assertTrue(removedFromFront.equalsExactly(makeDataSet(dataArray, 1, dataArray.length)));
+    assertTrue(removed2FromFront.equalsExactly(makeDataSet(dataArray, 2, dataArray.length)));
+    assertTrue(removedFromEnd.equalsExactly(makeDataSet(dataArray, 0, dataArray.length - 1)));
+    assertTrue(removed2FromEnd.equalsExactly(makeDataSet(dataArray, 0, dataArray.length - 2)));
+    assertTrue(removedFromBoth.equalsExactly(makeDataSet(dataArray, 1, dataArray.length - 1)));
+
+    assertFalse(removedFromFront.equalsExactly(makeDataSet(dataArray, 1, dataArray.length)
+                                                 .addToFront(-1)
+                                                 .remove(0)));
+    assertFalse(removed2FromFront.equalsExactly(makeDataSet(dataArray, 2, dataArray.length)
+                                                  .addToFront(-1)
+                                                  .remove(0)));
+    assertFalse(removedFromEnd.equalsExactly(makeDataSet(dataArray, 0, dataArray.length - 1)
+                                               .addToFront(-1)
+                                               .remove(0)));
+    assertFalse(removed2FromEnd.equalsExactly(makeDataSet(dataArray, 0, dataArray.length - 2)
+                                                .addToFront(-1)
+                                                .remove(0)));
+    assertFalse(removedFromBoth.equalsExactly(makeDataSet(dataArray, 1, dataArray.length - 1)
+                                                .addToFront(-1)
+                                                .remove(0)));
+    
+    assertFalse(orderedNormal.equalsExactly(removedFromFront));
+    assertFalse(orderedNormal.equalsExactly(removed2FromFront));
+    assertFalse(orderedNormal.equalsExactly(removedFromEnd));
+    assertFalse(orderedNormal.equalsExactly(removed2FromEnd));
+    assertFalse(orderedNormal.equalsExactly(removedFromBoth));
+    
+    assertTrue(removedFromFront.equalsExactly(orderedNormal.remove(0)));
+    assertTrue(removed2FromFront.equalsExactly(orderedNormal.remove(0).remove(0)));
+    assertTrue(removedFromEnd.equalsExactly(orderedNormal.remove(orderedNormal.size - 1)));
+    assertTrue(removedFromBoth.equalsExactly(orderedNormal.remove(orderedNormal.size - 1).remove(0)));
+  }
+  
+  @Test
   public void repositionNormalMoveFrontTest() {
     // move front to middle
     DataSet<Integer> result = orderedNormal.reposition(0, 5);
