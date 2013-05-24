@@ -609,7 +609,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   public void reposition(T item, int newIndex, boolean searchBackwards) {
     synchronized (modificationLock) {
       if (newIndex > size()) {
-        throw new IndexOutOfBoundsException(newIndex + " is beyond the array's length: " + (size() - 1));
+        throw new IndexOutOfBoundsException(newIndex + " is beyond the array's size: " + size());
+      } else if (newIndex < 0) {
+        throw new IndexOutOfBoundsException("New index can not be negative");
       }
       
       int index;
@@ -620,7 +622,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
       
       if (index < 0) {
-        throw new RuntimeException("Could not find item: " + item);
+        throw new NoSuchElementException("Could not find item: " + item);
       }
       
       reposition(index, newIndex);

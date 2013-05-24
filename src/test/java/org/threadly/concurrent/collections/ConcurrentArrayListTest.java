@@ -404,6 +404,24 @@ public class ConcurrentArrayListTest {
       assertFalse(fIt.next() == next);
     }
   }
+
+  
+  @Test (expected = IndexOutOfBoundsException.class)
+  public void repositionObjectIndexFail() {
+    testList.reposition(Integer.toString(0), 1);
+    fail("Exception should have been thrown");
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void repositionObjectNotFoundFail() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(str);
+    }
+    
+    testList.reposition("foobar", 0);
+    fail("Exception should have been thrown");
+  }
   
   @Test
   public void repositionIndexTest() {
