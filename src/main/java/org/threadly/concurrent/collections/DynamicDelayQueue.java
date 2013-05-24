@@ -102,7 +102,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
       
       queue.add(insertionIndex, e);
       
-      queueLock.notify();
+      queueLock.signal();
     }
     
     return true;
@@ -435,11 +435,13 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
       return 0;
     }
     
-    // TODO - this can be optimized
     int addedElements = 0;
-    while (addedElements < maxElements && peek() != null) {
-      c.add(poll());
-      addedElements++;
+    // synchronize once to avoid constant grabbing and releasing of the lock
+    synchronized (queueLock) {
+      while (addedElements < maxElements && peek() != null) {
+        c.add(poll());
+        addedElements++;
+      }
     }
     
     return addedElements;
