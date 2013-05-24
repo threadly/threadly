@@ -437,11 +437,9 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     
     // TODO - this can be optimized
     int addedElements = 0;
-    T next = poll();
-    while (addedElements < maxElements && next != null) {
-      c.add(next);
+    while (addedElements < maxElements && peek() != null) {
+      c.add(poll());
       addedElements++;
-      next = poll();
     }
     
     return addedElements;

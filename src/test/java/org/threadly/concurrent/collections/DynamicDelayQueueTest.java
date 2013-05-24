@@ -312,15 +312,37 @@ public class DynamicDelayQueueTest {
     assertArrayEquals(testQueue.toArray(), compare);
   }
   
-  /*@Test
+  @Test
   public void drainToTest() {
-    // TODO - implement
+    List<TestDelayed> drainToList = new ArrayList<TestDelayed>(TEST_QTY * 2);
+    populateNegative(testQueue); // should fully drain
+    
+    testQueue.drainTo(drainToList);
+    
+    assertEquals(testQueue.size(), 0);
+    assertNull(testQueue.peek());
+    assertEquals(drainToList.size(), TEST_QTY);
+    
+    populatePositive(testQueue);
+    testQueue.drainTo(drainToList); // should only drain the zero entry
+    
+
+    assertEquals(testQueue.size(), TEST_QTY - 1);
+    assertNull(testQueue.peek());
+    assertEquals(drainToList.size(), TEST_QTY + 1);
   }
   
   @Test
   public void drainToLimitTest() {
-    // TODO - implement
-  }*/
+    List<TestDelayed> drainToList = new ArrayList<TestDelayed>(TEST_QTY);
+    populateNegative(testQueue); // should fully drain
+    
+    testQueue.drainTo(drainToList, TEST_QTY / 2);
+    
+    assertEquals(testQueue.size(), TEST_QTY - (TEST_QTY / 2));
+    assertEquals(drainToList.size(), TEST_QTY / 2);
+    assertNotNull(testQueue.peek());
+  }
   
   protected static class TestDelayed implements Delayed {
     private final long delayInMs;
