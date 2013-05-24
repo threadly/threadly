@@ -143,6 +143,24 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void offerFirstTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      assertTrue(testList.offerFirst(str));
+      assertEquals(testList.getFirst(), str);
+    }
+  }
+  
+  @Test
+  public void offerLastTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      assertTrue(testList.offerLast(str));
+      assertEquals(testList.getLast(), str);
+    }
+  }
+  
+  @Test
   public void addAllTest() {
     ListTests.addAllTest(testList);
   }
@@ -279,6 +297,46 @@ public class ConcurrentArrayListTest {
   @Test (expected = NoSuchElementException.class)
   public void removeLastFail() {
     testList.removeLast();
+  }
+  
+  @Test
+  public void pollFirstTest() {
+    List<String> compareList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      compareList.add(str);
+      testList.add(str);
+    }
+    
+    Iterator<String> it = compareList.iterator();
+    int removed = 0;
+    while (it.hasNext()) {
+      String next = it.next();
+      assertTrue(testList.pollFirst() == next);
+      removed++;
+      assertEquals(testList.size(), TEST_QTY - removed);
+      assertFalse(testList.peek() == next);
+    }
+  }
+  
+  @Test
+  public void pollLastTest() {
+    LinkedList<String> compareList = new LinkedList<String>();
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      compareList.add(str);
+      testList.add(str);
+    }
+    
+    Iterator<String> it = compareList.descendingIterator();
+    int removed = 0;
+    while (it.hasNext()) {
+      String next = it.next();
+      assertTrue(testList.pollLast() == next);
+      removed++;
+      assertEquals(testList.size(), TEST_QTY - removed);
+      assertFalse(testList.peekLast() == next);
+    }
   }
   
   @Test
