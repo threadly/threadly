@@ -317,6 +317,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         
         return true;
       }
+    } else if (c == this) {
+      return false;
     }
 
     synchronized (modificationLock) {
@@ -873,6 +875,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         Object[] newData = new Object[size + frontPadding + rearPadding];
         
         if (newIndex == dataEndIndex) {
+          // moving to end can be done with two array copies at most
           System.arraycopy(dataArray, dataStartIndex, 
                            newData, frontPadding, origCurrentIndex);
           System.arraycopy(dataArray, currentIndex + 1, 
@@ -898,12 +901,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         Object[] newData = new Object[size + frontPadding + rearPadding];
         
         if (newIndex == dataStartIndex) {
+          // moving to front can be done with two array copies at most
           System.arraycopy(dataArray, dataStartIndex, 
                            newData, frontPadding + 1, origCurrentIndex);
           System.arraycopy(dataArray, currentIndex + 1, 
                            newData, frontPadding + origCurrentIndex + 1, 
                            dataEndIndex - currentIndex - 1);
         } else {
+          // work forward
           System.arraycopy(dataArray, dataStartIndex,   // write from start to new position
                            newData, frontPadding, origNewIndex);
           System.arraycopy(dataArray, newIndex,   // write from new position to current position
@@ -1009,7 +1014,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         return addToFront(element);
       } else if (origIndex == size) { // add to end
         return addToEnd(element);
-      } else {
+      } else {  // add into middle
         Object[] newData = new Object[size + 1 + frontPadding + rearPadding];
         System.arraycopy(dataArray, dataStartIndex, 
                          newData, frontPadding, origIndex);
@@ -1041,6 +1046,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         
         return new DataSet<T>(newData, frontPadding, rearPadding);
       } else if (origIndex == size) {
+        // add to end
         Object[] newData = getArrayCopy(size + toAdd.length);
         
         System.arraycopy(toAdd, 0, 
@@ -1048,6 +1054,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         
         return new DataSet<T>(newData, frontPadding, rearPadding);
       } else {
+        // add in middle
         Object[] newData = new Object[size + toAdd.length + frontPadding + rearPadding];
         
         System.arraycopy(dataArray, dataStartIndex, 
@@ -1065,13 +1072,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     public DataSet<T> remove(int origIndex) {
       int index = origIndex + dataStartIndex;
       
-      if (index == dataStartIndex) {
+      if (index == dataStartIndex) {  // remove from front without copy
         return new DataSet<T>(dataArray, dataStartIndex + 1, dataEndIndex, 
                               frontPadding, rearPadding);
-      } else if (index == dataEndIndex - 1) {
+      } else if (index == dataEndIndex - 1) {  // remove from end without copy
         return new DataSet<T>(dataArray, dataStartIndex, dataEndIndex - 1, 
                               frontPadding, rearPadding);
-      } else {
+      } else {  // remove from middle
         Object[] newData = new Object[size - 1 + frontPadding + rearPadding];
         
         System.arraycopy(dataArray, dataStartIndex, 
@@ -1085,31 +1092,61 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     public DataSet<T> removeAll(Collection<?> c) {
-      Object[] resultArray = new Object[size + frontPadding + rearPadding];
+      Object[] resultArray = null;  // will only be allocated once modification occurs
+      
       int i = frontPadding;
       for (int currentIndex = 0; currentIndex < size; currentIndex++) {
         Object currItem = this.get(currentIndex);
         if (! c.contains(currItem)) {
-          resultArray[i++] = currItem;
+          if (resultArray != null) {
+            resultArray[i++] = currItem;
+          } else {
+            i++;
+          }
+        } else {
+          // modification occurred, create array and copy
+          if (resultArray == null) {
+            resultArray = new Object[size + frontPadding + rearPadding];
+            System.arraycopy(dataArray, dataStartIndex, resultArray, frontPadding, i);
+          }
         }
       }
       
-      return new DataSet<T>(resultArray, frontPadding, i, 
-                            frontPadding, rearPadding);
+      if (resultArray != null) {
+        return new DataSet<T>(resultArray, frontPadding, i, 
+                              frontPadding, rearPadding);
+      } else {
+        return this;
+      }
     }
 
     public DataSet<T> retainAll(Collection<?> c) {
-      Object[] resultArray = new Object[size + frontPadding + rearPadding];
+      Object[] resultArray = null;  // will only be allocated once modification occurs
+      
       int i = frontPadding;
       for (int currentIndex = 0; currentIndex < size; currentIndex++) {
         Object currItem = this.get(currentIndex);
         if (c.contains(currItem)) {
-          resultArray[i++] = currItem;
+          if (resultArray != null) {
+            resultArray[i++] = currItem;
+          } else {
+            i++;
+          }
+        } else {
+          // modification occurred, create array and copy
+          if (resultArray == null) {
+            resultArray = new Object[size + frontPadding + rearPadding];
+            System.arraycopy(dataArray, dataStartIndex, resultArray, frontPadding, i);
+          }
         }
       }
       
-      return new DataSet<T>(resultArray, frontPadding, i, 
-                            frontPadding, rearPadding);
+      if (resultArray != null) {
+        return new DataSet<T>(resultArray, frontPadding, i, 
+                              frontPadding, rearPadding);
+      } else {
+        return this;
+      }
     }
     
     @Override

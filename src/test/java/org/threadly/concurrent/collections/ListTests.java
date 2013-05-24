@@ -220,6 +220,14 @@ public class ListTests {
       }
     }
     
+    List<String> noOpList = new ArrayList<String>(2);
+    noOpList.add("foo");
+    noOpList.add("bar");
+    
+    assertFalse(testList.removeAll(noOpList));
+    
+    assertEquals(testList.size(), TEST_QTY);
+    
     testList.removeAll(toRemoveList);
     assertEquals(testList.size(), TEST_QTY - toRemoveList.size());
     Iterator<String> it = toRemoveList.iterator();
@@ -262,6 +270,9 @@ public class ListTests {
     assertEquals(testList.size(), 0);
     
     populateIntStrings(testList, TEST_QTY);
+    
+    assertFalse(testList.retainAll(testList));
+    assertFalse(testList.retainAll(new ArrayList<String>(testList)));
     
     List<String> toRetainList = new ArrayList<String>(TEST_QTY / 2);
     populateIntStrings(toRetainList, TEST_QTY / 2);
