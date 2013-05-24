@@ -11,6 +11,13 @@ import java.util.List;
 public class ListTests {
   private static final int TEST_QTY = 10;
   
+  public static void populateIntStrings(List<String> testList, int qty) {
+    for (int i = 0; i < qty; i++) {
+      String str = Integer.toString(i);
+      testList.add(str);
+    }
+  }
+  
   public static void sizeTest(List<String> testList) {
     for (int i = 0; i < TEST_QTY; i++) {
       assertEquals(testList.size(), i);
@@ -40,10 +47,7 @@ public class ListTests {
   
   public static void addAllTest(List<String> testList) {
     List<String> toAddList = new ArrayList<String>(TEST_QTY);
-    for (int i = 0; i < TEST_QTY; i++) {
-      String str = Integer.toString(i);
-      toAddList.add(str);
-    }
+    populateIntStrings(toAddList, TEST_QTY);
     
     testList.addAll(toAddList);
     
@@ -55,6 +59,29 @@ public class ListTests {
     while (it.hasNext()) {
       assertTrue(it.next() == testIt.next());
     }
+  }
+  
+  public static void addAllIndexTest(List<String> testList) {
+    List<String> toAddList = new ArrayList<String>(TEST_QTY);
+    testList.add("foo");
+    testList.add("bar");
+    populateIntStrings(toAddList, TEST_QTY);
+    
+    testList.addAll(1, toAddList);
+    
+    assertEquals(testList.size(), TEST_QTY + 2);
+    assertTrue(testList.containsAll(toAddList));
+    
+    assertEquals(testList.indexOf(Integer.toString(0)), 1);
+    assertEquals(testList.indexOf(Integer.toString(TEST_QTY - 1)), TEST_QTY);
+    
+    Iterator<String> it = toAddList.iterator();
+    Iterator<String> testIt = testList.iterator();
+    assertTrue(testIt.next().equals("foo"));
+    while (it.hasNext()) {
+      assertTrue(it.next() == testIt.next());
+    }
+    assertTrue(testIt.next().equals("bar"));
   }
   
   public static void getTest(List<String> testList) {
@@ -105,10 +132,8 @@ public class ListTests {
   }
   
   public static void containsTest(List<String> testList) {
-    for (int i = 0; i < TEST_QTY; i++) {
-      String str = Integer.toString(i);
-      testList.add(str);
-    }
+    populateIntStrings(testList, TEST_QTY);
+    
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       assertTrue(testList.contains(str));
@@ -152,10 +177,7 @@ public class ListTests {
   }
   
   public static void clearTest(List<String> testList) {
-    for (int i = 0; i < TEST_QTY; i++) {
-      String str = Integer.toString(i);
-      testList.add(str);
-    }
+    populateIntStrings(testList, TEST_QTY);
     
     assertEquals(testList.size(), TEST_QTY);
     testList.clear();
@@ -163,10 +185,7 @@ public class ListTests {
   }
   
   public static void removeObjectTest(List<String> testList) {
-    for (int i = 0; i < TEST_QTY; i++) {
-      String str = Integer.toString(i);
-      testList.add(str);
-    }
+    populateIntStrings(testList, TEST_QTY);
     
     boolean flip = false;
     int removed = 0;
@@ -213,10 +232,7 @@ public class ListTests {
   }
   
   public static void removeIndexTest(List<String> testList) {
-    for (int i = 0; i < TEST_QTY; i++) {
-      String str = Integer.toString(i);
-      testList.add(str);
-    }
+    populateIntStrings(testList, TEST_QTY);
     
     List<String> removedItems = new LinkedList<String>();
     String removedItem = testList.remove(TEST_QTY - 1);

@@ -147,6 +147,11 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void addAllIndexTest() {
+    ListTests.addAllIndexTest(testList);
+  }
+  
+  @Test
   public void peekFirstTest() {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
