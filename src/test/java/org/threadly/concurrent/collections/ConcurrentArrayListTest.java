@@ -165,17 +165,17 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
-  public void removeFirstOccurrenceTest() {
-    List<String> firstStr = new ArrayList<String>(TEST_QTY);
-    List<String> secondStr = new ArrayList<String>(TEST_QTY);
-    for (int i = 0; i < TEST_QTY; i++) {
-      String str1 = Integer.toString(i);
-      firstStr.add(str1);
-      String str2 = Integer.toString(i);
-      secondStr.add(str2);
-      testList.add(str1);
-      testList.add(str2);
-    }
+    public void removeFirstOccurrenceTest() {
+      List<String> firstStr = new ArrayList<String>(TEST_QTY);
+      List<String> secondStr = new ArrayList<String>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
+        String str1 = Integer.toString(i);
+        firstStr.add(str1);
+        String str2 = Integer.toString(i);
+        secondStr.add(str2);
+        testList.add(str1);
+        testList.add(str2);
+      }
     
     
     for (int i = 0; i < TEST_QTY; i++) {
@@ -225,20 +225,84 @@ public class ConcurrentArrayListTest {
     ListTests.removeIndexTest(testList);
   }
   
-  /*@Test
+  @Test
   public void repositionSearchForwardTest() {
-    // TODO - implement
+    List<String> firstStr = new ArrayList<String>(TEST_QTY);
+    List<String> secondStr = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str1 = Integer.toString(i);
+      firstStr.add(str1);
+      String str2 = Integer.toString(i);
+      secondStr.add(str2);
+      testList.add(str1);
+      testList.add(str2);
+    }
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.reposition(str, i, false);
+    }
+    
+    Iterator<String> fIt = firstStr.iterator();
+    Iterator<String> sIt = secondStr.iterator();
+    Iterator<String> testIt = testList.iterator();
+    while (fIt.hasNext()) {
+      String next = testIt.next();
+      assertTrue(fIt.next() == next);
+      assertFalse(sIt.next() == next);
+    }
   }
   
   @Test
   public void repositionSearchBackwardTest() {
-    // TODO - implement
+    List<String> firstStr = new ArrayList<String>(TEST_QTY);
+    List<String> secondStr = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str1 = Integer.toString(i);
+      firstStr.add(str1);
+      String str2 = Integer.toString(i);
+      secondStr.add(str2);
+      testList.add(str1);
+      testList.add(str2);
+    }
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.reposition(str, i, true);
+    }
+    
+    Iterator<String> fIt = firstStr.iterator();
+    Iterator<String> sIt = secondStr.iterator();
+    Iterator<String> testIt = testList.iterator();
+    while (sIt.hasNext()) {
+      String next = testIt.next();
+      assertTrue(sIt.next() == next);
+      assertFalse(fIt.next() == next);
+    }
   }
   
   @Test
   public void repositionIndexTest() {
-    // TODO - implement
-  }*/
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(str);
+    }
+    
+    testList.reposition(TEST_QTY - 1, 0);
+    assertEquals(testList.get(0), Integer.toString(TEST_QTY - 1));
+    assertEquals(testList.get(1), Integer.toString(0));
+
+    String expectedNext = testList.get(6);
+    testList.reposition(0, 5);
+    assertEquals(testList.get(4), // one less than index position because shifted right 
+                 Integer.toString(TEST_QTY - 1));
+    assertEquals(testList.get(6), expectedNext);
+    
+    testList.reposition(1, 3);  // swap 1 to 2
+    System.out.println(testList);
+    assertEquals(testList.get(1), Integer.toString(2));
+    assertEquals(testList.get(2), Integer.toString(1));
+  }
   
   /* This also tests the ListIterator forwards, 
    * since this just defaults to that implementation
