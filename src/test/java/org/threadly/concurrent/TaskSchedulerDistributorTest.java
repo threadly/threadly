@@ -9,6 +9,8 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -19,7 +21,7 @@ public class TaskSchedulerDistributorTest {
   
   private volatile boolean ready;
   private PriorityScheduledExecutor scheduler;
-  private Object agentLock;
+  private VirtualLock agentLock;
   private TaskSchedulerDistributor distributor;
   
   @Before
@@ -29,7 +31,7 @@ public class TaskSchedulerDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT);
-    agentLock = new Object();
+    agentLock = new NativeLock(); // TODO test with testable lock
     distributor = new TaskSchedulerDistributor(scheduler, agentLock);
     ready = false;
   }
