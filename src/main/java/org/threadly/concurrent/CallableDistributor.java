@@ -5,7 +5,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLockFactory;
@@ -16,8 +18,8 @@ public class CallableDistributor<K, R> {
   
   private final TaskExecutorDistributor taskDistributor;
   private final VirtualLock callLock;
-  private final Map<K, Integer> waitingCalls;
-  private final Map<K, LinkedList<? extends R>> results;
+  private final Map<K, AtomicInteger> waitingCalls;
+  private final Map<K, LinkedList<Result<R>>> results;
   
   public CallableDistributor(int expectedParallism, int maxThreadCount) {
     this(new TaskExecutorDistributor(expectedParallism, maxThreadCount));
@@ -39,74 +41,111 @@ public class CallableDistributor<K, R> {
     
     this.taskDistributor = taskDistributor;
     callLock = lockFactory.makeLock();
-    waitingCalls = new HashMap<K, Integer>();
-    results = new HashMap<K, LinkedList<? extends R>>();
+    waitingCalls = new HashMap<K, AtomicInteger>();
+    results = new HashMap<K, LinkedList<Result<R>>>();
   }
   
   public void submit(K key, Callable<? extends R> callable) {
-    synchronized (callLock) {
-      Integer waitingCount = waitingCalls.get(key);
-      if (waitingCount == null) {
-        waitingCount = 0;
-        waitingCalls.put(key, waitingCount);
-      }
-      waitingCount++;
-      
-      CallableContainer cc = new CallableContainer(key, callable);
-      taskDistributor.addTask(key, cc);
+    AtomicInteger waitingCount = waitingCalls.get(key);
+    if (waitingCount == null) {
+      waitingCount = new AtomicInteger();
+      waitingCalls.put(key, waitingCount);
     }
+    waitingCount.incrementAndGet();
+      
+    CallableContainer cc = new CallableContainer(key, callable);
+    taskDistributor.addTask(key, cc);
   }
   
   // must be locked around callLock
   protected void verifyWaitingForResult(K key) {
-      Integer waitingCount = waitingCalls.get(key);
-      if (waitingCount == null || waitingCount == 0) {
-        throw new IllegalStateException("No submitted calls currently running for key: " + key);
-      }
-  }
-  
-  public R getNextResult(K key) {
-    return getNextResult(key, RESULTS_EXPECTED_DEFAULT);
-  }
-  
-  public R getNextResult(K key, boolean resultsExpected) {
-    synchronized (callLock) {
-      if (resultsExpected) {
-        verifyWaitingForResult(key);
-      }
-      
-      // TODO 
-      throw new UnsupportedOperationException();
+    AtomicInteger waitingCount = waitingCalls.get(key);
+    if (waitingCount == null || waitingCount.get() == 0) {
+      throw new IllegalStateException("No submitted calls currently running for key: " + key);
     }
   }
   
-  public List<? extends R> getAllResults(K key) {
-    return getAllResults(key, RESULTS_EXPECTED_DEFAULT);
+  public Result<R> getNextResult(K key) throws InterruptedException {
+    return getNextResult(key, RESULTS_EXPECTED_DEFAULT);
   }
   
-  public List<? extends R> getAllResults(K key, boolean resultsExpected) {
+  public Result<R> getNextResult(K key, boolean resultsExpected) throws InterruptedException {
     synchronized (callLock) {
       if (resultsExpected) {
         verifyWaitingForResult(key);
       }
       
-      // TODO 
-      throw new UnsupportedOperationException();
+      LinkedList<Result<R>> resultList = results.get(key);
+      while (resultList == null) {
+        callLock.await();
+        
+        resultList = results.get(key);
+      }
+      
+      Result<R> result = resultList.removeFirst();
+      if (resultList.isEmpty()) {
+        results.remove(key);
+      }
+      
+      return result;
+    }
+  }
+  
+  public List<Result<R>> getAllResults(K key) throws InterruptedException {
+    return getAllResults(key, RESULTS_EXPECTED_DEFAULT);
+  }
+  
+  public List<Result<R>> getAllResults(K key, boolean resultsExpected) throws InterruptedException {
+    synchronized (callLock) {
+      if (resultsExpected) {
+        verifyWaitingForResult(key);
+      }
+      
+      List<Result<R>> resultList = results.remove(key);
+      while (resultList == null) {
+        callLock.await();
+        
+        resultList = results.get(key);
+      }
+      
+      return resultList;
     }
   }
   
   protected void handleSuccessResult(K key, R result) {
     synchronized (callLock) {
-      // TODO
+      AtomicInteger waitingCount = waitingCalls.get(key);
+      if (waitingCount == null || waitingCount.get() < 1) {
+        throw new IllegalStateException("Not waiting for result?");
+      }
       
+      LinkedList<Result<R>> resultList = results.get(key);
+      if (resultList == null) {
+        resultList = new LinkedList<Result<R>>();
+        results.put(key, resultList);
+      }
+      resultList.add(new Result<R>(result));
+
+      waitingCount.decrementAndGet();
       callLock.signalAll();
     }
   }
   
   protected void handleFailureResult(K key, Throwable t) {
     synchronized (callLock) {
-      // TODO
+      AtomicInteger waitingCount = waitingCalls.get(key);
+      if (waitingCount == null || waitingCount.get() < 1) {
+        throw new IllegalStateException("Not waiting for result?");
+      }
       
+      LinkedList<Result<R>> resultList = results.get(key);
+      if (resultList == null) {
+        resultList = new LinkedList<Result<R>>();
+        results.put(key, resultList);
+      }
+      resultList.add(new Result<R>(t));
+
+      waitingCount.decrementAndGet();
       callLock.signalAll();
     }
   }
@@ -128,6 +167,33 @@ public class CallableDistributor<K, R> {
       } catch (Exception e) {
         handleFailureResult(key, e);
       }
+    }
+  }
+  
+  public class Result<R> {
+    private final R successResult;
+    private final Throwable failureResult;
+    
+    private Result(R successResult) {
+      this.successResult = successResult;
+      failureResult = null;
+    }
+    
+    private Result(Throwable failureResult) {
+      successResult = null;
+      this.failureResult = failureResult;
+    }
+    
+    public R getResult() throws ExecutionException {
+      if (failureResult != null) {
+        throw new ExecutionException(failureResult);
+      }
+      
+      return successResult;
+    }
+    
+    public Throwable getFailure() {
+      return failureResult;
     }
   }
 }
