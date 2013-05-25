@@ -283,16 +283,16 @@ public class CallableDistributor<K, R> {
    *
    * @param <R> result type
    */
-  public class Result<R> {
+  public static class Result<R> {
     private final R successResult;
     private final Throwable failureResult;
     
-    private Result(R successResult) {
+    protected Result(R successResult) {
       this.successResult = successResult;
       failureResult = null;
     }
     
-    private Result(Throwable failureResult) {
+    protected Result(Throwable failureResult) {
       successResult = null;
       this.failureResult = failureResult;
     }
