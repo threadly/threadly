@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.NativeLockFactory;
+import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
@@ -28,9 +29,10 @@ import org.threadly.concurrent.lock.VirtualLock;
  */
 public class TaskExecutorDistributor {
   protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;
+  protected static final int DEFAULT_LOCK_PARALISM = 10;
   
   private final Executor executor;
-  private final VirtualLock agentLock;
+  private final StripedLock sLock;
   private final Map<Object, TaskQueueWorker> taskWorkers;
   
   /**
@@ -44,28 +46,43 @@ public class TaskExecutorDistributor {
                                        maxThreadCount, 
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
-                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT));
+                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT), 
+         new StripedLock(expectedParallism, new NativeLockFactory()));
   }
   
   /**
+   * Constructor to use a provided executor implementation for running tasks.
+   * 
    * @param executor A multi-threaded executor to distribute tasks to.  
    *                 Ideally has as many possible threads as keys that 
    *                 will be used in parallel. 
    */
   public TaskExecutorDistributor(Executor executor) {
-    this(executor, new NativeLock());
+    this(DEFAULT_LOCK_PARALISM, executor);
+  }
+    
+  /**
+   * Constructor to use a provided executor implementation for running tasks.
+   * 
+   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param executor A multi-threaded executor to distribute tasks to.  
+   *                 Ideally has as many possible threads as keys that 
+   *                 will be used in parallel. 
+   */
+  public TaskExecutorDistributor(int expectedParallism, Executor executor) {
+    this(executor, new StripedLock(expectedParallism, new NativeLockFactory()));
   }
   
   /**
    * used for testing, so that agentLock can be held and prevent execution.
    */
-  protected TaskExecutorDistributor(Executor executor, VirtualLock agentLock) {
+  protected TaskExecutorDistributor(Executor executor, StripedLock sLock) {
     if (executor == null) {
       throw new IllegalArgumentException("executor can not be null");
     }
     
     this.executor = executor;
-    this.agentLock = agentLock;
+    this.sLock = sLock;
     this.taskWorkers = new HashMap<Object, TaskQueueWorker>();
   }
   
@@ -89,10 +106,11 @@ public class TaskExecutorDistributor {
       throw new IllegalArgumentException("Must provide task");
     }
     
+    VirtualLock agentLock = sLock.getLock(threadKey);
     synchronized (agentLock) {
       TaskQueueWorker worker = taskWorkers.get(threadKey);
       if (worker == null) {
-        worker = new TaskQueueWorker(threadKey);
+        worker = new TaskQueueWorker(threadKey, agentLock);
         taskWorkers.put(threadKey, worker);
         worker.add(task);
         executor.execute(worker);
@@ -110,10 +128,13 @@ public class TaskExecutorDistributor {
    */
   private class TaskQueueWorker implements Runnable {
     private final Object mapKey;
+    private final VirtualLock agentLock;
     private LinkedList<Runnable> queue;
     
-    private TaskQueueWorker(Object mapKey) {
+    private TaskQueueWorker(Object mapKey, 
+                            VirtualLock agentLock) {
       this.mapKey = mapKey;
+      this.agentLock = agentLock;
       this.queue = new LinkedList<Runnable>();
     }
     

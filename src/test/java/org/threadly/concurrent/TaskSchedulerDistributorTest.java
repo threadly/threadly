@@ -10,6 +10,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.NativeLockFactory;
+import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -31,8 +33,9 @@ public class TaskSchedulerDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT);
-    agentLock = new NativeLock(); // TODO test with testable lock
-    distributor = new TaskSchedulerDistributor(scheduler, agentLock);
+    StripedLock sLock = new StripedLock(1, new NativeLockFactory()); // TODO - test with testable lock
+    agentLock = sLock.getLock(null);  // there should be only one lock
+    distributor = new TaskSchedulerDistributor(scheduler, sLock);
     ready = false;
   }
   
