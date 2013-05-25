@@ -205,7 +205,7 @@ public class CallableDistributor<K, R> {
       while (resultList == null) {
         callLock.await();
         
-        resultList = results.get(key);
+        resultList = results.remove(key);
       }
       
       return resultList;
