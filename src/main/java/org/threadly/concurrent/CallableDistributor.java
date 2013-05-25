@@ -9,8 +9,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLockFactory;
+import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
@@ -29,7 +29,7 @@ public class CallableDistributor<K, R> {
   private static final boolean RESULTS_EXPECTED_DEFAULT = true;
   
   private final TaskExecutorDistributor taskDistributor;
-  private final VirtualLock callLock;
+  private final StripedLock sLock;
   private final Map<K, AtomicInteger> waitingCalls;
   private final Map<K, LinkedList<Result<R>>> results;
   
@@ -56,22 +56,39 @@ public class CallableDistributor<K, R> {
   }
   
   /**
+   * Constructs a new CallableDistributor with a provided Executor.  
+   * Executor should have enough available threads to be able to service the 
+   * expected key quantity in parallel.
+   * 
+   * @param expectedParallism  level of expected qty of threads adding callables in parallel
+   * @param executor Executor for new threads to be executed on
+   */
+  public CallableDistributor(int expectedParallism, Executor executor) {
+    this(new TaskExecutorDistributor(expectedParallism, executor));
+  }
+
+  
+  /**
    * Constructs a new CallableDistributor with a provided taskDistributor.
    * 
    * @param taskDistributor TaskDistributor used to execute callables
    */
   public CallableDistributor(TaskExecutorDistributor taskDistributor) {
-    this(taskDistributor, new NativeLockFactory());
+    this(taskDistributor, new StripedLock(taskDistributor.sLock.getExpectedConcurrencyLevel(), 
+                                          new NativeLockFactory()));
   }
   
+  /**
+   * Constructs for unit testing.
+   */
   protected CallableDistributor(TaskExecutorDistributor taskDistributor, 
-                                LockFactory lockFactory) {
+                                StripedLock sLock) {
     if (taskDistributor == null) {
       throw new IllegalArgumentException("Must provide taskDistributor");
     }
     
     this.taskDistributor = taskDistributor;
-    callLock = lockFactory.makeLock();
+    this.sLock = sLock;
     waitingCalls = new HashMap<K, AtomicInteger>();
     results = new HashMap<K, LinkedList<Result<R>>>();
   }
@@ -141,6 +158,7 @@ public class CallableDistributor<K, R> {
       throw new IllegalArgumentException("key can not be null");
     }
     
+    VirtualLock callLock = sLock.getLock(key);
     synchronized (callLock) {
       if (resultsExpected) {
         verifyWaitingForResult(key);
@@ -195,7 +213,8 @@ public class CallableDistributor<K, R> {
     if (key == null) {
       throw new IllegalArgumentException("key can not be null");
     }
-    
+
+    VirtualLock callLock = sLock.getLock(key);
     synchronized (callLock) {
       if (resultsExpected) {
         verifyWaitingForResult(key);
@@ -213,6 +232,7 @@ public class CallableDistributor<K, R> {
   }
   
   protected void handleSuccessResult(K key, R result) {
+    VirtualLock callLock = sLock.getLock(key);
     synchronized (callLock) {
       AtomicInteger waitingCount = waitingCalls.get(key);
       if (waitingCount == null || waitingCount.get() < 1) {
@@ -232,6 +252,7 @@ public class CallableDistributor<K, R> {
   }
   
   protected void handleFailureResult(K key, Throwable t) {
+    VirtualLock callLock = sLock.getLock(key);
     synchronized (callLock) {
       AtomicInteger waitingCount = waitingCalls.get(key);
       if (waitingCount == null || waitingCount.get() < 1) {
