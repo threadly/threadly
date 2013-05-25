@@ -1,5 +1,7 @@
 package org.threadly.concurrent.lock;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * This structure allows for more controlled levels of parallism.  It helps 
  * in allowing threads to only lock when their interest are the same.  It 
@@ -11,8 +13,19 @@ package org.threadly.concurrent.lock;
 public class StripedLock {
   private final int expectedConcurrencyLevel;
   private final LockFactory lockFactory;
+  private final ConcurrentHashMap<Integer, VirtualLock> locks;
   
-  public StripedLock(int expectedConcurrencyLevel, LockFactory lockFactory) {
+  /**
+   * Constructs a new StripedLock with a given expected concurrency level.  
+   * The higher the concurrency level, the less lock contention will exist, 
+   * but more locks will have to be synchronized on and more memory will be 
+   * used to store the locks.
+   * 
+   * @param expectedConcurrencyLevel expected level of paralism
+   * @param lockFactory factory to produce new locks from
+   */
+  public StripedLock(int expectedConcurrencyLevel, 
+                     LockFactory lockFactory) {
     if (expectedConcurrencyLevel <= 0) {
       throw new IllegalArgumentException("expectedConcurrencyLevel must be > 0: " + expectedConcurrencyLevel);
     } else if (lockFactory == null) {
@@ -21,5 +34,40 @@ public class StripedLock {
     
     this.expectedConcurrencyLevel = expectedConcurrencyLevel;
     this.lockFactory = lockFactory;
+    this.locks = new ConcurrentHashMap<Integer, VirtualLock>();
+  }
+  
+  /**
+   * Call to get a striped lock for a given key.
+   * 
+   * @param key to use hashCode() from to determine lock
+   * @return consistent VirtualLock for a given key
+   */
+  public VirtualLock getLock(Object key) {
+    if (key == null) {
+      return getLock(0);
+    } else {
+      return getLock(key.hashCode());
+    }
+  }
+  
+  /**
+   * Call to get a striped lock for a given hash code.
+   * 
+   * @param hashCode to use to determine which lock to return
+   * @return consistent VirtualLock for a given hash code
+   */
+  public VirtualLock getLock(int hashCode) {
+    int lockIndex = Math.abs(hashCode) % expectedConcurrencyLevel;
+    VirtualLock result = locks.get(lockIndex);
+    if (result == null) {
+      result = lockFactory.makeLock();
+      VirtualLock putIfAbsentResult = locks.putIfAbsent(lockIndex, result);
+      if (putIfAbsentResult != null) {
+        result = putIfAbsentResult;
+      }
+    }
+    
+    return result;
   }
 }
