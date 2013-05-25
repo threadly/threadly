@@ -87,6 +87,13 @@ public class TaskSchedulerDistributorTest {
     return runs;
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void constructorFail() {
+    new TaskSchedulerDistributor(1, null);
+    
+    fail("Exception should have been thrown");
+  }
+  
   @Test
   public void testGetExecutor() {
     assertTrue(scheduler == distributor.getExecutor());

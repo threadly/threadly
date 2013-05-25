@@ -47,6 +47,13 @@ public class TaskExecutorDistributorTest {
     ready = false;
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void constructorFail() {
+    new TaskExecutorDistributor(1, null);
+    
+    fail("Exception should have been thrown");
+  }
+  
   @Test
   public void testGetExecutor() {
     assertTrue(scheduler == distributor.getExecutor());

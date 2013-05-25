@@ -25,11 +25,15 @@ public class StripedLockTest {
   @Test (expected = IllegalArgumentException.class)
   public void constructorNegativeConcurrencyFail() {
     new StripedLock(-10, new NativeLockFactory());
+    
+    fail("Exception should have been thrown");
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void constructorNullFactoryFail() {
     new StripedLock(0, null);
+    
+    fail("Exception should have been thrown");
   }
   
   @Test
