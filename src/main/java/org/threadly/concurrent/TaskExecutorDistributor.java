@@ -31,8 +31,8 @@ public class TaskExecutorDistributor {
   protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;
   protected static final int DEFAULT_LOCK_PARALISM = 10;
   
-  private final Executor executor;
-  private final StripedLock sLock;
+  protected final Executor executor;
+  protected final StripedLock sLock;
   private final Map<Object, TaskQueueWorker> taskWorkers;
   
   /**

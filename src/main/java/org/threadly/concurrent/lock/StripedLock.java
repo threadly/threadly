@@ -38,6 +38,13 @@ public class StripedLock {
   }
   
   /**
+   * @return the constructed level of concurrency
+   */
+  public int getExpectedConcurrencyLevel() {
+    return expectedConcurrencyLevel;
+  }
+  
+  /**
    * Call to get a striped lock for a given key.
    * 
    * @param key to use hashCode() from to determine lock
