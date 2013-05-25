@@ -1,7 +1,7 @@
 package org.threadly.concurrent;
 
-import org.threadly.concurrent.lock.NativeLock;
-import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.concurrent.lock.NativeLockFactory;
+import org.threadly.concurrent.lock.StripedLock;
 
 /**
  * This is a class which is more full featured than TaskExecutorDistributor, 
@@ -24,23 +24,38 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                                        maxThreadCount, 
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
-                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT));
+                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT), 
+         new StripedLock(expectedParallism, new NativeLockFactory()));
   }
   
   /**
+   * Constructor to use a provided executor implementation for running tasks.
+   * 
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
+   *                  Ideally has as many possible threads as keys that 
+   *                  will be used in parallel.
+   */
+  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler) {
+    this(DEFAULT_LOCK_PARALISM, scheduler);
+  }
+    
+  /**
+   * Constructor to use a provided scheduler implementation for running tasks.
+   * 
+   * @param expectedParallism level of expected qty of threads adding tasks in parallel
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
    *                  will be used in parallel. 
    */
-  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler) {
-    this(scheduler, new NativeLock());
+  public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler) {
+    this(scheduler, new StripedLock(expectedParallism, new NativeLockFactory()));
   }
   
   /**
    * used for testing, so that agentLock can be held and prevent execution.
    */
-  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, VirtualLock agentLock) {
-    super(scheduler, agentLock);
+  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, StripedLock sLock) {
+    super(scheduler, sLock);
     
     this.scheduler = scheduler;
   }
