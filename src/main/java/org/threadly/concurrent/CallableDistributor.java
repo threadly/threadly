@@ -1,10 +1,10 @@
 package org.threadly.concurrent;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,8 +30,8 @@ public class CallableDistributor<K, R> {
   
   private final TaskExecutorDistributor taskDistributor;
   private final StripedLock sLock;
-  private final Map<K, AtomicInteger> waitingCalls;
-  private final Map<K, LinkedList<Result<R>>> results;
+  private final ConcurrentHashMap<K, AtomicInteger> waitingCalls;
+  private final Map<K, LinkedList<Result<R>>> results;  // locked around sLock for key
   
   /**
    * Constructs a new CallableDistributor with giving parameters to 
@@ -89,8 +89,8 @@ public class CallableDistributor<K, R> {
     
     this.taskDistributor = taskDistributor;
     this.sLock = sLock;
-    waitingCalls = new HashMap<K, AtomicInteger>();
-    results = new HashMap<K, LinkedList<Result<R>>>();
+    waitingCalls = new ConcurrentHashMap<K, AtomicInteger>();
+    results = new ConcurrentHashMap<K, LinkedList<Result<R>>>();
   }
   
   /**
@@ -110,7 +110,10 @@ public class CallableDistributor<K, R> {
     AtomicInteger waitingCount = waitingCalls.get(key);
     if (waitingCount == null) {
       waitingCount = new AtomicInteger();
-      waitingCalls.put(key, waitingCount);
+      AtomicInteger putResult = waitingCalls.putIfAbsent(key, waitingCount);
+      if (putResult != null) {
+        waitingCount = putResult;
+      }
     }
     waitingCount.incrementAndGet();
       
@@ -332,10 +335,10 @@ public class CallableDistributor<K, R> {
     
     /**
      * Will return the result from the callable, or throw an ExecutionException 
-     * if a failue occured during execution.
+     * if a failure occurred during execution.
      * 
      * @return computed result
-     * @throws ExecutionException Exception to indicate failure occured during run
+     * @throws ExecutionException Exception to indicate failure occurred during run
      */
     public R get() throws ExecutionException {
       if (failureResult != null) {
