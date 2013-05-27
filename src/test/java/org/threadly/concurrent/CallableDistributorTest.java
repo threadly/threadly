@@ -62,6 +62,8 @@ public class CallableDistributorTest {
     TestCallable tc = new TestCallable(false, 50, resultStr);  // delay to force .get calls to have to wait
     distributor.submit(key, tc);
     
+    assertTrue(distributor.waitingResults(key));
+    
     Result<String> result = distributor.getNextResult(key);
     assertNotNull(result);
     assertTrue(result.getResult() == resultStr);
@@ -76,6 +78,8 @@ public class CallableDistributorTest {
     String resultStr = "foobar";
     TestCallable tc = new TestCallable(true, 50, resultStr);  // delay to force .get calls to have to wait
     distributor.submit(key, tc);
+    
+    assertTrue(distributor.waitingResults(key));
     
     Result<String> result = distributor.getNextResult(key);
     assertNotNull(result);
@@ -97,6 +101,8 @@ public class CallableDistributorTest {
       distributor.submit(key, tc);
     }
     
+    assertTrue(distributor.waitingResults(key));
+    
     List<Result<String>> results = new ArrayList<Result<String>>(testQty);
     for (int i = 0; i < testQty; i++) {
       Result<String> result = distributor.getNextResult(key);
@@ -104,6 +110,11 @@ public class CallableDistributorTest {
       assertFalse(results.contains(result));
       results.add(result);
     }
+  }
+  
+  @Test
+  public void waitingResultsFalseTest() {
+    assertFalse(distributor.waitingResults("foobar"));
   }
   
   @Test (expected = IllegalArgumentException.class)
