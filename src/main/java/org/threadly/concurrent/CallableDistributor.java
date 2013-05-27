@@ -118,10 +118,22 @@ public class CallableDistributor<K, R> {
     taskDistributor.addTask(key, cc);
   }
   
+  /**
+   * Call to check if results are, or will be ready for a given key.
+   * 
+   * @param key key for submitted callables
+   * @return true if results are either ready, or currently processing for key
+   */
+  public boolean waitingResults(K key) {
+    AtomicInteger waitingCount = waitingCalls.get(key);
+    
+    return (waitingCount != null && waitingCount.get() > 0) || 
+             results.containsKey(key);
+  }
+  
   // must be locked around callLock
   protected void verifyWaitingForResult(K key) {
-    AtomicInteger waitingCount = waitingCalls.get(key);
-    if ((waitingCount == null || waitingCount.get() == 0) && ! results.containsKey(key)) {
+    if (! waitingResults(key)) {
       throw new IllegalStateException("No submitted calls currently running for key: " + key);
     }
   }
@@ -133,7 +145,7 @@ public class CallableDistributor<K, R> {
    * 
    * @param key used when submitted that results will be returned for
    * @return result from execution
-   * @throws InterruptedException exception if thread was interupted while blocking
+   * @throws InterruptedException exception if thread was interrupted while blocking
    */
   public Result<R> getNextResult(K key) throws InterruptedException {
     return getNextResult(key, RESULTS_EXPECTED_DEFAULT);
@@ -151,7 +163,7 @@ public class CallableDistributor<K, R> {
    * @param key used when submitted that results will be returned for
    * @param resultsExpected if callable was guaranteed to be already submitted
    * @return result from execution
-   * @throws InterruptedException exception if thread was interupted while blocking
+   * @throws InterruptedException exception if thread was interrupted while blocking
    */
   public Result<R> getNextResult(K key, boolean resultsExpected) throws InterruptedException {
     if (key == null) {
@@ -189,7 +201,7 @@ public class CallableDistributor<K, R> {
    * 
    * @param key used when submitted that results will be returned for
    * @return a list of all results ready for the given key
-   * @throws InterruptedException exception if thread was interupted while blocking
+   * @throws InterruptedException exception if thread was interrupted while blocking
    */
   public List<Result<R>> getAllResults(K key) throws InterruptedException {
     return getAllResults(key, RESULTS_EXPECTED_DEFAULT);
@@ -207,7 +219,7 @@ public class CallableDistributor<K, R> {
    * @param key used when submitted that results will be returned for
    * @param resultsExpected if callable was guaranteed to be already submitted
    * @return a list of all results ready for the given key
-   * @throws InterruptedException exception if thread was interupted while blocking
+   * @throws InterruptedException exception if thread was interrupted while blocking
    */
   public List<Result<R>> getAllResults(K key, boolean resultsExpected) throws InterruptedException {
     if (key == null) {
