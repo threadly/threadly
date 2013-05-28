@@ -394,17 +394,9 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
         if (! isCancelled) {
           run = true;
           if (task != null) {
-            if (task instanceof VirtualCallable) {
-              result = ((VirtualCallable<T>)task).call(factory);
-            } else {
-              result = task.call();
-            }
+            result = task.call();
           } else {
-            if (toRun instanceof VirtualRunnable) {
-              ((VirtualRunnable)toRun).run(factory);
-            } else {
-              toRun.run();
-            }
+            toRun.run();
           }
         }
       } catch (Exception e) {
