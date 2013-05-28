@@ -1,11 +1,10 @@
 package org.threadly.concurrent;
 
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 import org.threadly.concurrent.lock.NativeLockFactory;
@@ -33,7 +32,7 @@ public class TaskExecutorDistributor {
   
   protected final Executor executor;
   protected final StripedLock sLock;
-  private final Map<Object, TaskQueueWorker> taskWorkers;
+  private final ConcurrentHashMap<Object, TaskQueueWorker> taskWorkers;
   
   /**
    * Constructor which creates executor based off provided values.
@@ -83,7 +82,7 @@ public class TaskExecutorDistributor {
     
     this.executor = executor;
     this.sLock = sLock;
-    this.taskWorkers = new HashMap<Object, TaskQueueWorker>();
+    this.taskWorkers = new ConcurrentHashMap<Object, TaskQueueWorker>();
   }
   
   /**

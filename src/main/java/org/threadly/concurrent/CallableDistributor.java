@@ -1,9 +1,7 @@
 package org.threadly.concurrent;
 
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -33,7 +31,7 @@ public class CallableDistributor<K, R> {
   private final TaskExecutorDistributor taskDistributor;
   private final StripedLock sLock;
   private final ConcurrentHashMap<K, AtomicInteger> waitingCalls;
-  private final Map<K, LinkedList<Result<R>>> results;  // locked around sLock for key
+  private final ConcurrentHashMap<K, LinkedList<Result<R>>> results;  // locked around sLock for key
   
   /**
    * Constructs a new CallableDistributor with giving parameters to 
@@ -92,7 +90,7 @@ public class CallableDistributor<K, R> {
     this.taskDistributor = taskDistributor;
     this.sLock = sLock;
     waitingCalls = new ConcurrentHashMap<K, AtomicInteger>();
-    results = new HashMap<K, LinkedList<Result<R>>>();
+    results = new ConcurrentHashMap<K, LinkedList<Result<R>>>();
   }
   
   /**
@@ -132,14 +130,8 @@ public class CallableDistributor<K, R> {
   public boolean waitingResults(K key) {
     AtomicInteger waitingCount = waitingCalls.get(key);
     
-    if (waitingCount != null && waitingCount.get() > 0) {
-      return true;
-    } else {
-      VirtualLock callLock = sLock.getLock(key);
-      synchronized (callLock) {
-        return results.containsKey(key);
-      }
-    }
+    return (waitingCount != null && waitingCount.get() > 0) || 
+             results.containsKey(key);
   }
   
   protected void verifyWaitingForResult(K key) {
