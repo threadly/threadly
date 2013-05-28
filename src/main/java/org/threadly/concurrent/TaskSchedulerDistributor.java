@@ -117,7 +117,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  private class AddTask implements Runnable {
+  private class AddTask extends VirtualRunnable {
     private final Object key;
     private final Runnable task;
     
@@ -137,7 +137,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  private class RecrringTask implements Runnable {
+  private class RecrringTask extends VirtualRunnable {
     private final Object key;
     private final Runnable task;
     private final long recurringDelay;
@@ -150,7 +150,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     @Override
     public void run() {
       try {
-        task.run();
+        if (factory != null && task instanceof VirtualRunnable) {
+          ((VirtualRunnable)task).run(factory);
+        } else {
+          task.run();
+        }
       } finally {
         if (! scheduler.isShutdown()) {
           scheduler.schedule(new AddTask(key, this), recurringDelay);

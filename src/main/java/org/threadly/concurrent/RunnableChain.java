@@ -10,7 +10,7 @@ import java.util.List;
  * 
  * @author jent - Mike Jensen
  */
-public class RunnableChain implements Runnable {
+public class RunnableChain extends VirtualRunnable {
   private final boolean exceptionStopsChain;
   private final List<? extends Runnable> toRun;
   
@@ -39,19 +39,19 @@ public class RunnableChain implements Runnable {
     }
   }
   
-  private void runExceptionsCascade() {
+  protected void runExceptionsCascade() {
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {
-      it.next().run();
+      runRunnable(it.next());
     }
   }
   
-  private void runIsolated() {
+  protected void runIsolated() {
     Throwable toThrow = null;
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {
       try {
-        it.next().run();
+        runRunnable(it.next());
       } catch (Throwable t) {
         toThrow = t;
       }
@@ -59,6 +59,14 @@ public class RunnableChain implements Runnable {
     
     if (toThrow != null) {
       throw new RuntimeException("Throwable from runnable chain", toThrow);
+    }
+  }
+  
+  protected void runRunnable(Runnable toRun) {
+    if (factory != null && toRun instanceof VirtualRunnable) {
+      ((VirtualRunnable)toRun).run(factory);
+    } else {
+      toRun.run();
     }
   }
 }
