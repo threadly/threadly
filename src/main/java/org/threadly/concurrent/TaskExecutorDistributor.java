@@ -126,7 +126,7 @@ public class TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  private class TaskQueueWorker implements Runnable {
+  private class TaskQueueWorker extends VirtualRunnable {
     private final Object mapKey;
     private final VirtualLock agentLock;
     private LinkedList<Runnable> queue;
@@ -173,8 +173,11 @@ public class TaskExecutorDistributor {
         while (it.hasNext()) {
           try {
             Runnable next = it.next();
-            // TODO - VirtualRunnables are not handled here
-            next.run();
+            if (factory != null && next instanceof VirtualRunnable) {
+              ((VirtualRunnable)next).run(factory);
+            } else {
+              next.run();
+            }
           } catch (Throwable t) {
             UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
             ueh.uncaughtException(Thread.currentThread(), t);
