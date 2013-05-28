@@ -22,7 +22,7 @@ public class ExceptionUtils {
     if (t instanceof RuntimeException) {
       return (RuntimeException)t;
     } else {
-      RuntimeException result = new RuntimeException(t);
+      TransformedException result = new TransformedException(t.getMessage(), t);
       
       // remove this function from the stack trace
       StackTraceElement[] originalstack = result.getStackTrace();
@@ -63,6 +63,26 @@ public class ExceptionUtils {
       } finally {
         pw.close();
       }
+    }
+  }
+  
+  /**
+   * Exception which is constructed from makeRuntime when the exception 
+   * was not a runtime exception.
+   * 
+   * @author jent - Mike Jensen
+   */
+  public static class TransformedException extends RuntimeException {
+    private static final long serialVersionUID = 4524467217814731188L;
+
+    /**
+     * Constructs a new TransformedException.
+     * 
+     * @param message message for exception
+     * @param t throwable cause
+     */
+    protected TransformedException(String message, Throwable t) {
+      super(message, t);
     }
   }
 }

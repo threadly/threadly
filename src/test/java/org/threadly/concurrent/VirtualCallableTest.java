@@ -10,7 +10,7 @@ import org.threadly.concurrent.lock.VirtualLock;
 public class VirtualCallableTest {
   
   @Test
-  public void runTest() throws Exception {
+  public void runTest() {
     TestLockFactory tlf = new TestLockFactory();
     TestCallable tc = new TestCallable();
     

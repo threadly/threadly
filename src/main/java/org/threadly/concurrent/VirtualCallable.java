@@ -5,6 +5,8 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.ExceptionUtils;
+import org.threadly.util.ExceptionUtils.TransformedException;
 
 /**
  * This class helps assist in making concurrent code testable.
@@ -28,13 +30,15 @@ public abstract class VirtualCallable<T> implements Callable<T>  {
    *  
    * @param factory factory to use while running this runnable
    * @return result from .call()
-   * @throws Exception exception that could be thrown from the .call()
+   * @throws TransformedException thrown if .call() threw an exception, the cause will be the original exception
    */
-  public T call(LockFactory factory) throws Exception {
+  public T call(LockFactory factory) throws TransformedException {
     this.factory = factory;
     
     try {
       return call();
+    } catch (Exception e) {
+      throw ExceptionUtils.makeRuntime(e);
     } finally {
       this.factory = null;
     }
