@@ -1,53 +1,53 @@
 package org.threadly.test.concurrent.lock;
 
 import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.test.concurrent.TestablePriorityScheduler;
+import org.threadly.test.concurrent.TestableExecutor;
 
 /**
  * Lock which is used for a testable scheduler which may not want
  * threads to be blocked.
  * 
- * @author jent
+ * @author jent - Mike Jensen
  */
 public class TestableLock extends VirtualLock {
-  private final TestablePriorityScheduler scheduler;
+  private final TestableExecutor executor;
   
   /**
    * Constructs a new TestableLock with a testable scheduler 
    * to default to for implementation.
    * 
-   * @param scheduler Scheduler which lock operations default to.
+   * @param executor Scheduler which lock operations default to.
    */
-  public TestableLock(TestablePriorityScheduler scheduler) {
-    if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler for lock to deffer to");
+  public TestableLock(TestableExecutor executor) {
+    if (executor == null) {
+      throw new IllegalArgumentException("Must provide executor for lock to deffer to");
     }
     
-    this.scheduler = scheduler;
+    this.executor = executor;
   }
 
   @Override
   public void await() throws InterruptedException {
-    scheduler.waiting(this);
+    executor.waiting(this);
   }
 
   @Override
   public void await(long waitTimeInMs) throws InterruptedException {
-    scheduler.waiting(this, waitTimeInMs);
+    executor.waiting(this, waitTimeInMs);
   }
 
   @Override
   public void signal() {
-    scheduler.signal(this);
+    executor.signal(this);
   }
 
   @Override
   public void signalAll() {
-    scheduler.signalAll(this);
+    executor.signalAll(this);
   }
 
   @Override
   public void sleep(long timeInMs) throws InterruptedException {
-    scheduler.sleep(timeInMs);
+    executor.sleep(timeInMs);
   }
 }

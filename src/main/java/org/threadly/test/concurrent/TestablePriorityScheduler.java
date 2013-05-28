@@ -32,6 +32,7 @@ import org.threadly.util.ListUtils;
  * @author jent - Mike Jensen
  */
 public class TestablePriorityScheduler implements PrioritySchedulerInterface, 
+                                                  TestableExecutor, 
                                                   LockFactory {
   protected final Executor executor;
   protected final TaskPriority defaultPriority;
@@ -277,13 +278,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return new TestableLock(this);
   }
 
-  /**
-   * should only be called from TestableVirtualLock.
-   * 
-   * @param lock lock referencing calling into scheduler
-   * @throws InterruptedException
-   */
-  @SuppressWarnings("javadoc")
+  @Override
   public void waiting(TestableLock lock) throws InterruptedException {
     NotifyObject no = waitingThreads.get(lock);
     if (no == null) {
@@ -294,14 +289,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     no.yield();
   }
 
-  /**
-   * should only be called from TestableVirtualLock.
-   * 
-   * @param lock lock referencing calling into scheduler
-   * @param waitTimeInMs time to wait on lock
-   * @throws InterruptedException
-   */
-  @SuppressWarnings("javadoc")
+  @Override
   public void waiting(final TestableLock lock, 
                       long waitTimeInMs) throws InterruptedException {
     final boolean[] notified = new boolean[] { false };
@@ -319,11 +307,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     notified[0] = true;
   }
 
-  /**
-   * should only be called from TestableVirtualLock.
-   * 
-   * @param lock lock referencing calling into scheduler
-   */
+  @Override
   public void signal(TestableLock lock) {
     NotifyObject no = waitingThreads.get(lock);
     if (no != null) {
@@ -332,11 +316,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
 
-  /**
-   * should only be called from TestableVirtualLock.
-   * 
-   * @param lock lock referencing calling into scheduler
-   */
+  @Override
   public void signalAll(TestableLock lock) {
     NotifyObject no = waitingThreads.get(lock);
     if (no != null) {
@@ -345,14 +325,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     }
   }
 
-  /**
-   * should only be called from TestableVirtualLock or 
-   * the running thread inside the scheduler.
-   * 
-   * @param sleepTime time for thread to sleep
-   * @throws InterruptedException
-   */
-  @SuppressWarnings("javadoc")
+  @Override
   public void sleep(long sleepTime) throws InterruptedException {
     NotifyObject sleepLock = new NotifyObject(new Object());
     add(new WakeUpThread(sleepLock, false, sleepTime));
