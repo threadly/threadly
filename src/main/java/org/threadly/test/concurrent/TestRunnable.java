@@ -11,7 +11,7 @@ import org.threadly.concurrent.VirtualRunnable;
  * @author jent - Mike Jensen
  */
 public class TestRunnable extends VirtualRunnable {
-  private static final int DEFAULT_TIMEOUT_PER_RUN = 2000;
+  private static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;
   private static final int RUN_CONDITION_POLL_INTERVAL = 20;
   
   private final TestCondition runCondition;
