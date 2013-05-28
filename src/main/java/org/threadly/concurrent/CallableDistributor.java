@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,7 @@ public class CallableDistributor<K, R> {
     this.taskDistributor = taskDistributor;
     this.sLock = sLock;
     waitingCalls = new ConcurrentHashMap<K, AtomicInteger>();
-    results = new ConcurrentHashMap<K, LinkedList<Result<R>>>();
+    results = new HashMap<K, LinkedList<Result<R>>>();
   }
   
   /**
@@ -130,11 +131,16 @@ public class CallableDistributor<K, R> {
   public boolean waitingResults(K key) {
     AtomicInteger waitingCount = waitingCalls.get(key);
     
-    return (waitingCount != null && waitingCount.get() > 0) || 
-             results.containsKey(key);
+    if (waitingCount != null && waitingCount.get() > 0) {
+      return true;
+    } else {
+      VirtualLock callLock = sLock.getLock(key);
+      synchronized (callLock) {
+        return results.containsKey(key);
+      }
+    }
   }
   
-  // must be locked around callLock
   protected void verifyWaitingForResult(K key) {
     if (! waitingResults(key)) {
       throw new IllegalStateException("No submitted calls currently running for key: " + key);
@@ -291,7 +297,7 @@ public class CallableDistributor<K, R> {
    * 
    * @author jent - Mike Jensen
    */
-  protected class CallableContainer implements Runnable {
+  protected class CallableContainer extends VirtualRunnable {
     private final K key;
     private final Callable<? extends R> callable;
     
