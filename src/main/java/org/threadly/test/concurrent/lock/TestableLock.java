@@ -28,26 +28,26 @@ public class TestableLock extends VirtualLock {
 
   @Override
   public void await() throws InterruptedException {
-    executor.waiting(this);
+    executor.handleWaiting(this);
   }
 
   @Override
   public void await(long waitTimeInMs) throws InterruptedException {
-    executor.waiting(this, waitTimeInMs);
+    executor.handleWaiting(this, waitTimeInMs);
   }
 
   @Override
   public void signal() {
-    executor.signal(this);
+    executor.handleSignal(this);
   }
 
   @Override
   public void signalAll() {
-    executor.signalAll(this);
+    executor.handleSignalAll(this);
   }
 
   @Override
   public void sleep(long timeInMs) throws InterruptedException {
-    executor.sleep(timeInMs);
+    executor.handleSleep(timeInMs);
   }
 }

@@ -279,7 +279,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
-  public void waiting(TestableLock lock) throws InterruptedException {
+  public void handleWaiting(TestableLock lock) throws InterruptedException {
     NotifyObject no = waitingThreads.get(lock);
     if (no == null) {
       no = new NotifyObject(lock);
@@ -290,25 +290,25 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
-  public void waiting(final TestableLock lock, 
-                      long waitTimeInMs) throws InterruptedException {
+  public void handleWaiting(final TestableLock lock, 
+                            long waitTimeInMs) throws InterruptedException {
     final boolean[] notified = new boolean[] { false };
     // schedule runnable to wake up in case not signaled
     schedule(new Runnable() {
       @Override
       public void run() {
         if (! notified[0]) {
-          signal(lock);
+          handleSignal(lock);
         }
       }
     }, waitTimeInMs);
     
-    waiting(lock);
+    handleWaiting(lock);
     notified[0] = true;
   }
 
   @Override
-  public void signal(TestableLock lock) {
+  public void handleSignal(TestableLock lock) {
     NotifyObject no = waitingThreads.get(lock);
     if (no != null) {
       // schedule task to wake up other thread
@@ -317,7 +317,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
-  public void signalAll(TestableLock lock) {
+  public void handleSignalAll(TestableLock lock) {
     NotifyObject no = waitingThreads.get(lock);
     if (no != null) {
       // schedule task to wake up other thread
@@ -326,7 +326,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
-  public void sleep(long sleepTime) throws InterruptedException {
+  public void handleSleep(long sleepTime) throws InterruptedException {
     NotifyObject sleepLock = new NotifyObject(new Object());
     add(new WakeUpThread(sleepLock, false, sleepTime));
     
