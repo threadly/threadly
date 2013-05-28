@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.test.concurrent.TestableExecutor;
 
 /**
  * This abstraction is designed to make submitting callable tasks with 
@@ -29,6 +30,7 @@ import org.threadly.concurrent.lock.VirtualLock;
 public class CallableDistributor<K, R> {
   private static final boolean RESULTS_EXPECTED_DEFAULT = true;
   
+  private final boolean testableExecutor;
   private final TaskExecutorDistributor taskDistributor;
   private final StripedLock sLock;
   private final ConcurrentHashMap<K, AtomicInteger> waitingCalls;
@@ -88,6 +90,7 @@ public class CallableDistributor<K, R> {
       throw new IllegalArgumentException("Must provide taskDistributor");
     }
     
+    testableExecutor = taskDistributor.getExecutor() instanceof TestableExecutor;
     this.taskDistributor = taskDistributor;
     this.sLock = sLock;
     waitingCalls = new ConcurrentHashMap<K, AtomicInteger>();
@@ -306,17 +309,20 @@ public class CallableDistributor<K, R> {
       this.callable = callable;
     }
     
+    @SuppressWarnings("unchecked")
     @Override
     public void run() {
       try {
         R result;
-        // TODO - is there a way to handle VirtualCallable's without instanceof checks?
-        /*if (callable instanceof VirtualCallable) {
-          result = ((VirtualCallable<R>)callable).call(factory);
-        } else {
+        if (testableExecutor) {
+          if (callable instanceof VirtualCallable) {
+            result = ((VirtualCallable<R>)callable).call(factory);
+          } else {
+            result = callable.call();
+          }
+        } else {  // no reason to waste our time
           result = callable.call();
-        }*/
-        result = callable.call();
+        }
         handleSuccessResult(key, result);
       } catch (Exception e) {
         handleFailureResult(key, e);
