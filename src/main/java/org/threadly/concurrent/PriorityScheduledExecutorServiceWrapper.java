@@ -300,7 +300,8 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    *
    * @param <T> generic for callable result
    */
-  protected class FutureRunnable<T> implements Runnable, Future<T> {
+  protected class FutureRunnable<T> extends VirtualRunnable 
+                                    implements Future<T> {
     private final Callable<T> task;
     private final Runnable toRun;
     private volatile T result;
@@ -393,9 +394,17 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
         if (! isCancelled) {
           run = true;
           if (task != null) {
-            result = task.call();
+            if (task instanceof VirtualCallable) {
+              result = ((VirtualCallable<T>)task).call(factory);
+            } else {
+              result = task.call();
+            }
           } else {
-            toRun.run();
+            if (toRun instanceof VirtualRunnable) {
+              ((VirtualRunnable)toRun).run(factory);
+            } else {
+              toRun.run();
+            }
           }
         }
       } catch (Exception e) {

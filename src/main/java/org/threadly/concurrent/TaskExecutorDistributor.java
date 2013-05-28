@@ -172,7 +172,9 @@ public class TaskExecutorDistributor {
         Iterator<Runnable> it = nextList.iterator();
         while (it.hasNext()) {
           try {
-            it.next().run();
+            Runnable next = it.next();
+            // TODO - VirtualRunnables are not handled here
+            next.run();
           } catch (Throwable t) {
             UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
             ueh.uncaughtException(Thread.currentThread(), t);

@@ -309,7 +309,14 @@ public class CallableDistributor<K, R> {
     @Override
     public void run() {
       try {
-        R result = callable.call();
+        R result;
+        // TODO - is there a way to handle VirtualCallable's without instanceof checks?
+        /*if (callable instanceof VirtualCallable) {
+          result = ((VirtualCallable<R>)callable).call(factory);
+        } else {
+          result = callable.call();
+        }*/
+        result = callable.call();
         handleSuccessResult(key, result);
       } catch (Exception e) {
         handleFailureResult(key, e);

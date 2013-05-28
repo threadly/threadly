@@ -1,5 +1,7 @@
 package org.threadly.concurrent;
 
+import java.util.concurrent.Callable;
+
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -10,11 +12,13 @@ import org.threadly.concurrent.lock.VirtualLock;
  * a drop in replacement instead of having to pass a LockFactory into your code.
  * 
  * The alternative to using this class would be to pass a LockFactory into your code.
- * But in addition if the runnable needs to sleep, it must do it on the scheduler or locks. 
+ * But in addition if the runnable needs to sleep, it must do it on the scheduler or locks.
  * 
  * @author jent - Mike Jensen
+ * 
+ * @param <T> type to be returned from .call()
  */
-public abstract class VirtualRunnable implements Runnable {
+public abstract class VirtualCallable<T> implements Callable<T>  {
   protected LockFactory factory = null;
   
   /**
@@ -23,12 +27,14 @@ public abstract class VirtualRunnable implements Runnable {
    * lets us inject a lock factory that works for the given scheduler.
    *  
    * @param factory factory to use while running this runnable
+   * @return result from .call()
+   * @throws Exception exception that could be thrown from the .call()
    */
-  public void run(LockFactory factory) {
+  public T call(LockFactory factory) throws Exception {
     this.factory = factory;
     
     try {
-      run();
+      return call();
     } finally {
       this.factory = null;
     }
