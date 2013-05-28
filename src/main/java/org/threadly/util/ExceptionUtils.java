@@ -22,7 +22,7 @@ public class ExceptionUtils {
     if (t instanceof RuntimeException) {
       return (RuntimeException)t;
     } else {
-      TransformedException result = new TransformedException(t.getMessage(), t);
+      TransformedException result = new TransformedException(t == null ? null : t.getMessage(), t);
       
       // remove this function from the stack trace
       StackTraceElement[] originalstack = result.getStackTrace();

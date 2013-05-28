@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.StringTokenizer;
 
 import org.junit.Test;
+import org.threadly.util.ExceptionUtils.TransformedException;
 
 @SuppressWarnings("javadoc")
 public class ExceptionUtilsTest {
@@ -25,6 +26,7 @@ public class ExceptionUtilsTest {
 
     RuntimeException resultException = ExceptionUtils.makeRuntime(testException);
     assertNotNull(resultException);
+    assertTrue(resultException instanceof TransformedException);
 
     // verify stack trace does not contain Util.makeRuntime inside it for when it created a new exception
     StackTraceElement[] stack = resultException.getStackTrace();
