@@ -11,6 +11,10 @@ import org.threadly.util.Clock;
  * There is no reason to make a system call for each item, so we just pause getting
  * accurate time for those fast but frequent operations.
  * 
+ * All the functions in this class are protected because it is not intended to be used 
+ * outside of this package.  This is a utility class that must be handled carefully, 
+ * using it incorrectly could have serious impacts on other classes which depend on it.
+ * 
  * @author jent - Mike Jensen
  */
 public class ClockWrapper {
