@@ -11,8 +11,8 @@ public interface SimpleSchedulerInterface extends Executor {
   /**
    * Schedule a task with a given delay.
    * 
-   * @param task Task to execute
-   * @param delayInMs Time to wait to execute task
+   * @param task runnable to execute
+   * @param delayInMs time in milliseconds to wait to execute task
    */
   public void schedule(Runnable task, 
                        long delayInMs);
@@ -21,9 +21,9 @@ public interface SimpleSchedulerInterface extends Executor {
    * Schedule a recurring task to run.  The recurring delay time will be
    * from the point where execution finished.
    * 
-   * @param task Task to be executed.
-   * @param initialDelay Delay in milliseconds until first run.
-   * @param recurringDelay Delay in milliseconds for running task after last finish.
+   * @param task runnable to be executed.
+   * @param initialDelay delay in milliseconds until first run.
+   * @param recurringDelay delay in milliseconds for running task after last finish.
    */
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 

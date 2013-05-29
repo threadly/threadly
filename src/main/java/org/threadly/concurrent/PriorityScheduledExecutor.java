@@ -212,6 +212,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     this.allowCorePoolTimeout = false;
     currentPoolSize = 0;
   }
+  
+  /**
+   * If a section of code wants a different default priority, or wanting to provide 
+   * a specific default priority in for {@link CallableDistributor}, 
+   * {@link TaskExecutorDistributor}, or {@link TaskSchedulerDistributor}.
+   * 
+   * @param priority default priority for PrioritySchedulerInterface implementation
+   * @return a PrioritySchedulerInterface with the default priority specified
+   */
+  public PrioritySchedulerInterface makeWithDefaultPriority(TaskPriority priority) {
+    if (priority == defaultPriority) {
+      return this;
+    } else {
+      return new PrioritySchedulerWrapper(this, priority);
+    }
+  }
 
   @Override
   public TaskPriority getDefaultPriority() {
@@ -416,45 +432,21 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
              removeFromTaskQueue(lowPriorityQueue, task);
   }
 
-  /**
-   * Executes a task as soon as possible with the default priority.
-   * 
-   * @param task Task to execute
-   */
   @Override
   public void execute(Runnable task) {
     execute(task, defaultPriority);
   }
 
-  /**
-   * Executes the task as soon as possible with the given priority.
-   * 
-   * @param task Task to execute
-   * @param priority Priority for task
-   */
   @Override
   public void execute(Runnable task, TaskPriority priority) {
     schedule(task, 0, priority);
   }
 
-  /**
-   * Schedule a task with a given delay and a default priority.
-   * 
-   * @param task Task to execute
-   * @param delayInMs Time to wait to execute task
-   */
   @Override
   public void schedule(Runnable task, long delayInMs) {
     schedule(task, delayInMs, defaultPriority);
   }
 
-  /**
-   * Schedule a task with a given delay and a specified priority.
-   * 
-   * @param task Task to execute
-   * @param delayInMs Time to wait to execute task
-   * @param priority Priority to give task for execution
-   */
   @Override
   public void schedule(Runnable task, long delayInMs, 
                        TaskPriority priority) {
@@ -470,13 +462,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     addToQueue(new OneTimeTaskWrapper(task, priority, delayInMs));
   }
 
-  /**
-   * Schedule a recurring task to run with the default priority.
-   * 
-   * @param task Task to be executed.
-   * @param initialDelay Delay in milliseconds until first run.
-   * @param recurringDelay Delay in milliseconds for running task after last finish.
-   */
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
@@ -484,14 +469,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                            defaultPriority);
   }
 
-  /**
-   * Schedule a recurring task to run with a provided priority.
-   * 
-   * @param task Task to be executed.
-   * @param initialDelay Delay in milliseconds until first run.
-   * @param recurringDelay Delay in milliseconds for running task after last finish.
-   * @param priority Priority for task to run at
-   */
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority) {

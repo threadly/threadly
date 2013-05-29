@@ -34,6 +34,21 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void makeWithDefaultPriorityTest() {
+    TaskPriority originalPriority = TaskPriority.Low;
+    TaskPriority newPriority = TaskPriority.High;
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000, 
+                                                                        originalPriority, 1000);
+    assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
+    PrioritySchedulerInterface newScheduler = scheduler.makeWithDefaultPriority(newPriority);
+    try {
+      assertEquals(newScheduler.getDefaultPriority(), newPriority);
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
   public void getAndSetCorePoolSizeTest() {
     int corePoolSize = 1;
     PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(corePoolSize, 
@@ -233,6 +248,82 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void wrapperExecutionTest() {
+    WrapperFactory wf = new WrapperFactory();
+    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2);
+    try {
+      SimpleSchedulerInterfaceTest.executionTest(wf);
+      
+      TestRunnable tr1 = new TestRunnable();
+      TestRunnable tr2 = new TestRunnable();
+      scheduler.execute(tr1, TaskPriority.High);
+      scheduler.execute(tr2, TaskPriority.Low);
+      scheduler.execute(tr1, TaskPriority.High);
+      scheduler.execute(tr2, TaskPriority.Low);
+      
+      tr1.blockTillRun(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillRun(1000 * 10, 2); // throws exception if fails
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void wrapperExecuteTestFail() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.executeTestFail(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test
+  public void wrapperScheduleExecutionTest() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.scheduleExecutionTest(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test
+  public void wrapperScheduleExecutionFail() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.scheduleExecutionFail(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test
+  public void wrapperRecurringExecutionTest() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.recurringExecutionTest(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test
+  public void wrapperRecurringExecutionFail() {
+    WrapperFactory sf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test
   public void shutdownTest() {
     PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
     
@@ -361,6 +452,33 @@ public class PriorityScheduledExecutorTest {
       executors.add(result);
       
       return result;
+    }
+    
+    private void shutdown() {
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
+      while (it.hasNext()) {
+        it.next().shutdown();
+      }
+    }
+  }
+  
+  private class WrapperFactory implements PrioritySchedulerFactory {
+    private final List<PriorityScheduledExecutor> executors;
+    
+    private WrapperFactory() {
+      executors = new LinkedList<PriorityScheduledExecutor>();
+    }
+    
+    @Override
+    public SimpleSchedulerInterface make(int poolSize) {
+      TaskPriority originalPriority = TaskPriority.Low;
+      TaskPriority returnPriority = TaskPriority.High;
+      PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
+                                                                       1000, originalPriority, 
+                                                                       500);
+      executors.add(result);
+      
+      return result.makeWithDefaultPriority(returnPriority);
     }
     
     private void shutdown() {
