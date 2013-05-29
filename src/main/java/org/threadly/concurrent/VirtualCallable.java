@@ -30,15 +30,13 @@ public abstract class VirtualCallable<T> implements Callable<T>  {
    *  
    * @param factory factory to use while running this runnable
    * @return result from .call()
-   * @throws TransformedException thrown if .call() threw an exception, the cause will be the original exception
+   * @throws Exception possible thrown from .call()
    */
-  public T call(LockFactory factory) throws TransformedException {
+  public T call(LockFactory factory) throws Exception {
     this.factory = factory;
     
     try {
       return call();
-    } catch (Exception e) {
-      throw ExceptionUtils.makeRuntime(e);
     } finally {
       this.factory = null;
     }

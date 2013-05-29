@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.util.ExceptionUtils.TransformedException;
 
 /**
  * This abstraction is designed to make submitting callable tasks with 
@@ -322,11 +321,7 @@ public class CallableDistributor<K, R> {
         }
         handleSuccessResult(key, result);
       } catch (Exception e) {
-        if (e instanceof TransformedException) {
-          handleFailureResult(key, e.getCause());
-        } else {
-          handleFailureResult(key, e);
-        }
+        handleFailureResult(key, e);
       }
     }
   }
