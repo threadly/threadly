@@ -5,8 +5,6 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.util.ExceptionUtils;
-import org.threadly.util.ExceptionUtils.TransformedException;
 
 /**
  * This class helps assist in making concurrent code testable.
