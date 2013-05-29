@@ -29,6 +29,9 @@ import org.threadly.concurrent.lock.VirtualLock;
 public class TaskExecutorDistributor {
   protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;
   protected static final int DEFAULT_LOCK_PARALISM = 10;
+  protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = (float)0.75;  // 0.75 is ConcurrentHashMap default
+  protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 100;
+  protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 100;
   
   protected final Executor executor;
   protected final StripedLock sLock;
@@ -82,7 +85,13 @@ public class TaskExecutorDistributor {
     
     this.executor = executor;
     this.sLock = sLock;
-    this.taskWorkers = new ConcurrentHashMap<Object, TaskQueueWorker>();
+    int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
+                                  CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
+    int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel(), 
+                                       CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL);
+    this.taskWorkers = new ConcurrentHashMap<Object, TaskQueueWorker>(mapInitialSize,  
+                                                                      CONCURRENT_HASH_MAP_LOAD_FACTOR, 
+                                                                      mapConcurrencyLevel);
   }
   
   /**

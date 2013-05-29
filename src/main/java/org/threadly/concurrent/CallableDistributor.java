@@ -26,12 +26,15 @@ import org.threadly.util.ExceptionUtils.TransformedException;
  * @param <R> Type of result that is returned
  */
 public class CallableDistributor<K, R> {
-  private static final boolean RESULTS_EXPECTED_DEFAULT = true;
+  protected static final boolean RESULTS_EXPECTED_DEFAULT = true;
+  protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = (float)0.75;  // 0.75 is ConcurrentHashMap default
+  protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 100;
+  protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 100;
   
-  private final TaskExecutorDistributor taskDistributor;
-  private final StripedLock sLock;
-  private final ConcurrentHashMap<K, AtomicInteger> waitingCalls;
-  private final ConcurrentHashMap<K, LinkedList<Result<R>>> results;  // locked around sLock for key
+  protected final TaskExecutorDistributor taskDistributor;
+  protected final StripedLock sLock;
+  protected final ConcurrentHashMap<K, AtomicInteger> waitingCalls;
+  protected final ConcurrentHashMap<K, LinkedList<Result<R>>> results;  // locked around sLock for key
   
   /**
    * Constructs a new CallableDistributor with giving parameters to 
@@ -89,8 +92,16 @@ public class CallableDistributor<K, R> {
     
     this.taskDistributor = taskDistributor;
     this.sLock = sLock;
-    waitingCalls = new ConcurrentHashMap<K, AtomicInteger>();
-    results = new ConcurrentHashMap<K, LinkedList<Result<R>>>();
+    int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
+                                  CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
+    int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel(), 
+                                       CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL);
+    waitingCalls = new ConcurrentHashMap<K, AtomicInteger>(mapInitialSize,  
+                                                           CONCURRENT_HASH_MAP_LOAD_FACTOR, 
+                                                           mapConcurrencyLevel);
+    results = new ConcurrentHashMap<K, LinkedList<Result<R>>>(mapInitialSize,  
+                                                              CONCURRENT_HASH_MAP_LOAD_FACTOR, 
+                                                              mapConcurrencyLevel);
   }
   
   /**
