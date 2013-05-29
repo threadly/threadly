@@ -87,6 +87,28 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
+  public void blockTillAvailableNoSpin() throws InterruptedException {
+    final int delayTime = 20;
+    
+    long startTime = System.currentTimeMillis();
+    testQueue.put(new RealTimeDelayed(delayTime));
+    testQueue.blockTillAvailable(false);
+    long endTime = System.currentTimeMillis();
+    
+    assertTrue(endTime - startTime >= delayTime);
+  }
+  
+  @Test
+  public void blockTillAvailableSpin() throws InterruptedException {
+    long startTime = System.currentTimeMillis();
+    testQueue.put(new RealTimeDelayed(DynamicDelayQueue.SPIN_LOCK_THRESHOLD));
+    testQueue.blockTillAvailable(true);
+    long endTime = System.currentTimeMillis();
+    
+    assertTrue(endTime - startTime >= DynamicDelayQueue.SPIN_LOCK_THRESHOLD);
+  }
+  
+  @Test
   public void sizeTest() {
     for (int i = 0; i < TEST_QTY; i++) {
       testQueue.add(new TestDelayed(i));
@@ -414,9 +436,9 @@ public class DynamicDelayQueueTest {
   }
   
   protected static class TestDelayed implements Delayed {
-    private final long delayInMs;
+    protected final long delayInMs;
     
-    private TestDelayed(long delayInMs) {
+    protected TestDelayed(long delayInMs) {
       this.delayInMs = delayInMs;
     }
     
@@ -456,6 +478,23 @@ public class DynamicDelayQueueTest {
       } else {
         return false;
       }
+    }
+  }
+  
+  private class RealTimeDelayed extends TestDelayed {
+    private final long creationTime;
+
+    protected RealTimeDelayed(long delayInMs) {
+      super(delayInMs);
+      
+      creationTime = System.currentTimeMillis();
+    }
+    
+    @Override
+    public long getDelay(TimeUnit unit) {
+      long elapsedTime = System.currentTimeMillis() - creationTime;
+      return unit.convert(delayInMs - elapsedTime, 
+                          TimeUnit.MILLISECONDS);
     }
   }
 }

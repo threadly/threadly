@@ -28,13 +28,13 @@ import org.threadly.util.ListUtils;
  */
 public class DynamicDelayQueue<T extends Delayed> implements Queue<T>, 
                                                              BlockingQueue<T> {
-  private static final int SPIN_LOCK_THRESHOLD = 5;
-  private static final int QUEUE_FRONT_PADDING = 0;
-  private static final int QUEUE_REAR_PADDING = 1;
+  protected static final int SPIN_LOCK_THRESHOLD = 5;
+  protected static final int QUEUE_FRONT_PADDING = 0;
+  protected static final int QUEUE_REAR_PADDING = 1;
   
-  private final boolean randomAccessQueue;
-  private final VirtualLock queueLock;
-  private final ConcurrentArrayList<T> queue;
+  protected final boolean randomAccessQueue;
+  protected final VirtualLock queueLock;
+  protected final ConcurrentArrayList<T> queue;
 
   /**
    * Constructs a new DynamicDelayQueue queue.
@@ -86,7 +86,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
 
   @Override
-  public void put(T e) throws InterruptedException {
+  public void put(T e) {
     // there is no limit, just add
     add(e);
   }
