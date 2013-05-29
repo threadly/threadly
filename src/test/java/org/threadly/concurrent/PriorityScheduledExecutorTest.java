@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
@@ -325,7 +325,7 @@ public class PriorityScheduledExecutorTest {
       
       assertEquals(scheduler.availableWorkers.size(), 1);
       
-      TestUtil.blockTillClockAdvances();
+      TestUtils.blockTillClockAdvances();
       Clock.accurateTime(); // update clock so scheduler will see it
       
       scheduler.lookForExpiredWorkers();
@@ -335,7 +335,7 @@ public class PriorityScheduledExecutorTest {
 
       scheduler.allowCoreThreadTimeOut(true);
       
-      TestUtil.blockTillClockAdvances();
+      TestUtils.blockTillClockAdvances();
       Clock.accurateTime(); // update clock so scheduler will see it
       
       scheduler.lookForExpiredWorkers();

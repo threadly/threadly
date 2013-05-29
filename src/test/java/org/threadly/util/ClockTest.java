@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ClockTest {
@@ -18,7 +18,7 @@ public class ClockTest {
     // verify clock is not updating
     long before = Clock.lastKnownTimeMillis();
     
-    TestUtil.sleep(Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
+    TestUtils.sleep(Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
     
     assertEquals(before, Clock.lastKnownTimeMillis());
     
@@ -35,7 +35,7 @@ public class ClockTest {
     
     Clock.startClockUpdateThread();
 
-    TestUtil.sleep(Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS + 
+    TestUtils.sleep(Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS + 
                    (Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS / 2));
     
     assertTrue(Clock.lastKnownTimeMillis() > before);

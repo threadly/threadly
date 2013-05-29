@@ -81,4 +81,8 @@ public class Clock {
   public static long accurateTime() {
     return now = System.currentTimeMillis();
   }
+  
+  private Clock() {
+    // don't construct
+  }
 }

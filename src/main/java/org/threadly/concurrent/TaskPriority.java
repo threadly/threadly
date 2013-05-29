@@ -9,4 +9,5 @@ public enum TaskPriority {
   @SuppressWarnings("javadoc")
   High, 
   @SuppressWarnings("javadoc")
-  Low }
+  Low;
+}

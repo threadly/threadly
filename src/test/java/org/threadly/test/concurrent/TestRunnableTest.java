@@ -6,7 +6,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestCondition.TimeoutException;
 
 @SuppressWarnings("javadoc")
@@ -34,7 +34,7 @@ public class TestRunnableTest {
     TestTestRunnable ttr = new TestTestRunnable();
     long start = System.currentTimeMillis();
     
-    TestUtil.blockTillClockAdvances();
+    TestUtils.blockTillClockAdvances();
     
     ttr.run();
     
@@ -45,11 +45,11 @@ public class TestRunnableTest {
     assertEquals(ttr.getRunCount(), 1);
     assertTrue(ttr.getDelayTillFirstRun() > 0);
 
-    TestUtil.blockTillClockAdvances();
+    TestUtils.blockTillClockAdvances();
     
     ttr.run();
     
-    TestUtil.blockTillClockAdvances();
+    TestUtils.blockTillClockAdvances();
     
     long now = System.currentTimeMillis();
     assertTrue(ttr.getDelayTillRun(2) <= now - start);
@@ -67,7 +67,7 @@ public class TestRunnableTest {
       public void handleRunStart() throws InterruptedException {
         if (firstRun) {
           firstRun = false;
-          TestUtil.sleep(delay);
+          TestUtils.sleep(delay);
           run();
         }
       }

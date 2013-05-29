@@ -15,7 +15,7 @@ import org.threadly.concurrent.CallableDistributor.Result;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
-import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class CallableDistributorTest {
@@ -189,7 +189,7 @@ public class CallableDistributorTest {
 
     @Override
     public String call() {
-      TestUtil.sleep(delay);
+      TestUtils.sleep(delay);
       
       done = true;
       

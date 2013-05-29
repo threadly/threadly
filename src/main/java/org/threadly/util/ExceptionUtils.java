@@ -85,4 +85,8 @@ public class ExceptionUtils {
       super(message, t);
     }
   }
+
+  private ExceptionUtils() {
+    // don't construct
+  }
 }

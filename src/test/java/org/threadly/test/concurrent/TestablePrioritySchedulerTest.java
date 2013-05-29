@@ -13,7 +13,7 @@ import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestablePriorityScheduler;
 import org.threadly.test.concurrent.TestablePriorityScheduler.OneTimeRunnable;
 
@@ -132,7 +132,7 @@ public class TestablePrioritySchedulerTest {
     long now;
     assertEquals(testScheduler.tick(now = System.currentTimeMillis()), RUNNABLE_COUNT); // should execute all
     
-    TestUtil.blockTillClockAdvances();
+    TestUtils.blockTillClockAdvances();
     
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = new TestRunnable();
@@ -227,7 +227,7 @@ public class TestablePrioritySchedulerTest {
       assertTrue(it.next().running);
     }
     
-    TestUtil.blockTillClockAdvances();
+    TestUtils.blockTillClockAdvances();
     
     assertEquals(testScheduler.tick(now = System.currentTimeMillis()), 0);
     

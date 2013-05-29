@@ -66,4 +66,8 @@ public class ClockWrapper {
   protected static long getLastKnownTime() {
     return Clock.lastKnownTimeMillis();
   }
+  
+  private ClockWrapper() {
+    // don't construct
+  }
 }

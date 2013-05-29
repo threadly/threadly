@@ -5,7 +5,7 @@ package org.threadly.test.concurrent;
  * 
  * @author jent - Mike Jensen
  */
-public class TestUtil {
+public class TestUtils {
   /**
    * Since sleeps are sometimes necessary, this makes
    * an easy way to ignore InterruptedException's.
@@ -40,5 +40,10 @@ public class TestUtil {
         blockTillTrue(TIMEOUT_IN_MS, POLL_INTERVAL_IN_MS);
       }
     }.blockTillTrue();
+  }
+
+  
+  private TestUtils() {
+    // don't construct
   }
 }

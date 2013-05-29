@@ -16,7 +16,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtil;
+import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ScheduledExecutorServiceTest {
@@ -31,11 +31,11 @@ public class ScheduledExecutorServiceTest {
     };
     scheduler.execute(tr);
     
-    TestUtil.sleep(10);
+    TestUtils.sleep(10);
     scheduler.shutdown();
 
     tr.blockTillRun();
-    TestUtil.sleep(100);
+    TestUtils.sleep(100);
     assertTrue(scheduler.isTerminated());
   }
   
@@ -53,7 +53,7 @@ public class ScheduledExecutorServiceTest {
     long start = System.currentTimeMillis();
     scheduler.execute(tr);
     
-    TestUtil.sleep(10);
+    TestUtils.sleep(10);
     scheduler.shutdown();
 
     scheduler.awaitTermination(1000, TimeUnit.MILLISECONDS);
@@ -229,7 +229,7 @@ public class ScheduledExecutorServiceTest {
 
     @Override
     public Object call() {
-      TestUtil.sleep(runTime);
+      TestUtils.sleep(runTime);
       
       done = true;
       

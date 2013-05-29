@@ -156,4 +156,9 @@ public class ListUtils {
       }
     }
   }
+
+  
+  private ListUtils() {
+    // don't construct
+  }
 }
