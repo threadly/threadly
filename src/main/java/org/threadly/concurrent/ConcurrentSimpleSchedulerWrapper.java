@@ -1,6 +1,6 @@
 package org.threadly.concurrent;
 
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,13 +37,21 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task) {
+  public Future<?> submit(Runnable task) {
     if (task == null) {
       throw new IllegalArgumentException("Runnable can not be null");
     }
     
-    Future<?> future = scheduler.submit(task);
-    return new ExecuteFutureWrapper(future);
+    return scheduler.submit(task);
+  }
+
+  @Override
+  public <T> Future<T> submit(Callable<T> task) {
+    if (task == null) {
+      throw new IllegalArgumentException("Callable can not be null");
+    }
+    
+    return scheduler.submit(task);
   }
 
   @Override
@@ -58,16 +66,27 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+  public Future<?> submitScheduled(Runnable task, long delayInMs) {
     if (task == null) {
       throw new IllegalArgumentException("Runnable can not be null");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
     
-    Future<?> future = scheduler.schedule(task, delayInMs, 
-                                          TimeUnit.MILLISECONDS);
-    return new ExecuteFutureWrapper(future);
+    return scheduler.schedule(task, delayInMs, 
+                              TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Callable can not be null");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    
+    return scheduler.schedule(task, delayInMs, 
+                              TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -88,30 +107,5 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
-  }
-  
-  /**
-   * Class which wraps a java.util.concurrent.Future into the 
-   * ExecuteFuture interface.
-   * 
-   * @author jent - Mike Jensen
-   */
-  private class ExecuteFutureWrapper implements ExecuteFuture {
-    private final Future<?> future;
-    
-    private ExecuteFutureWrapper(Future<?> future) {
-      this.future = future;
-    }
-    
-    @Override
-    public void blockTillCompleted() throws InterruptedException, 
-                                            ExecutionException {
-      future.get();
-    }
-
-    @Override
-    public boolean isCompleted() {
-      return future.isDone();
-    }
   }
 }

@@ -5,11 +5,13 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.ExecuteFuture;
 import org.threadly.test.concurrent.NoThreadScheduler;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -33,6 +35,15 @@ public class NoThreadSchedulerTest {
     List<TestRunnable> result = new ArrayList<TestRunnable>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       result.add(new TestRunnable());
+    }
+    
+    return result;
+  }
+  
+  private List<TestCallable> getCallableList() {
+    List<TestCallable> result = new ArrayList<TestCallable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      result.add(new TestCallable());
     }
     
     return result;
@@ -69,12 +80,12 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void submitTest() {
+  public void submitRunnableTest() {
     List<TestRunnable> runnables = getRunnableList();
-    List<ExecuteFuture> futures = new ArrayList<ExecuteFuture>(runnables.size());
+    List<Future<?>> futures = new ArrayList<Future<?>>(runnables.size());
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
-      ExecuteFuture future = scheduler.submit(it.next());
+      Future<?> future = scheduler.submit(it.next());
       assertNotNull(future);
       futures.add(future);
     }
@@ -95,14 +106,44 @@ public class NoThreadSchedulerTest {
       assertEquals(it.next().getRunCount(), 1);
     }
     
-    Iterator<ExecuteFuture> futureIt = futures.iterator();
+    Iterator<Future<?>> futureIt = futures.iterator();
     while (futureIt.hasNext()) {
-      assertTrue(futureIt.next().isCompleted());
+      assertTrue(futureIt.next().isDone());
     }
   }
   
   @Test
-  public void scheduleTest() {
+  public void submitCallableTest() throws InterruptedException, ExecutionException {
+    List<TestCallable> callables = getCallableList();
+    List<Future<Object>> futures = new ArrayList<Future<Object>>(callables.size());
+    Iterator<TestCallable> it = callables.iterator();
+    while (it.hasNext()) {
+      Future<Object> future = scheduler.submit(it.next());
+      assertNotNull(future);
+      futures.add(future);
+    }
+    
+    // all should run now
+    assertEquals(scheduler.tick(), TEST_QTY);
+    
+    it = callables.iterator();
+    while (it.hasNext()) {
+      assertTrue(it.next().done);
+    }
+
+    it = callables.iterator();
+    Iterator<Future<Object>> futureIt = futures.iterator();
+    while (futureIt.hasNext()) {
+      Future<Object> future = futureIt.next();
+      TestCallable tc = it.next();
+      
+      assertTrue(future.isDone());
+      assertTrue(tc.result == future.get());
+    }
+  }
+  
+  @Test
+  public void scheduleRunnableTest() {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable executeRun = new TestRunnable();
@@ -129,13 +170,13 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void submitScheduledTest() {
+  public void submitScheduledRunnableTest() {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable submitRun = new TestRunnable();
     TestRunnable scheduleRun = new TestRunnable();
     
-    ExecuteFuture future = scheduler.submit(submitRun);
+    Future<?> future = scheduler.submit(submitRun);
     assertNotNull(future);
     future = scheduler.submitScheduled(scheduleRun, scheduleDelay);
     assertNotNull(future);
@@ -155,6 +196,31 @@ public class NoThreadSchedulerTest {
     
     assertEquals(submitRun.getRunCount(), 1);   // should NOT have run again
     assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
+  }
+  
+  @Test
+  public void submitScheduledCallableTest() {
+    long scheduleDelay = 1000 * 10;
+    
+    TestCallable submitRun = new TestCallable();
+    TestCallable scheduleRun = new TestCallable();
+    
+    Future<?> future = scheduler.submit(submitRun);
+    assertNotNull(future);
+    future = scheduler.submitScheduled(scheduleRun, scheduleDelay);
+    assertNotNull(future);
+
+    long startTime = System.currentTimeMillis();
+    assertEquals(scheduler.tick(startTime), 1);
+
+    assertTrue(submitRun.done);   // should have run
+    assertFalse(scheduleRun.done);  // should NOT have run yet
+    
+    assertEquals(scheduler.tick(startTime + scheduleDelay), 1);
+    
+    assertTrue(scheduleRun.done);  // should have run
+    
+    assertEquals(scheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
   }
   
   @Test
@@ -230,5 +296,38 @@ public class NoThreadSchedulerTest {
     
     scheduler.tick(now - 1);
     fail("Exception should have been thrown");
+  }
+  
+  protected static class TestCallable extends TestCondition 
+                                      implements Callable<Object> {
+    private final long creationTime;
+    private final Object result;
+    private volatile long callTime;
+    private volatile boolean done;
+    
+    public TestCallable() {
+      this.creationTime = System.currentTimeMillis();
+      callTime = -1;
+      result = new Object();
+      done = false;
+    }
+
+    public long getDelayTillFirstRun() {
+      return callTime - creationTime;
+    }
+
+    @Override
+    public Object call() {
+      callTime = System.currentTimeMillis();
+      
+      done = true;
+      
+      return result;
+    }
+
+    @Override
+    public boolean get() {
+      return done;
+    }
   }
 }

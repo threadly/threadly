@@ -6,21 +6,25 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import org.threadly.concurrent.ExecuteFuture;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.TaskPriority;
+import org.threadly.concurrent.VirtualCallable;
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.lock.TestableLock;
 import org.threadly.util.Clock;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.ListUtils;
 
 /**
@@ -106,25 +110,50 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task) {
+  public Future<?> submit(Runnable task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task, TaskPriority priority) {
+  public Future<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+  public <T> Future<T> submit(Callable<T> task) {
+    return submit(task, defaultPriority);
+  }
+
+  @Override
+  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
+    return submitScheduled(task, 0, priority);
+  }
+
+  @Override
+  public Future<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs,
+  public Future<?> submitScheduled(Runnable task, long delayInMs,
                                        TaskPriority priority) {
-    OneTimeFutureRunnable otfr = new OneTimeFutureRunnable(task, delayInMs, priority, 
-                                                           new NativeLock());
+    OneTimeFutureRunnable<?> otfr = new OneTimeFutureRunnable<Object>(task, delayInMs, priority, 
+                                                                      new NativeLock());
+    add(otfr);
+    
+    return otfr;
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+    return submitScheduled(task, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
+                                       TaskPriority priority) {
+    OneTimeFutureRunnable<T> otfr = new OneTimeFutureRunnable<T>(task, delayInMs, priority, 
+                                                                 new NativeLock());
     add(otfr);
     
     return otfr;
@@ -175,6 +204,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       if (runBeforeBlocking != null) {
         runBeforeBlocking.run();
       }
+      
       while (mainThread && waitingForThreadCount > 1) {
         // give others a chance
         try {
@@ -184,6 +214,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         }
       }
     }
+    
     try {
       Object runningLock = threadQueue.take();
       if (this.runningLock != null) {
@@ -205,6 +236,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       
       tickLock.notify();
     }
+    
     Object runningLock = this.runningLock;
     this.runningLock = null;
     threadQueue.offer(runningLock);
@@ -468,66 +500,140 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   /**
    * Container for runnables which are only run once.  And also need 
-   * to implement the {@link ExecuteFuture} interface.
+   * to implement the {@link Future} interface.
    * 
    * @author jent - Mike Jensen
    */
-  protected class OneTimeFutureRunnable extends OneTimeRunnable
-                                        implements ExecuteFuture {
+  protected class OneTimeFutureRunnable<T> extends OneTimeRunnable
+                                           implements Future<T> {
+    private final Callable<T> callable;
     private final VirtualLock lock;
+    private boolean canceled;
+    private boolean started;
     private boolean done;
-    private Throwable failure;
+    private Exception failure;
+    private T result;
 
     protected OneTimeFutureRunnable(Runnable runnable, long delay, 
                                     TaskPriority priority, VirtualLock lock) {
       super(runnable, delay, priority);
       
+      callable = null;
       this.lock = lock;
+      canceled = false;
+      started = false;
       done = false;
       failure = null;
+      result = null;
+    }
+
+    protected OneTimeFutureRunnable(Callable<T> callable, long delay, 
+                                    TaskPriority priority, VirtualLock lock) {
+      super(null, delay, priority);
+      
+      this.callable = callable;
+      this.lock = lock;
+      canceled = false;
+      started = false;
+      done = false;
+      failure = null;
+      result = null;
     }
     
     @Override
     public void run(LockFactory scheduler) {
       try {
-        if (runnable instanceof VirtualRunnable) {
-          ((VirtualRunnable)runnable).run(scheduler);
-        } else {
-          runnable.run();
+        boolean shouldRun = false;
+        synchronized (lock) {
+          if (! canceled) {
+            started = true;
+            shouldRun = true;
+          }
+        }
+        
+        if (shouldRun) {
+          if (runnable != null) {
+            if (runnable instanceof VirtualRunnable) {
+              ((VirtualRunnable)runnable).run(scheduler);
+            } else {
+              runnable.run();
+            }
+          } else {
+            if (callable instanceof VirtualCallable) {
+              result = ((VirtualCallable<T>)callable).call(scheduler);
+            } else {
+              result = callable.call();
+            }
+          }
         }
         
         synchronized (lock) {
           done = true;
           lock.signalAll();
         }
-      } catch (RuntimeException e) {
+      } catch (Exception e) {
         synchronized (lock) {
           done = true;
           failure = e;
           lock.signalAll();
         }
         
-        throw e;
+        throw ExceptionUtils.makeRuntime(e);
       }
     }
 
     @Override
-    public void blockTillCompleted() throws InterruptedException,
-                                            ExecutionException {
+    public boolean cancel(boolean mayInterruptIfRunning) {
       synchronized (lock) {
-        while (! done) {
-          lock.await();
+        canceled = true;
+        
+        lock.signalAll();
+      }
+      return ! started;
+    }
+
+    @Override
+    public boolean isDone() {
+      synchronized (lock) {
+        return done;
+      }
+    }
+
+    @Override
+    public boolean isCancelled() {
+      synchronized (lock) {
+        return canceled && ! started;
+      }
+    }
+
+    @Override
+    public T get() throws InterruptedException, ExecutionException {
+      try {
+        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        // basically impossible
+        throw ExceptionUtils.makeRuntime(e);
+      }
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws InterruptedException,
+                                                     ExecutionException,
+                                                     TimeoutException {
+      long startTime = Clock.accurateTime();
+      long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+      synchronized (lock) {
+        long waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
+        while (! done && waitTime > 0) {
+          lock.await(waitTime);
+          waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
         }
         if (failure != null) {
           throw new ExecutionException(failure);
+        } else if (! done) {
+          throw new TimeoutException();
         }
-      }
-    }
-
-    @Override
-    public boolean isCompleted() {
-      synchronized (lock) {
-        return done;
+        return result;
       }
     }
   }

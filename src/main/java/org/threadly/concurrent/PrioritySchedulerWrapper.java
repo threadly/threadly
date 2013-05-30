@@ -1,5 +1,8 @@
 package org.threadly.concurrent;
 
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+
 /**
  * Class to wrap any implementation of PrioritySchedulerInterface.  The purpose of wrapping 
  * like this would be to change the default priority from the wrapped instance.  That way 
@@ -43,13 +46,23 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task) {
+  public Future<?> submit(Runnable task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task, TaskPriority priority) {
+  public Future<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
+  }
+
+  @Override
+  public <T> Future<T> submit(Callable<T> task) {
+    return submit(task, defaultPriority);
+  }
+
+  @Override
+  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
+    return scheduler.submit(task, priority);
   }
   
   @Override
@@ -64,12 +77,23 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+  public Future<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs,
+  public Future<?> submitScheduled(Runnable task, long delayInMs,
+                                   TaskPriority priority) {
+    return scheduler.submitScheduled(task, delayInMs, priority);
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+    return submitScheduled(task, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
                                        TaskPriority priority) {
     return scheduler.submitScheduled(task, delayInMs, priority);
   }

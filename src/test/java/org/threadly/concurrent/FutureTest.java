@@ -2,7 +2,11 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -10,12 +14,12 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
-public class ExecuteFutureTest {
+public class FutureTest {
   private static final TestablePriorityScheduler scheduler = new TestablePriorityScheduler(new PriorityScheduledExecutor(10, 10, 500));
   
   public static void blockTillCompletedTest(FutureFactory ff) {
     Runnable r = new TestRunnable();
-    ExecuteFuture future = ff.make(r, scheduler.makeLock());
+    Future<?> future = ff.make(r, scheduler.makeLock());
     BlockingRunnable br = new BlockingRunnable(future);
     
     scheduler.execute(br);
@@ -31,11 +35,14 @@ public class ExecuteFutureTest {
     assertTrue(br.runStarted);
     assertTrue(br.blockReleased);
     assertFalse(br.executionExceptionThrown);
+    
+    assertFalse(future.isCancelled());
+    assertTrue(future.isDone());
   }
   
   public static void blockTillCompletedFail(FutureFactory ff) {
     Runnable r = new FailureRunnable();
-    ExecuteFuture future = ff.make(r, scheduler.makeLock());
+    Future<?> future = ff.make(r, scheduler.makeLock());
     BlockingRunnable br = new BlockingRunnable(future);
     
     scheduler.execute(br);
@@ -51,50 +58,104 @@ public class ExecuteFutureTest {
     assertTrue(br.runStarted);
     assertTrue(br.blockReleased);
     assertTrue(br.executionExceptionThrown);
+    
+    assertFalse(future.isCancelled());
+    assertTrue(future.isDone());
   }
   
-  public static void isCompletedTest(FutureFactory ff) {
+  public static void cancelTest(FutureFactory ff) {
+    Runnable r = new TestRunnable();
+    Future<?> future = ff.make(r, scheduler.makeLock());
+    BlockingRunnable br = new BlockingRunnable(future);
+    
+    scheduler.execute(br);
+    
+    scheduler.tick();
+    assertTrue(br.runStarted);
+    assertFalse(br.blockReleased);
+    assertFalse(br.executionExceptionThrown);
+    
+    // cancel
+    future.cancel(false);
+    
+    scheduler.execute((Runnable)future);
+    
+    // assert get released
+    scheduler.tick();
+    assertTrue(br.runStarted);
+    assertTrue(br.blockReleased);
+    assertFalse(br.executionExceptionThrown);
+    
+    assertTrue(future.isCancelled());
+    assertTrue(future.isDone());
+  }
+  
+  public static void getTimeoutFail(FutureFactory ff) throws InterruptedException, ExecutionException {
+    final int timeout = 10;
+
+    Future<?> future = ff.make(new TestRunnable() {
+      @Override
+      public void handleRunStart() throws InterruptedException {
+        Thread.sleep(timeout * 10);
+      }
+    }, new NativeLock());
+    
+    scheduler.getExecutor().execute((Runnable)future);
+    
+    long startTime = System.currentTimeMillis();
+    try {
+      future.get(timeout, TimeUnit.MILLISECONDS);
+      fail("Exception should have been thrown");
+    } catch (TimeoutException e) {
+      long catchTime = System.currentTimeMillis();
+      assertTrue(catchTime - startTime >= timeout);
+    }
+  }
+  
+  public static void isDoneTest(FutureFactory ff) {
     TestRunnable r = new TestRunnable();
-    ExecuteFuture future = ff.make(r, new NativeLock());
+    Future<?> future = ff.make(r, new NativeLock());
     scheduler.getExecutor().execute((Runnable)future);
     try {
-      future.blockTillCompleted();
+      future.get();
     } catch (InterruptedException e) {
       // ignored
     } catch (ExecutionException e) {
       // ignored
     }
     
-    assertTrue(future.isCompleted());
+    assertTrue(future.isDone());
   }
   
-  public static void isCompletedFail(FutureFactory ff) {
+  public static void isDoneFail(FutureFactory ff) {
     TestRunnable r = new FailureRunnable();
-    ExecuteFuture future = ff.make(r, new NativeLock());
+    Future<?> future = ff.make(r, new NativeLock());
     scheduler.getExecutor().execute((Runnable)future);
     try {
-      future.blockTillCompleted();
+      future.get();
     } catch (InterruptedException e) {
       // ignored
     } catch (ExecutionException e) {
       // ignored
     }
     
-    assertTrue(future.isCompleted());
+    assertTrue(future.isDone());
   }
   
   public interface FutureFactory {
-    public ExecuteFuture make(Runnable run, 
+    public Future<?> make(Runnable run, 
+                          VirtualLock lock);
+    public <T> Future<T> make(Callable<T> callable, 
                               VirtualLock lock);
   }
   
   private static class BlockingRunnable extends VirtualRunnable {
-    private final ExecuteFuture future;
+    private final Future<?> future;
     private volatile boolean runStarted;
     private volatile boolean blockReleased;
     private volatile boolean executionExceptionThrown;
     
-    public BlockingRunnable(ExecuteFuture future) {
+    public BlockingRunnable(Future<?> future) {
       this.future = future;
       runStarted = false;
       blockReleased = false;
@@ -105,7 +166,7 @@ public class ExecuteFutureTest {
     public void run() {
       runStarted = true;
       try {
-        future.blockTillCompleted();
+        future.get();
       } catch (InterruptedException e) {
         // ignored
       } catch (ExecutionException e) {
