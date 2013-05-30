@@ -328,7 +328,9 @@ public class CallableDistributor<K, R> {
   
   /**
    * Result from a callable which can be either a computed 
-   * result, or an exception due to failure.
+   * result, or an exception due to failure.  These are different 
+   * from futures in that they represent the product of work, not 
+   * work that has yet to occur.
    * 
    * @author jent - Mike Jensen
    *
