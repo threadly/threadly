@@ -3,15 +3,18 @@ package org.threadly.test.concurrent;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import org.threadly.concurrent.ExecuteFuture;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.Clock;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.ListUtils;
 
 /**
@@ -53,7 +56,12 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task) {
+  public Future<?> submit(Runnable task) {
+    return submitScheduled(task, 0);
+  }
+
+  @Override
+  public <T> Future<T> submit(Callable<T> task) {
     return submitScheduled(task, 0);
   }
 
@@ -63,9 +71,18 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
-    OneTimeFutureRunnable otfr = new OneTimeFutureRunnable(task, delayInMs, 
-                                                           new NativeLock());
+  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+    OneTimeFutureRunnable<?> otfr = new OneTimeFutureRunnable<Object>(task, delayInMs, 
+                                                                      new NativeLock());
+    add(otfr);
+    
+    return otfr;
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+    OneTimeFutureRunnable<T> otfr = new OneTimeFutureRunnable<T>(task, delayInMs, 
+                                                                 new NativeLock());
     add(otfr);
     
     return otfr;
@@ -239,63 +256,134 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   
   /**
    * Runnable container for runnables that only run once 
-   * and also need to implement the {@link ExecuteFuture} 
+   * and also need to implement the {@link Future} 
    * interface.
    * 
    * @author jent - Mike Jensen
    */
-  protected class OneTimeFutureRunnable extends OneTimeRunnable 
-                                        implements ExecuteFuture {
+  protected class OneTimeFutureRunnable<T> extends OneTimeRunnable 
+                                           implements Future<T> {
+    private final Callable<T> callable;
     private final VirtualLock lock;
+    private boolean canceled;
+    private boolean started;
     private boolean done;
-    private RuntimeException failure;
+    private Exception failure;
+    private T result;
     
     public OneTimeFutureRunnable(Runnable runnable, long delay, 
                                  VirtualLock lock) {
       super(runnable, delay);
       
+      callable = null;
       this.lock = lock;
+      canceled = false;
+      started = false;
       done = false;
       failure = null;
+      result = null;
+    }
+
+    
+    public OneTimeFutureRunnable(Callable<T> callable, long delay, 
+                                 VirtualLock lock) {
+      super(null, delay);
+      
+      this.callable = callable;
+      this.lock = lock;
+      canceled = false;
+      started = false;
+      done = false;
+      failure = null;
+      result = null;
     }
     
     @Override
     public void run(long nowInMs) {
       try {
-        runnable.run();
+        boolean shouldRun = false;
+        synchronized (lock) {
+          if (! canceled) {
+            started = true;
+            shouldRun = true;
+          }
+        }
+        
+        if (shouldRun) {
+          if (runnable != null) {
+            runnable.run();
+          } else {
+            result = callable.call();
+          }
+        }
         
         synchronized (lock) {
           done = true;
           lock.signalAll();
         }
-      } catch (RuntimeException e) {
+      } catch (Exception e) {
         synchronized (lock) {
           done = true;
           failure = e;
           lock.signalAll();
         }
         
-        throw e;
+        throw ExceptionUtils.makeRuntime(e);
       }
     }
 
     @Override
-    public void blockTillCompleted() throws InterruptedException,
-                                            ExecutionException {
+    public boolean cancel(boolean mayInterruptIfRunning) {
       synchronized (lock) {
-        while (! done) {
-          lock.await();
+        canceled = true;
+        
+        lock.signalAll();
+      }
+      return ! started;
+    }
+
+    @Override
+    public boolean isDone() {
+      synchronized (lock) {
+        return done;
+      }
+    }
+
+    @Override
+    public boolean isCancelled() {
+      synchronized (lock) {
+        return canceled && ! started;
+      }
+    }
+
+    @Override
+    public T get() throws InterruptedException, ExecutionException {
+      try {
+        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        // basically impossible
+        throw ExceptionUtils.makeRuntime(e);
+      }
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws InterruptedException,
+                                                     ExecutionException,
+                                                     TimeoutException {
+      long startTime = Clock.accurateTime();
+      long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+      synchronized (lock) {
+        long waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
+        while (! done && waitTime > 0) {
+          lock.await(waitTime);
+          waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
         }
         if (failure != null) {
           throw new ExecutionException(failure);
+        } else if (! done) {
+          throw new TimeoutException();
         }
-      }
-    }
-
-    @Override
-    public boolean isCompleted() {
-      synchronized (lock) {
-        return done;
+        return result;
       }
     }
   }

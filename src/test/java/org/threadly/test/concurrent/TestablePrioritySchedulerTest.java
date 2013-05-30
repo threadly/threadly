@@ -5,11 +5,11 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Future;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.ExecuteFuture;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -67,11 +67,11 @@ public class TestablePrioritySchedulerTest {
   @Test
   public void submitTest() {
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(RUNNABLE_COUNT);
-    List<ExecuteFuture> futures = new ArrayList<ExecuteFuture>(RUNNABLE_COUNT);
+    List<Future<?>> futures = new ArrayList<Future<?>>(RUNNABLE_COUNT);
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
-      ExecuteFuture future = testScheduler.submit(tr);
+      Future<?> future = testScheduler.submit(tr);
       assertNotNull(future);
       futures.add(future);
     }
@@ -90,9 +90,9 @@ public class TestablePrioritySchedulerTest {
       assertEquals(it.next().getRunCount(), 1);
     }
     
-    Iterator<ExecuteFuture> futureIt = futures.iterator();
+    Iterator<Future<?>> futureIt = futures.iterator();
     while (futureIt.hasNext()) {
-      assertTrue(futureIt.next().isCompleted());
+      assertTrue(futureIt.next().isDone());
     }
   }
   
@@ -130,7 +130,7 @@ public class TestablePrioritySchedulerTest {
     TestRunnable submitRun = new TestRunnable();
     TestRunnable scheduleRun = new TestRunnable();
 
-    ExecuteFuture future = testScheduler.submit(submitRun);
+    Future<?> future = testScheduler.submit(submitRun);
     assertNotNull(future);
     future = testScheduler.submitScheduled(scheduleRun, scheduleDelay);
     assertNotNull(future);

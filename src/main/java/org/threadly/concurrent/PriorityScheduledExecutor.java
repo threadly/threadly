@@ -3,16 +3,21 @@ package org.threadly.concurrent;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.collections.DynamicDelayQueue;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.Clock;
+import org.threadly.util.ExceptionUtils;
 
 /**
  * Executor to run tasks, schedule tasks.  
@@ -444,12 +449,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task) {
+  public Future<?> submit(Runnable task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public ExecuteFuture submit(Runnable task, TaskPriority priority) {
+  public Future<?> submit(Runnable task, TaskPriority priority) {
+    return submitScheduled(task, 0, priority);
+  }
+
+  @Override
+  public <T> Future<T> submit(Callable<T> task) {
+    return submit(task, defaultPriority);
+  }
+
+  @Override
+  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
@@ -474,12 +489,38 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+  public Future<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public ExecuteFuture submitScheduled(Runnable task, long delayInMs, 
+  public Future<?> submitScheduled(Runnable task, long delayInMs, 
+                                   TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide a task");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    if (priority == null) {
+      priority = defaultPriority;
+    }
+
+    OneTimeFutureTaskWrapper<?> otftw = new OneTimeFutureTaskWrapper<Object>(task, 
+                                                                             priority, 
+                                                                             delayInMs, 
+                                                                             makeLock());
+    addToQueue(otftw);
+    
+    return otftw;
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+    return submitScheduled(task, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
                                        TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
@@ -490,10 +531,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    OneTimeFutureTaskWrapper otftw = new OneTimeFutureTaskWrapper(task, 
-                                                                  priority, 
-                                                                  delayInMs, 
-                                                                  makeLock());
+    OneTimeFutureTaskWrapper<T> otftw = new OneTimeFutureTaskWrapper<T>(task, 
+                                                                        priority, 
+                                                                        delayInMs, 
+                                                                        makeLock());
     addToQueue(otftw);
     
     return otftw;
@@ -969,62 +1010,130 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   /**
    * Wrapper for tasks which only executes once, and also implements 
-   * the {@link ExecuteFuture} interface.
+   * the {@link Future} interface.
    * 
    * @author jent - Mike Jensen
    */
-  protected static class OneTimeFutureTaskWrapper extends OneTimeTaskWrapper 
-                                                  implements ExecuteFuture {
+  protected static class OneTimeFutureTaskWrapper<T> extends OneTimeTaskWrapper 
+                                                     implements Future<T> {
+    private final Callable<T> callable;
     private final VirtualLock lock;
+    private boolean started;
     private boolean done;
-    private Throwable failure;
+    private Exception failure;
+    private T result;
     
     protected OneTimeFutureTaskWrapper(Runnable task, TaskPriority priority,
                                        long delay, VirtualLock lock) {
       super(task, priority, delay);
       
+      callable = null;
       this.lock = lock;
+      started = false;
       done = false;
       failure = null;
+      result = null;
+    }
+
+    
+    protected OneTimeFutureTaskWrapper(Callable<T> callable, TaskPriority priority,
+                                       long delay, VirtualLock lock) {
+      super(null, priority, delay);
+      
+      this.callable = callable;
+      this.lock = lock;
+      started = false;
+      done = false;
+      failure = null;
+      result = null;
     }
 
     @Override
     public void run() {
       try {
-        super.run();
+        boolean shouldRun = false;
+        synchronized (lock) {
+          if (! canceled) {
+            started = true;
+            shouldRun = true;
+          }
+        }
+        
+        if (shouldRun) {
+          if (task != null) {
+            task.run();
+          } else {
+            result = callable.call();
+          }
+        }
         
         synchronized (lock) {
           done = true;
           lock.signalAll();
         }
-      } catch (RuntimeException e) {
+      } catch (Exception e) {
         synchronized (lock) {
           done = true;
           failure = e;
           lock.signalAll();
         }
         
-        throw e;
+        throw ExceptionUtils.makeRuntime(e);
       }
     }
 
     @Override
-    public void blockTillCompleted() throws InterruptedException,
-                                            ExecutionException {
+    public boolean cancel(boolean mayInterruptIfRunning) {
       synchronized (lock) {
-        while (! done) {
-          lock.await();
+        canceled = true;
+        
+        lock.signalAll();
+      }
+      return ! started;
+    }
+
+    @Override
+    public boolean isDone() {
+      synchronized (lock) {
+        return done;
+      }
+    }
+
+    @Override
+    public boolean isCancelled() {
+      synchronized (lock) {
+        return canceled && ! started;
+      }
+    }
+
+    @Override
+    public T get() throws InterruptedException, ExecutionException {
+      try {
+        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        // basically impossible
+        throw ExceptionUtils.makeRuntime(e);
+      }
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws InterruptedException,
+                                                     ExecutionException,
+                                                     TimeoutException {
+      long startTime = Clock.accurateTime();
+      long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+      synchronized (lock) {
+        long waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
+        while (! done && waitTime > 0) {
+          lock.await(waitTime);
+          waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
         }
         if (failure != null) {
           throw new ExecutionException(failure);
+        } else if (! done) {
+          throw new TimeoutException();
         }
-      }
-    }
-
-    @Override
-    public boolean isCompleted() {
-      synchronized (lock) {
-        return done;
+        return result;
       }
     }
   }

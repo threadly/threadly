@@ -5,11 +5,13 @@ import static org.junit.Assert.*;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SimpleSchedulerInterfaceTest.TestCallable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
@@ -194,11 +196,11 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void submitTest() {
+  public void submitRunnableTest() {
     SchedulerFactory sf = new SchedulerFactory();
     PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);;
     try {
-      SimpleSchedulerInterfaceTest.submitTest(sf);
+      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -218,23 +220,57 @@ public class PriorityScheduledExecutorTest {
     }
   }
   
+  @Test
+  public void submitCallableTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);;
+    try {
+      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
+      
+      TestCallable tc1 = new TestCallable(0);
+      TestCallable tc2 = new TestCallable(0);
+      scheduler.submit(tc1, TaskPriority.High);
+      scheduler.submit(tc2, TaskPriority.Low);
+      
+      tc1.blockTillTrue(); // throws exception if fails
+      tc2.blockTillTrue(); // throws exception if fails
+    } finally {
+      try {
+        sf.shutdown();
+      } finally {
+        scheduler.shutdown();
+      }
+    }
+  }
+  
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.executeTestFail(sf);
+      SimpleSchedulerInterfaceTest.executeFail(sf);
     } finally {
       sf.shutdown();
     }
   }
   
   @Test (expected = IllegalArgumentException.class)
-  public void submitTestFail() {
+  public void submitRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.submitTestFail(sf);
+      SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitCallableFail() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitCallableFail(sf);
     } finally {
       sf.shutdown();
     }
@@ -245,18 +281,29 @@ public class PriorityScheduledExecutorTest {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionTest(sf);
+      SimpleSchedulerInterfaceTest.scheduleTest(sf);
     } finally {
       sf.shutdown();
     }
   }
   
   @Test
-  public void submitScheduledExecutionTest() {
+  public void submitScheduledRunnableTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.submitScheduledExecutionTest(sf);
+      SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test
+  public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
     } finally {
       sf.shutdown();
     }
@@ -274,11 +321,22 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void submitScheduledExecutionFail() {
+  public void submitScheduledRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.submitScheduledExecutionFail(sf);
+      SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test
+  public void submitScheduledCallableFail() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
     } finally {
       sf.shutdown();
     }
@@ -328,11 +386,11 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void wrapperSubmitTest() {
+  public void wrapperSubmitRunnableTest() {
     WrapperFactory wf = new WrapperFactory();
     PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2);
     try {
-      SimpleSchedulerInterfaceTest.submitTest(wf);
+      SimpleSchedulerInterfaceTest.submitRunnableTest(wf);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -348,45 +406,87 @@ public class PriorityScheduledExecutorTest {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
-  public void wrapperExecuteTestFail() {
+  @Test
+  public void wrapperSubmitCallableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
-    
+    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2);
     try {
-      SimpleSchedulerInterfaceTest.executeTestFail(wf);
+      SimpleSchedulerInterfaceTest.submitCallableTest(wf);
+      
+      TestCallable tc1 = new TestCallable(0);
+      TestCallable tc2 = new TestCallable(0);
+      scheduler.submit(tc1, TaskPriority.High);
+      scheduler.submit(tc2, TaskPriority.Low);
+
+      
+      tc1.blockTillTrue(); // throws exception if fails
+      tc2.blockTillTrue(); // throws exception if fails
     } finally {
       wf.shutdown();
     }
   }
   
   @Test (expected = IllegalArgumentException.class)
-  public void wrapperSubmitTestFail() {
+  public void wrapperExecuteFail() {
     WrapperFactory wf = new WrapperFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.submitTestFail(wf);
+      SimpleSchedulerInterfaceTest.executeFail(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void wrapperSubmitRunnableFail() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitRunnableFail(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void wrapperSubmitCallableFail() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitCallableFail(wf);
     } finally {
       wf.shutdown();
     }
   }
   
   @Test
-  public void wrapperScheduleExecutionTest() {
+  public void wrapperScheduleTest() {
     WrapperFactory wf = new WrapperFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionTest(wf);
+      SimpleSchedulerInterfaceTest.scheduleTest(wf);
     } finally {
       wf.shutdown();
     }
   }
   
   @Test
-  public void wrapperSubmitScheduledExecutionTest() {
+  public void wrapperSubmitScheduledRunnableTest() {
     WrapperFactory wf = new WrapperFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.submitScheduledExecutionTest(wf);
+      SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test
+  public void wrapperSubmitScheduledCallableTest() throws InterruptedException, ExecutionException {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitScheduledCallableTest(wf);
     } finally {
       wf.shutdown();
     }
@@ -404,11 +504,22 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void wrapperSubmitScheduledExecutionFail() {
+  public void wrapperSubmitScheduledRunnableFail() {
     WrapperFactory wf = new WrapperFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.submitScheduledExecutionFail(wf);
+      SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(wf);
+    } finally {
+      wf.shutdown();
+    }
+  }
+  
+  @Test
+  public void wrapperSubmitScheduledCallableFail() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitScheduledCallableFail(wf);
     } finally {
       wf.shutdown();
     }
