@@ -113,7 +113,7 @@ public class TestRunnable extends VirtualRunnable {
    * Blocks until run has been called at least once.
    */
   public void blockTillStarted() {
-    blockTillFinished(DEFAULT_TIMEOUT_PER_RUN, 1);
+    blockTillStarted(DEFAULT_TIMEOUT_PER_RUN);
   }
 
   /**
