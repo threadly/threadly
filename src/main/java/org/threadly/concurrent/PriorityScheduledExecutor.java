@@ -389,7 +389,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     synchronized (workersLock) {
       Iterator<Worker> it = availableWorkers.iterator();
       while (it.hasNext()) {
-        it.next().stop();
+        killWorker(it.next());
         it.remove();
       }
     }
