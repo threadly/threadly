@@ -59,7 +59,7 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
 
   @Override
   public void schedule(Runnable task, long delayInMs, 
-                                TaskPriority priority) {
+                       TaskPriority priority) {
     scheduler.schedule(task, delayInMs, priority);
   }
 
