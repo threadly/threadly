@@ -1,16 +1,9 @@
 package org.threadly.concurrent;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.threadly.util.ExceptionUtils;
 
 /**
  * This is a wrapper for the java.util.concurrent.ScheduledThreadPoolExecutor
@@ -18,8 +11,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterface, 
-                                                         ScheduledExecutorService {
+public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterface {
   private final ScheduledExecutorService scheduler;
   
   /**
@@ -45,6 +37,12 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   }
 
   @Override
+  public ExecuteFuture submit(Runnable task) {
+    Future<?> future = scheduler.submit(task);
+    return new ExecuteFutureWrapper(future);
+  }
+
+  @Override
   public void schedule(Runnable task, long delayInMs) {
     if (task == null) {
       throw new IllegalArgumentException("Runnable can not be null");
@@ -53,6 +51,19 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
     }
     
     scheduler.schedule(task, delayInMs, TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Runnable can not be null");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    
+    Future<?> future = scheduler.schedule(task, delayInMs, 
+                                          TimeUnit.MILLISECONDS);
+    return new ExecuteFutureWrapper(future);
   }
 
   @Override
@@ -74,97 +85,29 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
   public boolean isShutdown() {
     return scheduler.isShutdown();
   }
-
-  @Override
-  public void shutdown() {
-    scheduler.shutdown();
-  }
-
-  @Override
-  public List<Runnable> shutdownNow() {
-    return scheduler.shutdownNow();
-  }
-
-  @Override
-  public boolean isTerminated() {
-    return scheduler.isTerminated();
-  }
-
-  @Override
-  public boolean awaitTermination(long timeout, 
-                                  TimeUnit unit) throws InterruptedException {
-    return scheduler.awaitTermination(timeout, unit);
-  }
-
-  @Override
-  public <T> Future<T> submit(Callable<T> task) {
-    return scheduler.submit(task);
-  }
-
-  @Override
-  public <T> Future<T> submit(Runnable task, T result) {
-    return scheduler.submit(task, result);
-  }
-
-  @Override
-  public Future<?> submit(Runnable task) {
-    return scheduler.submit(task);
-  }
-
-  @Override
-  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks) throws InterruptedException {
-    return scheduler.invokeAll(tasks);
-  }
-
-  @Override
-  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
-                                       long timeout, TimeUnit unit) throws InterruptedException {
-    return scheduler.invokeAll(tasks, timeout, unit);
-  }
-
-  @Override
-  public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException,
-                                                                         ExecutionException {
-    try {
-      return invokeAny(tasks, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-    } catch (TimeoutException e) {
-      // should not happen
-      throw ExceptionUtils.makeRuntime(e);
+  
+  /**
+   * Class which wraps a java.util.concurrent.Future into the 
+   * ExecuteFuture interface.
+   * 
+   * @author jent - Mike Jensen
+   */
+  private class ExecuteFutureWrapper implements ExecuteFuture {
+    private final Future<?> future;
+    
+    private ExecuteFutureWrapper(Future<?> future) {
+      this.future = future;
     }
-  }
+    
+    @Override
+    public void blockTillCompleted() throws InterruptedException, 
+                                            ExecutionException {
+      future.get();
+    }
 
-  @Override
-  public <T> T invokeAny(Collection<? extends Callable<T>> tasks, 
-                         long timeout, TimeUnit unit) throws InterruptedException,
-                                                             ExecutionException, 
-                                                             TimeoutException {
-    throw new UnsupportedOperationException();  // TODO - need to implement
-  }
-
-  @Override
-  public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
-    return scheduler.schedule(command, delay, unit);
-  }
-
-  @Override
-  public <V> ScheduledFuture<V> schedule(Callable<V> callable, 
-                                         long delay, TimeUnit unit) {
-    return scheduler.schedule(callable, delay, unit);
-  }
-
-  @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(Runnable command,
-                                                long initialDelay, 
-                                                long period,
-                                                TimeUnit unit) {
-    return scheduler.scheduleAtFixedRate(command, initialDelay, period, unit);
-  }
-
-  @Override
-  public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
-                                                   long initialDelay,
-                                                   long delay, 
-                                                   TimeUnit unit) {
-    return scheduler.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+    @Override
+    public boolean isCompleted() {
+      return future.isDone();
+    }
   }
 }

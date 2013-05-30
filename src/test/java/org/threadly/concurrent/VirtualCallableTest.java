@@ -15,7 +15,7 @@ public class VirtualCallableTest {
     TestCallable tc = new TestCallable();
     
     assertNull(tc.factory); // null before run
-    Object result = tc.call(tlf);
+    tc.call(tlf);
     assertNull(tc.factory); // null after run
     
     assertTrue(tc.runCalled);

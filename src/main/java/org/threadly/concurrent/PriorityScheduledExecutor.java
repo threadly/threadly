@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -443,6 +444,16 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   @Override
+  public ExecuteFuture submit(Runnable task) {
+    return submit(task, defaultPriority);
+  }
+
+  @Override
+  public ExecuteFuture submit(Runnable task, TaskPriority priority) {
+    return submitScheduled(task, 0, priority);
+  }
+
+  @Override
   public void schedule(Runnable task, long delayInMs) {
     schedule(task, delayInMs, defaultPriority);
   }
@@ -460,6 +471,32 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
 
     addToQueue(new OneTimeTaskWrapper(task, priority, delayInMs));
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+    return submitScheduled(task, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs, 
+                                       TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide a task");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    if (priority == null) {
+      priority = defaultPriority;
+    }
+
+    OneTimeFutureTaskWrapper otftw = new OneTimeFutureTaskWrapper(task, 
+                                                                  priority, 
+                                                                  delayInMs, 
+                                                                  makeLock());
+    addToQueue(otftw);
+    
+    return otftw;
   }
 
   @Override
@@ -926,6 +963,68 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     public void run() {
       if (! canceled) {
         task.run();
+      }
+    }
+  }
+  
+  /**
+   * Wrapper for tasks which only executes once, and also implements 
+   * the {@link ExecuteFuture} interface.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class OneTimeFutureTaskWrapper extends OneTimeTaskWrapper 
+                                           implements ExecuteFuture {
+    private final VirtualLock lock;
+    private boolean done;
+    private Throwable failure;
+    
+    protected OneTimeFutureTaskWrapper(Runnable task, TaskPriority priority,
+                                       long delay, VirtualLock lock) {
+      super(task, priority, delay);
+      
+      this.lock = lock;
+      done = false;
+      failure = null;
+    }
+
+    @Override
+    public void run() {
+      try {
+        super.run();
+        
+        synchronized (lock) {
+          done = true;
+          lock.signalAll();
+        }
+      } catch (RuntimeException e) {
+        synchronized (lock) {
+          done = true;
+          failure = e;
+          lock.signalAll();
+        }
+        
+        throw e;
+      }
+    }
+
+    @Override
+    public void blockTillCompleted() throws InterruptedException,
+                                            ExecutionException {
+      synchronized (lock) {
+        while (! done) {
+          lock.wait();
+        }
+        if (failure != null) {
+          throw new ExecutionException(failure);
+        }
+      }
+    }
+
+    @Override
+    public boolean isCompleted() {
+      synchronized (lock) {
+        return done;
       }
     }
   }

@@ -8,12 +8,23 @@ package org.threadly.concurrent;
  */
 public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
   /**
-   * Executes the task as soon as possible with the given priority.
+   * Executes the task as soon as possible with the given priority.  
    * 
    * @param task runnable to execute
    * @param priority priority for task
    */
   public void execute(Runnable task, TaskPriority priority);
+  
+  /**
+   * Submit a task to run as soon as possible.  There is a 
+   * slight increase in load when using submit over execute.  
+   * So this should only be used when the future is necessary.
+   * 
+   * @param task runnable to be executed
+   * @param priority priority for task
+   * @return a future to know when the task has completed
+   */
+  public ExecuteFuture submit(Runnable task, TaskPriority priority);
   
   /**
    * Schedule a task with a given delay and a specified priority.
@@ -23,6 +34,18 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
    * @param priority priority to give task for execution
    */
   public void schedule(Runnable task, long delayInMs, TaskPriority priority);
+  
+  /**
+   * Schedule a task with a given delay and a specified priority.  There is 
+   * a slight increase in load when using submitScheduled over schedule.  So 
+   * this should only be used when the future is necessary.
+   * 
+   * @param task runnable to execute
+   * @param delayInMs time in milliseconds to wait to execute task
+   * @param priority priority to give task for execution
+   * @return a future to know when the task has completed
+   */
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs, TaskPriority priority);
 
   /**
    * Schedule a recurring task to run and a provided priority.  The recurring 

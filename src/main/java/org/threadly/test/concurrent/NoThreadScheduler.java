@@ -4,9 +4,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.ExecuteFuture;
 import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
@@ -49,8 +53,22 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   }
 
   @Override
+  public ExecuteFuture submit(Runnable task) {
+    return submitScheduled(task, 0);
+  }
+
+  @Override
   public void schedule(Runnable task, long delayInMs) {
     add(new OneTimeRunnable(task, delayInMs));
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+    OneTimeFutureRunnable otfr = new OneTimeFutureRunnable(task, delayInMs, 
+                                                           new NativeLock());
+    add(otfr);
+    
+    return otfr;
   }
 
   @Override
@@ -198,10 +216,10 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
    * 
    * @author jent - Mike Jensen
    */
-  private class OneTimeRunnable extends RunnableContainer {
+  protected class OneTimeRunnable extends RunnableContainer {
     private final long runTime;
     
-    private OneTimeRunnable(Runnable runnable, long delay) {
+    public OneTimeRunnable(Runnable runnable, long delay) {
       super(runnable);
       
       this.runTime = nowInMillis + delay;
@@ -218,13 +236,75 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
                               TimeUnit.MILLISECONDS);
     }
   }
+  /**
+   * Runnable container for runnables that only run once 
+   * and also need to implement the {@link ExecuteFuture} 
+   * interface.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class OneTimeFutureRunnable extends OneTimeRunnable 
+                                        implements ExecuteFuture {
+    private final VirtualLock lock;
+    private boolean done;
+    private RuntimeException failure;
+    
+    public OneTimeFutureRunnable(Runnable runnable, long delay, 
+                                 VirtualLock lock) {
+      super(runnable, delay);
+      
+      this.lock = lock;
+      done = false;
+      failure = null;
+    }
+    
+    @Override
+    public void run(long nowInMs) {
+      try {
+        runnable.run();
+        
+        synchronized (lock) {
+          done = true;
+          lock.signalAll();
+        }
+      } catch (RuntimeException e) {
+        synchronized (lock) {
+          done = true;
+          failure = e;
+          lock.signalAll();
+        }
+        
+        throw e;
+      }
+    }
+
+    @Override
+    public void blockTillCompleted() throws InterruptedException,
+                                            ExecutionException {
+      synchronized (lock) {
+        while (! done) {
+          lock.wait();
+        }
+        if (failure != null) {
+          throw new ExecutionException(failure);
+        }
+      }
+    }
+
+    @Override
+    public boolean isCompleted() {
+      synchronized (lock) {
+        return done;
+      }
+    }
+  }
   
   /**
    * Container for runnables which run multiple times.
    * 
    * @author jent - Mike Jensen
    */
-  private class RecurringRunnable extends RunnableContainer {
+  protected class RecurringRunnable extends RunnableContainer {
     private final long recurringDelay;
     private long nextRunTime;
     

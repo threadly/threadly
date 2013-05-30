@@ -41,6 +41,16 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   public void execute(Runnable task, TaskPriority priority) {
     schedule(task, 0, priority);
   }
+
+  @Override
+  public ExecuteFuture submit(Runnable task) {
+    return submit(task, defaultPriority);
+  }
+
+  @Override
+  public ExecuteFuture submit(Runnable task, TaskPriority priority) {
+    return submitScheduled(task, 0, priority);
+  }
   
   @Override
   public void schedule(Runnable task, long delayInMs) {
@@ -49,8 +59,19 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
 
   @Override
   public void schedule(Runnable task, long delayInMs, 
-                       TaskPriority priority) {
+                                TaskPriority priority) {
     scheduler.schedule(task, delayInMs, priority);
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+    return submitScheduled(task, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs,
+                                       TaskPriority priority) {
+    return scheduler.submitScheduled(task, delayInMs, priority);
   }
 
   @Override

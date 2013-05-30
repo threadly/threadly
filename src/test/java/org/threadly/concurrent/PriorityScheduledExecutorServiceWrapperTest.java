@@ -3,15 +3,11 @@ package org.threadly.concurrent;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
-import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -196,72 +192,6 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   }
   
   @Test
-  public void executionTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    try {
-      SimpleSchedulerInterfaceTest.executionTest(sf);
-    } finally {
-      sf.shutdown();
-    }
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void executeTestFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    try {
-      SimpleSchedulerInterfaceTest.executeTestFail(sf);
-    } finally {
-      sf.shutdown();
-    }
-  }
-  
-  @Test
-  public void scheduleExecutionTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionTest(sf);
-    } finally {
-      sf.shutdown();
-    }
-  }
-  
-  @Test
-  public void scheduleExecutionFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
-  }
-  
-  @Test
-  public void recurringExecutionTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
-    } finally {
-      sf.shutdown();
-    }
-  }
-  
-  @Test
-  public void recurringExecutionFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
-  }
-  
-  @Test
   public void shutdownTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
     PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
@@ -276,42 +206,6 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       fail("Execption should have been thrown");
     } catch (IllegalStateException e) {
       // expected
-    }
-    
-    try {
-      wrapper.schedule(new TestRunnable(), 1000);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-    
-    try {
-      wrapper.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-  }
-
-  private class SchedulerFactory implements PrioritySchedulerFactory {
-    private final List<PriorityScheduledExecutor> executors;
-    
-    private SchedulerFactory() {
-      executors = new LinkedList<PriorityScheduledExecutor>();
-    }
-    
-    @Override
-    public SimpleSchedulerInterface make(int poolSize) {
-      PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 200);
-      executors.add(executor);
-      return new PriorityScheduledExecutorServiceWrapper(executor);
-    }
-    
-    private void shutdown() {
-      Iterator<PriorityScheduledExecutor> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdown();
-      }
     }
   }
 }

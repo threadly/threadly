@@ -7,14 +7,17 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Delayed;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.ExecuteFuture;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.lock.LockFactory;
+import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.lock.TestableLock;
 import org.threadly.util.Clock;
@@ -93,6 +96,31 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   @Override
   public void execute(Runnable task, TaskPriority priority) {
     schedule(task, 0, priority);
+  }
+
+  @Override
+  public ExecuteFuture submit(Runnable task) {
+    return submit(task, defaultPriority);
+  }
+
+  @Override
+  public ExecuteFuture submit(Runnable task, TaskPriority priority) {
+    return submitScheduled(task, 0, priority);
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
+    return submitScheduled(task, 0, defaultPriority);
+  }
+
+  @Override
+  public ExecuteFuture submitScheduled(Runnable task, long delayInMs,
+                                       TaskPriority priority) {
+    OneTimeFutureRunnable otfr = new OneTimeFutureRunnable(task, delayInMs, priority, 
+                                                           new NativeLock());
+    add(otfr);
+    
+    return otfr;
   }
 
   @Override
@@ -401,7 +429,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
   
   /**
-   * Runnables which are only run once.
+   * Container for runnables which are only run once.
    * 
    * @author jent - Mike Jensen
    */
@@ -428,6 +456,72 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     public long getDelay(TimeUnit timeUnit) {
       return timeUnit.convert(runTime - nowInMillis, 
                               TimeUnit.MILLISECONDS);
+    }
+  }
+  
+  /**
+   * Container for runnables which are only run once.  And also need 
+   * to implement the {@link ExecuteFuture} interface.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class OneTimeFutureRunnable extends OneTimeRunnable
+                                        implements ExecuteFuture {
+    private final VirtualLock lock;
+    private boolean done;
+    private Throwable failure;
+
+    protected OneTimeFutureRunnable(Runnable runnable, long delay, 
+                                    TaskPriority priority, VirtualLock lock) {
+      super(runnable, delay, priority);
+      
+      this.lock = lock;
+      done = false;
+      failure = null;
+    }
+    
+    @Override
+    public void run(LockFactory scheduler) {
+      try {
+        if (runnable instanceof VirtualRunnable) {
+          ((VirtualRunnable)runnable).run(scheduler);
+        } else {
+          runnable.run();
+        }
+        
+        synchronized (lock) {
+          done = true;
+          lock.signalAll();
+        }
+      } catch (RuntimeException e) {
+        synchronized (lock) {
+          done = true;
+          failure = e;
+          lock.signalAll();
+        }
+        
+        throw e;
+      }
+    }
+
+    @Override
+    public void blockTillCompleted() throws InterruptedException,
+                                            ExecutionException {
+      synchronized (lock) {
+        while (! done) {
+          lock.wait();
+        }
+        if (failure != null) {
+          throw new ExecutionException(failure);
+        }
+      }
+    }
+
+    @Override
+    public boolean isCompleted() {
+      synchronized (lock) {
+        return done;
+      }
     }
   }
   
