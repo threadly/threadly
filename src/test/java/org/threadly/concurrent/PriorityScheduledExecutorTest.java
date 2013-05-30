@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
+import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
@@ -474,18 +475,18 @@ public class PriorityScheduledExecutorTest {
       assertFalse(scheduler.highPriorityConsumer.isRunning());
       assertFalse(scheduler.lowPriorityConsumer.isRunning());
       
-      scheduler.addToQueue(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
-                                                            TaskPriority.High, 
-                                                            taskDelay));
+      scheduler.addToQueue(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                  TaskPriority.High, 
+                                                  taskDelay));
 
       assertEquals(scheduler.highPriorityQueue.size(), 1);
       assertEquals(scheduler.lowPriorityQueue.size(), 0);
       assertTrue(scheduler.highPriorityConsumer.isRunning());
       assertFalse(scheduler.lowPriorityConsumer.isRunning());
       
-      scheduler.addToQueue(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
-                                                            TaskPriority.Low, 
-                                                            taskDelay));
+      scheduler.addToQueue(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                  TaskPriority.Low, 
+                                                  taskDelay));
 
       assertEquals(scheduler.highPriorityQueue.size(), 1);
       assertEquals(scheduler.lowPriorityQueue.size(), 1);

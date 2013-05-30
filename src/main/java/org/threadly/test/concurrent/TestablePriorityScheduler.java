@@ -88,6 +88,13 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     nowInMillis = Clock.accurateTime();
   }
   
+  /**
+   * @return executor that was provided at construction time
+   */
+  public Executor getExecutor() {
+    return executor;
+  }
+  
   @Override
   public void execute(Runnable task) {
     schedule(task, 0, defaultPriority);

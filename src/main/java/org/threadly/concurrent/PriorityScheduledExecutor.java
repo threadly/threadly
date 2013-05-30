@@ -940,7 +940,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  protected class OneTimeTaskWrapper extends TaskWrapper {
+  protected static class OneTimeTaskWrapper extends TaskWrapper {
     private final long runTime;
     
     protected OneTimeTaskWrapper(Runnable task, TaskPriority priority, long delay) {
@@ -973,8 +973,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  protected class OneTimeFutureTaskWrapper extends OneTimeTaskWrapper 
-                                           implements ExecuteFuture {
+  protected static class OneTimeFutureTaskWrapper extends OneTimeTaskWrapper 
+                                                  implements ExecuteFuture {
     private final VirtualLock lock;
     private boolean done;
     private Throwable failure;

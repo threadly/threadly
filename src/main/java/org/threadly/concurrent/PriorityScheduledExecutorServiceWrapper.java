@@ -196,9 +196,9 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
     FutureRunnable<Object> taskFuture = new FutureRunnable<Object>(command);
-    OneTimeTaskWrapper ottw = scheduler.new OneTimeTaskWrapper(taskFuture, 
-                                                               scheduler.getDefaultPriority(), 
-                                                               delayInMs);
+    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
+                                                     scheduler.getDefaultPriority(), 
+                                                     delayInMs);
     scheduler.addToQueue(ottw);
     
     return new ScheduledFutureRunnable<Object>(taskFuture, ottw);
@@ -216,9 +216,9 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
     FutureRunnable<V> taskFuture = new FutureRunnable<V>(callable);
-    OneTimeTaskWrapper ottw = scheduler.new OneTimeTaskWrapper(taskFuture, 
-                                                               scheduler.getDefaultPriority(), 
-                                                               delayInMs);
+    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
+                                                     scheduler.getDefaultPriority(), 
+                                                     delayInMs);
     scheduler.addToQueue(ottw);
     
     return new ScheduledFutureRunnable<V>(taskFuture, ottw);
