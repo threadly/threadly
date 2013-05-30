@@ -1,8 +1,9 @@
 package org.threadly.test.concurrent;
 
-import java.util.LinkedList;
+import java.util.List;
 
 import org.threadly.concurrent.VirtualRunnable;
+import org.threadly.concurrent.collections.ConcurrentArrayList;
 
 /**
  * Generic runnable implementation that can be used in 
@@ -15,7 +16,7 @@ public class TestRunnable extends VirtualRunnable {
   private static final int RUN_CONDITION_POLL_INTERVAL = 20;
   
   private final long creationTime;
-  private volatile LinkedList<Long> runTime;
+  private volatile List<Long> runTime;
   private volatile int runCount;
 
   /**
@@ -23,7 +24,7 @@ public class TestRunnable extends VirtualRunnable {
    */
   public TestRunnable() {
     creationTime = System.currentTimeMillis();
-    runTime = new LinkedList<Long>();
+    runTime = new ConcurrentArrayList<Long>();
     runCount = 0;
   }
   
@@ -71,35 +72,35 @@ public class TestRunnable extends VirtualRunnable {
    * @return the amount of time between construction and run being called
    */
   public long getDelayTillRun(int timeout, int runNumber) {
-    blockTillRun(timeout, runNumber);
+    blockTillFinished(timeout, runNumber);
     
     return runTime.get(runNumber - 1) - creationTime;
   }
   
   /**
-   * Blocks until run has been called at least once.
+   * Blocks until run has completed at least once.
    */
-  public void blockTillRun() {
-    blockTillRun(DEFAULT_TIMEOUT_PER_RUN, 1);
+  public void blockTillFinished() {
+    blockTillFinished(DEFAULT_TIMEOUT_PER_RUN, 1);
   }
 
   /**
-   * Blocks until run has been called at least once.
+   * Blocks until run has completed at least once.
    * 
    * @param timeout time to wait for run to be called
    */
-  public void blockTillRun(int timeout) {
-    blockTillRun(timeout, 1);
+  public void blockTillFinished(int timeout) {
+    blockTillFinished(timeout, 1);
   }
   
   /**
-   * Blocks until run has been called the provided qty of times.
+   * Blocks until run completed been called the provided qty of times.
    * 
    * @param timeout time to wait for run to be called
    * @param expectedRunCount run count to wait for
    */
-  public void blockTillRun(int timeout, 
-                           final int expectedRunCount) {
+  public void blockTillFinished(int timeout, 
+                                final int expectedRunCount) {
     new TestCondition() {
       @Override
       public boolean get() {
@@ -108,12 +109,32 @@ public class TestRunnable extends VirtualRunnable {
     }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
   
+  /**
+   * Blocks until run has been called at least once.
+   */
+  public void blockTillStarted() {
+    blockTillFinished(DEFAULT_TIMEOUT_PER_RUN, 1);
+  }
+
+  /**
+   * Blocks until run has been called at least once.
+   * 
+   * @param timeout time to wait for run to be called
+   */
+  public void blockTillStarted(int timeout) {
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return ! runTime.isEmpty();
+      }
+    }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
+  }
+  
   @Override
   public final void run() {
+    runTime.add(System.currentTimeMillis());
     synchronized (this) {
       try {
-        runTime.add(System.currentTimeMillis());
-        
         handleRunStart();
       } catch (InterruptedException e) {
         // ignored

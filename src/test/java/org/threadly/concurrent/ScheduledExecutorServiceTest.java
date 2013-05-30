@@ -30,11 +30,10 @@ public class ScheduledExecutorServiceTest {
       }
     };
     scheduler.execute(tr);
-    
     TestUtils.sleep(10);
     scheduler.shutdown();
 
-    tr.blockTillRun();
+    tr.blockTillFinished();
     TestUtils.sleep(100);
     assertTrue(scheduler.isTerminated());
   }
@@ -172,7 +171,7 @@ public class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillRun(runnableCount * recurringDelay + 500, waitCount);
+      tr.blockTillFinished(runnableCount * recurringDelay + 500, waitCount);
       long executionDelay = tr.getDelayTillRun(waitCount);
       assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
       

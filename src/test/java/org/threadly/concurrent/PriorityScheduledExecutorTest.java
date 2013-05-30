@@ -162,7 +162,7 @@ public class PriorityScheduledExecutorTest {
       TestRunnable tr = new TestRunnable();
       scheduler.execute(tr);
       
-      tr.blockTillRun();  // wait for execution
+      tr.blockTillFinished();  // wait for execution
       
       assertEquals(scheduler.getCurrentPoolSize(), 1);
     } finally {
@@ -184,8 +184,8 @@ public class PriorityScheduledExecutorTest {
       scheduler.execute(tr1, TaskPriority.High);
       scheduler.execute(tr2, TaskPriority.Low);
       
-      tr1.blockTillRun(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillRun(1000 * 10, 2); // throws exception if fails
+      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       try {
         sf.shutdown();
@@ -209,8 +209,8 @@ public class PriorityScheduledExecutorTest {
       scheduler.submit(tr1, TaskPriority.High);
       scheduler.submit(tr2, TaskPriority.Low);
       
-      tr1.blockTillRun(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillRun(1000 * 10, 2); // throws exception if fails
+      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       try {
         sf.shutdown();
@@ -378,8 +378,8 @@ public class PriorityScheduledExecutorTest {
       scheduler.execute(tr1, TaskPriority.High);
       scheduler.execute(tr2, TaskPriority.Low);
       
-      tr1.blockTillRun(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillRun(1000 * 10, 2); // throws exception if fails
+      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       wf.shutdown();
     }
@@ -399,8 +399,8 @@ public class PriorityScheduledExecutorTest {
       scheduler.submit(tr1, TaskPriority.High);
       scheduler.submit(tr2, TaskPriority.Low);
       
-      tr1.blockTillRun(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillRun(1000 * 10, 2); // throws exception if fails
+      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       wf.shutdown();
     }

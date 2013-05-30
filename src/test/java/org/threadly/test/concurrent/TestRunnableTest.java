@@ -75,7 +75,7 @@ public class TestRunnableTest {
     new Thread(tr).start();
     
     long startTime = System.currentTimeMillis();
-    tr.blockTillRun(1000, 2);
+    tr.blockTillFinished(1000, 2);
     long endTime = System.currentTimeMillis();
     
     assertTrue(endTime - startTime >= delay);
@@ -83,7 +83,7 @@ public class TestRunnableTest {
   
   @Test (expected = TimeoutException.class)
   public void blockTillRunTestFail() {
-    instance.blockTillRun(10);
+    instance.blockTillFinished(10);
     
     fail("Exception should have thrown");
   }

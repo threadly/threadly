@@ -31,7 +31,7 @@ public class SimpleSchedulerInterfaceTest {
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      tr.blockTillRun();
+      tr.blockTillFinished();
       
       assertEquals(tr.getRunCount(), 1);
     }
@@ -46,7 +46,7 @@ public class SimpleSchedulerInterfaceTest {
     it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      tr.blockTillRun(1000, 2);
+      tr.blockTillFinished(1000, 2);
       
       assertEquals(tr.getRunCount(), 2);
     }
@@ -71,7 +71,7 @@ public class SimpleSchedulerInterfaceTest {
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      tr.blockTillRun();
+      tr.blockTillFinished();
       
       assertEquals(tr.getRunCount(), 1);
     }
@@ -86,7 +86,7 @@ public class SimpleSchedulerInterfaceTest {
     it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      tr.blockTillRun(1000, 2);
+      tr.blockTillFinished(1000, 2);
       
       assertEquals(tr.getRunCount(), 2);
     }
@@ -307,7 +307,7 @@ public class SimpleSchedulerInterfaceTest {
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      tr.blockTillRun(runnableCount * recurringDelay + 500, 2);
+      tr.blockTillFinished(runnableCount * recurringDelay + 500, 2);
       long executionDelay = tr.getDelayTillRun(2);
       assertTrue(executionDelay >= recurringDelay);
       // should be very timely with a core pool size that matches runnable count
