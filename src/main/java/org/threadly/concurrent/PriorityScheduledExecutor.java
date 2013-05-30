@@ -1013,7 +1013,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                                             ExecutionException {
       synchronized (lock) {
         while (! done) {
-          lock.wait();
+          lock.await();
         }
         if (failure != null) {
           throw new ExecutionException(failure);

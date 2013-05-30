@@ -284,7 +284,7 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
                                             ExecutionException {
       synchronized (lock) {
         while (! done) {
-          lock.wait();
+          lock.await();
         }
         if (failure != null) {
           throw new ExecutionException(failure);

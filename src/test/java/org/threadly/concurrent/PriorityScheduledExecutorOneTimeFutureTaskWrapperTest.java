@@ -1,6 +1,5 @@
 package org.threadly.concurrent;
 
-import org.junit.Ignore;  // ignored due to never unblocking
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeFutureTaskWrapper;
 import org.threadly.concurrent.ExecuteFutureTest.FutureFactory;
@@ -8,24 +7,24 @@ import org.threadly.concurrent.lock.VirtualLock;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorOneTimeFutureTaskWrapperTest {
-  @Test @Ignore
+  @Test
   public void blockTillCompletedTest() {
     ExecuteFutureTest.blockTillCompletedTest(new Factory());
   }
   
-  @Test @Ignore
+  @Test
   public void blockTillCompletedFail() {
     ExecuteFutureTest.blockTillCompletedFail(new Factory());
   }
   
-  @Test @Ignore
+  @Test
   public void isCompletedTest() {
-    ExecuteFutureTest.blockTillCompletedFail(new Factory());
+    ExecuteFutureTest.isCompletedTest(new Factory());
   }
   
-  @Test @Ignore
+  @Test
   public void isCompletedFail() {
-    ExecuteFutureTest.blockTillCompletedFail(new Factory());
+    ExecuteFutureTest.isCompletedFail(new Factory());
   }
   
   private class Factory implements FutureFactory {

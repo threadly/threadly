@@ -25,7 +25,7 @@ public class ExecuteFutureTest {
     assertFalse(br.blockReleased);
     assertFalse(br.executionExceptionThrown);
     
-    scheduler.execute(r);
+    scheduler.execute((Runnable)future);
     
     scheduler.tick();
     assertTrue(br.runStarted);
@@ -45,7 +45,7 @@ public class ExecuteFutureTest {
     assertFalse(br.blockReleased);
     assertFalse(br.executionExceptionThrown);
     
-    scheduler.execute(r);
+    scheduler.execute((Runnable)future);
     
     scheduler.tick();
     assertTrue(br.runStarted);
@@ -56,8 +56,14 @@ public class ExecuteFutureTest {
   public static void isCompletedTest(FutureFactory ff) {
     TestRunnable r = new TestRunnable();
     ExecuteFuture future = ff.make(r, new NativeLock());
-    scheduler.getExecutor().execute(r);
-    r.blockTillRun();
+    scheduler.getExecutor().execute((Runnable)future);
+    try {
+      future.blockTillCompleted();
+    } catch (InterruptedException e) {
+      // ignored
+    } catch (ExecutionException e) {
+      // ignored
+    }
     
     assertTrue(future.isCompleted());
   }
@@ -65,8 +71,14 @@ public class ExecuteFutureTest {
   public static void isCompletedFail(FutureFactory ff) {
     TestRunnable r = new FailureRunnable();
     ExecuteFuture future = ff.make(r, new NativeLock());
-    scheduler.getExecutor().execute(r);
-    r.blockTillRun();
+    scheduler.getExecutor().execute((Runnable)future);
+    try {
+      future.blockTillCompleted();
+    } catch (InterruptedException e) {
+      // ignored
+    } catch (ExecutionException e) {
+      // ignored
+    }
     
     assertTrue(future.isCompleted());
   }
