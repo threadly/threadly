@@ -14,9 +14,7 @@ public class TestRunnable extends VirtualRunnable {
   private static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;
   private static final int RUN_CONDITION_POLL_INTERVAL = 20;
   
-  private final TestCondition runCondition;
   private final long creationTime;
-  private volatile int expectedRunCount;
   private volatile LinkedList<Long> runTime;
   private volatile int runCount;
 
@@ -26,14 +24,7 @@ public class TestRunnable extends VirtualRunnable {
   public TestRunnable() {
     creationTime = System.currentTimeMillis();
     runTime = new LinkedList<Long>();
-    expectedRunCount = -1;
     runCount = 0;
-    runCondition = new TestCondition() {
-      @Override
-      public boolean get() {
-        return runCount >= expectedRunCount;
-      }
-    };
   }
   
   /**
@@ -107,9 +98,14 @@ public class TestRunnable extends VirtualRunnable {
    * @param timeout time to wait for run to be called
    * @param expectedRunCount run count to wait for
    */
-  public void blockTillRun(int timeout, int expectedRunCount) {
-    this.expectedRunCount = expectedRunCount;
-    runCondition.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
+  public void blockTillRun(int timeout, 
+                           final int expectedRunCount) {
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return runCount >= expectedRunCount;
+      }
+    }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
   
   @Override
