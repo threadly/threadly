@@ -39,7 +39,12 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void testExecute() {
+  public void isShutdownTest() {
+    assertFalse(scheduler.isShutdown());
+  }
+  
+  @Test
+  public void executeTest() {
     List<TestRunnable> runnables = getRunnableList();
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
@@ -64,7 +69,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void testSubmit() {
+  public void submitTest() {
     List<TestRunnable> runnables = getRunnableList();
     List<ExecuteFuture> futures = new ArrayList<ExecuteFuture>(runnables.size());
     Iterator<TestRunnable> it = runnables.iterator();
@@ -97,7 +102,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void testSchedule() {
+  public void scheduleTest() {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable executeRun = new TestRunnable();
@@ -124,7 +129,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void testSubmitScheduled() {
+  public void submitScheduledTest() {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable submitRun = new TestRunnable();
@@ -153,7 +158,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void testRecurring() {
+  public void recurringTest() {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
@@ -185,7 +190,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void testRemoval() {
+  public void removeTest() {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
