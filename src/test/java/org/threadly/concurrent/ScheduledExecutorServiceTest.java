@@ -20,17 +20,34 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ScheduledExecutorServiceTest {
-  public static void isTerminatedTest(ScheduledExecutorService scheduler) {
+  public static void isTerminatedShortTest(ScheduledExecutorService scheduler) {
+    assertFalse(scheduler.isTerminated());
+    
+    TestRunnable tr = new TestRunnable();
+    scheduler.execute(tr);
+    
+    tr.blockTillStarted();
+    scheduler.shutdown();
+
+    tr.blockTillFinished();
+    TestUtils.sleep(100);
+    assertTrue(scheduler.isTerminated());
+  }
+  
+  public static void isTerminatedLongTest(ScheduledExecutorService scheduler) {
+    final int sleepTime = 100;
+    
     assertFalse(scheduler.isTerminated());
     
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunStart() throws InterruptedException {
-        Thread.sleep(50);
+        Thread.sleep(sleepTime);
       }
     };
     scheduler.execute(tr);
-    TestUtils.sleep(10);
+    
+    tr.blockTillStarted();
     scheduler.shutdown();
 
     tr.blockTillFinished();
@@ -39,7 +56,7 @@ public class ScheduledExecutorServiceTest {
   }
   
   public static void awaitTerminationTest(ScheduledExecutorService scheduler) throws InterruptedException {
-    final int sleepTime = 50;
+    final int sleepTime = 200;
     
     assertFalse(scheduler.isTerminated());
     
@@ -52,7 +69,7 @@ public class ScheduledExecutorServiceTest {
     long start = System.currentTimeMillis();
     scheduler.execute(tr);
     
-    TestUtils.sleep(10);
+    tr.blockTillStarted();
     scheduler.shutdown();
 
     scheduler.awaitTermination(1000, TimeUnit.MILLISECONDS);
