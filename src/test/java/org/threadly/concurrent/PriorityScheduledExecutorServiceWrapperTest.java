@@ -16,12 +16,24 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   private static final int KEEP_ALIVE_TIME = 200;
   
   @Test
-  public void isTerminatedTest() {
+  public void isTerminatedShortTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
                                                                        KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
-      ScheduledExecutorServiceTest.isTerminatedTest(wrapper);
+      ScheduledExecutorServiceTest.isTerminatedShortTest(wrapper);
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
+  @Test
+  public void isTerminatedLongTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.isTerminatedLongTest(wrapper);
     } finally {
       executor.shutdown();
     }
