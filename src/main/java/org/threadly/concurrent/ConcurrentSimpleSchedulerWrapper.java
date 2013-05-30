@@ -38,6 +38,10 @@ public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterfac
 
   @Override
   public ExecuteFuture submit(Runnable task) {
+    if (task == null) {
+      throw new IllegalArgumentException("Runnable can not be null");
+    }
+    
     Future<?> future = scheduler.submit(task);
     return new ExecuteFutureWrapper(future);
   }

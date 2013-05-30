@@ -11,11 +11,22 @@ import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFac
 @SuppressWarnings("javadoc")
 public class ConcurrentSimpleSchedulerWrapperTest {
   @Test
-  public void executionTest() {
+  public void executeTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.executionTest(sf);
+      SimpleSchedulerInterfaceTest.executeTest(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test
+  public void submitTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitTest(sf);
     } finally {
       sf.shutdown();
     }
@@ -27,6 +38,17 @@ public class ConcurrentSimpleSchedulerWrapperTest {
     
     try {
       SimpleSchedulerInterfaceTest.executeTestFail(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitTestFail() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitTestFail(sf);
     } finally {
       sf.shutdown();
     }
@@ -44,11 +66,33 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   }
   
   @Test
+  public void submitScheduledExecutionTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitScheduledExecutionTest(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test
   public void scheduleExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
     try {
       SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    } finally {
+      sf.shutdown();
+    }
+  }
+  
+  @Test
+  public void submitScheduledExecutionFail() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    try {
+      SimpleSchedulerInterfaceTest.submitScheduledExecutionFail(sf);
     } finally {
       sf.shutdown();
     }

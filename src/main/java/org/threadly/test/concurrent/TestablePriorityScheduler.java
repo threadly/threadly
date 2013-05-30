@@ -110,7 +110,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
 
   @Override
   public ExecuteFuture submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, 0, defaultPriority);
+    return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override

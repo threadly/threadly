@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.ExecuteFuture;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -64,6 +65,38 @@ public class TestablePrioritySchedulerTest {
   }
   
   @Test
+  public void submitTest() {
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(RUNNABLE_COUNT);
+    List<ExecuteFuture> futures = new ArrayList<ExecuteFuture>(RUNNABLE_COUNT);
+    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+      TestRunnable tr = new TestRunnable();
+      runnables.add(tr);
+      ExecuteFuture future = testScheduler.submit(tr);
+      assertNotNull(future);
+      futures.add(future);
+    }
+    
+    assertEquals(testScheduler.tick(), RUNNABLE_COUNT); // should execute all
+    
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      assertEquals(it.next().getRunCount(), 1);
+    }
+    
+    assertEquals(testScheduler.tick(), 0); // should not execute anything
+    
+    it = runnables.iterator();
+    while (it.hasNext()) {
+      assertEquals(it.next().getRunCount(), 1);
+    }
+    
+    Iterator<ExecuteFuture> futureIt = futures.iterator();
+    while (futureIt.hasNext()) {
+      assertTrue(futureIt.next().isCompleted());
+    }
+  }
+  
+  @Test
   public void scheduleExecuteTest() {
     long scheduleDelay = 1000 * 10;
     
@@ -87,6 +120,35 @@ public class TestablePrioritySchedulerTest {
     assertEquals(testScheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
     
     assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
+    assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
+  }
+  
+  @Test
+  public void submitScheduledExecuteTest() {
+    long scheduleDelay = 1000 * 10;
+    
+    TestRunnable submitRun = new TestRunnable();
+    TestRunnable scheduleRun = new TestRunnable();
+
+    ExecuteFuture future = testScheduler.submit(submitRun);
+    assertNotNull(future);
+    future = testScheduler.submitScheduled(scheduleRun, scheduleDelay);
+    assertNotNull(future);
+
+    long startTime = System.currentTimeMillis();
+    assertEquals(testScheduler.tick(startTime), 1);
+
+    assertEquals(submitRun.getRunCount(), 1);   // should have run
+    assertEquals(scheduleRun.getRunCount(), 0);  // should NOT have run yet
+    
+    assertEquals(testScheduler.tick(startTime + scheduleDelay), 1);
+    
+    assertEquals(submitRun.getRunCount(), 1);   // should NOT have run again
+    assertEquals(scheduleRun.getRunCount(), 1);  // should have run
+    
+    assertEquals(testScheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
+    
+    assertEquals(submitRun.getRunCount(), 1);   // should NOT have run again
     assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
   }
   

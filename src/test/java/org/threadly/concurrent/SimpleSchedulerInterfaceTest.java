@@ -10,7 +10,7 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SimpleSchedulerInterfaceTest {
-  public static void executionTest(PrioritySchedulerFactory factory) {
+  public static void executeTest(PrioritySchedulerFactory factory) {
     int runnableCount = 10;
     
     SimpleSchedulerInterface scheduler = factory.make(runnableCount);
@@ -47,10 +47,61 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
+  public static void submitTest(PrioritySchedulerFactory factory) {
+    int runnableCount = 10;
+    
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+    List<ExecuteFuture> futures = new ArrayList<ExecuteFuture>(runnableCount);
+    for (int i = 0; i < runnableCount; i++) {
+      TestRunnable tr = new TestRunnable();
+      ExecuteFuture future = scheduler.submit(tr);
+      assertNotNull(future);
+      runnables.add(tr);
+      futures.add(future);
+    }
+    
+    // verify execution
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      TestRunnable tr = it.next();
+      tr.blockTillRun();
+      
+      assertEquals(tr.getRunCount(), 1);
+    }
+    
+    // run one more time now that all workers are already running
+    it = runnables.iterator();
+    while (it.hasNext()) {
+      scheduler.execute(it.next());
+    }
+    
+    // verify second execution
+    it = runnables.iterator();
+    while (it.hasNext()) {
+      TestRunnable tr = it.next();
+      tr.blockTillRun(1000, 2);
+      
+      assertEquals(tr.getRunCount(), 2);
+    }
+    
+    Iterator<ExecuteFuture> futureIt = futures.iterator();
+    while (futureIt.hasNext()) {
+      assertTrue(futureIt.next().isCompleted());
+    }
+  }
+  
   public static void executeTestFail(PrioritySchedulerFactory factory) {
     SimpleSchedulerInterface scheduler = factory.make(1);
     
     scheduler.execute(null);
+  }
+  
+  public static void submitTestFail(PrioritySchedulerFactory factory) {
+    SimpleSchedulerInterface scheduler = factory.make(1);
+    
+    scheduler.submit(null);
   }
   
   public static void scheduleExecutionTest(PrioritySchedulerFactory factory) {
@@ -78,6 +129,39 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
+  public static void submitScheduledExecutionTest(PrioritySchedulerFactory factory) {
+    int runnableCount = 10;
+    int scheduleDelay = 50;
+    
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+    List<ExecuteFuture> futures = new ArrayList<ExecuteFuture>(runnableCount);
+    for (int i = 0; i < runnableCount; i++) {
+      TestRunnable tr = new TestRunnable();
+      ExecuteFuture future = scheduler.submitScheduled(tr, scheduleDelay);
+      assertNotNull(future);
+      runnables.add(tr);
+      futures.add(future);
+    }
+    
+    // verify execution and execution times
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      TestRunnable tr = it.next();
+      long executionDelay = tr.getDelayTillFirstRun();
+      assertTrue(executionDelay >= scheduleDelay);
+      // should be very timely with a core pool size that matches runnable count
+      assertTrue(executionDelay <= (scheduleDelay + 200));  
+      assertEquals(tr.getRunCount(), 1);
+    }
+    
+    Iterator<ExecuteFuture> futureIt = futures.iterator();
+    while (futureIt.hasNext()) {
+      assertTrue(futureIt.next().isCompleted());
+    }
+  }
+  
   public static void scheduleExecutionFail(PrioritySchedulerFactory factory) {
     SimpleSchedulerInterface scheduler = factory.make(1);
     try {
@@ -88,6 +172,22 @@ public class SimpleSchedulerInterfaceTest {
     }
     try {
       scheduler.schedule(new TestRunnable(), -1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  public static void submitScheduledExecutionFail(PrioritySchedulerFactory factory) {
+    SimpleSchedulerInterface scheduler = factory.make(1);
+    try {
+      scheduler.submitScheduled(null, 1000);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      scheduler.submitScheduled(new TestRunnable(), -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
