@@ -19,7 +19,7 @@ import org.threadly.util.ListUtils;
 
 /**
  * Executor which has no threads itself.  This can be useful for testing.
- * It is similar to TestablePriorityScheduler except it is much less advanced.
+ * It is similar to {@link TestablePriorityScheduler} except it is much less advanced.
  * It has the same semantics that it only progressed forward with .tick(), but
  * since it is running on the calling thread, calls to .wait() and .sleep() will
  * block (possibly forever).

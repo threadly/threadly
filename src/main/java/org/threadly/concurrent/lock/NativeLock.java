@@ -8,7 +8,7 @@ package org.threadly.concurrent.lock;
  */
 public class NativeLock extends VirtualLock {
   /**
-   * Constructs a new NativeLock.
+   * Constructs a new {@link NativeLock}.
    */
   public NativeLock() {
   }

@@ -13,7 +13,7 @@ public class TestableLock extends VirtualLock {
   private final TestableExecutor executor;
   
   /**
-   * Constructs a new TestableLock with a testable scheduler 
+   * Constructs a new {@link TestableLock} with a testable scheduler 
    * to default to for implementation.
    * 
    * @param executor Scheduler which lock operations default to.

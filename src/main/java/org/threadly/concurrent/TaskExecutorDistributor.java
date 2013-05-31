@@ -12,7 +12,7 @@ import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
- * TaskDistributor is designed to take a multi threaded pool
+ * TaskDistributor is designed to take a multi-threaded pool
  * and add tasks with a given key such that those tasks will
  * be run single threaded for any given key.  The thread which
  * runs those tasks may be different each time, but no two tasks

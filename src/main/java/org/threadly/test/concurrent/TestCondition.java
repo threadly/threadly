@@ -1,7 +1,7 @@
 package org.threadly.test.concurrent;
 
 /**
- * TestCondition in unit test, designed to check a condition
+ * {@link TestCondition} in unit test, designed to check a condition
  * for something that is happening in a different thread.  Allowing a 
  * test to efficiently block till the testable action has finished.
  * 

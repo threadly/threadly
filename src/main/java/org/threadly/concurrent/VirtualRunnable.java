@@ -6,7 +6,7 @@ import org.threadly.concurrent.lock.VirtualLock;
 
 /**
  * This class helps assist in making concurrent code testable.
- * This class is not strictly required, but it makes the TestablePriorityScheduler
+ * This class is not strictly required, but it makes the {@link org.threadly.test.concurrent.TestablePriorityScheduler}
  * a drop in replacement instead of having to pass a LockFactory into your code.
  * 
  * The alternative to using this class would be to pass a LockFactory into your code.

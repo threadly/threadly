@@ -54,7 +54,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   protected volatile DataSet<T> currentData;
   
   /**
-   * Constructs a new ConcurrentArrayList with a new
+   * Constructs a new {@link ConcurrentArrayList} with a new
    * internal NativeLock implementation.
    */
   public ConcurrentArrayList() {
@@ -62,7 +62,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * Constructs a new ConcurrentArrayList with a new
+   * Constructs a new {@link ConcurrentArrayList} with a new
    * internal NativeLock implementation.  Specifying
    * the padding amounts can optimize this implementation 
    * more for the specific use case.  If there is space in the 
@@ -77,7 +77,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
-   * Constructs a new ConcurrentArrayList with a provided
+   * Constructs a new {@link ConcurrentArrayList} with a provided
    * lock implementation.
    * 
    * @param modificationLock lock to synchronize on internally
@@ -87,7 +87,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
-   * Constructs a new ConcurrentArrayList with a provided
+   * Constructs a new {@link ConcurrentArrayList} with a provided
    * lock implementation.  Specifying the padding amounts 
    * can optimize this implementation more for the 
    * specific use case.  If there is space in the array 

@@ -7,7 +7,7 @@ package org.threadly.concurrent.lock;
  */
 public class NativeLockFactory implements LockFactory {
   /**
-   * Constructs a new native lock factory.
+   * Constructs a new {@link NativeLockFactory}.
    */
   public NativeLockFactory() {
   }

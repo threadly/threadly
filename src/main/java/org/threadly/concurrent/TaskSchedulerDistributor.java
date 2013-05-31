@@ -4,7 +4,7 @@ import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 
 /**
- * This is a class which is more full featured than TaskExecutorDistributor, 
+ * This is a class which is more full featured than {@link TaskExecutorDistributor}, 
  * but it does require a scheduler implementation in order to be able to perform scheduling.
  * 
  * @author jent - Mike Jensen
@@ -112,8 +112,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * Task which will run delayed to add a task
-   * into the queue when ready.
+   * Task which will run delayed to add a task into the queue when ready.
    * 
    * @author jent - Mike Jensen
    */

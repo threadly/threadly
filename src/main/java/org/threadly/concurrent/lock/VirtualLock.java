@@ -47,7 +47,7 @@ public abstract class VirtualLock {
   }
   
   /**
-   * Calls .await(long) but ignores any InterruptedExceptions that may be thrown.
+   * Calls .await(long) but ignores any {@link InterruptedException} that may be thrown.
    * 
    * @param waitTimeInMs Time to wait on lock
    */

@@ -13,7 +13,7 @@ public class ExceptionUtils {
   /**
    * Makes a runtime exception if necessary.  If provided exception
    * is already runtime then that is just removed.  If it has to produce
-   * a new exception the stack is updated to ommit this call.
+   * a new exception the stack is updated to omit this call.
    * 
    * @param t Throwable which may or may not be a runtimeException
    * @return a runtime exception based on provided exception

@@ -10,7 +10,7 @@ public interface LockFactory {
   /**
    * Produces a new lock.
    * 
-   * @return new VirtualLock
+   * @return new {@link VirtualLock}
    */
   public VirtualLock makeLock();
 }

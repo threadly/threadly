@@ -44,7 +44,7 @@ public abstract class VirtualCallable<T> implements Callable<T>  {
    * Returns a virtual lock for the runnable that makes sense for the 
    * processing thread pool.
    * 
-   * @return VirtualLock to synchronize on and use with pleasure
+   * @return {@link VirtualLock} to synchronize on and use with pleasure
    */
   protected VirtualLock makeLock() {
     if (factory == null) {

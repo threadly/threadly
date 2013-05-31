@@ -12,7 +12,7 @@ import org.threadly.test.concurrent.lock.TestableLock;
  */
 public interface TestableExecutor extends Executor {
   /**
-   * should only be called from TestableLock.
+   * should only be called from {@link TestableLock}.
    * 
    * @param lock lock referencing calling into scheduler
    * @throws InterruptedException thrown if the thread is interrupted while blocking
@@ -20,7 +20,7 @@ public interface TestableExecutor extends Executor {
   public void handleWaiting(TestableLock lock) throws InterruptedException;
   
   /**
-   * should only be called from TestableLock.
+   * should only be called from {@link TestableLock}.
    * 
    * @param lock lock referencing calling into scheduler
    * @param waitTimeInMs time to wait on lock
@@ -30,21 +30,21 @@ public interface TestableExecutor extends Executor {
                             long waitTimeInMs) throws InterruptedException;
 
   /**
-   * should only be called from TestableLock.
+   * should only be called from {@link TestableLock}.
    * 
    * @param lock lock referencing calling into scheduler
    */
   public void handleSignal(TestableLock lock);
 
   /**
-   * should only be called from TestableVirtualLock.
+   * should only be called from {@link TestableLock}.
    * 
    * @param lock lock referencing calling into scheduler
    */
   public void handleSignalAll(TestableLock lock);
 
   /**
-   * should only be called from TestableLock.
+   * should only be called from {@link TestableLock}.
    * 
    * @param sleepTime time for thread to sleep
    * @throws InterruptedException thrown if the thread is interrupted while sleeping

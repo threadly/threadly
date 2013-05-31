@@ -23,7 +23,7 @@ public interface SimpleSchedulerInterface extends Executor {
   public Future<?> submit(Runnable task);
 
   /**
-   * Submit a callable to run as soon as possible.  This is 
+   * Submit a {@link Callable} to run as soon as possible.  This is 
    * needed when a result needs to be consumed from the 
    * callable.
    * 
@@ -55,7 +55,7 @@ public interface SimpleSchedulerInterface extends Executor {
                                    long delayInMs);
   
   /**
-   * Schedule a callable with a given delay.  This is 
+   * Schedule a {@link Callable} with a given delay.  This is 
    * needed when a result needs to be consumed from the 
    * callable.
    * 

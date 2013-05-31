@@ -21,9 +21,9 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * This is a wrapper for PriorityScheduledExecutor to be a drop in replacement
- * for any ScheduledExecutorService (aka the ScheduledThreadPoolExecutor interface).
- * It does make some performance sacrifices to adhere to this interface, but those
+ * This is a wrapper for {@link PriorityScheduledExecutor} to be a drop in replacement
+ * for any {@link ScheduledExecutorService} (aka the {@link java.util.concurrent.ScheduledThreadPoolExecutor} 
+ * interface). It does make some performance sacrifices to adhere to this interface, but those
  * are pretty minimal.
  * 
  * @author jent - Mike Jensen
@@ -34,7 +34,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   private final PriorityScheduledExecutor scheduler;
   
   /**
-   * Constructs a new wrapper to adhere to the ScheduledExecutorService interface.
+   * Constructs a new wrapper to adhere to the {@link ScheduledExecutorService} interface.
    * 
    * @param scheduler scheduler implementation to rely on
    */
@@ -52,7 +52,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   /**
-   * Currently the PriorityScheduledExecutor does not track
+   * Currently the {@link PriorityScheduledExecutor} does not track
    * tasks while they are running, so this call will always
    * return an empty list of runnables it was able to terminate.
    */

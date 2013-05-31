@@ -16,11 +16,12 @@ import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
- * This queue is very similar to java.util.concurrent.DelayQueue but has one major
+ * This queue is very similar to {@link java.util.concurrent.DelayQueue} but has one major
  * difference.  This queue is designed around the idea that items can change their delay.
- * This is needed in the PriorityScheduledExecutor in order to ensure that task removal requests
- * can always be found in the queue.  Items enter the queue with Long.MAX_VALUE delay, and then
- * will just call reposition once they know when their next execution time is.
+ * This is needed in the {@link org.threadly.concurrent.PriorityScheduledExecutor} in 
+ * order to ensure that task removal requests can always be found in the queue.  
+ * Items enter the queue with Long.MAX_VALUE delay, and then will just call reposition 
+ * once they know when their next execution time is.
  * 
  * @author jent - Mike Jensen
  * 
@@ -37,7 +38,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   protected final ConcurrentArrayList<T> queue;
 
   /**
-   * Constructs a new DynamicDelayQueue queue.
+   * Constructs a new {@link DynamicDelayQueue} queue.
    */
   public DynamicDelayQueue() {
     this(new NativeLock());
@@ -62,8 +63,9 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   public String toString() {
     return "Queue:" + queue.toString();
   }
-    /**
-   * Returns the VirtualLock that will be called with .await during take.  
+  
+  /**
+   * Returns the {@link VirtualLock} that will be called with .await during take.  
    * And must be synchronized on while using the iterator.
    * 
    * @return lock synchronized on internally

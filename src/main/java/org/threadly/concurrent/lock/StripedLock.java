@@ -3,7 +3,7 @@ package org.threadly.concurrent.lock;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This structure allows for more controlled levels of parallism.  It helps 
+ * This structure allows for more controlled levels of parallelism.  It helps 
  * in allowing threads to only lock when their interest are the same.  It 
  * is guaranteed that every key provided will return the same lock.  But it 
  * is not guaranteed that two different keys will not have the same lock.
@@ -16,12 +16,12 @@ public class StripedLock {
   private final ConcurrentHashMap<Integer, VirtualLock> locks;
   
   /**
-   * Constructs a new StripedLock with a given expected concurrency level.  
+   * Constructs a new {@link StripedLock} with a given expected concurrency level.  
    * The higher the concurrency level, the less lock contention will exist, 
    * but more locks will have to be synchronized on and more memory will be 
    * used to store the locks.
    * 
-   * @param expectedConcurrencyLevel expected level of paralism
+   * @param expectedConcurrencyLevel expected level of parallelism
    * @param lockFactory factory to produce new locks from
    */
   public StripedLock(int expectedConcurrencyLevel, 

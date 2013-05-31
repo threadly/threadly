@@ -32,7 +32,7 @@ import org.threadly.util.ListUtils;
  * Although it actually runs multiple threads, it only has one 
  * thread actively executing at a time (thus simulating single threaded).
  * 
- * The scheduler uses .awaits() and .sleep()'s to TestableLock's as opportunities
+ * The scheduler uses .awaits() and .sleep()'s to {@link TestableLock}'s as opportunities
  * to simulate multiple threads.  When you call .tick() you progress forward
  * externally scheduled threads, or possibly threads which are sleeping.
  * 
@@ -53,7 +53,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   private long nowInMillis;
 
   /**
-   * Constructs a new TestablePriorityScheduler with the backed thread pool.
+   * Constructs a new {@link TestablePriorityScheduler} with the backed thread pool.
    * Because this only simulates threads running in a single threaded way, 
    * it must have a sufficiently large thread pool to back that.
    * 
@@ -64,7 +64,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   /**
-   * Constructs a new TestablePriorityScheduler with the backed thread pool.
+   * Constructs a new {@link TestablePriorityScheduler} with the backed thread pool.
    * Because this only simulates threads running in a single threaded way, 
    * it must have a sufficiently large thread pool to back that.
    * 

@@ -6,7 +6,7 @@ import org.threadly.util.Clock;
 
 /**
  * This is a small wrapper class for Clock to avoid updating for bulk calls.
- * This is primarily useful for the PriorityScheduledExecutor when it needs to 
+ * This is primarily useful for the {@link PriorityScheduledExecutor} when it needs to 
  * do a binary search in a list of delayed items, or sort those delayed items.
  * There is no reason to make a system call for each item, so we just pause getting
  * accurate time for those fast but frequent operations.

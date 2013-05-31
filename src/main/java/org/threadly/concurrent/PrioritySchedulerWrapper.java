@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * Class to wrap any implementation of PrioritySchedulerInterface.  The purpose of wrapping 
+ * Class to wrap any implementation of {@link PrioritySchedulerInterface}.  The purpose of wrapping 
  * like this would be to change the default priority from the wrapped instance.  That way 
  * this could be passed into other parts of code and although use the same thread pool, 
  * have different default priorities.  (this could be particularly useful when used 

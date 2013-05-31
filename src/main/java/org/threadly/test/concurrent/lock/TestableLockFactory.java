@@ -13,7 +13,7 @@ public class TestableLockFactory implements LockFactory {
   private final TestablePriorityScheduler scheduler;
   
   /**
-   * Constructs a new TestableLockFactory that can be injected during unit testing.
+   * Constructs a new {@link TestableLockFactory} that can be injected during unit testing.
    * 
    * @param scheduler Scheduler to be provided to TestableLocks which are produced
    */

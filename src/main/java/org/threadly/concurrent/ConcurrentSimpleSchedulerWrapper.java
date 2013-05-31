@@ -6,7 +6,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This is a wrapper for the java.util.concurrent.ScheduledThreadPoolExecutor
+ * This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor}
  * to use that implementation with the SimpleSchedulerInterface.
  * 
  * @author jent - Mike Jensen

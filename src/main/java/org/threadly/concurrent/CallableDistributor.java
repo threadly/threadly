@@ -13,7 +13,7 @@ import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
- * This abstraction is designed to make submitting callable tasks with 
+ * This abstraction is designed to make submitting {@link Callable} tasks with 
  * results easier.  Tasks are submitted and results for those tasks can be 
  * captured when ready using .getNextResult() or .getAllResults().  
  * If multiple callables are submitted with the same key, they are guaranteed to 
@@ -36,7 +36,7 @@ public class CallableDistributor<K, R> {
   protected final ConcurrentHashMap<K, LinkedList<Result<R>>> results;  // locked around sLock for key
   
   /**
-   * Constructs a new CallableDistributor with giving parameters to 
+   * Constructs a new {@link CallableDistributor} with giving parameters to 
    * help guide thread pool construction.
    * 
    * @param expectedParallism expected qty of keys to be used in parallel
@@ -47,7 +47,7 @@ public class CallableDistributor<K, R> {
   }
   
   /**
-   * Constructs a new CallableDistributor with a provided Executor.  
+   * Constructs a new {@link CallableDistributor} with a provided Executor.  
    * Executor should have enough available threads to be able to service the 
    * expected key quantity in parallel.
    * 
@@ -58,7 +58,7 @@ public class CallableDistributor<K, R> {
   }
   
   /**
-   * Constructs a new CallableDistributor with a provided Executor.  
+   * Constructs a new {@link CallableDistributor} with a provided Executor.  
    * Executor should have enough available threads to be able to service the 
    * expected key quantity in parallel.
    * 
@@ -71,7 +71,7 @@ public class CallableDistributor<K, R> {
 
   
   /**
-   * Constructs a new CallableDistributor with a provided taskDistributor.
+   * Constructs a new {@link CallableDistributor} with a provided {@link TaskExecutorDistributor}.
    * 
    * @param taskDistributor TaskDistributor used to execute callables
    */
@@ -104,7 +104,7 @@ public class CallableDistributor<K, R> {
   }
   
   /**
-   * Submits a new callable to be executed with a given key to determine 
+   * Submits a new {@link Callable} to be executed with a given key to determine 
    * thread to be run on, and how to get results for callable.
    * 
    * @param key key for callable thread choice and to get result

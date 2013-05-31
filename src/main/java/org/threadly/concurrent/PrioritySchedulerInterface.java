@@ -32,7 +32,7 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
   public Future<?> submit(Runnable task, TaskPriority priority);
 
   /**
-   * Submit a callable to run as soon as possible.  This is 
+   * Submit a {@link Callable} to run as soon as possible.  This is 
    * needed when a result needs to be consumed from the 
    * callable.
    * 
@@ -67,7 +67,7 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
                                    TaskPriority priority);
   
   /**
-   * Schedule a callable with a given delay.  This is 
+   * Schedule a {@link Callable} with a given delay.  This is 
    * needed when a result needs to be consumed from the 
    * callable.
    * 
