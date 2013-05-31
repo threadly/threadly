@@ -162,6 +162,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
+   * Getter for current amount to added padding to the front of new buffers.
+   * 
    * @return current amount to added padding to the front of new buffers
    */
   public int getFrontPadding() {
@@ -169,6 +171,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
+   * Getter for current amount to added padding to the rear of new buffers.
+   * 
    * @return current amount to added padding to the rear of new buffers
    */
   public int getRearPadding() {

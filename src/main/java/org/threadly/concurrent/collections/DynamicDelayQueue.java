@@ -458,6 +458,8 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
    */
   public interface ConsumerIterator<E> {
     /**
+     * Check if there are additional items to consume.
+     * 
      * @return true if there is another item in the queue
      */
     public boolean hasNext();

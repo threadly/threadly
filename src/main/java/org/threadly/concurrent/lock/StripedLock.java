@@ -38,6 +38,9 @@ public class StripedLock {
   }
   
   /**
+   * Getter for the expected concurrency level this class was 
+   * constructed with.
+   * 
    * @return the constructed level of concurrency
    */
   public int getExpectedConcurrencyLevel() {

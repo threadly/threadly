@@ -21,7 +21,7 @@ import org.threadly.util.ExceptionUtils;
 
 /**
  * Executor to run tasks, schedule tasks.  
- * Unlike java.util.concurrent.ScheduledThreadPoolExecutor
+ * Unlike {@link java.util.concurrent.ScheduledThreadPoolExecutor}
  * this scheduled executor's pool size can grow and shrink 
  * based off usage.  It also has the benefit that you can 
  * provide "low priority" tasks which will attempt to use 
@@ -241,28 +241,36 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * @return Set core pool size
+   * Getter for the current set core pool size.
+   * 
+   * @return current core pool size
    */
   public int getCorePoolSize() {
     return corePoolSize;
   }
   
   /**
-   * @return Set max pool size
+   * Getter for the currently set max pool size.
+   * 
+   * @return current max pool size
    */
   public int getMaxPoolSize() {
     return maxPoolSize;
   }
   
   /**
-   * @return Set keep alive time
+   * Getter for the currently set keep alive time.
+   * 
+   * @return current keep alive time
    */
   public long getKeepAliveTime() {
     return keepAliveTimeInMs;
   }
   
   /**
-   * @return The current worker count
+   * Getter for the current qty of workers constructed (ether running or idle).
+   * 
+   * @return current worker count
    */
   public int getCurrentPoolSize() {
     synchronized (workersLock) {

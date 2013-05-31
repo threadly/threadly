@@ -67,6 +67,8 @@ public class Clock {
   }
 
   /**
+   * Getter for the last known time in milliseconds.
+   * 
    * @return last known time in milliseconds
    */
   public static long lastKnownTimeMillis() {

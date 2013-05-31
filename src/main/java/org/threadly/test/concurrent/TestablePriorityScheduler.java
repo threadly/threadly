@@ -93,6 +93,8 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
   
   /**
+   * Getter for the executor that was provided at construction time.
+   * 
    * @return executor that was provided at construction time
    */
   public Executor getExecutor() {

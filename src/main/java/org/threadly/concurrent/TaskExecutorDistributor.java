@@ -95,6 +95,8 @@ public class TaskExecutorDistributor {
   }
   
   /**
+   * Getter for the executor being used behind the scenes.
+   * 
    * @return executor tasks are being distributed to
    */
   public Executor getExecutor() {

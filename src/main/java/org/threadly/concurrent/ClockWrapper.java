@@ -54,14 +54,14 @@ public class ClockWrapper {
   /**
    * Forces an update to the clock.
    * 
-   * @return the current time in millis
+   * @return the current time in milliseconds
    */
   protected static long updateClock() {
     return Clock.accurateTime();
   }
   
   /**
-   * @return the last stored time in millis
+   * @return the last stored time in milliseconds
    */
   protected static long getLastKnownTime() {
     return Clock.lastKnownTimeMillis();

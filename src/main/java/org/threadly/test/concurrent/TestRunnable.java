@@ -29,13 +29,17 @@ public class TestRunnable extends VirtualRunnable {
   }
   
   /**
-   * @return True if the runnable has been called once
+   * Getter to check if the runnable has run exactly once.
+   * 
+   * @return true if the runnable has been called once
    */
   public boolean ranOnce() {
     return runCount == 1;
   }
   
   /**
+   * Getter for the number of times the run function has completed.
+   * 
    * @return The number of times the run function has been called
    */
   public int getRunCount() {

@@ -13,7 +13,9 @@ public abstract class TestCondition {
   private static final int SPIN_THRESHOLD = 10;
   
   /**
-   * @return condition state
+   * Getter for the conditions current state.
+   * 
+   * @return condition state, true if ready
    */
   public abstract boolean get();
 
