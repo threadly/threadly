@@ -17,7 +17,7 @@ It relies on any code that performs blocking uses an injectable LockFactory, the
 
 *    PriorityScheduledExecutor - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
 
-It does not handle any futures, nor does it implement ScheduledExecutorService by the default. If that functionality is necessary you have to wrap it in "ConcurrentSimpleSchedulerWrapper", but even then a few functions are not implemented due to wanting to keep the original implementation very lean and efficient.
+It provides calls that can or can not return a future, so if a future is not necessary the performance hit can be avoided. If you need a thread pool that implements ScheduledExecutorService you can wrap it in "ConcurrentSimpleSchedulerWrapper", but even then a few functions are not implemented due to wanting to keep the original implementation very lean and efficient.
 
 It removes tasks much easier than ScheduledThreadPoolExecutor, by allowing you to just provide the original runnable, instead of requiring you to cast the future that was originally provided.
 
@@ -26,3 +26,7 @@ It offers the ability to submit tasks with a given priority. Low priority tasks 
 The other large difference compared to ScheduledThreadPoolExecutor is that the pool size is dynamic. In ScheduledThreadPoolExecutor you can only provide one size, and that pool can not grow or shrink. In this implementation you have a core size, max size, and workers can be expired if they are no longer used.
 
 *    TaskExecutorDistributor and TaskSchedulerDistributor provide you the ability to execute (or schedule) tasks with a given key such that tasks with the same key hash code will NEVER run concurrently. This is designed as an ability to help the developer from having to deal with concurrent issues when ever possible. It allows you to have multiple runnables or tasks that share memory, but don't force the developer to deal with synchronization and memory barriers (assuming they all share the same key).
+
+*    CallableDistributor allows you to execute callables with a given key. All callables with the same key will never run concurrently (using TaskExecutorDistributor as the back end). Then another thread can easily reap the results from those callables by requesting them via known keys.
+
+*    ConcurrentArrayList is a thread safe array list that also implements a Dequeue. It may be better performing than a CopyOnWriteArrayList depending on what the use case is. It is able to avoid copies for some operations (and can be tuned for the specific application to possibly make copies very rare).
