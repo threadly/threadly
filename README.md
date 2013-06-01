@@ -1,7 +1,7 @@
 Threadly
 ========
 
-A library of java tools to assist with concurrent development. There are tools to help with a wide range of development and testing. This is designed to be a complement to java.util.concurrent and uses java.util.concurrent to help assist in it's implementations where it makes sense. This library is particularly useful for getting legacy concurrent code and getting it under test.
+A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of development and testing needs. This is designed to be a complement to java.util.concurrent and uses java.util.concurrent to help assist in it's implementations where it makes sense. This library is particularly useful for getting legacy concurrent code and getting it under test.
 
 -- Notable Unit Test Tools --
 
