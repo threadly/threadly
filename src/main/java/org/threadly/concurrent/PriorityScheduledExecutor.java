@@ -760,7 +760,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     public void maybeStart() {
       /* this looks like a double check but 
        * due to being volatile and only changing 
-       * one direction should be safe
+       * one direction should be safe, as well as the fact 
+       * that started is a primitive (can't be half constructed)
        */
       if (started) {
         return;
@@ -782,7 +783,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     public void stop() {
       /* this looks like a double check but 
        * due to being volatile and only changing 
-       * one direction should be safe
+       * one direction should be safe, as well as the fact 
+       * that started and stopped are primitives
        */
       if (stopped || ! started) {
         return;
