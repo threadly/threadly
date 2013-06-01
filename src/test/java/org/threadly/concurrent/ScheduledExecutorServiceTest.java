@@ -171,7 +171,7 @@ public class ScheduledExecutorServiceTest {
   public static void scheduleWithFixedDelayTest(ScheduledExecutorService scheduler) {
     int runnableCount = 10;
     int recurringDelay = 50;
-    int waitCount = 3;
+    int waitCount = 2;
     
     long startTime = System.currentTimeMillis();
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
