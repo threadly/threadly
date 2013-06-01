@@ -120,9 +120,8 @@ public class TaskExecutorDistributor {
     synchronized (agentLock) {
       TaskQueueWorker worker = taskWorkers.get(threadKey);
       if (worker == null) {
-        worker = new TaskQueueWorker(threadKey, agentLock);
+        worker = new TaskQueueWorker(threadKey, agentLock, task);
         taskWorkers.put(threadKey, worker);
-        worker.add(task);
         executor.execute(worker);
       } else {
         worker.add(task);
@@ -142,10 +141,12 @@ public class TaskExecutorDistributor {
     private LinkedList<Runnable> queue;
     
     private TaskQueueWorker(Object mapKey, 
-                            VirtualLock agentLock) {
+                            VirtualLock agentLock, 
+                            Runnable firstTask) {
       this.mapKey = mapKey;
       this.agentLock = agentLock;
       this.queue = new LinkedList<Runnable>();
+      queue.add(firstTask);
     }
     
     public void add(Runnable task) {
@@ -156,11 +157,8 @@ public class TaskExecutorDistributor {
     
     private List<Runnable> next() {
       synchronized (agentLock) {
-        List<Runnable> result = null;
-        if (! queue.isEmpty()) {
-          result = queue;
-          queue = new LinkedList<Runnable>();
-        }
+        List<Runnable> result = queue;
+        queue = new LinkedList<Runnable>();
         
         return result;
       }
