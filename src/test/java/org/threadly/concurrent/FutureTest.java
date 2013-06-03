@@ -92,11 +92,12 @@ public class FutureTest {
   
   public static void getTimeoutFail(FutureFactory ff) throws InterruptedException, ExecutionException {
     final int timeout = 10;
+    final int threadSleepTime = 1000 * 10;
 
     Future<?> future = ff.make(new TestRunnable() {
       @Override
       public void handleRunStart() throws InterruptedException {
-        Thread.sleep(timeout * 10);
+        Thread.sleep(threadSleepTime);
       }
     }, new NativeLock());
     
