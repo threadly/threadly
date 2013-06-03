@@ -29,6 +29,15 @@ public class TestRunnable extends VirtualRunnable {
   }
   
   /**
+   * Call to get the time recorded when the runnable was constructed.
+   * 
+   * @return time in milliseconds object was constructed
+   */
+  public long getCreationTime() {
+    return creationTime;
+  }
+  
+  /**
    * Getter to check if the runnable has run exactly once.
    * 
    * @return true if the runnable has been called once
