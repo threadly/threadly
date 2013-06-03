@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.collections.DynamicDelayQueue;
+import org.threadly.concurrent.collections.DynamicDelayedUpdater;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -1153,7 +1154,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecurringTaskWrapper extends TaskWrapper {
+  protected class RecurringTaskWrapper extends TaskWrapper 
+                                       implements DynamicDelayedUpdater {
     private final long recurringDelay;
     //private volatile long maxExpectedRuntime;
     private volatile boolean executing;
@@ -1180,6 +1182,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     
     private long getNextDelayInMillis() {
       return nextRunTime - ClockWrapper.getAccurateTime();
+    }
+
+    @Override
+    public void allowDelayUpdate() {
+      executing = false;
     }
     
     @Override
@@ -1215,7 +1222,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
-                highPriorityQueue.reposition(this, getNextDelayInMillis());
+                highPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
                 ClockWrapper.resumeForcingUpdate();
               }
@@ -1228,7 +1235,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
-                lowPriorityQueue.reposition(this, getNextDelayInMillis());
+                lowPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
                 ClockWrapper.resumeForcingUpdate();
               }
@@ -1238,8 +1245,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         default:
           throw new UnsupportedOperationException("Not implemented for priority: " + priority);
       }
-      
-      executing = false;
     }
 
     @Override
