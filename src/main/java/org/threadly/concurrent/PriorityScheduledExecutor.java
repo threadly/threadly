@@ -1174,8 +1174,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       if (executing) {
         return Long.MAX_VALUE;
       } else {
-        return TimeUnit.MILLISECONDS.convert(nextRunTime - ClockWrapper.getAccurateTime(), unit);
+        return TimeUnit.MILLISECONDS.convert(getNextDelayInMillis(), unit);
       }
+    }
+    
+    private long getNextDelayInMillis() {
+      return nextRunTime - ClockWrapper.getAccurateTime();
     }
     
     @Override
@@ -1202,7 +1206,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     
     private void reschedule() {
       nextRunTime = ClockWrapper.getAccurateTime() + recurringDelay;
-      executing = false;
       
       // now that nextRunTime has been set, resort the queue
       switch (priority) {
@@ -1212,7 +1215,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
-                highPriorityQueue.reposition(this);
+                highPriorityQueue.reposition(this, getNextDelayInMillis());
               } finally {
                 ClockWrapper.resumeForcingUpdate();
               }
@@ -1225,7 +1228,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
-                lowPriorityQueue.reposition(this);
+                lowPriorityQueue.reposition(this, getNextDelayInMillis());
               } finally {
                 ClockWrapper.resumeForcingUpdate();
               }
@@ -1235,6 +1238,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         default:
           throw new UnsupportedOperationException("Not implemented for priority: " + priority);
       }
+      
+      executing = false;
     }
 
     @Override
