@@ -190,11 +190,11 @@ public class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillFinished(runnableCount * (recurringDelay * (waitCount - 1)) + 500, waitCount);
+      tr.blockTillFinished((runnableCount * (recurringDelay * waitCount)) + 2000, waitCount);
       long executionDelay = tr.getDelayTillRun(waitCount);
       assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 500);
+      assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 2000);
     }
   }
   
