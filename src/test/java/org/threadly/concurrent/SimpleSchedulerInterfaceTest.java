@@ -292,6 +292,7 @@ public class SimpleSchedulerInterfaceTest {
   public static void recurringExecutionTest(PrioritySchedulerFactory factory) {
     int runnableCount = 10;
     int recurringDelay = 50;
+    int waitCount = 2;
     
     SimpleSchedulerInterface scheduler = factory.make(runnableCount);
     
@@ -309,15 +310,11 @@ public class SimpleSchedulerInterfaceTest {
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
       TestRunnable tr = it.next();
-      tr.blockTillFinished(runnableCount * recurringDelay + 500, 2);
-      long executionDelay = tr.getDelayTillRun(2);
-      assertTrue(executionDelay >= recurringDelay);
+      tr.blockTillFinished(runnableCount * (recurringDelay * (waitCount - 1)) + 500, waitCount);
+      long executionDelay = tr.getDelayTillRun(waitCount);
+      assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (recurringDelay + 500));
-      int expectedRunCount = (int)((System.currentTimeMillis() - tr.getCreationTime()) / recurringDelay);
-      System.out.println(tr.getRunCount() + " vs " + expectedRunCount + ", " + (System.currentTimeMillis() - tr.getCreationTime()));
-      assertTrue(tr.getRunCount() >= expectedRunCount - 5); // in case the system running was so slow it was not able to wake up threads
-      assertTrue(tr.getRunCount() <= expectedRunCount + 2);
+      assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 500);
     }
   }
   

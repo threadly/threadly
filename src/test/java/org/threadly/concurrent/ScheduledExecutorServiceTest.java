@@ -190,15 +190,11 @@ public class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillFinished(runnableCount * recurringDelay + 500, waitCount);
+      tr.blockTillFinished(runnableCount * (recurringDelay * (waitCount - 1)) + 500, waitCount);
       long executionDelay = tr.getDelayTillRun(waitCount);
       assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
-      
-      assertTrue(executionDelay <= ((recurringDelay * (waitCount - 1)) + 500));
-      int expectedRunCount = (int)((System.currentTimeMillis() - tr.getCreationTime()) / recurringDelay);
-      System.out.println(tr.getRunCount() + " vs " + expectedRunCount + ", " + (System.currentTimeMillis() - tr.getCreationTime()));
-      assertTrue(tr.getRunCount() >= expectedRunCount - 5); // more tolerance in case the run machine is very slow
-      assertTrue(tr.getRunCount() <= expectedRunCount + 2);
+      // should be very timely with a core pool size that matches runnable count
+      assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 500);
     }
   }
   
