@@ -673,6 +673,7 @@ public class PriorityScheduledExecutorTest {
     public SimpleSchedulerInterface make(int poolSize) {
       PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                        1000);
+      result.prestartAllCoreThreads();
       executors.add(result);
       
       return result;
@@ -700,6 +701,7 @@ public class PriorityScheduledExecutorTest {
       PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                        1000, originalPriority, 
                                                                        500);
+      result.prestartAllCoreThreads();
       executors.add(result);
       
       return result.makeWithDefaultPriority(returnPriority);

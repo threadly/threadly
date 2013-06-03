@@ -169,9 +169,9 @@ public class ScheduledExecutorServiceTest {
   }
   
   public static void scheduleWithFixedDelayTest(ScheduledExecutorService scheduler) {
-    int runnableCount = 10;
-    int recurringDelay = 50;
-    int waitCount = 2;
+    final int runnableCount = 10;
+    final int recurringDelay = 50;
+    final int waitCount = 2;
     
     // schedule a task first in case there are any initial startup actions which may be slow
     scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10, TimeUnit.MILLISECONDS);

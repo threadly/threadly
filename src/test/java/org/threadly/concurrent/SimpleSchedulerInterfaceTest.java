@@ -290,9 +290,9 @@ public class SimpleSchedulerInterfaceTest {
   }
   
   public static void recurringExecutionTest(PrioritySchedulerFactory factory) {
-    int runnableCount = 10;
-    int recurringDelay = 50;
-    int waitCount = 2;
+    final int runnableCount = 10;
+    final int recurringDelay = 50;
+    final int waitCount = 2;
     
     SimpleSchedulerInterface scheduler = factory.make(runnableCount);
     
