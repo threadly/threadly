@@ -193,6 +193,7 @@ public class ScheduledExecutorServiceTest {
       
       assertTrue(executionDelay <= ((recurringDelay * (waitCount - 1)) + 500));
       int expectedRunCount = (int)((System.currentTimeMillis() - tr.getCreationTime()) / recurringDelay);
+      System.out.println(tr.getRunCount() + " vs " + expectedRunCount + ", " + (System.currentTimeMillis() - tr.getCreationTime()));
       assertTrue(tr.getRunCount() >= expectedRunCount - 5); // more tolerance in case the run machine is very slow
       assertTrue(tr.getRunCount() <= expectedRunCount + 2);
     }
