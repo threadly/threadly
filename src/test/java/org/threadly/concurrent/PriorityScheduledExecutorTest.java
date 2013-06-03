@@ -367,7 +367,7 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void wrapperExecuteTest() {
     WrapperFactory wf = new WrapperFactory();
-    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2);
+    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
     try {
       SimpleSchedulerInterfaceTest.executeTest(wf);
       
@@ -388,7 +388,7 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void wrapperSubmitRunnableTest() {
     WrapperFactory wf = new WrapperFactory();
-    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2);
+    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
     try {
       SimpleSchedulerInterfaceTest.submitRunnableTest(wf);
       
@@ -409,7 +409,7 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void wrapperSubmitCallableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
-    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2);
+    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
     try {
       SimpleSchedulerInterfaceTest.submitCallableTest(wf);
       
@@ -670,9 +670,12 @@ public class PriorityScheduledExecutorTest {
     }
     
     @Override
-    public SimpleSchedulerInterface make(int poolSize) {
+    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                        1000);
+      if (prestartIfAvailable) {
+        result.prestartAllCoreThreads();
+      }
       executors.add(result);
       
       return result;
@@ -694,12 +697,15 @@ public class PriorityScheduledExecutorTest {
     }
     
     @Override
-    public SimpleSchedulerInterface make(int poolSize) {
+    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
       TaskPriority originalPriority = TaskPriority.Low;
       TaskPriority returnPriority = TaskPriority.High;
       PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                        1000, originalPriority, 
                                                                        500);
+      if (prestartIfAvailable) {
+        result.prestartAllCoreThreads();
+      }
       executors.add(result);
       
       return result.makeWithDefaultPriority(returnPriority);

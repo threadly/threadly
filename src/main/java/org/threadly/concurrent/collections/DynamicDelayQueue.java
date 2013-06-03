@@ -111,22 +111,33 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
 
   /**
-   * Called to reposition an item in the queue which's delay has updated
-   * since original insertion (or was originally inserted as addLast().
+   * Called to reposition an item in the queue which's delay wants to be updated
+   * since original insertion (or was originally inserted as addLast()).
+   * 
+   * It is expected that this function will be called to reposition before the items 
+   * delay time is updated in the .getDelay(TimeUnit) call.  Once the queue is ready 
+   * for the item to update, it will call allowDelayUpdate on the provided updater.  This 
+   * call to allowDelayUpdate will happen before the reposition call returns.
    * 
    * @param e item currently in the queue
+   * @param newDelayInMillis delay time that e will be updated to after reposition
+   * @param updater class to call into when queue is ready for item to update delay
    */
-  public void reposition(T e) {
+  public void reposition(T e, long newDelayInMillis, 
+                         DynamicDelayedUpdater updater) {
     if (e == null) {
       return;
     }
 
     synchronized (queueLock) {
-      int insertionIndex = ListUtils.getInsertionEndIndex(queue, e, randomAccessQueue);
+      int insertionIndex = ListUtils.getInsertionEndIndex(queue, newDelayInMillis, 
+                                                          randomAccessQueue);
       
       /* provide the option to search backwards since the item 
        * will most likely be towards the back of the queue */
       queue.reposition(e, insertionIndex, true);
+      
+      updater.allowDelayUpdate();
       
       queueLock.signalAll();
     }

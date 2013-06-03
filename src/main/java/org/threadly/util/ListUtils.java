@@ -42,12 +42,28 @@ public class ListUtils {
    */
   public static int getInsertionEndIndex(List<? extends Delayed> list, 
                                          Delayed key, boolean randomAccessList) {
-    int searchResult = binarySearch(list, key, 
+    return getInsertionEndIndex(list, key.getDelay(TimeUnit.MILLISECONDS), randomAccessList);
+  }
+  
+  /**
+   * This function uses the binary search and adds a small amount of logic
+   * such that it determines the placement index for a given item.  It is 
+   * designed to always place the item after any existing items that match the 
+   * key's delay.
+   * 
+   * @param list List to search entries for placement
+   * @param insertionValueInMillis delay time in milliseconds to search for insertion point
+   * @param randomAccessList boolean for optimization with binary search
+   * @return the index to insert the key into the list
+   */
+  public static int getInsertionEndIndex(List<? extends Delayed> list, 
+                                         long insertionValueInMillis, 
+                                         boolean randomAccessList) {
+    int searchResult = binarySearch(list, insertionValueInMillis, 
                                     randomAccessList);
     if (searchResult >= 0) {
-      long keyDelay = key.getDelay(TimeUnit.MILLISECONDS);
       Iterator<? extends Delayed> it = list.listIterator(searchResult);
-      while (it.hasNext() && it.next().getDelay(TimeUnit.MILLISECONDS) == keyDelay) {
+      while (it.hasNext() && it.next().getDelay(TimeUnit.MILLISECONDS) == insertionValueInMillis) {
         searchResult++;
       }
       return searchResult;
@@ -91,6 +107,26 @@ public class ListUtils {
    */
   public static int binarySearch(List<? extends Delayed> list, 
                                  Delayed key, boolean randomAccessList) {
+    return binarySearch(list, key.getDelay(TimeUnit.MILLISECONDS), randomAccessList);
+  }
+  
+  /**
+   * A faster binary search algorithm for sorting a list.
+   * This algorithm works by actually knowing the values 
+   * and making smart decisions about how far to jump in 
+   * the list based on those values.  Which is why this
+   * can not take in a comparable interface like Collections
+   * does.  This was adapted from code posted from this 
+   * blog post: http://ochafik.com/blog/?p=106
+   * 
+   * @param list to be searched through
+   * @param insertionValueInMillis delay time in milliseconds to search for insertion point
+   * @param randomAccessList true to optimize for list that have cheap random access
+   * @return index where found, or -(insertion point) - 1 if not found
+   */
+  public static int binarySearch(List<? extends Delayed> list, 
+                                 long insertionValueInMillis, 
+                                 boolean randomAccessList) {
     if (list.isEmpty()) {
       return -1;
     }
@@ -98,7 +134,6 @@ public class ListUtils {
     final int absoluteMin = 0;
     final int absoluteMax = list.size() - 1;
     
-    long keyValue = key.getDelay(TimeUnit.MILLISECONDS);
     int min = absoluteMin;
     int max = absoluteMax;
     long minVal = list.get(absoluteMin).getDelay(TimeUnit.MILLISECONDS);
@@ -106,10 +141,10 @@ public class ListUtils {
     
     int nPreviousSteps = 1;
     while (true) {
-      if (keyValue <= minVal) {
-        return keyValue == minVal ? min : -1 - min;
-      } else if (keyValue >= maxVal) {
-        return keyValue == maxVal ? max : -2 - max;
+      if (insertionValueInMillis <= minVal) {
+        return insertionValueInMillis == minVal ? min : -1 - min;
+      } else if (insertionValueInMillis >= maxVal) {
+        return insertionValueInMillis == maxVal ? max : -2 - max;
       }
       
       int pivot;
@@ -125,13 +160,13 @@ public class ListUtils {
       } else {
         // We cannot do the following operations in int precision, because there might be overflows.
         // using a float is better performing than using a long (even on 64bit)
-        pivot = min + (int)((keyValue - (float)minVal) / (maxVal - (float)minVal) * (max - min));
+        pivot = min + (int)((insertionValueInMillis - (float)minVal) / (maxVal - (float)minVal) * (max - min));
         nPreviousSteps++;
       }
       
       long pivotVal = list.get(pivot).getDelay(TimeUnit.MILLISECONDS);
       
-      if (keyValue > pivotVal) {
+      if (insertionValueInMillis > pivotVal) {
         min = pivot + 1;
         if (min > absoluteMax) {
           return absoluteMax + 1;
@@ -141,7 +176,7 @@ public class ListUtils {
           max--;
           maxVal = list.get(max).getDelay(TimeUnit.MILLISECONDS);
         }
-      } else if (keyValue < pivotVal) {
+      } else if (insertionValueInMillis < pivotVal) {
         max = pivot - 1;
         if (max < absoluteMin) {
           return absoluteMin;

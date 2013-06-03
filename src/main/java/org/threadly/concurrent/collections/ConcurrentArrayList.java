@@ -872,6 +872,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
+      if (origCurrentIndex == size - 1 && origNewIndex == size) {
+        // no-op, moving end item to end
+        return this;
+      } else if (origCurrentIndex == origNewIndex) {
+        // no-op, moving to same position
+        return this;
+      }
+      
       int currentIndex = origCurrentIndex + dataStartIndex;
       int newIndex = origNewIndex + dataStartIndex;
       

@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.collections.DynamicDelayQueue;
+import org.threadly.concurrent.collections.DynamicDelayedUpdater;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -1153,7 +1154,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecurringTaskWrapper extends TaskWrapper {
+  protected class RecurringTaskWrapper extends TaskWrapper 
+                                       implements DynamicDelayedUpdater {
     private final long recurringDelay;
     //private volatile long maxExpectedRuntime;
     private volatile boolean executing;
@@ -1174,8 +1176,17 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       if (executing) {
         return Long.MAX_VALUE;
       } else {
-        return TimeUnit.MILLISECONDS.convert(nextRunTime - ClockWrapper.getAccurateTime(), unit);
+        return TimeUnit.MILLISECONDS.convert(getNextDelayInMillis(), unit);
       }
+    }
+    
+    private long getNextDelayInMillis() {
+      return nextRunTime - ClockWrapper.getAccurateTime();
+    }
+
+    @Override
+    public void allowDelayUpdate() {
+      executing = false;
     }
     
     @Override
@@ -1202,7 +1213,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     
     private void reschedule() {
       nextRunTime = ClockWrapper.getAccurateTime() + recurringDelay;
-      executing = false;
       
       // now that nextRunTime has been set, resort the queue
       switch (priority) {
@@ -1212,7 +1222,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
-                highPriorityQueue.reposition(this);
+                highPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
                 ClockWrapper.resumeForcingUpdate();
               }
@@ -1225,7 +1235,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
-                lowPriorityQueue.reposition(this);
+                lowPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
                 ClockWrapper.resumeForcingUpdate();
               }

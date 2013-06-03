@@ -169,9 +169,12 @@ public class ScheduledExecutorServiceTest {
   }
   
   public static void scheduleWithFixedDelayTest(ScheduledExecutorService scheduler) {
-    int runnableCount = 10;
-    int recurringDelay = 50;
-    int waitCount = 2;
+    final int runnableCount = 10;
+    final int recurringDelay = 50;
+    final int waitCount = 2;
+    
+    // schedule a task first in case there are any initial startup actions which may be slow
+    scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10, TimeUnit.MILLISECONDS);
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
@@ -187,14 +190,11 @@ public class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillFinished(runnableCount * recurringDelay + 500, waitCount);
+      tr.blockTillFinished((runnableCount * (recurringDelay * waitCount)) + 2000, waitCount);
       long executionDelay = tr.getDelayTillRun(waitCount);
       assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
-      
-      assertTrue(executionDelay <= ((recurringDelay * (waitCount - 1)) + 500));
-      int expectedRunCount = (int)((System.currentTimeMillis() - tr.getCreationTime()) / recurringDelay);
-      assertTrue(tr.getRunCount() >= expectedRunCount - 5); // more tolerance in case the run machine is very slow
-      assertTrue(tr.getRunCount() <= expectedRunCount + 2);
+      // should be very timely with a core pool size that matches runnable count
+      assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 2000);
     }
   }
   

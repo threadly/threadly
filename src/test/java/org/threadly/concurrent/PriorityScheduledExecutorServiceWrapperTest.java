@@ -159,6 +159,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   public void scheduleWithFixedDelayTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
                                                                        KEEP_ALIVE_TIME);
+    executor.prestartAllCoreThreads();
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleWithFixedDelayTest(wrapper);
