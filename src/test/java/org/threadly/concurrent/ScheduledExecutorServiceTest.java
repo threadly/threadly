@@ -194,7 +194,7 @@ public class ScheduledExecutorServiceTest {
       
       assertTrue(executionDelay <= ((recurringDelay * (waitCount - 1)) + 500));
       int expectedRunCount = (int)((System.currentTimeMillis() - startTime) / recurringDelay);
-      assertTrue(tr.getRunCount() >= expectedRunCount - 2);
+      assertTrue(tr.getRunCount() >= expectedRunCount - 5); // more tolerance in case the run machine is very slow
       assertTrue(tr.getRunCount() <= expectedRunCount + 2);
     }
   }

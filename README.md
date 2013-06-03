@@ -3,7 +3,7 @@ Threadly
 
 A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of development and testing needs. This is designed to be a complement to java.util.concurrent and uses java.util.concurrent to help assist in it's implementations where it makes sense. This library is particularly useful for getting legacy concurrent code and getting it under test.
 
--- Notable Unit Test Tools --
+-- Unit Test Tools --
 
 *    TestablePriorityScheduler - Probably the largest gem in the tool kit. This scheduler is designed to take blocking and concurrent code and make it more controllable. It only allows one thread to execute at any given time. In addition threads are progressed forward by .tick() calls to the scheduler.
 
@@ -13,7 +13,7 @@ It relies on any code that performs blocking uses an injectable LockFactory, the
 
 *    TestRunnable - a runnable structure that has common operations already implemented. It gives two functions handleRunStart and handleRunFinish to allow people to optionally override to provide any test specific operation which is necessary. You can see many examples in our own unit test code of how we are using this.
 
--- Notable Concurrency Tools --
+-- General Concurrency Tools --
 
 *    PriorityScheduledExecutor - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
 

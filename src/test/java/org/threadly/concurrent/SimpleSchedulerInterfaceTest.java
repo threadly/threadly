@@ -170,7 +170,7 @@ public class SimpleSchedulerInterfaceTest {
       long executionDelay = tr.getDelayTillFirstRun();
       assertTrue(executionDelay >= scheduleDelay);
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (scheduleDelay + 200));  
+      assertTrue(executionDelay <= (scheduleDelay + 500));  
       assertEquals(tr.getRunCount(), 1);
     }
   }
@@ -198,7 +198,7 @@ public class SimpleSchedulerInterfaceTest {
       long executionDelay = tr.getDelayTillFirstRun();
       assertTrue(executionDelay >= scheduleDelay);
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (scheduleDelay + 200));  
+      assertTrue(executionDelay <= (scheduleDelay + 500));  
       assertEquals(tr.getRunCount(), 1);
     }
     
@@ -237,7 +237,7 @@ public class SimpleSchedulerInterfaceTest {
       long executionDelay = tc.getDelayTillFirstRun();
       assertTrue(executionDelay >= scheduleDelay);
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (scheduleDelay + 200));
+      assertTrue(executionDelay <= (scheduleDelay + 500));
     }
   }
   
@@ -313,7 +313,7 @@ public class SimpleSchedulerInterfaceTest {
       // should be very timely with a core pool size that matches runnable count
       assertTrue(executionDelay <= (recurringDelay + 500));
       int expectedRunCount = (int)((System.currentTimeMillis() - startTime) / recurringDelay);
-      assertTrue(tr.getRunCount() >= expectedRunCount - 2);
+      assertTrue(tr.getRunCount() >= expectedRunCount - 5); // in case the system running was so slow it was not able to wake up threads
       assertTrue(tr.getRunCount() <= expectedRunCount + 2);
     }
   }

@@ -25,7 +25,7 @@ public class NativeLockTest {
     }
     
     assertTrue(resume - start >= waitTimeInMs);
-    assertTrue(resume - start < waitTimeInMs + 200);
+    assertTrue(resume - start < waitTimeInMs + 500);
   }
   
   @Test
@@ -41,7 +41,7 @@ public class NativeLockTest {
     }
     
     assertTrue(resume - start >= waitTimeInMs);
-    assertTrue(resume - start < waitTimeInMs + 200);
+    assertTrue(resume - start < waitTimeInMs + 500);
   }
   
   @Test
@@ -57,7 +57,7 @@ public class NativeLockTest {
     long resume = System.currentTimeMillis();
     
     assertTrue(resume - start >= sleepTimeInMs);
-    assertTrue(resume - start < sleepTimeInMs + 200);
+    assertTrue(resume - start < sleepTimeInMs + 500);
   }
   
   @Test
@@ -69,6 +69,6 @@ public class NativeLockTest {
     long resume = System.currentTimeMillis();
     
     assertTrue(resume - start >= sleepTimeInMs);
-    assertTrue(resume - start < sleepTimeInMs + 200);
+    assertTrue(resume - start < sleepTimeInMs + 500);
   }
 }
