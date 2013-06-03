@@ -1,7 +1,5 @@
 package org.threadly.test.concurrent;
 
-import java.util.List;
-
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 
@@ -16,7 +14,7 @@ public class TestRunnable extends VirtualRunnable {
   private static final int RUN_CONDITION_POLL_INTERVAL = 20;
   
   private final long creationTime;
-  private volatile List<Long> runTime;
+  private final ConcurrentArrayList<Long> runTime;
   private volatile int runCount;
 
   /**
@@ -145,7 +143,7 @@ public class TestRunnable extends VirtualRunnable {
   
   @Override
   public final void run() {
-    runTime.add(System.currentTimeMillis());
+    runTime.addLast(System.currentTimeMillis());
     synchronized (this) {
       try {
         handleRunStart();
