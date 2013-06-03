@@ -295,7 +295,6 @@ public class SimpleSchedulerInterfaceTest {
     
     SimpleSchedulerInterface scheduler = factory.make(runnableCount);
 
-    long startTime = System.currentTimeMillis();
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
       TestRunnable tr = new TestRunnable();
@@ -312,7 +311,7 @@ public class SimpleSchedulerInterfaceTest {
       assertTrue(executionDelay >= recurringDelay);
       // should be very timely with a core pool size that matches runnable count
       assertTrue(executionDelay <= (recurringDelay + 500));
-      int expectedRunCount = (int)((System.currentTimeMillis() - startTime) / recurringDelay);
+      int expectedRunCount = (int)((System.currentTimeMillis() - tr.getCreationTime()) / recurringDelay);
       assertTrue(tr.getRunCount() >= expectedRunCount - 5); // in case the system running was so slow it was not able to wake up threads
       assertTrue(tr.getRunCount() <= expectedRunCount + 2);
     }

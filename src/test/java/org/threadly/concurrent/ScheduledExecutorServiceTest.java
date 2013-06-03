@@ -173,7 +173,6 @@ public class ScheduledExecutorServiceTest {
     int recurringDelay = 50;
     int waitCount = 2;
     
-    long startTime = System.currentTimeMillis();
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
       TestRunnable tr = new TestRunnable();
@@ -193,7 +192,7 @@ public class ScheduledExecutorServiceTest {
       assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
       
       assertTrue(executionDelay <= ((recurringDelay * (waitCount - 1)) + 500));
-      int expectedRunCount = (int)((System.currentTimeMillis() - startTime) / recurringDelay);
+      int expectedRunCount = (int)((System.currentTimeMillis() - tr.getCreationTime()) / recurringDelay);
       assertTrue(tr.getRunCount() >= expectedRunCount - 5); // more tolerance in case the run machine is very slow
       assertTrue(tr.getRunCount() <= expectedRunCount + 2);
     }
