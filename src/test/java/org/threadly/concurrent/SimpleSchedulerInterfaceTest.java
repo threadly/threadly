@@ -294,6 +294,9 @@ public class SimpleSchedulerInterfaceTest {
     int recurringDelay = 50;
     
     SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    
+    // schedule a task first in case there are any initial startup actions which may be slow
+    scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10);
 
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
