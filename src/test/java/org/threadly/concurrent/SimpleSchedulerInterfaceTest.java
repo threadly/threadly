@@ -18,7 +18,7 @@ public class SimpleSchedulerInterfaceTest {
   public static void executeTest(PrioritySchedulerFactory factory) {
     int runnableCount = 10;
     
-    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
@@ -55,7 +55,7 @@ public class SimpleSchedulerInterfaceTest {
   public static void submitRunnableTest(PrioritySchedulerFactory factory) {
     int runnableCount = 10;
     
-    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -100,7 +100,7 @@ public class SimpleSchedulerInterfaceTest {
   public static void submitCallableTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
     int runnableCount = 10;
     
-    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
     
     List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
     List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
@@ -133,19 +133,19 @@ public class SimpleSchedulerInterfaceTest {
   }
   
   public static void executeFail(PrioritySchedulerFactory factory) {
-    SimpleSchedulerInterface scheduler = factory.make(1);
+    SimpleSchedulerInterface scheduler = factory.make(1, false);
     
     scheduler.execute(null);
   }
   
   public static void submitRunnableFail(PrioritySchedulerFactory factory) {
-    SimpleSchedulerInterface scheduler = factory.make(1);
+    SimpleSchedulerInterface scheduler = factory.make(1, false);
     
     scheduler.submit((Runnable)null);
   }
   
   public static void submitCallableFail(PrioritySchedulerFactory factory) {
-    SimpleSchedulerInterface scheduler = factory.make(1);
+    SimpleSchedulerInterface scheduler = factory.make(1, false);
     
     scheduler.submit((Callable<Object>)null);
   }
@@ -154,7 +154,7 @@ public class SimpleSchedulerInterfaceTest {
     int runnableCount = 10;
     int scheduleDelay = 50;
     
-    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
@@ -179,7 +179,7 @@ public class SimpleSchedulerInterfaceTest {
     int runnableCount = 10;
     int scheduleDelay = 50;
     
-    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -212,7 +212,7 @@ public class SimpleSchedulerInterfaceTest {
     int runnableCount = 10;
     int scheduleDelay = 50;
     
-    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
     
     List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
     List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
@@ -242,7 +242,7 @@ public class SimpleSchedulerInterfaceTest {
   }
   
   public static void scheduleExecutionFail(PrioritySchedulerFactory factory) {
-    SimpleSchedulerInterface scheduler = factory.make(1);
+    SimpleSchedulerInterface scheduler = factory.make(1, false);
     try {
       scheduler.schedule(null, 1000);
       fail("Exception should have been thrown");
@@ -258,7 +258,7 @@ public class SimpleSchedulerInterfaceTest {
   }
   
   public static void submitScheduledRunnableFail(PrioritySchedulerFactory factory) {
-    SimpleSchedulerInterface scheduler = factory.make(1);
+    SimpleSchedulerInterface scheduler = factory.make(1, false);
     try {
       scheduler.submitScheduled((Runnable)null, 1000);
       fail("Exception should have been thrown");
@@ -274,7 +274,7 @@ public class SimpleSchedulerInterfaceTest {
   }
   
   public static void submitScheduledCallableFail(PrioritySchedulerFactory factory) {
-    SimpleSchedulerInterface scheduler = factory.make(1);
+    SimpleSchedulerInterface scheduler = factory.make(1, false);
     try {
       scheduler.submitScheduled((Callable<Object>)null, 1000);
       fail("Exception should have been thrown");
@@ -294,7 +294,7 @@ public class SimpleSchedulerInterfaceTest {
     final int recurringDelay = 50;
     final int waitCount = 2;
     
-    SimpleSchedulerInterface scheduler = factory.make(runnableCount);
+    SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
     
     // schedule a task first in case there are any initial startup actions which may be slow
     scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10);
@@ -319,7 +319,7 @@ public class SimpleSchedulerInterfaceTest {
   }
   
   public static void recurringExecutionFail(PrioritySchedulerFactory factory) {
-    SimpleSchedulerInterface scheduler = factory.make(1);
+    SimpleSchedulerInterface scheduler = factory.make(1, false);
     try {
       scheduler.scheduleWithFixedDelay(null, 1000, 1000);
       fail("Exception should have been thrown");
@@ -341,7 +341,7 @@ public class SimpleSchedulerInterfaceTest {
   }
   
   public interface PrioritySchedulerFactory {
-    public SimpleSchedulerInterface make(int poolSize);
+    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
   }
   
   protected static class TestCallable extends TestCondition 

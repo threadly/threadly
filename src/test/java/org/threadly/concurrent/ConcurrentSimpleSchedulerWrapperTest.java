@@ -173,9 +173,11 @@ public class ConcurrentSimpleSchedulerWrapperTest {
     }
     
     @Override
-    public SimpleSchedulerInterface make(int poolSize) {
+    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
       ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(poolSize);
-      executor.prestartAllCoreThreads();
+      if (prestartIfAvailable) {
+        executor.prestartAllCoreThreads();
+      }
       executors.add(executor);
       return new ConcurrentSimpleSchedulerWrapper(executor);
     }
