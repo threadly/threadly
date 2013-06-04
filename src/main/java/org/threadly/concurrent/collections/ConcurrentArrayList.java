@@ -15,7 +15,7 @@ import org.threadly.concurrent.lock.VirtualLock;
 
 /**
  * A thread safe list implementation with an array back end.  Make sure
- * to read the java docs carefully, as many functions behave subtly different
+ * to read the javadocs carefully, as many functions behave subtly different
  * from the java.util.List definition.
  * 
  * The design of this implementation is NOT to completely avoid synchronization.  
@@ -710,20 +710,32 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   /**
    * This returns a sub list from the current list.  The initial call
    * is very cheap because it uses the current data backing to produce 
-   * (no copying necessary).  But any modifications to this list will 
-   * be treated as a completely new list, and wont ever reflect on the 
-   * source list.
+   * (no copying necessary).
+   * 
+   * But any modifications to this list will be treated as a completely 
+   * new list, and wont ever reflect on the source list.
    */
   @Override
   public List<T> subList(int fromIndex, int toIndex) {
     DataSet<T> workingData = currentData;
+    
+    if (fromIndex < 0) {
+      throw new IndexOutOfBoundsException("from index can not be negative");
+    } else if (fromIndex > workingData.size) {
+      throw new IndexOutOfBoundsException("from index must be <= size: " + workingData.size);
+    } else if (toIndex > workingData.size) {
+      throw new IndexOutOfBoundsException("to index must be <= size: " + workingData.size);
+    } else if (toIndex <= fromIndex) {
+      throw new IndexOutOfBoundsException("fromIndex must be < toIndex");
+    }
+    
     DataSet<T> newSet = new DataSet<T>(workingData.dataArray, 
                                        workingData.dataStartIndex + fromIndex, 
                                        workingData.dataEndIndex - 
                                          (workingData.dataEndIndex - toIndex), 
                                        currentData.frontPadding, 
                                        currentData.rearPadding);
-    // TODO - do we want to return an unmodifiable list?
+    
     return new ConcurrentArrayList<T>(newSet, 
                                       modificationLock);
   }
