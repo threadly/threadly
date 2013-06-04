@@ -670,7 +670,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       
       currentData = currentData.reposition(originalIndex, newIndex);
     }
-    
   }
 
   @Override
@@ -745,6 +744,37 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public String toString() {
     return currentData.toString();
+  }
+  
+  @SuppressWarnings("rawtypes")
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) {
+      return true;
+    } else if (o instanceof ConcurrentArrayList) {
+      ConcurrentArrayList cal = (ConcurrentArrayList)o;
+      return currentData.equalsEquivelent(cal.currentData);
+    } else if (o instanceof List) {
+      List list = (List)o;
+      Iterator thisIt = this.iterator();
+      Iterator listIt = list.iterator();
+      while (thisIt.hasNext() && listIt.hasNext()) {
+        if (! thisIt.next().equals(listIt.next())) {
+          return false;
+        }
+      }
+      if (thisIt.hasNext() || listIt.hasNext()) {
+        return false;
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+  
+  @Override
+  public int hashCode() {
+    return currentData.hashCode();
   }
   
   /**
@@ -1287,7 +1317,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     
     @Override
     public int hashCode() {
-      return toString().hashCode();
+      int hashCode = 1;
+      for (int i = dataStartIndex; i < dataEndIndex; i++) {
+        Object obj = dataArray[i];
+        hashCode = 31*hashCode + (obj==null ? 0 : obj.hashCode());
+      }
+      
+      return hashCode;
     }
     
     @Override

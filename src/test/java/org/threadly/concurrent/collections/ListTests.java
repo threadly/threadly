@@ -408,6 +408,28 @@ public class ListTests {
     }
   }
   
+  public static void equalsTest(List<String> testList) {
+    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      comparisionList.add(str);
+      testList.add(str);
+      assertTrue(testList.equals(comparisionList));
+    }
+    
+    String foo = "foo";
+    comparisionList.add(foo);
+    assertFalse(testList.equals(comparisionList));
+    
+    testList.add(foo);
+    assertTrue(testList.equals(comparisionList));
+    
+    testList.add(foo);
+    assertFalse(testList.equals(comparisionList));
+    
+    assertEquals(testList.subList(0, testList.size()).hashCode(), testList.hashCode());
+  }
+  
   public static void subListTest(List<String> testList) {
     populateIntStrings(testList, TEST_QTY);
     
