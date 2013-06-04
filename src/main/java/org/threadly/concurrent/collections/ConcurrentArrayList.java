@@ -1097,14 +1097,35 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
           return new DataSet<T>(newData, frontPadding, rearPadding);
         }
       } else if (origIndex == size) {
-        // TODO - optimize to avoid array copy if possible
         // add to end
-        Object[] newData = getArrayCopy(size + toAdd.length);
+        boolean currentSpaceAvailable = false;
+        if (dataEndIndex + toAdd.length <= dataArray.length) {
+          currentSpaceAvailable = true;
+          for (int i = dataEndIndex; i < dataEndIndex + toAdd.length; i++) {
+            if (dataArray[i] != null) {
+              currentSpaceAvailable = false;
+              break;
+            }
+          }
+        }
         
-        System.arraycopy(toAdd, 0, 
-                         newData, size + frontPadding, toAdd.length);
-        
-        return new DataSet<T>(newData, frontPadding, rearPadding);
+        if (currentSpaceAvailable) {
+          System.arraycopy(toAdd, 0, 
+                           dataArray, dataEndIndex, 
+                           toAdd.length);
+
+          return new DataSet<T>(dataArray, 
+                                dataStartIndex, 
+                                dataEndIndex + toAdd.length, 
+                                frontPadding, rearPadding);
+        } else {
+          Object[] newData = getArrayCopy(size + toAdd.length);
+          
+          System.arraycopy(toAdd, 0, 
+                           newData, size + frontPadding, toAdd.length);
+          
+          return new DataSet<T>(newData, frontPadding, rearPadding);
+        }
       } else {
         // add in middle
         Object[] newData = new Object[size + toAdd.length + frontPadding + rearPadding];
