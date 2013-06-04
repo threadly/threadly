@@ -40,6 +40,8 @@ import org.threadly.concurrent.lock.VirtualLock;
  * @param <T> type of object to retain
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
+  private static final int HASH_CODE_PRIME_NUMBER = 31;
+  
   protected static <E> DataSet<E> makeEmptyDataSet(int frontPadding, int rearPadding) {
     if (frontPadding < 0) {
       throw new IllegalArgumentException("frontPadding must be >= 0");
@@ -1320,7 +1322,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       int hashCode = 1;
       for (int i = dataStartIndex; i < dataEndIndex; i++) {
         Object obj = dataArray[i];
-        hashCode = 31*hashCode + (obj==null ? 0 : obj.hashCode());
+        hashCode = HASH_CODE_PRIME_NUMBER * hashCode + (obj == null ? 0 : obj.hashCode());
       }
       
       return hashCode;
