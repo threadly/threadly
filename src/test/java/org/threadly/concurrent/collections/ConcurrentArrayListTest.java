@@ -465,8 +465,18 @@ public class ConcurrentArrayListTest {
    * since this just defaults to that implementation
    */
   @Test
-  public void testIterator() {
-    ListTests.testIterator(testList);
+  public void iteratorTest() {
+    ListTests.iteratorTest(testList);
+  }
+  
+  @Test
+  public void listIteratorTest() {
+    ListTests.listIteratorTest(testList);
+  }
+  
+  @Test
+  public void listIteratorFail() {
+    ListTests.listIteratorFail(testList);
   }
   
   @Test

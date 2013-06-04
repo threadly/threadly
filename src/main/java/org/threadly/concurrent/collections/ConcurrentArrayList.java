@@ -680,7 +680,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public ListIterator<T> listIterator() {
-    return listIterator(-1);
+    return listIterator(0);
   }
 
   @Override
@@ -756,49 +756,53 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    */
   protected class DataSetListIterator implements ListIterator<T> {
     private DataSet<T> dataSet;
-    private int currentIndex;
+    private int nextIndex;
 
     public DataSetListIterator(DataSet<T> dataSet, int index) {
       this.dataSet = dataSet;
-      currentIndex = index;
+      nextIndex = index;
     }
 
     @Override
     public boolean hasNext() {
-      return currentIndex + 1 < dataSet.size;
+      return nextIndex < dataSet.size;
     }
 
     @Override
     public T next() {
-      currentIndex++;
-
-      if (currentIndex < 0 || currentIndex >= dataSet.size) {
-        throw new NoSuchElementException();
-      }
+      verifyPosition();
       
-      return dataSet.get(currentIndex);
+      return dataSet.get(nextIndex++);
     }
 
     @Override
     public boolean hasPrevious() {
-      return currentIndex - 1 >= 0;
+      return nextIndex - 1 >= 0;
     }
 
     @Override
     public T previous() {
-      currentIndex--;
+      nextIndex--;
       
-      return dataSet.get(currentIndex);
+      verifyPosition();
+      
+      return dataSet.get(nextIndex);
+    }
+    
+    private void verifyPosition() {
+      if (nextIndex < 0 || nextIndex >= dataSet.size) {
+        throw new NoSuchElementException();
+      }
     }
 
     @Override
     public int nextIndex() {
-      return currentIndex + 1;
+      return nextIndex;
     }
 
     @Override
     public int previousIndex() {
-      return currentIndex - 1;
+      return nextIndex - 1;
     }
 
     @Override
@@ -806,12 +810,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       synchronized (modificationLock) {
         // you can not cause concurrent modification exceptions with this implementation
         if (currentData == dataSet) {
-          ConcurrentArrayList.this.remove(currentIndex);
+          ConcurrentArrayList.this.remove(--nextIndex);
           
           dataSet = currentData;
-          currentIndex--;
         } else {
-          int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(currentIndex));
+          int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(nextIndex - 1));
           if (globalIndex >= 0) {
             ConcurrentArrayList.this.remove(globalIndex);
           }
@@ -823,10 +826,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     public void set(T e) {
       synchronized (modificationLock) {
         if (currentData == dataSet) {
-          ConcurrentArrayList.this.set(currentIndex, e);
+          ConcurrentArrayList.this.set(nextIndex - 1, e);
+          
           dataSet = currentData;
         } else {
-          int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(currentIndex));
+          int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(nextIndex - 1));
           if (globalIndex >= 0) {
             ConcurrentArrayList.this.set(globalIndex, e);
           }
@@ -837,9 +841,17 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     @Override
     public void add(T e) {
       synchronized (modificationLock) {
-        int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(currentIndex));
-        if (globalIndex >= 0) {
-          ConcurrentArrayList.this.add(globalIndex + 1, e);
+        if (currentData == dataSet) {
+          ConcurrentArrayList.this.add(nextIndex, e);
+          
+          nextIndex++;
+          
+          dataSet = currentData;
+        } else {
+          int globalIndex = ConcurrentArrayList.this.indexOf(dataSet.get(nextIndex - 1));
+          if (globalIndex >= 0) {
+            ConcurrentArrayList.this.add(globalIndex + 1, e);
+          }
         }
       }
     }
