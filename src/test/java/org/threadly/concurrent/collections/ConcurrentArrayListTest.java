@@ -480,6 +480,11 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void equalsTest() {
+    ListTests.equalsTest(testList);
+  }
+  
+  @Test
   public void testListIteratorBackwards() {
     List<String> comparisionList = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
