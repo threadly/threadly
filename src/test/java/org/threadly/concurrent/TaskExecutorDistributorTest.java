@@ -94,7 +94,7 @@ public class TaskExecutorDistributorTest {
       public boolean get() {
         return ready;
       }
-    }.blockTillTrue();
+    }.blockTillTrue(15000);
 
     synchronized (testLock) {
       Iterator<TDRunnable> it = runs.iterator();
