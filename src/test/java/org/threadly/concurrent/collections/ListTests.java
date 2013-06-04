@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 @SuppressWarnings("javadoc")
 public class ListTests {
@@ -284,7 +286,7 @@ public class ListTests {
     assertTrue(toRetainList.containsAll(testList));
   }
   
-  public static void testIterator(List<String> testList) {
+  public static void iteratorTest(List<String> testList) {
     List<String> comparisionList = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
@@ -297,6 +299,112 @@ public class ListTests {
     while (clIt.hasNext()) {
       assertTrue(testIt.hasNext());
       assertEquals(clIt.next(), testIt.next());
+    }
+    
+    boolean flip = false;
+    clIt = comparisionList.iterator();
+    testIt = testList.iterator();
+    while (clIt.hasNext()) {
+      clIt.next();
+      testIt.next();
+      if (flip) {
+        clIt.remove();
+        testIt.remove();
+        
+        flip = false;
+      } else {
+        flip = true;
+      }
+    }
+    
+    assertTrue(comparisionList.equals(testList));
+  }
+  
+  public static void listIteratorTest(List<String> testList) {
+    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      comparisionList.add(str);
+      testList.add(str);
+    }
+    
+    // forward
+    ListIterator<String> clIt = comparisionList.listIterator(0);
+    ListIterator<String> testIt = testList.listIterator(0);
+    assertFalse(testIt.hasPrevious());
+    while (clIt.hasNext()) {
+      assertTrue(testIt.hasNext());
+      assertEquals(clIt.next(), testIt.next());
+      assertEquals(clIt.nextIndex(), testIt.nextIndex());
+      //assertEquals(clIt.previousIndex(), testIt.previousIndex());
+    }
+    
+    // backwards
+    clIt = comparisionList.listIterator(comparisionList.size());
+    testIt = testList.listIterator(testList.size());
+    assertFalse(testIt.hasNext());
+    while (clIt.hasPrevious()) {
+      assertTrue(testIt.hasPrevious());
+      assertEquals(clIt.previous(), testIt.previous());
+      assertEquals(clIt.nextIndex(), testIt.nextIndex());
+      assertEquals(clIt.previousIndex(), testIt.previousIndex());
+    }
+    
+    // modify
+    int iteration = Integer.MAX_VALUE;
+    boolean flip = false;
+    clIt = comparisionList.listIterator();
+    testIt = testList.listIterator();
+    while (clIt.hasNext()) {
+      iteration--;
+      clIt.next();
+      testIt.next();
+      if (flip) {
+        clIt.remove();
+        testIt.remove();
+        
+        flip = false;
+      } else {
+        String value = Integer.toHexString(iteration);
+        clIt.add(value);
+        testIt.add(value);
+        flip = true;
+      }
+    }
+    assertTrue(comparisionList.equals(testList));
+  }
+  
+  public static void listIteratorFail(List<String> testList) {
+    ListIterator<String> it = testList.listIterator();
+    try {
+      it.next();
+      fail("Exception should have been thrown");
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    it = testList.listIterator();
+    try {
+      it.previous();
+      fail("Exception should have been thrown");
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    
+    populateIntStrings(testList, TEST_QTY);
+    
+    it = testList.listIterator();
+    try {
+      it.previous();
+      fail("Exception should have been thrown");
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    it = testList.listIterator(testList.size());
+    try {
+      it.next();
+      fail("Exception should have been thrown");
+    } catch (NoSuchElementException e) {
+      // expected
     }
   }
   
