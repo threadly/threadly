@@ -504,6 +504,16 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void subListTest() {
+    ListTests.subListTest(testList);
+  }
+  
+  @Test
+  public void subListFail() {
+    ListTests.subListFail(testList);
+  }
+  
+  @Test
   public void makeEmptyDataSetTest() {
     DataSet<String> ds = ConcurrentArrayList.makeEmptyDataSet(0, 0);
     

@@ -939,6 +939,39 @@ public class ConcurrentArrayListDataSetTest {
   }
   
   @Test
+  public void addAllFrontSpaceTest() {
+    List<Integer> toAddList = new ArrayList<Integer>(5);
+    toAddList.add(100);
+    toAddList.add(200);
+    toAddList.add(300);
+    toAddList.add(400);
+    toAddList.add(500);
+    Integer[] emptyArray = new Integer[toAddList.size()];
+    DataSet<Integer> result = makeDataSet(emptyArray, toAddList.size(), toAddList.size());
+    result = result.addAll(0, toAddList);
+    Integer[] expectedResult = new Integer[]{ 100, 200, 300, 400, 500};
+    assertTrue(result.equalsExactly(makeDataSet(expectedResult, 0, expectedResult.length)));
+    assertTrue(result.dataArray == emptyArray);
+  }
+  
+  @Test
+  public void addAllEndSpaceTest() {
+    List<Integer> toAddList = new ArrayList<Integer>(5);
+    toAddList.add(100);
+    toAddList.add(200);
+    toAddList.add(300);
+    toAddList.add(400);
+    toAddList.add(500);
+    Integer[] emptyArray = new Integer[toAddList.size() + 1];
+    emptyArray[0] = -1;
+    DataSet<Integer> result = makeDataSet(emptyArray, 0, 1);
+    result = result.addAll(1, toAddList);
+    Integer[] expectedResult = new Integer[]{ -1, 100, 200, 300, 400, 500};
+    assertTrue(result.equalsExactly(makeDataSet(expectedResult, 0, expectedResult.length)));
+    assertTrue(result.dataArray == emptyArray);
+  }
+  
+  @Test
   public void removeIndexNormalTest() {
     DataSet<Integer> result = orderedNormal.remove(9).remove(5).remove(0);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 6, 7, 8 };

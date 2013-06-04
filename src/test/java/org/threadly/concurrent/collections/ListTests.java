@@ -299,4 +299,60 @@ public class ListTests {
       assertEquals(clIt.next(), testIt.next());
     }
   }
+  
+  public static void subListTest(List<String> testList) {
+    populateIntStrings(testList, TEST_QTY);
+    
+    List<String> completeList = testList.subList(0, TEST_QTY); 
+    assertEquals(completeList.size(), TEST_QTY);
+    Iterator<String> it1 = testList.iterator();
+    Iterator<String> it2 = completeList.iterator();
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(it1.next(), it2.next());
+    }
+    
+    List<String> smallList = testList.subList(0, 1);
+    assertEquals(smallList.size(), 1);
+    assertEquals(smallList.get(0), testList.get(0));
+    
+    smallList = testList.subList(TEST_QTY - 1, TEST_QTY);
+    assertEquals(smallList.size(), 1);
+    assertEquals(smallList.get(0), testList.get(TEST_QTY - 1));
+    
+    int halfQty = TEST_QTY / 2;
+    List<String> mediumList = testList.subList(1, halfQty);
+    assertEquals(mediumList.size(), halfQty - 1);
+    it1 = mediumList.iterator();
+    for (int i = 1; i < halfQty; i++) {
+      assertEquals(it1.next(), testList.get(i));
+    }
+  }
+  
+  public static void subListFail(List<String> testList) {
+    populateIntStrings(testList, TEST_QTY);
+    try {
+      testList.subList(-1, 0);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.subList(0, -1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.subList(2, 0);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.subList(0, TEST_QTY + 1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+  }
 }
