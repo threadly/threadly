@@ -52,9 +52,16 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * used for testing, so that agentLock can be held and prevent execution.
+   * Constructor to be used in unit tests.  This allows you to provide a StripedLock 
+   * that provides a {@link org.threadly.test.concurrent.lock.TestableLockFactory} so 
+   * that this class can be used with the 
+   * {@link org.threadly.test.concurrent.TestablePriorityScheduler}.
+   * 
+   * @param scheduler scheduler to be used for task worker execution 
+   * @param sLock lock to be used for controlling access to workers
    */
-  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, StripedLock sLock) {
+  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
+                                  StripedLock sLock) {
     super(scheduler, sLock);
     
     this.scheduler = scheduler;

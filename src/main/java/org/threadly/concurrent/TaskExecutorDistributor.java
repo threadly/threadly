@@ -76,11 +76,20 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * used for testing, so that agentLock can be held and prevent execution.
+   * Constructor to be used in unit tests.  This allows you to provide a StripedLock 
+   * that provides a {@link org.threadly.test.concurrent.lock.TestableLockFactory} so 
+   * that this class can be used with the 
+   * {@link org.threadly.test.concurrent.TestablePriorityScheduler}.
+   * 
+   * @param executor executor to be used for task worker execution 
+   * @param sLock lock to be used for controlling access to workers
    */
-  protected TaskExecutorDistributor(Executor executor, StripedLock sLock) {
+  public TaskExecutorDistributor(Executor executor, 
+                                 StripedLock sLock) {
     if (executor == null) {
       throw new IllegalArgumentException("executor can not be null");
+    } else if (sLock == null) {
+      throw new IllegalArgumentException("striped lock must be provided");
     }
     
     this.executor = executor;

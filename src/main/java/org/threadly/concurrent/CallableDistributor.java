@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
@@ -77,11 +76,16 @@ public class CallableDistributor<K, R> {
    */
   public CallableDistributor(TaskExecutorDistributor taskDistributor) {
     this(taskDistributor, new StripedLock(taskDistributor.sLock.getExpectedConcurrencyLevel(), 
-                                          new NativeLockFactory()));
+                                          taskDistributor.sLock.getFactory()));
   }
   
   /**
-   * Constructs for unit testing.
+   * Constructor for Threadly internal unit testing.  If you need to use a 
+   * {@link CallableDistributor} in your unit testing, you should use the 
+   * constructor where you provide a testable {@link TaskExecutorDistributor}.
+   * 
+   * @param taskDistributor TaskDistributor used to execute callables
+   * @param sLock lock to be used for controlling access to results
    */
   protected CallableDistributor(TaskExecutorDistributor taskDistributor, 
                                 StripedLock sLock) {
