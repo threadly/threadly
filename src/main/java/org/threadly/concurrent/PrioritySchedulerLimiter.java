@@ -107,6 +107,14 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public void execute(Runnable task, TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
+    
     PriorityRunnableWrapper wrapper = new PriorityRunnableWrapper(task, priority);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
@@ -124,6 +132,13 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    */
   @Override
   public Future<?> submit(Runnable task, TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
     throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
   }
 
@@ -134,12 +149,28 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    */
   @Override
   public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
     throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
   }
 
   @Override
   public void schedule(Runnable task, long delayInMs, 
                        TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide a task");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
+    
     scheduler.schedule(new DelayedExecution(task, priority), 
                        delayInMs, priority);
   }
@@ -152,6 +183,15 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   @Override
   public Future<?> submitScheduled(Runnable task, long delayInMs,
                                    TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide a task");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
+    
     throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
   }
 
@@ -163,6 +203,15 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   @Override
   public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
                                        TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide a task");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs must be >= 0");
+    }
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
+    
     throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
   }
 
@@ -174,6 +223,17 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide a task");
+    } else if (initialDelay < 0) {
+      throw new IllegalArgumentException("initialDelay must be >= 0");
+    } else if (recurringDelay < 0) {
+      throw new IllegalArgumentException("recurringDelay must be >= 0");
+    }
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
+    
     throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
   }
 
