@@ -121,7 +121,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void submitScheduledRunnableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
@@ -132,7 +132,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void submitScheduledCallableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
@@ -154,7 +154,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void recurringExecutionFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
