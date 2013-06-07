@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -156,28 +157,63 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     return resultList;
   }
 
-  /**
-   * Not implemented yet, will always throw UnsupportedOperationException.
-   * 
-   * throws UnsupportedOperationException not yet implemented
-   */
   @Override
   public <T> T invokeAny(Collection<? extends Callable<T>> tasks) throws InterruptedException,
                                                                          ExecutionException {
-    throw new UnsupportedOperationException("Not implemented in wrapper");
+    try {
+      return invokeAny(tasks, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+    } catch (TimeoutException e) {
+      // basically impossible
+      throw ExceptionUtils.makeRuntime(e);
+    }
   }
 
-  /**
-   * Not implemented yet, will always throw UnsupportedOperationException.
-   * 
-   * throws UnsupportedOperationException not yet implemented
-   */
   @Override
   public <T> T invokeAny(Collection<? extends Callable<T>> tasks, 
                          long timeout, TimeUnit unit) throws InterruptedException,
                                                              ExecutionException, 
                                                              TimeoutException {
-    throw new UnsupportedOperationException("Not implemented in wrapper");
+    final long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+    final long startTime = Clock.accurateTime();
+    List<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
+    ExecutorCompletionService<T> ecs = new ExecutorCompletionService<T>(this);
+    
+    try {
+      Iterator<? extends Callable<T>> it = tasks.iterator();
+      if (it.hasNext()) {
+        // submit first one
+        Future<T> submittedFuture = ecs.submit(it.next());
+        futures.add(submittedFuture);
+      }
+      Future<T> completedFuture = null;
+      while (completedFuture == null && it.hasNext() && 
+             Clock.accurateTime() - startTime < timeoutInMs) {
+        completedFuture = ecs.poll();
+        if (completedFuture == null) {
+          // submit another
+          futures.add(ecs.submit(it.next()));
+        } else {
+          return completedFuture.get();
+        }
+      }
+      
+      if (Clock.lastKnownTimeMillis() - startTime >= timeoutInMs) {
+        throw new TimeoutException();
+      } else {
+        long remainingTime = timeoutInMs - (Clock.lastKnownTimeMillis() - startTime);
+        completedFuture = ecs.poll(remainingTime, TimeUnit.MILLISECONDS);
+        if (completedFuture == null) {
+          throw new TimeoutException();
+        } else {
+          return completedFuture.get();
+        }
+      }
+    } finally {
+      Iterator<Future<T>> it = futures.iterator();
+      while (it.hasNext()) {
+        it.next().cancel(true);
+      }
+    }
   }
 
   @Override
