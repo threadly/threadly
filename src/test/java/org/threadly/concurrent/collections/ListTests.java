@@ -176,6 +176,18 @@ public class ListTests {
     }
     
     assertArrayEquals(testList.toArray(), compare);
+    
+    String[] expectedResult = compare;
+    
+    // reset for next test
+    compare = new String[TEST_QTY];
+    String[] result = testList.toArray(compare);
+    
+    assertArrayEquals(result, expectedResult);
+    assertTrue(result == compare);
+    
+    result = testList.toArray(new String[0]);
+    assertArrayEquals(result, expectedResult);
   }
   
   public static void clearTest(List<String> testList) {

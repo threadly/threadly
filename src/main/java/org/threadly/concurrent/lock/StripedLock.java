@@ -46,6 +46,16 @@ public class StripedLock {
   public int getExpectedConcurrencyLevel() {
     return expectedConcurrencyLevel;
   }
+
+  /**
+   * Call to get {@link LockFactory} that this class was 
+   * constructed with.
+   * 
+   * @return the provided lock factory
+   */
+  public LockFactory getFactory() {
+    return lockFactory;
+  }
   
   /**
    * Call to get a striped lock for a given key.

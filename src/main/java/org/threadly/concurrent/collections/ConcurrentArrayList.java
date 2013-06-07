@@ -1,5 +1,6 @@
 package org.threadly.concurrent.collections;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
@@ -235,23 +236,28 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   @Override
   public Object[] toArray() {
     DataSet<T> workingSet = currentData;
-    Object[] resultArray = new Object[workingSet.size];
-    System.arraycopy(workingSet.dataArray, workingSet.dataStartIndex, 
-                     resultArray, 0, resultArray.length);
 
-    return resultArray;
+    return Arrays.copyOfRange(workingSet.dataArray, 
+                              workingSet.dataStartIndex, 
+                              workingSet.dataEndIndex);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <E> E[] toArray(E[] a) {
-    Object[] toCopyArray = currentData.dataArray;
-    if (a.length < toCopyArray.length) {  // TODO - need to implement this
-      throw new UnsupportedOperationException("need " + toCopyArray.length + ", provided " + a.length);
+    DataSet<T> workingSet = currentData;
+    
+    if (a.length < workingSet.size) {
+      return (E[])Arrays.copyOfRange(workingSet.dataArray, 
+                                     workingSet.dataStartIndex, 
+                                     workingSet.dataEndIndex, 
+                                     a.getClass());
+    } else {
+      System.arraycopy(workingSet.dataArray, workingSet.dataStartIndex, 
+                       a, 0, workingSet.size);
+      
+      return a;
     }
-    
-    System.arraycopy(toCopyArray, 0, a, 0, toCopyArray.length);
-    
-    return a;
   }
 
   @Override
