@@ -164,25 +164,18 @@ public class TaskExecutorDistributor {
       }
     }
     
-    private List<Runnable> next() {
-      synchronized (agentLock) {
-        List<Runnable> result = queue;
-        queue = new LinkedList<Runnable>();
-        
-        return result;
-      }
-    }
-    
     @Override
     public void run() {
       while (true) {
         List<Runnable> nextList;
         synchronized (agentLock) {
-          nextList = next();
+          nextList = queue;
           
-          if (nextList == null) {
+          if (nextList.isEmpty()) {  // stop consuming tasks
             taskWorkers.remove(mapKey);
-            break;  // stop consuming tasks
+            break;
+          } else {  // prepare queue for future tasks
+            queue = new LinkedList<Runnable>();
           }
         }
         
