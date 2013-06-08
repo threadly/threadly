@@ -570,7 +570,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     private boolean mayInterruptIfRunningOnCancel;
     private Future<?> parentFuture;
     
-    private FutureFuture() {
+    public FutureFuture() {
       canceled = false;
       parentFuture = null;
     }

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -47,11 +48,32 @@ public class PrioritySchedulerLimiterTest {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
     PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, testQty);
     
+    boolean flip1 = true;
+    boolean flip2 = true;
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(testQty);
     for (int i = 0; i < testQty; i++) {
-      TestRunnable tr = new TestRunnable();
-      runnables.add(tr);
-      psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, null));
+      
+      if (flip1) {
+        TestRunnable tr = new TestRunnable();
+        runnables.add(tr);
+        if (flip2) {
+          psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, 
+                                                               psl.new FutureFuture<Object>()));
+          flip2 = false;
+        } else {
+          psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, null));
+          flip2 = true;
+        }
+        flip1 = false;
+      } else {
+        psl.waitingTasks.add(psl.new PriorityCallableWrapper<Object>(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            return new Object();
+          }
+        }, TaskPriority.High, psl.new FutureFuture<Object>()));
+        flip1 = true;
+      }
     }
     
     psl.consumeAvailable();
