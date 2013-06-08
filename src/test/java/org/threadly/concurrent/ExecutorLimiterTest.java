@@ -42,6 +42,22 @@ public class ExecutorLimiterTest {
   }
   
   @Test
+  public void constructorFail() {
+    try {
+      new ExecutorLimiter(null, 100);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new ExecutorLimiter(Executors.newSingleThreadExecutor(), 0);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
   public void executeTest() {
     int runnableCount = 10;
     
