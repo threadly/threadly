@@ -1,5 +1,7 @@
 package org.threadly.concurrent;
 
+import static org.junit.Assert.*;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +13,31 @@ import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFac
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerLimiterTest {
+  @Test
+  public void constructorFail() {
+    try {
+      new PrioritySchedulerLimiter(null, 100);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PrioritySchedulerLimiter(new PriorityScheduledExecutor(1, 1, 100), 0);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void getDefaultPriorityTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.Low, 100);
+    assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
+    
+    executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
+    assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
+  }
+  
   @Test
   public void executeTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
