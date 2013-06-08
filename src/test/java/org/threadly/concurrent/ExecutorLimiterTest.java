@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -17,12 +18,17 @@ import org.threadly.test.concurrent.TestRunnable;
 public class ExecutorLimiterTest {
   private static final int PARALLEL_COUNT = 2;
   private static final int THREAD_COUNT = PARALLEL_COUNT * 2;
+  private static final int THREAD_SLEEP_TIME = 20;
   
+  private volatile boolean parallelFailure;
+  private AtomicInteger running;
   private ExecutorService executor;
   private ExecutorLimiter limiter;
   
   @Before
   public void setup() {
+    parallelFailure = false;
+    running = new AtomicInteger(0);
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
     limiter = new ExecutorLimiter(executor, PARALLEL_COUNT);
   }
@@ -32,6 +38,7 @@ public class ExecutorLimiterTest {
     executor.shutdown();
     executor = null;
     limiter = null;
+    running = null;
   }
   
   @Test
@@ -40,12 +47,26 @@ public class ExecutorLimiterTest {
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
-      TestRunnable tr = new TestRunnable();
+      TestRunnable tr = new TestRunnable() {
+        @Override
+        public void handleRunStart() throws InterruptedException {
+          running.incrementAndGet();
+          if (running.get() > PARALLEL_COUNT) {
+            parallelFailure = true;
+          }
+          Thread.sleep(THREAD_SLEEP_TIME);
+        }
+        
+        @Override
+        public void handleRunFinish() {
+          running.decrementAndGet();
+        }
+      };
       limiter.execute(tr);
       runnables.add(tr);
     }
     
-    // TODO - verify that only PARALLEL_COUNT ran in parallel
+    assertFalse(parallelFailure);
     
     // verify execution
     Iterator<TestRunnable> it = runnables.iterator();
