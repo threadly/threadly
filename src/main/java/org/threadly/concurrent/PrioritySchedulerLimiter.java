@@ -3,7 +3,12 @@ package org.threadly.concurrent;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.threadly.util.ExceptionUtils;
 
 /**
  * This class is designed to limit how much parallel execution happens 
@@ -55,7 +60,11 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       while (! waitingTasks.isEmpty() && canRunTask()) {
         // by entering loop we can now execute task
         PriorityRunnableWrapper next = waitingTasks.poll();
-        scheduler.execute(next, next.priority);
+        if (next.future == null) {
+          scheduler.execute(next, next.priority);
+        } else {
+          next.future.setParentFuture(scheduler.submit(next, next.priority));
+        }
       }
     }
   }
@@ -115,10 +124,39 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    PriorityRunnableWrapper wrapper = new PriorityRunnableWrapper(task, priority);
+    PriorityRunnableWrapper wrapper = new PriorityRunnableWrapper(task, priority, null);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
       scheduler.execute(wrapper, priority);
+    } else {
+      waitingTasks.add(wrapper);
+      consumeAvailable(); // call to consume in case task finished after first check
+    }
+  }
+
+  @Override
+  public Future<?> submit(Runnable task, TaskPriority priority) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
+    
+    FutureFuture<?> ff = new FutureFuture<Object>();
+    
+    submit(task, priority, ff);
+    
+    return ff;
+  }
+  
+  private void submit(Runnable task, 
+                      TaskPriority priority, FutureFuture<?> ff) {
+    PriorityRunnableWrapper wrapper = new PriorityRunnableWrapper(task, priority, ff);
+    
+    if (canRunTask()) {  // try to avoid adding to queue if we can
+      ff.setParentFuture(scheduler.submit(wrapper, priority));
     } else {
       waitingTasks.add(wrapper);
       consumeAvailable(); // call to consume in case task finished after first check
@@ -131,31 +169,14 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * @throws UnsupportedOperationException exception always thrown
    */
   @Override
-  public Future<?> submit(Runnable task, TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
-    
-    if (priority == null) {
-      priority = scheduler.getDefaultPriority();
-    }
-    throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
-  }
-
-  /**
-   * Not currently implemented for limiter.
-   * 
-   * @throws UnsupportedOperationException exception always thrown
-   */
-  @Override
   public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide task");
     }
-    
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
+    
     throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
   }
 
@@ -171,15 +192,10 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    scheduler.schedule(new DelayedExecution(task, priority), 
+    scheduler.schedule(new DelayedExecution(task, priority, null), 
                        delayInMs, priority);
   }
 
-  /**
-   * Not currently implemented for limiter.
-   * 
-   * @throws UnsupportedOperationException exception always thrown
-   */
   @Override
   public Future<?> submitScheduled(Runnable task, long delayInMs,
                                    TaskPriority priority) {
@@ -191,8 +207,12 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
+
+    FutureFuture<?> ff = new FutureFuture<Object>();
+    scheduler.schedule(new DelayedExecution(task, priority, ff), 
+                       delayInMs, priority);
     
-    throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
+    return ff;
   }
 
   /**
@@ -251,16 +271,23 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   protected class DelayedExecution extends VirtualRunnable {
     private final Runnable runnable;
     private final TaskPriority priority;
-    
+    private final FutureFuture<?> future;
+
     public DelayedExecution(Runnable runnable, 
-                            TaskPriority priority) {
+                            TaskPriority priority, 
+                            FutureFuture<?> future) {
       this.runnable = runnable;
       this.priority = priority;
+      this.future = future;
     }
     
     @Override
     public void run() {
-      execute(runnable, priority);
+      if (future == null) {
+        execute(runnable, priority);
+      } else {
+        submit(runnable, priority, future);
+      }
     }
   }
 
@@ -274,11 +301,14 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   protected class PriorityRunnableWrapper extends VirtualRunnable {
     private final Runnable runnable;
     private final TaskPriority priority;
+    private final FutureFuture<?> future;
     
     public PriorityRunnableWrapper(Runnable runnable, 
-                                   TaskPriority priority) {
+                                   TaskPriority priority, 
+                                   FutureFuture<?> future) {
       this.runnable = runnable;
       this.priority = priority;
+      this.future = future;
     }
     
     @Override
@@ -293,6 +323,86 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
         }
       } finally {
         handleTaskFinished();
+      }
+    }
+  }
+  
+  /**
+   * Future which contains a parent future 
+   * (which may not be created yet).
+   * 
+   * @author jent - Mike Jensen
+   * @param <T> result type returned by .get()
+   */
+  protected class FutureFuture<T> implements Future<T> {
+    private boolean canceled;
+    private boolean mayInterruptIfRunningOnCancel;
+    private Future<?> parentFuture;
+    
+    private FutureFuture() {
+      canceled = false;
+      parentFuture = null;
+    }
+    
+    private void setParentFuture(Future<?> parentFuture) {
+      synchronized (this) {
+        this.parentFuture = parentFuture;
+        if (canceled) {
+          parentFuture.cancel(mayInterruptIfRunningOnCancel);
+        }
+        
+        this.notifyAll();
+      }
+    }
+    
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      synchronized (this) {
+        canceled = true;
+        mayInterruptIfRunningOnCancel = mayInterruptIfRunning;
+        if (parentFuture != null) {
+          return parentFuture.cancel(mayInterruptIfRunning);
+        } else {
+          return true;  // this is not guaranteed to be true, but is likely
+        }
+      }
+    }
+
+    @Override
+    public boolean isCancelled() {
+      synchronized (this) {
+        return canceled;
+      }
+    }
+
+    @Override
+    public boolean isDone() {
+      synchronized (this) {
+        if (parentFuture == null) {
+          return false;
+        } else {
+          return parentFuture.isDone();
+        }
+      }
+    }
+
+    @Override
+    public T get() throws InterruptedException, ExecutionException {
+      try {
+        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+      } catch (TimeoutException e) {
+        // basically impossible
+        throw ExceptionUtils.makeRuntime(e);
+      }
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws InterruptedException,
+                                                     ExecutionException,
+                                                     TimeoutException {
+      synchronized (this) {
+      // TODO Auto-generated method stub
+      return null;
       }
     }
   }

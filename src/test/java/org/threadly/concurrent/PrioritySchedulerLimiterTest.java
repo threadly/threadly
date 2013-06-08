@@ -22,7 +22,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void submitRunnableTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
@@ -99,7 +99,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void submitScheduledRunnableTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
