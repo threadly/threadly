@@ -136,18 +136,21 @@ public class SimpleSchedulerInterfaceTest {
     SimpleSchedulerInterface scheduler = factory.make(1, false);
     
     scheduler.execute(null);
+    fail("Execption should have thrown");
   }
   
   public static void submitRunnableFail(PrioritySchedulerFactory factory) {
     SimpleSchedulerInterface scheduler = factory.make(1, false);
     
     scheduler.submit((Runnable)null);
+    fail("Execption should have thrown");
   }
   
   public static void submitCallableFail(PrioritySchedulerFactory factory) {
     SimpleSchedulerInterface scheduler = factory.make(1, false);
     
     scheduler.submit((Callable<Object>)null);
+    fail("Execption should have thrown");
   }
   
   public static void scheduleTest(PrioritySchedulerFactory factory) {
