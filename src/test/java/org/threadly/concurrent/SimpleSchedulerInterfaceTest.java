@@ -126,9 +126,9 @@ public class SimpleSchedulerInterfaceTest {
     while (futureIt.hasNext()) {
       Future<Object> future = futureIt.next();
       TestCallable tc = it.next();
-      
-      assertTrue(future.isDone());
+
       assertTrue(tc.result == future.get());
+      assertTrue(future.isDone());
     }
   }
   

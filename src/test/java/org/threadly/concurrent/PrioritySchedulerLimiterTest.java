@@ -103,7 +103,42 @@ public class PrioritySchedulerLimiterTest {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
     try {
-      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
+
+      int runnableCount = 10;
+      
+      SimpleSchedulerInterface scheduler = sf.make(runnableCount, false);
+      
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+      List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
+      for (int i = 0; i < runnableCount; i++) {
+        TestRunnable tr = new TestRunnable();
+        Future<?> future = scheduler.submit(tr);
+        assertNotNull(future);
+        runnables.add(tr);
+        futures.add(future);
+      }
+      
+      // verify execution
+      Iterator<TestRunnable> it = runnables.iterator();
+      while (it.hasNext()) {
+        TestRunnable tr = it.next();
+        tr.blockTillFinished();
+        
+        assertEquals(tr.getRunCount(), 1);
+      }
+      
+      Iterator<Future<?>> futureIt = futures.iterator();
+      while (futureIt.hasNext()) {
+        Future<?> f = futureIt.next();
+        try {
+          f.get();
+        } catch (InterruptedException e) {
+          fail();
+        } catch (ExecutionException e) {
+          fail();
+        }
+        assertTrue(f.isDone());
+      }
     } finally {
       sf.shutdown();
     }
