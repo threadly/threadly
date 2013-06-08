@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -155,9 +156,46 @@ public class PrioritySchedulerLimiterTest {
   @Test
   public void submitScheduledRunnableTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
-    
+    // we can't defer to the interface implementation for this check
     try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
+      int runnableCount = 10;
+      int scheduleDelay = 50;
+      
+      SimpleSchedulerInterface scheduler = sf.make(runnableCount, true);
+      
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+      List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
+      for (int i = 0; i < runnableCount; i++) {
+        TestRunnable tr = new TestRunnable();
+        Future<?> future = scheduler.submitScheduled(tr, scheduleDelay);
+        assertNotNull(future);
+        runnables.add(tr);
+        futures.add(future);
+      }
+      
+      // verify execution and execution times
+      Iterator<TestRunnable> it = runnables.iterator();
+      while (it.hasNext()) {
+        TestRunnable tr = it.next();
+        long executionDelay = tr.getDelayTillFirstRun();
+        assertTrue(executionDelay >= scheduleDelay);
+        // should be very timely with a core pool size that matches runnable count
+        assertTrue(executionDelay <= (scheduleDelay + 2000));  
+        assertEquals(tr.getRunCount(), 1);
+      }
+      
+      Iterator<Future<?>> futureIt = futures.iterator();
+      while (futureIt.hasNext()) {
+        Future<?> f = futureIt.next();
+        try {
+          f.get();
+        } catch (InterruptedException e) {
+          fail();
+        } catch (ExecutionException e) {
+          fail();
+        }
+        assertTrue(f.isDone());
+      }
     } finally {
       sf.shutdown();
     }
