@@ -15,6 +15,12 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   private static final int THREAD_COUNT = 1000;
   private static final int KEEP_ALIVE_TIME = 200;
   
+  @Test (expected = IllegalArgumentException.class)
+  public void constructorFail() {
+    new PriorityScheduledExecutorServiceWrapper(null);
+    fail("Exception should have thrown");
+  }
+  
   @Test
   public void isTerminatedShortTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 

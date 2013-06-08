@@ -22,8 +22,8 @@ import java.util.concurrent.Executor;
  */
 public class ExecutorLimiter extends AbstractThreadPoolLimiter 
                              implements Executor {
-  private final Executor executor;
-  private final Queue<Runnable> waitingTasks;
+  protected final Executor executor;
+  protected final Queue<Runnable> waitingTasks;
   
   /**
    * Construct a new execution limiter that implements the 
