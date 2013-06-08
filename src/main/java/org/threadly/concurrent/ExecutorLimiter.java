@@ -60,6 +60,10 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public void execute(Runnable command) {
+    if (command == null) {
+      throw new IllegalArgumentException("Must provide runnable");
+    }
+    
     if (canRunTask()) {  // try to avoid adding to queue if we can
       executor.execute(new RunnableWrapper(command));
     } else {

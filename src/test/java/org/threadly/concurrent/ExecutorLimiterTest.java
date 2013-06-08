@@ -55,15 +55,6 @@ public class ExecutorLimiterTest {
       
       assertEquals(tr.getRunCount(), 1);
     }
-    
-    // verify second execution
-    it = runnables.iterator();
-    while (it.hasNext()) {
-      TestRunnable tr = it.next();
-      tr.blockTillFinished(1000, 2);
-      
-      assertEquals(tr.getRunCount(), 2);
-    }
   }
   
   @Test (expected = IllegalArgumentException.class)
