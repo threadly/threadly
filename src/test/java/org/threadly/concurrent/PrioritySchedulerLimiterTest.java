@@ -170,7 +170,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void recurringExecutionTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     

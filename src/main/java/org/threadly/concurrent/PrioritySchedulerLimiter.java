@@ -271,7 +271,10 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
+    RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay, priority);
+    
+    scheduler.schedule(new DelayedExecutionRunnable(rrw, priority, null), initialDelay, 
+                       initialDelay == 0 ? TaskPriority.High : priority);
   }
 
   @Override
@@ -330,6 +333,80 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     @Override
     public void run() {
       submit(callable, priority, future);
+    }
+  }
+
+  /**
+   * Wrapper for priority tasks which are executed in this sub pool, 
+   * this ensures that handleTaskFinished() will be called 
+   * after the task completes.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class RecurringRunnableWrapper extends VirtualRunnable
+                                           implements Wrapper  {
+    private final Runnable runnable;
+    private final long recurringDelay;
+    private final TaskPriority priority;
+    private final DelayedExecutionRunnable delayRunnable;
+    
+    public RecurringRunnableWrapper(Runnable runnable, 
+                                    long recurringDelay, 
+                                    TaskPriority priority) {
+      this.runnable = runnable;
+      this.recurringDelay = recurringDelay;
+      this.priority = priority;
+      
+      delayRunnable = new DelayedExecutionRunnable(this, priority, null);
+    }
+    
+    @Override
+    public void run() {
+      try {
+        if (factory != null && 
+            runnable instanceof VirtualRunnable) {
+          VirtualRunnable vr = (VirtualRunnable)runnable;
+          vr.run(factory);
+        } else {
+          runnable.run();
+        }
+      } finally {
+        try {
+          handleTaskFinished();
+        } finally {
+          scheduler.schedule(delayRunnable, recurringDelay, priority);
+        }
+      }
+    }
+
+    @Override
+    public boolean isCallable() {
+      return false;
+    }
+
+    @Override
+    public FutureFuture<?> getFuture() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TaskPriority getPriority() {
+      return priority;
+    }
+
+    @Override
+    public boolean hasFuture() {
+      return false;
+    }
+
+    @Override
+    public Callable<?> getCallable() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Runnable getRunnable() {
+      return this;
     }
   }
 
