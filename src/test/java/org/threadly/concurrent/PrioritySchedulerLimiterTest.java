@@ -33,7 +33,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
@@ -110,7 +110,7 @@ public class PrioritySchedulerLimiterTest {
     }
   }
   
-  @Test @Ignore
+  @Test
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     

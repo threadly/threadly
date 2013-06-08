@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -29,7 +30,7 @@ import org.threadly.util.ExceptionUtils;
 public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter 
                                       implements PrioritySchedulerInterface {
   private final PrioritySchedulerInterface scheduler;
-  private final Queue<PriorityRunnableWrapper> waitingTasks;
+  private final Queue<Wrapper> waitingTasks;
   
   /**
    * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
@@ -46,7 +47,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     }
     
     this.scheduler = scheduler;
-    waitingTasks = new ConcurrentLinkedQueue<PriorityRunnableWrapper>();
+    waitingTasks = new ConcurrentLinkedQueue<Wrapper>();
   }
   
   @Override
@@ -59,11 +60,18 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     synchronized (this) {
       while (! waitingTasks.isEmpty() && canRunTask()) {
         // by entering loop we can now execute task
-        PriorityRunnableWrapper next = waitingTasks.poll();
-        if (next.future == null) {
-          scheduler.execute(next, next.priority);
+        Wrapper next = waitingTasks.poll();
+        if (next.hasFuture()) {
+          if (next.isCallable()) {
+            Future<?> f = scheduler.submit(next.getCallable(), next.getPriority());
+            next.getFuture().setParentFuture(f);
+          } else {
+            Future<?> f = scheduler.submit(next.getRunnable(), next.getPriority());
+            next.getFuture().setParentFuture(f);
+          }
         } else {
-          next.future.setParentFuture(scheduler.submit(next, next.priority));
+          // all callables will have futures, so we know this is a runnable
+          scheduler.execute(next.getRunnable(), next.getPriority());
         }
       }
     }
@@ -139,7 +147,6 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     if (task == null) {
       throw new IllegalArgumentException("Must provide task");
     }
-    
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
@@ -163,11 +170,6 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     }
   }
 
-  /**
-   * Not currently implemented for limiter.
-   * 
-   * @throws UnsupportedOperationException exception always thrown
-   */
   @Override
   public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
     if (task == null) {
@@ -177,7 +179,23 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
+    FutureFuture<T> ff = new FutureFuture<T>();
+    
+    submit(task, priority, ff);
+    
+    return ff;
+  }
+  
+  private <T> void submit(Callable<T> task, 
+                          TaskPriority priority, FutureFuture<T> ff) {
+    PriorityCallableWrapper<T> wrapper = new PriorityCallableWrapper<T>(task, priority, ff);
+    
+    if (canRunTask()) {  // try to avoid adding to queue if we can
+      ff.setParentFuture(scheduler.submit(wrapper, priority));
+    } else {
+      waitingTasks.add(wrapper);
+      consumeAvailable(); // call to consume in case task finished after first check
+    }
   }
 
   @Override
@@ -192,7 +210,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    scheduler.schedule(new DelayedExecution(task, priority, null), 
+    scheduler.schedule(new DelayedExecutionRunnable(task, priority, null), 
                        delayInMs, priority);
   }
 
@@ -209,17 +227,12 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     }
 
     FutureFuture<?> ff = new FutureFuture<Object>();
-    scheduler.schedule(new DelayedExecution(task, priority, ff), 
+    scheduler.schedule(new DelayedExecutionRunnable(task, priority, ff), 
                        delayInMs, priority);
     
     return ff;
   }
 
-  /**
-   * Not currently implemented for limiter.
-   * 
-   * @throws UnsupportedOperationException exception always thrown
-   */
   @Override
   public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
                                        TaskPriority priority) {
@@ -231,8 +244,12 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
+
+    FutureFuture<T> ff = new FutureFuture<T>();
+    scheduler.schedule(new DelayedExecutionCallable<T>(task, priority, ff), 
+                       delayInMs, priority);
     
-    throw new UnsupportedOperationException("Not implemented for limiter");  // TODO implement
+    return ff;
   }
 
   /**
@@ -268,14 +285,14 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecution extends VirtualRunnable {
+  protected class DelayedExecutionRunnable extends VirtualRunnable {
     private final Runnable runnable;
     private final TaskPriority priority;
     private final FutureFuture<?> future;
 
-    public DelayedExecution(Runnable runnable, 
-                            TaskPriority priority, 
-                            FutureFuture<?> future) {
+    public DelayedExecutionRunnable(Runnable runnable, 
+                                    TaskPriority priority, 
+                                    FutureFuture<?> future) {
       this.runnable = runnable;
       this.priority = priority;
       this.future = future;
@@ -290,6 +307,31 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       }
     }
   }
+  
+  /**
+   * Small runnable that allows scheduled tasks to pass through 
+   * the same execution queue that immediate execution has to.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class DelayedExecutionCallable<T> extends VirtualRunnable {
+    private final Callable<T> callable;
+    private final TaskPriority priority;
+    private final FutureFuture<T> future;
+
+    public DelayedExecutionCallable(Callable<T> runnable, 
+                                    TaskPriority priority, 
+                                    FutureFuture<T> future) {
+      this.callable = runnable;
+      this.priority = priority;
+      this.future = future;
+    }
+    
+    @Override
+    public void run() {
+      submit(callable, priority, future);
+    }
+  }
 
   /**
    * Wrapper for priority tasks which are executed in this sub pool, 
@@ -298,7 +340,8 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class PriorityRunnableWrapper extends VirtualRunnable {
+  protected class PriorityRunnableWrapper extends VirtualRunnable
+                                          implements Wrapper  {
     private final Runnable runnable;
     private final TaskPriority priority;
     private final FutureFuture<?> future;
@@ -325,6 +368,117 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
         handleTaskFinished();
       }
     }
+
+    @Override
+    public boolean isCallable() {
+      return false;
+    }
+
+    @Override
+    public FutureFuture<?> getFuture() {
+      return future;
+    }
+
+    @Override
+    public TaskPriority getPriority() {
+      return priority;
+    }
+
+    @Override
+    public boolean hasFuture() {
+      return future != null;
+    }
+
+    @Override
+    public Callable<?> getCallable() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Runnable getRunnable() {
+      return this;
+    }
+  }
+
+  /**
+   * Wrapper for priority tasks which are executed in this sub pool, 
+   * this ensures that handleTaskFinished() will be called 
+   * after the task completes.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class PriorityCallableWrapper<T> extends VirtualCallable<T>
+                                             implements Wrapper {
+    private final Callable<T> callable;
+    private final TaskPriority priority;
+    private final FutureFuture<?> future;
+    
+    public PriorityCallableWrapper(Callable<T> callable, 
+                                   TaskPriority priority, 
+                                   FutureFuture<?> future) {
+      this.callable = callable;
+      this.priority = priority;
+      this.future = future;
+    }
+    
+    @Override
+    public T call() throws Exception {
+      try {
+        if (factory != null && 
+            callable instanceof VirtualCallable) {
+          VirtualCallable<T> vc = (VirtualCallable<T>)callable;
+          return vc.call(factory);
+        } else {
+          return callable.call();
+        }
+      } finally {
+        handleTaskFinished();
+      }
+    }
+
+    @Override
+    public boolean isCallable() {
+      return true;
+    }
+
+    @Override
+    public FutureFuture<?> getFuture() {
+      return future;
+    }
+
+    @Override
+    public TaskPriority getPriority() {
+      return priority;
+    }
+
+    @Override
+    public boolean hasFuture() {
+      return future != null;
+    }
+
+    @Override
+    public Callable<?> getCallable() {
+      return this;
+    }
+
+    @Override
+    public Runnable getRunnable() {
+      throw new UnsupportedOperationException();
+    }
+  }
+  
+  /**
+   * Interface so that we can handle both callables and runnables.
+   * 
+   * @author jent - Mike Jensen
+   */
+  private interface Wrapper {
+    public boolean isCallable();
+    public FutureFuture<?> getFuture();
+    public TaskPriority getPriority();
+    public boolean hasFuture();
+    public Callable<?> getCallable();
+    public Runnable getRunnable();
   }
   
   /**
@@ -396,13 +550,24 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public T get(long timeout, TimeUnit unit) throws InterruptedException,
                                                      ExecutionException,
                                                      TimeoutException {
+      long startTime = Clock.accurateTime();
+      long timeoutInMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
       synchronized (this) {
-      // TODO Auto-generated method stub
-      return null;
+        long remainingWaitTime = timeoutInMillis;
+        while (parentFuture == null && remainingWaitTime > 0) {
+          this.wait(remainingWaitTime);
+          remainingWaitTime = timeoutInMillis - (Clock.accurateTime() - startTime);
+        }
+        if (remainingWaitTime <= 0) {
+          throw new TimeoutException();
+        }
+        // parent future is now not null
+        return (T)parentFuture.get(remainingWaitTime, TimeUnit.MILLISECONDS);
       }
     }
   }
