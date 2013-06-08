@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -12,6 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.PrioritySchedulerLimiter.FutureFuture;
+import org.threadly.concurrent.PrioritySchedulerLimiter.PriorityCallableWrapper;
+import org.threadly.concurrent.PrioritySchedulerLimiter.PriorityRunnableWrapper;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -54,6 +58,26 @@ public class ExecutorLimiterTest {
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
+    }
+  }
+  
+  @Test
+  public void consumeAvailableTest() {
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(PARALLEL_COUNT);
+    for (int i = 0; i < PARALLEL_COUNT; i++) {
+      TestRunnable tr = new TestRunnable();
+      runnables.add(tr);
+      limiter.waitingTasks.add(limiter.new RunnableWrapper(tr));
+    }
+    
+    limiter.consumeAvailable();
+    
+    // should be fully consumed
+    assertEquals(limiter.waitingTasks.size(), 0);
+    
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      it.next().blockTillFinished();  // throws exception if it does not finish
     }
   }
   
