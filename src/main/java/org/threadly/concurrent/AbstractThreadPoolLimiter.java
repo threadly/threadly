@@ -59,12 +59,7 @@ public abstract class AbstractThreadPoolLimiter {
    * tasks which exists.
    */
   protected void handleTaskFinished() {
-    boolean reducedTaskCount = false;
-    while (! reducedTaskCount) {
-      int currentValue = currentlyRunning.get();
-      reducedTaskCount = currentlyRunning.compareAndSet(currentValue, 
-                                                        currentValue - 1);
-    }
+    currentlyRunning.decrementAndGet();
     
     consumeAvailable(); // allow any waiting tasks to run
   }
