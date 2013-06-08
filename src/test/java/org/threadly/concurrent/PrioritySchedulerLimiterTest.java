@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
+import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerLimiterTest {
@@ -36,6 +38,30 @@ public class PrioritySchedulerLimiterTest {
     
     executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
+  }
+  
+  @Test
+  public void consumeAvailableTest() {
+    int testQty = 10;
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
+    PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, testQty);
+    
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(testQty);
+    for (int i = 0; i < testQty; i++) {
+      TestRunnable tr = new TestRunnable();
+      runnables.add(tr);
+      psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, null));
+    }
+    
+    psl.consumeAvailable();
+    
+    // should be fully consumed
+    assertEquals(psl.waitingTasks.size(), 0);
+    
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      it.next().blockTillFinished();  // throws exception if it does not finish
+    }
   }
   
   @Test

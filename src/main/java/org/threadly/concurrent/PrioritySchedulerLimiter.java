@@ -29,8 +29,8 @@ import org.threadly.util.ExceptionUtils;
  */
 public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter 
                                       implements PrioritySchedulerInterface {
-  private final PrioritySchedulerInterface scheduler;
-  private final Queue<Wrapper> waitingTasks;
+  protected final PrioritySchedulerInterface scheduler;
+  protected final Queue<Wrapper> waitingTasks;
   
   /**
    * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
