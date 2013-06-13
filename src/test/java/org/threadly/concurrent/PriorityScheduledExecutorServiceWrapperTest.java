@@ -211,6 +211,30 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   }
   
   @Test
+  public void invokeAnyTest() throws InterruptedException, ExecutionException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.invokeAnyTest(wrapper);
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
+  @Test
+  public void invokeAnyFail() throws InterruptedException, ExecutionException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.invokeAnyFail(wrapper);
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
+  @Test
   public void shutdownTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
     PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
