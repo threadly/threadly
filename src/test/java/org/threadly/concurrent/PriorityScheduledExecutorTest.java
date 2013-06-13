@@ -171,6 +171,21 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void makeSubPoolTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(10, 10, 1000);
+    PrioritySchedulerInterface subPool = scheduler.makeSubPool(2);
+    assertNotNull(subPool);
+    assertTrue(subPool instanceof PrioritySchedulerLimiter);  // if true, test cases are covered under PrioritySchedulerLimiter unit cases
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void makeSubPoolFail() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    scheduler.makeSubPool(2);
+    fail("Exception should have been thrown");
+  }
+  
+  @Test
   public void executeTest() {
     SchedulerFactory sf = new SchedulerFactory();
     PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);;

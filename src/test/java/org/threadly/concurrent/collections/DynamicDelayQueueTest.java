@@ -272,6 +272,19 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
+  public void pollTimeoutTest() throws InterruptedException {
+    populateRandom(testQueue);
+    
+    TestDelayed prev = testQueue.poll(0, TimeUnit.MILLISECONDS);
+    for (int i = 0; i > TEST_QTY; i++) {
+      assertTrue(prev.compareTo(testQueue.peek()) >= 0);
+      
+      prev = testQueue.poll(0, TimeUnit.MILLISECONDS);
+    }
+    // TODO - this test can be expanded
+  }
+  
+  @Test
   public void removeAllTest() {
     List<TestDelayed> toRemoveList = new ArrayList<TestDelayed>(TEST_QTY);
     List<TestDelayed> comparisonList = new ArrayList<TestDelayed>(TEST_QTY);
