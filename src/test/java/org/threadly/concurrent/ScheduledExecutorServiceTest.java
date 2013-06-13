@@ -230,6 +230,40 @@ public class ScheduledExecutorServiceTest {
     scheduler.invokeAll(toInvoke);
   }
   
+  public static void invokeAnyTest(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                              ExecutionException {
+    int callableQty = 10;
+    
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+    for (int i = 0; i < callableQty; i++) {
+      toInvoke.add(new TestCallable(0));
+    }
+    Object result = scheduler.invokeAny(toInvoke);
+    
+    assertNotNull(result);
+    
+    // TODO - improve to verify what result is returned
+  }
+  
+  public static void invokeAnyFail(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                              ExecutionException {
+    try {
+      List<TestCallable> toInvoke = new ArrayList<TestCallable>(2);
+      toInvoke.add(new TestCallable(0));
+      toInvoke.add(null);
+      scheduler.invokeAny(toInvoke);
+      fail("Exception should have thrown");
+    } catch (NullPointerException e) {
+      // expected
+    }
+    try {
+      scheduler.invokeAny(null);
+      fail("Exception should have thrown");
+    } catch (NullPointerException e) {
+      // expected
+    }
+  }
+  
   private static class TestCallable extends TestCondition 
                                     implements Callable<Object> {
     private final long runTime;
