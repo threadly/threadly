@@ -330,12 +330,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds.  Must be >= 0.
    */
-  public void setMaxWaitForLowPriorityInMs(long maxWaitForLowPriorityInMs) {
+  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
     if (maxWaitForLowPriorityInMs < 0) {
       throw new IllegalArgumentException("maxWaitForLowPriorityInMs must be >= 0");
     }
     
     this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
+  }
+  
+  /**
+   * Getter for the maximum amount of time a low priority task will 
+   * wait for an available worker.
+   * 
+   * @return currently set max wait for low priority task
+   */
+  public long getMaxWaitForLowPriority() {
+    return maxWaitForLowPriorityInMs;
   }
   
   /**

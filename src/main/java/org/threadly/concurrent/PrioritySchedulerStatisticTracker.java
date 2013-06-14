@@ -23,11 +23,14 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  */
 public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor {
-  private static final int MAX_RUN_TIME_WINDOW_SIZE = 1000;
+  private static final int MAX_WINDOW_SIZE = 1000;
   
-  protected final AtomicInteger totalExecutions;
+  protected final AtomicInteger totalHighPriorityExecutions;
+  protected final AtomicInteger totalLowPriorityExecutions;
   protected final ConcurrentHashMap<Wrapper, Long> runningTasks;
   protected final LinkedList<Long> runTimes;
+  protected final LinkedList<Boolean> lowPriorityWorkerAvailable;
+  protected final LinkedList<Boolean> highPriorityWorkerAvailable;
   
   /**
    * Constructs a new thread pool, though no threads will be started 
@@ -44,9 +47,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
                                            long keepAliveTimeInMs) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs);
     
-    totalExecutions = new AtomicInteger();
+    totalHighPriorityExecutions = new AtomicInteger();
+    totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
     runTimes = new LinkedList<Long>();
+    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
+    highPriorityWorkerAvailable = new LinkedList<Boolean>();
   }
   
   /**
@@ -64,9 +70,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
                                            long keepAliveTimeInMs, boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, useDaemonThreads);
     
-    totalExecutions = new AtomicInteger();
+    totalHighPriorityExecutions = new AtomicInteger();
+    totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
     runTimes = new LinkedList<Long>();
+    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
+    highPriorityWorkerAvailable = new LinkedList<Boolean>();
   }
   
   /**
@@ -90,9 +99,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs);
     
-    totalExecutions = new AtomicInteger();
+    totalHighPriorityExecutions = new AtomicInteger();
+    totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
     runTimes = new LinkedList<Long>();
+    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
+    highPriorityWorkerAvailable = new LinkedList<Boolean>();
   }
   
   /**
@@ -118,9 +130,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs);
     
-    totalExecutions = new AtomicInteger();
+    totalHighPriorityExecutions = new AtomicInteger();
+    totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
     runTimes = new LinkedList<Long>();
+    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
+    highPriorityWorkerAvailable = new LinkedList<Boolean>();
   }
   
   /**
@@ -146,9 +161,75 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
           defaultPriority, maxWaitForLowPriorityInMs, 
           threadFactory);
     
-    totalExecutions = new AtomicInteger();
+    totalHighPriorityExecutions = new AtomicInteger();
+    totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
     runTimes = new LinkedList<Long>();
+    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
+    highPriorityWorkerAvailable = new LinkedList<Boolean>();
+  }
+
+  @Override
+  protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
+    Worker w = null;
+    synchronized (workersLock) {
+      if (! isShutdown()) {
+        synchronized (highPriorityWorkerAvailable) {
+          highPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
+          trimList(highPriorityWorkerAvailable);
+        }
+        if (getCurrentPoolSize() >= getMaxPoolSize()) {
+          // we can't make the pool any bigger
+          w = getExistingWorker(Long.MAX_VALUE);
+        } else {
+          if (availableWorkers.isEmpty()) {
+            w = makeNewWorker();
+          } else {
+            // always remove from the front, to get the newest worker
+            w = availableWorkers.removeFirst();
+          }
+        }
+      }
+    }
+    
+    if (w != null) {  // may be null if shutdown
+      w.nextTask(task);
+    }
+  }
+  
+  @Override
+  protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
+    Worker w = null;
+    synchronized (workersLock) {
+      if (! isShutdown()) {
+        if (getCurrentPoolSize() >= getMaxPoolSize()) {
+          synchronized (lowPriorityWorkerAvailable) {
+            lowPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
+            trimList(lowPriorityWorkerAvailable);
+          }
+          w = getExistingWorker(Long.MAX_VALUE);
+        } else {
+          w = getExistingWorker(getMaxWaitForLowPriority());
+          synchronized (lowPriorityWorkerAvailable) {
+            lowPriorityWorkerAvailable.add(w != null);
+            trimList(lowPriorityWorkerAvailable);
+          }
+        }
+        if (w == null) {
+          // this means we expired past our wait time, so just make a new worker
+          if (getCurrentPoolSize() >= getMaxPoolSize()) {
+            // more workers were created while waiting, now have exceeded our max
+            w = getExistingWorker(Long.MAX_VALUE);
+          } else {
+            w = makeNewWorker();
+          }
+        }
+      }
+    }
+    
+    if (w != null) {  // may be null if shutdown
+      w.nextTask(task);
+    }
   }
   
   private Runnable wrap(Runnable task, 
@@ -219,7 +300,26 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return total qty of tasks run
    */
   public int getTotalExecutionCount() {
-    return totalExecutions.get();
+    return getTotalHighPriorityExecutionCount() + 
+             getTotalLowPriorityExecutionCount();
+  }
+  
+  /**
+   * Call to get the total qty of high priority tasks this executor has handled.
+   * 
+   * @return total qty of high priority tasks run
+   */
+  public int getTotalHighPriorityExecutionCount() {
+    return totalHighPriorityExecutions.get();
+  }
+  
+  /**
+   * Call to get the total qty of low priority tasks this executor has handled.
+   * 
+   * @return total qty of low priority tasks run
+   */
+  public int getTotalLowPriorityExecutionCount() {
+    return totalLowPriorityExecutions.get();
   }
   
   /**
@@ -306,10 +406,61 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     return runningTasks.size();
   }
   
+  /**
+   * Call to see how frequently high priority tasks are able to run without creating 
+   * a new thread.
+   * 
+   * Returns -1 if no statistics for high priority tasks have been recorded yet.
+   * 
+   * @return percent that an existing worker could be used on high priority tasks
+   */
+  public double getHighPriorityThreadReusePercent() {
+    return getTruePercent(highPriorityWorkerAvailable);
+  }
+  
+  /**
+   * Call to see how frequently low priority tasks are able to run without creating 
+   * a new thread.
+   * 
+   * Returns -1 if no statistics for high priority tasks have been recorded yet.
+   * 
+   * @return percent that an existing worker could be used on low priority tasks
+   */
+  public double getLowPriorityThreadReusePercent() {
+    return getTruePercent(lowPriorityWorkerAvailable);
+  }
+  
+  private static double getTruePercent(List<Boolean> list) {
+    synchronized (list) {
+      if (list.isEmpty()) {
+        return -1;
+      }
+      
+      double reuseCount = 0;
+      Iterator<Boolean> it = list.iterator();
+      while (it.hasNext()) {
+        if (it.next()) {
+          reuseCount++;
+        }
+      }
+      
+      return (reuseCount / list.size()) * 100;
+    }
+  }
+  
   protected void trackTaskStart(Wrapper taskWrapper) {
     runningTasks.put(taskWrapper, Clock.accurateTime());
     
-    totalExecutions.incrementAndGet();
+    switch (taskWrapper.priority) {
+      case High:
+        totalHighPriorityExecutions.incrementAndGet();
+        break;
+      case Low:
+        totalLowPriorityExecutions.incrementAndGet();
+        break;
+      default:
+        throw new UnsupportedOperationException("Priority not handled: " + taskWrapper.priority);
+    }
   }
   
   protected void trackTaskFinish(Wrapper taskWrapper) {
@@ -320,8 +471,15 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
      */
     synchronized (runTimes) {
       runTimes.add(Clock.accurateTime() - startTime);
-      while (runTimes.size() > MAX_RUN_TIME_WINDOW_SIZE) {
-        runTimes.removeFirst();
+      trimList(runTimes);
+    }
+  }
+  
+  @SuppressWarnings("rawtypes")
+  protected static void trimList(LinkedList list) {
+    synchronized (list) {
+      while (list.size() > MAX_WINDOW_SIZE) {
+        list.removeFirst();
       }
     }
   }
