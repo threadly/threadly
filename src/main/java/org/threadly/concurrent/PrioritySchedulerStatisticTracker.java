@@ -1,8 +1,16 @@
 package org.threadly.concurrent;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.threadly.util.Clock;
 
 /**
  * An implementation of {@link PriorityScheduledExecutor} which tracks run and usage 
@@ -15,6 +23,12 @@ import java.util.concurrent.ThreadFactory;
  * @author jent - Mike Jensen
  */
 public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor {
+  private static final int MAX_RUN_TIME_WINDOW_SIZE = 1000;
+  
+  protected final AtomicInteger totalExecutions;
+  protected final ConcurrentHashMap<Wrapper, Long> runningTasks;
+  protected final LinkedList<Long> runTimes;
+  
   /**
    * Constructs a new thread pool, though no threads will be started 
    * till it accepts it's first request.  This constructs a default 
@@ -29,6 +43,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs);
+    
+    totalExecutions = new AtomicInteger();
+    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
+    runTimes = new LinkedList<Long>();
   }
   
   /**
@@ -45,6 +63,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, useDaemonThreads);
+    
+    totalExecutions = new AtomicInteger();
+    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
+    runTimes = new LinkedList<Long>();
   }
   
   /**
@@ -67,6 +89,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
                                            long maxWaitForLowPriorityInMs) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs);
+    
+    totalExecutions = new AtomicInteger();
+    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
+    runTimes = new LinkedList<Long>();
   }
   
   /**
@@ -89,9 +115,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
                                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            final boolean useDaemonThreads) {
-    
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs);
+    
+    totalExecutions = new AtomicInteger();
+    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
+    runTimes = new LinkedList<Long>();
   }
   
   /**
@@ -113,7 +142,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, defaultPriority, maxWaitForLowPriorityInMs, threadFactory);
+    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+          defaultPriority, maxWaitForLowPriorityInMs, 
+          threadFactory);
+    
+    totalExecutions = new AtomicInteger();
+    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
+    runTimes = new LinkedList<Long>();
   }
   
   private Runnable wrap(Runnable task, 
@@ -178,11 +213,128 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
                                  initialDelay, recurringDelay, priority);
   }
   
+  /**
+   * Call to get the total qty of tasks this executor has handled.
+   * 
+   * @return total qty of tasks run
+   */
+  public int getTotalExecutionCount() {
+    return totalExecutions.get();
+  }
+  
+  /**
+   * Call to get any runnables that have been running longer than a given period of time.  
+   * This is particularly useful when looking for runnables that may be executing longer 
+   * than expected.  Cases where that happens these runnables could block the thread pool 
+   * from executing additional tasks.
+   * 
+   * @param timeInMs threshold of time to search for runnables
+   * @return list of runnables which are, or had been running over the provided time length
+   */
+  public List<Runnable> getRunnablesRunningOverTime(long timeInMs) {
+    List<Runnable> result = new LinkedList<Runnable>();
+    
+    long now = Clock.accurateTime();
+    Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
+    while (it.hasNext()) {
+      Entry<Wrapper, Long> entry = it.next();
+      if (! entry.getKey().callable) {
+        if (now - entry.getValue() >= timeInMs) {
+          result.add(((RunnableStatWrapper)entry.getKey()).toRun);
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Call to get any callables that have been running longer than a given period of time.  
+   * This is particularly useful when looking for callables that may be executing longer 
+   * than expected.  Cases where that happens these callables could block the thread pool 
+   * from executing additional tasks.
+   * 
+   * @param timeInMs threshold of time to search for callables
+   * @return list of callables which are, or had been running over the provided time length
+   */
+  public List<Callable<?>> getCallablesRunningOverTime(long timeInMs) {
+    List<Callable<?>> result = new LinkedList<Callable<?>>();
+    
+    long now = Clock.accurateTime();
+    Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
+    while (it.hasNext()) {
+      Entry<Wrapper, Long> entry = it.next();
+      if (entry.getKey().callable) {
+        if (now - entry.getValue() >= timeInMs) {
+          result.add(((CallableStatWrapper<?>)entry.getKey()).toRun);
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Call to return the number of callables and/or runnables which have been running longer 
+   * than the provided amount of time in milliseconds.
+   * 
+   * @param timeInMs threshold of time to search for execution
+   * @return total qty of runnables and callables which have or are running longer than the provided time length
+   */
+  public int getQtyRunningOverTime(long timeInMs) {
+    int result = 0;
+    
+    long now = Clock.accurateTime();
+    Iterator<Long> it = runningTasks.values().iterator();
+    while (it.hasNext()) {
+      Long startTime = it.next();
+      if (now - startTime >= timeInMs) {
+        result++;
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Call to check how many tasks are currently being executed 
+   * in this thread pool.
+   * 
+   * @return current number of running tasks
+   */
+  public int getCurrentlyRunningCount() {
+    return runningTasks.size();
+  }
+  
+  protected void trackTaskStart(Wrapper taskWrapper) {
+    runningTasks.put(taskWrapper, Clock.accurateTime());
+    
+    totalExecutions.incrementAndGet();
+  }
+  
+  protected void trackTaskFinish(Wrapper taskWrapper) {
+    Long startTime = runningTasks.remove(taskWrapper);
+    /* start time will never be null if this is called in the same 
+     * thread as trackTaskStart and trackTaskStart was called first.  
+     * We make that assumption here.
+     */
+    synchronized (runTimes) {
+      runTimes.add(Clock.accurateTime() - startTime);
+      while (runTimes.size() > MAX_RUN_TIME_WINDOW_SIZE) {
+        runTimes.removeFirst();
+      }
+    }
+  }
+  
   protected class Wrapper {
+    public final boolean callable;
     public final TaskPriority priority;
     public final boolean recurring;
     
-    public Wrapper(TaskPriority priority, boolean recurring) {
+    public Wrapper(boolean callable, 
+                   TaskPriority priority, 
+                   boolean recurring) {
+      this.callable = callable;
       this.priority = priority;
       this.recurring = recurring;
     }
@@ -194,18 +346,18 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     public RunnableStatWrapper(Runnable toRun, 
                                TaskPriority priority, 
                                boolean recurring) {
-      super(priority, recurring);
+      super(false, priority, recurring);
       
       this.toRun = toRun;
     }
     
     @Override
     public void run() {
-      // TODO - track start
+      trackTaskStart(this);
       try {
         toRun.run();
       } finally {
-        // TODO - track finish
+        trackTaskFinish(this);
       }
     }
   }
@@ -216,18 +368,18 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     public CallableStatWrapper(Callable<T> toRun, 
                                TaskPriority priority, 
                                boolean recurring) {
-      super(priority, recurring);
+      super(true, priority, recurring);
       
       this.toRun = toRun;
     }
     
     @Override
     public T call() throws Exception {
-      // TODO - track start
+      trackTaskStart(this);
       try {
         return toRun.call();
       } finally {
-        // TODO - track finish
+        trackTaskFinish(this);
       }
     }
   }
