@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.util.Clock;
@@ -33,6 +34,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   protected final LinkedList<Long> runTimes;
   protected final LinkedList<Boolean> lowPriorityWorkerAvailable;
   protected final LinkedList<Boolean> highPriorityWorkerAvailable;
+  protected final List<Long> lowPriorityExecutionDelay;
+  protected final List<Long> highPriorityExecutionDelay;
   
   /**
    * Constructs a new thread pool, though no threads will be started 
@@ -55,6 +58,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     runTimes = new LinkedList<Long>();
     lowPriorityWorkerAvailable = new LinkedList<Boolean>();
     highPriorityWorkerAvailable = new LinkedList<Boolean>();
+    lowPriorityExecutionDelay = new LinkedList<Long>();
+    highPriorityExecutionDelay = new LinkedList<Long>();
   }
   
   /**
@@ -78,6 +83,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     runTimes = new LinkedList<Long>();
     lowPriorityWorkerAvailable = new LinkedList<Boolean>();
     highPriorityWorkerAvailable = new LinkedList<Boolean>();
+    lowPriorityExecutionDelay = new LinkedList<Long>();
+    highPriorityExecutionDelay = new LinkedList<Long>();
   }
   
   /**
@@ -107,6 +114,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     runTimes = new LinkedList<Long>();
     lowPriorityWorkerAvailable = new LinkedList<Boolean>();
     highPriorityWorkerAvailable = new LinkedList<Boolean>();
+    lowPriorityExecutionDelay = new LinkedList<Long>();
+    highPriorityExecutionDelay = new LinkedList<Long>();
   }
   
   /**
@@ -138,6 +147,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     runTimes = new LinkedList<Long>();
     lowPriorityWorkerAvailable = new LinkedList<Boolean>();
     highPriorityWorkerAvailable = new LinkedList<Boolean>();
+    lowPriorityExecutionDelay = new LinkedList<Long>();
+    highPriorityExecutionDelay = new LinkedList<Long>();
   }
   
   /**
@@ -169,6 +180,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     runTimes = new LinkedList<Long>();
     lowPriorityWorkerAvailable = new LinkedList<Boolean>();
     highPriorityWorkerAvailable = new LinkedList<Boolean>();
+    lowPriorityExecutionDelay = new LinkedList<Long>();
+    highPriorityExecutionDelay = new LinkedList<Long>();
   }
 
   @Override
@@ -195,6 +208,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
     
     if (w != null) {  // may be null if shutdown
+      Clock.accurateTime(); // update clock for task to ensure it is accurate
+      long executionDelay = Math.abs(task.getDelay(TimeUnit.MILLISECONDS));
+      highPriorityExecutionDelay.add(executionDelay);
+      
       w.nextTask(task);
     }
   }
@@ -230,6 +247,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
     
     if (w != null) {  // may be null if shutdown
+      Clock.accurateTime(); // update clock for task to ensure it is accurate
+      long executionDelay = Math.abs(task.getDelay(TimeUnit.MILLISECONDS));
+      lowPriorityExecutionDelay.add(executionDelay);
+      
       w.nextTask(task);
     }
   }
@@ -288,15 +309,61 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return average time in milliseconds tasks run
    */
   public long getAverageTaskRunTime() {
-    long totalRunTime = 0;
     synchronized (runTimes) {
-      Iterator<Long> it = runTimes.iterator();
-      while (it.hasNext()) {
-        totalRunTime += it.next();
-      }
-      
-      return totalRunTime / runTimes.size();
+      return getAvgTime(runTimes);
     }
+  }
+  
+  /**
+   * Gets the average delay from when the task is ready, to when 
+   * it is actually executed.
+   * 
+   * @return average delay for tasks to be executed
+   */
+  public long getAvgExecutionDelay() {
+    List<Long> resultList = new LinkedList<Long>();
+    synchronized (lowPriorityExecutionDelay) {
+      resultList.addAll(lowPriorityExecutionDelay);
+    }
+    synchronized (highPriorityExecutionDelay) {
+      resultList.addAll(highPriorityExecutionDelay);
+    }
+    
+    return getAvgTime(resultList);
+  }
+  
+  /**
+   * Gets the average delay from when the task is ready, to when 
+   * it is actually executed.
+   * 
+   * @return average delay for high priority tasks to be executed
+   */
+  public long getHighPriorityAvgExecutionDelay() {
+    synchronized (highPriorityExecutionDelay) {
+      return getAvgTime(highPriorityExecutionDelay);
+    }
+  }
+  
+  /**
+   * Gets the average delay from when the task is ready, to when 
+   * it is actually executed.
+   * 
+   * @return average delay for low priority tasks to be executed
+   */
+  public long getLowPriorityAvgExecutionDelay() {
+    synchronized (lowPriorityExecutionDelay) {
+      return getAvgTime(lowPriorityExecutionDelay);
+    }
+  }
+  
+  private static long getAvgTime(List<Long> list) {
+    long totalTime = 0;
+    Iterator<Long> it = list.iterator();
+    while (it.hasNext()) {
+      totalTime += it.next();
+    }
+      
+    return totalTime / list.size();
   }
   
   /**
@@ -321,8 +388,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return total qty of tasks run
    */
   public int getTotalExecutionCount() {
-    return getTotalHighPriorityExecutionCount() + 
-             getTotalLowPriorityExecutionCount();
+    return getHighPriorityTotalExecutionCount() + 
+             getLowPriorityTotalExecutionCount();
   }
   
   /**
@@ -330,7 +397,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * 
    * @return total qty of high priority tasks run
    */
-  public int getTotalHighPriorityExecutionCount() {
+  public int getHighPriorityTotalExecutionCount() {
     return totalHighPriorityExecutions.get();
   }
   
@@ -339,7 +406,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * 
    * @return total qty of low priority tasks run
    */
-  public int getTotalLowPriorityExecutionCount() {
+  public int getLowPriorityTotalExecutionCount() {
     return totalLowPriorityExecutions.get();
   }
   
@@ -455,7 +522,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return percent of time that threads are able to be reused for high priority tasks
    */
   public double getHighPriorityThreadReusePercent() {
-    return getTruePercent(highPriorityWorkerAvailable);
+    synchronized (highPriorityWorkerAvailable) {
+      return getTruePercent(highPriorityWorkerAvailable);
+    }
   }
   
   /**
@@ -467,25 +536,25 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return percent of time that threads are able to be reused for low priority tasks
    */
   public double getLowPriorityThreadReusePercent() {
-    return getTruePercent(lowPriorityWorkerAvailable);
+    synchronized (lowPriorityWorkerAvailable) {
+      return getTruePercent(lowPriorityWorkerAvailable);
+    }
   }
   
   private static double getTruePercent(List<Boolean> list) {
-    synchronized (list) {
-      if (list.isEmpty()) {
-        return -1;
-      }
-      
-      double reuseCount = 0;
-      Iterator<Boolean> it = list.iterator();
-      while (it.hasNext()) {
-        if (it.next()) {
-          reuseCount++;
-        }
-      }
-      
-      return (reuseCount / list.size()) * 100;
+    if (list.isEmpty()) {
+      return -1;
     }
+    
+    double reuseCount = 0;
+    Iterator<Boolean> it = list.iterator();
+    while (it.hasNext()) {
+      if (it.next()) {
+        reuseCount++;
+      }
+    }
+    
+    return (reuseCount / list.size()) * 100;
   }
   
   protected synchronized void trackTaskStart(Wrapper taskWrapper) {

@@ -798,8 +798,8 @@ public class PrioritySchedulerStatisticTrackerTest {
     assertEquals(scheduler.getCurrentlyRunningCount(), 0);
     
     assertEquals(scheduler.getTotalExecutionCount(), lowPriorityCount + highPriorityCount);
-    assertEquals(scheduler.getTotalLowPriorityExecutionCount(), lowPriorityCount);
-    assertEquals(scheduler.getTotalHighPriorityExecutionCount(), highPriorityCount);
+    assertEquals(scheduler.getLowPriorityTotalExecutionCount(), lowPriorityCount);
+    assertEquals(scheduler.getHighPriorityTotalExecutionCount(), highPriorityCount);
   }
   
   @Test
@@ -841,6 +841,8 @@ public class PrioritySchedulerStatisticTrackerTest {
     assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
     assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
   }
+  
+  // TODO - add tests to verify average execution delay
   
   // TODO - add test to verify getting long running runnables
   
