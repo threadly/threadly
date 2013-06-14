@@ -315,6 +315,22 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
+   * This reports the median run time for tasks run by this executor.  
+   * It only reports for tasks which have completed.
+   * 
+   * @return median time in milliseconds tasks run
+   */
+  public long getMedianTaskRunTime() {
+    List<Long> times;
+    synchronized (runTimes) {
+      times = new ArrayList<Long>(runTimes);
+    }
+    Collections.sort(times);
+    
+    return times.get(times.size() / 2);
+  }
+  
+  /**
    * Gets the average delay from when the task is ready, to when 
    * it is actually executed.
    * 
@@ -354,6 +370,38 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     synchronized (lowPriorityExecutionDelay) {
       return getAvgTime(lowPriorityExecutionDelay);
     }
+  }
+  
+  /**
+   * Gets the median delay from when the task is ready, to when 
+   * it is actually executed.
+   * 
+   * @return median delay for high priority tasks to be executed
+   */
+  public long getHighPriorityMedianExecutionDelay() {
+    List<Long> times;
+    synchronized (highPriorityExecutionDelay) {
+      times = new ArrayList<Long>(highPriorityExecutionDelay);
+    }
+    Collections.sort(times);
+    
+    return times.get(times.size() / 2);
+  }
+  
+  /**
+   * Gets the median delay from when the task is ready, to when 
+   * it is actually executed.
+   * 
+   * @return median delay for low priority tasks to be executed
+   */
+  public long getLowPriorityMedianExecutionDelay() {
+    List<Long> times;
+    synchronized (lowPriorityExecutionDelay) {
+      times = new ArrayList<Long>(lowPriorityExecutionDelay);
+    }
+    Collections.sort(times);
+    
+    return times.get(times.size() / 2);
   }
   
   /**
