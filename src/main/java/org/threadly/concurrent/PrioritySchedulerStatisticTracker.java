@@ -223,12 +223,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to get any runnables that have been running longer than a given period of time.  
+   * Call to get any {@link Runnable} that have been running longer than a given period of time.  
    * This is particularly useful when looking for runnables that may be executing longer 
    * than expected.  Cases where that happens these runnables could block the thread pool 
    * from executing additional tasks.
    * 
-   * @param timeInMs threshold of time to search for runnables
+   * @param timeInMs threshold of time to search for
    * @return list of runnables which are, or had been running over the provided time length
    */
   public List<Runnable> getRunnablesRunningOverTime(long timeInMs) {
@@ -249,12 +249,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to get any callables that have been running longer than a given period of time.  
+   * Call to get any {@link Callable} that have been running longer than a given period of time.  
    * This is particularly useful when looking for callables that may be executing longer 
    * than expected.  Cases where that happens these callables could block the thread pool 
    * from executing additional tasks.
    * 
-   * @param timeInMs threshold of time to search for callables
+   * @param timeInMs threshold of time to search for
    * @return list of callables which are, or had been running over the provided time length
    */
   public List<Callable<?>> getCallablesRunningOverTime(long timeInMs) {
@@ -326,6 +326,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
+  /**
+   * Wrapper for any task which needs to track statistics.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class Wrapper {
     public final boolean callable;
     public final TaskPriority priority;
@@ -340,6 +345,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
+  /**
+   * Wrapper for {@link Runnable} for tracking statistics.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class RunnableStatWrapper extends Wrapper implements Runnable {
     private final Runnable toRun;
     
@@ -361,7 +371,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       }
     }
   }
+
   
+  /**
+   * Wrapper for {@link Callable} for tracking statistics.
+   * 
+   * @author jent - Mike Jensen
+   */
   protected class CallableStatWrapper<T> extends Wrapper implements Callable<T> {
     private final Callable<T> toRun;
     
