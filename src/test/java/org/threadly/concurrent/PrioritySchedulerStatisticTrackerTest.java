@@ -734,5 +734,36 @@ public class PrioritySchedulerStatisticTrackerTest {
     }
   }
   
-  // TODO - add tests to verify statistics tracked
+  // tests for statistics tracking
+  
+  @Test
+  public void getTotalExecutionCountTest() {
+    int lowPriorityCount = 5;
+    int highPriorityCount = 10;
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
+                                                                                        highPriorityCount + lowPriorityCount, 
+                                                                                        1000, TaskPriority.High, 100);
+    TestRunnable lastLowPriorityRunnable = null;
+    for (int i = 0; i < lowPriorityCount; i++) {
+      lastLowPriorityRunnable = new TestRunnable();
+      scheduler.execute(lastLowPriorityRunnable, 
+                        TaskPriority.Low);
+    }
+    TestRunnable lastHighPriorityRunnable = null;
+    for (int i = 0; i < highPriorityCount; i++) {
+      lastHighPriorityRunnable = new TestRunnable();
+      scheduler.execute(lastHighPriorityRunnable, 
+                        TaskPriority.High);
+    }
+    lastLowPriorityRunnable.blockTillFinished();
+    lastHighPriorityRunnable.blockTillFinished();
+    
+    assertEquals(scheduler.getCurrentlyRunningCount(), 0);
+    
+    assertEquals(scheduler.getTotalExecutionCount(), lowPriorityCount + highPriorityCount);
+    assertEquals(scheduler.getTotalLowPriorityExecutionCount(), lowPriorityCount);
+    assertEquals(scheduler.getTotalHighPriorityExecutionCount(), highPriorityCount);
+  }
+  
+  // TODO - add more tests to verify statistics tracked
 }

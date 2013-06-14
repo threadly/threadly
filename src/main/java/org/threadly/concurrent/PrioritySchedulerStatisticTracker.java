@@ -18,7 +18,7 @@ import org.threadly.util.Clock;
  * more overhead from the normal {@link PriorityScheduledExecutor}.
  * 
  * It helps give insight in how long tasks are running, how well the thread pool is 
- * being utilized, as well as execution frequency. 
+ * being utilized, as well as execution frequency.
  * 
  * @author jent - Mike Jensen
  */
@@ -253,21 +253,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
 
   @Override
-  public void execute(Runnable task, TaskPriority priority) {
-    super.execute(wrap(task, priority, false), priority);
-  }
-
-  @Override
-  public Future<?> submit(Runnable task, TaskPriority priority) {
-    return super.submit(wrap(task, priority, false), priority);
-  }
-
-  @Override
-  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
-    return super.submit(wrap(task, priority, false), priority);
-  }
-
-  @Override
   public void schedule(Runnable task, long delayInMs, TaskPriority priority) {
     super.schedule(wrap(task, priority, false), 
                    delayInMs, priority);
@@ -407,12 +392,31 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
+   * Call to see how frequently tasks are able to run without creating 
+   * a new thread.
+   * 
+   * Returns -1 if no statistics have been recorded yet.
+   * 
+   * @return percent of time that threads are able to be reused
+   */
+  public double getThreadReusePercent() {
+    List<Boolean> totalList = new LinkedList<Boolean>();
+    synchronized (lowPriorityWorkerAvailable) {
+      totalList.addAll(lowPriorityWorkerAvailable);
+    }
+    synchronized (highPriorityWorkerAvailable) {
+      totalList.addAll(highPriorityWorkerAvailable);
+    }
+    return getTruePercent(totalList);
+  }
+  
+  /**
    * Call to see how frequently high priority tasks are able to run without creating 
    * a new thread.
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
-   * @return percent that an existing worker could be used on high priority tasks
+   * @return percent of time that threads are able to be reused for high priority tasks
    */
   public double getHighPriorityThreadReusePercent() {
     return getTruePercent(highPriorityWorkerAvailable);
@@ -424,7 +428,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
-   * @return percent that an existing worker could be used on low priority tasks
+   * @return percent of time that threads are able to be reused for low priority tasks
    */
   public double getLowPriorityThreadReusePercent() {
     return getTruePercent(lowPriorityWorkerAvailable);
@@ -448,7 +452,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
-  protected void trackTaskStart(Wrapper taskWrapper) {
+  protected synchronized void trackTaskStart(Wrapper taskWrapper) {
     runningTasks.put(taskWrapper, Clock.accurateTime());
     
     switch (taskWrapper.priority) {
