@@ -737,6 +737,43 @@ public class PrioritySchedulerStatisticTrackerTest {
   // tests for statistics tracking
   
   @Test
+  public void getRunTimeTest() {
+    int lowPriorityCount = 5;
+    int highPriorityCount = 10;
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
+                                                                                        highPriorityCount + lowPriorityCount, 
+                                                                                        1000, TaskPriority.High, 100);
+    TestRunnable lastLowPriorityRunnable = null;
+    for (int i = 0; i < lowPriorityCount; i++) {
+      lastLowPriorityRunnable = new TestRunnable();
+      scheduler.execute(lastLowPriorityRunnable, 
+                        TaskPriority.Low);
+    }
+    TestRunnable lastHighPriorityRunnable = null;
+    for (int i = 0; i < highPriorityCount; i++) {
+      lastHighPriorityRunnable = new TestRunnable();
+      scheduler.execute(lastHighPriorityRunnable, 
+                        TaskPriority.High);
+    }
+    lastLowPriorityRunnable.blockTillFinished();
+    lastHighPriorityRunnable.blockTillFinished();
+    
+    List<Long> runTimes = scheduler.getRunTimes();
+    assertEquals(runTimes.size(), 
+                 lowPriorityCount + highPriorityCount);
+    
+    long totalRunTime = 0;
+    Iterator<Long> it = runTimes.iterator();
+    while (it.hasNext()) {
+      totalRunTime += it.next();
+    }
+    
+    long avgRunTime = totalRunTime / runTimes.size();
+    
+    assertEquals(scheduler.getAverageTaskRunTime(), avgRunTime);
+  }
+  
+  @Test
   public void getTotalExecutionCountTest() {
     int lowPriorityCount = 5;
     int highPriorityCount = 10;
@@ -805,5 +842,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
   }
   
-  // TODO - add more tests to verify statistics tracked
+  // TODO - add test to verify getting long running runnables
+  
+  // TODO - add test to verify getting long running callables
 }

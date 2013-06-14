@@ -1,5 +1,7 @@
 package org.threadly.concurrent;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -280,6 +282,40 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
+   * This reports the rolling average of time that tasks for this 
+   * scheduler run.  It only reports for tasks which have completed.
+   * 
+   * @return average time in milliseconds tasks run
+   */
+  public long getAverageTaskRunTime() {
+    long totalRunTime = 0;
+    synchronized (runTimes) {
+      Iterator<Long> it = runTimes.iterator();
+      while (it.hasNext()) {
+        totalRunTime += it.next();
+      }
+      
+      return totalRunTime / runTimes.size();
+    }
+  }
+  
+  /**
+   * Call to get a list of all currently recorded times for execution.  
+   * This is the window used for the rolling average for 
+   * getAverageTaskRunTime().  This call allows for more complex statistics 
+   * (looking for outliers, etc).
+   * 
+   * @return the list of currently recorded run times for tasks
+   */
+  public List<Long> getRunTimes() {
+    List<Long> result;
+    synchronized (runTimes) {
+      result = new ArrayList<Long>(runTimes);
+    }
+    return Collections.unmodifiableList(result);
+  }
+  
+  /**
    * Call to get the total qty of tasks this executor has handled.
    * 
    * @return total qty of tasks run
@@ -468,13 +504,14 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   protected void trackTaskFinish(Wrapper taskWrapper) {
+    long finishTime = Clock.accurateTime();
     Long startTime = runningTasks.remove(taskWrapper);
     /* start time will never be null if this is called in the same 
      * thread as trackTaskStart and trackTaskStart was called first.  
      * We make that assumption here.
      */
     synchronized (runTimes) {
-      runTimes.add(Clock.accurateTime() - startTime);
+      runTimes.add(finishTime - startTime);
       trimList(runTimes);
     }
   }
@@ -534,7 +571,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
 
-  
   /**
    * Wrapper for {@link Callable} for tracking statistics.
    * 
