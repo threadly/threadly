@@ -356,6 +356,38 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
+  /**
+   * Call to get a list of all currently recorded times for execution delays.  
+   * This is the window used for the rolling average for 
+   * getHighPriorityAvgExecutionDelay().  This call allows for more complex 
+   * statistics (ie looking for outliers, etc).
+   * 
+   * @return list which represents execution delay samples
+   */
+  public List<Long> getHighPriorityExecutionDelays() {
+    List<Long> result;
+    synchronized (highPriorityExecutionDelay) {
+      result = new ArrayList<Long>(highPriorityExecutionDelay);
+    }
+    return Collections.unmodifiableList(result);
+  }
+  
+  /**
+   * Call to get a list of all currently recorded times for execution delays.  
+   * This is the window used for the rolling average for 
+   * getLowPriorityAvgExecutionDelay().  This call allows for more complex 
+   * statistics (ie looking for outliers, etc).
+   * 
+   * @return list which represents execution delay samples
+   */
+  public List<Long> getLowPriorityExecutionDelays() {
+    List<Long> result;
+    synchronized (lowPriorityExecutionDelay) {
+      result = new ArrayList<Long>(lowPriorityExecutionDelay);
+    }
+    return Collections.unmodifiableList(result);
+  }
+  
   private static long getAvgTime(List<Long> list) {
     long totalTime = 0;
     Iterator<Long> it = list.iterator();
@@ -370,7 +402,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * Call to get a list of all currently recorded times for execution.  
    * This is the window used for the rolling average for 
    * getAverageTaskRunTime().  This call allows for more complex statistics 
-   * (looking for outliers, etc).
+   * (ie looking for outliers, etc).
    * 
    * @return the list of currently recorded run times for tasks
    */
