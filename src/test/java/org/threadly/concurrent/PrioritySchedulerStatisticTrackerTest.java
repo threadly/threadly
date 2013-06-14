@@ -765,5 +765,45 @@ public class PrioritySchedulerStatisticTrackerTest {
     assertEquals(scheduler.getTotalHighPriorityExecutionCount(), highPriorityCount);
   }
   
+  @Test
+  public void getThreadReusePercentTest() {
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                        TaskPriority.High, 100);
+    assertTrue(scheduler.getThreadReusePercent() == -1);
+    assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
+    assertTrue(scheduler.getHighPriorityThreadReusePercent() == -1);
+    
+    TestRunnable tr = new TestRunnable();
+    scheduler.execute(tr, TaskPriority.High);
+    tr.blockTillFinished();
+    
+    assertTrue(scheduler.getThreadReusePercent() == 0);
+    assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
+    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 0);
+    
+    tr = new TestRunnable();
+    scheduler.execute(tr, TaskPriority.High);
+    tr.blockTillFinished();
+    
+    assertTrue(scheduler.getThreadReusePercent() == 50);
+    assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
+    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+    
+    tr = new TestRunnable();
+    scheduler.execute(tr, TaskPriority.Low);
+    tr.blockTillFinished();
+    
+    assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
+    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+    
+    tr = new TestRunnable();
+    scheduler.execute(tr, TaskPriority.Low);
+    tr.blockTillFinished();
+    
+    assertTrue(scheduler.getThreadReusePercent() == 75);
+    assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
+    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+  }
+  
   // TODO - add more tests to verify statistics tracked
 }
