@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
@@ -12,6 +13,7 @@ import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.TestCallable;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
@@ -743,34 +745,38 @@ public class PrioritySchedulerStatisticTrackerTest {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
                                                                                         highPriorityCount + lowPriorityCount, 
                                                                                         1000, TaskPriority.High, 100);
-    TestRunnable lastLowPriorityRunnable = null;
-    for (int i = 0; i < lowPriorityCount; i++) {
-      lastLowPriorityRunnable = new TestRunnable();
-      scheduler.execute(lastLowPriorityRunnable, 
-                        TaskPriority.Low);
+    try {
+      TestRunnable lastLowPriorityRunnable = null;
+      for (int i = 0; i < lowPriorityCount; i++) {
+        lastLowPriorityRunnable = new TestRunnable();
+        scheduler.execute(lastLowPriorityRunnable, 
+                          TaskPriority.Low);
+      }
+      TestRunnable lastHighPriorityRunnable = null;
+      for (int i = 0; i < highPriorityCount; i++) {
+        lastHighPriorityRunnable = new TestRunnable();
+        scheduler.execute(lastHighPriorityRunnable, 
+                          TaskPriority.High);
+      }
+      lastLowPriorityRunnable.blockTillFinished();
+      lastHighPriorityRunnable.blockTillFinished();
+      
+      List<Long> runTimes = scheduler.getRunTimes();
+      assertEquals(runTimes.size(), 
+                   lowPriorityCount + highPriorityCount);
+      
+      long totalRunTime = 0;
+      Iterator<Long> it = runTimes.iterator();
+      while (it.hasNext()) {
+        totalRunTime += it.next();
+      }
+      
+      long avgRunTime = totalRunTime / runTimes.size();
+      
+      assertEquals(scheduler.getAverageTaskRunTime(), avgRunTime);
+    } finally {
+      scheduler.shutdown();
     }
-    TestRunnable lastHighPriorityRunnable = null;
-    for (int i = 0; i < highPriorityCount; i++) {
-      lastHighPriorityRunnable = new TestRunnable();
-      scheduler.execute(lastHighPriorityRunnable, 
-                        TaskPriority.High);
-    }
-    lastLowPriorityRunnable.blockTillFinished();
-    lastHighPriorityRunnable.blockTillFinished();
-    
-    List<Long> runTimes = scheduler.getRunTimes();
-    assertEquals(runTimes.size(), 
-                 lowPriorityCount + highPriorityCount);
-    
-    long totalRunTime = 0;
-    Iterator<Long> it = runTimes.iterator();
-    while (it.hasNext()) {
-      totalRunTime += it.next();
-    }
-    
-    long avgRunTime = totalRunTime / runTimes.size();
-    
-    assertEquals(scheduler.getAverageTaskRunTime(), avgRunTime);
   }
   
   @Test
@@ -780,66 +786,74 @@ public class PrioritySchedulerStatisticTrackerTest {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
                                                                                         highPriorityCount + lowPriorityCount, 
                                                                                         1000, TaskPriority.High, 100);
-    TestRunnable lastLowPriorityRunnable = null;
-    for (int i = 0; i < lowPriorityCount; i++) {
-      lastLowPriorityRunnable = new TestRunnable();
-      scheduler.execute(lastLowPriorityRunnable, 
-                        TaskPriority.Low);
+    try {
+      TestRunnable lastLowPriorityRunnable = null;
+      for (int i = 0; i < lowPriorityCount; i++) {
+        lastLowPriorityRunnable = new TestRunnable();
+        scheduler.execute(lastLowPriorityRunnable, 
+                          TaskPriority.Low);
+      }
+      TestRunnable lastHighPriorityRunnable = null;
+      for (int i = 0; i < highPriorityCount; i++) {
+        lastHighPriorityRunnable = new TestRunnable();
+        scheduler.execute(lastHighPriorityRunnable, 
+                          TaskPriority.High);
+      }
+      lastLowPriorityRunnable.blockTillFinished();
+      lastHighPriorityRunnable.blockTillFinished();
+      
+      assertEquals(scheduler.getCurrentlyRunningCount(), 0);
+      
+      assertEquals(scheduler.getTotalExecutionCount(), lowPriorityCount + highPriorityCount);
+      assertEquals(scheduler.getLowPriorityTotalExecutionCount(), lowPriorityCount);
+      assertEquals(scheduler.getHighPriorityTotalExecutionCount(), highPriorityCount);
+    } finally {
+      scheduler.shutdown();
     }
-    TestRunnable lastHighPriorityRunnable = null;
-    for (int i = 0; i < highPriorityCount; i++) {
-      lastHighPriorityRunnable = new TestRunnable();
-      scheduler.execute(lastHighPriorityRunnable, 
-                        TaskPriority.High);
-    }
-    lastLowPriorityRunnable.blockTillFinished();
-    lastHighPriorityRunnable.blockTillFinished();
-    
-    assertEquals(scheduler.getCurrentlyRunningCount(), 0);
-    
-    assertEquals(scheduler.getTotalExecutionCount(), lowPriorityCount + highPriorityCount);
-    assertEquals(scheduler.getLowPriorityTotalExecutionCount(), lowPriorityCount);
-    assertEquals(scheduler.getHighPriorityTotalExecutionCount(), highPriorityCount);
   }
   
   @Test
   public void getThreadReusePercentTest() {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                         TaskPriority.High, 100);
-    assertTrue(scheduler.getThreadReusePercent() == -1);
-    assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
-    assertTrue(scheduler.getHighPriorityThreadReusePercent() == -1);
-    
-    TestRunnable tr = new TestRunnable();
-    scheduler.execute(tr, TaskPriority.High);
-    tr.blockTillFinished();
-    
-    assertTrue(scheduler.getThreadReusePercent() == 0);
-    assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
-    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 0);
-    
-    tr = new TestRunnable();
-    scheduler.execute(tr, TaskPriority.High);
-    tr.blockTillFinished();
-    
-    assertTrue(scheduler.getThreadReusePercent() == 50);
-    assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
-    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
-    
-    tr = new TestRunnable();
-    scheduler.execute(tr, TaskPriority.Low);
-    tr.blockTillFinished();
-    
-    assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
-    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
-    
-    tr = new TestRunnable();
-    scheduler.execute(tr, TaskPriority.Low);
-    tr.blockTillFinished();
-    
-    assertTrue(scheduler.getThreadReusePercent() == 75);
-    assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
-    assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+    try {
+      assertTrue(scheduler.getThreadReusePercent() == -1);
+      assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
+      assertTrue(scheduler.getHighPriorityThreadReusePercent() == -1);
+      
+      TestRunnable tr = new TestRunnable();
+      scheduler.execute(tr, TaskPriority.High);
+      tr.blockTillFinished();
+      
+      assertTrue(scheduler.getThreadReusePercent() == 0);
+      assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
+      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 0);
+      
+      tr = new TestRunnable();
+      scheduler.execute(tr, TaskPriority.High);
+      tr.blockTillFinished();
+      
+      assertTrue(scheduler.getThreadReusePercent() == 50);
+      assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
+      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+      
+      tr = new TestRunnable();
+      scheduler.execute(tr, TaskPriority.Low);
+      tr.blockTillFinished();
+      
+      assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
+      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+      
+      tr = new TestRunnable();
+      scheduler.execute(tr, TaskPriority.Low);
+      tr.blockTillFinished();
+      
+      assertTrue(scheduler.getThreadReusePercent() == 75);
+      assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
+      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+    } finally {
+      scheduler.shutdown();
+    }
   }
   
   // TODO - add tests to verify getMedianTaskRunTime
@@ -850,7 +864,117 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   // TODO - add tests to verify getLowPriorityMedianExecutionDelay
   
-  // TODO - add test to verify getting long running runnables
+  @Test
+  public void getRunnablesRunningOverTimeTest() {
+    final int checkTime = 20;
+    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                              TaskPriority.High, 100);
+    try {
+      BlockRunnable br = new BlockRunnable();
+      scheduler.execute(br);
+      
+      long before = System.currentTimeMillis();
+      br.blockTillStarted();
+      TestUtils.sleep(System.currentTimeMillis() - before + checkTime + 1);
+      
+      List<Runnable> longRunning = scheduler.getRunnablesRunningOverTime(checkTime);
+      br.unblock();
+      
+      assertEquals(longRunning.size(), 1);
+      assertTrue(longRunning.get(0) == br);
+      
+      // wait for task to finish now
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentlyRunningCount() == 0;
+        }
+      }.blockTillTrue();
+      
+      longRunning = scheduler.getRunnablesRunningOverTime(checkTime);
+      
+      assertTrue(longRunning.isEmpty());
+    } finally {
+      scheduler.shutdown();
+    }
+  }
   
-  // TODO - add test to verify getting long running callables
+  @Test
+  public void getCallablesRunningOverTimeTest() {
+    final int checkTime = 20;
+    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                              TaskPriority.High, 100);
+    try {
+      BlockCallable bc = new BlockCallable();
+      scheduler.submit(bc);
+      
+      long before = System.currentTimeMillis();
+      bc.blockTillStarted();
+      TestUtils.sleep(System.currentTimeMillis() - before + checkTime + 1);
+      
+      List<Callable<?>> longRunning = scheduler.getCallablesRunningOverTime(checkTime);
+      bc.unblock();
+      
+      assertEquals(longRunning.size(), 1);
+      assertTrue(longRunning.get(0) == bc);
+      
+      // wait for task to finish now
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentlyRunningCount() == 0;
+        }
+      }.blockTillTrue();
+      
+      longRunning = scheduler.getCallablesRunningOverTime(checkTime);
+      
+      assertTrue(longRunning.isEmpty());
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  private static class BlockRunnable extends TestRunnable {
+    private volatile boolean unblock = false;
+    
+    public void unblock() {
+      unblock = true;
+    }
+    
+    @Override
+    public void handleRunFinish() {
+      while (! unblock) {
+        TestUtils.sleep(10);
+      }
+    }
+  }
+  
+  private static class BlockCallable extends TestCondition implements Callable<Object> {
+    private volatile boolean unblock = false;
+    private volatile boolean started = false;
+    
+    public void unblock() {
+      unblock = true;
+    }
+    
+    public void blockTillStarted() {
+      this.blockTillTrue();
+    }
+
+    @Override
+    public Object call() {
+      started = true;
+      
+      while (! unblock) {
+        TestUtils.sleep(10);
+      }
+      
+      return new Object();
+    }
+
+    @Override
+    public boolean get() {
+      return started;
+    }
+  }
 }
