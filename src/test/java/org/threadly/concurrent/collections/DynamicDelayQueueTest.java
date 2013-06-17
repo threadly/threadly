@@ -281,7 +281,11 @@ public class DynamicDelayQueueTest {
       
       prev = testQueue.poll(0, TimeUnit.MILLISECONDS);
     }
-    // TODO - this test can be expanded
+  }
+  
+  @Test
+  public void pollTimeoutFail() throws InterruptedException {
+    assertNull(testQueue.poll(10, TimeUnit.MILLISECONDS));
   }
   
   @Test
