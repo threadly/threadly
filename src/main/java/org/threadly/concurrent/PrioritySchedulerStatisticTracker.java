@@ -309,14 +309,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return average time in milliseconds tasks run
    */
   public long getAverageTaskRunTime() {
-    synchronized (runTimes) {
-      return getAvgTime(runTimes);
-    }
+    return getAvgTime(getRunTimes());
   }
   
   /**
    * This reports the median run time for tasks run by this executor.  
-   * It only reports for tasks which have completed.
+   * It only reports for tasks which have completed.  Returns -1 if 
+   * no stats have been collected yet.
    * 
    * @return median time in milliseconds tasks run
    */
@@ -324,6 +323,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     List<Long> times;
     synchronized (runTimes) {
       times = new ArrayList<Long>(runTimes);
+    }
+    if (times.isEmpty()) {
+      return -1;
     }
     Collections.sort(times);
     
@@ -355,9 +357,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return average delay for high priority tasks to be executed
    */
   public long getHighPriorityAvgExecutionDelay() {
-    synchronized (highPriorityExecutionDelay) {
-      return getAvgTime(highPriorityExecutionDelay);
-    }
+    return getAvgTime(getHighPriorityExecutionDelays());
   }
   
   /**
@@ -367,14 +367,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return average delay for low priority tasks to be executed
    */
   public long getLowPriorityAvgExecutionDelay() {
-    synchronized (lowPriorityExecutionDelay) {
-      return getAvgTime(lowPriorityExecutionDelay);
-    }
+    return getAvgTime(getLowPriorityExecutionDelays());
   }
   
   /**
    * Gets the median delay from when the task is ready, to when 
-   * it is actually executed.
+   * it is actually executed.  Returns -1 if no stats have been 
+   * collected yet.
    * 
    * @return median delay for high priority tasks to be executed
    */
@@ -383,6 +382,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     synchronized (highPriorityExecutionDelay) {
       times = new ArrayList<Long>(highPriorityExecutionDelay);
     }
+    if (times.isEmpty()) {
+      return -1;
+    }
     Collections.sort(times);
     
     return times.get(times.size() / 2);
@@ -390,7 +392,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   
   /**
    * Gets the median delay from when the task is ready, to when 
-   * it is actually executed.
+   * it is actually executed.  Returns -1 if no stats have been 
+   * collected yet.
    * 
    * @return median delay for low priority tasks to be executed
    */
@@ -398,6 +401,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     List<Long> times;
     synchronized (lowPriorityExecutionDelay) {
       times = new ArrayList<Long>(lowPriorityExecutionDelay);
+    }
+    if (times.isEmpty()) {
+      return -1;
     }
     Collections.sort(times);
     
@@ -437,6 +443,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   private static long getAvgTime(List<Long> list) {
+    if (list.isEmpty()) {
+      return -1;
+    }
+    
     long totalTime = 0;
     Iterator<Long> it = list.iterator();
     while (it.hasNext()) {
