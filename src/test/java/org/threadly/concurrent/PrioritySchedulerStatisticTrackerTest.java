@@ -755,7 +755,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void geAvgtRunTimeTest() {
+  public void getAvgRunTimeTest() {
     int lowPriorityCount = 5;
     int highPriorityCount = 10;
     final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
@@ -766,12 +766,15 @@ public class PrioritySchedulerStatisticTrackerTest {
         scheduler.execute(new TestRunnable(), 
                           TaskPriority.Low);
       }
+      TestRunnable lastRunnable = null;
       for (int i = 0; i < highPriorityCount; i++) {
-        scheduler.execute(new TestRunnable(), 
+        lastRunnable = new TestRunnable();
+        scheduler.execute(lastRunnable, 
                           TaskPriority.High);
       }
       
-      new TestCondition() {
+      lastRunnable.blockTillFinished();
+      new TestCondition() { // block till all are finished
         @Override
         public boolean get() {
           return scheduler.getCurrentlyRunningCount() == 0;
@@ -912,6 +915,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       TestUtils.blockTillClockAdvances();
       lastRunnable.unblock();
       
+      lastRunnable.blockTillFinished();
       new TestCondition() {
         @Override
         public boolean get() {
@@ -949,6 +953,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       br.unblock();
 
       // wait for task to finish now
+      br.blockTillFinished();
       new TestCondition() {
         @Override
         public boolean get() {
@@ -989,6 +994,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       TestUtils.blockTillClockAdvances();
       lastRunnable.unblock();
       
+      lastRunnable.blockTillFinished();
       new TestCondition() {
         @Override
         public boolean get() {
@@ -1019,6 +1025,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       br.unblock();
 
       // wait for task to finish now
+      br.blockTillFinished();
       new TestCondition() {
         @Override
         public boolean get() {
@@ -1059,6 +1066,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       TestUtils.blockTillClockAdvances();
       lastRunnable.unblock();
       
+      lastRunnable.blockTillFinished();
       new TestCondition() {
         @Override
         public boolean get() {
@@ -1106,6 +1114,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       TestUtils.blockTillClockAdvances();
       lastRunnable.unblock();
       
+      lastRunnable.blockTillFinished();
       new TestCondition() {
         @Override
         public boolean get() {
@@ -1149,6 +1158,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       TestUtils.blockTillClockAdvances();
       lastRunnable.unblock();
       
+      lastRunnable.blockTillFinished();
       new TestCondition() {
         @Override
         public boolean get() {
