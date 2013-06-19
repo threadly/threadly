@@ -90,11 +90,7 @@ public class PrioritySchedulerLimiterTest {
   public void executeTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.executeTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.executeTest(sf);
   }
   
   @Test
@@ -147,66 +143,42 @@ public class PrioritySchedulerLimiterTest {
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitCallableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitCallableTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.executeFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitCallableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitCallableFail(sf);
   }
   
   @Test
   public void scheduleExecutionTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleExecutionFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
   }
   
   @Test
@@ -261,55 +233,35 @@ public class PrioritySchedulerLimiterTest {
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
   public void submitScheduledRunnableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
   }
   
   @Test
   public void submitScheduledCallableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
   }
   
   @Test
   public void recurringExecutionTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
 
   private class SchedulerLimiterFactory implements PrioritySchedulerFactory {
