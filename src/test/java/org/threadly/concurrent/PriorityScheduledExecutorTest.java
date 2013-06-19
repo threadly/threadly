@@ -503,38 +503,51 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void shutdownTest() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
-    
-    scheduler.shutdown();
-    
-    assertTrue(scheduler.isShutdown());
-    
+    shutdownTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void shutdownTest(PriorityScheduledExecutorFactory factory) {
     try {
-      scheduler.execute(new TestRunnable());
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-    
-    try {
-      scheduler.schedule(new TestRunnable(), 1000);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-    
-    try {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
+      PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
+      
+      scheduler.shutdown();
+      
+      assertTrue(scheduler.isShutdown());
+      
+      try {
+        scheduler.execute(new TestRunnable());
+        fail("Execption should have been thrown");
+      } catch (IllegalStateException e) {
+        // expected
+      }
+      
+      try {
+        scheduler.schedule(new TestRunnable(), 1000);
+        fail("Execption should have been thrown");
+      } catch (IllegalStateException e) {
+        // expected
+      }
+      
+      try {
+        scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
+        fail("Execption should have been thrown");
+      } catch (IllegalStateException e) {
+        // expected
+      }
+    } finally {
+      factory.shutdown();
     }
   }
   
   @Test
   public void addToQueueTest() {
+    addToQueueTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void addToQueueTest(PriorityScheduledExecutorFactory factory) {
     long taskDelay = 1000 * 10; // make it long to prevent it from getting consumed from the queue
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
     try {
       // verify before state
       assertFalse(scheduler.highPriorityConsumer.isRunning());
@@ -558,13 +571,17 @@ public class PriorityScheduledExecutorTest {
       assertTrue(scheduler.highPriorityConsumer.isRunning());
       assertTrue(scheduler.lowPriorityConsumer.isRunning());
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void getExistingWorkerTest() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    getExistingWorkerTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getExistingWorkerTest(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
     try {
       // add an idle worker
       Worker testWorker = scheduler.makeNewWorker();
@@ -580,13 +597,17 @@ public class PriorityScheduledExecutorTest {
       }
       
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void lookForExpiredWorkersTest() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 0);
+    lookForExpiredWorkersTest(new PriorityScheduledExecutorTestFactory());
+  }
+
+  public static void lookForExpiredWorkersTest(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 0);
     try {
       // add an idle worker
       Worker testWorker = scheduler.makeNewWorker();
@@ -612,7 +633,7 @@ public class PriorityScheduledExecutorTest {
       // verify collected now
       assertEquals(scheduler.availableWorkers.size(), 0);
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   

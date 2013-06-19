@@ -11,15 +11,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
-import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.PriorityScheduledExecutorTest.PriorityScheduledExecutorFactory;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.TestCallable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
-import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerTest {
@@ -311,117 +308,22 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void shutdownTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    
-    scheduler.shutdown();
-    
-    assertTrue(scheduler.isShutdown());
-    
-    try {
-      scheduler.execute(new TestRunnable());
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-    
-    try {
-      scheduler.schedule(new TestRunnable(), 1000);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-    
-    try {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
+    PriorityScheduledExecutorTest.shutdownTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void addToQueueTest() {
-    long taskDelay = 1000 * 10; // make it long to prevent it from getting consumed from the queue
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    try {
-      // verify before state
-      assertFalse(scheduler.highPriorityConsumer.isRunning());
-      assertFalse(scheduler.lowPriorityConsumer.isRunning());
-      
-      scheduler.addToQueue(new OneTimeTaskWrapper(new TestRunnable(), 
-                                                  TaskPriority.High, 
-                                                  taskDelay));
-
-      assertEquals(scheduler.highPriorityQueue.size(), 1);
-      assertEquals(scheduler.lowPriorityQueue.size(), 0);
-      assertTrue(scheduler.highPriorityConsumer.isRunning());
-      assertFalse(scheduler.lowPriorityConsumer.isRunning());
-      
-      scheduler.addToQueue(new OneTimeTaskWrapper(new TestRunnable(), 
-                                                  TaskPriority.Low, 
-                                                  taskDelay));
-
-      assertEquals(scheduler.highPriorityQueue.size(), 1);
-      assertEquals(scheduler.lowPriorityQueue.size(), 1);
-      assertTrue(scheduler.highPriorityConsumer.isRunning());
-      assertTrue(scheduler.lowPriorityConsumer.isRunning());
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.addToQueueTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void getExistingWorkerTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    try {
-      // add an idle worker
-      Worker testWorker = scheduler.makeNewWorker();
-      scheduler.workerDone(testWorker);
-      
-      assertEquals(scheduler.availableWorkers.size(), 1);
-      
-      try {
-        Worker returnedWorker = scheduler.getExistingWorker(100);
-        assertTrue(returnedWorker == testWorker);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.getExistingWorkerTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void lookForExpiredWorkersTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 0);
-    try {
-      // add an idle worker
-      Worker testWorker = scheduler.makeNewWorker();
-      scheduler.workerDone(testWorker);
-      
-      assertEquals(scheduler.availableWorkers.size(), 1);
-      
-      TestUtils.blockTillClockAdvances();
-      Clock.accurateTime(); // update clock so scheduler will see it
-      
-      scheduler.lookForExpiredWorkers();
-      
-      // should not have collected yet due to core size == 1
-      assertEquals(scheduler.availableWorkers.size(), 1);
-
-      scheduler.allowCoreThreadTimeOut(true);
-      
-      TestUtils.blockTillClockAdvances();
-      Clock.accurateTime(); // update clock so scheduler will see it
-      
-      scheduler.lookForExpiredWorkers();
-      
-      // verify collected now
-      assertEquals(scheduler.availableWorkers.size(), 0);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.lookForExpiredWorkersTest(new PriorityScheduledExecutorTestFactory());
   }
   
   private class SchedulerFactory implements PrioritySchedulerFactory {
