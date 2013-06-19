@@ -309,79 +309,57 @@ public class PriorityScheduledExecutorTest {
   
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.executeFail(sf);
+    SimpleSchedulerInterfaceTest.executeFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
+    SimpleSchedulerInterfaceTest.submitRunnableFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.submitCallableFail(sf);
+    SimpleSchedulerInterfaceTest.submitCallableFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void scheduleExecutionTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.scheduleTest(sf);
+    SimpleSchedulerInterfaceTest.scheduleTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void submitScheduledRunnableTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
+    SimpleSchedulerInterfaceTest.submitScheduledCallableTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void scheduleExecutionFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void submitScheduledRunnableFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void submitScheduledCallableFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
+    SimpleSchedulerInterfaceTest.submitScheduledCallableFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void recurringExecutionTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void recurringExecutionFail() {
-    SchedulerFactory sf = new SchedulerFactory();
-    
-    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
@@ -672,7 +650,8 @@ public class PriorityScheduledExecutorTest {
     }
   }
   
-  private class PriorityScheduledExecutorTestFactory implements PriorityScheduledExecutorFactory {
+  private class PriorityScheduledExecutorTestFactory implements PriorityScheduledExecutorFactory, 
+                                                                PrioritySchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     
     private PriorityScheduledExecutorTestFactory() {
@@ -701,22 +680,6 @@ public class PriorityScheduledExecutorTest {
       
       return result;
     }
-
-    @Override
-    public void shutdown() {
-      Iterator<PriorityScheduledExecutor> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdown();
-      }
-    }
-  }
-  
-  private class SchedulerFactory implements PrioritySchedulerFactory {
-    private final List<PriorityScheduledExecutor> executors;
-    
-    private SchedulerFactory() {
-      executors = new LinkedList<PriorityScheduledExecutor>();
-    }
     
     @Override
     public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
@@ -729,13 +692,12 @@ public class PriorityScheduledExecutorTest {
       
       return result;
     }
-    
+
     @Override
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
-        it.remove();
       }
     }
   }
