@@ -80,20 +80,17 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void executeTest() {
-    PriorityScheduledExecutorTest.executeTest(new SchedulerFactory(), 
-                                              new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTest.executeTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void submitRunnableTest() {
-    PriorityScheduledExecutorTest.submitRunnableTest(new SchedulerFactory(), 
-                                                     new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTest.submitRunnableTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutorTest.submitCallableTest(new SchedulerFactory(), 
-                                                     new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTest.submitCallableTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)

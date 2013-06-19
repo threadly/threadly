@@ -239,14 +239,12 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void executeTest() {
-    executeTest(new SchedulerFactory(), 
-                new PriorityScheduledExecutorTestFactory());
+    executeTest(new PriorityScheduledExecutorTestFactory());
   }
-
-  public static void executeTest(PrioritySchedulerFactory schedulerFactory, 
-                                 PriorityScheduledExecutorFactory priorityFactory) {
+  
+  public static void executeTest(PriorityScheduledExecutorFactory priorityFactory) {
     try {
-      SimpleSchedulerInterfaceTest.executeTest(schedulerFactory);
+      SimpleSchedulerInterfaceTest.executeTest(new FactoryWrapper(priorityFactory));
 
       PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
       TestRunnable tr1 = new TestRunnable();
@@ -265,14 +263,12 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void submitRunnableTest() {
-    submitRunnableTest(new SchedulerFactory(), 
-                       new PriorityScheduledExecutorTestFactory());
+    submitRunnableTest(new PriorityScheduledExecutorTestFactory());
   }
 
-  public static void submitRunnableTest(PrioritySchedulerFactory schedulerFactory, 
-                                        PriorityScheduledExecutorFactory priorityFactory) {
+  public static void submitRunnableTest(PriorityScheduledExecutorFactory priorityFactory) {
     try {
-      SimpleSchedulerInterfaceTest.submitRunnableTest(schedulerFactory);
+      SimpleSchedulerInterfaceTest.submitRunnableTest(new FactoryWrapper(priorityFactory));
 
       PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
       TestRunnable tr1 = new TestRunnable();
@@ -291,14 +287,12 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
-    submitCallableTest(new SchedulerFactory(), 
-                       new PriorityScheduledExecutorTestFactory());
+    submitCallableTest(new PriorityScheduledExecutorTestFactory());
   }
 
-  public static void submitCallableTest(PrioritySchedulerFactory schedulerFactory, 
-                                        PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
+  public static void submitCallableTest(PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
     try {
-      SimpleSchedulerInterfaceTest.submitCallableTest(schedulerFactory);
+      SimpleSchedulerInterfaceTest.submitCallableTest(new FactoryWrapper(priorityFactory));
 
       PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
       TestCallable tc1 = new TestCallable(0);
@@ -652,6 +646,30 @@ public class PriorityScheduledExecutorTest {
     public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize, 
                                           long keepAliveTimeInMs);
     public void shutdown();
+  }
+
+  private static class FactoryWrapper implements PrioritySchedulerFactory {
+    PriorityScheduledExecutorFactory factory;
+    
+    private FactoryWrapper(PriorityScheduledExecutorFactory factory) {
+      this.factory = factory;
+    }
+    
+    @Override
+    public SimpleSchedulerInterface make(int poolSize,
+                                         boolean prestartIfAvailable) {
+      PriorityScheduledExecutor result = factory.make(poolSize, poolSize, 500);
+      if (prestartIfAvailable) {
+        result.prestartAllCoreThreads();
+      }
+      
+      return result;
+    }
+
+    @Override
+    public void shutdown() {
+      factory.shutdown();
+    }
   }
   
   private class PriorityScheduledExecutorTestFactory implements PriorityScheduledExecutorFactory {
