@@ -345,6 +345,8 @@ public class SimpleSchedulerInterfaceTest {
   
   public interface PrioritySchedulerFactory {
     public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
+
+    public void shutdown();
   }
   
   protected static class TestCallable extends TestCondition 

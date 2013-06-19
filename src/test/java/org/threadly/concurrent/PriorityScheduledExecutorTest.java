@@ -20,42 +20,54 @@ import org.threadly.util.Clock;
 public class PriorityScheduledExecutorTest {
   @Test
   public void getDefaultPriorityTest() {
+    getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
+  } 
+  
+  public static void getDefaultPriorityTest(PriorityScheduledExecutorFactory factory) {
     TaskPriority priority = TaskPriority.High;
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000, 
-                                                                        priority, 1000);
     try {
+      PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000, 
+                                                         priority, 1000);
+      
       assertEquals(scheduler.getDefaultPriority(), priority);
-      scheduler.shutdown();
       
       priority = TaskPriority.Low;
-      scheduler = new PriorityScheduledExecutor(1, 1, 1000, 
-                                                priority, 1000);
+      scheduler = factory.make(1, 1, 1000, 
+                               priority, 1000);
       assertEquals(scheduler.getDefaultPriority(), priority);
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void makeWithDefaultPriorityTest() {
+    makeWithDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void makeWithDefaultPriorityTest(PriorityScheduledExecutorFactory factory) {
     TaskPriority originalPriority = TaskPriority.Low;
     TaskPriority newPriority = TaskPriority.High;
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000, 
-                                                                        originalPriority, 1000);
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000, 
+                                                       originalPriority, 1000);
     assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
     PrioritySchedulerInterface newScheduler = scheduler.makeWithDefaultPriority(newPriority);
     try {
       assertEquals(newScheduler.getDefaultPriority(), newPriority);
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void getAndSetCorePoolSizeTest() {
+    getAndSetCorePoolSizeTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getAndSetCorePoolSizeTest(PriorityScheduledExecutorFactory factory) {
     int corePoolSize = 1;
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(corePoolSize, 
-                                                                        corePoolSize + 10, 1000);
+    PriorityScheduledExecutor scheduler = factory.make(corePoolSize, 
+                                                       corePoolSize + 10, 1000);
     try {
       assertEquals(scheduler.getCorePoolSize(), corePoolSize);
       
@@ -65,17 +77,21 @@ public class PriorityScheduledExecutorTest {
       
       assertEquals(scheduler.getCorePoolSize(), corePoolSize);
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void setCorePoolSizeFail() {
+    setCorePoolSizeFail(new PriorityScheduledExecutorTestFactory());
+  }
+
+  public static void setCorePoolSizeFail(PriorityScheduledExecutorFactory factory) {
     int corePoolSize = 1;
     int maxPoolSize = 10;
     // first construct a valid scheduler
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(corePoolSize, 
-                                                                        maxPoolSize, 1000);
+    PriorityScheduledExecutor scheduler = factory.make(corePoolSize, 
+                                                       maxPoolSize, 1000);
     try {
       // verify no negative values
       try {
@@ -92,14 +108,18 @@ public class PriorityScheduledExecutorTest {
         // ignored
       }
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void getAndSetMaxPoolSizeTest() {
+    getAndSetMaxPoolSizeTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getAndSetMaxPoolSizeTest(PriorityScheduledExecutorFactory factory) {
     int maxPoolSize = 1;
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, maxPoolSize, 1000);
+    PriorityScheduledExecutor scheduler = factory.make(1, maxPoolSize, 1000);
     try {
       assertEquals(scheduler.getMaxPoolSize(), maxPoolSize);
       
@@ -108,26 +128,34 @@ public class PriorityScheduledExecutorTest {
       
       assertEquals(scheduler.getMaxPoolSize(), maxPoolSize);
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void setMaxPoolSizeFail() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    setMaxPoolSizeFail(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void setMaxPoolSizeFail(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
     
     try {
       scheduler.setMaxPoolSize(-1); // should throw exception for negative value
       fail("Exception should have been thrown");
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void getAndSetKeepAliveTimeTest() {
+    getAndSetKeepAliveTimeTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getAndSetKeepAliveTimeTest(PriorityScheduledExecutorFactory factory) {
     long keepAliveTime = 1000;
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, keepAliveTime);
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, keepAliveTime);
     try {
       assertEquals(scheduler.getKeepAliveTime(), keepAliveTime);
       
@@ -136,25 +164,33 @@ public class PriorityScheduledExecutorTest {
       
       assertEquals(scheduler.getKeepAliveTime(), keepAliveTime);
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void setKeepAliveTimeFail() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    setKeepAliveTimeFail(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void setKeepAliveTimeFail(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
     
     try {
       scheduler.setKeepAliveTime(-1L); // should throw exception for negative value
       fail("Exception should have been thrown");
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void getCurrentPoolSizeTest() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    getCurrentPoolSizeTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getCurrentPoolSizeTest(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
     try {
       // verify nothing at the start
       assertEquals(scheduler.getCurrentPoolSize(), 0);
@@ -166,31 +202,52 @@ public class PriorityScheduledExecutorTest {
       
       assertEquals(scheduler.getCurrentPoolSize(), 1);
     } finally {
-      scheduler.shutdown();
+      factory.shutdown();
     }
   }
   
   @Test
   public void makeSubPoolTest() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(10, 10, 1000);
-    PrioritySchedulerInterface subPool = scheduler.makeSubPool(2);
-    assertNotNull(subPool);
-    assertTrue(subPool instanceof PrioritySchedulerLimiter);  // if true, test cases are covered under PrioritySchedulerLimiter unit cases
+    makeSubPoolTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void makeSubPoolTest(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(10, 10, 1000);
+    try {
+      PrioritySchedulerInterface subPool = scheduler.makeSubPool(2);
+      assertNotNull(subPool);
+      assertTrue(subPool instanceof PrioritySchedulerLimiter);  // if true, test cases are covered under PrioritySchedulerLimiter unit cases
+    } finally {
+      factory.shutdown();
+    }
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void makeSubPoolFail() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
-    scheduler.makeSubPool(2);
-    fail("Exception should have been thrown");
+    makeSubPoolFail(new PriorityScheduledExecutorTestFactory());
+  }
+
+  public static void makeSubPoolFail(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
+    try {
+      scheduler.makeSubPool(2);
+      fail("Exception should have been thrown");
+    } finally {
+      factory.shutdown();
+    }
   }
   
   @Test
   public void executeTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);;
+    executeTest(new SchedulerFactory(), 
+                new PriorityScheduledExecutorTestFactory());
+  }
+
+  public static void executeTest(PrioritySchedulerFactory schedulerFactory, 
+                                 PriorityScheduledExecutorFactory priorityFactory) {
+    PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
     try {
-      SimpleSchedulerInterfaceTest.executeTest(sf);
+      SimpleSchedulerInterfaceTest.executeTest(schedulerFactory);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -203,19 +260,24 @@ public class PriorityScheduledExecutorTest {
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       try {
-        sf.shutdown();
+        schedulerFactory.shutdown();
       } finally {
-        scheduler.shutdown();
+        priorityFactory.shutdown();
       }
     }
   }
   
   @Test
   public void submitRunnableTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);;
+    submitRunnableTest(new SchedulerFactory(), 
+                       new PriorityScheduledExecutorTestFactory());
+  }
+
+  public static void submitRunnableTest(PrioritySchedulerFactory schedulerFactory, 
+                                        PriorityScheduledExecutorFactory priorityFactory) {
+    PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
     try {
-      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
+      SimpleSchedulerInterfaceTest.submitRunnableTest(schedulerFactory);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -228,19 +290,24 @@ public class PriorityScheduledExecutorTest {
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       try {
-        sf.shutdown();
+        schedulerFactory.shutdown();
       } finally {
-        scheduler.shutdown();
+        priorityFactory.shutdown();
       }
     }
   }
   
   @Test
-  public void submitCallableTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);;
+  public void submitCallableTest() throws InterruptedException, ExecutionException {
+    submitCallableTest(new SchedulerFactory(), 
+                       new PriorityScheduledExecutorTestFactory());
+  }
+
+  public static void submitCallableTest(PrioritySchedulerFactory schedulerFactory, 
+                                        PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
+    PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
     try {
-      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
+      SimpleSchedulerInterfaceTest.submitCallableTest(schedulerFactory);
       
       TestCallable tc1 = new TestCallable(0);
       TestCallable tc2 = new TestCallable(0);
@@ -251,7 +318,7 @@ public class PriorityScheduledExecutorTest {
       tc2.blockTillTrue(); // throws exception if fails
     } finally {
       try {
-        sf.shutdown();
+        schedulerFactory.shutdown();
       } finally {
         scheduler.shutdown();
       }
@@ -677,6 +744,55 @@ public class PriorityScheduledExecutorTest {
     }
   }
   
+  public interface PriorityScheduledExecutorFactory {
+    public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize, 
+                                          long keepAliveTimeInMs, 
+                                          TaskPriority defaultPriority, 
+                                          long maxWaitForLowPrioriyt);
+    public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize, 
+                                          long keepAliveTimeInMs);
+    public void shutdown();
+  }
+  
+  private class PriorityScheduledExecutorTestFactory implements PriorityScheduledExecutorFactory {
+    private final List<PriorityScheduledExecutor> executors;
+    
+    private PriorityScheduledExecutorTestFactory() {
+      executors = new LinkedList<PriorityScheduledExecutor>();
+    }
+
+    @Override
+    public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize,
+                                          long keepAliveTimeInMs,
+                                          TaskPriority defaultPriority,
+                                          long maxWaitForLowPriority) {
+      PriorityScheduledExecutor result = new PriorityScheduledExecutor(corePoolSize, maxPoolSize, 
+                                                                       keepAliveTimeInMs, defaultPriority, 
+                                                                       maxWaitForLowPriority);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize, 
+                                          long keepAliveTimeInMs) {
+      PriorityScheduledExecutor result = new PriorityScheduledExecutor(corePoolSize, maxPoolSize, 
+                                                                       keepAliveTimeInMs);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public void shutdown() {
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
+      while (it.hasNext()) {
+        it.next().shutdown();
+      }
+    }
+  }
+  
   private class SchedulerFactory implements PrioritySchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     
@@ -696,10 +812,12 @@ public class PriorityScheduledExecutorTest {
       return result;
     }
     
-    private void shutdown() {
+    @Override
+    public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
+        it.remove();
       }
     }
   }
@@ -726,10 +844,12 @@ public class PriorityScheduledExecutorTest {
       return result.makeWithDefaultPriority(returnPriority);
     }
     
-    private void shutdown() {
+    @Override
+    public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
+        it.remove();
       }
     }
   }

@@ -10,7 +10,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
@@ -331,10 +330,12 @@ public class PrioritySchedulerLimiterTest {
       return new PrioritySchedulerLimiter(executor, poolSize);
     }
     
-    private void shutdown() {
+    @Override
+    public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
+        it.remove();
       }
     }
   }

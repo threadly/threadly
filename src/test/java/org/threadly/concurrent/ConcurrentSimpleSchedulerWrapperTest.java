@@ -182,10 +182,12 @@ public class ConcurrentSimpleSchedulerWrapperTest {
       return new ConcurrentSimpleSchedulerWrapper(executor);
     }
     
-    private void shutdown() {
+    @Override
+    public void shutdown() {
       Iterator<ScheduledThreadPoolExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
+        it.remove();
       }
     }
   }
