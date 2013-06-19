@@ -389,8 +389,6 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   // tests for statistics tracking
   
-  // TODO - reduce code duplication for bellow tests, several are almost identical (just high vs low priority)
-  
   @Test
   public void getAvgRunTimeNoInputTest() {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
@@ -590,14 +588,22 @@ public class PrioritySchedulerStatisticTrackerTest {
       scheduler.shutdown();
     }
   }
-  
-  @Test
-  public void getHighPriorityAvgExecutionDelayNoInputTest() {
+
+  public void getPriorityAvgExecutionDelayNoInputTest(TaskPriority testPriority) {
     final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                               TaskPriority.High, 100);
     try {
       BlockRunnable br = new BlockRunnable();
-      scheduler.execute(br, TaskPriority.Low);  // submit with opposite priority
+      switch (testPriority) { // submit with opposite priority
+        case High:
+          scheduler.execute(br, TaskPriority.Low);
+          break;
+        case Low:
+          scheduler.execute(br, TaskPriority.High);
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + testPriority);
+      }
       br.unblock();
 
       // wait for task to finish now
@@ -608,8 +614,95 @@ public class PrioritySchedulerStatisticTrackerTest {
           return scheduler.getCurrentlyRunningCount() == 0;
         }
       }.blockTillTrue();
+
+      switch (testPriority) {
+        case High:
+          assertEquals(scheduler.getHighPriorityAvgExecutionDelay(), -1);
+          break;
+        case Low:
+          assertEquals(scheduler.getLowPriorityAvgExecutionDelay(), -1);
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + testPriority);
+      }
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void getHighPriorityAvgExecutionDelayNoInputTest() {
+    getPriorityAvgExecutionDelayNoInputTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void getLowPriorityAvgExecutionDelayNoInputTest() {
+    getPriorityAvgExecutionDelayNoInputTest(TaskPriority.Low);
+  }
+  
+
+  public void getPriorityAvgExecutionDelayTest(TaskPriority priority) {
+    int lowPriorityCount = 5;
+    int highPriorityCount = 10;
+    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                              TaskPriority.High, 100);
+    try {
+      BlockRunnable lastRunnable = null;
+      for (int i = 0; i < lowPriorityCount; i++) {
+        if (lastRunnable != null) {
+          TestUtils.blockTillClockAdvances();
+          lastRunnable.unblock();
+        }
+        lastRunnable = new BlockRunnable();
+        scheduler.execute(lastRunnable, 
+                          TaskPriority.Low);
+      }
+      for (int i = 0; i < highPriorityCount; i++) {
+        TestUtils.blockTillClockAdvances();
+        lastRunnable.unblock();
+        lastRunnable = new BlockRunnable();
+        scheduler.execute(lastRunnable, 
+                          TaskPriority.High);
+      }
+      TestUtils.blockTillClockAdvances();
+      lastRunnable.unblock();
       
-      assertEquals(scheduler.getHighPriorityAvgExecutionDelay(), -1);
+      lastRunnable.blockTillFinished();
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentlyRunningCount() == 0;
+        }
+      }.blockTillTrue();
+      
+      List<Long> samples;
+      switch (priority) {
+        case High:
+          samples = scheduler.getHighPriorityExecutionDelays();
+          break;
+        case Low:
+          samples = scheduler.getLowPriorityExecutionDelays();
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
+      }
+      
+      long total = 0;
+      Iterator<Long> it = samples.iterator();
+      while (it.hasNext()) {
+        total += it.next();
+      }
+
+      switch (priority) {
+        case High:
+          assertTrue(scheduler.getHighPriorityAvgExecutionDelay() == total / samples.size());
+          break;
+        case Low:
+          assertTrue(scheduler.getLowPriorityAvgExecutionDelay() == total / samples.size());
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
+      }
     } finally {
       scheduler.shutdown();
     }
@@ -617,78 +710,16 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void getHighPriorityAvgExecutionDelayTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable lastRunnable = null;
-      for (int i = 0; i < lowPriorityCount; i++) {
-        if (lastRunnable != null) {
-          TestUtils.blockTillClockAdvances();
-          lastRunnable.unblock();
-        }
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.Low);
-      }
-      for (int i = 0; i < highPriorityCount; i++) {
-        TestUtils.blockTillClockAdvances();
-        lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.High);
-      }
-      TestUtils.blockTillClockAdvances();
-      lastRunnable.unblock();
-      
-      lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      List<Long> samples = scheduler.getHighPriorityExecutionDelays();
-      long total = 0;
-      Iterator<Long> it = samples.iterator();
-      while (it.hasNext()) {
-        total += it.next();
-      }
-      
-      assertTrue(scheduler.getHighPriorityAvgExecutionDelay() == total / samples.size());
-    } finally {
-      scheduler.shutdown();
-    }
-  }
-  
-  @Test
-  public void getLowPriorityAvgExecutionDelayNoInputTest() {
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable br = new BlockRunnable();
-      scheduler.execute(br, TaskPriority.High);  // submit with opposite priority
-      br.unblock();
-
-      // wait for task to finish now
-      br.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      assertEquals(scheduler.getLowPriorityAvgExecutionDelay(), -1);
-    } finally {
-      scheduler.shutdown();
-    }
+    getPriorityAvgExecutionDelayTest(TaskPriority.High);
   }
   
   @Test
   public void getLowPriorityAvgExecutionDelayTest() {
+    getPriorityAvgExecutionDelayTest(TaskPriority.Low);
+  }
+  
+
+  public void getPriorityMedianExecutionDelayTest(TaskPriority priority) {
     int lowPriorityCount = 5;
     int highPriorityCount = 10;
     final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
@@ -722,14 +753,30 @@ public class PrioritySchedulerStatisticTrackerTest {
         }
       }.blockTillTrue();
       
-      List<Long> samples = scheduler.getLowPriorityExecutionDelays();
-      long total = 0;
-      Iterator<Long> it = samples.iterator();
-      while (it.hasNext()) {
-        total += it.next();
+      List<Long> samples;
+      switch (priority) {
+        case High:
+          samples = new ArrayList<Long>(scheduler.getHighPriorityExecutionDelays());
+          break;
+        case Low:
+          samples = new ArrayList<Long>(scheduler.getLowPriorityExecutionDelays());
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
       }
       
-      assertTrue(scheduler.getLowPriorityAvgExecutionDelay() == total / samples.size());
+      Collections.sort(samples);
+
+      switch (priority) {
+        case High:
+          assertTrue(scheduler.getHighPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
+          break;
+        case Low:
+          assertTrue(scheduler.getLowPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
+      }
     } finally {
       scheduler.shutdown();
     }
@@ -737,90 +784,12 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void getHighPriorityMedianExecutionDelayTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable lastRunnable = null;
-      for (int i = 0; i < lowPriorityCount; i++) {
-        if (lastRunnable != null) {
-          TestUtils.blockTillClockAdvances();
-          lastRunnable.unblock();
-        }
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.Low);
-      }
-      for (int i = 0; i < highPriorityCount; i++) {
-        TestUtils.blockTillClockAdvances();
-        lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.High);
-      }
-      TestUtils.blockTillClockAdvances();
-      lastRunnable.unblock();
-      
-      lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      List<Long> samples = new ArrayList<Long>(scheduler.getHighPriorityExecutionDelays());
-      Collections.sort(samples);
-      
-      assertTrue(scheduler.getHighPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
-    } finally {
-      scheduler.shutdown();
-    }
+    getPriorityMedianExecutionDelayTest(TaskPriority.High);
   }
   
   @Test
   public void getLowPriorityMedianExecutionDelayTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable lastRunnable = null;
-      for (int i = 0; i < lowPriorityCount; i++) {
-        if (lastRunnable != null) {
-          TestUtils.blockTillClockAdvances();
-          lastRunnable.unblock();
-        }
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.Low);
-      }
-      for (int i = 0; i < highPriorityCount; i++) {
-        TestUtils.blockTillClockAdvances();
-        lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.High);
-      }
-      TestUtils.blockTillClockAdvances();
-      lastRunnable.unblock();
-      
-      lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      List<Long> samples = new ArrayList<Long>(scheduler.getLowPriorityExecutionDelays());
-      Collections.sort(samples);
-      
-      assertTrue(scheduler.getLowPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
-    } finally {
-      scheduler.shutdown();
-    }
+    getPriorityMedianExecutionDelayTest(TaskPriority.Low);
   }
   
   @Test
