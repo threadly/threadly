@@ -15,154 +15,98 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   public void executeTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.executeTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.executeTest(sf);
   }
   
   @Test
   public void submitRunnableTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitCallableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitCallableTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.executeFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitCallableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitCallableFail(sf);
   }
   
   @Test
   public void scheduleExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
   }
   
   @Test
   public void submitScheduledRunnableTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
   @Test
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
   public void submitScheduledRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
   }
   
   @Test
   public void submitScheduledCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
   }
   
   @Test
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
 
   private class SchedulerFactory implements PrioritySchedulerFactory {
@@ -182,10 +126,12 @@ public class ConcurrentSimpleSchedulerWrapperTest {
       return new ConcurrentSimpleSchedulerWrapper(executor);
     }
     
-    private void shutdown() {
+    @Override
+    public void shutdown() {
       Iterator<ScheduledThreadPoolExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
+        it.remove();
       }
     }
   }

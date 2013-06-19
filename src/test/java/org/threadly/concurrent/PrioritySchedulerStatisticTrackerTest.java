@@ -11,386 +11,169 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
-import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
+import org.threadly.concurrent.PriorityScheduledExecutorTest.PriorityScheduledExecutorFactory;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.TestCallable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
-import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerTest {
-  // TODO - reduce code duplication in these tests, they are identical to PriorityScheduledExecutorTest
   @Test
   public void getDefaultPriorityTest() {
-    TaskPriority priority = TaskPriority.High;
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                priority, 1000);
-    try {
-      assertEquals(scheduler.getDefaultPriority(), priority);
-      scheduler.shutdown();
-      
-      priority = TaskPriority.Low;
-      scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                priority, 1000);
-      assertEquals(scheduler.getDefaultPriority(), priority);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void makeWithDefaultPriorityTest() {
-    TaskPriority originalPriority = TaskPriority.Low;
-    TaskPriority newPriority = TaskPriority.High;
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                originalPriority, 1000);
-    assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
-    PrioritySchedulerInterface newScheduler = scheduler.makeWithDefaultPriority(newPriority);
-    try {
-      assertEquals(newScheduler.getDefaultPriority(), newPriority);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.makeWithDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void getAndSetCorePoolSizeTest() {
-    int corePoolSize = 1;
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(corePoolSize, 
-                                                                                corePoolSize + 10, 1000);
-    try {
-      assertEquals(scheduler.getCorePoolSize(), corePoolSize);
-      
-      corePoolSize = 10;
-      scheduler.setMaxPoolSize(corePoolSize + 10);
-      scheduler.setCorePoolSize(corePoolSize);
-      
-      assertEquals(scheduler.getCorePoolSize(), corePoolSize);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.getAndSetCorePoolSizeTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void setCorePoolSizeFail() {
-    int corePoolSize = 1;
-    int maxPoolSize = 10;
-    // first construct a valid scheduler
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(corePoolSize, 
-                                                                                maxPoolSize, 1000);
-    try {
-      // verify no negative values
-      try {
-        scheduler.setCorePoolSize(-1);
-        fail("Exception should have been thrown");
-      } catch (IllegalArgumentException expected) {
-        // ignored
-      }
-      // verify can't be set higher than max size
-      try {
-        scheduler.setCorePoolSize(maxPoolSize + 1);
-        fail("Exception should have been thrown");
-      } catch (IllegalArgumentException expected) {
-        // ignored
-      }
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.setCorePoolSizeFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void getAndSetMaxPoolSizeTest() {
-    int maxPoolSize = 1;
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, maxPoolSize, 1000);
-    try {
-      assertEquals(scheduler.getMaxPoolSize(), maxPoolSize);
-      
-      maxPoolSize = 10;
-      scheduler.setMaxPoolSize(maxPoolSize);
-      
-      assertEquals(scheduler.getMaxPoolSize(), maxPoolSize);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.getAndSetMaxPoolSizeTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void setMaxPoolSizeFail() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    
-    try {
-      scheduler.setMaxPoolSize(-1); // should throw exception for negative value
-      fail("Exception should have been thrown");
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.setMaxPoolSizeFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void getAndSetKeepAliveTimeTest() {
-    long keepAliveTime = 1000;
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, keepAliveTime);
-    try {
-      assertEquals(scheduler.getKeepAliveTime(), keepAliveTime);
-      
-      keepAliveTime = Long.MAX_VALUE;
-      scheduler.setKeepAliveTime(keepAliveTime);
-      
-      assertEquals(scheduler.getKeepAliveTime(), keepAliveTime);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.getAndSetKeepAliveTimeTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void setKeepAliveTimeFail() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    
-    try {
-      scheduler.setKeepAliveTime(-1L); // should throw exception for negative value
-      fail("Exception should have been thrown");
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.setKeepAliveTimeFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void getCurrentPoolSizeTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    try {
-      // verify nothing at the start
-      assertEquals(scheduler.getCurrentPoolSize(), 0);
-      
-      TestRunnable tr = new TestRunnable();
-      scheduler.execute(tr);
-      
-      tr.blockTillFinished();  // wait for execution
-      
-      assertEquals(scheduler.getCurrentPoolSize(), 1);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.getCurrentPoolSizeTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void makeSubPoolTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(10, 10, 1000);
-    PrioritySchedulerInterface subPool = scheduler.makeSubPool(2);
-    assertNotNull(subPool);
-    assertTrue(subPool instanceof PrioritySchedulerLimiter);  // if true, test cases are covered under PrioritySchedulerLimiter unit cases
+    PriorityScheduledExecutorTest.makeSubPoolTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void makeSubPoolFail() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    scheduler.makeSubPool(2);
-    fail("Exception should have been thrown");
+    PriorityScheduledExecutorTest.makeSubPoolFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void executeTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(2, 2, 1000);;
-    try {
-      SimpleSchedulerInterfaceTest.executeTest(sf);
-      
-      TestRunnable tr1 = new TestRunnable();
-      TestRunnable tr2 = new TestRunnable();
-      scheduler.execute(tr1, TaskPriority.High);
-      scheduler.execute(tr2, TaskPriority.Low);
-      scheduler.execute(tr1, TaskPriority.High);
-      scheduler.execute(tr2, TaskPriority.Low);
-      
-      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
-    } finally {
-      try {
-        sf.shutdown();
-      } finally {
-        scheduler.shutdown();
-      }
-    }
+    PriorityScheduledExecutorTest.executeTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void submitRunnableTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(2, 2, 1000);;
-    try {
-      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
-      
-      TestRunnable tr1 = new TestRunnable();
-      TestRunnable tr2 = new TestRunnable();
-      scheduler.submit(tr1, TaskPriority.High);
-      scheduler.submit(tr2, TaskPriority.Low);
-      scheduler.submit(tr1, TaskPriority.High);
-      scheduler.submit(tr2, TaskPriority.Low);
-      
-      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
-    } finally {
-      try {
-        sf.shutdown();
-      } finally {
-        scheduler.shutdown();
-      }
-    }
+    PriorityScheduledExecutorTest.submitRunnableTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
-  public void submitCallableTest() {
-    SchedulerFactory sf = new SchedulerFactory();
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(2, 2, 1000);;
-    try {
-      SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
-      
-      TestCallable tc1 = new TestCallable(0);
-      TestCallable tc2 = new TestCallable(0);
-      scheduler.submit(tc1, TaskPriority.High);
-      scheduler.submit(tc2, TaskPriority.Low);
-      
-      tc1.blockTillTrue(); // throws exception if fails
-      tc2.blockTillTrue(); // throws exception if fails
-    } finally {
-      try {
-        sf.shutdown();
-      } finally {
-        scheduler.shutdown();
-      }
-    }
+  public void submitCallableTest() throws InterruptedException, ExecutionException {
+    PriorityScheduledExecutorTest.submitCallableTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.executeFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitRunnableFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitCallableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitCallableFail(sf);
   }
   
   @Test
   public void scheduleExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void submitScheduledRunnableTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
   @Test
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
   public void scheduleExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
   }
   
   @Test
   public void submitScheduledRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
   }
   
   @Test
   public void submitScheduledCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableFail(sf);
   }
   
   @Test
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
   
   @Test
   public void wrapperExecuteTest() {
     WrapperFactory wf = new WrapperFactory();
-    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
     try {
       SimpleSchedulerInterfaceTest.executeTest(wf);
-      
+
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
       scheduler.execute(tr1, TaskPriority.High);
@@ -401,17 +184,17 @@ public class PrioritySchedulerStatisticTrackerTest {
       tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
-      wf.shutdown();
+      wf.shutdown();  // must shutdown here because we created another scheduler after calling executeTest
     }
   }
   
   @Test
   public void wrapperSubmitRunnableTest() {
     WrapperFactory wf = new WrapperFactory();
-    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
     try {
       SimpleSchedulerInterfaceTest.submitRunnableTest(wf);
-      
+
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
       scheduler.submit(tr1, TaskPriority.High);
@@ -422,17 +205,17 @@ public class PrioritySchedulerStatisticTrackerTest {
       tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
-      wf.shutdown();
+      wf.shutdown();  // must call shutdown here because we called make after submitRunnableTest
     }
   }
   
   @Test
   public void wrapperSubmitCallableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
-    PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
     try {
       SimpleSchedulerInterfaceTest.submitCallableTest(wf);
-      
+
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestCallable tc1 = new TestCallable(0);
       TestCallable tc2 = new TestCallable(0);
       scheduler.submit(tc1, TaskPriority.High);
@@ -442,7 +225,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       tc1.blockTillTrue(); // throws exception if fails
       tc2.blockTillTrue(); // throws exception if fails
     } finally {
-      wf.shutdown();
+      wf.shutdown();  // must call shutdown here because we called make after submitCallableTest
     }
   }
   
@@ -450,236 +233,97 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperExecuteFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.executeFail(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.executeFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void wrapperSubmitRunnableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitRunnableFail(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitRunnableFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void wrapperSubmitCallableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitCallableFail(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitCallableFail(wf);
   }
   
   @Test
   public void wrapperScheduleTest() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleTest(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleTest(wf);
   }
   
   @Test
   public void wrapperSubmitScheduledRunnableTest() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
   }
   
   @Test
   public void wrapperSubmitScheduledCallableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableTest(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableTest(wf);
   }
   
   @Test
   public void wrapperScheduleExecutionFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.scheduleExecutionFail(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(wf);
   }
   
   @Test
   public void wrapperSubmitScheduledRunnableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableFail(wf);
   }
   
   @Test
   public void wrapperSubmitScheduledCallableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.submitScheduledCallableFail(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.submitScheduledCallableFail(wf);
   }
   
   @Test
   public void wrapperRecurringExecutionTest() {
     WrapperFactory wf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionTest(wf);
-    } finally {
-      wf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(wf);
   }
   
   @Test
   public void wrapperRecurringExecutionFail() {
     WrapperFactory sf = new WrapperFactory();
     
-    try {
-      SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
-    } finally {
-      sf.shutdown();
-    }
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
   
   @Test
   public void shutdownTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    
-    scheduler.shutdown();
-    
-    assertTrue(scheduler.isShutdown());
-    
-    try {
-      scheduler.execute(new TestRunnable());
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-    
-    try {
-      scheduler.schedule(new TestRunnable(), 1000);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
-    
-    try {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
-    }
+    PriorityScheduledExecutorTest.shutdownTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void addToQueueTest() {
-    long taskDelay = 1000 * 10; // make it long to prevent it from getting consumed from the queue
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    try {
-      // verify before state
-      assertFalse(scheduler.highPriorityConsumer.isRunning());
-      assertFalse(scheduler.lowPriorityConsumer.isRunning());
-      
-      scheduler.addToQueue(new OneTimeTaskWrapper(new TestRunnable(), 
-                                                  TaskPriority.High, 
-                                                  taskDelay));
-
-      assertEquals(scheduler.highPriorityQueue.size(), 1);
-      assertEquals(scheduler.lowPriorityQueue.size(), 0);
-      assertTrue(scheduler.highPriorityConsumer.isRunning());
-      assertFalse(scheduler.lowPriorityConsumer.isRunning());
-      
-      scheduler.addToQueue(new OneTimeTaskWrapper(new TestRunnable(), 
-                                                  TaskPriority.Low, 
-                                                  taskDelay));
-
-      assertEquals(scheduler.highPriorityQueue.size(), 1);
-      assertEquals(scheduler.lowPriorityQueue.size(), 1);
-      assertTrue(scheduler.highPriorityConsumer.isRunning());
-      assertTrue(scheduler.lowPriorityConsumer.isRunning());
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.addToQueueTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void getExistingWorkerTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    try {
-      // add an idle worker
-      Worker testWorker = scheduler.makeNewWorker();
-      scheduler.workerDone(testWorker);
-      
-      assertEquals(scheduler.availableWorkers.size(), 1);
-      
-      try {
-        Worker returnedWorker = scheduler.getExistingWorker(100);
-        assertTrue(returnedWorker == testWorker);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.getExistingWorkerTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
   public void lookForExpiredWorkersTest() {
-    PriorityScheduledExecutor scheduler = new PrioritySchedulerStatisticTracker(1, 1, 0);
-    try {
-      // add an idle worker
-      Worker testWorker = scheduler.makeNewWorker();
-      scheduler.workerDone(testWorker);
-      
-      assertEquals(scheduler.availableWorkers.size(), 1);
-      
-      TestUtils.blockTillClockAdvances();
-      Clock.accurateTime(); // update clock so scheduler will see it
-      
-      scheduler.lookForExpiredWorkers();
-      
-      // should not have collected yet due to core size == 1
-      assertEquals(scheduler.availableWorkers.size(), 1);
-
-      scheduler.allowCoreThreadTimeOut(true);
-      
-      TestUtils.blockTillClockAdvances();
-      Clock.accurateTime(); // update clock so scheduler will see it
-      
-      scheduler.lookForExpiredWorkers();
-      
-      // verify collected now
-      assertEquals(scheduler.availableWorkers.size(), 0);
-    } finally {
-      scheduler.shutdown();
-    }
+    PriorityScheduledExecutorTest.lookForExpiredWorkersTest(new PriorityScheduledExecutorTestFactory());
   }
   
   private class SchedulerFactory implements PrioritySchedulerFactory {
@@ -701,10 +345,12 @@ public class PrioritySchedulerStatisticTrackerTest {
       return result;
     }
     
-    private void shutdown() {
+    @Override
+    public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
+        it.remove();
       }
     }
   }
@@ -731,17 +377,17 @@ public class PrioritySchedulerStatisticTrackerTest {
       return result.makeWithDefaultPriority(returnPriority);
     }
     
-    private void shutdown() {
+    @Override
+    public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
+        it.remove();
       }
     }
   }
   
   // tests for statistics tracking
-  
-  // TODO - reduce code duplication for bellow tests, several are almost identical (just high vs low priority)
   
   @Test
   public void getAvgRunTimeNoInputTest() {
@@ -942,14 +588,22 @@ public class PrioritySchedulerStatisticTrackerTest {
       scheduler.shutdown();
     }
   }
-  
-  @Test
-  public void getHighPriorityAvgExecutionDelayNoInputTest() {
+
+  public void getPriorityAvgExecutionDelayNoInputTest(TaskPriority testPriority) {
     final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                               TaskPriority.High, 100);
     try {
       BlockRunnable br = new BlockRunnable();
-      scheduler.execute(br, TaskPriority.Low);  // submit with opposite priority
+      switch (testPriority) { // submit with opposite priority
+        case High:
+          scheduler.execute(br, TaskPriority.Low);
+          break;
+        case Low:
+          scheduler.execute(br, TaskPriority.High);
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + testPriority);
+      }
       br.unblock();
 
       // wait for task to finish now
@@ -960,8 +614,95 @@ public class PrioritySchedulerStatisticTrackerTest {
           return scheduler.getCurrentlyRunningCount() == 0;
         }
       }.blockTillTrue();
+
+      switch (testPriority) {
+        case High:
+          assertEquals(scheduler.getHighPriorityAvgExecutionDelay(), -1);
+          break;
+        case Low:
+          assertEquals(scheduler.getLowPriorityAvgExecutionDelay(), -1);
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + testPriority);
+      }
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void getHighPriorityAvgExecutionDelayNoInputTest() {
+    getPriorityAvgExecutionDelayNoInputTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void getLowPriorityAvgExecutionDelayNoInputTest() {
+    getPriorityAvgExecutionDelayNoInputTest(TaskPriority.Low);
+  }
+  
+
+  public void getPriorityAvgExecutionDelayTest(TaskPriority priority) {
+    int lowPriorityCount = 5;
+    int highPriorityCount = 10;
+    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                              TaskPriority.High, 100);
+    try {
+      BlockRunnable lastRunnable = null;
+      for (int i = 0; i < lowPriorityCount; i++) {
+        if (lastRunnable != null) {
+          TestUtils.blockTillClockAdvances();
+          lastRunnable.unblock();
+        }
+        lastRunnable = new BlockRunnable();
+        scheduler.execute(lastRunnable, 
+                          TaskPriority.Low);
+      }
+      for (int i = 0; i < highPriorityCount; i++) {
+        TestUtils.blockTillClockAdvances();
+        lastRunnable.unblock();
+        lastRunnable = new BlockRunnable();
+        scheduler.execute(lastRunnable, 
+                          TaskPriority.High);
+      }
+      TestUtils.blockTillClockAdvances();
+      lastRunnable.unblock();
       
-      assertEquals(scheduler.getHighPriorityAvgExecutionDelay(), -1);
+      lastRunnable.blockTillFinished();
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentlyRunningCount() == 0;
+        }
+      }.blockTillTrue();
+      
+      List<Long> samples;
+      switch (priority) {
+        case High:
+          samples = scheduler.getHighPriorityExecutionDelays();
+          break;
+        case Low:
+          samples = scheduler.getLowPriorityExecutionDelays();
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
+      }
+      
+      long total = 0;
+      Iterator<Long> it = samples.iterator();
+      while (it.hasNext()) {
+        total += it.next();
+      }
+
+      switch (priority) {
+        case High:
+          assertTrue(scheduler.getHighPriorityAvgExecutionDelay() == total / samples.size());
+          break;
+        case Low:
+          assertTrue(scheduler.getLowPriorityAvgExecutionDelay() == total / samples.size());
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
+      }
     } finally {
       scheduler.shutdown();
     }
@@ -969,78 +710,16 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void getHighPriorityAvgExecutionDelayTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable lastRunnable = null;
-      for (int i = 0; i < lowPriorityCount; i++) {
-        if (lastRunnable != null) {
-          TestUtils.blockTillClockAdvances();
-          lastRunnable.unblock();
-        }
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.Low);
-      }
-      for (int i = 0; i < highPriorityCount; i++) {
-        TestUtils.blockTillClockAdvances();
-        lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.High);
-      }
-      TestUtils.blockTillClockAdvances();
-      lastRunnable.unblock();
-      
-      lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      List<Long> samples = scheduler.getHighPriorityExecutionDelays();
-      long total = 0;
-      Iterator<Long> it = samples.iterator();
-      while (it.hasNext()) {
-        total += it.next();
-      }
-      
-      assertTrue(scheduler.getHighPriorityAvgExecutionDelay() == total / samples.size());
-    } finally {
-      scheduler.shutdown();
-    }
-  }
-  
-  @Test
-  public void getLowPriorityAvgExecutionDelayNoInputTest() {
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable br = new BlockRunnable();
-      scheduler.execute(br, TaskPriority.High);  // submit with opposite priority
-      br.unblock();
-
-      // wait for task to finish now
-      br.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      assertEquals(scheduler.getLowPriorityAvgExecutionDelay(), -1);
-    } finally {
-      scheduler.shutdown();
-    }
+    getPriorityAvgExecutionDelayTest(TaskPriority.High);
   }
   
   @Test
   public void getLowPriorityAvgExecutionDelayTest() {
+    getPriorityAvgExecutionDelayTest(TaskPriority.Low);
+  }
+  
+
+  public void getPriorityMedianExecutionDelayTest(TaskPriority priority) {
     int lowPriorityCount = 5;
     int highPriorityCount = 10;
     final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
@@ -1074,14 +753,30 @@ public class PrioritySchedulerStatisticTrackerTest {
         }
       }.blockTillTrue();
       
-      List<Long> samples = scheduler.getLowPriorityExecutionDelays();
-      long total = 0;
-      Iterator<Long> it = samples.iterator();
-      while (it.hasNext()) {
-        total += it.next();
+      List<Long> samples;
+      switch (priority) {
+        case High:
+          samples = new ArrayList<Long>(scheduler.getHighPriorityExecutionDelays());
+          break;
+        case Low:
+          samples = new ArrayList<Long>(scheduler.getLowPriorityExecutionDelays());
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
       }
       
-      assertTrue(scheduler.getLowPriorityAvgExecutionDelay() == total / samples.size());
+      Collections.sort(samples);
+
+      switch (priority) {
+        case High:
+          assertTrue(scheduler.getHighPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
+          break;
+        case Low:
+          assertTrue(scheduler.getLowPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
+          break;
+        default:
+          throw new UnsupportedOperationException("Priority not implenented: " + priority);
+      }
     } finally {
       scheduler.shutdown();
     }
@@ -1089,90 +784,12 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void getHighPriorityMedianExecutionDelayTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable lastRunnable = null;
-      for (int i = 0; i < lowPriorityCount; i++) {
-        if (lastRunnable != null) {
-          TestUtils.blockTillClockAdvances();
-          lastRunnable.unblock();
-        }
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.Low);
-      }
-      for (int i = 0; i < highPriorityCount; i++) {
-        TestUtils.blockTillClockAdvances();
-        lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.High);
-      }
-      TestUtils.blockTillClockAdvances();
-      lastRunnable.unblock();
-      
-      lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      List<Long> samples = new ArrayList<Long>(scheduler.getHighPriorityExecutionDelays());
-      Collections.sort(samples);
-      
-      assertTrue(scheduler.getHighPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
-    } finally {
-      scheduler.shutdown();
-    }
+    getPriorityMedianExecutionDelayTest(TaskPriority.High);
   }
   
   @Test
   public void getLowPriorityMedianExecutionDelayTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
-    try {
-      BlockRunnable lastRunnable = null;
-      for (int i = 0; i < lowPriorityCount; i++) {
-        if (lastRunnable != null) {
-          TestUtils.blockTillClockAdvances();
-          lastRunnable.unblock();
-        }
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.Low);
-      }
-      for (int i = 0; i < highPriorityCount; i++) {
-        TestUtils.blockTillClockAdvances();
-        lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
-        scheduler.execute(lastRunnable, 
-                          TaskPriority.High);
-      }
-      TestUtils.blockTillClockAdvances();
-      lastRunnable.unblock();
-      
-      lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
-      
-      List<Long> samples = new ArrayList<Long>(scheduler.getLowPriorityExecutionDelays());
-      Collections.sort(samples);
-      
-      assertTrue(scheduler.getLowPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
-    } finally {
-      scheduler.shutdown();
-    }
+    getPriorityMedianExecutionDelayTest(TaskPriority.Low);
   }
   
   @Test
@@ -1246,6 +863,46 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertTrue(longRunning.isEmpty());
     } finally {
       scheduler.shutdown();
+    }
+  }
+  
+  private class PriorityScheduledExecutorTestFactory implements PriorityScheduledExecutorFactory {
+    private final List<PriorityScheduledExecutor> executors;
+    
+    private PriorityScheduledExecutorTestFactory() {
+      executors = new LinkedList<PriorityScheduledExecutor>();
+    }
+
+    @Override
+    public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize,
+                                          long keepAliveTimeInMs,
+                                          TaskPriority defaultPriority,
+                                          long maxWaitForLowPriority) {
+      PriorityScheduledExecutor result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
+                                                                               keepAliveTimeInMs, defaultPriority, 
+                                                                               maxWaitForLowPriority);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize, 
+                                          long keepAliveTimeInMs) {
+      PriorityScheduledExecutor result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
+                                                                               keepAliveTimeInMs);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public void shutdown() {
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
+      while (it.hasNext()) {
+        it.next().shutdown();
+        it.remove();
+      }
     }
   }
   
