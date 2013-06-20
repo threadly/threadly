@@ -1,5 +1,7 @@
 package org.threadly.test.concurrent;
 
+import java.util.concurrent.locks.LockSupport;
+
 /**
  * {@link TestCondition} in unit test, designed to check a condition
  * for something that is happening in a different thread.  Allowing a 
@@ -54,11 +56,7 @@ public abstract class TestCondition {
     while (! (lastResult = get()) && 
            System.currentTimeMillis() - startTime < timeout) {
       if (pollInterval > SPIN_THRESHOLD) {
-        try {
-          Thread.sleep(pollInterval);
-        } catch (InterruptedException e) {
-          // ignored
-        }
+        LockSupport.parkNanos(1000000 * pollInterval);
       }
     }
     

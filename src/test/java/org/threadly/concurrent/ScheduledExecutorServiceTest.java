@@ -41,8 +41,8 @@ public class ScheduledExecutorServiceTest {
     
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunStart() throws InterruptedException {
-        Thread.sleep(sleepTime);
+      public void handleRunStart() {
+        TestUtils.sleep(sleepTime);
       }
     };
     scheduler.execute(tr);
@@ -62,8 +62,8 @@ public class ScheduledExecutorServiceTest {
     
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunStart() throws InterruptedException {
-        Thread.sleep(sleepTime);
+      public void handleRunStart() {
+        TestUtils.sleep(sleepTime);
       }
     };
     long start = System.currentTimeMillis();

@@ -14,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.RecurringTaskWrapper;
@@ -30,7 +31,7 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  */
 public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecutorService {
-  private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_MS = 100;
+  private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS = 1000000 * 100;  // 100ms
   
   private final PriorityScheduledExecutor scheduler;
   
@@ -82,7 +83,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long waitTimeInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
     while (! isTerminated() && 
            Clock.accurateTime() - startTime < waitTimeInMs) {
-      Thread.sleep(AWAIT_TERMINATION_POLL_INTERVAL_IN_MS);
+      LockSupport.parkNanos(AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS);
     }
     
     return isTerminated();

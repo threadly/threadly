@@ -11,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
@@ -96,8 +97,8 @@ public class FutureTest {
 
     Future<?> future = ff.make(new TestRunnable() {
       @Override
-      public void handleRunStart() throws InterruptedException {
-        Thread.sleep(threadSleepTime);
+      public void handleRunStart() {
+        TestUtils.sleep(threadSleepTime);
       }
     }, new NativeLock());
     
