@@ -943,8 +943,15 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } catch (Throwable t) {
           if (t instanceof InterruptedException || 
               t instanceof OutOfMemoryError) {
-           // this will stop the worker, and thus prevent it from calling workerDone
+            // this will stop the worker, and thus prevent it from calling workerDone
             killWorker(this);
+          } else {
+            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+            if (handler != null) {
+              handler.uncaughtException(Thread.currentThread(), t);
+            } else {
+              t.printStackTrace();
+            }
           }
         } finally {
           nextTask = null;
