@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -847,7 +848,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
         } catch (Throwable t) {
-          Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), t);
+          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+          if (handler != null) {
+            handler.uncaughtException(Thread.currentThread(), t);
+          } else {
+            t.printStackTrace();
+          }
         }
       }
     }
