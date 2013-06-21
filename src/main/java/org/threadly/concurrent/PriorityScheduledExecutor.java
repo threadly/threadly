@@ -12,7 +12,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.concurrent.collections.DynamicDelayQueue;
 import org.threadly.concurrent.collections.DynamicDelayedUpdater;
@@ -877,12 +876,14 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @author jent - Mike Jensen
    */
   protected class Worker implements Runnable {
+    private final VirtualLock taskNotifyLock;
     private final Thread thread;
     private volatile long lastRunTime;
-    private volatile boolean running;
+    private boolean running;
     private volatile TaskWrapper nextTask;
     
     protected Worker() {
+      this.taskNotifyLock = makeLock();
       thread = threadFactory.newThread(this);
       running = true;
       lastRunTime = ClockWrapper.getLastKnownTime();
@@ -890,9 +891,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     public void stop() {
-      running = false;
-      
-      LockSupport.unpark(thread);
+      synchronized (taskNotifyLock) {
+        running = false;
+        
+        taskNotifyLock.signalAll();
+      }
     }
 
     public void start() {
@@ -904,15 +907,16 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     public void nextTask(TaskWrapper task) {
-      if (! running) {
-        throw new IllegalStateException("Worker has been killed");
-      } else if (nextTask != null) {
-        throw new IllegalStateException("Already has a task");
-      }
+      synchronized (taskNotifyLock) {
+        if (! running) {
+          throw new IllegalStateException("Worker has been killed");
+        } else if (nextTask != null) {
+          throw new IllegalStateException("Already has a task");
+        }
         
-      nextTask = task;
-      
-      LockSupport.unpark(thread);
+        nextTask = task;
+        taskNotifyLock.signalAll();
+      }
     }
     
     public void blockTillNextTask() throws InterruptedException {
@@ -920,8 +924,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         return;
       }
       
-      while (nextTask == null && running) {
-        LockSupport.park();
+      synchronized (taskNotifyLock) {
+        while (nextTask == null && running) {
+          taskNotifyLock.await();
+        }
       }
     }
     
