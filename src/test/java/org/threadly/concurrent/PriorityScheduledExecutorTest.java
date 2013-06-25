@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -676,6 +677,13 @@ public class PriorityScheduledExecutorTest {
     private final List<PriorityScheduledExecutor> executors;
     
     private PriorityScheduledExecutorTestFactory() {
+      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          // ignored
+        }
+      });
+      
       executors = new LinkedList<PriorityScheduledExecutor>();
     }
 
@@ -727,6 +735,13 @@ public class PriorityScheduledExecutorTest {
     private final List<PriorityScheduledExecutor> executors;
     
     private WrapperFactory() {
+      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          // ignored
+        }
+      });
+      
       executors = new LinkedList<PriorityScheduledExecutor>();
     }
     

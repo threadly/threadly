@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -268,6 +269,13 @@ public class PrioritySchedulerLimiterTest {
     private final List<PriorityScheduledExecutor> executors;
     
     private SchedulerLimiterFactory() {
+      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          // ignored
+        }
+      });
+      
       executors = new LinkedList<PriorityScheduledExecutor>();
     }
     
