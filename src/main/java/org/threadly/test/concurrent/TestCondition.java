@@ -10,6 +10,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author jent - Mike Jensen
  */
 public abstract class TestCondition {
+  private static final int NANOS_IN_MILLISECOND = 1000000;
   private static final int DEFAULT_POLL_INTERVAL = 20;
   private static final int DEFAULT_TIMEOUT = 1000 * 10;
   private static final int SPIN_THRESHOLD = 10;
@@ -56,7 +57,7 @@ public abstract class TestCondition {
     while (! (lastResult = get()) && 
            System.currentTimeMillis() - startTime < timeout) {
       if (pollInterval > SPIN_THRESHOLD) {
-        LockSupport.parkNanos(1000000 * pollInterval);
+        LockSupport.parkNanos(NANOS_IN_MILLISECOND * pollInterval);
       }
     }
     
