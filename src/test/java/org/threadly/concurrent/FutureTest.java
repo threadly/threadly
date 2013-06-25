@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -16,7 +17,18 @@ import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
 public class FutureTest {
-  private static final TestablePriorityScheduler scheduler = new TestablePriorityScheduler(new PriorityScheduledExecutor(10, 10, 500));
+  private static final TestablePriorityScheduler scheduler;
+  
+  static {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        // ignored
+      }
+    });
+    
+    scheduler = new TestablePriorityScheduler(new PriorityScheduledExecutor(10, 10, 500));
+  }
   
   public static void blockTillCompletedTest(FutureFactory ff) {
     Runnable r = new TestRunnable();

@@ -3,6 +3,7 @@ package org.threadly.concurrent;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
@@ -14,6 +15,15 @@ import org.threadly.test.concurrent.TestRunnable;
 public class PriorityScheduledExecutorServiceWrapperTest {
   private static final int THREAD_COUNT = 1000;
   private static final int KEEP_ALIVE_TIME = 200;
+  
+  static {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        // ignored
+      }
+    });
+  }
   
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {

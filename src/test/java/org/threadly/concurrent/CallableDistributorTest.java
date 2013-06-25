@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,6 +25,13 @@ public class CallableDistributorTest {
   
   @Before
   public void setup() {
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        // ignored
+      }
+    });
+    
     executor = new PriorityScheduledExecutor(10, 10, 200);
     distributor = new CallableDistributor<String, String>(executor);
   }
