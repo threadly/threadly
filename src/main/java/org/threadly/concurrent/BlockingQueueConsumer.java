@@ -23,6 +23,8 @@ import java.util.concurrent.ThreadFactory;
  * @param <T> Type of items contained in the queue to be consumed
  */
 public class BlockingQueueConsumer<T> implements Runnable {
+  private static final String DEFAULT_THREAD_NAME = "QueueConsumer";
+  
   protected final BlockingQueue<T> queue;
   protected final ConsumerAcceptor<T> acceptor;
   protected volatile boolean started;
@@ -62,8 +64,19 @@ public class BlockingQueueConsumer<T> implements Runnable {
   
   /**
    * Will start the consumer if it is not already started.  This is 
-   * designed so you can efficently call into this multiple times, and 
-   * it will safely garuntee that this will only be started once.
+   * designed so you can efficiently call into this multiple times, and 
+   * it will safely guarantee that this will only be started once.
+   * 
+   * @param threadFactory ThreadFactory to create new thread from
+   */
+  public void maybeStart(ThreadFactory threadFactory) {
+    maybeStart(threadFactory, DEFAULT_THREAD_NAME);
+  }
+  
+  /**
+   * Will start the consumer if it is not already started.  This is 
+   * designed so you can efficiently call into this multiple times, and 
+   * it will safely guarantee that this will only be started once.
    * 
    * @param threadFactory ThreadFactory to create new thread from
    * @param threadName Name to set the new thread to
