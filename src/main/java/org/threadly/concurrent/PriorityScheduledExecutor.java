@@ -18,6 +18,7 @@ import org.threadly.concurrent.collections.DynamicDelayedUpdater;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -39,6 +40,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT = 500;
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
+  protected static final String QUEUE_CONSUMER_THREADS_NAME = "ScheduledExecutor task consumer thread";
   
   protected final TaskPriority defaultPriority;
   protected final VirtualLock highPriorityLock;
@@ -199,16 +201,16 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
     this.threadFactory = threadFactory;
     highPriorityConsumer = new TaskConsumer(highPriorityQueue, highPriorityLock, 
-                                            new TaskAcceptor() {
+                                            new ConsumerAcceptor<TaskWrapper>() {
       @Override
-      public void acceptTask(TaskWrapper task) throws InterruptedException {
+      public void acceptConsumedItem(TaskWrapper task) throws InterruptedException {
         runHighPriorityTask(task);
       }
     });
     lowPriorityConsumer = new TaskConsumer(lowPriorityQueue, lowPriorityLock, 
-                                           new TaskAcceptor() {
+                                           new ConsumerAcceptor<TaskWrapper>() {
       @Override
-      public void acceptTask(TaskWrapper task) throws InterruptedException {
+      public void acceptConsumedItem(TaskWrapper task) throws InterruptedException {
         runLowPriorityTask(task);
       }
     });
@@ -609,7 +611,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } finally {
           ClockWrapper.resumeForcingUpdate();
         }
-        highPriorityConsumer.maybeStart();
+        highPriorityConsumer.maybeStart(threadFactory, 
+                                        QUEUE_CONSUMER_THREADS_NAME);
         break;
       case Low:
         verifyNotShutdown();
@@ -620,7 +623,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } finally {
           ClockWrapper.resumeForcingUpdate();
         }
-        lowPriorityConsumer.maybeStart();
+        lowPriorityConsumer.maybeStart(threadFactory, 
+                                       QUEUE_CONSUMER_THREADS_NAME);
         break;
       default:
         throw new UnsupportedOperationException("Priority not implemented: " + task.priority);
@@ -761,112 +765,30 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  protected class TaskConsumer implements Runnable {
-    private final DynamicDelayQueue<TaskWrapper> workQueue;
+  protected class TaskConsumer extends BlockingQueueConsumer<TaskWrapper> {
     private final VirtualLock queueLock;
-    private final TaskAcceptor acceptor;
-    private volatile boolean started;
-    private volatile boolean stopped;
-    private volatile Thread runningThread;
     
-    protected TaskConsumer(DynamicDelayQueue<TaskWrapper> workQueue, 
-                           VirtualLock queueLock, TaskAcceptor acceptor) {
-      this.workQueue = workQueue;
+    public TaskConsumer(DynamicDelayQueue<TaskWrapper> queue,
+                        VirtualLock queueLock, 
+                        ConsumerAcceptor<TaskWrapper> taskAcceptor) {
+      super(queue, taskAcceptor);
+      
       this.queueLock = queueLock;
-      this.acceptor = acceptor;
-      started = false;
-      stopped = false;
-      runningThread = null;
     }
 
-    public boolean isRunning() {
-      return started && ! stopped;
-    }
-    
-    public void maybeStart() {
-      /* this looks like a double check but 
-       * due to being volatile and only changing 
-       * one direction should be safe, as well as the fact 
-       * that started is a primitive (can't be half constructed)
-       */
-      if (started) {
-        return;
-      }
-      
-      synchronized (queueLock) {
-        if (started) {
-          return;
-        }
-
-        started = true;
-        runningThread = threadFactory.newThread(this);
-        runningThread.setDaemon(true);
-        runningThread.setName("ScheduledExecutor task consumer thread");
-        runningThread.start();
-      }
-    }
-    
-    public void stop() {
-      /* this looks like a double check but 
-       * due to being volatile and only changing 
-       * one direction should be safe, as well as the fact 
-       * that started and stopped are primitives
-       */
-      if (stopped || ! started) {
-        return;
-      }
-      
-      synchronized (queueLock) {
-        if (stopped || ! started) {
-          return;
-        }
-
-        stopped = true;
-        Thread runningThread = this.runningThread;
-        this.runningThread = null;
-        runningThread.interrupt();
-      }
-    }
-    
     @Override
-    public void run() {
-      while (! stopped) {
-        try {
-          TaskWrapper task;
-          /* must lock as same lock for removal to 
-           * ensure that task can be found for removal
-           */
-          synchronized (queueLock) {
-            task = workQueue.take();
-            task.executing();  // for recurring tasks this will put them back into the queue
-          }
-          try {
-            acceptor.acceptTask(task);
-          } catch (InterruptedException e) {
-            stop();
-          }
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        } catch (Throwable t) {
-          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-          if (handler != null) {
-            handler.uncaughtException(Thread.currentThread(), t);
-          } else {
-            t.printStackTrace();
-          }
-        }
+    public TaskWrapper getNext() throws InterruptedException {
+      TaskWrapper task;
+      /* must lock as same lock for removal to 
+       * ensure that task can be found for removal
+       */
+      synchronized (queueLock) {
+        task = queue.take();
+        task.executing();  // for recurring tasks this will put them back into the queue
       }
+      
+      return task;
     }
-  }
-  
-  /**
-   * Interface for an implementation which can accept
-   * consumed tasks.
-   * 
-   * @author jent - Mike Jensen
-   */
-  protected interface TaskAcceptor {
-    public void acceptTask(TaskWrapper task) throws InterruptedException;
   }
   
   /**
