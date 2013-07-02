@@ -25,6 +25,10 @@ It offers the ability to submit tasks with a given priority. Low priority tasks 
 
 The other large difference compared to ScheduledThreadPoolExecutor is that the pool size is dynamic. In ScheduledThreadPoolExecutor you can only provide one size, and that pool can not grow or shrink. In this implementation you have a core size, max size, and workers can be expired if they are no longer used.
 
+* ExecutorLimiter and PrioritySchedulerLimiter - These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
+
+The design is such so that you create one large pool, and then wrap it in one of these two wrappers.  You then pass the wrapper to your different parts of code.  It relies on the large pool in order to actually get a thread, but this prevents any one section of code from completely dominating the thread pool.
+
 *    TaskExecutorDistributor and TaskSchedulerDistributor provide you the ability to execute (or schedule) tasks with a given key such that tasks with the same key hash code will NEVER run concurrently. This is designed as an ability to help the developer from having to deal with concurrent issues when ever possible. It allows you to have multiple runnables or tasks that share memory, but don't force the developer to deal with synchronization and memory barriers (assuming they all share the same key).
 
 *    CallableDistributor allows you to execute callables with a given key. All callables with the same key will never run concurrently (using TaskExecutorDistributor as the back end). Then another thread can easily reap the results from those callables by requesting them via known keys.
