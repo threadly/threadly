@@ -13,6 +13,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ExecutorLimiterTest {
@@ -85,12 +86,12 @@ public class ExecutorLimiterTest {
     for (int i = 0; i < runnableCount; i++) {
       TestRunnable tr = new TestRunnable() {
         @Override
-        public void handleRunStart() throws InterruptedException {
+        public void handleRunStart() {
           running.incrementAndGet();
           if (running.get() > PARALLEL_COUNT) {
             parallelFailure = true;
           }
-          Thread.sleep(THREAD_SLEEP_TIME);
+          TestUtils.sleep(THREAD_SLEEP_TIME);
         }
         
         @Override
