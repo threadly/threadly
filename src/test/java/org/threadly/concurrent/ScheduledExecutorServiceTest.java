@@ -235,14 +235,22 @@ public class ScheduledExecutorServiceTest {
     int callableQty = 10;
     
     List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+    Object expectedResult = null;
     for (int i = 0; i < callableQty; i++) {
-      toInvoke.add(new TestCallable(0));
+      TestCallable tc;
+      if (i == 0) {
+        tc = new TestCallable(0);
+        expectedResult = tc.result;
+      } else {
+        tc = new TestCallable(1000 + i - 1);
+      }
+      toInvoke.add(tc);
     }
     Object result = scheduler.invokeAny(toInvoke);
     
     assertNotNull(result);
     
-    // TODO - improve to verify what result is returned
+    assertTrue(result == expectedResult);
   }
   
   public static void invokeAnyFail(ScheduledExecutorService scheduler) throws InterruptedException, 
