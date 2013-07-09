@@ -35,7 +35,9 @@ public class PriorityScheduledExecutorTaskWrapperTest {
   
   private class TestWrapper extends TaskWrapper {
     private final int delayInMs;
+    @SuppressWarnings("unused")
     private boolean executingCalled;
+    @SuppressWarnings("unused")
     private boolean runCalled;
     
     protected TestWrapper() {
