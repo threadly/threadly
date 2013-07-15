@@ -19,6 +19,7 @@ import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.FutureTest.FutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
+import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestablePriorityScheduler.OneTimeFutureRunnable;
 
@@ -75,7 +76,8 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
       
       assertEquals(future.listeners.size(), 1); // should now have once now that the runnable has not run yet
       
-      future.run(); // this should call the listener
+      future.run(new NativeLockFactory()); // this should call the listener
+      scheduler.tick();
       
       assertTrue(listener.ranOnce()); // verify listener was called
       
@@ -84,6 +86,7 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
       TestRunnable postRunListener = new TestRunnable();
       
       future.addListener(postRunListener);
+      scheduler.tick();
       
       assertTrue(postRunListener.ranOnce()); // verify listener was called
       
