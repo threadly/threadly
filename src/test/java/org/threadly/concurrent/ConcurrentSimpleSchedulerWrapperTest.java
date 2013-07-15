@@ -19,10 +19,17 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   }
   
   @Test
-  public void submitRunnableTest() {
+  public void submitRunnableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SimpleSchedulerInterfaceTest.submitRunnableTest(sf);
+  }
+  
+  @Test
+  public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.submitRunnableWithResultTest(sf);
   }
   
   @Test

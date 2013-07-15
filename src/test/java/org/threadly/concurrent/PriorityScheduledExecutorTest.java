@@ -263,11 +263,11 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void submitRunnableTest() {
+  public void submitRunnableTest() throws InterruptedException, ExecutionException {
     submitRunnableTest(new PriorityScheduledExecutorTestFactory());
   }
 
-  public static void submitRunnableTest(PriorityScheduledExecutorFactory priorityFactory) {
+  public static void submitRunnableTest(PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
     try {
       SimpleSchedulerInterfaceTest.submitRunnableTest(new FactoryWrapper(priorityFactory));
 
@@ -278,6 +278,30 @@ public class PriorityScheduledExecutorTest {
       scheduler.submit(tr2, TaskPriority.Low);
       scheduler.submit(tr1, TaskPriority.High);
       scheduler.submit(tr2, TaskPriority.Low);
+      
+      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+    } finally {
+      priorityFactory.shutdown();
+    }
+  }
+  
+  @Test
+  public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    submitRunnableWithResultTest(new PriorityScheduledExecutorTestFactory());
+  }
+
+  public static void submitRunnableWithResultTest(PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
+    try {
+      SimpleSchedulerInterfaceTest.submitRunnableWithResultTest(new FactoryWrapper(priorityFactory));
+
+      PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
+      TestRunnable tr1 = new TestRunnable();
+      TestRunnable tr2 = new TestRunnable();
+      scheduler.submit(tr1, tr1, TaskPriority.High);
+      scheduler.submit(tr2, tr2, TaskPriority.Low);
+      scheduler.submit(tr1, tr1, TaskPriority.High);
+      scheduler.submit(tr2, tr2, TaskPriority.Low);
       
       tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
@@ -385,7 +409,7 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void wrapperSubmitRunnableTest() {
+  public void wrapperSubmitRunnableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
       SimpleSchedulerInterfaceTest.submitRunnableTest(wf);
@@ -397,6 +421,27 @@ public class PriorityScheduledExecutorTest {
       scheduler.submit(tr2, TaskPriority.Low);
       scheduler.submit(tr1, TaskPriority.High);
       scheduler.submit(tr2, TaskPriority.Low);
+      
+      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+    } finally {
+      wf.shutdown();  // must call shutdown here because we called make after submitRunnableTest
+    }
+  }
+  
+  @Test
+  public void wrapperSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    WrapperFactory wf = new WrapperFactory();
+    try {
+      SimpleSchedulerInterfaceTest.submitRunnableWithResultTest(wf);
+
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
+      TestRunnable tr1 = new TestRunnable();
+      TestRunnable tr2 = new TestRunnable();
+      scheduler.submit(tr1, tr1, TaskPriority.High);
+      scheduler.submit(tr2, tr2, TaskPriority.Low);
+      scheduler.submit(tr1, tr1, TaskPriority.High);
+      scheduler.submit(tr2, tr2, TaskPriority.Low);
       
       tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
