@@ -1,5 +1,10 @@
 package org.threadly.test.concurrent;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -10,8 +15,10 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.FutureTest;
+import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.FutureTest.FutureFactory;
+import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestablePriorityScheduler.OneTimeFutureRunnable;
 
@@ -47,6 +54,51 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
   @Test
   public void isDoneFail() {
     FutureTest.isDoneFail(new Factory());
+  }
+  
+  @Test
+  public void listenerTest() {
+    TestRunnable tr = new TestRunnable();
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
+    try {
+      TestablePriorityScheduler scheduler = new TestablePriorityScheduler(executor, 
+                                                                          TaskPriority.High);
+      OneTimeFutureRunnable<Object> future = scheduler.new OneTimeFutureRunnable<Object>(tr, null, 0, 
+                                                                                         TaskPriority.High, 
+                                                                                         new NativeLock());
+      
+      assertEquals(future.listeners.size(), 0); // empty to start
+      
+      TestRunnable listener = new TestRunnable();
+      
+      future.addListener(listener);
+      
+      assertEquals(future.listeners.size(), 1); // should now have once now that the runnable has not run yet
+      
+      future.run(); // this should call the listener
+      
+      assertTrue(listener.ranOnce()); // verify listener was called
+      
+      assertEquals(future.listeners.size(), 0); // empty after listener calls
+      
+      TestRunnable postRunListener = new TestRunnable();
+      
+      future.addListener(postRunListener);
+      
+      assertTrue(postRunListener.ranOnce()); // verify listener was called
+      
+      assertEquals(future.listeners.size(), 0); // still empty after future ran
+      
+      // verify run on correct executor
+      TestRunnable executorListener = new TestRunnable();
+      TestExecutor testExecutor = new TestExecutor();
+      future.addListener(executorListener, testExecutor);
+      
+      assertEquals(testExecutor.providedRunnables.size(), 1);
+      assertTrue(testExecutor.providedRunnables.get(0) == executorListener);
+    } finally {
+      executor.shutdown();
+    }
   }
   
   private class Factory implements FutureFactory {
@@ -111,6 +163,15 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
                                                      ExecutionException,
                                                      TimeoutException {
       return otfr.get(timeout, unit);
+    }
+  }
+  
+  private class TestExecutor implements Executor {
+    public List<Runnable> providedRunnables = new LinkedList<Runnable>();
+    
+    @Override
+    public void execute(Runnable command) {
+      providedRunnables.add(command);
     }
   }
 }

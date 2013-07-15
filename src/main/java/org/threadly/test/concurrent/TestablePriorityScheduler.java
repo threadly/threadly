@@ -533,7 +533,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   protected class OneTimeFutureRunnable<T> extends OneTimeRunnable
                                            implements ListenableFuture<T> {
-    private final Map<Runnable, Executor> listeners;
+    protected final Map<Runnable, Executor> listeners;
     private final Callable<T> callable;
     private final VirtualLock lock;
     private final T runnableResult;
