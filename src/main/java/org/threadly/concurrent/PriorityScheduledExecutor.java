@@ -3,12 +3,15 @@ package org.threadly.concurrent;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -485,22 +488,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public Future<?> submit(Runnable task, TaskPriority priority) {
+  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
+  public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
@@ -525,13 +528,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs, 
-                                   TaskPriority priority) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
+                                             TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
@@ -551,13 +554,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
-                                       TaskPriority priority) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
+                                                 TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
@@ -980,12 +983,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   /**
    * Wrapper for tasks which only executes once, and also implements 
-   * the {@link Future} interface.
+   * the {@link ListenableFuture} interface.
    * 
    * @author jent - Mike Jensen
    */
   protected static class OneTimeFutureTaskWrapper<T> extends OneTimeTaskWrapper 
-                                                     implements Future<T> {
+                                                     implements ListenableFuture<T> {
+    private final Map<Runnable, Executor> listeners;
     private final Callable<T> callable;
     private final VirtualLock lock;
     private boolean started;
@@ -997,6 +1001,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                                        long delay, VirtualLock lock) {
       super(task, priority, delay);
       
+      listeners = new HashMap<Runnable, Executor>();
       callable = null;
       this.lock = lock;
       started = false;
@@ -1005,11 +1010,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       result = null;
     }
 
-    
     protected OneTimeFutureTaskWrapper(Callable<T> callable, TaskPriority priority,
                                        long delay, VirtualLock lock) {
       super(null, priority, delay);
       
+      listeners = new HashMap<Runnable, Executor>();
       this.callable = callable;
       this.lock = lock;
       started = false;
@@ -1039,12 +1044,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         
         synchronized (lock) {
           done = true;
+        
+          callListeners();
+          
           lock.signalAll();
         }
       } catch (Exception e) {
         synchronized (lock) {
           done = true;
           failure = e;
+        
+          callListeners();
+        
           lock.signalAll();
         }
         
@@ -1057,9 +1068,24 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       synchronized (lock) {
         canceled = true;
         
+        callListeners();
+        
         lock.signalAll();
+      
+        return ! started;
       }
-      return ! started;
+    }
+    
+    private void callListeners() {
+      synchronized (lock) {
+        Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
+        while (it.hasNext()) {
+          Entry<Runnable, Executor> listener = it.next();
+          runListener(listener.getKey(), listener.getValue(), false);
+        }
+        
+        listeners.clear();
+      }
     }
 
     @Override
@@ -1104,6 +1130,44 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           throw new TimeoutException();
         }
         return result;
+      }
+    }
+    
+    private void runListener(Runnable listener, Executor executor, 
+                             boolean throwException) {
+      if (executor != null) {
+        executor.execute(listener);
+      } else {
+        try {
+          listener.run();
+        } catch (RuntimeException e) {
+          if (throwException) {
+            throw e;
+          } else {
+            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+            if (handler != null) {
+              handler.uncaughtException(Thread.currentThread(), e);
+            } else {
+              e.printStackTrace();
+            }
+          }
+        }
+      }
+    }
+
+    @Override
+    public void addListener(Runnable listener) {
+      addListener(listener, null);
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor executor) {
+      synchronized (lock) {
+        if (done || canceled) {
+          runListener(listener, executor, true);
+        } else {
+          listeners.put(listener, executor);
+        }
       }
     }
   }

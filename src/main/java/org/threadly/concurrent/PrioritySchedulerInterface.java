@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 /**
  * This interface represents schedulers which can not only execute
@@ -26,10 +25,32 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
    * The future .get() method will return null once the runnable has completed.
    * 
    * @param task runnable to be executed
+   * @return a future to know when the task has completed
+   */
+  public ListenableFuture<?> submit(Runnable task);
+
+  /**
+   * Submit a {@link Callable} to run as soon as possible.  This is 
+   * needed when a result needs to be consumed from the 
+   * callable.
+   * 
+   * @param task callable to be executed
+   * @return a future to know when the task has completed and get the result of the callable
+   */
+  public <T> ListenableFuture<T> submit(Callable<T> task);
+  
+  /**
+   * Submit a task to run as soon as possible.  There is a 
+   * slight increase in load when using submit over execute.  
+   * So this should only be used when the future is necessary.
+   * 
+   * The future .get() method will return null once the runnable has completed.
+   * 
+   * @param task runnable to be executed
    * @param priority priority for task
    * @return a future to know when the task has completed
    */
-  public Future<?> submit(Runnable task, TaskPriority priority);
+  public ListenableFuture<?> submit(Runnable task, TaskPriority priority);
 
   /**
    * Submit a {@link Callable} to run as soon as possible.  This is 
@@ -40,7 +61,7 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
    * @param priority priority for callable
    * @return a future to know when the task has completed and get the result of the callable
    */
-  public <T> Future<T> submit(Callable<T> task, TaskPriority priority);
+  public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority);
   
   /**
    * Schedule a task with a given delay and a specified priority.
@@ -50,6 +71,32 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
    * @param priority priority to give task for execution
    */
   public void schedule(Runnable task, long delayInMs, TaskPriority priority);
+  
+  /**
+   * Schedule a task with a given delay.  There is a slight 
+   * increase in load when using submitScheduled over schedule.  So 
+   * this should only be used when the future is necessary.
+   * 
+   * The future .get() method will return null once the runnable has completed.
+   * 
+   * @param task runnable to execute
+   * @param delayInMs time in milliseconds to wait to execute task
+   * @return a future to know when the task has completed
+   */
+  public ListenableFuture<?> submitScheduled(Runnable task, 
+                                             long delayInMs);
+  
+  /**
+   * Schedule a {@link Callable} with a given delay.  This is 
+   * needed when a result needs to be consumed from the 
+   * callable.
+   * 
+   * @param task callable to be executed
+   * @param delayInMs time in milliseconds to wait to execute task
+   * @return a future to know when the task has completed and get the result of the callable
+   */
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, 
+                                                 long delayInMs);
   
   /**
    * Schedule a task with a given delay and a specified priority.  There is 
@@ -63,8 +110,8 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
    * @param priority priority to give task for execution
    * @return a future to know when the task has completed
    */
-  public Future<?> submitScheduled(Runnable task, long delayInMs, 
-                                   TaskPriority priority);
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
+                                             TaskPriority priority);
   
   /**
    * Schedule a {@link Callable} with a given delay.  This is 
@@ -76,8 +123,8 @@ public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
    * @param priority priority to give task for execution
    * @return a future to know when the task has completed and get the result of the callable
    */
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs, 
-                                       TaskPriority priority);
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs, 
+                                                 TaskPriority priority);
 
   /**
    * Schedule a recurring task to run and a provided priority.  The recurring 

@@ -1,13 +1,18 @@
 package org.threadly.concurrent;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -90,7 +95,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     FutureRunnable<T> fr = new FutureRunnable<T>(task);
     
     scheduler.execute(fr);
@@ -99,7 +104,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   @Override
-  public <T> Future<T> submit(Runnable task, T result) {
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
     FutureRunnable<T> fr = new FutureRunnable<T>(task, result);
     
     scheduler.execute(fr);
@@ -108,7 +113,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     FutureRunnable<?> fr = new FutureRunnable<Object>(task);
     
     scheduler.execute(fr);
@@ -123,7 +128,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
 
   @Override
   public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
-                                       long timeout, TimeUnit unit) throws InterruptedException {
+                                                 long timeout, TimeUnit unit) throws InterruptedException {
     long startTime = Clock.accurateTime();
     long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
     List<Future<T>> resultList = new ArrayList<Future<T>>(tasks.size());
@@ -305,20 +310,24 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    * @param <T> generic for callable result
    */
   protected class FutureRunnable<T> extends VirtualRunnable 
-                                    implements Future<T> {
+                                    implements ListenableFuture<T> {
+    private final Map<Runnable, Executor> listeners;
     private final Callable<T> task;
     private final Runnable toRun;
     private volatile T result;
     private volatile Exception thrownException;
     private volatile boolean isCancelled;
+    private boolean started;
     private boolean hasRun; // guarded by synchronization on this
     
     protected FutureRunnable(Callable<T> task) {
+      listeners = new HashMap<Runnable, Executor>();
       this.task = task;
       this.toRun = null;
       this.result = null;
       thrownException = null;
       isCancelled = false;
+      started = false;
       hasRun = false;
     }
     
@@ -327,11 +336,13 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     }
     
     protected FutureRunnable(Runnable toRun, T result) {
+      listeners = new HashMap<Runnable, Executor>();
       this.task = null;
       this.toRun = toRun;
       this.result = result;
       thrownException = null;
       isCancelled = false;
+      started = false;
       hasRun = false;
     }
 
@@ -339,10 +350,12 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     public boolean cancel(boolean mayInterruptIfRunning) {
       synchronized (this) {
         isCancelled = true;
+          
+        callListeners();
         
         this.notifyAll();
         
-        return ! hasRun;
+        return ! started;
       }
     }
 
@@ -395,7 +408,15 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     public void run() {
       boolean run = false;
       try {
-        if (! isCancelled) {
+        boolean shouldRun = false;
+        synchronized (this) {
+          if (! isCancelled) {
+            started = true;
+            shouldRun = true;
+          }
+        }
+        
+        if (shouldRun) {
           run = true;
           if (task != null) {
             result = task.call();
@@ -404,14 +425,68 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
           }
         }
       } catch (Exception e) {
-        thrownException = e;
+        synchronized (this) {
+          thrownException = e;
+        }
       } finally {
         synchronized (this) {
           if (run) {
             hasRun = true;
           }
           
+          callListeners();
+          
           this.notifyAll();
+        }
+      }
+    }
+    
+    private void callListeners() {
+      synchronized (this) {
+        Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
+        while (it.hasNext()) {
+          Entry<Runnable, Executor> listener = it.next();
+          runListener(listener.getKey(), listener.getValue(), false);
+        }
+        
+        listeners.clear();
+      }
+    }
+    
+    private void runListener(Runnable listener, Executor executor, 
+                             boolean throwException) {
+      if (executor != null) {
+        executor.execute(listener);
+      } else {
+        try {
+          listener.run();
+        } catch (RuntimeException e) {
+          if (throwException) {
+            throw e;
+          } else {
+            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+            if (handler != null) {
+              handler.uncaughtException(Thread.currentThread(), e);
+            } else {
+              e.printStackTrace();
+            }
+          }
+        }
+      }
+    }
+
+    @Override
+    public void addListener(Runnable listener) {
+      addListener(listener, null);
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor executor) {
+      synchronized (this) {
+        if (hasRun || isCancelled || thrownException != null) {
+          runListener(listener, executor, true);
+        } else {
+          listeners.put(listener, executor);
         }
       }
     }

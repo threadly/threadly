@@ -4,16 +4,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.concurrent.ListenableFuture;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.TaskPriority;
@@ -112,33 +113,33 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public Future<?> submit(Runnable task, TaskPriority priority) {
+  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
+  public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs,
-                                       TaskPriority priority) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs,
+                                             TaskPriority priority) {
     OneTimeFutureRunnable<?> otfr = new OneTimeFutureRunnable<Object>(task, delayInMs, priority, 
                                                                       new NativeLock());
     add(otfr);
@@ -147,13 +148,13 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
-                                       TaskPriority priority) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
+                                                 TaskPriority priority) {
     OneTimeFutureRunnable<T> otfr = new OneTimeFutureRunnable<T>(task, delayInMs, priority, 
                                                                  new NativeLock());
     add(otfr);
@@ -502,12 +503,13 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   
   /**
    * Container for runnables which are only run once.  And also need 
-   * to implement the {@link Future} interface.
+   * to implement the {@link ListenableFuture} interface.
    * 
    * @author jent - Mike Jensen
    */
   protected class OneTimeFutureRunnable<T> extends OneTimeRunnable
-                                           implements Future<T> {
+                                           implements ListenableFuture<T> {
+    private final Map<Runnable, Executor> listeners;
     private final Callable<T> callable;
     private final VirtualLock lock;
     private boolean canceled;
@@ -520,6 +522,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
                                     TaskPriority priority, VirtualLock lock) {
       super(runnable, delay, priority);
       
+      listeners = new HashMap<Runnable, Executor>();
       callable = null;
       this.lock = lock;
       canceled = false;
@@ -533,6 +536,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
                                     TaskPriority priority, VirtualLock lock) {
       super(null, delay, priority);
       
+      listeners = new HashMap<Runnable, Executor>();
       this.callable = callable;
       this.lock = lock;
       canceled = false;
@@ -571,12 +575,18 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         
         synchronized (lock) {
           done = true;
+          
+          callListeners();
+          
           lock.signalAll();
         }
       } catch (Exception e) {
         synchronized (lock) {
           done = true;
           failure = e;
+          
+          callListeners();
+          
           lock.signalAll();
         }
         
@@ -589,9 +599,12 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       synchronized (lock) {
         canceled = true;
         
+        callListeners();
+        
         lock.signalAll();
+      
+        return ! started;
       }
-      return ! started;
     }
 
     @Override
@@ -635,7 +648,45 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
         } else if (! done) {
           throw new TimeoutException();
         }
+        
         return result;
+      }
+    }
+    
+    private void callListeners() {
+      synchronized (this) {
+        Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
+        while (it.hasNext()) {
+          Entry<Runnable, Executor> listener = it.next();
+          runListener(listener.getKey(), listener.getValue(), false);
+        }
+        
+        listeners.clear();
+      }
+    }
+    
+    private void runListener(Runnable listener, Executor executor, 
+                             boolean throwException) {
+      if (executor == null) {
+        executor = TestablePriorityScheduler.this;
+      }
+      
+      executor.execute(listener);
+    }
+
+    @Override
+    public void addListener(Runnable listener) {
+      addListener(listener, null);
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor executor) {
+      synchronized (this) {
+        if (done || canceled) {
+          runListener(listener, executor, true);
+        } else {
+          listeners.put(listener, executor);
+        }
       }
     }
   }

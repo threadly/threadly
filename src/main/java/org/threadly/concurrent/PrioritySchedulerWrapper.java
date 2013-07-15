@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
 
 /**
  * Class to wrap any implementation of {@link PrioritySchedulerInterface}.  The purpose of wrapping 
@@ -46,22 +45,22 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public Future<?> submit(Runnable task, TaskPriority priority) {
+  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     return submit(task, defaultPriority);
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
+  public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     return scheduler.submit(task, priority);
   }
   
@@ -77,24 +76,24 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs,
-                                   TaskPriority priority) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs,
+                                             TaskPriority priority) {
     return scheduler.submitScheduled(task, delayInMs, priority);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
-                                       TaskPriority priority) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
+                                                 TaskPriority priority) {
     return scheduler.submitScheduled(task, delayInMs, priority);
   }
 

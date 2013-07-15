@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -282,15 +281,15 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs,
-                                   TaskPriority priority) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs,
+                                             TaskPriority priority) {
     return super.submitScheduled(wrap(task, priority, false), 
                                  delayInMs, priority);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
-                                       TaskPriority priority) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
+                                                 TaskPriority priority) {
     return super.submitScheduled(wrap(task, priority, false), 
                                  delayInMs, priority);
   }

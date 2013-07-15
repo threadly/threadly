@@ -4,7 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -63,10 +63,10 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
         Wrapper next = waitingTasks.poll();
         if (next.hasFuture()) {
           if (next.isCallable()) {
-            Future<?> f = scheduler.submit(next.getCallable(), next.getPriority());
+            ListenableFuture<?> f = scheduler.submit(next.getCallable(), next.getPriority());
             next.getFuture().setParentFuture(f);
           } else {
-            Future<?> f = scheduler.submit(next.getRunnable(), next.getPriority());
+            ListenableFuture<?> f = scheduler.submit(next.getRunnable(), next.getPriority());
             next.getFuture().setParentFuture(f);
           }
         } else {
@@ -83,12 +83,12 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     return submit(task, scheduler.getDefaultPriority());
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     return submit(task, scheduler.getDefaultPriority());
   }
 
@@ -99,13 +99,13 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, delayInMs, 
                            scheduler.getDefaultPriority());
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     return submitScheduled(task, delayInMs, 
                            scheduler.getDefaultPriority());
   }
@@ -143,7 +143,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public Future<?> submit(Runnable task, TaskPriority priority) {
+  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide task");
     }
@@ -171,7 +171,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task, TaskPriority priority) {
+  public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide task");
     }
@@ -215,8 +215,8 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs,
-                                   TaskPriority priority) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs,
+                                             TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
@@ -234,8 +234,8 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs,
-                                       TaskPriority priority) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
+                                                 TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
@@ -559,23 +559,23 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
   
   /**
-   * Future which contains a parent future 
+   * ListenableFuture which contains a parent {@link ListenableFuture}. 
    * (which may not be created yet).
    * 
    * @author jent - Mike Jensen
    * @param <T> result type returned by .get()
    */
-  protected class FutureFuture<T> implements Future<T> {
+  protected class FutureFuture<T> implements ListenableFuture<T> {
     private boolean canceled;
     private boolean mayInterruptIfRunningOnCancel;
-    private Future<?> parentFuture;
+    private ListenableFuture<?> parentFuture;
     
     public FutureFuture() {
       canceled = false;
       parentFuture = null;
     }
     
-    private void setParentFuture(Future<?> parentFuture) {
+    private void setParentFuture(ListenableFuture<?> parentFuture) {
       synchronized (this) {
         this.parentFuture = parentFuture;
         if (canceled) {
@@ -646,6 +646,26 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
         // parent future is now not null
         return (T)parentFuture.get(remainingWaitTime, TimeUnit.MILLISECONDS);
       }
+    }
+
+    @Override
+    public void addListener(Runnable listener) {
+      addListener(listener, null);
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor executor) {
+      synchronized (this) {
+        while (parentFuture == null) {
+          try {
+            this.wait();
+          } catch (InterruptedException e) {
+            throw ExceptionUtils.makeRuntime(e);
+          }
+        }
+      }
+      
+      parentFuture.addListener(listener, executor);
     }
   }
 }
