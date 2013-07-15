@@ -353,8 +353,13 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void submitScheduledRunnableTest() {
+  public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException {
     SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
@@ -499,10 +504,17 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void wrapperSubmitScheduledRunnableTest() {
+  public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     
     SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
+  }
+  
+  @Test
+  public void wrapperSubmitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    WrapperFactory wf = new WrapperFactory();
+    
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(wf);
   }
   
   @Test

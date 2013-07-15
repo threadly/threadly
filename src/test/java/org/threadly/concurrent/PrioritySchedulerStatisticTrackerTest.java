@@ -124,10 +124,17 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void submitScheduledRunnableTest() {
+  public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
+  }
+  
+  @Test
+  public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(sf);
   }
   
   @Test
@@ -284,10 +291,17 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void wrapperSubmitScheduledRunnableTest() {
+  public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     
     SimpleSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
+  }
+  
+  @Test
+  public void wrapperSubmitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    WrapperFactory wf = new WrapperFactory();
+    
+    SimpleSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(wf);
   }
   
   @Test

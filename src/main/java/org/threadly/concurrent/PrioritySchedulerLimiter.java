@@ -589,7 +589,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * @author jent - Mike Jensen
    * @param <T> result type returned by .get()
    */
-  protected class FutureFuture<T> implements ListenableFuture<T> {
+  protected static class FutureFuture<T> implements ListenableFuture<T> {
     private boolean canceled;
     private boolean mayInterruptIfRunningOnCancel;
     private ListenableFuture<?> parentFuture;
@@ -599,7 +599,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       parentFuture = null;
     }
     
-    private void setParentFuture(ListenableFuture<?> parentFuture) {
+    protected void setParentFuture(ListenableFuture<?> parentFuture) {
       synchronized (this) {
         this.parentFuture = parentFuture;
         if (canceled) {

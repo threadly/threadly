@@ -260,7 +260,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledRunnableTest(PrioritySchedulerFactory factory) {
+  public static void submitScheduledRunnableTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
@@ -290,7 +290,49 @@ public class SimpleSchedulerInterfaceTest {
       
       Iterator<Future<?>> futureIt = futures.iterator();
       while (futureIt.hasNext()) {
-        assertTrue(futureIt.next().isDone());
+        Future<?> future = futureIt.next();
+        assertTrue(future.isDone());
+        assertNull(future.get());
+      }
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  public static void submitScheduledRunnableWithResultTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
+    try {
+      int runnableCount = 10;
+      int scheduleDelay = 50;
+      
+      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+      List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(runnableCount);
+      for (int i = 0; i < runnableCount; i++) {
+        TestRunnable tr = new TestRunnable();
+        Future<TestRunnable> future = scheduler.submitScheduled(tr, tr, scheduleDelay);
+        assertNotNull(future);
+        runnables.add(tr);
+        futures.add(future);
+      }
+      
+      // verify execution and execution times
+      Iterator<TestRunnable> it = runnables.iterator();
+      while (it.hasNext()) {
+        TestRunnable tr = it.next();
+        long executionDelay = tr.getDelayTillFirstRun();
+        assertTrue(executionDelay >= scheduleDelay);
+        // should be very timely with a core pool size that matches runnable count
+        assertTrue(executionDelay <= (scheduleDelay + 2000));  
+        assertEquals(tr.getRunCount(), 1);
+      }
+      
+      it = runnables.iterator();
+      Iterator<Future<TestRunnable>> futureIt = futures.iterator();
+      while (futureIt.hasNext()) {
+        Future<?> future = futureIt.next();
+        assertTrue(future.isDone());
+        assertTrue(future.get() == it.next());
       }
     } finally {
       factory.shutdown();

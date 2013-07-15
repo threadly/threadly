@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
+import org.threadly.concurrent.PrioritySchedulerLimiter.FutureFuture;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -58,7 +59,7 @@ public class PrioritySchedulerLimiterTest {
         runnables.add(tr);
         if (flip2) {
           psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, 
-                                                               psl.new FutureFuture<Object>()));
+                                                               new FutureFuture<Object>()));
           flip2 = false;
         } else {
           psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, null));
@@ -71,7 +72,7 @@ public class PrioritySchedulerLimiterTest {
           public Object call() throws Exception {
             return new Object();
           }
-        }, TaskPriority.High, psl.new FutureFuture<Object>()));
+        }, TaskPriority.High, new FutureFuture<Object>()));
         flip1 = true;
       }
     }
