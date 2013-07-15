@@ -271,7 +271,11 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
     try {
       PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      TestRunnable futureListener = new TestRunnable();
+      ListenableFuture<?> future = wrapper.submit(new TestRunnable());
+      future.addListener(futureListener);
       
+      futureListener.blockTillFinished(); // throws exception if never called
     } finally {
       executor.shutdown();
     }
