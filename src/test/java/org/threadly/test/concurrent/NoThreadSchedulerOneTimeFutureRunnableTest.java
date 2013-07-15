@@ -60,7 +60,7 @@ public class NoThreadSchedulerOneTimeFutureRunnableTest {
     private final OneTimeFutureRunnable<T> otfr;
     
     private FutureRunnable(Runnable run, VirtualLock lock) {
-      this.otfr = new NoThreadScheduler().new OneTimeFutureRunnable<T>(run, 0, lock);
+      this.otfr = new NoThreadScheduler().new OneTimeFutureRunnable<T>(run, null, 0, lock);
     }
     
     private FutureRunnable(Callable<T> callable, VirtualLock lock) {

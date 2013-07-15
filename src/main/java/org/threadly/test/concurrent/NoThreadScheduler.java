@@ -61,6 +61,11 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
   }
 
   @Override
+  public <T> Future<T> submit(Runnable task, T result) {
+    return submitScheduled(task, result, 0);
+  }
+
+  @Override
   public <T> Future<T> submit(Callable<T> task) {
     return submitScheduled(task, 0);
   }
@@ -72,8 +77,13 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
 
   @Override
   public Future<?> submitScheduled(Runnable task, long delayInMs) {
-    OneTimeFutureRunnable<?> otfr = new OneTimeFutureRunnable<Object>(task, delayInMs, 
-                                                                      new NativeLock());
+    return submitScheduled(task, null, delayInMs);
+  }
+
+  @Override
+  public <T> Future<T> submitScheduled(Runnable task, T result, long delayInMs) {
+    OneTimeFutureRunnable<T> otfr = new OneTimeFutureRunnable<T>(task, result, delayInMs, 
+                                                                 new NativeLock());
     add(otfr);
     
     return otfr;
@@ -265,25 +275,26 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
                                            implements Future<T> {
     private final Callable<T> callable;
     private final VirtualLock lock;
+    private final T runnableResult;
     private boolean canceled;
     private boolean started;
     private boolean done;
     private Exception failure;
     private T result;
     
-    public OneTimeFutureRunnable(Runnable runnable, long delay, 
-                                 VirtualLock lock) {
+    public OneTimeFutureRunnable(Runnable runnable, T runnableResult, 
+                                 long delay, VirtualLock lock) {
       super(runnable, delay);
       
       callable = null;
       this.lock = lock;
+      this.runnableResult = runnableResult;
       canceled = false;
       started = false;
       done = false;
       failure = null;
       result = null;
     }
-
     
     public OneTimeFutureRunnable(Callable<T> callable, long delay, 
                                  VirtualLock lock) {
@@ -291,6 +302,7 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
       
       this.callable = callable;
       this.lock = lock;
+      this.runnableResult = null;
       canceled = false;
       started = false;
       done = false;
@@ -312,6 +324,7 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
         if (shouldRun) {
           if (runnable != null) {
             runnable.run();
+            result = runnableResult;
           } else {
             result = callable.call();
           }
@@ -341,7 +354,7 @@ public class NoThreadScheduler implements SimpleSchedulerInterface {
       }
       return ! started;
     }
-
+    
     @Override
     public boolean isDone() {
       synchronized (lock) {

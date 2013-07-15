@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -491,10 +492,20 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public ListenableFuture<?> submit(Runnable task) {
     return submit(task, defaultPriority);
   }
+  
+  @Override
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+    return submit(task, result, defaultPriority);
+  }
 
   @Override
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
+  }
+  
+  @Override
+  public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
+    return submitScheduled(task, result, 0, priority);
   }
 
   @Override
@@ -533,8 +544,20 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   @Override
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
+    return submitScheduled(task, result, delayInMs, defaultPriority);
+  }
+
+  @Override
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
                                              TaskPriority priority) {
+    return submitScheduled(task, null, delayInMs, priority);
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
+                                                 long delayInMs, 
+                                                 TaskPriority priority) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
@@ -544,10 +567,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    OneTimeFutureTaskWrapper<?> otftw = new OneTimeFutureTaskWrapper<Object>(task, 
-                                                                             priority, 
-                                                                             delayInMs, 
-                                                                             makeLock());
+    OneTimeFutureTaskWrapper<T> otftw = new OneTimeFutureTaskWrapper<T>(task, result, 
+                                                                        priority, 
+                                                                        delayInMs, 
+                                                                        makeLock());
     addToQueue(otftw);
     
     return otftw;
@@ -989,21 +1012,24 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    */
   protected static class OneTimeFutureTaskWrapper<T> extends OneTimeTaskWrapper 
                                                      implements ListenableFuture<T> {
-    private final Map<Runnable, Executor> listeners;
+    protected final Map<Runnable, Executor> listeners;
     private final Callable<T> callable;
     private final VirtualLock lock;
+    private final T runnableResult;
     private boolean started;
     private boolean done;
     private Exception failure;
     private T result;
     
-    protected OneTimeFutureTaskWrapper(Runnable task, TaskPriority priority,
+    protected OneTimeFutureTaskWrapper(Runnable task, T runnableResult, 
+                                       TaskPriority priority,
                                        long delay, VirtualLock lock) {
       super(task, priority, delay);
       
       listeners = new HashMap<Runnable, Executor>();
       callable = null;
       this.lock = lock;
+      this.runnableResult = runnableResult;
       started = false;
       done = false;
       failure = null;
@@ -1017,6 +1043,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       listeners = new HashMap<Runnable, Executor>();
       this.callable = callable;
       this.lock = lock;
+      this.runnableResult = null;
       started = false;
       done = false;
       failure = null;
@@ -1037,6 +1064,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         if (shouldRun) {
           if (task != null) {
             task.run();
+            result = runnableResult;
           } else {
             result = callable.call();
           }
@@ -1124,11 +1152,15 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           lock.await(waitTime);
           waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
         }
-        if (failure != null) {
+        
+        if (canceled) {
+          throw new CancellationException();
+        } else if (failure != null) {
           throw new ExecutionException(failure);
         } else if (! done) {
           throw new TimeoutException();
         }
+        
         return result;
       }
     }

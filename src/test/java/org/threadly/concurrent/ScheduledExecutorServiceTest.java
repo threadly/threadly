@@ -134,8 +134,6 @@ public class ScheduledExecutorServiceTest {
     } catch (CancellationException e) {
       // expected
     }
-    
-    assertTrue(f.isCancelled());
   }
   
   public static void scheduleRunnableTest(ScheduledExecutorService scheduler) throws InterruptedException, 

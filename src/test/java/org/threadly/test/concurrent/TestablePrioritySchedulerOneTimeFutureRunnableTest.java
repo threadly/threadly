@@ -68,7 +68,7 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
     private FutureRunnable(Runnable run, VirtualLock lock) {
       scheduler = new TestablePriorityScheduler(executor, 
                                                 TaskPriority.High);
-      this.otfr = scheduler.new OneTimeFutureRunnable<T>(run, 0, 
+      this.otfr = scheduler.new OneTimeFutureRunnable<T>(run, null, 0, 
                                                          TaskPriority.High, 
                                                          lock);
     }

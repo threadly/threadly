@@ -118,8 +118,19 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+    return submit(task, result, defaultPriority);
+  }
+
+  @Override
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submit(Runnable task, T result, 
+                                        TaskPriority priority) {
+    return submitScheduled(task, result, 0, priority);
   }
 
   @Override
@@ -138,10 +149,23 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
+                                                 long delayInMs) {
+    return submitScheduled(task, result, delayInMs, defaultPriority);
+  }
+
+  @Override
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs,
                                              TaskPriority priority) {
-    OneTimeFutureRunnable<?> otfr = new OneTimeFutureRunnable<Object>(task, delayInMs, priority, 
-                                                                      new NativeLock());
+    return submitScheduled(task, null, delayInMs, priority);
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
+                                                 long delayInMs, TaskPriority priority) {
+    OneTimeFutureRunnable<T> otfr = new OneTimeFutureRunnable<T>(task, result, 
+                                                                 delayInMs, priority, 
+                                                                 new NativeLock());
     add(otfr);
     
     return otfr;
@@ -512,19 +536,21 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     private final Map<Runnable, Executor> listeners;
     private final Callable<T> callable;
     private final VirtualLock lock;
+    private final T runnableResult;
     private boolean canceled;
     private boolean started;
     private boolean done;
     private Exception failure;
     private T result;
 
-    protected OneTimeFutureRunnable(Runnable runnable, long delay, 
+    protected OneTimeFutureRunnable(Runnable runnable, T runnableResult, long delay, 
                                     TaskPriority priority, VirtualLock lock) {
       super(runnable, delay, priority);
       
       listeners = new HashMap<Runnable, Executor>();
       callable = null;
       this.lock = lock;
+      this.runnableResult = runnableResult;
       canceled = false;
       started = false;
       done = false;
@@ -539,6 +565,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       listeners = new HashMap<Runnable, Executor>();
       this.callable = callable;
       this.lock = lock;
+      this.runnableResult = null;
       canceled = false;
       started = false;
       done = false;
@@ -564,6 +591,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
             } else {
               runnable.run();
             }
+            result = runnableResult;
           } else {
             if (callable instanceof VirtualCallable) {
               result = ((VirtualCallable<T>)callable).call(scheduler);

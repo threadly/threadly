@@ -96,29 +96,17 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task) {
-    FutureRunnable<T> fr = new FutureRunnable<T>(task);
-    
-    scheduler.execute(fr);
-    
-    return fr;
+    return scheduler.submit(task);
   }
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    FutureRunnable<T> fr = new FutureRunnable<T>(task, result);
-    
-    scheduler.execute(fr);
-    
-    return fr;
+    return scheduler.submit(task, result);
   }
 
   @Override
   public ListenableFuture<?> submit(Runnable task) {
-    FutureRunnable<?> fr = new FutureRunnable<Object>(task);
-    
-    scheduler.execute(fr);
-    
-    return fr;
+    return scheduler.submit(task);
   }
 
   @Override

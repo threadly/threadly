@@ -247,18 +247,33 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test
   public void shutdownTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
-    PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
-    
-    wrapper.shutdownNow();
-    
-    assertTrue(wrapper.isShutdown());
-    assertTrue(executor.isShutdown());
-    
     try {
-      wrapper.execute(new TestRunnable());
-      fail("Execption should have been thrown");
-    } catch (IllegalStateException e) {
-      // expected
+      PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      
+      wrapper.shutdownNow();
+      
+      assertTrue(wrapper.isShutdown());
+      assertTrue(executor.isShutdown());
+      
+      try {
+        wrapper.execute(new TestRunnable());
+        fail("Execption should have been thrown");
+      } catch (IllegalStateException e) {
+        // expected
+      }
+    } finally {
+      executor.shutdown();
+    }
+  }
+  
+  @Test
+  public void listenableFutureTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
+    try {
+      PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      
+    } finally {
+      executor.shutdown();
     }
   }
 }
