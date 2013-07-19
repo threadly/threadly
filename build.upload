@@ -4,7 +4,7 @@ apply plugin: 'signing'
 apply plugin: 'checkstyle'
 
 group 'org.threadly'
-version = '0.5-SNAPSHOT'
+version = '0.5'
 
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
