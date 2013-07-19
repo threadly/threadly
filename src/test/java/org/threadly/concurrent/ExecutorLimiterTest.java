@@ -31,7 +31,8 @@ public class ExecutorLimiterTest {
     parallelFailure = false;
     running = new AtomicInteger(0);
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
-    limiter = new ExecutorLimiter(executor, PARALLEL_COUNT);
+    limiter = new ExecutorLimiter(executor, PARALLEL_COUNT, 
+                                  "TestExecutorLimiter");
   }
   
   @After
@@ -55,6 +56,18 @@ public class ExecutorLimiterTest {
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
+    }
+  }
+  
+  @Test
+  public void constructorEmptySubPoolNameTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
+    try {
+      ExecutorLimiter limiter = new ExecutorLimiter(executor, 0, " ");
+      
+      assertNull(limiter.subPoolName);
+    } finally {
+      executor.shutdown();
     }
   }
   
