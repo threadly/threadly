@@ -48,7 +48,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * 
    * @param scheduler {@link PrioritySchedulerInterface} implementation to submit task executions to.
    * @param maxConcurrency maximum qty of runnables to run in parallel
-   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
+   * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
   public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
                                   int maxConcurrency, String subPoolName) {

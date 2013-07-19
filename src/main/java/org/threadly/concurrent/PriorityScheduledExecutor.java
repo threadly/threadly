@@ -443,11 +443,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
    */
   public PrioritySchedulerInterface makeSubPool(int maxConcurrency) {
+    return makeSubPool(maxConcurrency, null);
+  }
+
+  /**  
+   * Makes a new {@link PrioritySchedulerLimiter} that uses this pool as it's execution source.
+   * 
+   * @param maxConcurrency maximum number of threads to run in parallel in sub pool
+   * @param subPoolName name to describe threads while running under this sub pool
+   * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
+   */
+  public PrioritySchedulerInterface makeSubPool(int maxConcurrency, String subPoolName) {
     if (maxConcurrency > corePoolSize) {
       throw new IllegalArgumentException("A sub pool should be smaller than the parent pool");
     }
     
-    return new PrioritySchedulerLimiter(this, maxConcurrency);
+    return new PrioritySchedulerLimiter(this, maxConcurrency, subPoolName);
   }
   
   protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
