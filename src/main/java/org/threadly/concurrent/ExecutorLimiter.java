@@ -33,7 +33,19 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
    * @param maxConcurrency maximum qty of runnables to run in parallel
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency) {
-    super(maxConcurrency);
+    this(executor, maxConcurrency, null);
+  }
+  
+  /**
+   * Construct a new execution limiter that implements the 
+   * {@link Executor} interface.
+   * 
+   * @param executor {@link Executor} to submit task executions to.
+   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
+   */
+  public ExecutorLimiter(Executor executor, int maxConcurrency, String subPoolName) {
+    super(subPoolName, maxConcurrency);
     
     if (executor == null) {
       throw new IllegalArgumentException("Must provide executor");
@@ -88,6 +100,15 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     
     @Override
     public void run() {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
       try {
         if (factory != null && 
             runnable instanceof VirtualRunnable) {
@@ -98,6 +119,10 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
         }
       } finally {
         handleTaskFinished();
+        
+        if (subPoolName != null) {
+          currentThread.setName(originalThreadName);
+        }
       }
     }
   }

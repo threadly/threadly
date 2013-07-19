@@ -40,7 +40,19 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    */
   public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
                                   int maxConcurrency) {
-    super(maxConcurrency);
+    this(scheduler, maxConcurrency, null);
+  }
+  
+  /**
+   * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
+   * 
+   * @param scheduler {@link PrioritySchedulerInterface} implementation to submit task executions to.
+   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
+   */
+  public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
+                                  int maxConcurrency, String subPoolName) {
+    super(subPoolName, maxConcurrency);
     
     if (scheduler == null) {
       throw new IllegalArgumentException("Must provide scheduler");
@@ -386,6 +398,15 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     
     @Override
     public void run() {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
       try {
         if (factory != null && 
             runnable instanceof VirtualRunnable) {
@@ -399,6 +420,10 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
           handleTaskFinished();
         } finally {
           scheduler.schedule(delayRunnable, recurringDelay, priority);
+          
+          if (subPoolName != null) {
+            currentThread.setName(originalThreadName);
+          }
         }
       }
     }
@@ -457,6 +482,15 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     
     @Override
     public void run() {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
       try {
         if (factory != null && 
             runnable instanceof VirtualRunnable) {
@@ -467,6 +501,10 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
         }
       } finally {
         handleTaskFinished();
+          
+        if (subPoolName != null) {
+          currentThread.setName(originalThreadName);
+        }
       }
     }
 
@@ -524,6 +562,15 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     
     @Override
     public T call() throws Exception {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
       try {
         if (factory != null && 
             callable instanceof VirtualCallable) {
@@ -534,6 +581,10 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
         }
       } finally {
         handleTaskFinished();
+          
+        if (subPoolName != null) {
+          currentThread.setName(originalThreadName);
+        }
       }
     }
 
