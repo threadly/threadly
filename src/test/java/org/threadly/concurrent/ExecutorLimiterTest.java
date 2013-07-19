@@ -63,7 +63,7 @@ public class ExecutorLimiterTest {
   public void constructorEmptySubPoolNameTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
     try {
-      ExecutorLimiter limiter = new ExecutorLimiter(executor, 0, " ");
+      ExecutorLimiter limiter = new ExecutorLimiter(executor, 1, " ");
       
       assertNull(limiter.subPoolName);
     } finally {

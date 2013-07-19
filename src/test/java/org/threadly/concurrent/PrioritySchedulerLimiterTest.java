@@ -41,7 +41,7 @@ public class PrioritySchedulerLimiterTest {
   public void constructorEmptySubPoolNameTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
     try {
-      PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(executor, 0, " ");
+      PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(executor, 1, " ");
       
       assertNull(limiter.subPoolName);
     } finally {
