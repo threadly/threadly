@@ -38,6 +38,15 @@ public abstract class AbstractThreadPoolLimiter {
   }
   
   /**
+   * Call to check what the maximum concurrency this limiter will allow.
+   * 
+   * @return maximum concurrent tasks to be run
+   */
+  public int getMaxConcurrency() {
+    return maxConcurrency;
+  }
+  
+  /**
    * Constructs a formated name for a given thread for this sub pool.  
    * This only makes sense to call when subPoolName is not null.
    * 
