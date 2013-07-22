@@ -286,11 +286,6 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     return ff;
   }
 
-  /**
-   * Not currently implemented for limiter.
-   * 
-   * @throws UnsupportedOperationException exception always thrown
-   */
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority) {
