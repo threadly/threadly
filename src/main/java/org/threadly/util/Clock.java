@@ -36,19 +36,9 @@ public class Clock {
       } else {
         updateClock = true;
         
-        Thread thread = new Thread() {
-            public void run() {
-              synchronized (UPDATE_LOCK) {
-                while (updateClock) {
-                  try {
-                    accurateTime();
-                    UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
-                  } catch (InterruptedException ignored) { }
-                }
-              }
-            }
-          };
-    
+        Thread thread = new Thread(new ClockUpdater());
+        
+        thread.setName("Threadly clock updater");
         thread.setDaemon(true);
         thread.start();
       }
@@ -86,5 +76,26 @@ public class Clock {
   
   private Clock() {
     // don't construct
+  }
+  
+  /**
+   * Runnable which will regularly update the stored clock time.  
+   * This runnable is designed to run in it's own dedicated thread.
+   * 
+   * @author jent - Mike Jensen
+   */
+  private static class ClockUpdater implements Runnable {
+    @Override
+    public void run() {
+      synchronized (UPDATE_LOCK) {
+        while (updateClock) {
+          try {
+            accurateTime();
+            
+            UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
+          } catch (InterruptedException ignored) { }
+        }
+      }
+    }
   }
 }
