@@ -3,12 +3,8 @@ package org.threadly.concurrent;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -27,7 +23,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter 
+public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter 
                                       implements PrioritySchedulerInterface {
   protected final PrioritySchedulerInterface scheduler;
   protected final Queue<Wrapper> waitingTasks;
@@ -635,86 +631,19 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * @author jent - Mike Jensen
    * @param <T> result type returned by .get()
    */
-  protected static class FutureFuture<T> implements ListenableFuture<T> {
-    private boolean canceled;
-    private boolean mayInterruptIfRunningOnCancel;
+  protected static class FutureFuture<T> extends AbstractSchedulerLimiter.FutureFuture<T> 
+                                         implements ListenableFuture<T> {
     private ListenableFuture<?> parentFuture;
     
     public FutureFuture() {
-      canceled = false;
       parentFuture = null;
     }
     
     protected void setParentFuture(ListenableFuture<?> parentFuture) {
       synchronized (this) {
         this.parentFuture = parentFuture;
-        if (canceled) {
-          parentFuture.cancel(mayInterruptIfRunningOnCancel);
-        }
         
-        this.notifyAll();
-      }
-    }
-    
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      synchronized (this) {
-        canceled = true;
-        mayInterruptIfRunningOnCancel = mayInterruptIfRunning;
-        if (parentFuture != null) {
-          return parentFuture.cancel(mayInterruptIfRunning);
-        } else {
-          return true;  // this is not guaranteed to be true, but is likely
-        }
-      }
-    }
-
-    @Override
-    public boolean isCancelled() {
-      synchronized (this) {
-        return canceled;
-      }
-    }
-
-    @Override
-    public boolean isDone() {
-      synchronized (this) {
-        if (parentFuture == null) {
-          return false;
-        } else {
-          return parentFuture.isDone();
-        }
-      }
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-      try {
-        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-      } catch (TimeoutException e) {
-        // basically impossible
-        throw ExceptionUtils.makeRuntime(e);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException,
-                                                     ExecutionException,
-                                                     TimeoutException {
-      long startTime = Clock.accurateTime();
-      long timeoutInMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
-      synchronized (this) {
-        long remainingWaitTime = timeoutInMillis;
-        while (parentFuture == null && remainingWaitTime > 0) {
-          this.wait(remainingWaitTime);
-          remainingWaitTime = timeoutInMillis - (Clock.accurateTime() - startTime);
-        }
-        if (remainingWaitTime <= 0) {
-          throw new TimeoutException();
-        }
-        // parent future is now not null
-        return (T)parentFuture.get(remainingWaitTime, TimeUnit.MILLISECONDS);
+        super.setParentFuture(parentFuture);  // parent will call this.notifyAll()
       }
     }
 

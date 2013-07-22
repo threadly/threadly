@@ -12,8 +12,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
+import org.threadly.concurrent.AbstractSchedulerLimiter.FutureFuture;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
-import org.threadly.concurrent.SimpleSchedulerLimiter.FutureFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -65,7 +65,7 @@ public class SimpleSchedulerLimiterTest {
         runnables.add(tr);
         if (flip2) {
           psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, 
-                                                               new FutureFuture<Object>()));
+                                                             new FutureFuture<Object>()));
           flip2 = false;
         } else {
           psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, null));

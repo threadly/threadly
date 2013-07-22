@@ -14,7 +14,7 @@ public abstract class AbstractThreadPoolLimiter {
   private final AtomicInteger currentlyRunning;
   
   /**
-   * Initial abstract constructor.
+   * Constructor for abstract class to call into for anyone extending this class.
    * 
    * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
    * @param maxConcurrency maximum concurrency to allow

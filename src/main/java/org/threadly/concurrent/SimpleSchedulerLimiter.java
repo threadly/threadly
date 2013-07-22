@@ -3,17 +3,11 @@ package org.threadly.concurrent;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.threadly.util.Clock;
-import org.threadly.util.ExceptionUtils;
 
 /**
  * This class is designed to limit how much parallel execution happens 
- * on a provided {@link PriorityScheduledExecutor}.  This allows the 
+ * on a provided {@link SimpleSchedulerInterface}.  This allows the 
  * implementor to have one thread pool for all their code, and if 
  * they want certain sections to have less levels of parallelism 
  * (possibly because those those sections would completely consume the 
@@ -27,8 +21,8 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class SimpleSchedulerLimiter extends AbstractThreadPoolLimiter 
-                                     implements SimpleSchedulerInterface {
+public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter 
+                                    implements SimpleSchedulerInterface {
   protected final SimpleSchedulerInterface scheduler;
   protected final Queue<Wrapper> waitingTasks;
   
@@ -279,7 +273,7 @@ public class SimpleSchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   /**
-   * Wrapper for priority tasks which are executed in this sub pool, 
+   * Wrapper for tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
    * after the task completes.
    * 
@@ -358,7 +352,7 @@ public class SimpleSchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   /**
-   * Wrapper for priority tasks which are executed in this sub pool, 
+   * Wrapper for tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
    * after the task completes.
    * 
@@ -430,7 +424,7 @@ public class SimpleSchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   /**
-   * Wrapper for priority tasks which are executed in this sub pool, 
+   * Wrapper for tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
    * after the task completes.
    * 
@@ -512,96 +506,5 @@ public class SimpleSchedulerLimiter extends AbstractThreadPoolLimiter
     public boolean hasFuture();
     public Callable<?> getCallable();
     public Runnable getRunnable();
-  }
-  
-  /**
-   * ListenableFuture which contains a parent {@link ListenableFuture}. 
-   * (which may not be created yet).
-   * 
-   * @author jent - Mike Jensen
-   * @param <T> result type returned by .get()
-   */
-  protected static class FutureFuture<T> implements Future<T> {
-    private boolean canceled;
-    private boolean mayInterruptIfRunningOnCancel;
-    private Future<?> parentFuture;
-    
-    public FutureFuture() {
-      canceled = false;
-      parentFuture = null;
-    }
-    
-    protected void setParentFuture(Future<?> parentFuture) {
-      synchronized (this) {
-        this.parentFuture = parentFuture;
-        if (canceled) {
-          parentFuture.cancel(mayInterruptIfRunningOnCancel);
-        }
-        
-        this.notifyAll();
-      }
-    }
-    
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      synchronized (this) {
-        canceled = true;
-        mayInterruptIfRunningOnCancel = mayInterruptIfRunning;
-        if (parentFuture != null) {
-          return parentFuture.cancel(mayInterruptIfRunning);
-        } else {
-          return true;  // this is not guaranteed to be true, but is likely
-        }
-      }
-    }
-
-    @Override
-    public boolean isCancelled() {
-      synchronized (this) {
-        return canceled;
-      }
-    }
-
-    @Override
-    public boolean isDone() {
-      synchronized (this) {
-        if (parentFuture == null) {
-          return false;
-        } else {
-          return parentFuture.isDone();
-        }
-      }
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-      try {
-        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-      } catch (TimeoutException e) {
-        // basically impossible
-        throw ExceptionUtils.makeRuntime(e);
-      }
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException,
-                                                     ExecutionException,
-                                                     TimeoutException {
-      long startTime = Clock.accurateTime();
-      long timeoutInMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
-      synchronized (this) {
-        long remainingWaitTime = timeoutInMillis;
-        while (parentFuture == null && remainingWaitTime > 0) {
-          this.wait(remainingWaitTime);
-          remainingWaitTime = timeoutInMillis - (Clock.accurateTime() - startTime);
-        }
-        if (remainingWaitTime <= 0) {
-          throw new TimeoutException();
-        }
-        // parent future is now not null
-        return (T)parentFuture.get(remainingWaitTime, TimeUnit.MILLISECONDS);
-      }
-    }
   }
 }
