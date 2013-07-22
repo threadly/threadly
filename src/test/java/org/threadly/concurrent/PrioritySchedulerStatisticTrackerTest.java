@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutorTest.PriorityScheduledExecutorFactory;
-import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.TestCallable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -366,7 +366,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     PriorityScheduledExecutorTest.lookForExpiredWorkersTest(new PriorityScheduledExecutorTestFactory());
   }
   
-  private class SchedulerFactory implements PrioritySchedulerFactory {
+  private class SchedulerFactory implements SimpleSchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     
     private SchedulerFactory() {
@@ -395,7 +395,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     }
   }
   
-  private class WrapperFactory implements PrioritySchedulerFactory {
+  private class WrapperFactory implements SimpleSchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     
     private WrapperFactory() {

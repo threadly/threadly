@@ -7,7 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import org.junit.Test;
-import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
 
 @SuppressWarnings("javadoc")
 public class ConcurrentSimpleSchedulerWrapperTest {
@@ -123,7 +123,7 @@ public class ConcurrentSimpleSchedulerWrapperTest {
     SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
 
-  private class SchedulerFactory implements PrioritySchedulerFactory {
+  private class SchedulerFactory implements SimpleSchedulerFactory {
     private final List<ScheduledThreadPoolExecutor> executors;
     
     private SchedulerFactory() {

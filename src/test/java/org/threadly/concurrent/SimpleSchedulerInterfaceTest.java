@@ -15,7 +15,7 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class SimpleSchedulerInterfaceTest {
-  public static void executeTest(PrioritySchedulerFactory factory) {
+  public static void executeTest(SimpleSchedulerFactory factory) {
     try {
       int runnableCount = 10;
       
@@ -56,7 +56,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitRunnableTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitRunnableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       
@@ -107,7 +107,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitRunnableWithResultTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitRunnableWithResultTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       
@@ -159,7 +159,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitCallableTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitCallableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       
@@ -198,7 +198,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void executeFail(PrioritySchedulerFactory factory) {
+  public static void executeFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       
@@ -209,7 +209,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitRunnableFail(PrioritySchedulerFactory factory) {
+  public static void submitRunnableFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       
@@ -220,7 +220,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitCallableFail(PrioritySchedulerFactory factory) {
+  public static void submitCallableFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       
@@ -231,7 +231,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void scheduleTest(PrioritySchedulerFactory factory) {
+  public static void scheduleTest(SimpleSchedulerFactory factory) {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
@@ -260,7 +260,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledRunnableTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitScheduledRunnableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
@@ -299,7 +299,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledRunnableWithResultTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitScheduledRunnableWithResultTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
@@ -339,7 +339,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledCallableTest(PrioritySchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitScheduledCallableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
@@ -376,7 +376,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void scheduleExecutionFail(PrioritySchedulerFactory factory) {
+  public static void scheduleExecutionFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       try {
@@ -396,7 +396,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledRunnableFail(PrioritySchedulerFactory factory) {
+  public static void submitScheduledRunnableFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       try {
@@ -416,7 +416,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledCallableFail(PrioritySchedulerFactory factory) {
+  public static void submitScheduledCallableFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       try {
@@ -436,7 +436,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void recurringExecutionTest(PrioritySchedulerFactory factory) {
+  public static void recurringExecutionTest(SimpleSchedulerFactory factory) {
     try {
       final int runnableCount = 10;
       final int recurringDelay = 50;
@@ -469,7 +469,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void recurringExecutionFail(PrioritySchedulerFactory factory) {
+  public static void recurringExecutionFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       try {
@@ -495,7 +495,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public interface PrioritySchedulerFactory {
+  public interface SimpleSchedulerFactory {
     public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
 
     public void shutdown();

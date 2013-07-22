@@ -12,23 +12,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
-import org.threadly.concurrent.PrioritySchedulerLimiter.FutureFuture;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
+import org.threadly.concurrent.SimpleSchedulerLimiter.FutureFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class PrioritySchedulerLimiterTest {
+public class SimpleSchedulerLimiterTest {
   @Test
   public void constructorFail() {
     try {
-      new PrioritySchedulerLimiter(null, 100);
+      new SimpleSchedulerLimiter(null, 100);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
     try {
-      new PrioritySchedulerLimiter(executor, 0);
+      new SimpleSchedulerLimiter(executor, 0);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -41,7 +41,7 @@ public class PrioritySchedulerLimiterTest {
   public void constructorEmptySubPoolNameTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
     try {
-      PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(executor, 1, " ");
+      SimpleSchedulerLimiter limiter = new SimpleSchedulerLimiter(executor, 1, " ");
       
       assertNull(limiter.subPoolName);
     } finally {
@@ -50,19 +50,10 @@ public class PrioritySchedulerLimiterTest {
   }
   
   @Test
-  public void getDefaultPriorityTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.Low, 100);
-    assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
-    
-    executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
-    assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
-  }
-  
-  @Test
   public void consumeAvailableTest() {
     int testQty = 10;
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
-    PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, testQty);
+    SimpleSchedulerLimiter psl = new SimpleSchedulerLimiter(executor, testQty);
     
     boolean flip1 = true;
     boolean flip2 = true;
@@ -73,21 +64,21 @@ public class PrioritySchedulerLimiterTest {
         TestRunnable tr = new TestRunnable();
         runnables.add(tr);
         if (flip2) {
-          psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, 
+          psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, 
                                                                new FutureFuture<Object>()));
           flip2 = false;
         } else {
-          psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, null));
+          psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, null));
           flip2 = true;
         }
         flip1 = false;
       } else {
-        psl.waitingTasks.add(psl.new PriorityCallableWrapper<Object>(new Callable<Object>() {
+        psl.waitingTasks.add(psl.new CallableFutureWrapper<Object>(new Callable<Object>() {
           @Override
           public Object call() throws Exception {
             return new Object();
           }
-        }, TaskPriority.High, new FutureFuture<Object>()));
+        }, new FutureFuture<Object>()));
         flip1 = true;
       }
     }
@@ -350,7 +341,7 @@ public class PrioritySchedulerLimiterTest {
     }
     
     @Override
-    public PrioritySchedulerLimiter make(int poolSize, boolean prestartIfAvailable) {
+    public SimpleSchedulerLimiter make(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                          1000 * 10);
       if (prestartIfAvailable) {
@@ -359,9 +350,9 @@ public class PrioritySchedulerLimiterTest {
       executors.add(executor);
       
       if (addSubPoolName) {
-        return new PrioritySchedulerLimiter(executor, poolSize, "TestSubPool");
+        return new SimpleSchedulerLimiter(executor, poolSize, "TestSubPool");
       } else {
-        return new PrioritySchedulerLimiter(executor, poolSize);
+        return new SimpleSchedulerLimiter(executor, poolSize);
       }
     }
     

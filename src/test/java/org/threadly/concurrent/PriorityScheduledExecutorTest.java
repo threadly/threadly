@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
-import org.threadly.concurrent.SimpleSchedulerInterfaceTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.TestCallable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
@@ -705,7 +705,7 @@ public class PriorityScheduledExecutorTest {
     public void shutdown();
   }
 
-  private static class FactoryWrapper implements PrioritySchedulerFactory {
+  private static class FactoryWrapper implements SimpleSchedulerFactory {
     PriorityScheduledExecutorFactory factory;
     
     private FactoryWrapper(PriorityScheduledExecutorFactory factory) {
@@ -730,7 +730,7 @@ public class PriorityScheduledExecutorTest {
   }
   
   private class PriorityScheduledExecutorTestFactory implements PriorityScheduledExecutorFactory, 
-                                                                PrioritySchedulerFactory {
+                                                                SimpleSchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     
     private PriorityScheduledExecutorTestFactory() {
@@ -788,7 +788,7 @@ public class PriorityScheduledExecutorTest {
     }
   }
   
-  private class WrapperFactory implements PrioritySchedulerFactory {
+  private class WrapperFactory implements SimpleSchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     
     private WrapperFactory() {
