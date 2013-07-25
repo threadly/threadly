@@ -48,7 +48,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    */
   public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
                                   int maxConcurrency, String subPoolName) {
-    super(subPoolName, maxConcurrency);
+    super(maxConcurrency, subPoolName);
     
     if (scheduler == null) {
       throw new IllegalArgumentException("Must provide scheduler");

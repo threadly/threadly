@@ -18,11 +18,11 @@ public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter
   /**
    * Constructor for abstract class to call into for anyone extending this class.
    * 
-   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
    * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
    */
-  protected AbstractSchedulerLimiter(String subPoolName, int maxConcurrency) {
-    super(subPoolName, maxConcurrency);
+  protected AbstractSchedulerLimiter(int maxConcurrency, String subPoolName) {
+    super(maxConcurrency, subPoolName);
   }
   
   /**

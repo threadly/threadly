@@ -46,7 +46,7 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    */
   public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
                                 int maxConcurrency, String subPoolName) {
-    super(subPoolName, maxConcurrency);
+    super(maxConcurrency, subPoolName);
     
     if (scheduler == null) {
       throw new IllegalArgumentException("Must provide scheduler");

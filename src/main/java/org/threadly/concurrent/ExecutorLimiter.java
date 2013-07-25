@@ -45,7 +45,7 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency, String subPoolName) {
-    super(subPoolName, maxConcurrency);
+    super(maxConcurrency, subPoolName);
     
     if (executor == null) {
       throw new IllegalArgumentException("Must provide executor");

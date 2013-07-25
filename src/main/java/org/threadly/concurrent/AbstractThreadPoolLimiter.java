@@ -9,20 +9,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author jent - Mike Jensen
  */
 public abstract class AbstractThreadPoolLimiter {
+  protected final int maxConcurrency;
   protected final String subPoolName;
-  private final int maxConcurrency;
   private final AtomicInteger currentlyRunning;
   
   /**
    * Constructor for abstract class to call into for anyone extending this class.
    * 
-   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
    * @param maxConcurrency maximum concurrency to allow
+   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
    */
-  public AbstractThreadPoolLimiter(String subPoolName, int maxConcurrency) {
+  public AbstractThreadPoolLimiter(int maxConcurrency, String subPoolName) {
     if (maxConcurrency < 1) {
       throw new IllegalArgumentException("max concurrency must be at least 1");
     }
+    
+    this.maxConcurrency = maxConcurrency;
     
     if (subPoolName != null) {
       subPoolName = subPoolName.trim();
@@ -31,9 +33,8 @@ public abstract class AbstractThreadPoolLimiter {
         subPoolName = null;
       }
     }
-    
     this.subPoolName = subPoolName;
-    this.maxConcurrency = maxConcurrency;
+    
     currentlyRunning = new AtomicInteger(0);
   }
   
