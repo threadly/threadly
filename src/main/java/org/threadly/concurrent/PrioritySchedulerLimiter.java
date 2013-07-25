@@ -385,7 +385,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecurringRunnableWrapper extends RunnableWrapper
+  protected class RecurringRunnableWrapper extends LimiterRunnableWrapper
                                            implements Wrapper  {
     private final long recurringDelay;
     private final TaskPriority priority;
@@ -445,7 +445,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class PriorityRunnableWrapper extends RunnableWrapper
+  protected class PriorityRunnableWrapper extends LimiterRunnableWrapper
                                           implements Wrapper  {
     private final TaskPriority priority;
     private final FutureFuture<?> future;
@@ -501,8 +501,9 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * after the task completes.
    * 
    * @author jent - Mike Jensen
+   * @param <T> type for return of callable contained within wrapper
    */
-  protected class PriorityCallableWrapper<T> extends CallableWrapper<T>
+  protected class PriorityCallableWrapper<T> extends LimiterCallableWrapper<T>
                                              implements Wrapper {
     private final TaskPriority priority;
     private final FutureFuture<?> future;

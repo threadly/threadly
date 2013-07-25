@@ -25,10 +25,15 @@ public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter
     super(subPoolName, maxConcurrency);
   }
   
-  protected abstract class RunnableWrapper extends VirtualRunnable {
+  /**
+   * Generic wrapper for runnables which are used within the limiters.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected abstract class LimiterRunnableWrapper extends VirtualRunnable {
     private final Runnable runnable;
     
-    public RunnableWrapper(Runnable runnable) {
+    public LimiterRunnableWrapper(Runnable runnable) {
       this.runnable = runnable;
     }
     
@@ -69,10 +74,16 @@ public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter
     }
   }
   
-  protected class CallableWrapper<T> extends VirtualCallable<T> {
+  /**
+   * Generic wrapper for callables which are used within the limiters.
+   * 
+   * @author jent - Mike Jensen
+   * @param <T> type for return of callable contained within wrapper
+   */
+  protected class LimiterCallableWrapper<T> extends VirtualCallable<T> {
     private final Callable<T> callable;
     
-    public CallableWrapper(Callable<T> callable) {
+    public LimiterCallableWrapper(Callable<T> callable) {
       this.callable = callable;
     }
     

@@ -296,7 +296,7 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecurringRunnableWrapper extends RunnableWrapper
+  protected class RecurringRunnableWrapper extends LimiterRunnableWrapper
                                            implements Wrapper  {
     private final long recurringDelay;
     private final DelayedExecutionRunnable<?> delayRunnable;
@@ -347,7 +347,7 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class RunnableFutureWrapper extends RunnableWrapper
+  protected class RunnableFutureWrapper extends LimiterRunnableWrapper
                                         implements Wrapper  {
     private final FutureFuture<?> future;
     
@@ -395,8 +395,9 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    * after the task completes.
    * 
    * @author jent - Mike Jensen
+   * @param <T> type for return of callable contained within wrapper
    */
-  protected class CallableFutureWrapper<T> extends CallableWrapper<T>
+  protected class CallableFutureWrapper<T> extends LimiterCallableWrapper<T>
                                            implements Wrapper {
     private final FutureFuture<?> future;
     
