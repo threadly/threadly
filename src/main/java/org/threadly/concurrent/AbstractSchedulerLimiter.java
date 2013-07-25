@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,42 @@ public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter
    */
   protected AbstractSchedulerLimiter(String subPoolName, int maxConcurrency) {
     super(subPoolName, maxConcurrency);
+  }
+  
+  protected class RunnableWrapper extends VirtualRunnable {
+    private final Runnable runnable;
+    
+    public RunnableWrapper(Runnable runnable) {
+      this.runnable = runnable;
+    }
+    
+    @Override
+    public void run() {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
+      try {
+        if (factory != null && 
+            runnable instanceof VirtualRunnable) {
+          VirtualRunnable vr = (VirtualRunnable)runnable;
+          vr.run(factory);
+        } else {
+          runnable.run();
+        }
+      } finally {
+        handleTaskFinished();
+          
+        if (subPoolName != null) {
+          currentThread.setName(originalThreadName);
+        }
+      }
+    }
   }
   
   /**

@@ -117,13 +117,13 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
     
     FutureFuture<T> ff = new FutureFuture<T>();
     
-    submit(task, result, ff);
+    doSubmit(task, result, ff);
     
     return ff;
   }
   
-  private <T> void submit(Runnable task, T result, 
-                          FutureFuture<T> ff) {
+  private <T> void doSubmit(Runnable task, T result, 
+                            FutureFuture<T> ff) {
     RunnableFutureWrapper wrapper = new RunnableFutureWrapper(task, ff);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
@@ -142,13 +142,13 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
     
     FutureFuture<T> ff = new FutureFuture<T>();
     
-    submit(task, ff);
+    doSubmit(task, ff);
     
     return ff;
   }
   
-  private <T> void submit(Callable<T> task, 
-                          FutureFuture<T> ff) {
+  private <T> void doSubmit(Callable<T> task, 
+                            FutureFuture<T> ff) {
     CallableFutureWrapper<T> wrapper = new CallableFutureWrapper<T>(task, ff);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
@@ -167,8 +167,12 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
     
-    scheduler.schedule(new DelayedExecutionRunnable<Object>(task, null, null), 
-                       delayInMs);
+    if (delayInMs == 0) {
+      execute(task);
+    } else {
+      scheduler.schedule(new DelayedExecutionRunnable<Object>(task, null, null), 
+                         delayInMs);
+    }
   }
 
   @Override
@@ -185,8 +189,12 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
     }
 
     FutureFuture<T> ff = new FutureFuture<T>();
-    scheduler.schedule(new DelayedExecutionRunnable<T>(task, result, ff), 
-                       delayInMs);
+    if (delayInMs == 0) {
+      doSubmit(task, result, ff);
+    } else {
+      scheduler.schedule(new DelayedExecutionRunnable<T>(task, result, ff), 
+                         delayInMs);
+    }
     
     return ff;
   }
@@ -200,8 +208,12 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
     }
 
     FutureFuture<T> ff = new FutureFuture<T>();
-    scheduler.schedule(new DelayedExecutionCallable<T>(task, ff), 
-                       delayInMs);
+    if (delayInMs == 0) {
+      doSubmit(task, ff);
+    } else {
+      scheduler.schedule(new DelayedExecutionCallable<T>(task, ff), 
+                         delayInMs);
+    }
     
     return ff;
   }
@@ -219,7 +231,12 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
     
     RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay);
     
-    scheduler.schedule(new DelayedExecutionRunnable<Object>(rrw, null, null), initialDelay);
+    if (initialDelay == 0) {
+      execute(rrw);
+    } else {
+      scheduler.schedule(new DelayedExecutionRunnable<Object>(rrw, null, null), 
+                         initialDelay);
+    }
   }
   
   /**
@@ -245,7 +262,7 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
       if (future == null) {
         execute(runnable);
       } else {
-        submit(runnable, runnableResult, future);
+        doSubmit(runnable, runnableResult, future);
       }
     }
   }
@@ -268,7 +285,7 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
     
     @Override
     public void run() {
-      submit(callable, future);
+      doSubmit(callable, future);
     }
   }
 
@@ -283,14 +300,11 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
                                            implements Wrapper  {
     private final Runnable runnable;
     private final long recurringDelay;
-    private final DelayedExecutionRunnable<Object> delayRunnable;
     
     public RecurringRunnableWrapper(Runnable runnable, 
                                     long recurringDelay) {
       this.runnable = runnable;
       this.recurringDelay = recurringDelay;
-      
-      delayRunnable = new DelayedExecutionRunnable<Object>(this, null, null);
     }
     
     @Override
@@ -316,7 +330,7 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
         try {
           handleTaskFinished();
         } finally {
-          scheduler.schedule(delayRunnable, recurringDelay);
+          scheduler.schedule(this, recurringDelay);
           
           if (subPoolName != null) {
             currentThread.setName(originalThreadName);
@@ -358,43 +372,15 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class RunnableFutureWrapper extends VirtualRunnable
-                                          implements Wrapper  {
-    private final Runnable runnable;
+  protected class RunnableFutureWrapper extends RunnableWrapper
+                                        implements Wrapper  {
     private final FutureFuture<?> future;
     
     public RunnableFutureWrapper(Runnable runnable, 
                                  FutureFuture<?> future) {
-      this.runnable = runnable;
-      this.future = future;
-    }
-    
-    @Override
-    public void run() {
-      Thread currentThread = null;
-      String originalThreadName = null;
-      if (subPoolName != null) {
-        currentThread = Thread.currentThread();
-        originalThreadName = currentThread.getName();
-        
-        currentThread.setName(makeSubPoolThreadName(originalThreadName));
-      }
+      super(runnable);
       
-      try {
-        if (factory != null && 
-            runnable instanceof VirtualRunnable) {
-          VirtualRunnable vr = (VirtualRunnable)runnable;
-          vr.run(factory);
-        } else {
-          runnable.run();
-        }
-      } finally {
-        handleTaskFinished();
-          
-        if (subPoolName != null) {
-          currentThread.setName(originalThreadName);
-        }
-      }
+      this.future = future;
     }
 
     @Override
@@ -431,7 +417,7 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    * @author jent - Mike Jensen
    */
   protected class CallableFutureWrapper<T> extends VirtualCallable<T>
-                                             implements Wrapper {
+                                           implements Wrapper {
     private final Callable<T> callable;
     private final FutureFuture<?> future;
     
