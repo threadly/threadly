@@ -25,12 +25,14 @@ public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter
     super(subPoolName, maxConcurrency);
   }
   
-  protected class RunnableWrapper extends VirtualRunnable {
+  protected abstract class RunnableWrapper extends VirtualRunnable {
     private final Runnable runnable;
     
     public RunnableWrapper(Runnable runnable) {
       this.runnable = runnable;
     }
+    
+    protected abstract void doAfterRunTasks();
     
     @Override
     public void run() {
@@ -50,6 +52,48 @@ public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter
           vr.run(factory);
         } else {
           runnable.run();
+        }
+      } finally {
+        try {
+          doAfterRunTasks();
+        } finally {
+          try {
+            handleTaskFinished();
+          } finally {
+            if (subPoolName != null) {
+              currentThread.setName(originalThreadName);
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  protected class CallableWrapper<T> extends VirtualCallable<T> {
+    private final Callable<T> callable;
+    
+    public CallableWrapper(Callable<T> callable) {
+      this.callable = callable;
+    }
+    
+    @Override
+    public T call() throws Exception {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
+      try {
+        if (factory != null && 
+            callable instanceof VirtualCallable) {
+          VirtualCallable<T> vc = (VirtualCallable<T>)callable;
+          return vc.call(factory);
+        } else {
+          return callable.call();
         }
       } finally {
         handleTaskFinished();

@@ -13,7 +13,7 @@ import java.util.concurrent.Executor;
  * the executor in this class.
  * 
  * Thus providing you better control on the absolute thread count and 
- * how much parallism can occur in different sections of the program.  
+ * how much parallelism can occur in different sections of the program.  
  * 
  * Thus avoiding from having to create multiple thread pools, and also 
  * using threads more efficiently than multiple thread pools would.

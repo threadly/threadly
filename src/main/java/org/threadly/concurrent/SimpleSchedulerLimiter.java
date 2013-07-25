@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
  * global pool), they can wrap the executor in this class.
  * 
  * Thus providing you better control on the absolute thread count and 
- * how much parallism can occur in different sections of the program.  
+ * how much parallelism can occur in different sections of the program.  
  * 
  * Thus avoiding from having to create multiple thread pools, and also 
  * using threads more efficiently than multiple thread pools would.
@@ -296,47 +296,22 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecurringRunnableWrapper extends VirtualRunnable
+  protected class RecurringRunnableWrapper extends RunnableWrapper
                                            implements Wrapper  {
-    private final Runnable runnable;
     private final long recurringDelay;
+    private final DelayedExecutionRunnable<?> delayRunnable;
     
     public RecurringRunnableWrapper(Runnable runnable, 
                                     long recurringDelay) {
-      this.runnable = runnable;
+      super(runnable);
+      
       this.recurringDelay = recurringDelay;
+      delayRunnable = new DelayedExecutionRunnable<Object>(this, null, null);
     }
     
     @Override
-    public void run() {
-      Thread currentThread = null;
-      String originalThreadName = null;
-      if (subPoolName != null) {
-        currentThread = Thread.currentThread();
-        originalThreadName = currentThread.getName();
-        
-        currentThread.setName(makeSubPoolThreadName(originalThreadName));
-      }
-      
-      try {
-        if (factory != null && 
-            runnable instanceof VirtualRunnable) {
-          VirtualRunnable vr = (VirtualRunnable)runnable;
-          vr.run(factory);
-        } else {
-          runnable.run();
-        }
-      } finally {
-        try {
-          handleTaskFinished();
-        } finally {
-          scheduler.schedule(this, recurringDelay);
-          
-          if (subPoolName != null) {
-            currentThread.setName(originalThreadName);
-          }
-        }
-      }
+    protected void doAfterRunTasks() {
+      scheduler.schedule(delayRunnable, recurringDelay);
     }
 
     @Override
@@ -382,6 +357,11 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
       
       this.future = future;
     }
+    
+    @Override
+    protected void doAfterRunTasks() {
+      // nothing to do here
+    }
 
     @Override
     public boolean isCallable() {
@@ -416,43 +396,15 @@ public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class CallableFutureWrapper<T> extends VirtualCallable<T>
+  protected class CallableFutureWrapper<T> extends CallableWrapper<T>
                                            implements Wrapper {
-    private final Callable<T> callable;
     private final FutureFuture<?> future;
     
     public CallableFutureWrapper(Callable<T> callable, 
                                  FutureFuture<?> future) {
-      this.callable = callable;
-      this.future = future;
-    }
-    
-    @Override
-    public T call() throws Exception {
-      Thread currentThread = null;
-      String originalThreadName = null;
-      if (subPoolName != null) {
-        currentThread = Thread.currentThread();
-        originalThreadName = currentThread.getName();
-        
-        currentThread.setName(makeSubPoolThreadName(originalThreadName));
-      }
+      super(callable);
       
-      try {
-        if (factory != null && 
-            callable instanceof VirtualCallable) {
-          VirtualCallable<T> vc = (VirtualCallable<T>)callable;
-          return vc.call(factory);
-        } else {
-          return callable.call();
-        }
-      } finally {
-        handleTaskFinished();
-          
-        if (subPoolName != null) {
-          currentThread.setName(originalThreadName);
-        }
-      }
+      this.future = future;
     }
 
     @Override
