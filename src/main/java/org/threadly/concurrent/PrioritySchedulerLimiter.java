@@ -549,20 +549,6 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   /**
-   * Interface so that we can handle both callables and runnables.
-   * 
-   * @author jent - Mike Jensen
-   */
-  private interface Wrapper {
-    public boolean isCallable();
-    public FutureFuture<?> getFuture();
-    public TaskPriority getPriority();
-    public boolean hasFuture();
-    public Callable<?> getCallable();
-    public Runnable getRunnable();
-  }
-  
-  /**
    * ListenableFuture which contains a parent {@link ListenableFuture}. 
    * (which may not be created yet).
    * 
@@ -604,5 +590,19 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
       
       parentFuture.addListener(listener, executor);
     }
+  }
+  
+  /**
+   * Interface so that we can handle both callables and runnables.
+   * 
+   * @author jent - Mike Jensen
+   */
+  private interface Wrapper {
+    public boolean isCallable();
+    public FutureFuture<?> getFuture();
+    public TaskPriority getPriority();
+    public boolean hasFuture();
+    public Callable<?> getCallable();
+    public Runnable getRunnable();
   }
 }
