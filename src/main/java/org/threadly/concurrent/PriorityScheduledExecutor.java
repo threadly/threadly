@@ -45,7 +45,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   protected static final String QUEUE_CONSUMER_THREADS_NAME = "ScheduledExecutor task consumer thread";
   protected static final int WORKER_CONTENTION_LEVEL = 2; // level at which no worker contention is considered
-  protected static final int LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS = 2;  // time difference between low and high priority to force wait
+  protected static final int LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS = 2;
   
   protected final TaskPriority defaultPriority;
   protected final VirtualLock highPriorityLock;
