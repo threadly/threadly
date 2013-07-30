@@ -8,11 +8,13 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * A collection of utilities for working with lists.
- * 
- * @author jent - Mike Jensen
  */
 public class ListUtils {
   private static final int MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
+  
+  private ListUtils() {
+    // don't construct
+  }
   
   /**
    * This function uses the binary search and adds a small amount of logic
@@ -190,10 +192,5 @@ public class ListUtils {
         return pivot;
       }
     }
-  }
-
-  
-  private ListUtils() {
-    // don't construct
   }
 }

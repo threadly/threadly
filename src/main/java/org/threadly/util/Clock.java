@@ -26,6 +26,10 @@ public class Clock {
     }
   }
   
+  private Clock() {
+    // don't construct
+  }
+  
   /** 
    * Starts the clock updating automatically (used for testing).
    */
@@ -72,10 +76,6 @@ public class Clock {
    */
   public static long accurateTime() {
     return now = System.currentTimeMillis();
-  }
-  
-  private Clock() {
-    // don't construct
   }
   
   /**

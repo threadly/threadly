@@ -10,6 +10,10 @@ import java.io.StringWriter;
  * @author jent - Mike Jensen
  */
 public class ExceptionUtils {
+  private ExceptionUtils() {
+    // don't construct
+  }
+  
   /**
    * Makes a runtime exception if necessary.  If provided exception
    * is already runtime then that is just removed.  If it has to produce
@@ -84,9 +88,5 @@ public class ExceptionUtils {
     protected TransformedException(String message, Throwable t) {
       super(message, t);
     }
-  }
-
-  private ExceptionUtils() {
-    // don't construct
   }
 }
