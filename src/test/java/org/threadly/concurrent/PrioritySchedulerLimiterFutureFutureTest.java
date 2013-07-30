@@ -138,13 +138,4 @@ public class PrioritySchedulerLimiterFutureFutureTest {
       listeners.add(listener);
     }
   }
-  
-  private class TestExecutor implements Executor {
-    public List<Runnable> providedRunnables = new LinkedList<Runnable>();
-    
-    @Override
-    public void execute(Runnable command) {
-      providedRunnables.add(command);
-    }
-  }
 }
