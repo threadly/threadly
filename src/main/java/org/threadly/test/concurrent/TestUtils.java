@@ -29,7 +29,7 @@ public class TestUtils {
    */
   public static void blockTillClockAdvances() {
     new TestCondition() {
-      private static final int TIMEOUT_IN_MS = 100;
+      private static final int TIMEOUT_IN_MS = 1000;
       private static final int POLL_INTERVAL_IN_MS = 1;
       
       private final long startTime = System.currentTimeMillis();
