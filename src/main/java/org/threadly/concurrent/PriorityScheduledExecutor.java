@@ -226,7 +226,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     this.keepAliveTimeInMs = keepAliveTimeInMs;
     this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
     this.allowCorePoolTimeout = false;
-    this.lastHighDelay = Short.MAX_VALUE;
+    this.lastHighDelay = 0;
     currentPoolSize = 0;
   }
   
@@ -716,7 +716,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           // we can't make the pool any bigger
           w = getExistingWorker(Long.MAX_VALUE);
         } else {
-          lastHighDelay = Short.MAX_VALUE;
+          lastHighDelay = 0;
           
           if (availableWorkers.isEmpty()) {
             w = makeNewWorker();
@@ -744,7 +744,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                running &&
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
           if (highPriorityQueue.isEmpty()) {
-            lastHighDelay = Short.MAX_VALUE; // no waiting high priority tasks, so no need to wait on low priority tasks
+            lastHighDelay = 0; // no waiting high priority tasks, so no need to wait on low priority tasks
           } else {
             workersLock.await(waitAmount);
             ClockWrapper.updateClock(); // update for getDelayEstimateInMillis
