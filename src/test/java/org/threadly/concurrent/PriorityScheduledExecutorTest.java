@@ -42,6 +42,42 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void constructorFail() {
+    try {
+      new PriorityScheduledExecutor(0, 1, 1, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PriorityScheduledExecutor(2, 1, 1, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PriorityScheduledExecutor(1, 1, -1, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PriorityScheduledExecutor(1, 1, 1, TaskPriority.High, -1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  
+  @Test
+  public void constructorNullPriorityTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 1, null, 1, null);
+    
+    assertTrue(executor.getDefaultPriority() == PriorityScheduledExecutor.DEFAULT_PRIORITY);
+  }
+  
+  @Test
   public void makeWithDefaultPriorityTest() {
     makeWithDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
   }
@@ -133,17 +169,69 @@ public class PriorityScheduledExecutorTest {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void setMaxPoolSizeFail() {
     setMaxPoolSizeFail(new PriorityScheduledExecutorTestFactory());
   }
   
   public static void setMaxPoolSizeFail(PriorityScheduledExecutorFactory factory) {
-    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
+    PriorityScheduledExecutor scheduler = factory.make(2, 2, 1000);
     
     try {
-      scheduler.setMaxPoolSize(-1); // should throw exception for negative value
-      fail("Exception should have been thrown");
+      try {
+        scheduler.setMaxPoolSize(-1); // should throw exception for negative value
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        //expected
+      }
+      try {
+        scheduler.setMaxPoolSize(1); // should throw exception for negative value
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        //expected
+      }
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void getAndSetLowPriorityWaitTest() {
+    getAndSetLowPriorityWaitTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getAndSetLowPriorityWaitTest(PriorityScheduledExecutorFactory factory) {
+    long lowPriorityWait = 1000;
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, lowPriorityWait / 10, TaskPriority.High, lowPriorityWait);
+    try {
+      assertEquals(scheduler.getMaxWaitForLowPriority(), lowPriorityWait);
+      
+      lowPriorityWait = Long.MAX_VALUE;
+      scheduler.setMaxWaitForLowPriority(lowPriorityWait);
+      
+      assertEquals(scheduler.getMaxWaitForLowPriority(), lowPriorityWait);
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void setLowPriorityWaitFail() {
+    setLowPriorityWaitFail(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void setLowPriorityWaitFail(PriorityScheduledExecutorFactory factory) {
+    long lowPriorityWait = 1000;
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, lowPriorityWait / 10, TaskPriority.High, lowPriorityWait);
+    try {
+      try {
+        scheduler.setMaxWaitForLowPriority(-1);
+        fail("Exception should have thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      
+      assertEquals(scheduler.getMaxWaitForLowPriority(), lowPriorityWait);
     } finally {
       factory.shutdown();
     }

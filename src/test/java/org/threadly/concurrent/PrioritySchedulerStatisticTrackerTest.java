@@ -45,9 +45,19 @@ public class PrioritySchedulerStatisticTrackerTest {
     PriorityScheduledExecutorTest.getAndSetMaxPoolSizeTest(new PriorityScheduledExecutorTestFactory());
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void setMaxPoolSizeFail() {
     PriorityScheduledExecutorTest.setMaxPoolSizeFail(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void getAndSetLowPriorityWaitTest() {
+    PriorityScheduledExecutorTest.getAndSetLowPriorityWaitTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void setLowPriorityWaitFail() {
+    PriorityScheduledExecutorTest.setLowPriorityWaitFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
