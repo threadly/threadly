@@ -783,7 +783,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       
         lookForExpiredWorkers();
             
-        workersLock.signalAll();
+        workersLock.signal();
       } else {
         killWorker(worker);
       }
