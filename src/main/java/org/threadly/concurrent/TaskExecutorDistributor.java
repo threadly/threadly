@@ -48,7 +48,7 @@ public class TaskExecutorDistributor {
                                        maxThreadCount, 
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
-                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT), 
+                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
          new StripedLock(expectedParallism, new NativeLockFactory()));
   }
   

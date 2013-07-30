@@ -23,7 +23,6 @@ import org.threadly.concurrent.collections.DynamicDelayedUpdater;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -42,9 +41,11 @@ import org.threadly.util.ExceptionUtils;
 public class PriorityScheduledExecutor implements PrioritySchedulerInterface, 
                                                   LockFactory {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
-  protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT = 500;
+  protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   protected static final String QUEUE_CONSUMER_THREADS_NAME = "ScheduledExecutor task consumer thread";
+  protected static final int WORKER_CONTENTION_LEVEL = 2; // level at which no worker contention is considered
+  protected static final int LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS = 2;  // time difference between low and high priority to force wait
   
   protected final TaskPriority defaultPriority;
   protected final VirtualLock highPriorityLock;
@@ -62,6 +63,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   private volatile long keepAliveTimeInMs;
   private volatile long maxWaitForLowPriorityInMs;
   private volatile boolean allowCorePoolTimeout;
+  private long lastHighDelay;   // is locked around workersLock
   private int currentPoolSize;  // is locked around workersLock
 
   /**
@@ -78,7 +80,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT, 
+         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
          DEFAULT_NEW_THREADS_DAEMON);
   }
   
@@ -96,7 +98,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs, boolean useDaemonThreads) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT, 
+         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
          useDaemonThreads);
   }
 
@@ -224,6 +226,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     this.keepAliveTimeInMs = keepAliveTimeInMs;
     this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
     this.allowCorePoolTimeout = false;
+    this.lastHighDelay = Long.MAX_VALUE;
     currentPoolSize = 0;
   }
   
@@ -709,9 +712,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     synchronized (workersLock) {
       if (running) {
         if (currentPoolSize >= maxPoolSize) {
+          lastHighDelay = task.getDelayEstimateInMillis();
           // we can't make the pool any bigger
           w = getExistingWorker(Long.MAX_VALUE);
         } else {
+          lastHighDelay = Long.MAX_VALUE;
+          
           if (availableWorkers.isEmpty()) {
             w = makeNewWorker();
           } else {
@@ -731,20 +737,36 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     Worker w = null;
     synchronized (workersLock) {
       if (running) {
-        long waitTime;
-        if (currentPoolSize >= maxPoolSize) {
-          waitTime = Long.MAX_VALUE;
-        } else {
-          waitTime = maxWaitForLowPriorityInMs;
-        }
-        w = getExistingWorker(waitTime);
-        if (w == null) {
-          // this means we expired past our wait time, so just make a new worker
-          if (currentPoolSize >= maxPoolSize) {
-            // more workers were created while waiting, now have exceeded our max
-            w = getExistingWorker(Long.MAX_VALUE);
+        // wait for high priority tasks that have been waiting longer than us if all workers are consumed
+        long waitAmount;
+        while (currentPoolSize >= maxPoolSize && 
+               availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
+               running &&
+               (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
+          if (highPriorityQueue.isEmpty()) {
+            lastHighDelay = Long.MAX_VALUE; // no waiting high priority tasks, so no need to wait on low priority tasks
           } else {
-            w = makeNewWorker();
+            workersLock.await(waitAmount);
+            ClockWrapper.updateClock(); // update for getDelayEstimateInMillis
+          }
+        }
+        
+        if (running) {  // check again that we are still running
+          long waitTime;
+          if (currentPoolSize >= maxPoolSize) {
+            waitTime = Long.MAX_VALUE;
+          } else {
+            waitTime = maxWaitForLowPriorityInMs;
+          }
+          w = getExistingWorker(waitTime);
+          if (w == null) {
+            // this means we expired past our wait time, so just make a new worker
+            if (currentPoolSize >= maxPoolSize) {
+              // more workers were created while waiting, now have exceeded our max
+              w = getExistingWorker(Long.MAX_VALUE);
+            } else {
+              w = makeNewWorker();
+            }
           }
         }
       }
@@ -959,6 +981,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     public abstract void executing();
+    
+    protected abstract long getDelayEstimateInMillis();
 
     @Override
     public int compareTo(Delayed o) {
@@ -1000,6 +1024,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     @Override
     public long getDelay(TimeUnit unit) {
       return TimeUnit.MILLISECONDS.convert(runTime - ClockWrapper.getAccurateTime(), unit);
+    }
+    
+    @Override
+    protected long getDelayEstimateInMillis() {
+      return runTime - ClockWrapper.getLastKnownTime();
     }
     
     @Override
@@ -1155,13 +1184,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     public T get(long timeout, TimeUnit unit) throws InterruptedException,
                                                      ExecutionException,
                                                      TimeoutException {
-      long startTime = Clock.accurateTime();
+      long startTime = ClockWrapper.getAccurateTime();
       long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
       synchronized (lock) {
-        long waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
+        long waitTime = timeoutInMs - (ClockWrapper.getAccurateTime() - startTime);
         while (! done && waitTime > 0) {
           lock.await(waitTime);
-          waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
+          waitTime = timeoutInMs - (ClockWrapper.getAccurateTime() - startTime);
         }
         
         if (canceled) {
@@ -1248,6 +1277,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     
     private long getNextDelayInMillis() {
       return nextRunTime - ClockWrapper.getAccurateTime();
+    }
+    
+    @Override
+    protected long getDelayEstimateInMillis() {
+      return nextRunTime - ClockWrapper.getLastKnownTime();
     }
 
     @Override

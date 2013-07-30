@@ -65,6 +65,11 @@ public class PriorityScheduledExecutorTaskWrapperTest {
     public long getDelay(TimeUnit unit) {
       return TimeUnit.MILLISECONDS.convert(delayInMs, unit);
     }
+    
+    @Override
+    protected long getDelayEstimateInMillis() {
+      return delayInMs;
+    }
 
     @Override
     public void run() {
