@@ -20,6 +20,10 @@ import org.threadly.util.Clock;
 public class ClockWrapper {
   private static AtomicInteger requestsToStopUpdatingTime = new AtomicInteger();
   
+  private ClockWrapper() {
+    // don't construct
+  }
+  
   /**
    * A call here causes getAccurateTime to use the last known time.
    */
@@ -52,7 +56,7 @@ public class ClockWrapper {
   }
   
   /**
-   * Forces an update to the clock.
+   * Forces an update to the clock, regardless of requests to stop forcing updates.
    * 
    * @return the current time in milliseconds
    */
@@ -61,13 +65,12 @@ public class ClockWrapper {
   }
   
   /**
+   * Call to get a semi-accurate time, based off the last time
+   * clock has updated, or accurate time has been requested.
+   * 
    * @return the last stored time in milliseconds
    */
   protected static long getLastKnownTime() {
     return Clock.lastKnownTimeMillis();
-  }
-  
-  private ClockWrapper() {
-    // don't construct
   }
 }

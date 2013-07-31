@@ -61,7 +61,9 @@ public class Clock {
   }
 
   /**
-   * Getter for the last known time in milliseconds.
+   * Getter for the last known time in milliseconds.  This time is considered semi-accurate, 
+   * based off the last time accurate time has been requested, or this class has automatically 
+   * updated the time (unless requested to stop automatically updating).
    * 
    * @return last known time in milliseconds
    */
