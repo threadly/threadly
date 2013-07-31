@@ -18,7 +18,7 @@ public class Clock {
   
   private static final Object UPDATE_LOCK = new Object();
   private static volatile long now = System.currentTimeMillis();
-  private static volatile boolean updateClock = false;
+  private static boolean updateClock = false;
   
   static {
     if (UPDATE_CLOCK_AUTOMATICALLY) {
