@@ -68,21 +68,23 @@ public class TestRunnable extends VirtualRunnable {
    * then gets the time between creation and a given run.
    * 
    * @param runNumber the run count to get delay to
+   * 
    * @return the amount of time between construction and run being called
    */
   public long getDelayTillRun(int runNumber) {
-    return getDelayTillRun(DEFAULT_TIMEOUT_PER_RUN * runNumber, runNumber);
+    return getDelayTillRun(runNumber, DEFAULT_TIMEOUT_PER_RUN * runNumber);
   }
   
   /**
    * This function blocks till the run provided, and 
    * then gets the time between creation and a given run.
    * 
-   * @param timeout timeout to wait for given run count to finish
    * @param runNumber the run count to get delay to
+   * @param timeout timeout to wait for given run count to finish
+   * 
    * @return the amount of time between construction and run being called
    */
-  public long getDelayTillRun(int timeout, int runNumber) {
+  public long getDelayTillRun(int runNumber, int timeout) {
     blockTillFinished(timeout, runNumber);
     
     return runTime.get(runNumber - 1) - creationTime;
