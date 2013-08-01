@@ -126,7 +126,17 @@ public class TaskExecutorDistributorTest {
                 containers.put(j, tc);
               }
               
-              TDRunnable tr = new TDRunnable(tc, previousRunnables.get(j));
+              TDRunnable tr = new TDRunnable(tc, previousRunnables.get(j)) {
+                private boolean added = false;
+                
+                @Override
+                public void handleRunFinish() {
+                  if (! added) {
+                    distributor.addTask(threadTracker, this);
+                    added = true;
+                  }
+                }
+              };
               runs.add(tr);
               distributor.addTask(tc, tr);
               previousRunnables.put(j, tr);
@@ -150,8 +160,8 @@ public class TaskExecutorDistributorTest {
       Iterator<TDRunnable> it = runs.iterator();
       while (it.hasNext()) {
         TDRunnable tr = it.next();
-        tr.blockTillFinished(20 * 1000);
-        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        tr.blockTillFinished(20 * 1000, 2);
+        assertEquals(tr.getRunCount(), 2); // verify each only ran twice
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
     }
@@ -175,25 +185,31 @@ public class TaskExecutorDistributorTest {
   }
   
   private class TDRunnable extends TestRunnable {
-    private final TDRunnable previousRunnable;
-    private final ThreadContainer threadTracker;
-    private volatile boolean previousRanFirst;
+    protected final TDRunnable previousRunnable;
+    protected final ThreadContainer threadTracker;
+    protected volatile boolean previousRanFirst;
+    private volatile boolean verifiedPrevious;
     
     private TDRunnable(ThreadContainer threadTracker, 
                        TDRunnable previousRunnable) {
       this.threadTracker = threadTracker;
       this.previousRunnable = previousRunnable;
       previousRanFirst = false;
+      verifiedPrevious = false;
     }
     
     @Override
     public void handleRunStart() {
       threadTracker.running();
       
-      if (previousRunnable != null) {
-        previousRanFirst = previousRunnable.ranOnce();
-      } else {
-        previousRanFirst = true;
+      if (! verifiedPrevious) {
+        if (previousRunnable != null) {
+          previousRanFirst = previousRunnable.getRunCount() >= 1;
+        } else {
+          previousRanFirst = true;
+        }
+        
+        verifiedPrevious = true;
       }
     }
   }
