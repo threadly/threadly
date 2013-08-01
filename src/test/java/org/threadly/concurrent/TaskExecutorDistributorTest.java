@@ -51,12 +51,12 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
-  public void testGetExecutor() {
+  public void getExecutorTest() {
     assertTrue(scheduler == distributor.getExecutor());
   }
   
   @Test
-  public void testExecutes() {
+  public void executeTest() {
     final Object testLock = new Object();
     final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
 
@@ -102,7 +102,7 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
-  public void testExecuteFail() {
+  public void executeFail() {
     try {
       distributor.addTask(null, new TestRunnable());
       fail("Exception should have been thrown");
