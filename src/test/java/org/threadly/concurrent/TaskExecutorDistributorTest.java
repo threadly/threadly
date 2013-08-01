@@ -22,7 +22,6 @@ public class TaskExecutorDistributorTest {
   
   private volatile boolean ready;
   private PriorityScheduledExecutor scheduler;
-  private VirtualLock agentLock;
   private TaskExecutorDistributor distributor;
   
   @Before
@@ -32,8 +31,7 @@ public class TaskExecutorDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
-    StripedLock sLock = new StripedLock(1, new NativeLockFactory()); // TODO - test with testable lock
-    agentLock = sLock.getLock(null);  // there should be only one lock
+    StripedLock sLock = new StripedLock(PARALLEL_LEVEL, new NativeLockFactory()); // TODO - test with testable lock
     distributor = new TaskExecutorDistributor(scheduler, sLock);
     ready = false;
   }
@@ -42,9 +40,7 @@ public class TaskExecutorDistributorTest {
   public void tearDown() {
     scheduler.shutdown();
     scheduler = null;
-    agentLock = null;
     distributor = null;
-    ready = false;
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -67,23 +63,20 @@ public class TaskExecutorDistributorTest {
     scheduler.execute(new Runnable() {
       @Override
       public void run() {
-        // hold agent lock to prevent execution till ready
-        synchronized (agentLock) {
-          synchronized (testLock) {
-            for (int i = 0; i < PARALLEL_LEVEL; i++) {
-              ThreadContainer tc = new ThreadContainer();
-              TDRunnable previous = null;
-              for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-                TDRunnable tr = new TDRunnable(tc, previous);
-                runs.add(tr);
-                distributor.addTask(tc, tr);
-                
-                previous = tr;
-              }
+        synchronized (testLock) {
+          for (int i = 0; i < PARALLEL_LEVEL; i++) {
+            ThreadContainer tc = new ThreadContainer();
+            TDRunnable previous = null;
+            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+              TDRunnable tr = new TDRunnable(tc, previous);
+              runs.add(tr);
+              distributor.addTask(tc, tr);
+              
+              previous = tr;
             }
-            
-            ready = true;
           }
+            
+          ready = true;
         }
       }
     });
@@ -94,7 +87,7 @@ public class TaskExecutorDistributorTest {
       public boolean get() {
         return ready;
       }
-    }.blockTillTrue(15000);
+    }.blockTillTrue(20000);
 
     synchronized (testLock) {
       Iterator<TDRunnable> it = runs.iterator();
@@ -154,6 +147,10 @@ public class TaskExecutorDistributorTest {
     private boolean threadConsistent = true;
     
     public synchronized void running() {
+      while (! ready) {
+        // spin
+      }
+      
       if (runningThread == null) {
         runningThread = Thread.currentThread();
       } else {

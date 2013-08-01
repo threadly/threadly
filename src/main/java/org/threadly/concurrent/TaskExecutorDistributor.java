@@ -159,9 +159,7 @@ public class TaskExecutorDistributor {
     }
     
     public void add(Runnable task) {
-      synchronized (agentLock) {
-        queue.addLast(task);
-      }
+      queue.addLast(task);
     }
     
     @Override
