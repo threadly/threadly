@@ -3,8 +3,10 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.After;
@@ -56,7 +58,7 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
-  public void executeTest() {
+  public void executeConsistentThreadTest() {
     final Object testLock = new Object();
     final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
 
@@ -81,21 +83,75 @@ public class TaskExecutorDistributorTest {
       }
     });
     
-    // block till ready to ensure other thread got lock
+    // block till ready to ensure other thread got testLock lock
     new TestCondition() {
       @Override
       public boolean get() {
         return ready;
       }
-    }.blockTillTrue(20000);
+    }.blockTillTrue(20 * 1000, 100);
 
     synchronized (testLock) {
       Iterator<TDRunnable> it = runs.iterator();
       while (it.hasNext()) {
         TDRunnable tr = it.next();
-        tr.blockTillFinished(10 * 1000);
+        tr.blockTillFinished(20 * 1000);
         assertEquals(tr.getRunCount(), 1); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
+      }
+    }
+  }
+  
+  @Test
+  public void executeStressTest() {
+    final Object testLock = new Object();
+    final int expectedCount = (PARALLEL_LEVEL * 2) * (RUNNABLE_COUNT_PER_LEVEL * 2);
+    final List<TDRunnable> runs = new ArrayList<TDRunnable>(expectedCount);
+
+    ready = true; // don't make tasks wait
+    
+    scheduler.execute(new Runnable() {
+      private final Map<Integer, ThreadContainer> containers = new HashMap<Integer, ThreadContainer>();
+      private final Map<Integer, TDRunnable> previousRunnables = new HashMap<Integer, TDRunnable>();
+      
+      @Override
+      public void run() {
+        synchronized (testLock) {
+          for (int i = 0; i < RUNNABLE_COUNT_PER_LEVEL * 2; i++) {
+            for (int j = 0; j < PARALLEL_LEVEL * 2; j++) {
+              ThreadContainer tc = containers.get(j);
+              if (tc == null) {
+                tc = new ThreadContainer();
+                containers.put(j, tc);
+              }
+              
+              TDRunnable tr = new TDRunnable(tc, previousRunnables.get(j));
+              runs.add(tr);
+              distributor.addTask(tc, tr);
+              previousRunnables.put(j, tr);
+            }
+          }
+        }
+      }
+    });
+    
+    // block till ready to ensure other thread got testLock lock
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        synchronized (testLock) {
+          return runs.size() == expectedCount;
+        }
+      }
+    }.blockTillTrue(20 * 1000, 100);
+
+    synchronized (testLock) {
+      Iterator<TDRunnable> it = runs.iterator();
+      while (it.hasNext()) {
+        TDRunnable tr = it.next();
+        tr.blockTillFinished(20 * 1000);
+        assertEquals(tr.getRunCount(), 1); // verify each only ran once
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
     }
