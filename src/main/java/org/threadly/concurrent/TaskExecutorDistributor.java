@@ -188,7 +188,11 @@ public class TaskExecutorDistributor {
             }
           } catch (Throwable t) {
             UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
-            ueh.uncaughtException(Thread.currentThread(), t);
+            if (ueh != null) {
+              ueh.uncaughtException(Thread.currentThread(), t);
+            } else {
+              t.printStackTrace();
+            }
           }
         }
       }
