@@ -113,6 +113,21 @@ public class TaskExecutorDistributor {
   }
   
   /**
+   * Returns an executor interface where all tasks submitted 
+   * on this executor will run on the provided key.
+   * 
+   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @return executor which will only execute based on the provided key
+   */
+  public Executor getExecutorForKey(Object threadKey) {
+    if (threadKey == null) {
+      throw new IllegalArgumentException("Must provide thread key");
+    }
+    
+    return new KeyBasedExecutor(threadKey);
+  }
+  
+  /**
    * Provide a task to be run with a given thread key.
    * 
    * @param threadKey object key where hashCode will be used to determine execution thread
@@ -196,6 +211,24 @@ public class TaskExecutorDistributor {
           }
         }
       }
+    }
+  }
+  
+  /**
+   * Simple executor implementation that runs on a given key.
+   * 
+   * @author jent - Mike Jensen
+   */
+  private class KeyBasedExecutor implements Executor {
+    private final Object threadKey;
+    
+    private KeyBasedExecutor(Object threadKey) {
+      this.threadKey = threadKey;
+    }
+    
+    @Override
+    public void execute(Runnable command) {
+      addTask(threadKey, command);
     }
   }
 }
