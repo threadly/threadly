@@ -7,7 +7,7 @@ import java.util.concurrent.Future;
 
 /**
  * This class is designed to limit how much parallel execution happens 
- * on a provided {@link SimpleSchedulerInterface}.  This allows the 
+ * on a provided {@link SubmitterSchedulerInterface}.  This allows the 
  * implementor to have one thread pool for all their code, and if 
  * they want certain sections to have less levels of parallelism 
  * (possibly because those those sections would completely consume the 
@@ -21,30 +21,30 @@ import java.util.concurrent.Future;
  * 
  * @author jent - Mike Jensen
  */
-public class SimpleSchedulerLimiter extends AbstractSchedulerLimiter 
-                                    implements SimpleSchedulerInterface {
-  protected final SimpleSchedulerInterface scheduler;
+public class SchedulerLimiter extends AbstractSchedulerLimiter 
+                              implements SubmitterSchedulerInterface {
+  protected final SubmitterSchedulerInterface scheduler;
   protected final Queue<Wrapper> waitingTasks;
   
   /**
-   * Constructs a new limiter that implements the {@link SimpleSchedulerInterface}.
+   * Constructs a new limiter that implements the {@link SubmitterSchedulerInterface}.
    * 
-   * @param scheduler {@link SimpleSchedulerInterface} implementation to submit task executions to.
+   * @param scheduler {@link SubmitterSchedulerInterface} implementation to submit task executions to.
    * @param maxConcurrency maximum qty of runnables to run in parallel
    */
-  public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
+  public SchedulerLimiter(SubmitterSchedulerInterface scheduler, 
                                 int maxConcurrency) {
     this(scheduler, maxConcurrency, null);
   }
   
   /**
-   * Constructs a new limiter that implements the {@link SimpleSchedulerInterface}.
+   * Constructs a new limiter that implements the {@link SubmitterSchedulerInterface}.
    * 
-   * @param scheduler {@link SimpleSchedulerInterface} implementation to submit task executions to.
+   * @param scheduler {@link SubmitterSchedulerInterface} implementation to submit task executions to.
    * @param maxConcurrency maximum qty of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
-  public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
+  public SchedulerLimiter(SubmitterSchedulerInterface scheduler, 
                                 int maxConcurrency, String subPoolName) {
     super(maxConcurrency, subPoolName);
     

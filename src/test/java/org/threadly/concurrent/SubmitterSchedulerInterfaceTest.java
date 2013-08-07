@@ -14,12 +14,12 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
-public class SimpleSchedulerInterfaceTest {
-  public static void executeTest(SimpleSchedulerFactory factory) {
+public class SubmitterSchedulerInterfaceTest {
+  public static void executeTest(SubmitterSchedulerFactory factory) {
     try {
       int runnableCount = 10;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       for (int i = 0; i < runnableCount; i++) {
@@ -56,11 +56,11 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitRunnableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitRunnableTest(SubmitterSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -107,11 +107,11 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitRunnableWithResultTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitRunnableWithResultTest(SubmitterSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(runnableCount);
@@ -159,11 +159,11 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitCallableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitCallableTest(SubmitterSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, false);
       
       List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
       List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
@@ -198,9 +198,9 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void executeFail(SimpleSchedulerFactory factory) {
+  public static void executeFail(SubmitterSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.make(1, false);
       
       scheduler.execute(null);
       fail("Execption should have thrown");
@@ -209,9 +209,9 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitRunnableFail(SimpleSchedulerFactory factory) {
+  public static void submitRunnableFail(SubmitterSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.make(1, false);
       
       scheduler.submit((Runnable)null);
       fail("Execption should have thrown");
@@ -220,9 +220,9 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitCallableFail(SimpleSchedulerFactory factory) {
+  public static void submitCallableFail(SubmitterSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.make(1, false);
       
       scheduler.submit((Callable<Object>)null);
       fail("Execption should have thrown");
@@ -231,12 +231,12 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void scheduleTest(SimpleSchedulerFactory factory) {
+  public static void scheduleTest(SubmitterSchedulerFactory factory) {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       for (int i = 0; i < runnableCount; i++) {
@@ -260,12 +260,12 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledRunnableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitScheduledRunnableTest(SubmitterSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -299,12 +299,12 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledRunnableWithResultTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitScheduledRunnableWithResultTest(SubmitterSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(runnableCount);
@@ -339,12 +339,12 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledCallableTest(SimpleSchedulerFactory factory) throws InterruptedException, ExecutionException {
+  public static void submitScheduledCallableTest(SubmitterSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
       
       List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
       List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
@@ -376,9 +376,9 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void scheduleExecutionFail(SimpleSchedulerFactory factory) {
+  public static void scheduleExecutionFail(SubmitterSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.make(1, false);
       try {
         scheduler.schedule(null, 1000);
         fail("Exception should have been thrown");
@@ -396,9 +396,9 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledRunnableFail(SimpleSchedulerFactory factory) {
+  public static void submitScheduledRunnableFail(SubmitterSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.make(1, false);
       try {
         scheduler.submitScheduled((Runnable)null, 1000);
         fail("Exception should have been thrown");
@@ -416,9 +416,9 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void submitScheduledCallableFail(SimpleSchedulerFactory factory) {
+  public static void submitScheduledCallableFail(SubmitterSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.make(1, false);
       try {
         scheduler.submitScheduled((Callable<Object>)null, 1000);
         fail("Exception should have been thrown");
@@ -436,13 +436,13 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void recurringExecutionTest(SimpleSchedulerFactory factory) {
+  public static void recurringExecutionTest(SubmitterSchedulerFactory factory) {
     try {
       final int runnableCount = 10;
       final int recurringDelay = 50;
       final int waitCount = 2;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
       
       // schedule a task first in case there are any initial startup actions which may be slow
       scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10);
@@ -469,9 +469,9 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void recurringExecutionFail(SimpleSchedulerFactory factory) {
+  public static void recurringExecutionFail(SubmitterSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.make(1, false);
       try {
         scheduler.scheduleWithFixedDelay(null, 1000, 1000);
         fail("Exception should have been thrown");
@@ -495,8 +495,8 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public interface SimpleSchedulerFactory {
-    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
+  public interface SubmitterSchedulerFactory {
+    public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
 
     public void shutdown();
   }

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeoutException;
  * 
  * @author jent - Mike Jensen
  */
-public class ConcurrentSimpleSchedulerWrapper implements SimpleSchedulerInterface {
+public class ConcurrentSimpleSchedulerWrapper implements SubmitterSchedulerInterface {
   private final ScheduledExecutorService scheduler;
   
   /**

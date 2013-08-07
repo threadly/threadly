@@ -66,6 +66,21 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     
     this.scheduler = scheduler;
   }
+  
+  /**
+   * Returns a scheduler implementation where all tasks submitted 
+   * on this scheduler will run on the provided key.
+   * 
+   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @return scheduler which will only execute based on the provided key
+   */
+  public SimpleSchedulerInterface getSimpleSchedulerForKey(Object threadKey) {
+    if (threadKey == null) {
+      throw new IllegalArgumentException("Must provide thread key");
+    }
+    
+    return new KeyBasedSimpleScheduler(threadKey);
+  }
 
   /**
    * Schedule a task with a given delay.
@@ -123,11 +138,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  private class AddTask extends VirtualRunnable {
+  protected class AddTask extends VirtualRunnable {
     private final Object key;
     private final Runnable task;
     
-    private AddTask(Object key, Runnable task) {
+    protected AddTask(Object key, Runnable task) {
       this.key = key;
       this.task = task;
     }
@@ -143,16 +158,17 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  private class RecrringTask extends VirtualRunnable {
+  protected class RecrringTask extends VirtualRunnable {
     private final Object key;
     private final Runnable task;
     private final long recurringDelay;
     
-    private RecrringTask(Object key, Runnable task, long recurringDelay) {
+    protected RecrringTask(Object key, Runnable task, long recurringDelay) {
       this.key = key;
       this.task = task;
       this.recurringDelay = recurringDelay;
     }
+    
     @Override
     public void run() {
       try {
@@ -168,5 +184,35 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       }
     }
     
+  }
+  
+  /**
+   * Simple scheduler implementation that runs all executions and 
+   * scheduling on a given key.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class KeyBasedSimpleScheduler extends KeyBasedExecutor implements SimpleSchedulerInterface {
+    protected KeyBasedSimpleScheduler(Object threadKey) {
+      super(threadKey);
+    }
+
+    @Override
+    public void schedule(Runnable task, long delayInMs) {
+      TaskSchedulerDistributor.this.schedule(threadKey, task, 
+                                             delayInMs);
+    }
+
+    @Override
+    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+      TaskSchedulerDistributor.this.scheduleWithFixedDelay(threadKey, task, 
+                                                           initialDelay, 
+                                                           recurringDelay);
+    }
+
+    @Override
+    public boolean isShutdown() {
+      return scheduler.isShutdown();
+    }
   }
 }

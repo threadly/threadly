@@ -113,7 +113,7 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * Returns an executor interface where all tasks submitted 
+   * Returns an executor implementation where all tasks submitted 
    * on this executor will run on the provided key.
    * 
    * @param threadKey object key where hashCode will be used to determine execution thread
@@ -219,10 +219,10 @@ public class TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  private class KeyBasedExecutor implements Executor {
-    private final Object threadKey;
+  protected class KeyBasedExecutor implements Executor {
+    protected final Object threadKey;
     
-    private KeyBasedExecutor(Object threadKey) {
+    protected KeyBasedExecutor(Object threadKey) {
       this.threadKey = threadKey;
     }
     

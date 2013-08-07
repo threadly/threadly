@@ -8,7 +8,7 @@ import java.util.concurrent.Callable;
  * 
  * @author jent - Mike Jensen
  */
-public interface PrioritySchedulerInterface extends SimpleSchedulerInterface {
+public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface {
   /**
    * Executes the task as soon as possible with the given priority.  
    * 

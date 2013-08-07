@@ -10,7 +10,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.Clock;
@@ -26,7 +26,7 @@ import org.threadly.util.ListUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class NoThreadScheduler implements SimpleSchedulerInterface {
+public class NoThreadScheduler implements SubmitterSchedulerInterface {
   private final boolean threadSafe;
   private final List<RunnableContainer> taskQueue;
   private long nowInMillis;
