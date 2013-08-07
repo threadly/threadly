@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.After;
@@ -55,6 +56,58 @@ public class TaskExecutorDistributorTest {
   @Test
   public void getExecutorTest() {
     assertTrue(scheduler == distributor.getExecutor());
+  }
+  
+  @Test
+  public void keyBasedExecuteConsistentThreadTest() {
+    final Object testLock = new Object();
+    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+
+    scheduler.execute(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (testLock) {
+          for (int i = 0; i < PARALLEL_LEVEL; i++) {
+            ThreadContainer tc = new ThreadContainer();
+            Executor keyExecutor = distributor.getExecutorForKey(tc);
+            TDRunnable previous = null;
+            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+              TDRunnable tr = new TDRunnable(tc, previous);
+              runs.add(tr);
+              keyExecutor.execute(tr);
+              
+              previous = tr;
+            }
+          }
+            
+          ready = true;
+        }
+      }
+    });
+    
+    // block till ready to ensure other thread got testLock lock
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return ready;
+      }
+    }.blockTillTrue(20 * 1000, 100);
+
+    synchronized (testLock) {
+      Iterator<TDRunnable> it = runs.iterator();
+      while (it.hasNext()) {
+        TDRunnable tr = it.next();
+        tr.blockTillFinished(20 * 1000);
+        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
+      }
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void getExecutorForKeyFail() {
+    distributor.getExecutorForKey(null);
   }
   
   @Test
