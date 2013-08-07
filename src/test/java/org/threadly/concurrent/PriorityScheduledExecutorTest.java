@@ -457,7 +457,7 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void scheduleExecutionFail() {
-    SimpleSchedulerInterfaceTest.scheduleExecutionFail(new PriorityScheduledExecutorTestFactory());
+    SimpleSchedulerInterfaceTest.scheduleFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
@@ -616,7 +616,7 @@ public class PriorityScheduledExecutorTest {
   public void wrapperScheduleExecutionFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SimpleSchedulerInterfaceTest.scheduleExecutionFail(wf);
+    SimpleSchedulerInterfaceTest.scheduleFail(wf);
   }
   
   @Test

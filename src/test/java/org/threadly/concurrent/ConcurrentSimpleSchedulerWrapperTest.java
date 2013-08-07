@@ -71,7 +71,7 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   public void scheduleExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.scheduleFail(sf);
   }
   
   @Test

@@ -2,13 +2,16 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -247,6 +250,48 @@ public class TaskSchedulerDistributorTest {
     }
   }
   
+  @Test
+  public void keyBasedSchedulerExecuteTest() {
+    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.executeTest(factory);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void keyBasedSchedulerExecuteFail() {
+    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.executeFail(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerScheduleTest() {
+    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.scheduleTest(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerScheduleFail() {
+    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.scheduleFail(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerRecurringTest() {
+    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerRecurringFail() {
+    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(factory);
+  }
+  
   private interface AddHandler {
     public void addTDRunnable(Object key, TDRunnable tdr);
   }
@@ -303,6 +348,45 @@ public class TaskSchedulerDistributorTest {
     @Override
     public String toString() {
       return Integer.toHexString(System.identityHashCode(this));
+    }
+  }
+
+  private class KeyBasedSimpleSchedulerFactory implements SimpleSchedulerFactory {
+    private final List<PriorityScheduledExecutor> executors;
+    
+    private KeyBasedSimpleSchedulerFactory() {
+      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          // ignored
+        }
+      });
+      
+      executors = new LinkedList<PriorityScheduledExecutor>();
+    }
+    
+    @Override
+    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
+      PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(poolSize, 
+                                                                          poolSize, 
+                                                                          1000 * 10);
+      executors.add(scheduler);
+      if (prestartIfAvailable) {
+        scheduler.prestartAllCoreThreads();
+      }
+      
+      TaskSchedulerDistributor distributor = new TaskSchedulerDistributor(poolSize, scheduler);
+      
+      return distributor.getSimpleSchedulerForKey(this);
+    }
+    
+    @Override
+    public void shutdown() {
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
+      while (it.hasNext()) {
+        it.next().shutdown();
+        it.remove();
+      }
     }
   }
 }

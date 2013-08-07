@@ -215,7 +215,7 @@ public class SchedulerLimiterTest {
   public void scheduleExecutionFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.scheduleFail(sf);
   }
   
   @Test

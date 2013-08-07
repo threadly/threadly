@@ -158,7 +158,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void scheduleExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.scheduleFail(sf);
   }
   
   @Test
@@ -325,7 +325,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperScheduleExecutionFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SimpleSchedulerInterfaceTest.scheduleExecutionFail(wf);
+    SimpleSchedulerInterfaceTest.scheduleFail(wf);
   }
   
   @Test

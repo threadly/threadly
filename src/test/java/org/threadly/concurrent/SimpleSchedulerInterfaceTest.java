@@ -93,7 +93,7 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void scheduleExecutionFail(SimpleSchedulerFactory factory) {
+  public static void scheduleFail(SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.make(1, false);
       try {
