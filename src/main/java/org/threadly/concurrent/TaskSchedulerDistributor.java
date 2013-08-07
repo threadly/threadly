@@ -74,7 +74,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @return scheduler which will only execute based on the provided key
    */
-  public SimpleSchedulerInterface getSimpleSchedulerForKey(Object threadKey) {
+  public SimpleSchedulerInterface getSimpleSchedulerForKey(Object threadKey) {  // TODO - handle futures issue #35
     if (threadKey == null) {
       throw new IllegalArgumentException("Must provide thread key");
     }
@@ -192,7 +192,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  protected class KeyBasedSimpleScheduler extends KeyBasedExecutor implements SimpleSchedulerInterface {
+  protected class KeyBasedSimpleScheduler extends KeyBasedExecutor 
+                                          implements SimpleSchedulerInterface {
     protected KeyBasedSimpleScheduler(Object threadKey) {
       super(threadKey);
     }
