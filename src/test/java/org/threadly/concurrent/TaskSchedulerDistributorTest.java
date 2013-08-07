@@ -93,6 +93,11 @@ public class TaskSchedulerDistributorTest {
     fail("Exception should have been thrown");
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void getSimpleSchedulerForKeyFail() {
+    distributor.getSimpleSchedulerForKey(null);
+  }
+  
   @Test
   public void testGetExecutor() {
     assertTrue(scheduler == distributor.getExecutor());

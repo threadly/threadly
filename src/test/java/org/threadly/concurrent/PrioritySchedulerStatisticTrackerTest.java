@@ -109,7 +109,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.executeFail(sf);
+    SimpleSchedulerInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -130,7 +130,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void scheduleExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.scheduleTest(sf);
+    SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
@@ -158,7 +158,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void scheduleExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
   }
   
   @Test
@@ -179,21 +179,21 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
   
   @Test
   public void wrapperExecuteTest() {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SubmitterSchedulerInterfaceTest.executeTest(wf);
+      SimpleSchedulerInterfaceTest.executeTest(wf);
 
       PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestRunnable tr1 = new TestRunnable();
@@ -276,7 +276,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperExecuteFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.executeFail(wf);
+    SimpleSchedulerInterfaceTest.executeFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -297,7 +297,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperScheduleTest() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.scheduleTest(wf);
+    SimpleSchedulerInterfaceTest.scheduleTest(wf);
   }
   
   @Test
@@ -325,7 +325,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperScheduleExecutionFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.scheduleExecutionFail(wf);
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(wf);
   }
   
   @Test
@@ -346,14 +346,14 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperRecurringExecutionTest() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionTest(wf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(wf);
   }
   
   @Test
   public void wrapperRecurringExecutionFail() {
     WrapperFactory sf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
   
   @Test

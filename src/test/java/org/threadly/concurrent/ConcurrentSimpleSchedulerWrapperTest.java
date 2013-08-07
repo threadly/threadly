@@ -15,7 +15,7 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   public void executeTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.executeTest(sf);
+    SimpleSchedulerInterfaceTest.executeTest(sf);
   }
   
   @Test
@@ -43,7 +43,7 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.executeFail(sf);
+    SimpleSchedulerInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -64,14 +64,14 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   public void scheduleExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.scheduleTest(sf);
+    SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
   }
   
   @Test
@@ -113,14 +113,14 @@ public class ConcurrentSimpleSchedulerWrapperTest {
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
 
   private class SchedulerFactory implements SubmitterSchedulerFactory {

@@ -107,14 +107,14 @@ public class PrioritySchedulerLimiterTest {
   public void executeTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.executeTest(sf);
+    SimpleSchedulerInterfaceTest.executeTest(sf);
   }
   
   @Test
   public void executeNamedSubPoolTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
-    SubmitterSchedulerInterfaceTest.executeTest(sf);
+    SimpleSchedulerInterfaceTest.executeTest(sf);
   }
   
   @Test
@@ -189,7 +189,7 @@ public class PrioritySchedulerLimiterTest {
   public void executeTestFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.executeFail(sf);
+    SimpleSchedulerInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -210,21 +210,21 @@ public class PrioritySchedulerLimiterTest {
   public void scheduleExecutionTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.scheduleTest(sf);
+    SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleExecutionNamedSubPoolTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
-    SubmitterSchedulerInterfaceTest.scheduleTest(sf);
+    SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleExecutionFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.scheduleExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.scheduleExecutionFail(sf);
   }
   
   @Test
@@ -316,21 +316,21 @@ public class PrioritySchedulerLimiterTest {
   public void recurringExecutionTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionNamedSubPoolTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.recurringExecutionFail(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
 
   private class SchedulerLimiterFactory implements SubmitterSchedulerFactory {
