@@ -1049,6 +1049,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * the {@link ListenableFuture} interface.
    * 
    * @author jent - Mike Jensen
+   * @param <T> type of future implementation
    */
   protected static class OneTimeFutureTaskWrapper<T> extends OneTimeTaskWrapper 
                                                      implements ListenableFuture<T> {
@@ -1058,7 +1059,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     private final T runnableResult;
     private boolean started;
     private boolean done;
-    private Exception failure;
+    private Throwable failure;
     private T result;
     
     protected OneTimeFutureTaskWrapper(Runnable task, T runnableResult, 
@@ -1089,6 +1090,40 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       failure = null;
       result = null;
     }
+    
+    private void callListeners() {
+      synchronized (lock) {
+        Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
+        while (it.hasNext()) {
+          Entry<Runnable, Executor> listener = it.next();
+          runListener(listener.getKey(), listener.getValue(), false);
+        }
+        
+        listeners.clear();
+      }
+    }
+    
+    private void runListener(Runnable listener, Executor executor, 
+                             boolean throwException) {
+      if (executor != null) {
+        executor.execute(listener);
+      } else {
+        try {
+          listener.run();
+        } catch (RuntimeException e) {
+          if (throwException) {
+            throw e;
+          } else {
+            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+            if (handler != null) {
+              handler.uncaughtException(Thread.currentThread(), e);
+            } else {
+              e.printStackTrace();
+            }
+          }
+        }
+      }
+    }
 
     @Override
     public void run() {
@@ -1117,17 +1152,17 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           
           lock.signalAll();
         }
-      } catch (Exception e) {
+      } catch (Throwable t) {
         synchronized (lock) {
           done = true;
-          failure = e;
+          failure = t;
         
           callListeners();
         
           lock.signalAll();
         }
         
-        throw ExceptionUtils.makeRuntime(e);
+        throw ExceptionUtils.makeRuntime(t);
       }
     }
 
@@ -1141,18 +1176,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         lock.signalAll();
       
         return ! started;
-      }
-    }
-    
-    private void callListeners() {
-      synchronized (lock) {
-        Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
-        while (it.hasNext()) {
-          Entry<Runnable, Executor> listener = it.next();
-          runListener(listener.getKey(), listener.getValue(), false);
-        }
-        
-        listeners.clear();
       }
     }
 
@@ -1202,28 +1225,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         }
         
         return result;
-      }
-    }
-    
-    private void runListener(Runnable listener, Executor executor, 
-                             boolean throwException) {
-      if (executor != null) {
-        executor.execute(listener);
-      } else {
-        try {
-          listener.run();
-        } catch (RuntimeException e) {
-          if (throwException) {
-            throw e;
-          } else {
-            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-            if (handler != null) {
-              handler.uncaughtException(Thread.currentThread(), e);
-            } else {
-              e.printStackTrace();
-            }
-          }
-        }
       }
     }
 
