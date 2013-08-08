@@ -25,6 +25,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
  */
 public class DebugLogger {
   private static final boolean LOG_TIME_DEFAULT = false;
+  private static final char MESSAGE_DELIM = '\n';
+  private static final String TIME_DELIM = " - ";
   private static volatile ConcurrentSkipListMap<Long, String> logMap = new ConcurrentSkipListMap<Long, String>();
   
   /**
@@ -88,13 +90,13 @@ public class DebugLogger {
       Entry<Long, String> entry = it.next();
       if (includeLogTimes) {
         result.append(entry.getKey())
-              .append(" - ")
+              .append(TIME_DELIM)
               .append(entry.getValue());
       } else {
         result.append(entry.getValue());
       }
       if (it.hasNext()) {
-        result.append('\n');
+        result.append(MESSAGE_DELIM);
       }
     }
     return result.toString();
@@ -134,10 +136,13 @@ public class DebugLogger {
       Entry<Long, String> entry = it.next();
       if (includeLogTimes) {
         result.append(entry.getKey())
-              .append(" - ")
+              .append(TIME_DELIM)
               .append(entry.getValue());
       } else {
         result.append(entry.getValue());
+      }
+      if (it.hasNext()) {
+        result.append(MESSAGE_DELIM);
       }
       
       collectedQty++;
