@@ -2,6 +2,8 @@ package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
 
+import org.threadly.concurrent.future.ListenableFuture;
+
 /**
  * Class to wrap any implementation of {@link PrioritySchedulerInterface}.  The purpose of wrapping 
  * like this would be to change the default priority from the wrapped instance.  That way 

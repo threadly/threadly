@@ -1,9 +1,12 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.limiter;
 
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
+
+import org.threadly.concurrent.SubmitterSchedulerInterface;
+import org.threadly.concurrent.VirtualRunnable;
 
 /**
  * This class is designed to limit how much parallel execution happens 

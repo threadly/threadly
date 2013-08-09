@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -6,6 +6,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.concurrent.VirtualCallable;
+import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 

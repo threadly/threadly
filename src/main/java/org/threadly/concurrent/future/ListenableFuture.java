@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.future;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;

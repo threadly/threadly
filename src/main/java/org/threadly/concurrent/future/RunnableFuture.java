@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.future;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
@@ -12,7 +12,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -34,7 +36,24 @@ public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
   protected Throwable failure;
   protected T result;
   
-  protected RunnableFuture(Runnable task, T result, VirtualLock lock) {
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @param task runnable to be run
+   * @param result result to be provide after run has completed
+   */
+  public RunnableFuture(Runnable task, T result) {
+    this(task, result, new NativeLock());
+  }
+  
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @param task runnable to be run
+   * @param result result to be provide after run has completed
+   * @param lock lock to be used internally
+   */
+  public RunnableFuture(Runnable task, T result, VirtualLock lock) {
     this.runnable = task;
     this.runnableResult = result;
     callable = null;
@@ -46,8 +65,23 @@ public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
     failure = null;
     result = null;
   }
+
+  /**
+   * Constructs a runnable future with a callable work unit.
+   * 
+   * @param task callable to be run
+   */
+  public RunnableFuture(Callable<T> task) {
+    this(task, new NativeLock());
+  }
   
-  protected RunnableFuture(Callable<T> task, VirtualLock lock) {
+  /**
+   * Constructs a runnable future with a callable work unit.
+   * 
+   * @param task callable to be run
+   * @param lock lock to be used internally
+   */
+  public RunnableFuture(Callable<T> task, VirtualLock lock) {
     this.runnable = null;
     this.runnableResult = null;
     this.callable = task;
@@ -176,13 +210,13 @@ public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
   public T get(long timeout, TimeUnit unit) throws InterruptedException,
                                                    ExecutionException,
                                                    TimeoutException {
-    long startTime = ClockWrapper.getAccurateTime();
+    long startTime = Clock.accurateTime();
     long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
     synchronized (lock) {
-      long waitTime = timeoutInMs - (ClockWrapper.getAccurateTime() - startTime);
+      long waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
       while (! done && waitTime > 0) {
         lock.await(waitTime);
-        waitTime = timeoutInMs - (ClockWrapper.getAccurateTime() - startTime);
+        waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
       }
       
       if (canceled) {

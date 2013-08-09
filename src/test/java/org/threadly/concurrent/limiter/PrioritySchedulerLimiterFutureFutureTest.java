@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
 
@@ -10,7 +10,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
-import org.threadly.concurrent.PrioritySchedulerLimiter.FutureFuture;
+import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.limiter.PrioritySchedulerLimiter.FutureFuture;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;

@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")

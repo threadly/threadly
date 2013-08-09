@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
-import org.threadly.concurrent.FutureTest;
-import org.threadly.concurrent.FutureTest.FutureFactory;
+import org.threadly.concurrent.future.FutureTest;
+import org.threadly.concurrent.future.FutureTest.FutureFactory;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.NoThreadScheduler.OneTimeFutureRunnable;
 

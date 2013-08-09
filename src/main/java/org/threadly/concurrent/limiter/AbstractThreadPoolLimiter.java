@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

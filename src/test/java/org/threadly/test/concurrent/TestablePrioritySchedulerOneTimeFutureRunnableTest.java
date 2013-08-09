@@ -14,10 +14,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
-import org.threadly.concurrent.FutureTest;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.FutureTest.FutureFactory;
+import org.threadly.concurrent.future.FutureTest;
+import org.threadly.concurrent.future.FutureTest.FutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.VirtualLock;

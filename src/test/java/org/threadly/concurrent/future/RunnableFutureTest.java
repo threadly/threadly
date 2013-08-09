@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
 
@@ -10,7 +10,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
-import org.threadly.concurrent.FutureTest.FutureFactory;
+import org.threadly.concurrent.future.RunnableFuture;
+import org.threadly.concurrent.future.FutureTest.FutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
