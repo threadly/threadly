@@ -24,8 +24,8 @@ import org.threadly.concurrent.VirtualRunnable;
  * 
  * @author jent - Mike Jensen
  */
-public class SchedulerLimiter extends AbstractSchedulerLimiter 
-                              implements SubmitterSchedulerInterface {
+public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter 
+                                       implements SubmitterSchedulerInterface {
   protected final SubmitterSchedulerInterface scheduler;
   protected final Queue<Wrapper> waitingTasks;
   
@@ -35,7 +35,7 @@ public class SchedulerLimiter extends AbstractSchedulerLimiter
    * @param scheduler {@link SubmitterSchedulerInterface} implementation to submit task executions to.
    * @param maxConcurrency maximum qty of runnables to run in parallel
    */
-  public SchedulerLimiter(SubmitterSchedulerInterface scheduler, 
+  public SubmitterSchedulerLimiter(SubmitterSchedulerInterface scheduler, 
                                 int maxConcurrency) {
     this(scheduler, maxConcurrency, null);
   }
@@ -47,7 +47,7 @@ public class SchedulerLimiter extends AbstractSchedulerLimiter
    * @param maxConcurrency maximum qty of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
-  public SchedulerLimiter(SubmitterSchedulerInterface scheduler, 
+  public SubmitterSchedulerLimiter(SubmitterSchedulerInterface scheduler, 
                                 int maxConcurrency, String subPoolName) {
     super(maxConcurrency, subPoolName);
     

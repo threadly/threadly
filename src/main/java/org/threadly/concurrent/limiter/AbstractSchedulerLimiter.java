@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.VirtualCallable;
-import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -25,55 +24,6 @@ public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter
    */
   protected AbstractSchedulerLimiter(int maxConcurrency, String subPoolName) {
     super(maxConcurrency, subPoolName);
-  }
-  
-  /**
-   * Generic wrapper for runnables which are used within the limiters.
-   * 
-   * @author jent - Mike Jensen
-   */
-  protected abstract class LimiterRunnableWrapper extends VirtualRunnable {
-    private final Runnable runnable;
-    
-    public LimiterRunnableWrapper(Runnable runnable) {
-      this.runnable = runnable;
-    }
-    
-    protected abstract void doAfterRunTasks();
-    
-    @Override
-    public void run() {
-      Thread currentThread = null;
-      String originalThreadName = null;
-      if (subPoolName != null) {
-        currentThread = Thread.currentThread();
-        originalThreadName = currentThread.getName();
-        
-        currentThread.setName(makeSubPoolThreadName(originalThreadName));
-      }
-      
-      try {
-        if (factory != null && 
-            runnable instanceof VirtualRunnable) {
-          VirtualRunnable vr = (VirtualRunnable)runnable;
-          vr.run(factory);
-        } else {
-          runnable.run();
-        }
-      } finally {
-        try {
-          doAfterRunTasks();
-        } finally {
-          try {
-            handleTaskFinished();
-          } finally {
-            if (subPoolName != null) {
-              currentThread.setName(originalThreadName);
-            }
-          }
-        }
-      }
-    }
   }
   
   /**

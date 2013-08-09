@@ -5,7 +5,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.VirtualRunnable;
@@ -14,7 +13,7 @@ import org.threadly.util.ExceptionUtils;
 
 /**
  * This class is designed to limit how much parallel execution happens 
- * on a provided {@link PriorityScheduledExecutor}.  This allows the 
+ * on a provided {@link PrioritySchedulerInterface}.  This allows the 
  * implementor to have one thread pool for all their code, and if 
  * they want certain sections to have less levels of parallelism 
  * (possibly because those those sections would completely consume the 

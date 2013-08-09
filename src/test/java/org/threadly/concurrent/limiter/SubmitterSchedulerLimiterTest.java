@@ -18,23 +18,23 @@ import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
-import org.threadly.concurrent.limiter.SchedulerLimiter;
+import org.threadly.concurrent.limiter.SubmitterSchedulerLimiter;
 import org.threadly.concurrent.limiter.AbstractSchedulerLimiter.FutureFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class SchedulerLimiterTest {
+public class SubmitterSchedulerLimiterTest {
   @Test
   public void constructorFail() {
     try {
-      new SchedulerLimiter(null, 100);
+      new SubmitterSchedulerLimiter(null, 100);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
     try {
-      new SchedulerLimiter(executor, 0);
+      new SubmitterSchedulerLimiter(executor, 0);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -47,7 +47,7 @@ public class SchedulerLimiterTest {
   public void constructorEmptySubPoolNameTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
     try {
-      SchedulerLimiter limiter = new SchedulerLimiter(executor, 1, " ");
+      SubmitterSchedulerLimiter limiter = new SubmitterSchedulerLimiter(executor, 1, " ");
       
       assertNull(limiter.subPoolName);
     } finally {
@@ -59,7 +59,7 @@ public class SchedulerLimiterTest {
   public void consumeAvailableTest() {
     int testQty = 10;
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
-    SchedulerLimiter psl = new SchedulerLimiter(executor, testQty);
+    SubmitterSchedulerLimiter psl = new SubmitterSchedulerLimiter(executor, testQty);
     
     boolean flip1 = true;
     boolean flip2 = true;
@@ -347,7 +347,7 @@ public class SchedulerLimiterTest {
     }
     
     @Override
-    public SchedulerLimiter make(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerLimiter make(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                          1000 * 10);
       if (prestartIfAvailable) {
@@ -356,9 +356,9 @@ public class SchedulerLimiterTest {
       executors.add(executor);
       
       if (addSubPoolName) {
-        return new SchedulerLimiter(executor, poolSize, "TestSubPool");
+        return new SubmitterSchedulerLimiter(executor, poolSize, "TestSubPool");
       } else {
-        return new SchedulerLimiter(executor, poolSize);
+        return new SubmitterSchedulerLimiter(executor, poolSize);
       }
     }
     

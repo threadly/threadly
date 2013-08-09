@@ -2,6 +2,8 @@ package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.threadly.concurrent.VirtualRunnable;
+
 /**
  * Abstract implementation for classes which limit concurrency 
  * for a parent thread pool.
@@ -94,5 +96,54 @@ public abstract class AbstractThreadPoolLimiter {
     currentlyRunning.decrementAndGet();
     
     consumeAvailable(); // allow any waiting tasks to run
+  }
+  
+  /**
+   * Generic wrapper for runnables which are used within the limiters.
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected abstract class LimiterRunnableWrapper extends VirtualRunnable {
+    private final Runnable runnable;
+    
+    public LimiterRunnableWrapper(Runnable runnable) {
+      this.runnable = runnable;
+    }
+    
+    protected abstract void doAfterRunTasks();
+    
+    @Override
+    public void run() {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
+      try {
+        if (factory != null && 
+            runnable instanceof VirtualRunnable) {
+          VirtualRunnable vr = (VirtualRunnable)runnable;
+          vr.run(factory);
+        } else {
+          runnable.run();
+        }
+      } finally {
+        try {
+          doAfterRunTasks();
+        } finally {
+          try {
+            handleTaskFinished();
+          } finally {
+            if (subPoolName != null) {
+              currentThread.setName(originalThreadName);
+            }
+          }
+        }
+      }
+    }
   }
 }
