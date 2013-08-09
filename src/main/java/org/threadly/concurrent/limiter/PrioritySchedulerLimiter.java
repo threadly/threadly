@@ -3,13 +3,13 @@ package org.threadly.concurrent.limiter;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Executor;
 
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.VirtualRunnable;
+import org.threadly.concurrent.future.FutureFuture;
+import org.threadly.concurrent.future.FutureListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.util.ExceptionUtils;
 
 /**
  * This class is designed to limit how much parallel execution happens 
@@ -178,7 +178,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     
     doSubmit(task, result, priority, ff);
     
@@ -206,7 +206,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     
     doSubmit(task, priority, ff);
     
@@ -263,7 +263,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
       priority = scheduler.getDefaultPriority();
     }
 
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     if (delayInMs == 0) {
       doSubmit(task, result, priority, ff);
     } else {
@@ -286,7 +286,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
       priority = scheduler.getDefaultPriority();
     }
 
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     if (delayInMs == 0) {
       doSubmit(task, priority, ff);
     } else {
@@ -549,50 +549,6 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     @Override
     public Runnable getRunnable() {
       throw new UnsupportedOperationException();
-    }
-  }
-  
-  /**
-   * ListenableFuture which contains a parent {@link ListenableFuture}. 
-   * (which may not be created yet).
-   * 
-   * @author jent - Mike Jensen
-   * @param <T> result type returned by .get()
-   */
-  protected static class FutureFuture<T> extends AbstractSchedulerLimiter.FutureFuture<T> 
-                                         implements ListenableFuture<T> {
-    private ListenableFuture<?> parentFuture;
-    
-    public FutureFuture() {
-      parentFuture = null;
-    }
-    
-    protected void setParentFuture(ListenableFuture<?> parentFuture) {
-      synchronized (this) {
-        this.parentFuture = parentFuture;
-        
-        super.setParentFuture(parentFuture);  // parent will call this.notifyAll()
-      }
-    }
-
-    @Override
-    public void addListener(Runnable listener) {
-      addListener(listener, null);
-    }
-
-    @Override
-    public void addListener(Runnable listener, Executor executor) {
-      synchronized (this) {
-        while (parentFuture == null) {
-          try {
-            this.wait();
-          } catch (InterruptedException e) {
-            throw ExceptionUtils.makeRuntime(e);
-          }
-        }
-      }
-      
-      parentFuture.addListener(listener, executor);
     }
   }
   

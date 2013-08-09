@@ -7,6 +7,7 @@ import java.util.concurrent.Future;
 
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.VirtualRunnable;
+import org.threadly.concurrent.future.FutureFuture;
 
 /**
  * This class is designed to limit how much parallel execution happens 

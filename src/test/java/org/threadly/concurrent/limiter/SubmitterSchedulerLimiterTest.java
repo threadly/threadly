@@ -18,8 +18,8 @@ import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
+import org.threadly.concurrent.future.FutureFuture;
 import org.threadly.concurrent.limiter.SubmitterSchedulerLimiter;
-import org.threadly.concurrent.limiter.AbstractSchedulerLimiter.FutureFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
