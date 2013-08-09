@@ -175,9 +175,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
 
   /**
-   * Submit a {@link Callable} to run as soon as possible.  This is 
-   * needed when a result needs to be consumed from the 
-   * callable.
+   * Submit a {@link Callable} to run as soon as possible for a given key.  
+   * This is needed when a result needs to be consumed from the callable.
    * 
    * @param threadKey key which hash will be used to determine which thread to run
    * @param task callable to be executed
