@@ -62,6 +62,11 @@ public class ExecutorLimiterTest {
   }
   
   @Test
+  public void getMaxConcurrencyTest() {
+    assertEquals(limiter.getMaxConcurrency(), PARALLEL_COUNT);
+  }
+  
+  @Test
   public void constructorEmptySubPoolNameTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
     try {
