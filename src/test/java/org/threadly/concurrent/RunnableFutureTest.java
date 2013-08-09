@@ -10,14 +10,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeFutureTaskWrapper;
 import org.threadly.concurrent.FutureTest.FutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class PriorityScheduledExecutorOneTimeFutureTaskWrapperTest {
+public class RunnableFutureTest {
   @Test
   public void blockTillCompletedTest() {
     FutureTest.blockTillCompletedTest(new Factory());
@@ -52,7 +51,7 @@ public class PriorityScheduledExecutorOneTimeFutureTaskWrapperTest {
   public void listenerTest() {
     TestRunnable tr = new TestRunnable();
     
-    OneTimeFutureTaskWrapper<Object> future = new OneTimeFutureTaskWrapper<Object>(tr, null, TaskPriority.High, 0, new NativeLock());
+    RunnableFuture<Object> future = new RunnableFuture<Object>(tr, null, new NativeLock());
     
     assertEquals(future.listeners.size(), 0); // empty to start
     
@@ -88,12 +87,12 @@ public class PriorityScheduledExecutorOneTimeFutureTaskWrapperTest {
   private class Factory implements FutureFactory {
     @Override
     public Future<?> make(Runnable run, VirtualLock lock) {
-      return new OneTimeFutureTaskWrapper<Object>(run, null, TaskPriority.High, 0, lock);
+      return new RunnableFuture<Object>(run, null, lock);
     }
 
     @Override
     public <T> Future<T> make(Callable<T> callable, VirtualLock lock) {
-      return new OneTimeFutureTaskWrapper<T>(callable, TaskPriority.High, 0, lock);
+      return new RunnableFuture<T>(callable, lock);
     }
   }
   

@@ -3,19 +3,13 @@ package org.threadly.concurrent;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.concurrent.collections.DynamicDelayQueue;
@@ -23,7 +17,6 @@ import org.threadly.concurrent.collections.DynamicDelayedUpdater;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.util.ExceptionUtils;
 
 /**
  * Executor to run tasks, schedule tasks.  
@@ -581,13 +574,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    OneTimeFutureTaskWrapper<T> otftw = new OneTimeFutureTaskWrapper<T>(task, result, 
-                                                                        priority, 
-                                                                        delayInMs, 
-                                                                        makeLock());
-    addToQueue(otftw);
+    RunnableFuture<T> rf = new RunnableFuture<T>(task, result, makeLock());
+    addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
-    return otftw;
+    return rf;
   }
 
   @Override
@@ -607,13 +597,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    OneTimeFutureTaskWrapper<T> otftw = new OneTimeFutureTaskWrapper<T>(task, 
-                                                                        priority, 
-                                                                        delayInMs, 
-                                                                        makeLock());
-    addToQueue(otftw);
+    RunnableFuture<T> rf = new RunnableFuture<T>(task, makeLock());
+    addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
-    return otftw;
+    return rf;
   }
 
   @Override
@@ -978,6 +965,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     
     public void cancel() {
       canceled = true;
+      
+      if (task instanceof Future<?>) {
+        ((Future<?>)task).cancel(false);
+      }
     }
     
     public abstract void executing();
@@ -1040,207 +1031,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     public void run() {
       if (! canceled) {
         task.run();
-      }
-    }
-  }
-  
-  /**
-   * Wrapper for tasks which only executes once, and also implements 
-   * the {@link ListenableFuture} interface.
-   * 
-   * @author jent - Mike Jensen
-   * @param <T> type of future implementation
-   */
-  protected static class OneTimeFutureTaskWrapper<T> extends OneTimeTaskWrapper 
-                                                     implements ListenableFuture<T> {
-    protected final Map<Runnable, Executor> listeners;
-    private final Callable<T> callable;
-    private final VirtualLock lock;
-    private final T runnableResult;
-    private boolean started;
-    private boolean done;
-    private Throwable failure;
-    private T result;
-    
-    protected OneTimeFutureTaskWrapper(Runnable task, T runnableResult, 
-                                       TaskPriority priority,
-                                       long delay, VirtualLock lock) {
-      super(task, priority, delay);
-      
-      listeners = new HashMap<Runnable, Executor>();
-      callable = null;
-      this.lock = lock;
-      this.runnableResult = runnableResult;
-      started = false;
-      done = false;
-      failure = null;
-      result = null;
-    }
-
-    protected OneTimeFutureTaskWrapper(Callable<T> callable, TaskPriority priority,
-                                       long delay, VirtualLock lock) {
-      super(null, priority, delay);
-      
-      listeners = new HashMap<Runnable, Executor>();
-      this.callable = callable;
-      this.lock = lock;
-      this.runnableResult = null;
-      started = false;
-      done = false;
-      failure = null;
-      result = null;
-    }
-    
-    private void callListeners() {
-      synchronized (lock) {
-        Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
-        while (it.hasNext()) {
-          Entry<Runnable, Executor> listener = it.next();
-          runListener(listener.getKey(), listener.getValue(), false);
-        }
-        
-        listeners.clear();
-      }
-    }
-    
-    private void runListener(Runnable listener, Executor executor, 
-                             boolean throwException) {
-      if (executor != null) {
-        executor.execute(listener);
-      } else {
-        try {
-          listener.run();
-        } catch (RuntimeException e) {
-          if (throwException) {
-            throw e;
-          } else {
-            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-            if (handler != null) {
-              handler.uncaughtException(Thread.currentThread(), e);
-            } else {
-              e.printStackTrace();
-            }
-          }
-        }
-      }
-    }
-
-    @Override
-    public void run() {
-      try {
-        boolean shouldRun = false;
-        synchronized (lock) {
-          if (! canceled) {
-            started = true;
-            shouldRun = true;
-          }
-        }
-        
-        if (shouldRun) {
-          if (task != null) {
-            task.run();
-            result = runnableResult;
-          } else {
-            result = callable.call();
-          }
-        }
-        
-        synchronized (lock) {
-          done = true;
-        
-          callListeners();
-          
-          lock.signalAll();
-        }
-      } catch (Throwable t) {
-        synchronized (lock) {
-          done = true;
-          failure = t;
-        
-          callListeners();
-        
-          lock.signalAll();
-        }
-        
-        throw ExceptionUtils.makeRuntime(t);
-      }
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      synchronized (lock) {
-        canceled = true;
-        
-        callListeners();
-        
-        lock.signalAll();
-      
-        return ! started;
-      }
-    }
-
-    @Override
-    public boolean isDone() {
-      synchronized (lock) {
-        return done;
-      }
-    }
-
-    @Override
-    public boolean isCancelled() {
-      synchronized (lock) {
-        return canceled && ! started;
-      }
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-      try {
-        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-      } catch (TimeoutException e) {
-        // basically impossible
-        throw ExceptionUtils.makeRuntime(e);
-      }
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException,
-                                                     ExecutionException,
-                                                     TimeoutException {
-      long startTime = ClockWrapper.getAccurateTime();
-      long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
-      synchronized (lock) {
-        long waitTime = timeoutInMs - (ClockWrapper.getAccurateTime() - startTime);
-        while (! done && waitTime > 0) {
-          lock.await(waitTime);
-          waitTime = timeoutInMs - (ClockWrapper.getAccurateTime() - startTime);
-        }
-        
-        if (canceled) {
-          throw new CancellationException();
-        } else if (failure != null) {
-          throw new ExecutionException(failure);
-        } else if (! done) {
-          throw new TimeoutException();
-        }
-        
-        return result;
-      }
-    }
-
-    @Override
-    public void addListener(Runnable listener) {
-      addListener(listener, null);
-    }
-
-    @Override
-    public void addListener(Runnable listener, Executor executor) {
-      synchronized (lock) {
-        if (done || canceled) {
-          runListener(listener, executor, true);
-        } else {
-          listeners.put(listener, executor);
-        }
       }
     }
   }

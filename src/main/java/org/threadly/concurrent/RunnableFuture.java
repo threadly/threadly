@@ -23,16 +23,16 @@ import org.threadly.util.ExceptionUtils;
  * @param <T> type of future implementation
  */
 public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
-  private final Runnable runnable;
-  private final T runnableResult;
-  private final Callable<T> callable;
-  private final VirtualLock lock;
-  private final Map<Runnable, Executor> listeners;
-  private boolean canceled;
-  private boolean started;
-  private boolean done;
-  private Throwable failure;
-  private T result;
+  protected final Runnable runnable;
+  protected final T runnableResult;
+  protected final Callable<T> callable;
+  protected final VirtualLock lock;
+  protected final Map<Runnable, Executor> listeners;
+  protected boolean canceled;
+  protected boolean started;
+  protected boolean done;
+  protected Throwable failure;
+  protected T result;
   
   protected RunnableFuture(Runnable task, T result, VirtualLock lock) {
     this.runnable = task;
