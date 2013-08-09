@@ -7,11 +7,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
+import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -97,8 +98,8 @@ public class TaskSchedulerDistributorTest {
   }
   
   @Test (expected = IllegalArgumentException.class)
-  public void getSimpleSchedulerForKeyFail() {
-    distributor.getSimpleSchedulerForKey(null);
+  public void getSubmitterSchedulerForKeyFail() {
+    distributor.getSubmitterSchedulerForKey(null);
   }
   
   @Test
@@ -252,44 +253,114 @@ public class TaskSchedulerDistributorTest {
   
   @Test
   public void keyBasedSchedulerExecuteTest() {
-    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SimpleSchedulerInterfaceTest.executeTest(factory);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void keyBasedSchedulerExecuteFail() {
-    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SimpleSchedulerInterfaceTest.executeFail(factory);
   }
   
   @Test
   public void keyBasedSchedulerScheduleTest() {
-    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SimpleSchedulerInterfaceTest.scheduleTest(factory);
   }
   
   @Test
   public void keyBasedSchedulerScheduleFail() {
-    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SimpleSchedulerInterfaceTest.scheduleFail(factory);
   }
   
   @Test
   public void keyBasedSchedulerRecurringTest() {
-    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SimpleSchedulerInterfaceTest.recurringExecutionTest(factory);
   }
   
   @Test
   public void keyBasedSchedulerRecurringFail() {
-    KeyBasedSimpleSchedulerFactory factory = new KeyBasedSimpleSchedulerFactory();
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SimpleSchedulerInterfaceTest.recurringExecutionFail(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitRunnableTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitRunnableTest(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitRunnableWithResultTest(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitCallableTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitCallableTest(factory);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void keyBasedSchedulerSubmitRunnableFail() {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitRunnableFail(factory);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void keyBasedSchedulerSubmitCallableFail() {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitCallableFail(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitScheduledRunnableTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitScheduledCallableTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitScheduledRunnableFail() {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerSubmitScheduledCallableFail() {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(factory);
   }
   
   @Test
@@ -299,7 +370,7 @@ public class TaskSchedulerDistributorTest {
     assertTrue(scheduler.isShutdown());
     
     //verify
-    assertTrue(distributor.getSimpleSchedulerForKey("foo").isShutdown());
+    assertTrue(distributor.getSubmitterSchedulerForKey("foo").isShutdown());
   }
   
   private interface AddHandler {
@@ -361,10 +432,10 @@ public class TaskSchedulerDistributorTest {
     }
   }
 
-  private class KeyBasedSimpleSchedulerFactory implements SimpleSchedulerFactory {
+  private class KeyBasedSubmitterSchedulerFactory implements SubmitterSchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     
-    private KeyBasedSimpleSchedulerFactory() {
+    private KeyBasedSubmitterSchedulerFactory() {
       Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
         @Override
         public void uncaughtException(Thread t, Throwable e) {
@@ -376,7 +447,7 @@ public class TaskSchedulerDistributorTest {
     }
     
     @Override
-    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(poolSize, 
                                                                           poolSize, 
                                                                           1000 * 10);
@@ -387,7 +458,7 @@ public class TaskSchedulerDistributorTest {
       
       TaskSchedulerDistributor distributor = new TaskSchedulerDistributor(poolSize, scheduler);
       
-      return distributor.getSimpleSchedulerForKey(this);
+      return distributor.getSubmitterSchedulerForKey(this);
     }
     
     @Override

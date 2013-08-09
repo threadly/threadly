@@ -9,7 +9,7 @@ import java.util.concurrent.Executor;
  */
 public interface SimpleSchedulerInterface extends Executor {
   /**
-   * Schedule a task with a given delay.
+   * Schedule a one time task with a given delay.
    * 
    * @param task runnable to execute
    * @param delayInMs time in milliseconds to wait to execute task
