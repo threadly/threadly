@@ -292,6 +292,16 @@ public class TaskSchedulerDistributorTest {
     SimpleSchedulerInterfaceTest.recurringExecutionFail(factory);
   }
   
+  @Test
+  public void keyBasedSchedulerIsShutdownTest() {
+    // setup
+    scheduler.shutdown();
+    assertTrue(scheduler.isShutdown());
+    
+    //verify
+    assertTrue(distributor.getSimpleSchedulerForKey("foo").isShutdown());
+  }
+  
   private interface AddHandler {
     public void addTDRunnable(Object key, TDRunnable tdr);
   }
