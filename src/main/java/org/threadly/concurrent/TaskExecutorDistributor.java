@@ -47,7 +47,7 @@ public class TaskExecutorDistributor {
    * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
    */
   public TaskExecutorDistributor(int expectedParallism, int maxThreadCount) {
-    this(new PriorityScheduledExecutor(expectedParallism, 
+    this(new PriorityScheduledExecutor(Math.min(expectedParallism, maxThreadCount), 
                                        maxThreadCount, 
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
