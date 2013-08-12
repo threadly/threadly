@@ -12,6 +12,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.concurrent.VirtualCallable;
+import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.Clock;
@@ -24,7 +26,7 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @param <T> type of future implementation
  */
-public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
+public class RunnableFuture<T> extends VirtualRunnable implements ListenableFuture<T> {
   protected final Runnable runnable;
   protected final T runnableResult;
   protected final Callable<T> callable;
@@ -56,14 +58,14 @@ public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
   public RunnableFuture(Runnable task, T result, VirtualLock lock) {
     this.runnable = task;
     this.runnableResult = result;
-    callable = null;
+    this.callable = null;
     this.lock = lock;
-    listeners = new HashMap<Runnable, Executor>();
-    canceled = false;
-    started = false;
-    done = false;
-    failure = null;
-    result = null;
+    this.listeners = new HashMap<Runnable, Executor>();
+    this.canceled = false;
+    this.started = false;
+    this.done = false;
+    this.failure = null;
+    this.result = null;
   }
 
   /**
@@ -86,12 +88,12 @@ public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
     this.runnableResult = null;
     this.callable = task;
     this.lock = lock;
-    listeners = new HashMap<Runnable, Executor>();
-    canceled = false;
-    started = false;
-    done = false;
-    failure = null;
-    result = null;
+    this.listeners = new HashMap<Runnable, Executor>();
+    this.canceled = false;
+    this.started = false;
+    this.done = false;
+    this.failure = null;
+    this.result = null;
   }
   
   private void callListeners() {
@@ -141,10 +143,18 @@ public class RunnableFuture<T> implements ListenableFuture<T>, Runnable {
       
       if (shouldRun) {
         if (runnable != null) {
-          runnable.run();
+          if (factory != null && runnable instanceof VirtualRunnable) {
+            ((VirtualRunnable)runnable).run(factory);
+          } else {
+            runnable.run();
+          }
           result = runnableResult;
         } else {
-          result = callable.call();
+          if (factory != null && callable instanceof VirtualCallable) {
+            result = ((VirtualCallable<T>)callable).call(factory);
+          } else {
+            result = callable.call();
+          }
         }
       }
       
