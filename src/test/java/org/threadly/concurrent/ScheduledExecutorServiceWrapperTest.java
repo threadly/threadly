@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 
 @SuppressWarnings("javadoc")
-public class SchedulerServiceWrapperTest {
+public class ScheduledExecutorServiceWrapperTest {
   @Test
   public void executeTest() {
     SchedulerFactory sf = new SchedulerFactory();
@@ -137,7 +137,7 @@ public class SchedulerServiceWrapperTest {
         executor.prestartAllCoreThreads();
       }
       executors.add(executor);
-      return new SchedulerServiceWrapper(executor);
+      return new ScheduledExecutorServiceWrapper(executor);
     }
     
     @Override

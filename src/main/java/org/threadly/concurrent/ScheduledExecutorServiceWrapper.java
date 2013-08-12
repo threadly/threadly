@@ -13,7 +13,7 @@ import java.util.concurrent.TimeoutException;
  * 
  * @author jent - Mike Jensen
  */
-public class SchedulerServiceWrapper implements SubmitterSchedulerInterface {
+public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterface {
   private final ScheduledExecutorService scheduler;
   
   /**
@@ -21,7 +21,7 @@ public class SchedulerServiceWrapper implements SubmitterSchedulerInterface {
    * 
    * @param scheduler ScheduledExecutorService implementor
    */
-  public SchedulerServiceWrapper(ScheduledExecutorService scheduler) {
+  public ScheduledExecutorServiceWrapper(ScheduledExecutorService scheduler) {
     if (scheduler == null) {
       throw new IllegalArgumentException("Must provide scheduler implementation");
     }
