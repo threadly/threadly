@@ -17,7 +17,7 @@ It relies on any code that performs blocking uses an injectable LockFactory, the
 
 *    PriorityScheduledExecutor - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
 
-It provides calls that can or can not return a future, so if a future is not necessary the performance hit can be avoided. If you need a thread pool that implements ScheduledExecutorService you can wrap it in "ConcurrentSimpleSchedulerWrapper", but even then a few functions are not implemented due to wanting to keep the original implementation very lean and efficient.
+It provides calls that can or can not return a future, so if a future is not necessary the performance hit can be avoided. If you need a thread pool that implements ScheduledExecutorService you can wrap it in "ScheduledExecutorServiceWrapper", but even then a few functions are not implemented due to wanting to keep the original implementation very lean and efficient.
 
 It removes tasks much easier than ScheduledThreadPoolExecutor, by allowing you to just provide the original runnable, instead of requiring you to cast the future that was originally provided.
 
