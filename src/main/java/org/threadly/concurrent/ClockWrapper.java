@@ -18,7 +18,7 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  */
 public class ClockWrapper {
-  private static AtomicInteger requestsToStopUpdatingTime = new AtomicInteger();
+  private static final AtomicInteger requestsToStopUpdatingTime = new AtomicInteger();
   
   private ClockWrapper() {
     // don't construct
