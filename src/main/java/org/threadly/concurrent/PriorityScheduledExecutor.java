@@ -429,8 +429,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * This implementation refuses new submissions after this call.  And will NOT interrupt any 
    * tasks which are currently running.  But any tasks which are waiting in queue to be run 
-   * (but have not started yet), will not be run.  They will be removed, and as workers finish 
-   * with their current tasks the threads will be joined.
+   * (but have not started yet), will not be run.  Those waiting tasks will be removed, and 
+   * as workers finish with their current tasks the threads will be joined.
    */
   public void shutdown() {
     running = false;
