@@ -421,7 +421,16 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   /**
-   * Stops any tasks from continuing to run and destroys all worker threads.
+   * Stops any new tasks from running and removes workers from the pool.
+   * 
+   * This is different from the implementation in java.util.concurrent.ExecutorService.  
+   * In ExecutorService it allows any scheduled or submitted task to execute, and just 
+   * refuses new submissions.
+   * 
+   * This implementation refuses new submissions after this call.  And will NOT interrupt any 
+   * tasks which are currently running.  But any tasks which are waiting in queue to be run 
+   * (but have not started yet), will not be run.  They will be removed, and as workers finish 
+   * with their current tasks the threads will be joined.
    */
   public void shutdown() {
     running = false;
