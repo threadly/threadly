@@ -13,16 +13,16 @@ repositories {
   mavenCentral()
 }
 
+dependencies {
+  testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
 tasks.withType(Compile) {
     options.compilerArgs << "-Xlint:-options"
 } 
 
 plugins.withType(JavaPlugin) {
   checkstyle.sourceSets = [sourceSets.main]
-}
-
-dependencies {
-  testCompile group: 'junit', name: 'junit', version: '4.+'
 }
 
 test {
@@ -33,6 +33,11 @@ jar {
   manifest {
     attributes 'Implementation-Title': 'Threadly', 'Implementation-Version': version
   }
+}
+
+javadoc {
+  source = sourceSets.main.allJava
+  options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
