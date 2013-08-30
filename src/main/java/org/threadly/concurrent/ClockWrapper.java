@@ -18,7 +18,7 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  */
 public class ClockWrapper {
-  private static final AtomicInteger requestsToStopUpdatingTime = new AtomicInteger();
+  private static final AtomicInteger REQUESTS_TO_STOP_UPDATING_TIME = new AtomicInteger();
   
   private ClockWrapper() {
     // don't construct
@@ -28,17 +28,17 @@ public class ClockWrapper {
    * A call here causes getAccurateTime to use the last known time.
    */
   protected static void stopForcingUpdate() {
-    requestsToStopUpdatingTime.incrementAndGet();
+    REQUESTS_TO_STOP_UPDATING_TIME.incrementAndGet();
   }
   
   /**
    * This resumes updating the clock for calls to getAccurateTime.
    */
   protected static void resumeForcingUpdate() {
-    int newVal = requestsToStopUpdatingTime.decrementAndGet();
+    int newVal = REQUESTS_TO_STOP_UPDATING_TIME.decrementAndGet();
     
     if (newVal < 0) {
-      boolean ableToCorrect = requestsToStopUpdatingTime.compareAndSet(newVal, 0);
+      boolean ableToCorrect = REQUESTS_TO_STOP_UPDATING_TIME.compareAndSet(newVal, 0);
       throw new IllegalStateException("Should have never become negative...corrected: " + ableToCorrect);
     }
   }
@@ -48,7 +48,7 @@ public class ClockWrapper {
    * stop updating from system clock temporarily or not.
    */
   protected static long getAccurateTime() {
-    if (requestsToStopUpdatingTime.get() > 0) {
+    if (REQUESTS_TO_STOP_UPDATING_TIME.get() > 0) {
       return Clock.lastKnownTimeMillis();
     } else {
       return Clock.accurateTime();
