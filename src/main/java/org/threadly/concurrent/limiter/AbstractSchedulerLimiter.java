@@ -9,7 +9,7 @@ import org.threadly.concurrent.VirtualCallable;
  * 
  * @author jent - Mike Jensen
  */
-public abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter {
+abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter {
   /**
    * Constructor for abstract class to call into for anyone extending this class.
    * 

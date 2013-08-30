@@ -17,7 +17,7 @@ import org.threadly.util.Clock;
  * 
  * @author jent - Mike Jensen
  */
-public class ClockWrapper {
+class ClockWrapper {
   private static final AtomicInteger REQUESTS_TO_STOP_UPDATING_TIME = new AtomicInteger();
   
   private ClockWrapper() {

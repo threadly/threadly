@@ -15,7 +15,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.collections.DynamicDelayQueue;
-import org.threadly.concurrent.collections.DynamicDelayQueue.ConsumerIterator;
 
 @SuppressWarnings("javadoc")
 public class DynamicDelayQueueTest {

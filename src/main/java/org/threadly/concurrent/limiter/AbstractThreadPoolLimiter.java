@@ -10,7 +10,7 @@ import org.threadly.concurrent.VirtualRunnable;
  * 
  * @author jent - Mike Jensen
  */
-public abstract class AbstractThreadPoolLimiter {
+abstract class AbstractThreadPoolLimiter {
   protected final int maxConcurrency;
   protected final String subPoolName;
   private final AtomicInteger currentlyRunning;

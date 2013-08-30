@@ -18,8 +18,6 @@ import org.threadly.util.ListUtils;
 /**
  * This queue is very similar to {@link java.util.concurrent.DelayQueue} but has one major
  * difference.  This queue is designed around the idea that items can change their delay.
- * This is needed in the {@link org.threadly.concurrent.PriorityScheduledExecutor} in 
- * order to ensure that task removal requests can always be found in the queue.  
  * Items enter the queue with Long.MAX_VALUE delay, and then will just call reposition 
  * once they know when their next execution time is.
  * 
@@ -458,36 +456,5 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     }
     
     return addedElements;
-  }
-  
-  /**
-   * Iterator which automatically consumes the queue as it is iterated over.
-   * 
-   * @author jent - Mike Jensen
-   * 
-   * @param <E> Parameter for types of item to be returned by next() and peek()
-   */
-  public interface ConsumerIterator<E> {
-    /**
-     * Check if there are additional items to consume.
-     * 
-     * @return true if there is another item in the queue
-     */
-    public boolean hasNext();
-    
-    /**
-     * Peek but don't remove the next item to be consumed, will return null if
-     * there is nothing left to consume in the queue.
-     * 
-     * @return next available item
-     */
-    public E peek();
-    
-    /**
-     * Removes and returns the next available item in the queue.
-     * 
-     * @return next item with delay <= 0
-     */
-    public E remove();
   }
 }
