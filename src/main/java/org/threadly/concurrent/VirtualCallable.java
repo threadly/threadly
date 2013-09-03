@@ -71,4 +71,33 @@ public abstract class VirtualCallable<T> implements Callable<T>  {
       factory.makeLock().sleep(sleepTime);
     }
   }
+  
+  /**
+   * Constructs a VirtualCallable for a given runnable and result.  This is very similar to 
+   * Executors.callable(Runnable, Result).  The difference is this callable implementation is 
+   * able to handle when {@link VirtualRunnable} are being provided.
+   * 
+   * @param task runnable or {@link VirtualRunnable} implementation to call
+   * @param result result to be provided from the callable after the runnable has run
+   * @return {@link VirtualCallable} object which will run the provided task
+   */
+  public static <T> VirtualCallable<T> fromRunnable(final Runnable task, 
+                                                    final T result) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide a task to be run within the callable");
+    }
+    
+    return new VirtualCallable<T>() {
+      @Override
+      public T call() throws Exception {
+        if (factory != null && task instanceof VirtualRunnable) {
+          ((VirtualRunnable)task).run(factory);
+        } else {
+          task.run();
+        }
+        
+        return result;
+      }
+    };
+  }
 }

@@ -28,7 +28,7 @@ public class ScheduledFutureImp<T> implements ListenableScheduledFuture<T> {
    * @param delayed implementation to call to for getDelay and compareTo
    */
   public ScheduledFutureImp(ListenableFuture<T> futureImp, 
-                                      Delayed delayed) {
+                            Delayed delayed) {
     this.futureImp = futureImp;
     this.delayed = delayed;
   }

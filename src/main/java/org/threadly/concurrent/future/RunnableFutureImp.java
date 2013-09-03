@@ -28,8 +28,6 @@ import org.threadly.util.ExceptionUtils;
  */
 public class RunnableFutureImp<T> extends VirtualRunnable 
                                   implements ListenableRunnableFuture<T> {
-  protected final Runnable runnable;
-  protected final T runnableResult;
   protected final Callable<T> callable;
   protected final VirtualLock lock;
   protected final Map<Runnable, Executor> listeners;
@@ -66,16 +64,7 @@ public class RunnableFutureImp<T> extends VirtualRunnable
    * @param lock lock to be used internally
    */
   public RunnableFutureImp(Runnable task, T result, VirtualLock lock) {
-    this.runnable = task;
-    this.runnableResult = result;
-    this.callable = null;
-    this.lock = lock;
-    this.listeners = new HashMap<Runnable, Executor>();
-    this.canceled = false;
-    this.started = false;
-    this.done = false;
-    this.failure = null;
-    this.result = null;
+    this(VirtualCallable.fromRunnable(task, result), lock);
   }
 
   /**
@@ -94,8 +83,6 @@ public class RunnableFutureImp<T> extends VirtualRunnable
    * @param lock lock to be used internally
    */
   public RunnableFutureImp(Callable<T> task, VirtualLock lock) {
-    this.runnable = null;
-    this.runnableResult = null;
     this.callable = task;
     this.lock = lock;
     this.listeners = new HashMap<Runnable, Executor>();
@@ -152,19 +139,10 @@ public class RunnableFutureImp<T> extends VirtualRunnable
       }
       
       if (shouldRun) {
-        if (runnable != null) {
-          if (factory != null && runnable instanceof VirtualRunnable) {
-            ((VirtualRunnable)runnable).run(factory);
-          } else {
-            runnable.run();
-          }
-          result = runnableResult;
+        if (factory != null && callable instanceof VirtualCallable) {
+          result = ((VirtualCallable<T>)callable).call(factory);
         } else {
-          if (factory != null && callable instanceof VirtualCallable) {
-            result = ((VirtualCallable<T>)callable).call(factory);
-          } else {
-            result = callable.call();
-          }
+          result = callable.call();
         }
       }
       
