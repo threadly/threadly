@@ -13,4 +13,6 @@ public interface LockFactory {
    * @return new {@link VirtualLock}
    */
   public VirtualLock makeLock();
+  
+  public boolean isNativeLockFactory();
 }

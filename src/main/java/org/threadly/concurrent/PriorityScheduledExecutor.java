@@ -601,7 +601,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, result, makeLock());
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, result);
     addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
     return rf;
@@ -624,7 +624,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, makeLock());
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task);
     addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
     return rf;
@@ -829,6 +829,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   @Override
   public VirtualLock makeLock() {
     return new NativeLock();
+  }
+  
+  @Override
+  public boolean isNativeLockFactory() {
+    return true;
   }
   
   /**

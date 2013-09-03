@@ -6,18 +6,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import org.threadly.concurrent.VirtualCallable;
 import org.threadly.concurrent.VirtualRunnable;
-import org.threadly.concurrent.lock.NativeLock;
-import org.threadly.concurrent.lock.VirtualLock;
-import org.threadly.util.Clock;
-import org.threadly.util.ExceptionUtils;
 
 /**
  * This is a future which can be executed.  Allowing you to construct the future with 
@@ -26,16 +20,9 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @param <T> type of future implementation
  */
-public class ListenableFutureTask<T> extends VirtualRunnable 
+public class ListenableFutureTask<T> extends FutureTask<T> 
                                      implements ListenableRunnableFuture<T> {
-  protected final Callable<T> callable;
-  protected final VirtualLock lock;
   protected final Map<Runnable, Executor> listeners;
-  protected boolean canceled;
-  protected boolean started;
-  protected boolean done;
-  protected Throwable failure;
-  protected T result;
   
   /**
    * Constructs a runnable future with a runnable work unit.
@@ -53,18 +40,7 @@ public class ListenableFutureTask<T> extends VirtualRunnable
    * @param result result to be provide after run has completed
    */
   public ListenableFutureTask(Runnable task, T result) {
-    this(task, result, new NativeLock());
-  }
-  
-  /**
-   * Constructs a runnable future with a runnable work unit.
-   * 
-   * @param task runnable to be run
-   * @param result result to be provide after run has completed
-   * @param lock lock to be used internally
-   */
-  public ListenableFutureTask(Runnable task, T result, VirtualLock lock) {
-    this(VirtualCallable.fromRunnable(task, result), lock);
+    this(task instanceof VirtualRunnable ? VirtualCallable.fromRunnable(task, result) : Executors.callable(task, result));
   }
 
   /**
@@ -73,28 +49,13 @@ public class ListenableFutureTask<T> extends VirtualRunnable
    * @param task callable to be run
    */
   public ListenableFutureTask(Callable<T> task) {
-    this(task, new NativeLock());
-  }
-  
-  /**
-   * Constructs a runnable future with a callable work unit.
-   * 
-   * @param task callable to be run
-   * @param lock lock to be used internally
-   */
-  public ListenableFutureTask(Callable<T> task, VirtualLock lock) {
-    this.callable = task;
-    this.lock = lock;
+    super(task);
+    
     this.listeners = new HashMap<Runnable, Executor>();
-    this.canceled = false;
-    this.started = false;
-    this.done = false;
-    this.failure = null;
-    this.result = null;
   }
   
   private void callListeners() {
-    synchronized (lock) {
+    synchronized (listeners) {
       Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
       while (it.hasNext()) {
         Entry<Runnable, Executor> listener = it.next();
@@ -126,108 +87,6 @@ public class ListenableFutureTask<T> extends VirtualRunnable
       }
     }
   }
-  
-  @Override
-  public void run() {
-    try {
-      boolean shouldRun = false;
-      synchronized (lock) {
-        if (! canceled) {
-          started = true;
-          shouldRun = true;
-        }
-      }
-      
-      if (shouldRun) {
-        if (factory != null && callable instanceof VirtualCallable) {
-          result = ((VirtualCallable<T>)callable).call(factory);
-        } else {
-          result = callable.call();
-        }
-      }
-      
-      synchronized (lock) {
-        done = true;
-      
-        callListeners();
-        
-        lock.signalAll();
-      }
-    } catch (Throwable t) {
-      synchronized (lock) {
-        done = true;
-        failure = t;
-      
-        callListeners();
-      
-        lock.signalAll();
-      }
-      
-      throw ExceptionUtils.makeRuntime(t);
-    }
-  }
-
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    synchronized (lock) {
-      canceled = true;
-      
-      callListeners();
-      
-      lock.signalAll();
-    
-      return ! started;
-    }
-  }
-
-  @Override
-  public boolean isDone() {
-    synchronized (lock) {
-      return done;
-    }
-  }
-
-  @Override
-  public boolean isCancelled() {
-    synchronized (lock) {
-      return canceled && ! started;
-    }
-  }
-
-  @Override
-  public T get() throws InterruptedException, ExecutionException {
-    try {
-      return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-    } catch (TimeoutException e) {
-      // basically impossible
-      throw ExceptionUtils.makeRuntime(e);
-    }
-  }
-
-  @Override
-  public T get(long timeout, TimeUnit unit) throws InterruptedException,
-                                                   ExecutionException,
-                                                   TimeoutException {
-    long startTime = Clock.accurateTime();
-    long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
-    synchronized (lock) {
-      long waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
-      while (! done && waitTime > 0) {
-        lock.await(waitTime);
-        waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
-      }
-      
-      if (canceled) {
-        throw new CancellationException();
-      } else if (failure != null) {
-        throw new ExecutionException(failure);
-      } else if (! done) {
-        throw new TimeoutException();
-      }
-      
-      return result;
-    }
-  }
 
   @Override
   public void addListener(Runnable listener) {
@@ -236,12 +95,17 @@ public class ListenableFutureTask<T> extends VirtualRunnable
 
   @Override
   public void addListener(Runnable listener, Executor executor) {
-    synchronized (lock) {
-      if (done || canceled) {
+    synchronized (listeners) {
+      if (isDone()) {
         runListener(listener, executor, true);
       } else {
         listeners.put(listener, executor);
       }
     }
+  }
+  
+  @Override
+  protected void done() {
+    callListeners();
   }
 }

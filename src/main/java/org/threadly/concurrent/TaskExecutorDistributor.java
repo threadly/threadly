@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.concurrent.future.ListenableFutureVirtualTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
@@ -184,8 +184,8 @@ public class TaskExecutorDistributor {
       throw new IllegalArgumentException("Must provide task");
     }
     
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, result, 
-                                                              sLock.getLock(threadKey));
+    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, result, 
+                                                                        sLock.getLock(threadKey));
     
     addTask(threadKey, rf);
     
@@ -206,7 +206,8 @@ public class TaskExecutorDistributor {
       throw new IllegalArgumentException("Must provide task");
     }
     
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, sLock.getLock(threadKey));
+    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, 
+                                                                        sLock.getLock(threadKey));
     
     addTask(threadKey, rf);
     

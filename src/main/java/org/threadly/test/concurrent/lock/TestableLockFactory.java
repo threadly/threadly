@@ -29,4 +29,9 @@ public class TestableLockFactory implements LockFactory {
   public VirtualLock makeLock() {
     return new TestableLock(scheduler);
   }
+
+  @Override
+  public boolean isNativeLockFactory() {
+    return false;
+  }
 }

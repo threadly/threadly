@@ -16,4 +16,9 @@ public class NativeLockFactory implements LockFactory {
   public VirtualLock makeLock() {
     return new NativeLock();
   }
+
+  @Override
+  public boolean isNativeLockFactory() {
+    return true;
+  }
 }

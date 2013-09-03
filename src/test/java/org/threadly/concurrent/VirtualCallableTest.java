@@ -88,5 +88,10 @@ public class VirtualCallableTest {
     public void sleep(long timeInMs) throws InterruptedException {
       sleepCount++;
     }
+
+    @Override
+    public boolean isNativeLockFactory() {
+      return false;
+    }
   }
 }

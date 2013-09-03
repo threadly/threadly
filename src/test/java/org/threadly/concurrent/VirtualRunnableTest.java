@@ -86,5 +86,10 @@ public class VirtualRunnableTest {
     public void sleep(long timeInMs) throws InterruptedException {
       sleepCount++;
     }
+
+    @Override
+    public boolean isNativeLockFactory() {
+      return false;
+    }
   }
 }

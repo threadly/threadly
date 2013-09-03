@@ -16,7 +16,7 @@ import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class ListenableFutureTaskTest {
+public class ListenableFutureVirtualTaskTest {
   @Test
   public void blockTillCompletedTest() {
     FutureTest.blockTillCompletedTest(new Factory());
@@ -51,7 +51,7 @@ public class ListenableFutureTaskTest {
   public void listenerTest() {
     TestRunnable tr = new TestRunnable();
     
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(tr, null, new NativeLock());
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
     
     assertEquals(future.listeners.size(), 0); // empty to start
     
@@ -87,12 +87,12 @@ public class ListenableFutureTaskTest {
   private class Factory implements FutureFactory {
     @Override
     public Future<?> make(Runnable run, VirtualLock lock) {
-      return new ListenableFutureTask<Object>(run, null, lock);
+      return new ListenableFutureVirtualTask<Object>(run, null, lock);
     }
 
     @Override
     public <T> Future<T> make(Callable<T> callable, VirtualLock lock) {
-      return new ListenableFutureTask<T>(callable, lock);
+      return new ListenableFutureVirtualTask<T>(callable, lock);
     }
   }
   

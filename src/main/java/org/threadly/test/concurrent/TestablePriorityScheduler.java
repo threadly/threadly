@@ -373,6 +373,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
   }
 
   @Override
+  public boolean isNativeLockFactory() {
+    return false;
+  }
+
+  @Override
   public void handleWaiting(TestableLock lock) throws InterruptedException {
     NotifyObject no = waitingThreads.get(lock);
     if (no == null) {
