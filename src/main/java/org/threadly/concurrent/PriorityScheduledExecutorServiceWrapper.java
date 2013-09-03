@@ -60,15 +60,22 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   /**
-   * Currently the {@link PriorityScheduledExecutor} does not track
-   * tasks while they are running, so this call will always
-   * return an empty list of runnables it was able to terminate.
+   * This call will stop the processor as quick as possible.  Any 
+   * tasks which are awaiting execution will be canceled and returned 
+   * as a result to this call.
+   * 
+   * Unlike java.util.concurrent.ExecutorService implementation there 
+   * is no attempt to stop any currently execution tasks.
+   *
+   * This method does not wait for actively executing tasks to
+   * terminate.  Use {@link #awaitTermination awaitTermination} to
+   * do that.
+   *
+   * @return list of tasks that never commenced execution
    */
   @Override
   public List<Runnable> shutdownNow() {
-    scheduler.shutdown();
-    
-    return new ArrayList<Runnable>(0);
+    return scheduler.shutdown();
   }
 
   @Override

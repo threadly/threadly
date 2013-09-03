@@ -2,8 +2,10 @@ package org.threadly.concurrent;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.Executors;
@@ -386,26 +388,34 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     return ! running;
   }
   
-  protected void clearTaskQueue() {
+  protected List<Runnable> clearTaskQueue() {
     synchronized (highPriorityLock) {
       synchronized (lowPriorityLock) {
         highPriorityConsumer.stop();
         lowPriorityConsumer.stop();
+        List<Runnable> removedTasks = new ArrayList<Runnable>(highPriorityQueue.size() + 
+                                                                lowPriorityQueue.size());
         
         synchronized (highPriorityQueue.getLock()) {
           Iterator<TaskWrapper> it = highPriorityQueue.iterator();
           while (it.hasNext()) {
-            it.next().cancel();
+            TaskWrapper tw = it.next();
+            tw.cancel();
+            removedTasks.add(tw.task);
           }
           lowPriorityQueue.clear();
         }
         synchronized (lowPriorityQueue.getLock()) {
           Iterator<TaskWrapper> it = lowPriorityQueue.iterator();
           while (it.hasNext()) {
-            it.next().cancel();
+            TaskWrapper tw = it.next();
+            tw.cancel();
+            removedTasks.add(tw.task);
           }
           lowPriorityQueue.clear();
         }
+        
+        return removedTasks;
       }
     }
   }
@@ -431,11 +441,15 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * tasks which are currently running.  But any tasks which are waiting in queue to be run 
    * (but have not started yet), will not be run.  Those waiting tasks will be removed, and 
    * as workers finish with their current tasks the threads will be joined.
+   * 
+   * @return List of runnables which were waiting to execute
    */
-  public void shutdown() {
+  public List<Runnable> shutdown() {
     running = false;
-    clearTaskQueue();
+    List<Runnable> awaitingTasks = clearTaskQueue();
     shutdownAllWorkers();
+    
+    return awaitingTasks;
   }
   
   protected void verifyNotShutdown() {
