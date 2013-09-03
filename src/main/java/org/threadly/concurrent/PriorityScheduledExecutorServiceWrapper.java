@@ -5,21 +5,19 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.RecurringTaskWrapper;
-import org.threadly.concurrent.PriorityScheduledExecutor.TaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.RunnableFuture;
+import org.threadly.concurrent.future.ScheduledListenableFuture;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -219,7 +217,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   @Override
-  public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+  public ScheduledListenableFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
     if (command == null) {
       throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
@@ -234,11 +232,11 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                                                      delayInMs);
     scheduler.addToQueue(ottw);
     
-    return new ScheduledFutureRunnable<Object>(taskFuture, ottw);
+    return new ScheduledListenableFuture<Object>(taskFuture, ottw);
   }
 
   @Override
-  public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay,
+  public <V> ScheduledListenableFuture<V> schedule(Callable<V> callable, long delay,
                                          TimeUnit unit) {
     if (callable == null) {
       throw new NullPointerException("Must provide a task");
@@ -254,7 +252,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                                                      delayInMs);
     scheduler.addToQueue(ottw);
     
-    return new ScheduledFutureRunnable<V>(taskFuture, ottw);
+    return new ScheduledListenableFuture<V>(taskFuture, ottw);
   }
 
   /**
@@ -263,14 +261,14 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    * throws UnsupportedOperationException not yet implemented
    */
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(Runnable command,
+  public ScheduledListenableFuture<?> scheduleAtFixedRate(Runnable command,
                                                 long initialDelay, long period,
                                                 TimeUnit unit) {
     throw new UnsupportedOperationException("Not implemented in wrapper");
   }
 
   @Override
-  public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
+  public ScheduledListenableFuture<?> scheduleWithFixedDelay(Runnable command,
                                                    long initialDelay,
                                                    long delay, TimeUnit unit) {
     if (command == null) {
@@ -290,61 +288,6 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                                                                   initialDelayInMs, delayInMs);
     scheduler.addToQueue(rtw);
     
-    return new ScheduledFutureRunnable<Object>(taskFuture, rtw);
-  }
-
-  /**
-   * ScheduledFutureRunnable to be returned for recurring scheduled calls.
-   * 
-   * @author jent - Mike Jensen
-   *
-   * @param <T> generic for callable result
-   */
-  protected class ScheduledFutureRunnable<T> implements ScheduledFuture<T> {
-    private final RunnableFuture<T> taskFuture;
-    private final TaskWrapper scheduledTask;
-    
-    public ScheduledFutureRunnable(RunnableFuture<T> taskFuture,
-                                   TaskWrapper scheduledTask) {
-      this.taskFuture = taskFuture;
-      this.scheduledTask = scheduledTask;
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return scheduledTask.getDelay(unit);
-    }
-
-    @Override
-    public int compareTo(Delayed o) {
-      return scheduledTask.compareTo(o);
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return taskFuture.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return taskFuture.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-      return taskFuture.isDone();
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-      return taskFuture.get();
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException,
-                                                     ExecutionException,
-                                                     TimeoutException {
-      return taskFuture.get(timeout, unit);
-    }
+    return new ScheduledListenableFuture<Object>(taskFuture, rtw);
   }
 }
