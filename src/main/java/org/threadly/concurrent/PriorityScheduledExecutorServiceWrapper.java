@@ -16,8 +16,9 @@ import java.util.concurrent.locks.LockSupport;
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.RecurringTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.RunnableFuture;
-import org.threadly.concurrent.future.ListenableScheduledFuture;
+import org.threadly.concurrent.future.ListenableRunnableFuture;
+import org.threadly.concurrent.future.ScheduledFutureImp;
+import org.threadly.concurrent.future.RunnableFutureImp;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -129,7 +130,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
           throw new NullPointerException();
         }
         
-        RunnableFuture<T> fr = new RunnableFuture<T>(c);
+        ListenableRunnableFuture<T> fr = new RunnableFutureImp<T>(c);
         resultList.add(fr);
         scheduler.execute(fr);
       }
@@ -217,7 +218,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   @Override
-  public ListenableScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+  public ScheduledFutureImp<?> schedule(Runnable command, long delay, TimeUnit unit) {
     if (command == null) {
       throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
@@ -226,17 +227,17 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    RunnableFuture<Object> taskFuture = new RunnableFuture<Object>(command);
+    ListenableRunnableFuture<Object> taskFuture = new RunnableFutureImp<Object>(command);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
                                                      scheduler.getDefaultPriority(), 
                                                      delayInMs);
     scheduler.addToQueue(ottw);
     
-    return new ListenableScheduledFuture<Object>(taskFuture, ottw);
+    return new ScheduledFutureImp<Object>(taskFuture, ottw);
   }
 
   @Override
-  public <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delay,
+  public <V> ScheduledFutureImp<V> schedule(Callable<V> callable, long delay,
                                                    TimeUnit unit) {
     if (callable == null) {
       throw new NullPointerException("Must provide a task");
@@ -246,13 +247,13 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    RunnableFuture<V> taskFuture = new RunnableFuture<V>(callable);
+    ListenableRunnableFuture<V> taskFuture = new RunnableFutureImp<V>(callable);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
                                                      scheduler.getDefaultPriority(), 
                                                      delayInMs);
     scheduler.addToQueue(ottw);
     
-    return new ListenableScheduledFuture<V>(taskFuture, ottw);
+    return new ScheduledFutureImp<V>(taskFuture, ottw);
   }
 
   /**
@@ -261,14 +262,14 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    * throws UnsupportedOperationException not yet implemented
    */
   @Override
-  public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable command,
+  public ScheduledFutureImp<?> scheduleAtFixedRate(Runnable command,
                                                           long initialDelay, long period,
                                                           TimeUnit unit) {
     throw new UnsupportedOperationException("Not implemented in wrapper");
   }
 
   @Override
-  public ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
+  public ScheduledFutureImp<?> scheduleWithFixedDelay(Runnable command,
                                                              long initialDelay,
                                                              long delay, TimeUnit unit) {
     if (command == null) {
@@ -282,12 +283,12 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long initialDelayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    RunnableFuture<Object> taskFuture = new RunnableFuture<Object>(command);
+    ListenableRunnableFuture<Object> taskFuture = new RunnableFutureImp<Object>(command);
     RecurringTaskWrapper rtw = scheduler.new RecurringTaskWrapper(taskFuture, 
                                                                   scheduler.getDefaultPriority(), 
                                                                   initialDelayInMs, delayInMs);
     scheduler.addToQueue(rtw);
     
-    return new ListenableScheduledFuture<Object>(taskFuture, rtw);
+    return new ScheduledFutureImp<Object>(taskFuture, rtw);
   }
 }

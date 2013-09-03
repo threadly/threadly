@@ -10,14 +10,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
-import org.threadly.concurrent.future.RunnableFuture;
 import org.threadly.concurrent.future.FutureTest.FutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class RunnableFutureTest {
+public class RunnableFutureImpTest {
   @Test
   public void blockTillCompletedTest() {
     FutureTest.blockTillCompletedTest(new Factory());
@@ -52,7 +51,7 @@ public class RunnableFutureTest {
   public void listenerTest() {
     TestRunnable tr = new TestRunnable();
     
-    RunnableFuture<Object> future = new RunnableFuture<Object>(tr, null, new NativeLock());
+    RunnableFutureImp<Object> future = new RunnableFutureImp<Object>(tr, null, new NativeLock());
     
     assertEquals(future.listeners.size(), 0); // empty to start
     
@@ -88,12 +87,12 @@ public class RunnableFutureTest {
   private class Factory implements FutureFactory {
     @Override
     public Future<?> make(Runnable run, VirtualLock lock) {
-      return new RunnableFuture<Object>(run, null, lock);
+      return new RunnableFutureImp<Object>(run, null, lock);
     }
 
     @Override
     public <T> Future<T> make(Callable<T> callable, VirtualLock lock) {
-      return new RunnableFuture<T>(callable, lock);
+      return new RunnableFutureImp<T>(callable, lock);
     }
   }
   

@@ -3,7 +3,8 @@ package org.threadly.concurrent;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.RunnableFuture;
+import org.threadly.concurrent.future.ListenableRunnableFuture;
+import org.threadly.concurrent.future.RunnableFutureImp;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 
@@ -224,7 +225,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    RunnableFuture<T> rf = new RunnableFuture<T>(task, result);
+    ListenableRunnableFuture<T> rf = new RunnableFutureImp<T>(task, result);
     
     if (delayInMs == 0) {
       addTask(threadKey, rf);
@@ -255,7 +256,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    RunnableFuture<T> rf = new RunnableFuture<T>(task);
+    ListenableRunnableFuture<T> rf = new RunnableFutureImp<T>(task);
     
     if (delayInMs == 0) {
       addTask(threadKey, rf);

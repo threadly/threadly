@@ -26,8 +26,8 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @param <T> type of future implementation
  */
-public class RunnableFuture<T> extends VirtualRunnable 
-                               implements ListenableFuture<T>, java.util.concurrent.RunnableFuture<T> {
+public class RunnableFutureImp<T> extends VirtualRunnable 
+                                  implements ListenableRunnableFuture<T> {
   protected final Runnable runnable;
   protected final T runnableResult;
   protected final Callable<T> callable;
@@ -44,7 +44,7 @@ public class RunnableFuture<T> extends VirtualRunnable
    * 
    * @param task runnable to be run
    */
-  public RunnableFuture(Runnable task) {
+  public RunnableFutureImp(Runnable task) {
     this(task, null);
   }
   
@@ -54,7 +54,7 @@ public class RunnableFuture<T> extends VirtualRunnable
    * @param task runnable to be run
    * @param result result to be provide after run has completed
    */
-  public RunnableFuture(Runnable task, T result) {
+  public RunnableFutureImp(Runnable task, T result) {
     this(task, result, new NativeLock());
   }
   
@@ -65,7 +65,7 @@ public class RunnableFuture<T> extends VirtualRunnable
    * @param result result to be provide after run has completed
    * @param lock lock to be used internally
    */
-  public RunnableFuture(Runnable task, T result, VirtualLock lock) {
+  public RunnableFutureImp(Runnable task, T result, VirtualLock lock) {
     this.runnable = task;
     this.runnableResult = result;
     this.callable = null;
@@ -83,7 +83,7 @@ public class RunnableFuture<T> extends VirtualRunnable
    * 
    * @param task callable to be run
    */
-  public RunnableFuture(Callable<T> task) {
+  public RunnableFutureImp(Callable<T> task) {
     this(task, new NativeLock());
   }
   
@@ -93,7 +93,7 @@ public class RunnableFuture<T> extends VirtualRunnable
    * @param task callable to be run
    * @param lock lock to be used internally
    */
-  public RunnableFuture(Callable<T> task, VirtualLock lock) {
+  public RunnableFutureImp(Callable<T> task, VirtualLock lock) {
     this.runnable = null;
     this.runnableResult = null;
     this.callable = task;
