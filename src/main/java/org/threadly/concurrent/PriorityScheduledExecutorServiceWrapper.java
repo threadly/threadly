@@ -17,7 +17,7 @@ import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.RecurringTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.RunnableFuture;
-import org.threadly.concurrent.future.ScheduledListenableFuture;
+import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -217,7 +217,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   }
 
   @Override
-  public ScheduledListenableFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
+  public ListenableScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
     if (command == null) {
       throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
@@ -232,12 +232,12 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                                                      delayInMs);
     scheduler.addToQueue(ottw);
     
-    return new ScheduledListenableFuture<Object>(taskFuture, ottw);
+    return new ListenableScheduledFuture<Object>(taskFuture, ottw);
   }
 
   @Override
-  public <V> ScheduledListenableFuture<V> schedule(Callable<V> callable, long delay,
-                                         TimeUnit unit) {
+  public <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delay,
+                                                   TimeUnit unit) {
     if (callable == null) {
       throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
@@ -252,7 +252,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                                                      delayInMs);
     scheduler.addToQueue(ottw);
     
-    return new ScheduledListenableFuture<V>(taskFuture, ottw);
+    return new ListenableScheduledFuture<V>(taskFuture, ottw);
   }
 
   /**
@@ -261,16 +261,16 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    * throws UnsupportedOperationException not yet implemented
    */
   @Override
-  public ScheduledListenableFuture<?> scheduleAtFixedRate(Runnable command,
-                                                long initialDelay, long period,
-                                                TimeUnit unit) {
+  public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable command,
+                                                          long initialDelay, long period,
+                                                          TimeUnit unit) {
     throw new UnsupportedOperationException("Not implemented in wrapper");
   }
 
   @Override
-  public ScheduledListenableFuture<?> scheduleWithFixedDelay(Runnable command,
-                                                   long initialDelay,
-                                                   long delay, TimeUnit unit) {
+  public ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
+                                                             long initialDelay,
+                                                             long delay, TimeUnit unit) {
     if (command == null) {
       throw new NullPointerException("Must provide a task");
     } else if (delay < 0) {
@@ -288,6 +288,6 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                                                                   initialDelayInMs, delayInMs);
     scheduler.addToQueue(rtw);
     
-    return new ScheduledListenableFuture<Object>(taskFuture, rtw);
+    return new ListenableScheduledFuture<Object>(taskFuture, rtw);
   }
 }
