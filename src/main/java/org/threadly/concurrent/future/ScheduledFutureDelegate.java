@@ -3,14 +3,13 @@ package org.threadly.concurrent.future;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Implementation which handles the {@link ScheduledFuture} interface as well 
+ * Implementation which handles the ScheduledFuture interface as well 
  * as the {@link ListenableFuture} interface.  It does so by delegating to 
- * two implementations.  A delayed object for the {@link ScheduledFuture} interface 
+ * two implementations.  A delayed object for the ScheduledFuture interface 
  * and a implementation of the {@link ListenableFuture}.
  * 
  * @author jent - Mike Jensen

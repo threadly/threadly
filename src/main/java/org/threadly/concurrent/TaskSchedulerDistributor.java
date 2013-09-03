@@ -3,8 +3,8 @@ package org.threadly.concurrent;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 

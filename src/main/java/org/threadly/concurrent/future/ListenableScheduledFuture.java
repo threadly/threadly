@@ -12,6 +12,6 @@ import java.util.concurrent.ScheduledFuture;
  * @author jent - Mike Jensen
  * @param <T> type of result for future
  */
-public interface ListenableScheduledFuture<T> extends ScheduledFuture<T>, ListenableFuture<T>{
+public interface ListenableScheduledFuture<T> extends ScheduledFuture<T>, ListenableFuture<T> {
   
 }
