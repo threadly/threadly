@@ -18,7 +18,7 @@ import org.threadly.concurrent.collections.DynamicDelayQueue;
 import org.threadly.concurrent.collections.DynamicDelayedUpdater;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.future.RunnableFutureImp;
+import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
@@ -601,7 +601,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new RunnableFutureImp<T>(task, result, makeLock());
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, result, makeLock());
     addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
     return rf;
@@ -624,7 +624,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new RunnableFutureImp<T>(task, makeLock());
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, makeLock());
     addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
     return rf;

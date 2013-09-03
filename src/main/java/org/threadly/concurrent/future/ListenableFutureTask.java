@@ -26,8 +26,8 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @param <T> type of future implementation
  */
-public class RunnableFutureImp<T> extends VirtualRunnable 
-                                  implements ListenableRunnableFuture<T> {
+public class ListenableFutureTask<T> extends VirtualRunnable 
+                                     implements ListenableRunnableFuture<T> {
   protected final Callable<T> callable;
   protected final VirtualLock lock;
   protected final Map<Runnable, Executor> listeners;
@@ -42,7 +42,7 @@ public class RunnableFutureImp<T> extends VirtualRunnable
    * 
    * @param task runnable to be run
    */
-  public RunnableFutureImp(Runnable task) {
+  public ListenableFutureTask(Runnable task) {
     this(task, null);
   }
   
@@ -52,7 +52,7 @@ public class RunnableFutureImp<T> extends VirtualRunnable
    * @param task runnable to be run
    * @param result result to be provide after run has completed
    */
-  public RunnableFutureImp(Runnable task, T result) {
+  public ListenableFutureTask(Runnable task, T result) {
     this(task, result, new NativeLock());
   }
   
@@ -63,7 +63,7 @@ public class RunnableFutureImp<T> extends VirtualRunnable
    * @param result result to be provide after run has completed
    * @param lock lock to be used internally
    */
-  public RunnableFutureImp(Runnable task, T result, VirtualLock lock) {
+  public ListenableFutureTask(Runnable task, T result, VirtualLock lock) {
     this(VirtualCallable.fromRunnable(task, result), lock);
   }
 
@@ -72,7 +72,7 @@ public class RunnableFutureImp<T> extends VirtualRunnable
    * 
    * @param task callable to be run
    */
-  public RunnableFutureImp(Callable<T> task) {
+  public ListenableFutureTask(Callable<T> task) {
     this(task, new NativeLock());
   }
   
@@ -82,7 +82,7 @@ public class RunnableFutureImp<T> extends VirtualRunnable
    * @param task callable to be run
    * @param lock lock to be used internally
    */
-  public RunnableFutureImp(Callable<T> task, VirtualLock lock) {
+  public ListenableFutureTask(Callable<T> task, VirtualLock lock) {
     this.callable = task;
     this.lock = lock;
     this.listeners = new HashMap<Runnable, Executor>();

@@ -9,26 +9,26 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Implementation which handles the {@link ScheduledFuture} interface as well 
- * as the {@link ListenableFuture} interface.  It does so by defaulting to 
+ * as the {@link ListenableFuture} interface.  It does so by delegating to 
  * two implementations.  A delayed object for the {@link ScheduledFuture} interface 
  * and a implementation of the {@link ListenableFuture}.
  * 
  * @author jent - Mike Jensen
  * @param <T> type of result for future
  */
-public class ScheduledFutureImp<T> implements ListenableScheduledFuture<T> {
+public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
   protected final ListenableFuture<T> futureImp;
   protected final Delayed delayed;
   
   /**
-   * Constructs a new {@link ScheduledFutureImp} with the provided 
+   * Constructs a new {@link ScheduledFutureDelegate} with the provided 
    * Implementations to call to for each interface.
    * 
    * @param futureImp implementation to call to for all Future calls
    * @param delayed implementation to call to for getDelay and compareTo
    */
-  public ScheduledFutureImp(ListenableFuture<T> futureImp, 
-                            Delayed delayed) {
+  public ScheduledFutureDelegate(ListenableFuture<T> futureImp, 
+                                 Delayed delayed) {
     this.futureImp = futureImp;
     this.delayed = delayed;
   }
@@ -64,7 +64,9 @@ public class ScheduledFutureImp<T> implements ListenableScheduledFuture<T> {
   }
 
   @Override
-  public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public T get(long timeout, TimeUnit unit) throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     return futureImp.get(timeout, unit);
   }
 
