@@ -42,6 +42,15 @@ public class RunnableFuture<T> extends VirtualRunnable implements ListenableFutu
    * Constructs a runnable future with a runnable work unit.
    * 
    * @param task runnable to be run
+   */
+  public RunnableFuture(Runnable task) {
+    this(task, null);
+  }
+  
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @param task runnable to be run
    * @param result result to be provide after run has completed
    */
   public RunnableFuture(Runnable task, T result) {

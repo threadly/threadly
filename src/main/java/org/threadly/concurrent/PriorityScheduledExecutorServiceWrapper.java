@@ -1,18 +1,12 @@
 package org.threadly.concurrent;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -25,6 +19,7 @@ import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.RecurringTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.TaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.RunnableFuture;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -91,7 +86,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
 
   @Override
   public boolean awaitTermination(long timeout, 
-                                  TimeUnit unit) throws InterruptedException {
+                                  TimeUnit unit) {
     long startTime = Clock.accurateTime();
     long waitTimeInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
     while (! isTerminated() && 
@@ -124,7 +119,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
 
   @Override
   public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
-                                                 long timeout, TimeUnit unit) throws InterruptedException {
+                                       long timeout, TimeUnit unit) throws InterruptedException {
     long startTime = Clock.accurateTime();
     long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
     List<Future<T>> resultList = new ArrayList<Future<T>>(tasks.size());
@@ -136,7 +131,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
           throw new NullPointerException();
         }
         
-        FutureRunnable<T> fr = new FutureRunnable<T>(c);
+        RunnableFuture<T> fr = new RunnableFuture<T>(c);
         resultList.add(fr);
         scheduler.execute(fr);
       }
@@ -233,7 +228,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    FutureRunnable<Object> taskFuture = new FutureRunnable<Object>(command);
+    RunnableFuture<Object> taskFuture = new RunnableFuture<Object>(command);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
                                                      scheduler.getDefaultPriority(), 
                                                      delayInMs);
@@ -253,7 +248,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    FutureRunnable<V> taskFuture = new FutureRunnable<V>(callable);
+    RunnableFuture<V> taskFuture = new RunnableFuture<V>(callable);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
                                                      scheduler.getDefaultPriority(), 
                                                      delayInMs);
@@ -289,203 +284,13 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long initialDelayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    FutureRunnable<Object> taskFuture = new FutureRunnable<Object>(command);
+    RunnableFuture<Object> taskFuture = new RunnableFuture<Object>(command);
     RecurringTaskWrapper rtw = scheduler.new RecurringTaskWrapper(taskFuture, 
                                                                   scheduler.getDefaultPriority(), 
                                                                   initialDelayInMs, delayInMs);
     scheduler.addToQueue(rtw);
     
     return new ScheduledFutureRunnable<Object>(taskFuture, rtw);
-  }
-  
-  /**
-   * FutureRunnable to be returned for scheduled calls.
-   * 
-   * @author jent - Mike Jensen
-   *
-   * @param <T> generic for callable result
-   */
-  protected class FutureRunnable<T> extends VirtualRunnable 
-                                    implements ListenableFuture<T> {
-    private final Map<Runnable, Executor> listeners;
-    private final Callable<T> task;
-    private final Runnable toRun;
-    private volatile T result;
-    private volatile Exception thrownException;
-    private volatile boolean isCancelled;
-    private boolean started;
-    private boolean hasRun; // guarded by synchronization on this
-    
-    protected FutureRunnable(Callable<T> task) {
-      listeners = new HashMap<Runnable, Executor>();
-      this.task = task;
-      this.toRun = null;
-      this.result = null;
-      thrownException = null;
-      isCancelled = false;
-      started = false;
-      hasRun = false;
-    }
-    
-    protected FutureRunnable(Runnable toRun) {
-      this(toRun, null);
-    }
-    
-    protected FutureRunnable(Runnable toRun, T result) {
-      listeners = new HashMap<Runnable, Executor>();
-      this.task = null;
-      this.toRun = toRun;
-      this.result = result;
-      thrownException = null;
-      isCancelled = false;
-      started = false;
-      hasRun = false;
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      synchronized (this) {
-        isCancelled = true;
-          
-        callListeners();
-        
-        this.notifyAll();
-        
-        return ! started;
-      }
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return isCancelled;
-    }
-
-    @Override
-    public boolean isDone() {
-      return hasRun;
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-      try {
-        return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-      } catch (TimeoutException e) {
-        // ignored, can't happen
-        throw ExceptionUtils.makeRuntime(e);
-      }
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException,
-                                                     ExecutionException,
-                                                     TimeoutException {
-      long startTime = Clock.accurateTime();
-      long waitTimeInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
-      synchronized (this) {
-        long waitTime;
-        while (! hasRun && ! isCancelled && 
-               (waitTime = Math.max(0,  waitTimeInMs - (Clock.accurateTime() - startTime))) > 0) {
-          this.wait(waitTime);
-        }
-        
-        if (isCancelled) {
-          throw new CancellationException();
-        } else if (thrownException != null) {
-          throw new ExecutionException(thrownException);
-        } else if (! hasRun) {
-          throw new TimeoutException();
-        } 
-      }
-      
-      return result;
-    }
-
-    @Override
-    public void run() {
-      boolean run = false;
-      try {
-        boolean shouldRun = false;
-        synchronized (this) {
-          if (! isCancelled) {
-            started = true;
-            shouldRun = true;
-          }
-        }
-        
-        if (shouldRun) {
-          run = true;
-          if (task != null) {
-            result = task.call();
-          } else {
-            toRun.run();
-          }
-        }
-      } catch (Exception e) {
-        synchronized (this) {
-          thrownException = e;
-        }
-      } finally {
-        synchronized (this) {
-          if (run) {
-            hasRun = true;
-          }
-          
-          callListeners();
-          
-          this.notifyAll();
-        }
-      }
-    }
-    
-    private void callListeners() {
-      synchronized (this) {
-        Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
-        while (it.hasNext()) {
-          Entry<Runnable, Executor> listener = it.next();
-          runListener(listener.getKey(), listener.getValue(), false);
-        }
-        
-        listeners.clear();
-      }
-    }
-    
-    private void runListener(Runnable listener, Executor executor, 
-                             boolean throwException) {
-      if (executor != null) {
-        executor.execute(listener);
-      } else {
-        try {
-          listener.run();
-        } catch (RuntimeException e) {
-          if (throwException) {
-            throw e;
-          } else {
-            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-            if (handler != null) {
-              handler.uncaughtException(Thread.currentThread(), e);
-            } else {
-              e.printStackTrace();
-            }
-          }
-        }
-      }
-    }
-
-    @Override
-    public void addListener(Runnable listener) {
-      addListener(listener, null);
-    }
-
-    @Override
-    public void addListener(Runnable listener, Executor executor) {
-      synchronized (this) {
-        if (hasRun || isCancelled || thrownException != null) {
-          runListener(listener, executor, true);
-        } else {
-          listeners.put(listener, executor);
-        }
-      }
-    }
   }
 
   /**
@@ -496,10 +301,10 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    * @param <T> generic for callable result
    */
   protected class ScheduledFutureRunnable<T> implements ScheduledFuture<T> {
-    private final FutureRunnable<T> taskFuture;
+    private final RunnableFuture<T> taskFuture;
     private final TaskWrapper scheduledTask;
     
-    public ScheduledFutureRunnable(FutureRunnable<T> taskFuture,
+    public ScheduledFutureRunnable(RunnableFuture<T> taskFuture,
                                    TaskWrapper scheduledTask) {
       this.taskFuture = taskFuture;
       this.scheduledTask = scheduledTask;
