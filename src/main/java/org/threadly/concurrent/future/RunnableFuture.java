@@ -26,7 +26,8 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @param <T> type of future implementation
  */
-public class RunnableFuture<T> extends VirtualRunnable implements ListenableFuture<T> {
+public class RunnableFuture<T> extends VirtualRunnable 
+                               implements ListenableFuture<T>, java.util.concurrent.RunnableFuture<T> {
   protected final Runnable runnable;
   protected final T runnableResult;
   protected final Callable<T> callable;
