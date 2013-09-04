@@ -70,7 +70,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    */
   @Override
   public List<Runnable> shutdownNow() {
-    return scheduler.shutdown();
+    return scheduler.shutdownNow();
   }
 
   @Override

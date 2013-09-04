@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.concurrent.collections.DynamicDelayQueue;
@@ -56,7 +57,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected final ThreadFactory threadFactory;
   protected final TaskConsumer highPriorityConsumer;  // is locked around highPriorityLock
   protected final TaskConsumer lowPriorityConsumer;    // is locked around lowPriorityLock
-  private volatile boolean running;
+  private final AtomicBoolean shutdownStarted;
+  private volatile boolean shutdownFinishing; // once true, never goes to false
   private volatile int corePoolSize;
   private volatile int maxPoolSize;
   private volatile long keepAliveTimeInMs;
@@ -219,7 +221,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         runLowPriorityTask(task);
       }
     });
-    running = true;
+    shutdownStarted = new AtomicBoolean(false);
+    shutdownFinishing = false;
     this.corePoolSize = corePoolSize;
     this.maxPoolSize = maxPoolSize;
     this.keepAliveTimeInMs = keepAliveTimeInMs;
@@ -386,7 +389,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
 
   @Override
   public boolean isShutdown() {
-    return ! running;
+    return shutdownStarted.get();
   }
   
   protected List<Runnable> clearTaskQueue() {
@@ -432,11 +435,20 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   /**
-   * Stops any new tasks from running and removes workers from the pool.
+   * Stops any new tasks from being submitted to the pool.  But allows all currently scheduled 
+   * tasks to be run.  If scheduled tasks are present they will also be unable to reschedule.
    * 
-   * This is different from the implementation in java.util.concurrent.ExecutorService.  
-   * In ExecutorService it allows any scheduled or submitted task to execute, and just 
-   * refuses new submissions.
+   * If you wish to not want to run any queued tasks you should use {#link shutdownNow()).
+   */
+  public void shutdown() {
+    if (! shutdownStarted.getAndSet(true)) {
+      addToHighPriorityQueue(new OneTimeTaskWrapper(new ShutdownRunnable(), 
+                                                    TaskPriority.High, 0));
+    }
+  }
+
+  /**
+   * Stops any new tasks from being able to be executed and removes workers from the pool.
    * 
    * This implementation refuses new submissions after this call.  And will NOT interrupt any 
    * tasks which are currently running.  But any tasks which are waiting in queue to be run 
@@ -445,8 +457,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @return List of runnables which were waiting to execute
    */
-  public List<Runnable> shutdown() {
-    running = false;
+  public List<Runnable> shutdownNow() {
+    shutdownStarted.set(true);
+    shutdownFinishing = true;
     List<Runnable> awaitingTasks = clearTaskQueue();
     shutdownAllWorkers();
     
@@ -454,7 +467,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   protected void verifyNotShutdown() {
-    if (! running) {
+    if (isShutdown()) {
       throw new IllegalStateException("Thread pool shutdown");
     }
   }
@@ -655,34 +668,42 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   protected void addToQueue(TaskWrapper task) {
+    verifyNotShutdown();
+    
     switch (task.priority) {
       case High:
-        verifyNotShutdown();
-        ClockWrapper.stopForcingUpdate();
-        try {
-          ClockWrapper.updateClock();
-          highPriorityQueue.add(task);
-        } finally {
-          ClockWrapper.resumeForcingUpdate();
-        }
-        highPriorityConsumer.maybeStart(threadFactory, 
-                                        QUEUE_CONSUMER_THREADS_NAME);
+        addToHighPriorityQueue(task);
         break;
       case Low:
-        verifyNotShutdown();
-        ClockWrapper.stopForcingUpdate();
-        try {
-          ClockWrapper.updateClock();
-          lowPriorityQueue.add(task);
-        } finally {
-          ClockWrapper.resumeForcingUpdate();
-        }
-        lowPriorityConsumer.maybeStart(threadFactory, 
-                                       QUEUE_CONSUMER_THREADS_NAME);
+        addToLowPriorityQueue(task);
         break;
       default:
         throw new UnsupportedOperationException("Priority not implemented: " + task.priority);
     }
+  }
+  
+  private void addToHighPriorityQueue(TaskWrapper task) {
+    ClockWrapper.stopForcingUpdate();
+    try {
+      ClockWrapper.updateClock();
+      highPriorityQueue.add(task);
+    } finally {
+      ClockWrapper.resumeForcingUpdate();
+    }
+    highPriorityConsumer.maybeStart(threadFactory, 
+                                    QUEUE_CONSUMER_THREADS_NAME);
+  }
+  
+  private void addToLowPriorityQueue(TaskWrapper task) {
+    ClockWrapper.stopForcingUpdate();
+    try {
+      ClockWrapper.updateClock();
+      lowPriorityQueue.add(task);
+    } finally {
+      ClockWrapper.resumeForcingUpdate();
+    }
+    lowPriorityConsumer.maybeStart(threadFactory, 
+                                   QUEUE_CONSUMER_THREADS_NAME);
   }
   
   protected Worker getExistingWorker(long maxWaitForLowPriorityInMs) throws InterruptedException {
@@ -724,7 +745,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
     synchronized (workersLock) {
-      if (running) {
+      if (! shutdownFinishing) {
         if (currentPoolSize >= maxPoolSize) {
           lastHighDelay = task.getDelayEstimateInMillis();
           // we can't make the pool any bigger
@@ -750,12 +771,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
     synchronized (workersLock) {
-      if (running) {
+      if (! shutdownFinishing) {
         // wait for high priority tasks that have been waiting longer than us if all workers are consumed
         long waitAmount;
         while (currentPoolSize >= maxPoolSize && 
                availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
-               running &&
+               ! shutdownFinishing &&
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
           if (highPriorityQueue.isEmpty()) {
             lastHighDelay = 0; // no waiting high priority tasks, so no need to wait on low priority tasks
@@ -765,7 +786,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           }
         }
         
-        if (running) {  // check again that we are still running
+        if (! shutdownFinishing) {  // check again that we are still running
           long waitTime;
           if (currentPoolSize >= maxPoolSize) {
             waitTime = Long.MAX_VALUE;
@@ -813,7 +834,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   protected void workerDone(Worker worker) {
     synchronized (workersLock) {
-      if (running) {
+      if (! shutdownFinishing) {
         // always add to the front so older workers are at the back
         availableWorkers.addFirst(worker);
       
@@ -1141,7 +1162,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       switch (priority) {
         case High:
           synchronized (highPriorityLock) {
-            if (running) {
+            if (! shutdownStarted.get()) {
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
@@ -1154,7 +1175,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           break;
         case Low:
           synchronized (lowPriorityLock) {
-            if (running) {
+            if (! shutdownStarted.get()) {
               ClockWrapper.stopForcingUpdate();
               try {
                 ClockWrapper.updateClock();
@@ -1189,6 +1210,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           reschedule();
         }
       }
+    }
+  }
+  
+  /**
+   * Runnable to be run after all current tasks to finish the shutdown sequence.
+   * 
+   * @author jent - Mike Jensen
+   */
+  private class ShutdownRunnable implements Runnable {
+    @Override
+    public void run() {
+      shutdownNow();
     }
   }
 }
