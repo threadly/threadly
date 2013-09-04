@@ -187,7 +187,7 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
   @Override
   public boolean isDone() {
     synchronized (lock) {
-      return done;
+      return done || canceled;
     }
   }
 
@@ -241,7 +241,7 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
   @Override
   public void addListener(Runnable listener, Executor executor) {
     synchronized (lock) {
-      if (done || canceled) {
+      if (isDone()) {
         runListener(listener, executor, true);
       } else {
         listeners.put(listener, executor);
