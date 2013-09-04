@@ -14,7 +14,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.VirtualCallable;
 import org.threadly.concurrent.VirtualRunnable;
-import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
@@ -45,39 +44,11 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
    * Constructs a runnable future with a runnable work unit.
    * 
    * @param task runnable to be run
-   */
-  public ListenableFutureVirtualTask(Runnable task) {
-    this(task, null);
-  }
-  
-  /**
-   * Constructs a runnable future with a runnable work unit.
-   * 
-   * @param task runnable to be run
-   * @param result result to be provide after run has completed
-   */
-  public ListenableFutureVirtualTask(Runnable task, T result) {
-    this(task, result, new NativeLock());
-  }
-  
-  /**
-   * Constructs a runnable future with a runnable work unit.
-   * 
-   * @param task runnable to be run
    * @param result result to be provide after run has completed
    * @param lock lock to be used internally
    */
   public ListenableFutureVirtualTask(Runnable task, T result, VirtualLock lock) {
     this(VirtualCallable.fromRunnable(task, result), lock);
-  }
-
-  /**
-   * Constructs a runnable future with a callable work unit.
-   * 
-   * @param task callable to be run
-   */
-  public ListenableFutureVirtualTask(Callable<T> task) {
-    this(task, new NativeLock());
   }
   
   /**

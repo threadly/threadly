@@ -225,7 +225,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, result);
+    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, result, 
+                                                                        sLock.getLock(threadKey));
     
     if (delayInMs == 0) {
       addTask(threadKey, rf);
@@ -256,7 +257,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, sLock.getLock(threadKey));
     
     if (delayInMs == 0) {
       addTask(threadKey, rf);
