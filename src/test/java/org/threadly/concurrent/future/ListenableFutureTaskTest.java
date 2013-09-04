@@ -10,31 +10,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.RunnableFuture;
 
 import org.junit.Test;
-import org.threadly.concurrent.future.RunnableFutureTest.BlockingFutureFactory;
-import org.threadly.concurrent.lock.NativeLock;
-import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.concurrent.future.RunnableFutureTest.FutureFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class ListenableFutureVirtualTaskTest {
-  @Test
-  public void blockTillCompletedTest() {
-    RunnableFutureTest.blockTillCompletedTest(new Factory());
-  }
-  
-  @Test
-  public void blockTillCompletedFail() {
-    RunnableFutureTest.blockTillCompletedFail(new Factory());
-  }
-  
+public class ListenableFutureTaskTest {
   @Test
   public void getTimeoutFail() throws InterruptedException, ExecutionException {
     RunnableFutureTest.getTimeoutFail(new Factory());
-  }
-  
-  @Test
-  public void cancelTest() {
-    RunnableFutureTest.cancelTest(new Factory());
   }
   
   @Test
@@ -51,7 +34,7 @@ public class ListenableFutureVirtualTaskTest {
   public void listenerTest() {
     TestRunnable tr = new TestRunnable();
     
-    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
+    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
     
     assertEquals(future.listeners.size(), 0); // empty to start
     
@@ -84,27 +67,15 @@ public class ListenableFutureVirtualTaskTest {
     assertTrue(executor.providedRunnables.get(0) == executorListener);
   }
   
-  private class Factory implements BlockingFutureFactory {
-    @Override
-    public RunnableFuture<?> make(Runnable run, VirtualLock lock) {
-      return new ListenableFutureVirtualTask<Object>(run, null, lock);
-    }
-
-    @Override
-    public <T> RunnableFuture<T> make(Callable<T> callable, VirtualLock lock) {
-      return new ListenableFutureVirtualTask<T>(callable, lock);
-    }
-
+  private class Factory implements FutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
-      return new ListenableFutureVirtualTask<Object>(run, null, 
-                                                     new NativeLock());
+      return new ListenableFutureTask<Object>(false, run);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Callable<T> callable) {
-      return new ListenableFutureVirtualTask<T>(callable, 
-                                                new NativeLock());
+      return new ListenableFutureTask<T>(false, callable);
     }
   }
   

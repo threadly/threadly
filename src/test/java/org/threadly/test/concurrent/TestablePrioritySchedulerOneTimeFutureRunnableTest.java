@@ -16,8 +16,8 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.future.FutureTest;
-import org.threadly.concurrent.future.FutureTest.FutureFactory;
+import org.threadly.concurrent.future.RunnableFutureTest;
+import org.threadly.concurrent.future.RunnableFutureTest.FutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -29,32 +29,32 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
   
   @Test
   public void blockTillCompletedTest() {
-    FutureTest.blockTillCompletedTest(new Factory());
+    RunnableFutureTest.blockTillCompletedTest(new Factory());
   }
   
   @Test
   public void blockTillCompletedFail() {
-    FutureTest.blockTillCompletedFail(new Factory());
+    RunnableFutureTest.blockTillCompletedFail(new Factory());
   }
   
   @Test
   public void getTimeoutFail() throws InterruptedException, ExecutionException {
-    FutureTest.getTimeoutFail(new Factory());
+    RunnableFutureTest.getTimeoutFail(new Factory());
   }
   
   @Test
   public void cancelTest() {
-    FutureTest.cancelTest(new Factory());
+    RunnableFutureTest.cancelTest(new Factory());
   }
   
   @Test
   public void isDoneTest() {
-    FutureTest.isDoneTest(new Factory());
+    RunnableFutureTest.isDoneTest(new Factory());
   }
   
   @Test
   public void isDoneFail() {
-    FutureTest.isDoneFail(new Factory());
+    RunnableFutureTest.isDoneFail(new Factory());
   }
   
   @Test
