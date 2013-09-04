@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.TestDelayed;
 import org.threadly.concurrent.collections.DynamicDelayQueue;
 
 @SuppressWarnings("javadoc")
@@ -449,52 +450,6 @@ public class DynamicDelayQueueTest {
     assertEquals(testQueue.size(), TEST_QTY - (TEST_QTY / 2));
     assertEquals(drainToList.size(), TEST_QTY / 2);
     assertNotNull(testQueue.peek());
-  }
-  
-  protected static class TestDelayed implements Delayed {
-    protected final long delayInMs;
-    
-    protected TestDelayed(long delayInMs) {
-      this.delayInMs = delayInMs;
-    }
-    
-    @Override
-    public int compareTo(Delayed o) {
-      if (this == o) {
-        return 0;
-      } else {
-        long thisDelay = this.getDelay(TimeUnit.MILLISECONDS);
-        long otherDelay = o.getDelay(TimeUnit.MILLISECONDS);
-        if (thisDelay == otherDelay) {
-          return 0;
-        } else if (thisDelay > otherDelay) {
-          return 1;
-        } else {
-          return -1;
-        }
-      }
-    }
-    
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return unit.convert(delayInMs, 
-                          TimeUnit.MILLISECONDS);
-    }
-    
-    @Override
-    public String toString() {
-      return "d:" + delayInMs;
-    }
-    
-    @Override
-    public boolean equals(Object o) {
-      if (o instanceof TestDelayed) {
-        TestDelayed td = (TestDelayed)o;
-        return this.toString().equals(td.toString());
-      } else {
-        return false;
-      }
-    }
   }
   
   private class RealTimeDelayed extends TestDelayed {

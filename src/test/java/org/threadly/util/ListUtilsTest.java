@@ -5,10 +5,9 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.threadly.concurrent.TestDelayed;
 
 @SuppressWarnings("javadoc")
 public class ListUtilsTest {
@@ -139,42 +138,6 @@ public class ListUtilsTest {
       int nonraSearch = ListUtils.binarySearch(list, testItem, false);
       assertTrue(raSearch >= 0);
       assertTrue(nonraSearch >= 0);
-    }
-  }
-  
-  private class TestDelayed implements Delayed {
-    private final long delayInMs;
-    
-    private TestDelayed(long delayInMs) {
-      this.delayInMs = delayInMs;
-    }
-    
-    @Override
-    public int compareTo(Delayed o) {
-      if (this == o) {
-        return 0;
-      } else {
-        long thisDelay = this.getDelay(TimeUnit.MILLISECONDS);
-        long otherDelay = o.getDelay(TimeUnit.MILLISECONDS);
-        if (thisDelay == otherDelay) {
-          return 0;
-        } else if (thisDelay > otherDelay) {
-          return 1;
-        } else {
-          return -1;
-        }
-      }
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return unit.convert(delayInMs, 
-                          TimeUnit.MILLISECONDS);
-    }
-    
-    @Override
-    public String toString() {
-      return "d:" + delayInMs;
     }
   }
 }
