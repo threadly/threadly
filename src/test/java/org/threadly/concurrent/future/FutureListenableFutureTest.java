@@ -10,6 +10,24 @@ import org.threadly.test.concurrent.TestUtils;
 @SuppressWarnings("javadoc")
 public class FutureListenableFutureTest {
   @Test
+  public void setParentFutureFail() {
+    FutureListenableFuture<Object> testFuture = new FutureListenableFuture<Object>();
+    try {
+      testFuture.setParentFuture(null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      testFuture.setParentFuture(new TestFutureImp());
+      testFuture.setParentFuture(new TestFutureImp());  // should not allow two sets
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
   public void cancelBeforeSetTest() {
     FutureListenableFuture<Object> testFuture = new FutureListenableFuture<Object>();
     testFuture.cancel(true);

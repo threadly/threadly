@@ -88,11 +88,13 @@ public class ScheduledFutureDelegateTest<T> {
   }
 
   @Test
-  public void getTest() throws InterruptedException, ExecutionException {
+  public void getTest() throws InterruptedException, ExecutionException, TimeoutException {
     TestFutureImp future = new TestFutureImp();
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
     
     assertTrue(future.get() == testItem.get());
+    
+    assertTrue(future.get(10, TimeUnit.MILLISECONDS) == testItem.get(10, TimeUnit.MILLISECONDS));
   }
 
   @Test (expected = ExecutionException.class)
@@ -132,6 +134,21 @@ public class ScheduledFutureDelegateTest<T> {
     TestRunnable secondListener = new TestRunnable();
     future.addListener(firstListener);
     testItem.addListener(secondListener);
+    
+    assertEquals(future.listeners.size(), 2);
+    assertTrue(future.listeners.contains(firstListener));
+    assertTrue(future.listeners.contains(secondListener));
+  }
+
+  @Test
+  public void addListenerExecutorTest() {
+    TestFutureImp future = new TestFutureImp();
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    
+    TestRunnable firstListener = new TestRunnable();
+    TestRunnable secondListener = new TestRunnable();
+    future.addListener(firstListener, null);
+    testItem.addListener(secondListener, null);
     
     assertEquals(future.listeners.size(), 2);
     assertTrue(future.listeners.contains(firstListener));

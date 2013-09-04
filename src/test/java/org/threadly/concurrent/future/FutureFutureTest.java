@@ -7,6 +7,24 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public class FutureFutureTest {
   @Test
+  public void setParentFutureFail() {
+    FutureFuture<Object> testFuture = new FutureFuture<Object>();
+    try {
+      testFuture.setParentFuture(null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      testFuture.setParentFuture(new TestFutureImp());
+      testFuture.setParentFuture(new TestFutureImp());  // should not allow two sets
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
   public void cancelBeforeSetTest() {
     FutureFuture<Object> testFuture = new FutureFuture<Object>();
     testFuture.cancel(true);

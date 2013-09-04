@@ -145,49 +145,6 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
 
   /**
-   * Submit a task to run as soon as possible.  There is a 
-   * slight increase in load when using submit over execute.  
-   * So this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return null once the runnable has completed.
-   * 
-   * @param threadKey key which hash will be used to determine which thread to run
-   * @param task runnable to be executed
-   * @return a future to know when the task has completed
-   */
-  public ListenableFuture<?> submit(Object threadKey, Runnable task) {
-    return submit(threadKey, task, null);
-  }
-
-  /**
-   * Submit a task to run as soon as possible.  There is a 
-   * slight increase in load when using submit over execute.  
-   * So this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return null once the runnable has completed.
-   * 
-   * @param threadKey key which hash will be used to determine which thread to run
-   * @param task runnable to be executed
-   * @param result result to be returned from resulting future .get() when runnable completes
-   * @return a future to know when the task has completed
-   */
-  public <T> ListenableFuture<T> submit(Object threadKey, Runnable task, T result) {
-    return submitScheduled(threadKey, task, result, 0);
-  }
-
-  /**
-   * Submit a {@link Callable} to run as soon as possible for a given key.  
-   * This is needed when a result needs to be consumed from the callable.
-   * 
-   * @param threadKey key which hash will be used to determine which thread to run
-   * @param task callable to be executed
-   * @return a future to know when the task has completed and get the result of the callable
-   */
-  public <T> ListenableFuture<T> submit(Object threadKey, Callable<T> task) {
-    return submitScheduled(threadKey, task, 0);
-  }
-
-  /**
    * Schedule a task with a given delay.  There is a slight 
    * increase in load when using submitScheduled over schedule.  So 
    * this should only be used when the future is necessary.
@@ -199,8 +156,10 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public ListenableFuture<?> submitScheduled(Object threadKey, Runnable task, long delayInMs) {
-    return submitScheduled(threadKey, task, null, delayInMs);
+  public ListenableFuture<?> submitScheduledTask(Object threadKey, 
+                                                 Runnable task, 
+                                                 long delayInMs) {
+    return submitScheduledTask(threadKey, task, null, delayInMs);
   }
 
   /**
@@ -216,7 +175,10 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public <T> ListenableFuture<T> submitScheduled(Object threadKey, Runnable task, T result, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, 
+                                                     Runnable task, 
+                                                     T result, 
+                                                     long delayInMs) {
     if (threadKey == null) {
       throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
@@ -248,7 +210,9 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed and get the result of the callable
    */
-  public <T> ListenableFuture<T> submitScheduled(Object threadKey, Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, 
+                                                     Callable<T> task, 
+                                                     long delayInMs) {
     if (threadKey == null) {
       throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
@@ -368,12 +332,12 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
 
     @Override
     public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-      return TaskSchedulerDistributor.this.submitScheduled(threadKey, task, result, delayInMs);
+      return TaskSchedulerDistributor.this.submitScheduledTask(threadKey, task, result, delayInMs);
     }
 
     @Override
     public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-      return TaskSchedulerDistributor.this.submitScheduled(threadKey, task, delayInMs);
+      return TaskSchedulerDistributor.this.submitScheduledTask(threadKey, task, delayInMs);
     }
 
     @Override

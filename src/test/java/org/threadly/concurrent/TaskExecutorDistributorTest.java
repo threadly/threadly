@@ -166,6 +166,22 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
+  public void submitRunnableFail() {
+    try {
+      distributor.submitTask(null, new TestRunnable());
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitTask(new Object(), null, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
   public void submitRunnableConsistentThreadTest() {
     final Object testLock = new Object();
     final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
@@ -211,11 +227,21 @@ public class TaskExecutorDistributorTest {
     }
   }
   
+  @Test
+  public void submitCallableFail() {
+    try {
+      distributor.submitTask(null, VirtualCallable.fromRunnable(new TestRunnable(), null));
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
   /*@Test
   public void submitCallableConsistentThreadTest() {
     // TODO -- implement
   }*/
-  
+
   @Test
   public void executeStressTest() {
     final Object testLock = new Object();
@@ -281,7 +307,7 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
-  public void executeFail() {
+  public void addTaskFail() {
     try {
       distributor.addTask(null, new TestRunnable());
       fail("Exception should have been thrown");

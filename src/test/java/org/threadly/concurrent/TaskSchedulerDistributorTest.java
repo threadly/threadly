@@ -103,12 +103,12 @@ public class TaskSchedulerDistributorTest {
   }
   
   @Test
-  public void testGetExecutor() {
+  public void getExecutorTest() {
     assertTrue(scheduler == distributor.getExecutor());
   }
   
   @Test
-  public void testExecutes() {
+  public void addTaskTest() {
     final Object testLock = new Object();
     
     List<TDRunnable> runs = populate(testLock, 
@@ -132,7 +132,7 @@ public class TaskSchedulerDistributorTest {
   }
   
   @Test
-  public void testExecuteFail() {
+  public void addTaskFail() {
     try {
       distributor.addTask(null, new TestRunnable());
       fail("Exception should have been thrown");
@@ -142,6 +142,32 @@ public class TaskSchedulerDistributorTest {
 
     try {
       distributor.addTask(new Object(), null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void submitRunnableFail() {
+    try {
+      distributor.submitTask(null, new TestRunnable());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitTask(new Object(), null, null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void submitCallableFail() {
+    try {
+      distributor.submitTask(null, VirtualCallable.fromRunnable(new TestRunnable(), null));
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
