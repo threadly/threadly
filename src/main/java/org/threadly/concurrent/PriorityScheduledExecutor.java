@@ -601,7 +601,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task, result);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
     addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
     return rf;
@@ -624,7 +624,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
     addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
     return rf;

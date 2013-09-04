@@ -131,7 +131,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
           throw new NullPointerException();
         }
         
-        ListenableRunnableFuture<T> fr = new ListenableFutureTask<T>(c);
+        ListenableRunnableFuture<T> fr = new ListenableFutureTask<T>(false, c);
         resultList.add(fr);
         scheduler.execute(fr);
       }
@@ -228,7 +228,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(command);
+    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(false, command);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
                                                      scheduler.getDefaultPriority(), 
                                                      delayInMs);
@@ -248,7 +248,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(callable);
+    ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(false, callable);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
                                                      scheduler.getDefaultPriority(), 
                                                      delayInMs);
@@ -284,7 +284,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long initialDelayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
     long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
 
-    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(command);
+    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, command);
     RecurringTaskWrapper rtw = scheduler.new RecurringTaskWrapper(taskFuture, 
                                                                   scheduler.getDefaultPriority(), 
                                                                   initialDelayInMs, delayInMs);

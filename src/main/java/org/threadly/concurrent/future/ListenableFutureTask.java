@@ -10,9 +10,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
-import org.threadly.concurrent.VirtualCallable;
-import org.threadly.concurrent.VirtualRunnable;
-
 /**
  * This is a future which can be executed.  Allowing you to construct the future with 
  * the interior work, submit it to an executor, and then return this future.
@@ -22,36 +19,50 @@ import org.threadly.concurrent.VirtualRunnable;
  */
 public class ListenableFutureTask<T> extends FutureTask<T> 
                                      implements ListenableRunnableFuture<T> {
+  protected final boolean recurring;
   protected final Map<Runnable, Executor> listeners;
   
   /**
    * Constructs a runnable future with a runnable work unit.
    * 
+   * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task runnable to be run
    */
-  public ListenableFutureTask(Runnable task) {
-    this(task, null);
+  public ListenableFutureTask(boolean recurring, Runnable task) {
+    this(recurring, task, null);
   }
   
   /**
    * Constructs a runnable future with a runnable work unit.
    * 
+   * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task runnable to be run
    * @param result result to be provide after run has completed
    */
-  public ListenableFutureTask(Runnable task, T result) {
-    this(task instanceof VirtualRunnable ? VirtualCallable.fromRunnable(task, result) : Executors.callable(task, result));
+  public ListenableFutureTask(boolean recurring, Runnable task, T result) {
+    this(recurring, Executors.callable(task, result));
   }
 
   /**
    * Constructs a runnable future with a callable work unit.
    * 
+   * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task callable to be run
    */
-  public ListenableFutureTask(Callable<T> task) {
+  public ListenableFutureTask(boolean recurring, Callable<T> task) {
     super(task);
     
+    this.recurring = recurring;
     this.listeners = new HashMap<Runnable, Executor>();
+  }
+  
+  @Override
+  public void run() {
+    if (recurring) {
+      super.runAndReset();
+    } else {
+      super.run();
+    }
   }
   
   private void callListeners() {
