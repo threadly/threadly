@@ -22,7 +22,7 @@ public class TestFutureImp implements ListenableFuture<Object> {
 
   @Override
   public boolean isCancelled() {
-    return false;
+    return canceled;
   }
 
   @Override
