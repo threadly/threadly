@@ -9,7 +9,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -17,7 +17,7 @@ import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.future.RunnableFutureTest;
-import org.threadly.concurrent.future.RunnableFutureTest.FutureFactory;
+import org.threadly.concurrent.future.RunnableFutureTest.BlockingFutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -104,19 +104,29 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
     }
   }
   
-  private class Factory implements FutureFactory {
+  private class Factory implements BlockingFutureFactory {
     @Override
-    public Future<?> make(Runnable run, VirtualLock lock) {
+    public RunnableFuture<?> make(Runnable run, VirtualLock lock) {
       return new FutureRunnable<Object>(run, lock);
     }
 
     @Override
-    public <T> Future<T> make(Callable<T> callable, VirtualLock lock) {
+    public <T> RunnableFuture<T> make(Callable<T> callable, VirtualLock lock) {
       return new FutureRunnable<T>(callable, lock);
+    }
+
+    @Override
+    public RunnableFuture<?> make(Runnable run) {
+      return make(run, new NativeLock());
+    }
+
+    @Override
+    public <T> RunnableFuture<T> make(Callable<T> callable) {
+      return make(callable, new NativeLock());
     }
   }
   
-  private class FutureRunnable<T> implements Future<T>, Runnable {
+  private class FutureRunnable<T> implements RunnableFuture<T> {
     private final TestablePriorityScheduler scheduler;
     private final OneTimeFutureRunnable<T> otfr;
     
