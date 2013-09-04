@@ -22,7 +22,7 @@ public class FutureListenableFutureTest {
       testFuture.setParentFuture(new TestFutureImp());
       testFuture.setParentFuture(new TestFutureImp());  // should not allow two sets
       fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
+    } catch (IllegalStateException e) {
       // expected
     }
   }
