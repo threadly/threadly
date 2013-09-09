@@ -205,18 +205,17 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
-    public void removeFirstOccurrenceTest() {
-      List<String> firstStr = new ArrayList<String>(TEST_QTY);
-      List<String> secondStr = new ArrayList<String>(TEST_QTY);
-      for (int i = 0; i < TEST_QTY; i++) {
-        String str1 = Integer.toString(i);
-        firstStr.add(str1);
-        String str2 = Integer.toString(i);
-        secondStr.add(str2);
-        testList.add(str1);
-        assertTrue(testList.offer(str2));
-      }
-    
+  public void removeFirstOccurrenceTest() {
+    List<String> firstStr = new ArrayList<String>(TEST_QTY);
+    List<String> secondStr = new ArrayList<String>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str1 = Integer.toString(i);
+      firstStr.add(str1);
+      String str2 = Integer.toString(i);
+      secondStr.add(str2);
+      testList.add(str1);
+      assertTrue(testList.offer(str2));
+    }
     
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);

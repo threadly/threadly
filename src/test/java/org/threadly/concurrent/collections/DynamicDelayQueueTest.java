@@ -204,6 +204,12 @@ public class DynamicDelayQueueTest {
     }
   }
   
+  @Test (expected = IllegalStateException.class)
+  public void iteratorLockFail() {
+    testQueue.iterator();
+    fail("Exception should have thrown");
+  }
+  
   @Test
   public void consumerIteratorTest() throws InterruptedException {
     synchronized (testQueue.getLock()) {
@@ -220,6 +226,13 @@ public class DynamicDelayQueueTest {
       
       assertEquals(removed, TEST_QTY);
     }
+  }
+  
+  
+  @Test (expected = IllegalStateException.class)
+  public void consumerIteratorLockFail() throws InterruptedException {
+    testQueue.consumeIterator();
+    fail("Exception should have thrown");
   }
    
   @Test
@@ -385,7 +398,7 @@ public class DynamicDelayQueueTest {
    }
    
    @Test (expected = NoSuchElementException.class)
-   public void consumerIteratorFail() throws InterruptedException {
+   public void consumerIteratorRemoveFail() throws InterruptedException {
     synchronized (testQueue.getLock()) {
       populateNegative(testQueue);
       
