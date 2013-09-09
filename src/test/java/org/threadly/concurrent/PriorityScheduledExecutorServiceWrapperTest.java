@@ -40,7 +40,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.isTerminatedShortTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -52,7 +52,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.isTerminatedLongTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -64,7 +64,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.awaitTerminationTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -77,7 +77,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.submitCallableTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -90,7 +90,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.submitWithResultTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -104,7 +104,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.futureGetTimeoutFail(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -117,7 +117,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.futureGetExecutionFail(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -130,7 +130,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.futureCancelTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -143,7 +143,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleRunnableTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -156,7 +156,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleCallableTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -168,7 +168,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleCallableCancelTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -181,7 +181,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleWithFixedDelayTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -193,7 +193,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleWithFixedDelayFail(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -205,7 +205,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAllTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -217,7 +217,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAllFail(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -229,7 +229,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAnyTest(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -241,7 +241,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAnyFail(wrapper);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -263,7 +263,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
         // expected
       }
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -278,7 +278,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
       
       futureListener.blockTillFinished(); // throws exception if never called
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
 }

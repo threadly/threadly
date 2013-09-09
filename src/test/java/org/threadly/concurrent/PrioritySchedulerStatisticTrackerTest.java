@@ -404,7 +404,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
-        it.next().shutdown();
+        it.next().shutdownNow();
         it.remove();
       }
     }
@@ -436,7 +436,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
-        it.next().shutdown();
+        it.next().shutdownNow();
         it.remove();
       }
     }
@@ -451,7 +451,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     try {
       assertEquals(scheduler.getAverageTaskRunTime(), -1);
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -496,7 +496,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       
       assertEquals(scheduler.getAverageTaskRunTime(), avgRunTime);
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -529,7 +529,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertEquals(scheduler.getLowPriorityTotalExecutionCount(), lowPriorityCount);
       assertEquals(scheduler.getHighPriorityTotalExecutionCount(), highPriorityCount);
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -573,7 +573,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
       assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -584,7 +584,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     try {
       assertEquals(scheduler.getMedianTaskRunTime(), -1);
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -629,7 +629,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       
       assertTrue(scheduler.getMedianTaskRunTime() == samples.get(samples.size() / 2));
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -640,7 +640,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     try {
       assertEquals(scheduler.getAvgExecutionDelay(), -1);
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
 
@@ -681,7 +681,7 @@ public class PrioritySchedulerStatisticTrackerTest {
           throw new UnsupportedOperationException("Priority not implenented: " + testPriority);
       }
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -759,7 +759,7 @@ public class PrioritySchedulerStatisticTrackerTest {
           throw new UnsupportedOperationException("Priority not implenented: " + priority);
       }
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -833,7 +833,7 @@ public class PrioritySchedulerStatisticTrackerTest {
           throw new UnsupportedOperationException("Priority not implenented: " + priority);
       }
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -880,7 +880,7 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       assertTrue(longRunning.isEmpty());
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -917,7 +917,7 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       assertTrue(longRunning.isEmpty());
     } finally {
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -955,7 +955,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
-        it.next().shutdown();
+        it.next().shutdownNow();
         it.remove();
       }
     }

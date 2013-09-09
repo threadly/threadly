@@ -36,7 +36,7 @@ public class TestablePrioritySchedulerTest {
   @After
   public void tearDown() {
     testScheduler = null;
-    parentScheduler.shutdown();
+    parentScheduler.shutdownNow();
     parentScheduler = null;
   }
   

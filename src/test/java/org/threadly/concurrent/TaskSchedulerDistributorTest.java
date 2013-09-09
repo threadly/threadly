@@ -44,7 +44,7 @@ public class TaskSchedulerDistributorTest {
   
   @After
   public void tearDown() {
-    scheduler.shutdown();
+    scheduler.shutdownNow();
     scheduler = null;
     agentLock = null;
     distributor = null;
@@ -491,7 +491,7 @@ public class TaskSchedulerDistributorTest {
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
-        it.next().shutdown();
+        it.next().shutdownNow();
         it.remove();
       }
     }
