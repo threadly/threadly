@@ -57,7 +57,7 @@ public class SimpleSchedulerLimiterTest {
     for (int i = 0; i < testQty; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
-      limiter.waitingTasks.add(limiter.new RunnableWrapper(tr));
+      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
     }
     
     limiter.consumeAvailable();

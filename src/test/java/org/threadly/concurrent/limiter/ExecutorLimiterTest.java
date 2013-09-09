@@ -33,8 +33,7 @@ public class ExecutorLimiterTest {
     parallelFailure = false;
     running = new AtomicInteger(0);
     executor = Executors.newFixedThreadPool(THREAD_COUNT);
-    limiter = new ExecutorLimiter(executor, PARALLEL_COUNT, 
-                                  "TestExecutorLimiter");
+    limiter = new ExecutorLimiter(executor, PARALLEL_COUNT);
   }
   
   @After
@@ -84,7 +83,7 @@ public class ExecutorLimiterTest {
     for (int i = 0; i < PARALLEL_COUNT; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
-      limiter.waitingTasks.add(limiter.new RunnableWrapper(tr));
+      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
     }
     
     limiter.consumeAvailable();

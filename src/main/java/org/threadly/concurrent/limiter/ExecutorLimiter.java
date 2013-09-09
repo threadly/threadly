@@ -4,8 +4,6 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.VirtualRunnable;
-
 /**
  * This class is designed to limit how much parallel execution happens 
  * on a provided {@link Executor}.  This allows the user to have one 
@@ -67,7 +65,7 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     synchronized (this) {
       while (! waitingTasks.isEmpty() && canRunTask()) {
         // by entering loop we can now execute task
-        executor.execute(new RunnableWrapper(waitingTasks.poll()));
+        executor.execute(new LimiterRunnableWrapper(waitingTasks.poll()));
       }
     }
   }
@@ -79,53 +77,10 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     }
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
-      executor.execute(new RunnableWrapper(command));
+      executor.execute(new LimiterRunnableWrapper(command));
     } else {
       waitingTasks.add(command);
       consumeAvailable(); // call to consume in case task finished after first check
-    }
-  }
-  
-  /**
-   * Wrapper for tasks which are executed in this sub pool, 
-   * this ensures that handleTaskFinished() will be called 
-   * after the task completes.
-   * 
-   * @author jent - Mike Jensen
-   */
-  protected class RunnableWrapper extends VirtualRunnable {
-    private final Runnable runnable;
-    
-    public RunnableWrapper(Runnable runnable) {
-      this.runnable = runnable;
-    }
-    
-    @Override
-    public void run() {
-      Thread currentThread = null;
-      String originalThreadName = null;
-      if (subPoolName != null) {
-        currentThread = Thread.currentThread();
-        originalThreadName = currentThread.getName();
-        
-        currentThread.setName(makeSubPoolThreadName(originalThreadName));
-      }
-      
-      try {
-        if (factory != null && 
-            runnable instanceof VirtualRunnable) {
-          VirtualRunnable vr = (VirtualRunnable)runnable;
-          vr.run(factory);
-        } else {
-          runnable.run();
-        }
-      } finally {
-        handleTaskFinished();
-        
-        if (subPoolName != null) {
-          currentThread.setName(originalThreadName);
-        }
-      }
     }
   }
 }

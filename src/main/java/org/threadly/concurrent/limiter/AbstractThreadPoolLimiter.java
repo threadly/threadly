@@ -100,17 +100,21 @@ abstract class AbstractThreadPoolLimiter {
   
   /**
    * Generic wrapper for runnables which are used within the limiters.
+   * This wrapper ensures that handleTaskFinished() will be called 
+   * after the task completes.
    * 
    * @author jent - Mike Jensen
    */
-  protected abstract class LimiterRunnableWrapper extends VirtualRunnable {
+  protected class LimiterRunnableWrapper extends VirtualRunnable {
     private final Runnable runnable;
     
     public LimiterRunnableWrapper(Runnable runnable) {
       this.runnable = runnable;
     }
     
-    protected abstract void doAfterRunTasks();
+    protected void doAfterRunTasks() {
+      // nothing in the default implementation
+    }
     
     @Override
     public void run() {
