@@ -10,9 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
-import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class SubmitterSchedulerInterfaceTest {
@@ -141,7 +139,7 @@ public class SubmitterSchedulerInterfaceTest {
         TestCallable tc = it.next();
         tc.blockTillTrue();
         
-        assertTrue(tc.done);
+        assertTrue(tc.isDone());
       }
       
       it = callables.iterator();
@@ -150,7 +148,7 @@ public class SubmitterSchedulerInterfaceTest {
         Future<Object> future = futureIt.next();
         TestCallable tc = it.next();
   
-        assertTrue(tc.result == future.get());
+        assertTrue(tc.getReturnedResult() == future.get());
         assertTrue(future.isDone());
       }
     } finally {
@@ -283,7 +281,7 @@ public class SubmitterSchedulerInterfaceTest {
         Future<Object> future = futureIt.next();
         TestCallable tc = it.next();
   
-        assertTrue(tc.result == future.get());
+        assertTrue(tc.getReturnedResult() == future.get());
         assertTrue(future.isDone());
         
         long executionDelay = tc.getDelayTillFirstRun();
@@ -340,41 +338,5 @@ public class SubmitterSchedulerInterfaceTest {
     public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
 
     public void shutdown();
-  }
-  
-  protected static class TestCallable extends TestCondition 
-                                      implements Callable<Object> {
-    private final long runDurration;
-    private final long creationTime;
-    private final Object result;
-    private volatile long callTime;
-    private volatile boolean done;
-    
-    public TestCallable(long runDurration) {
-      this.runDurration = runDurration;
-      this.creationTime = System.currentTimeMillis();
-      callTime = -1;
-      result = new Object();
-      done = false;
-    }
-
-    public long getDelayTillFirstRun() {
-      return callTime - creationTime;
-    }
-
-    @Override
-    public Object call() {
-      callTime = System.currentTimeMillis();
-      TestUtils.sleep(runDurration);
-      
-      done = true;
-      
-      return result;
-    }
-
-    @Override
-    public boolean get() {
-      return done;
-    }
   }
 }

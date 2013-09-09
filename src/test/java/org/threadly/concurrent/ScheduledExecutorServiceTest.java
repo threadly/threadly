@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -14,7 +13,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 
@@ -83,7 +81,7 @@ public class ScheduledExecutorServiceTest {
     TestCallable tc = new TestCallable(0);
     Future<Object> f = scheduler.submit(tc);
     
-    assertTrue(f.get() == tc.result);
+    assertTrue(f.get() == tc.getReturnedResult());
   }
   
   public static void submitWithResultTest(ScheduledExecutorService scheduler) throws InterruptedException, 
@@ -151,7 +149,7 @@ public class ScheduledExecutorServiceTest {
     TestCallable tc = new TestCallable(0);
     ScheduledFuture<Object> f = scheduler.schedule(tc, 0, TimeUnit.MILLISECONDS);
     assertTrue(f.getDelay(TimeUnit.MILLISECONDS) <= 0);
-    assertTrue(tc.result == f.get());
+    assertTrue(tc.getReturnedResult() == f.get());
     
     assertTrue(f.isDone());
   }
@@ -216,7 +214,7 @@ public class ScheduledExecutorServiceTest {
     Iterator<TestCallable> it = toInvoke.iterator();
     Iterator<Future<Object>> resultIt = result.iterator();
     while (it.hasNext()) {
-      assertTrue(resultIt.next().get() == it.next().result);
+      assertTrue(resultIt.next().get() == it.next().getReturnedResult());
     }
   }
   
@@ -238,7 +236,7 @@ public class ScheduledExecutorServiceTest {
       TestCallable tc;
       if (i == 0) {
         tc = new TestCallable(0);
-        expectedResult = tc.result;
+        expectedResult = tc.getReturnedResult();
       } else {
         tc = new TestCallable(1000 + i - 1);
       }
@@ -267,33 +265,6 @@ public class ScheduledExecutorServiceTest {
       fail("Exception should have thrown");
     } catch (NullPointerException e) {
       // expected
-    }
-  }
-  
-  private static class TestCallable extends TestCondition 
-                                    implements Callable<Object> {
-    private final long runTime;
-    private final Object result;
-    private volatile boolean done;
-    
-    private TestCallable(long runTime) {
-      this.runTime = runTime;
-      result = new Object();
-      done = false;
-    }
-
-    @Override
-    public Object call() {
-      TestUtils.sleep(runTime);
-      
-      done = true;
-      
-      return result;
-    }
-
-    @Override
-    public boolean get() {
-      return done;
     }
   }
 }

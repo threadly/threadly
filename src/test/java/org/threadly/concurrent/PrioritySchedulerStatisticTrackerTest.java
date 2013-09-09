@@ -13,7 +13,6 @@ import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutorTest.PriorityScheduledExecutorFactory;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
-import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.TestCallable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;

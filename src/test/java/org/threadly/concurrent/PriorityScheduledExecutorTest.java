@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
-import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.TestCallable;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;

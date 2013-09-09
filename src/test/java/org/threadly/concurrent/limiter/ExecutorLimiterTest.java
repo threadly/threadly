@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -16,6 +15,7 @@ import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
 public class ExecutorLimiterTest {
@@ -25,14 +25,14 @@ public class ExecutorLimiterTest {
   
   private volatile boolean parallelFailure;
   private AtomicInteger running;
-  private ExecutorService executor;
+  private PriorityScheduledExecutor executor;
   private ExecutorLimiter limiter;
   
   @Before
   public void setup() {
     parallelFailure = false;
     running = new AtomicInteger(0);
-    executor = Executors.newFixedThreadPool(THREAD_COUNT);
+    executor = new PriorityScheduledExecutor(PARALLEL_COUNT, THREAD_COUNT, 1000);
     limiter = new ExecutorLimiter(executor, PARALLEL_COUNT);
   }
   
@@ -123,6 +123,32 @@ public class ExecutorLimiterTest {
     }
     
     assertFalse(parallelFailure);
+    
+    // verify execution
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      TestRunnable tr = it.next();
+      tr.blockTillFinished();
+      
+      assertEquals(tr.getRunCount(), 1);
+    }
+  }
+  
+  @Test
+  public void executeTestableSchedulerTest() {
+    int runnableCount = 10;
+    
+    TestablePriorityScheduler testScheduler = new TestablePriorityScheduler(executor);
+    ExecutorLimiter limiter = new ExecutorLimiter(testScheduler, PARALLEL_COUNT);
+    
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+    for (int i = 0; i < runnableCount; i++) {
+      TestRunnable tr = new TestRunnable();
+      limiter.execute(tr);
+      runnables.add(tr);
+    }
+    
+    testScheduler.tick();
     
     // verify execution
     Iterator<TestRunnable> it = runnables.iterator();

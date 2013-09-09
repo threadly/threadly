@@ -18,9 +18,11 @@ import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
+import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.future.FutureFuture;
 import org.threadly.concurrent.limiter.SubmitterSchedulerLimiter;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
 public class SubmitterSchedulerLimiterTest {
@@ -180,6 +182,51 @@ public class SubmitterSchedulerLimiterTest {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
     SubmitterSchedulerInterfaceTest.submitCallableTest(sf);
+  }
+  
+  @Test
+  public void submitCallableTestableSchedulerTest() throws InterruptedException, ExecutionException {
+    int runnableCount = 10;
+    int parallelCount = 2;
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(parallelCount, runnableCount, 
+                                                                       1000 * 10);
+    try {
+      TestablePriorityScheduler testableScheduler = new TestablePriorityScheduler(executor);
+      SubmitterSchedulerLimiter limiter = new SubmitterSchedulerLimiter(executor, parallelCount);
+      
+      List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
+      List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
+      for (int i = 0; i < runnableCount; i++) {
+        TestCallable tc = new TestCallable(0);
+        Future<Object> future = limiter.submit(tc);
+        assertNotNull(future);
+        callables.add(tc);
+        futures.add(future);
+      }
+      
+      testableScheduler.tick();
+      
+      // verify execution
+      Iterator<TestCallable> it = callables.iterator();
+      while (it.hasNext()) {
+        TestCallable tc = it.next();
+        tc.blockTillTrue();
+        
+        assertTrue(tc.isDone());
+      }
+      
+      it = callables.iterator();
+      Iterator<Future<Object>> futureIt = futures.iterator();
+      while (futureIt.hasNext()) {
+        Future<Object> future = futureIt.next();
+        TestCallable tc = it.next();
+  
+        assertTrue(tc.getReturnedResult() == future.get());
+        assertTrue(future.isDone());
+      }
+    } finally {
+      executor.shutdown();
+    }
   }
   
   @Test (expected = IllegalArgumentException.class)

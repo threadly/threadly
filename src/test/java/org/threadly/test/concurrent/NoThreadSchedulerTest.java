@@ -5,13 +5,13 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.TestCallable;
 import org.threadly.test.concurrent.NoThreadScheduler;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -128,7 +128,7 @@ public class NoThreadSchedulerTest {
     
     it = callables.iterator();
     while (it.hasNext()) {
-      assertTrue(it.next().done);
+      assertTrue(it.next().isDone());
     }
 
     it = callables.iterator();
@@ -138,7 +138,7 @@ public class NoThreadSchedulerTest {
       TestCallable tc = it.next();
       
       assertTrue(future.isDone());
-      assertTrue(tc.result == future.get());
+      assertTrue(tc.getReturnedResult() == future.get());
     }
   }
   
@@ -213,12 +213,12 @@ public class NoThreadSchedulerTest {
     long startTime = System.currentTimeMillis();
     assertEquals(scheduler.tick(startTime), 1);
 
-    assertTrue(submitRun.done);   // should have run
-    assertFalse(scheduleRun.done);  // should NOT have run yet
+    assertTrue(submitRun.isDone());   // should have run
+    assertFalse(scheduleRun.isDone());  // should NOT have run yet
     
     assertEquals(scheduler.tick(startTime + scheduleDelay), 1);
     
-    assertTrue(scheduleRun.done);  // should have run
+    assertTrue(scheduleRun.isDone());  // should have run
     
     assertEquals(scheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
   }
@@ -296,38 +296,5 @@ public class NoThreadSchedulerTest {
     
     scheduler.tick(now - 1);
     fail("Exception should have been thrown");
-  }
-  
-  protected static class TestCallable extends TestCondition 
-                                      implements Callable<Object> {
-    private final long creationTime;
-    private final Object result;
-    private volatile long callTime;
-    private volatile boolean done;
-    
-    public TestCallable() {
-      this.creationTime = System.currentTimeMillis();
-      callTime = -1;
-      result = new Object();
-      done = false;
-    }
-
-    public long getDelayTillFirstRun() {
-      return callTime - creationTime;
-    }
-
-    @Override
-    public Object call() {
-      callTime = System.currentTimeMillis();
-      
-      done = true;
-      
-      return result;
-    }
-
-    @Override
-    public boolean get() {
-      return done;
-    }
   }
 }
