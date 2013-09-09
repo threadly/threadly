@@ -43,9 +43,16 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
-  protected static final String QUEUE_CONSUMER_THREADS_NAME = "ScheduledExecutor task consumer thread";
   protected static final int WORKER_CONTENTION_LEVEL = 2; // level at which no worker contention is considered
   protected static final int LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS = 2;
+  protected static final String QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY;
+  protected static final String QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY;
+  
+  static {
+    String threadNameSuffix = "task consumer for " + PriorityScheduledExecutor.class.getSimpleName();
+    QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY = "high priority " + threadNameSuffix;
+    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY = "low priority " + threadNameSuffix;
+  }
   
   protected final TaskPriority defaultPriority;
   protected final VirtualLock highPriorityLock;
@@ -691,7 +698,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       ClockWrapper.resumeForcingUpdate();
     }
     highPriorityConsumer.maybeStart(threadFactory, 
-                                    QUEUE_CONSUMER_THREADS_NAME);
+                                    QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY);
   }
   
   private void addToLowPriorityQueue(TaskWrapper task) {
@@ -703,7 +710,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       ClockWrapper.resumeForcingUpdate();
     }
     lowPriorityConsumer.maybeStart(threadFactory, 
-                                   QUEUE_CONSUMER_THREADS_NAME);
+                                   QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY);
   }
   
   protected Worker getExistingWorker(long maxWaitForLowPriorityInMs) throws InterruptedException {
