@@ -534,7 +534,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
 
   @Override
   public void execute(Runnable task) {
-    execute(task, defaultPriority);
+    schedule(task, 0, defaultPriority);
   }
 
   @Override
@@ -544,17 +544,17 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
 
   @Override
   public ListenableFuture<?> submit(Runnable task) {
-    return submit(task, defaultPriority);
+    return submitScheduled(task, null, 0, defaultPriority);
   }
   
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submit(task, result, defaultPriority);
+    return submitScheduled(task, result, 0, defaultPriority);
   }
 
   @Override
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
-    return submitScheduled(task, 0, priority);
+    return submitScheduled(task, null, 0, priority);
   }
   
   @Override
@@ -564,7 +564,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task) {
-    return submit(task, defaultPriority);
+    return submitScheduled(task, 0, defaultPriority);
   }
 
   @Override
