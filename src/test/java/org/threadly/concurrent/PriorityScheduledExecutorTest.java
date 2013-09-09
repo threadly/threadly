@@ -687,6 +687,44 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void shutdownNowTest() {
+    shutdownNowTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void shutdownNowTest(PriorityScheduledExecutorFactory factory) {
+    try {
+      PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
+      
+      scheduler.shutdownNow();
+      
+      assertTrue(scheduler.isShutdown());
+      
+      try {
+        scheduler.execute(new TestRunnable());
+        fail("Execption should have been thrown");
+      } catch (IllegalStateException e) {
+        // expected
+      }
+      
+      try {
+        scheduler.schedule(new TestRunnable(), 1000);
+        fail("Execption should have been thrown");
+      } catch (IllegalStateException e) {
+        // expected
+      }
+      
+      try {
+        scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
+        fail("Execption should have been thrown");
+      } catch (IllegalStateException e) {
+        // expected
+      }
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void addToQueueTest() {
     addToQueueTest(new PriorityScheduledExecutorTestFactory());
   }

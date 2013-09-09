@@ -362,6 +362,11 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void shutdownNowTest() {
+    PriorityScheduledExecutorTest.shutdownNowTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
   public void addToQueueTest() {
     PriorityScheduledExecutorTest.addToQueueTest(new PriorityScheduledExecutorTestFactory());
   }
