@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.LockSupport;
 
@@ -88,9 +89,9 @@ public class TaskExecutorDistributorTest {
               previous = tr;
             }
           }
-            
-          ready = true;
         }
+        
+        ready = true;
       }
     });
     
@@ -139,9 +140,9 @@ public class TaskExecutorDistributorTest {
               previous = tr;
             }
           }
-            
-          ready = true;
         }
+        
+        ready = true;
       }
     });
     
@@ -201,9 +202,9 @@ public class TaskExecutorDistributorTest {
               previous = tr;
             }
           }
-            
-          ready = true;
         }
+        
+        ready = true;
       }
     });
     
@@ -235,12 +236,58 @@ public class TaskExecutorDistributorTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+    try {
+      distributor.submitTask(new Object(), (Callable<Object>)null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
-  /*@Test
+  @Test
   public void submitCallableConsistentThreadTest() {
-    // TODO -- implement
-  }*/
+    final Object testLock = new Object();
+    final List<TDCallable> runs = new ArrayList<TDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+
+    scheduler.execute(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (testLock) {
+          for (int i = 0; i < PARALLEL_LEVEL; i++) {
+            ThreadContainer tc = new ThreadContainer();
+            TDCallable previous = null;
+            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+              TDCallable tr = new TDCallable(tc, previous);
+              runs.add(tr);
+              distributor.submitTask(tc, tr);
+              
+              previous = tr;
+            }
+          }
+        }
+        
+        ready = true;
+      }
+    });
+    
+    // block till ready to ensure other thread got testLock lock
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return ready;
+      }
+    }.blockTillTrue(20 * 1000, 100);
+
+    synchronized (testLock) {
+      Iterator<TDCallable> it = runs.iterator();
+      while (it.hasNext()) {
+        TDCallable tr = it.next();
+        tr.blockTillFinished(20 * 1000);
+        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
+      }
+    }
+  }
 
   @Test
   public void executeStressTest() {
@@ -344,6 +391,36 @@ public class TaskExecutorDistributorTest {
       if (! verifiedPrevious) {
         if (previousRunnable != null) {
           previousRanFirst = previousRunnable.getRunCount() >= 1;
+        } else {
+          previousRanFirst = true;
+        }
+        
+        verifiedPrevious = true;
+      }
+    }
+  }
+  
+  private class TDCallable extends TestCallable {
+    protected final TDCallable previousRunnable;
+    protected final ThreadContainer threadTracker;
+    protected volatile boolean previousRanFirst;
+    private volatile boolean verifiedPrevious;
+    
+    private TDCallable(ThreadContainer threadTracker, 
+                       TDCallable previousRunnable) {
+      this.threadTracker = threadTracker;
+      this.previousRunnable = previousRunnable;
+      previousRanFirst = false;
+      verifiedPrevious = false;
+    }
+    
+    @Override
+    public void handleCallStart() {
+      threadTracker.running();
+      
+      if (! verifiedPrevious) {
+        if (previousRunnable != null) {
+          previousRanFirst = previousRunnable.isDone();
         } else {
           previousRanFirst = true;
         }
