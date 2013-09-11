@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.concurrent.collections.DynamicDelayQueue;
@@ -904,58 +905,48 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @author jent - Mike Jensen
    */
   protected class Worker implements Runnable {
-    private final VirtualLock taskNotifyLock;
     private final Thread thread;
     private volatile long lastRunTime;
-    private boolean running;
+    private volatile boolean running;
     private volatile TaskWrapper nextTask;
     
     protected Worker() {
-      this.taskNotifyLock = makeLock();
       thread = threadFactory.newThread(this);
-      running = true;
+      running = false;
       lastRunTime = ClockWrapper.getLastKnownTime();
       nextTask = null;
     }
     
     public void stop() {
-      synchronized (taskNotifyLock) {
-        running = false;
-        
-        taskNotifyLock.signalAll();
-      }
+      running = false;
+      
+      LockSupport.unpark(thread);
     }
 
     public void start() {
       if (thread.isAlive()) {
         return;
       } else {
+        running = true;
         thread.start();
       }
     }
     
     public void nextTask(TaskWrapper task) {
-      synchronized (taskNotifyLock) {
-        if (! running) {
-          throw new IllegalStateException("Worker has been killed");
-        } else if (nextTask != null) {
-          throw new IllegalStateException("Already has a task");
-        }
-        
-        nextTask = task;
-        taskNotifyLock.signalAll();
-      }
-    }
-    
-    public void blockTillNextTask() throws InterruptedException {
-      if (nextTask != null) {
-        return;
+      if (! running) {
+        throw new IllegalStateException("Worker has been killed");
+      } else if (nextTask != null) {
+        throw new IllegalStateException("Already has a task");
       }
       
-      synchronized (taskNotifyLock) {
-        while (nextTask == null && running) {
-          taskNotifyLock.await();
-        }
+      nextTask = task;
+      
+      LockSupport.unpark(thread);
+    }
+    
+    public void blockTillNextTask() {
+      while (nextTask == null && running) {
+        LockSupport.park();
       }
     }
     
