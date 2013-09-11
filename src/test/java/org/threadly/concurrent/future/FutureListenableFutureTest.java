@@ -2,6 +2,9 @@ package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
+
 import org.junit.Test;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -19,8 +22,15 @@ public class FutureListenableFutureTest {
       // expected
     }
     try {
-      testFuture.setParentFuture(new TestFutureImp());
-      testFuture.setParentFuture(new TestFutureImp());  // should not allow two sets
+      // FutureListenableFuture can not accept normale futures
+      testFuture.setParentFuture(new FutureTask<Object>(new TestRunnable(), null));
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      testFuture.setParentFuture((Future<?>)new TestFutureImp());
+      testFuture.setParentFuture((Future<?>)new TestFutureImp());  // should not allow two sets
       fail("Exception should have thrown");
     } catch (IllegalStateException e) {
       // expected
