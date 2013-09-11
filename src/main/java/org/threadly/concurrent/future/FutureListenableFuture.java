@@ -24,6 +24,8 @@ public class FutureListenableFuture<T> extends FutureFuture<T>
    * depend on a ListenableFuture instance to be provided later.
    */
   public FutureListenableFuture() {
+    super();
+    
     waitingToAddListeners = new LinkedList<WaitingListener>();
     parentFuture = null;
   }

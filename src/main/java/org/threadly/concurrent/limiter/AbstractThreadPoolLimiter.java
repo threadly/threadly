@@ -3,6 +3,7 @@ package org.threadly.concurrent.limiter;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.VirtualRunnable;
+import org.threadly.concurrent.future.FutureFuture.TaskCanceler;
 
 /**
  * Abstract implementation for classes which limit concurrency 
@@ -105,11 +106,14 @@ abstract class AbstractThreadPoolLimiter {
    * 
    * @author jent - Mike Jensen
    */
-  protected class LimiterRunnableWrapper extends VirtualRunnable {
+  protected class LimiterRunnableWrapper extends VirtualRunnable
+                                         implements TaskCanceler {
     private final Runnable runnable;
+    private final AtomicInteger runStatus;  // 0 = not started, -1 = canceled, 1 = running
     
     public LimiterRunnableWrapper(Runnable runnable) {
       this.runnable = runnable;
+      runStatus = new AtomicInteger(0);
     }
     
     protected void doAfterRunTasks() {
@@ -118,6 +122,9 @@ abstract class AbstractThreadPoolLimiter {
     
     @Override
     public void run() {
+      if (! runStatus.compareAndSet(0, 1)) {
+        return;
+      }
       Thread currentThread = null;
       String originalThreadName = null;
       if (subPoolName != null) {
@@ -139,6 +146,7 @@ abstract class AbstractThreadPoolLimiter {
         try {
           doAfterRunTasks();
         } finally {
+          runStatus.compareAndSet(1, 0);
           try {
             handleTaskFinished();
           } finally {
@@ -148,6 +156,11 @@ abstract class AbstractThreadPoolLimiter {
           }
         }
       }
+    }
+
+    @Override
+    public boolean cancel() {
+      return runStatus.compareAndSet(0, -1);
     }
   }
 }

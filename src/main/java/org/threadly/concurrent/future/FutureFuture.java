@@ -17,6 +17,7 @@ import org.threadly.util.ExceptionUtils;
  * @param <T> result type returned by .get()
  */
 public class FutureFuture<T> implements Future<T> {
+  private volatile TaskCanceler canceler;
   private volatile boolean canceled;
   private volatile Future<?> parentFuture;
 
@@ -25,8 +26,26 @@ public class FutureFuture<T> implements Future<T> {
    * depend on a Future instance to be provided later.
    */
   public FutureFuture() {
+    this.canceler = null;
     canceled = false;
     parentFuture = null;
+  }
+  
+  /**
+   * Call to set a canceler for the task which this future represents.  If 
+   * this future gets a call to cancel before the parent future is set, 
+   * we will attempt to call to this canceler to cancel the task before it runs.
+   * 
+   * @param canceler canceler to call if parent future is not set
+   */
+  public void setTaskCanceler(TaskCanceler canceler) {
+    if (this.canceler != null) {
+      throw new IllegalStateException("Canceler has already been set");
+    } else if (canceler == null) {
+      throw new IllegalArgumentException("Must provide a non-null canceler");
+    }
+    
+    this.canceler = canceler;
   }
   
   /**
@@ -55,6 +74,8 @@ public class FutureFuture<T> implements Future<T> {
     }
     if (parentFuture != null) {
       return canceled = parentFuture.cancel(mayInterruptIfRunning);
+    } else if (canceler != null) {
+      return canceled = canceler.cancel();
     } else {
       return false;
     }
@@ -103,5 +124,19 @@ public class FutureFuture<T> implements Future<T> {
       // parent future is now not null
       return (T)parentFuture.get(remainingWaitTime, TimeUnit.MILLISECONDS);
     }
+  }
+  
+  /**
+   * A canceler which this future will use if a parent future has not been set.
+   * 
+   * @author jent - Mike Jensen
+   */
+  public interface TaskCanceler {
+    /**
+     * Attempt to cancel a task before it has run.
+     * 
+     * @return true if and only if the task can be canceled before it is run
+     */
+    public boolean cancel();
   }
 }

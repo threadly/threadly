@@ -129,6 +129,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   private <T> void doSubmit(Runnable task, T result, 
                             FutureFuture<T> ff) {
     RunnableFutureWrapper wrapper = new RunnableFutureWrapper(task, ff);
+    ff.setTaskCanceler(wrapper);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
       ff.setParentFuture(scheduler.submit(wrapper, result));
@@ -154,6 +155,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   private <T> void doSubmit(Callable<T> task, 
                             FutureFuture<T> ff) {
     CallableFutureWrapper<T> wrapper = new CallableFutureWrapper<T>(task, ff);
+    // TODO - set future canceler
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
       ff.setParentFuture(scheduler.submit(wrapper));
