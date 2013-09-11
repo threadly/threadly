@@ -6,9 +6,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
 import org.junit.Test;
-import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class FutureListenableFutureTest {
@@ -42,13 +40,13 @@ public class FutureListenableFutureTest {
     FutureListenableFuture<Object> testFuture = new FutureListenableFuture<Object>();
     testFuture.cancel(true);
     
-    assertTrue(testFuture.isCancelled());
+    assertFalse(testFuture.isCancelled());  // unable to cancel without parent being set
     
     TestFutureImp parentFuture = new TestFutureImp();
     testFuture.setParentFuture(parentFuture);
     
-    assertTrue(parentFuture.canceled);
-    assertTrue(testFuture.isCancelled());
+    assertFalse(parentFuture.canceled);
+    assertFalse(testFuture.isCancelled());
   }
   
   @Test
@@ -74,29 +72,23 @@ public class FutureListenableFutureTest {
     assertTrue(testFuture.isDone());
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void addListenerFail() {
+    FutureListenableFuture<Object> future = new FutureListenableFuture<Object>();
+    
+    future.addListener(null);
+    fail("Exception should have thrown");
+  }
+  
   @Test
   public void addListenerBeforeSetTest() {
     final FutureListenableFuture<Object> testFuture = new FutureListenableFuture<Object>();
     final TestRunnable listener = new TestRunnable();
     
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        testFuture.addListener(listener);
-      }
-    }).start();
-    
-    TestUtils.sleep(50);
+    testFuture.addListener(listener);
     
     final TestFutureImp parentFuture = new TestFutureImp();
     testFuture.setParentFuture(parentFuture);
-    
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ! parentFuture.listeners.isEmpty();
-      }
-    }.blockTillTrue();
     
     assertEquals(parentFuture.listeners.size(), 1);
     assertTrue(parentFuture.listeners.get(0) == listener);

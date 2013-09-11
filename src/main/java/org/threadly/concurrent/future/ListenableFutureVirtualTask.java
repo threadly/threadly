@@ -211,6 +211,10 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
 
   @Override
   public void addListener(Runnable listener, Executor executor) {
+    if (listener == null) {
+      throw new IllegalArgumentException("Can not provide a null listener runnable");
+    }
+    
     synchronized (lock) {
       if (isDone()) {
         runListener(listener, executor, true);

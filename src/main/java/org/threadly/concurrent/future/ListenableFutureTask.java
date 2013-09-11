@@ -106,6 +106,10 @@ public class ListenableFutureTask<T> extends FutureTask<T>
 
   @Override
   public void addListener(Runnable listener, Executor executor) {
+    if (listener == null) {
+      throw new IllegalArgumentException("Can not provide a null listener runnable");
+    }
+    
     synchronized (listeners) {
       if (isDone()) {
         runListener(listener, executor, true);

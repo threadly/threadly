@@ -17,9 +17,8 @@ import org.threadly.util.ExceptionUtils;
  * @param <T> result type returned by .get()
  */
 public class FutureFuture<T> implements Future<T> {
-  private boolean canceled;
-  private boolean mayInterruptIfRunningOnCancel;
-  private Future<?> parentFuture;
+  private volatile boolean canceled;
+  private volatile Future<?> parentFuture;
 
   /**
    * Constructs a new Future instance which will 
@@ -43,44 +42,35 @@ public class FutureFuture<T> implements Future<T> {
       throw new IllegalArgumentException("Must provide a non-null parent future");
     }
     
+    this.parentFuture = parentFuture;
     synchronized (this) {
-      this.parentFuture = parentFuture;
-      if (canceled) {
-        parentFuture.cancel(mayInterruptIfRunningOnCancel);
-      }
-      
       this.notifyAll();
     }
   }
   
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
-    synchronized (this) {
-      canceled = true;
-      mayInterruptIfRunningOnCancel = mayInterruptIfRunning;
-      if (parentFuture != null) {
-        return parentFuture.cancel(mayInterruptIfRunning);
-      } else {
-        return true;  // this is not guaranteed to be true, but is likely
-      }
+    if (canceled) {
+      return true;
+    }
+    if (parentFuture != null) {
+      return canceled = parentFuture.cancel(mayInterruptIfRunning);
+    } else {
+      return false;
     }
   }
 
   @Override
   public boolean isCancelled() {
-    synchronized (this) {
-      return canceled;
-    }
+    return canceled;
   }
 
   @Override
   public boolean isDone() {
-    synchronized (this) {
-      if (parentFuture == null) {
-        return false;
-      } else {
-        return parentFuture.isDone();
-      }
+    if (parentFuture == null) {
+      return false;
+    } else {
+      return parentFuture.isDone();
     }
   }
 

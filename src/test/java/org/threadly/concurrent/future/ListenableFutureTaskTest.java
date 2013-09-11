@@ -30,6 +30,14 @@ public class ListenableFutureTaskTest {
     RunnableFutureTest.isDoneFail(new Factory());
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void addListenerFail() {
+    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRunnable(), null);
+    
+    future.addListener(null);
+    fail("Exception should have thrown");
+  }
+  
   @Test
   public void listenerTest() {
     TestRunnable tr = new TestRunnable();

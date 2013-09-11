@@ -17,7 +17,7 @@ public class TestFutureImp implements ListenableFuture<Object> {
   public boolean cancel(boolean mayInterruptIfRunning) {
     canceled = true;
     
-    return false;
+    return true;
   }
 
   @Override

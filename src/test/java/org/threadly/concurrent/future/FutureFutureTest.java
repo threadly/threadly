@@ -29,13 +29,13 @@ public class FutureFutureTest {
     FutureFuture<Object> testFuture = new FutureFuture<Object>();
     testFuture.cancel(true);
     
-    assertTrue(testFuture.isCancelled());
+    assertFalse(testFuture.isCancelled());  // unable to cancel without parent being set
     
     TestFutureImp parentFuture = new TestFutureImp();
     testFuture.setParentFuture(parentFuture);
     
-    assertTrue(parentFuture.canceled);
-    assertTrue(testFuture.isCancelled());
+    assertFalse(parentFuture.canceled);
+    assertFalse(testFuture.isCancelled());
   }
   
   @Test

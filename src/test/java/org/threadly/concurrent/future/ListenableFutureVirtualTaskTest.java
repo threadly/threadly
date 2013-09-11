@@ -47,6 +47,14 @@ public class ListenableFutureVirtualTaskTest {
     RunnableFutureTest.isDoneFail(new Factory());
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void addListenerFail() {
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(new TestRunnable(), null, new NativeLock());
+    
+    future.addListener(null);
+    fail("Exception should have thrown");
+  }
+  
   @Test
   public void listenerTest() {
     TestRunnable tr = new TestRunnable();
