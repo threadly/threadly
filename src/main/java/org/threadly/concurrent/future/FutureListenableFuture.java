@@ -1,6 +1,7 @@
 package org.threadly.concurrent.future;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 import org.threadly.util.ExceptionUtils;
 
@@ -22,6 +23,15 @@ public class FutureListenableFuture<T> extends FutureFuture<T>
    */
   public FutureListenableFuture() {
     parentFuture = null;
+  }
+  
+  @Override
+  public void setParentFuture(Future<?> parentFuture) {
+    if (parentFuture instanceof ListenableFuture) {
+      setParentFuture((ListenableFuture<?>)parentFuture);
+    } else {
+      throw new IllegalArgumentException("Can not set with a future which does not implement ListenableFuture");
+    }
   }
   
   /**

@@ -29,7 +29,6 @@ public class FutureFuture<T> implements Future<T> {
     canceled = false;
     parentFuture = null;
   }
-
   
   /**
    * Once the parent Future is available, this function should 
