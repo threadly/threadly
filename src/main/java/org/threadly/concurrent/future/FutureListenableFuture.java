@@ -83,6 +83,12 @@ public class FutureListenableFuture<T> extends FutureFuture<T>
     }
   }
   
+  /**
+   * Small structure just to hold listeners that will be registered once 
+   * the parent future is provided.
+   * 
+   * @author jent - Mike Jensen
+   */
   private class WaitingListener {
     private final Runnable listener;
     private final Executor executor;
