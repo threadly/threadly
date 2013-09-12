@@ -192,8 +192,10 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
         waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
       }
       
-      if (canceled) {
-        throw new CancellationException();
+      if (canceled || 
+          (failure != null && 
+            (failure == StaticCancellationException.instance() || failure instanceof CancellationException))) {
+        throw StaticCancellationException.instance();
       } else if (failure != null) {
         throw new ExecutionException(failure);
       } else if (! done) {

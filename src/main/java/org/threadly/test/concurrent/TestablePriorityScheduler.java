@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -20,6 +21,7 @@ import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.VirtualCallable;
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.StaticCancellationException;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -676,7 +678,11 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
           lock.await(waitTime);
           waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
         }
-        if (failure != null) {
+        if (canceled || 
+            (failure != null && 
+              (failure == StaticCancellationException.instance() || failure instanceof CancellationException))) {
+          throw StaticCancellationException.instance();
+        } else if (failure != null) {
           throw new ExecutionException(failure);
         } else if (! done) {
           throw new TimeoutException();

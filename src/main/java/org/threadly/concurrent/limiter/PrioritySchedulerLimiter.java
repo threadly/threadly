@@ -217,7 +217,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   private <T> void doSubmit(Callable<T> task, 
                             TaskPriority priority, FutureFuture<T> ff) {
     PriorityCallableWrapper<T> wrapper = new PriorityCallableWrapper<T>(task, priority, ff);
-    // TODO - set future canceler
+    ff.setTaskCanceler(wrapper);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
       ff.setParentFuture(scheduler.submit(wrapper, priority));
