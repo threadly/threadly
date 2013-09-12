@@ -351,10 +351,14 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     
     @Override
     public void run() {
-      if (future == null) {
-        execute(runnable, priority);
-      } else {
-        doSubmit(runnable, runnableResult, priority, future);
+      try {
+        if (future == null) {
+          execute(runnable, priority);
+        } else {
+          doSubmit(runnable, runnableResult, priority, future);
+        }
+      } catch (IllegalStateException e) {
+        // catch exception in case scheduler shutdown
       }
     }
   }
@@ -409,8 +413,12 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     
     @Override
     protected void doAfterRunTasks() {
-      scheduler.schedule(delayRunnable, recurringDelay, 
-                         TaskPriority.High);
+      try {
+        scheduler.schedule(delayRunnable, recurringDelay, 
+                           TaskPriority.High);
+      } catch (IllegalStateException e) {
+        // catch exception in case scheduler shutdown
+      }
     }
 
     @Override
