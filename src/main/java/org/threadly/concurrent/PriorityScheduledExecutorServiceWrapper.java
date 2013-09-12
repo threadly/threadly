@@ -149,6 +149,10 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
         }
         remainingTime = Math.max(0, timeoutInMs - (Clock.accurateTime() - startTime)); 
       }
+      // cancel any which have not completed yet
+      while (it.hasNext()) {
+        it.next().cancel(true);
+      }
     }
     
     return resultList;
