@@ -176,11 +176,10 @@ public class TestRunnable extends VirtualRunnable {
   
   /**
    * Function to be overloaded by extending classes
-   * if more data or operations need to happen at the 
-   * run point.  
+   * if more data or operations need to happen at the run point.  
    * 
-   * This is the last call to be made in the runnable, 
-   * it is safe to throw any exceptions necessary here.
+   * This is the last call to be made in the runnable.  If you want a runtime 
+   * exception to get thrown to the caller, it must be thrown from here.
    */
   public void handleRunFinish() {
     // nothing in default implementation
