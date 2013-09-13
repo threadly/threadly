@@ -5,9 +5,12 @@ import static org.junit.Assert.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.future.RunnableFutureTest.BlockingFutureFactory;
@@ -90,6 +93,135 @@ public class ListenableFutureVirtualTaskTest {
     
     assertEquals(executor.providedRunnables.size(), 1);
     assertTrue(executor.providedRunnables.get(0) == executorListener);
+  }
+  
+  @Test
+  public void listenerExceptionAddBeforeRunTest() {
+    TestRunnable listener = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new RuntimeException();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(new TestRunnable(), null, new NativeLock());
+    
+    future.addListener(listener);
+    future.run();
+    
+    assertTrue(listener.ranOnce());
+  }
+  
+  @Test
+  public void listenerExceptionAddAfterRunTest() {
+    TestRunnable listener = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new RuntimeException();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(new TestRunnable(), null, new NativeLock());
+    
+    future.run();
+    try {
+      future.addListener(listener);
+      fail("Exception should have thrown");
+    } catch (RuntimeException e) {
+      // expected
+    }
+    
+    assertTrue(listener.ranOnce());
+  }
+  
+  @Test (expected = CancellationException.class)
+  public void getStaticCancelationExceptionTest() throws InterruptedException, ExecutionException {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw StaticCancellationException.instance();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
+    
+    future.run();
+    future.get();
+  }
+  
+  @Test (expected = CancellationException.class)
+  public void getWithTimeoutStaticCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw StaticCancellationException.instance();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
+    
+    future.run();
+    future.get(100, TimeUnit.MILLISECONDS);
+  }
+  
+  @Test (expected = CancellationException.class)
+  public void getCancelationExceptionTest() throws InterruptedException, ExecutionException {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new CancellationException();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
+    
+    future.run();
+    future.get();
+  }
+  
+  @Test (expected = CancellationException.class)
+  public void getWithTimeoutCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new CancellationException();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
+    
+    future.run();
+    future.get(100, TimeUnit.MILLISECONDS);
+  }
+  
+  @Test (expected = ExecutionException.class)
+  public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new RuntimeException();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
+    
+    future.run();
+    future.get();
+  }
+  
+  @Test (expected = ExecutionException.class)
+  public void getWithTimeoutExecutionExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new RuntimeException();
+      }
+    };
+    
+    ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
+    
+    future.run();
+    future.get(100, TimeUnit.MILLISECONDS);
   }
   
   private class Factory implements BlockingFutureFactory {

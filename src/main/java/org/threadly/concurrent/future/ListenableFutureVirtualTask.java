@@ -137,8 +137,6 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
       
         lock.signalAll();
       }
-      
-      throw ExceptionUtils.makeRuntime(t);
     }
   }
 
