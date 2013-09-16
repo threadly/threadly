@@ -714,16 +714,16 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                                    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY);
   }
   
-  protected Worker getExistingWorker(long maxWaitForLowPriorityInMs) throws InterruptedException {
+  protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
     synchronized (workersLock) {
       long startTime = ClockWrapper.getAccurateTime();
-      long waitTime = maxWaitForLowPriorityInMs;
+      long waitTime = maxWaitTimeInMs;
       while (availableWorkers.isEmpty() && waitTime > 0) {
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
           workersLock.await();
         } else {
           long elapsedTime = ClockWrapper.getAccurateTime() - startTime;
-          waitTime = maxWaitForLowPriorityInMs - elapsedTime;
+          waitTime = maxWaitTimeInMs - elapsedTime;
           if (waitTime > 0) {
             workersLock.await(waitTime);
           }
@@ -803,9 +803,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           }
           w = getExistingWorker(waitTime);
           if (w == null) {
-            // this means we expired past our wait time, so just make a new worker
+            // this means we expired past our wait time, so create a worker if we can
             if (currentPoolSize >= maxPoolSize) {
-              // more workers were created while waiting, now have exceeded our max
+              // more workers were created while waiting, now have reached our max
               w = getExistingWorker(Long.MAX_VALUE);
             } else {
               w = makeNewWorker();
