@@ -1,5 +1,7 @@
 package org.threadly.util;
 
+import java.util.concurrent.locks.LockSupport;
+
 /**
  * This is a utility class for low-resolution timing which avoids
  * frequent System.currentTimeMillis() calls (which perform poorly 
@@ -14,11 +16,12 @@ package org.threadly.util;
  */
 public class Clock {
   protected static final boolean UPDATE_CLOCK_AUTOMATICALLY = true;
-  protected static final int AUTOMATIC_UPDATE_FREQUENCY_IN_MS = 100;
+  protected static final short AUTOMATIC_UPDATE_FREQUENCY_IN_MS = 100;
+  protected static final short STOP_PARK_TIME_IN_NANOS = 10000;
   
   private static final Object UPDATE_LOCK = new Object();
   private static volatile long now = System.currentTimeMillis();
-  private static boolean updateClock = false;
+  private static ClockUpdater clockUpdater = null;
   
   static {
     if (UPDATE_CLOCK_AUTOMATICALLY) {
@@ -35,12 +38,12 @@ public class Clock {
    */
   public static void startClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
-      if (updateClock) {
+      if (clockUpdater != null) {
         return;
       } else {
-        updateClock = true;
+        clockUpdater = new ClockUpdater();
         
-        Thread thread = new Thread(new ClockUpdater());
+        Thread thread = new Thread(clockUpdater);
         
         thread.setName("Threadly clock updater");
         thread.setDaemon(true);
@@ -53,10 +56,19 @@ public class Clock {
    * Stops the clock from updating automatically (used for testing).
    */
   public static void stopClockUpdateThread() {
+    ClockUpdater oldUpdater;
     synchronized (UPDATE_LOCK) {
-      updateClock = false;
+      oldUpdater = clockUpdater;
+      
+      clockUpdater = null;
       
       UPDATE_LOCK.notifyAll();
+    }
+    
+    if (oldUpdater != null) {
+      while (! oldUpdater.runnableFinished) {
+        LockSupport.parkNanos(STOP_PARK_TIME_IN_NANOS);
+      }
     }
   }
 
@@ -87,16 +99,22 @@ public class Clock {
    * @author jent - Mike Jensen
    */
   private static class ClockUpdater implements Runnable {
+    private volatile boolean runnableFinished = false;
+    
     @Override
     public void run() {
-      synchronized (UPDATE_LOCK) {
-        while (updateClock) {
-          try {
-            accurateTime();
-            
-            UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
-          } catch (InterruptedException ignored) { }
+      try {
+        synchronized (UPDATE_LOCK) {
+          while (clockUpdater == this) {
+            try {
+              accurateTime();
+              
+              UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
+            } catch (InterruptedException ignored) { }
+          }
         }
+      } finally {
+        runnableFinished = true;
       }
     }
   }

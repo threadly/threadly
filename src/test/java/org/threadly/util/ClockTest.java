@@ -2,6 +2,7 @@ package org.threadly.util;
 
 import static org.junit.Assert.*;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestUtils;
@@ -13,24 +14,25 @@ public class ClockTest {
     Clock.stopClockUpdateThread();
   }
   
+  @After
+  public void tearDown() {
+    Clock.startClockUpdateThread();
+  }
+  
   @Test
-  public void testClock() {
+  public void lastKnownTimeMillisTest() {
     // verify clock is not updating
     long before = Clock.lastKnownTimeMillis();
-    
-    TestUtils.sleep(Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
-    
-    assertEquals(before, Clock.lastKnownTimeMillis());
     
     // update clock
     long newTime;
     assertTrue((newTime = Clock.accurateTime()) > before);
     // verify we get the new time again
-    assertEquals(newTime, Clock.lastKnownTimeMillis());
+    assertTrue(newTime <= Clock.lastKnownTimeMillis());
   }
   
   @Test
-  public void verifyAutomaticUpdate() {
+  public void automaticUpdateTest() {
     long before = Clock.lastKnownTimeMillis();
     
     Clock.startClockUpdateThread();
