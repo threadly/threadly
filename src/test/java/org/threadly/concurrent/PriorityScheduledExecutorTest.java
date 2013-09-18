@@ -274,6 +274,64 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void getScheduledTaskCountTest() {
+    PriorityScheduledExecutor result = new PriorityScheduledExecutor(1, 1, 1000);
+    // add directly to avoid starting the consumer
+    result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                        TaskPriority.High, 0));
+    result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                        TaskPriority.High, 0));
+    
+    assertEquals(result.getScheduledTaskCount(), 2);
+    
+    result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                      TaskPriority.Low, 0));
+    result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                      TaskPriority.Low, 0));
+    
+    assertEquals(result.getScheduledTaskCount(), 4);
+    assertEquals(result.getScheduledTaskCount(null), 4);
+  }
+  
+  @Test
+  public void getScheduledTaskCountLowPriorityTest() {
+    PriorityScheduledExecutor result = new PriorityScheduledExecutor(1, 1, 1000);
+    // add directly to avoid starting the consumer
+    result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                        TaskPriority.High, 0));
+    result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                        TaskPriority.High, 0));
+    
+    assertEquals(result.getScheduledTaskCount(TaskPriority.Low), 0);
+    
+    result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                      TaskPriority.Low, 0));
+    result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                      TaskPriority.Low, 0));
+    
+    assertEquals(result.getScheduledTaskCount(TaskPriority.Low), 2);
+  }
+  
+  @Test
+  public void getScheduledTaskCountHighPriorityTest() {
+    PriorityScheduledExecutor result = new PriorityScheduledExecutor(1, 1, 1000);
+    // add directly to avoid starting the consumer
+    result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                        TaskPriority.High, 0));
+    result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                        TaskPriority.High, 0));
+    
+    assertEquals(result.getScheduledTaskCount(TaskPriority.High), 2);
+    
+    result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                      TaskPriority.Low, 0));
+    result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
+                                                      TaskPriority.Low, 0));
+    
+    assertEquals(result.getScheduledTaskCount(TaskPriority.High), 2);
+  }
+  
+  @Test
   public void getCurrentPoolSizeTest() {
     getCurrentPoolSizeTest(new PriorityScheduledExecutorTestFactory());
   }
@@ -840,7 +898,7 @@ public class PriorityScheduledExecutorTest {
     
     @Override
     public SubmitterSchedulerInterface make(int poolSize,
-                                         boolean prestartIfAvailable) {
+                                            boolean prestartIfAvailable) {
       PriorityScheduledExecutor result = factory.make(poolSize, poolSize, 500);
       if (prestartIfAvailable) {
         result.prestartAllCoreThreads();

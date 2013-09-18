@@ -369,6 +369,38 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
+   * Returns how many tasks are either waiting to be executed, 
+   * or are scheduled to be executed at a future point.
+   * 
+   * @return qty of tasks waiting execution or scheduled to be executed later
+   */
+  public int getScheduledTaskCount() {
+    return highPriorityQueue.size() + lowPriorityQueue.size();
+  }
+  
+  /**
+   * Returns a count of how many tasks are either waiting to be executed, 
+   * or are scheduled to be executed at a future point for a specific priority.
+   * 
+   * @param priority priority for tasks to be counted
+   * @return qty of tasks waiting execution or scheduled to be executed later
+   */
+  public int getScheduledTaskCount(TaskPriority priority) {
+    if (priority == null) {
+      return getScheduledTaskCount();
+    }
+    
+    switch (priority) {
+      case High:
+        return highPriorityQueue.size();
+      case Low:
+        return lowPriorityQueue.size();
+      default:
+        throw new UnsupportedOperationException("Not implemented for priority: " + priority);
+    }
+  }
+  
+  /**
    * Prestarts all core threads.  This will make new idle workers to accept future tasks.
    */
   public void prestartAllCoreThreads() {
@@ -1216,7 +1248,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * 
    * @author jent - Mike Jensen
    */
-  private class ShutdownRunnable implements Runnable {
+  protected class ShutdownRunnable implements Runnable {
     @Override
     public void run() {
       shutdownNow();
