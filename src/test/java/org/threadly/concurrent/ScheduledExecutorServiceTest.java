@@ -25,7 +25,7 @@ public class ScheduledExecutorServiceTest {
     scheduler.execute(tr);
     
     tr.blockTillStarted();
-    scheduler.shutdown();
+    scheduler.shutdownNow();
 
     tr.blockTillFinished();
     TestUtils.sleep(100);
@@ -46,7 +46,7 @@ public class ScheduledExecutorServiceTest {
     scheduler.execute(tr);
     
     tr.blockTillStarted();
-    scheduler.shutdown();
+    scheduler.shutdownNow();
 
     tr.blockTillFinished();
     TestUtils.sleep(100);
