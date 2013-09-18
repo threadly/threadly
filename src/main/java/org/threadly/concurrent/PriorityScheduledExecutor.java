@@ -451,7 +451,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public void shutdown() {
     if (! shutdownStarted.getAndSet(true)) {
       addToHighPriorityQueue(new OneTimeTaskWrapper(new ShutdownRunnable(), 
-                                                    TaskPriority.High, 0));
+                                                    TaskPriority.High, 1));
     }
   }
 
