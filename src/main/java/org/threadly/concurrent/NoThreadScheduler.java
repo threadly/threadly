@@ -1,21 +1,19 @@
-package org.threadly.test.concurrent;
+package org.threadly.concurrent;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.threadly.concurrent.SubmitterSchedulerInterface;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
  * Executor which has no threads itself.  This can be useful for testing.
- * It is similar to {@link TestablePriorityScheduler} except it is much less advanced.
  * It has the same semantics that it only progressed forward with .tick(), but
  * since it is running on the calling thread, calls to .wait() and .sleep() will
  * block (possibly forever).
@@ -52,17 +50,17 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     return submit(task, null);
   }
 
   @Override
-  public <T> Future<T> submit(Runnable task, T result) {
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
     return submitScheduled(task, result, 0);
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     return submitScheduled(task, 0);
   }
 
@@ -72,12 +70,12 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, null, delayInMs);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Runnable task, T result, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
     
     add(new OneTimeRunnable(lft, delayInMs));
@@ -86,7 +84,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
     
     add(new OneTimeRunnable(lft, delayInMs));

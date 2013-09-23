@@ -1,4 +1,4 @@
-package org.threadly.test.concurrent;
+package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
@@ -11,8 +11,7 @@ import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.TestCallable;
-import org.threadly.test.concurrent.NoThreadScheduler;
+import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
