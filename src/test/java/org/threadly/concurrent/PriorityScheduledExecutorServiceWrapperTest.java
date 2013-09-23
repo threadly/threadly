@@ -4,8 +4,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
@@ -147,6 +149,19 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     }
   }
   
+  @Test (expected = NullPointerException.class)
+  public void scheduleRunnableFail() throws InterruptedException, 
+                                            ExecutionException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      wrapper.schedule((Runnable)null, 10, TimeUnit.MILLISECONDS);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
   @Test
   public void scheduleCallableTest() throws InterruptedException, 
                                             ExecutionException {
@@ -155,6 +170,19 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleCallableTest(wrapper);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test (expected = NullPointerException.class)
+  public void scheduleCallableFail() throws InterruptedException, 
+                                            ExecutionException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      wrapper.schedule((Callable<?>)null, 10, TimeUnit.MILLISECONDS);
     } finally {
       executor.shutdownNow();
     }

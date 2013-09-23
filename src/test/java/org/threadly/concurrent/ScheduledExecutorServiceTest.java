@@ -158,10 +158,12 @@ public class ScheduledExecutorServiceTest {
     TestCallable tcDelay = new TestCallable(0);
     ScheduledFuture<Object> delayF = scheduler.schedule(tcDelay, 20, TimeUnit.MILLISECONDS);
     long delay = delayF.getDelay(TimeUnit.MILLISECONDS);
-    delayF.cancel(true);
+    boolean canceled = delayF.cancel(true);
     
     assertTrue(delay <= 20);
-    assertTrue(delayF.isCancelled());
+    if (canceled) {
+      assertTrue(delayF.isCancelled());
+    }
   }
   
   public static void scheduleWithFixedDelayTest(ScheduledExecutorService scheduler) {

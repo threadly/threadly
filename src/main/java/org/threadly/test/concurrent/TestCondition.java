@@ -11,7 +11,7 @@ import java.util.concurrent.locks.LockSupport;
  */
 public abstract class TestCondition {
   private static final int NANOS_IN_MILLISECOND = 1000000;
-  private static final int DEFAULT_POLL_INTERVAL = 20;
+  private static final int DEFAULT_POLL_INTERVAL = 10;
   private static final int DEFAULT_TIMEOUT = 1000 * 10;
   private static final int SPIN_THRESHOLD = 10;
   
