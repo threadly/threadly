@@ -24,6 +24,8 @@ public class ClockTest {
     // verify clock is not updating
     long before = Clock.lastKnownTimeMillis();
     
+    TestUtils.blockTillClockAdvances();
+    
     // update clock
     long newTime;
     assertTrue((newTime = Clock.accurateTime()) > before);
