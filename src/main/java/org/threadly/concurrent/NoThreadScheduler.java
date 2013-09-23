@@ -36,6 +36,10 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * Constructs a new thread scheduler.  Making scheduler thread safe causes
    * some small additional performance reductions (for when that is important).
    * 
+   * Passing in a false expects that it is always the same thread which is 
+   * adding tasks, removing tasks, and calling tick.  The only operation which 
+   * is always thread safe is the handling of Futures.
+   * 
    * @param makeThreadSafe Make scheduler able to accept executions from multiple threads
    */
   public NoThreadScheduler(boolean makeThreadSafe) {
