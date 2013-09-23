@@ -87,7 +87,7 @@ public class TestRunnable extends VirtualRunnable {
   public long getDelayTillRun(int runNumber, int timeout) {
     blockTillFinished(timeout, runNumber);
     
-    return runTime.get(runNumber - 1) - creationTime;
+    return runTime.get(runNumber - 1) - getCreationTime();
   }
   
   /**

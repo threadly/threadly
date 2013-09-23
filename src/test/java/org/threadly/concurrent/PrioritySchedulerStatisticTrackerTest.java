@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutorTest.PriorityScheduledExecutorFactory;
@@ -19,6 +20,17 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerTest {
+  @Test
+  public void constructorTest() {
+    new PrioritySchedulerStatisticTracker(1, 1, 1000);
+    new PrioritySchedulerStatisticTracker(1, 1, 1000, false);
+    new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                          TaskPriority.High, 100);
+    new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                          TaskPriority.High, 100, false);
+    new PrioritySchedulerStatisticTracker(1, 1, 1000, TaskPriority.High, 100, 
+                                          Executors.defaultThreadFactory());
+  }
   @Test
   public void getDefaultPriorityTest() {
     PriorityScheduledExecutorTest.getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
@@ -778,6 +790,10 @@ public class PrioritySchedulerStatisticTrackerTest {
     int highPriorityCount = 10;
     final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                               TaskPriority.High, 100);
+
+    assertEquals(scheduler.getHighPriorityMedianExecutionDelay(), -1);
+    assertEquals(scheduler.getLowPriorityMedianExecutionDelay(), -1);
+    
     try {
       BlockRunnable lastRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {

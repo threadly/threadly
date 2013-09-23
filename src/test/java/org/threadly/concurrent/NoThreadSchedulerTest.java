@@ -18,19 +18,22 @@ import org.threadly.test.concurrent.TestRunnable;
 public class NoThreadSchedulerTest {
   private static final int TEST_QTY = 10;
   
-  private NoThreadScheduler scheduler;
+  private NoThreadScheduler threadSafeScheduler;
+  private NoThreadScheduler notSafeScheduler;
   
   @Before
   public void setup() {
-    scheduler = new NoThreadScheduler();
+    threadSafeScheduler = new NoThreadScheduler(true);
+    notSafeScheduler = new NoThreadScheduler(false);
   }
   
   @After
   public void tearDown() {
-    scheduler = null;
+    threadSafeScheduler = null;
+    notSafeScheduler = null;
   }
   
-  private List<TestRunnable> getRunnableList() {
+  private static List<TestRunnable> getRunnableList() {
     List<TestRunnable> result = new ArrayList<TestRunnable>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       result.add(new TestRunnable());
@@ -39,7 +42,7 @@ public class NoThreadSchedulerTest {
     return result;
   }
   
-  private List<TestCallable> getCallableList() {
+  private static List<TestCallable> getCallableList() {
     List<TestCallable> result = new ArrayList<TestCallable>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       result.add(new TestCallable());
@@ -50,11 +53,21 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void isShutdownTest() {
-    assertFalse(scheduler.isShutdown());
+    assertFalse(threadSafeScheduler.isShutdown());
+    assertFalse(notSafeScheduler.isShutdown());
+  }
+  
+  @Test
+  public void threadSafeExecuteTest() {
+    executeTest(threadSafeScheduler);
   }
   
   @Test
   public void executeTest() {
+    executeTest(notSafeScheduler);
+  }
+  
+  private static void executeTest(NoThreadScheduler scheduler) {
     List<TestRunnable> runnables = getRunnableList();
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
@@ -79,7 +92,16 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void threadSafeSubmitRunnableTest() {
+    submitRunnableTest(threadSafeScheduler);
+  }
+  
+  @Test
   public void submitRunnableTest() {
+    submitRunnableTest(notSafeScheduler);
+  }
+  
+  private static void submitRunnableTest(NoThreadScheduler scheduler) {
     List<TestRunnable> runnables = getRunnableList();
     List<Future<?>> futures = new ArrayList<Future<?>>(runnables.size());
     Iterator<TestRunnable> it = runnables.iterator();
@@ -112,7 +134,20 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void submitCallableTest() throws InterruptedException, ExecutionException {
+  public void threadSafeSubmitCallableTest() throws InterruptedException, 
+                                                    ExecutionException {
+    submitCallableTest(threadSafeScheduler);
+  }
+
+  
+  @Test
+  public void submitCallableTest() throws InterruptedException, 
+                                          ExecutionException {
+    submitCallableTest(notSafeScheduler);
+  }
+  
+  private static void submitCallableTest(NoThreadScheduler scheduler) throws InterruptedException, 
+                                                                             ExecutionException {
     List<TestCallable> callables = getCallableList();
     List<Future<Object>> futures = new ArrayList<Future<Object>>(callables.size());
     Iterator<TestCallable> it = callables.iterator();
@@ -142,7 +177,16 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void threadSafeScheduleRunnableTest() {
+    scheduleRunnableTest(threadSafeScheduler);
+  }
+  
+  @Test
   public void scheduleRunnableTest() {
+    scheduleRunnableTest(notSafeScheduler);
+  }
+  
+  private static void scheduleRunnableTest(NoThreadScheduler scheduler) {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable executeRun = new TestRunnable();
@@ -169,7 +213,16 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void threadSafeSubmitScheduledRunnableTest() {
+    submitScheduledRunnableTest(threadSafeScheduler);
+  }
+  
+  @Test
   public void submitScheduledRunnableTest() {
+    submitScheduledRunnableTest(notSafeScheduler);
+  }
+  
+  private static void submitScheduledRunnableTest(NoThreadScheduler scheduler) {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable submitRun = new TestRunnable();
@@ -198,7 +251,16 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void threadSafeSubmitScheduledCallableTest() {
+    submitScheduledCallableTest(threadSafeScheduler);
+  }
+  
+  @Test
   public void submitScheduledCallableTest() {
+    submitScheduledCallableTest(notSafeScheduler);
+  }
+  
+  private static void submitScheduledCallableTest(NoThreadScheduler scheduler) {
     long scheduleDelay = 1000 * 10;
     
     TestCallable submitRun = new TestCallable();
@@ -223,7 +285,16 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void threadSafeRecurringTest() {
+    recurringTest(threadSafeScheduler);
+  }
+  
+  @Test
   public void recurringTest() {
+    recurringTest(notSafeScheduler);
+  }
+  
+  private static void recurringTest(NoThreadScheduler scheduler) {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
@@ -255,7 +326,16 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void threadSafeRemoveTest() {
+    removeTest(threadSafeScheduler);
+  }
+  
+  @Test
   public void removeTest() {
+    removeTest(notSafeScheduler);
+  }
+  
+  private static void removeTest(NoThreadScheduler scheduler) {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
@@ -289,7 +369,15 @@ public class NoThreadSchedulerTest {
   }
   
   @Test (expected = IllegalArgumentException.class)
+  public void threadSafeTickFail() {
+    tickFail(threadSafeScheduler);
+  }
+
   public void tickFail() {
+    tickFail(notSafeScheduler);
+  }
+  
+  private static void tickFail(NoThreadScheduler scheduler) {
     long now;
     scheduler.tick(now = System.currentTimeMillis());
     
