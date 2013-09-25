@@ -1,15 +1,16 @@
 package org.threadly.util;
 
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.Writer;
 
 /**
- * Utilities for doing basic things with exceptions.
+ * Utilities for doing basic operations with exceptions.
  * 
  * @author jent - Mike Jensen
  */
 public class ExceptionUtils {
+  private static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 32;
+  
   private ExceptionUtils() {
     // don't construct
   }
@@ -42,8 +43,7 @@ public class ExceptionUtils {
   }
   
   /**
-   * Convert throwable's stack and message into a 
-   * simple string.
+   * Convert throwable's stack and message into a simple string.
    * 
    * @param t throwable which contains stack
    * @return string which contains the throwable stack trace
@@ -53,20 +53,52 @@ public class ExceptionUtils {
       return "";
     }
     
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
+    String msg = t.getMessage();
+    int msgLength = (msg == null ? 0 : msg.length());
+    StringBuilder sb = new StringBuilder(msgLength + INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK);
+    
+    writeStackTo(t, sb);
+    
+    return sb.toString();
+  }
+  
+  /**
+   * Formats and writes a throwable's stack trace to a provided {@link StringBuilder}.
+   * 
+   * @param t throwable which contains stack
+   * @param sb StringBuilder to write output to
+   */
+  public static void writeStackTo(Throwable t, StringBuilder sb) {
+    writeStackTo(t, new StringBuilderWriter(sb));
+  }
+  
+  /**
+   * Formats and writes a throwable's stack trace to a provided {@link StringBuffer}.
+   * 
+   * @param t throwable which contains stack
+   * @param sb StringBuffer to write output to
+   */
+  public static void writeStackTo(Throwable t, StringBuffer sb) {
+    writeStackTo(t, new StringBufferWriter(sb));
+  }
+  
+  /**
+   * Formats and writes a throwable's stack trace to a provided {@link Writer}.
+   * 
+   * @param t throwable which contains stack
+   * @param w Writer to write output to
+   */
+  public static void writeStackTo(Throwable t, Writer w) {
+    if (t == null) {
+      return;
+    }
+    
+    PrintWriter pw = new PrintWriter(w);
     try {
       t.printStackTrace(pw);
-      String result = sw.toString();
-      return result;
+      pw.flush();
     } finally {
-      try {
-        sw.close();
-      } catch (IOException e) {
-        throw makeRuntime(e);
-      } finally {
-        pw.close();
-      }
+      pw.close();
     }
   }
   
