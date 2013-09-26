@@ -1,5 +1,7 @@
 package org.threadly.test.concurrent;
 
+import org.threadly.util.Clock;
+
 /**
  * Generic tools to be used in unit testing.
  * 
@@ -32,11 +34,11 @@ public class TestUtils {
       private static final int TIMEOUT_IN_MS = 1000;
       private static final int POLL_INTERVAL_IN_MS = 1;
       
-      private final long startTime = System.currentTimeMillis();
+      private final long startTime = Clock.accurateTime();
       
       @Override
       public boolean get() {
-        return System.currentTimeMillis() != startTime;
+        return Clock.accurateTime() != startTime;
       }
       
       @Override

@@ -73,4 +73,48 @@ public class ExceptionUtilsTest {
     
     assertEquals(result.length(), 0);
   }
+  
+  @Test
+  public void writeStackToBuilderTest() {
+    String message = "TestMessage";
+    Exception testException = new Exception(message);
+    StringBuilder sb = new StringBuilder();
+    ExceptionUtils.writeStackTo(testException, sb);
+    String result = sb.toString();
+    assertNotNull(result);
+    
+    StringTokenizer st = new StringTokenizer(result, "\n");
+    assertEquals(st.countTokens(), testException.getStackTrace().length + 1);
+    assertTrue(result.contains(message));
+  }
+  
+  @Test
+  public void writeStackToBuilderNullTest() {
+    StringBuilder sb = new StringBuilder();
+    ExceptionUtils.writeStackTo(null, sb);
+    
+    assertEquals(sb.length(), 0);
+  }
+  
+  @Test
+  public void writeStackToBufferTest() {
+    String message = "TestMessage";
+    Exception testException = new Exception(message);
+    StringBuffer sb = new StringBuffer();
+    ExceptionUtils.writeStackTo(testException, sb);
+    String result = sb.toString();
+    assertNotNull(result);
+    
+    StringTokenizer st = new StringTokenizer(result, "\n");
+    assertEquals(st.countTokens(), testException.getStackTrace().length + 1);
+    assertTrue(result.contains(message));
+  }
+  
+  @Test
+  public void writeStackToBufferNullTest() {
+    StringBuffer sb = new StringBuffer();
+    ExceptionUtils.writeStackTo(null, sb);
+    
+    assertEquals(sb.length(), 0);
+  }
 }
