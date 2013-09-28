@@ -90,7 +90,8 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     long startTime = Clock.accurateTime();
     long waitTimeInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
     while (! isTerminated() && 
-           Clock.accurateTime() - startTime < waitTimeInMs) {
+           Clock.accurateTime() - startTime < waitTimeInMs && 
+           ! Thread.interrupted()) {
       LockSupport.parkNanos(AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS);
     }
     

@@ -468,8 +468,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     synchronized (workersLock) {
       Iterator<Worker> it = availableWorkers.iterator();
       while (it.hasNext()) {
-        killWorker(it.next());
+        Worker w = it.next();
         it.remove();
+        killWorker(w);
       }
     }
   }
@@ -867,8 +868,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   private void killWorker(Worker w) {
     synchronized (workersLock) {
-      w.stop();
       currentPoolSize--;
+      // it may not always be here, but it sometimes can (for example when a worker is interrupted)
+      availableWorkers.remove(w);
+      w.stop();
     }
   }
   
@@ -950,9 +953,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     public void stop() {
-      running = false;
-      
-      LockSupport.unpark(thread);
+      if (! running) {
+        return;
+      } else {
+        running = false;
+        
+        LockSupport.unpark(thread);
+      }
     }
 
     public void start() {
@@ -972,13 +979,17 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       }
       
       nextTask = task;
-      
+
       LockSupport.unpark(thread);
     }
     
     public void blockTillNextTask() {
       while (nextTask == null && running) {
-        LockSupport.park();
+        LockSupport.park(this);
+        
+        if (thread.isInterrupted()) {
+          killWorker(this);
+        }
       }
     }
     

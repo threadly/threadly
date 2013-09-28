@@ -81,7 +81,7 @@ public class DebugLogger {
     try {
       Thread.sleep(100);  // wait for any possibly log messages attempting to be currently stored
     } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+      // go ahead and produce results now and quit quickly
     }
     
     StringBuilder result = new StringBuilder();
@@ -99,6 +99,7 @@ public class DebugLogger {
         result.append(MESSAGE_DELIM);
       }
     }
+    
     return result.toString();
   }
   
