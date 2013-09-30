@@ -1005,8 +1005,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } catch (Throwable t) {
           if (t instanceof InterruptedException || 
               t instanceof OutOfMemoryError) {
-            // this will stop the worker, and thus prevent it from calling workerDone
-            killWorker(this);
+            if (running) {  // if not running killWorker has already been called
+              // this will stop the worker, and thus prevent it from calling workerDone
+              killWorker(this);
+            }
           } else {
             UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
             if (handler != null) {
@@ -1018,8 +1020,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         } finally {
           nextTask = null;
           if (running) {
-            lastRunTime = ClockWrapper.getLastKnownTime();
-            workerDone(this);
+            if (Thread.interrupted()) { // only check if still running, otherwise worker has already been killed
+              killWorker(this);
+            } else {
+              lastRunTime = ClockWrapper.getLastKnownTime();
+              workerDone(this);
+            }
           }
         }
       }
