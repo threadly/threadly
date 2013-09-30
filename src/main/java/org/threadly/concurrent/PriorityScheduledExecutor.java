@@ -969,7 +969,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
 
     public void start() {
-      if (thread.isAlive()) {
+      if (running) {
         return;
       } else {
         running = true;
