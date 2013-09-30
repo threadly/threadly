@@ -152,7 +152,6 @@ public class BlockingQueueConsumer<T> implements Runnable {
         acceptor.acceptConsumedItem(next);
       } catch (InterruptedException e) {
         stop();
-        Thread.currentThread().interrupt();
       } catch (Throwable t) {
         UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
         if (handler != null) {

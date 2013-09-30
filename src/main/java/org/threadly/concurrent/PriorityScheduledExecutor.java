@@ -468,8 +468,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     synchronized (workersLock) {
       Iterator<Worker> it = availableWorkers.iterator();
       while (it.hasNext()) {
-        killWorker(it.next());
+        Worker w = it.next();
         it.remove();
+        killWorker(w);
       }
     }
   }
@@ -867,8 +868,15 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   private void killWorker(Worker w) {
     synchronized (workersLock) {
-      w.stop();
-      currentPoolSize--;
+      /* we check running around workersLock since we want to make sure 
+       * we don't decrement the pool size more than once for a single worker
+       */
+      if (w.running) {
+        currentPoolSize--;
+        // it may not always be here, but it sometimes can (for example when a worker is interrupted)
+        availableWorkers.remove(w);
+        w.stop(); // will set running to false for worker
+      }
     }
   }
   
@@ -937,7 +945,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @author jent - Mike Jensen
    */
   protected class Worker implements Runnable {
-    private final Thread thread;
+    protected final Thread thread;
     private volatile long lastRunTime;
     private volatile boolean running;
     private volatile TaskWrapper nextTask;
@@ -949,14 +957,19 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       nextTask = null;
     }
     
+    // should only be called from killWorker
     public void stop() {
-      running = false;
-      
-      LockSupport.unpark(thread);
+      if (! running) {
+        return;
+      } else {
+        running = false;
+        
+        LockSupport.unpark(thread);
+      }
     }
 
     public void start() {
-      if (thread.isAlive()) {
+      if (running) {
         return;
       } else {
         running = true;
@@ -972,13 +985,25 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       }
       
       nextTask = task;
-      
+
       LockSupport.unpark(thread);
     }
     
     public void blockTillNextTask() {
       while (nextTask == null && running) {
-        LockSupport.park();
+        LockSupport.park(this);
+        
+        if (Thread.interrupted()) { // check and clear interrupt
+          /* We don't care about checking the shutdown state here because the interrupted status 
+           * was already cleared after the run of the last task.  So someone really wants to kill 
+           * this thread (and hopefully already called shutdown).  We will respect the request to 
+           * allow this thread to die at this point.
+           * 
+           * if (somehow) provided a new task, by the time killWorker returns we will still 
+           * run that task before quitting.
+           */
+          killWorker(this);
+        }
       }
     }
     
@@ -992,23 +1017,23 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             nextTask.run();
           }
         } catch (Throwable t) {
-          if (t instanceof InterruptedException || 
-              t instanceof OutOfMemoryError) {
-            // this will stop the worker, and thus prevent it from calling workerDone
-            killWorker(this);
+          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+          if (handler != null) {
+            handler.uncaughtException(thread, t);
           } else {
-            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-            if (handler != null) {
-              handler.uncaughtException(Thread.currentThread(), t);
-            } else {
-              t.printStackTrace();
-            }
+            t.printStackTrace(System.err);
           }
         } finally {
           nextTask = null;
           if (running) {
-            lastRunTime = ClockWrapper.getLastKnownTime();
-            workerDone(this);
+            // only check if still running, otherwise worker has already been killed
+            if (Thread.interrupted() && // clear interrupt
+                shutdownFinishing) {  // if shutting down kill worker
+              killWorker(this);
+            } else {
+              lastRunTime = ClockWrapper.getLastKnownTime();
+              workerDone(this);
+            }
           }
         }
       }

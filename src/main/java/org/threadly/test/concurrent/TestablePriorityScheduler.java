@@ -227,7 +227,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
     return false;
   }
   
-  private void wantToRun(boolean mainThread, Runnable runBeforeBlocking) {
+  private void wantToRun(boolean mainThread, Runnable runBeforeBlocking) throws InterruptedException {
     synchronized (tickLock) {
       waitingForThreadCount++;
       if (runBeforeBlocking != null) {
@@ -236,23 +236,15 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
       
       while (mainThread && waitingForThreadCount > 1) {
         // give others a chance
-        try {
-          tickLock.wait();
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
+        tickLock.wait();
       }
     }
     
-    try {
-      Object runningLock = threadQueue.take();
-      if (this.runningLock != null) {
-        throw new IllegalStateException("Running lock already set: " + this.runningLock);
-      } else {
-        this.runningLock = runningLock;
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    Object runningLock = threadQueue.take();
+    if (this.runningLock != null) {
+      throw new IllegalStateException("Running lock already set: " + this.runningLock);
+    } else {
+      this.runningLock = runningLock;
     }
   }
   
@@ -300,23 +292,28 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
    */
   public int tick(long currentTime) {
     updateTime(currentTime);
-    
-    wantToRun(true, null);
-    
     int ranTasks = 0;
-    RunnableContainer nextTask = getNextTask();
-    while (nextTask != null) {
-      ranTasks++;
+
+    try {
+      wantToRun(true, null);
       try {
-        handleTask(nextTask);
+        RunnableContainer nextTask = getNextTask();
+        while (nextTask != null) {
+          ranTasks++;
+          handleTask(nextTask);
+          nextTask = getNextTask();
+        }
       } catch (InterruptedException e) {
+        // allow tick call to return
         Thread.currentThread().interrupt();
       }
-      nextTask = getNextTask();
+      
+      // we must yield right before we return so next tick can run
+      yielding();
+    } catch (InterruptedException e) {
+      // allow tick call to return
+      Thread.currentThread().interrupt();
     }
-    
-    // we must yield right before we return so next tick can run
-    yielding();
     
     if (threadQueue.size() != 1) {
       throw new IllegalStateException("Someone took the lock before we returned: " + 
@@ -468,12 +465,16 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
 
     @Override
     public void run() {
-      wantToRun(false, null);  // must become running thread
-      running = true;
       try {
-        run(TestablePriorityScheduler.this);
-      } finally {
-        handleDone();
+        wantToRun(false, null);  // must become running thread
+        running = true;
+        try {
+          run(TestablePriorityScheduler.this);
+        } finally {
+          handleDone();
+        }
+      } catch (InterruptedException e) {
+        // allow thread to quit
       }
     }
     

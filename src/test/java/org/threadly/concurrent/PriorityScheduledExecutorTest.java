@@ -12,7 +12,9 @@ import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
@@ -381,6 +383,46 @@ public class PriorityScheduledExecutorTest {
       fail("Exception should have been thrown");
     } finally {
       factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void interruptedExecutionTest() {
+    final long taskRunTime = 1000 * 10;
+    final PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 1000);
+    try {
+      TestRunnable tr = new TestRunnable() {
+        @Override
+        public void handleRunFinish() {
+          long startTime = System.currentTimeMillis();
+          Thread currentThread = Thread.currentThread();
+          while (System.currentTimeMillis() - startTime < taskRunTime && 
+                 ! currentThread.isInterrupted()) {
+            // spin
+          }
+        }
+      };
+      
+      ListenableFuture<?> future = executor.submit(tr);
+      
+      tr.blockTillStarted();
+      assertEquals(executor.getCurrentPoolSize(), 1);
+      
+      assertTrue(future.cancel(true));
+      
+      // verify worker was returned to pool
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return executor.availableWorkers.size() == 1;
+        }
+      }.blockTillTrue(1000, 5); // will throw an exception if not true
+      // verify pool size is still correct
+      assertEquals(executor.getCurrentPoolSize(), 1);
+      // verify interrupted status has been cleared
+      assertFalse(executor.availableWorkers.getFirst().thread.isInterrupted());
+    } finally {
+      executor.shutdownNow();
     }
   }
   

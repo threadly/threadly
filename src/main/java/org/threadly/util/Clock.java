@@ -54,6 +54,9 @@ public class Clock {
 
   /**
    * Stops the clock from updating automatically (used for testing).
+   * 
+   * This call blocks until the automatic update thread stops, or 
+   * until this thread is interrupted.
    */
   public static void stopClockUpdateThread() {
     ClockUpdater oldUpdater;
@@ -66,7 +69,9 @@ public class Clock {
     }
     
     if (oldUpdater != null) {
-      while (! oldUpdater.runnableFinished) {
+      Thread currentThread = Thread.currentThread();
+      while (! oldUpdater.runnableFinished && 
+             ! currentThread.isInterrupted()) {
         LockSupport.parkNanos(STOP_PARK_TIME_IN_NANOS);
       }
     }
@@ -110,7 +115,9 @@ public class Clock {
               accurateTime();
               
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
-            } catch (InterruptedException ignored) { }
+            } catch (InterruptedException e) {
+              clockUpdater = null;  // let thread exit
+            }
           }
         }
       } finally {
