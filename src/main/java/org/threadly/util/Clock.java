@@ -69,8 +69,9 @@ public class Clock {
     }
     
     if (oldUpdater != null) {
+      Thread currentThread = Thread.currentThread();
       while (! oldUpdater.runnableFinished && 
-             ! Thread.interrupted()) {
+             ! currentThread.isInterrupted()) {
         LockSupport.parkNanos(STOP_PARK_TIME_IN_NANOS);
       }
     }

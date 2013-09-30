@@ -868,10 +868,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   private void killWorker(Worker w) {
     synchronized (workersLock) {
-      currentPoolSize--;
-      // it may not always be here, but it sometimes can (for example when a worker is interrupted)
-      availableWorkers.remove(w);
-      w.stop();
+      if (w.running) {  // we check running here since we want to make sure we don't decrement the pool size more than once for a single worker
+        currentPoolSize--;
+        // it may not always be here, but it sometimes can (for example when a worker is interrupted)
+        availableWorkers.remove(w);
+        w.stop(); // will set running to false for worker
+      }
     }
   }
   
@@ -940,7 +942,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @author jent - Mike Jensen
    */
   protected class Worker implements Runnable {
-    private final Thread thread;
+    protected final Thread thread;
     private volatile long lastRunTime;
     private volatile boolean running;
     private volatile TaskWrapper nextTask;
@@ -952,6 +954,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       nextTask = null;
     }
     
+    // should only be called from killWorker
     public void stop() {
       if (! running) {
         return;
@@ -987,8 +990,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       while (nextTask == null && running) {
         LockSupport.park(this);
         
-        if (thread.isInterrupted()) {
-          killWorker(this);
+        if (Thread.interrupted() && // clear interrupt
+            shutdownFinishing) { // if shutting down, kill worker
+          killWorker(this); // if provided a new task, we will still run that task before quitting
         }
       }
     }
@@ -1003,24 +1007,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             nextTask.run();
           }
         } catch (Throwable t) {
-          if (t instanceof InterruptedException || 
-              t instanceof OutOfMemoryError) {
-            if (running) {  // if not running killWorker has already been called
-              // this will stop the worker, and thus prevent it from calling workerDone
-              killWorker(this);
-            }
+          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
+          if (handler != null) {
+            handler.uncaughtException(thread, t);
           } else {
-            UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-            if (handler != null) {
-              handler.uncaughtException(Thread.currentThread(), t);
-            } else {
-              t.printStackTrace();
-            }
+            t.printStackTrace(System.err);
           }
         } finally {
           nextTask = null;
           if (running) {
-            if (Thread.interrupted()) { // only check if still running, otherwise worker has already been killed
+            // only check if still running, otherwise worker has already been killed
+            if (Thread.interrupted() && // clear interrupt
+                shutdownFinishing) {  // if shutting down kill worker
               killWorker(this);
             } else {
               lastRunTime = ClockWrapper.getLastKnownTime();
