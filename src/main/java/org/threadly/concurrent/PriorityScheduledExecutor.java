@@ -868,7 +868,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   private void killWorker(Worker w) {
     synchronized (workersLock) {
-      if (w.running) {  // we check running here since we want to make sure we don't decrement the pool size more than once for a single worker
+      /* we check running around workersLock since we want to make sure 
+       * we don't decrement the pool size more than once for a single worker
+       */
+      if (w.running) {
         currentPoolSize--;
         // it may not always be here, but it sometimes can (for example when a worker is interrupted)
         availableWorkers.remove(w);
