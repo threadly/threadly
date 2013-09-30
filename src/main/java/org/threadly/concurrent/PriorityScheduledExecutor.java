@@ -993,9 +993,16 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       while (nextTask == null && running) {
         LockSupport.park(this);
         
-        if (Thread.interrupted() && // clear interrupt
-            shutdownFinishing) { // if shutting down, kill worker
-          killWorker(this); // if provided a new task, we will still run that task before quitting
+        if (Thread.interrupted()) { // check and clear interrupt
+          /* We don't care about checking the shutdown state here because the interrupted status 
+           * was already cleared after the run of the last task.  So someone really wants to kill 
+           * this thread (and hopefully already called shutdown).  We will respect the request to 
+           * allow this thread to die at this point.
+           * 
+           * if (somehow) provided a new task, by the time killWorker returns we will still 
+           * run that task before quitting.
+           */
+          killWorker(this);
         }
       }
     }
