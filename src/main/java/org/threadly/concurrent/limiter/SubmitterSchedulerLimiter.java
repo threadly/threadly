@@ -253,7 +253,8 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionRunnable<T> extends VirtualRunnable {
+  protected class DelayedExecutionRunnable<T> extends VirtualRunnable
+                                              implements RunnableContainerInterface {
     private final Runnable runnable;
     private final T runnableResult;
     private final FutureFuture<T> future;
@@ -272,6 +273,11 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
       } else {
         doSubmit(runnable, runnableResult, future);
       }
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return runnable;
     }
   }
   
