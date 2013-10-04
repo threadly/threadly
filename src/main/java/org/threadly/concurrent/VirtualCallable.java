@@ -87,17 +87,41 @@ public abstract class VirtualCallable<T> implements Callable<T>  {
       throw new IllegalArgumentException("Must provide a task to be run within the callable");
     }
     
-    return new VirtualCallable<T>() {
-      @Override
-      public T call() throws Exception {
-        if (factory != null && task instanceof VirtualRunnable) {
-          ((VirtualRunnable)task).run(factory);
-        } else {
-          task.run();
-        }
-        
-        return result;
+    return new RunnableCallable<T>(task, result);
+  }
+  
+  /**
+   * Callable implementation which uses a runnable and result to handle 
+   * the actual run.
+   * 
+   * @author jent - Mike Jensen
+   * @param <T> type of result to be returned from callable
+   */
+  private static class RunnableCallable<T> extends VirtualCallable<T>
+                                           implements RunnableContainerInterface {
+    private final Runnable task;
+    private final T result;
+    
+    private RunnableCallable(Runnable task, 
+                             T result) {
+      this.task = task;
+      this.result = result;
+    }
+    
+    @Override
+    public T call() throws Exception {
+      if (factory != null && task instanceof VirtualRunnable) {
+        ((VirtualRunnable)task).run(factory);
+      } else {
+        task.run();
       }
-    };
+      
+      return result;
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
+    }
   }
 }

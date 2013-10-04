@@ -4,7 +4,9 @@ import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.PrioritySchedulerInterface;
+import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.future.FutureFuture;
@@ -334,7 +336,8 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionRunnable<T> extends VirtualRunnable {
+  protected class DelayedExecutionRunnable<T> extends VirtualRunnable
+                                              implements RunnableContainerInterface {
     private final Runnable runnable;
     private final T runnableResult;
     private final TaskPriority priority;
@@ -361,6 +364,11 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
         // catch exception in case scheduler shutdown
       }
     }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return runnable;
+    }
   }
   
   /**
@@ -369,7 +377,9 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionCallable<T> extends VirtualRunnable {
+  protected class DelayedExecutionCallable<T> extends VirtualRunnable
+                                              implements CallableContainerInterface<T>, 
+                                                         RunnableContainerInterface {
     private final Callable<T> callable;
     private final TaskPriority priority;
     private final FutureFuture<T> future;
@@ -386,6 +396,20 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     public void run() {
       doSubmit(callable, priority, future);
     }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      if (callable instanceof RunnableContainerInterface) {
+        return ((RunnableContainerInterface)callable).getContainedRunnable();
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public Callable<T> getContainedCallable() {
+      return callable;
+    }
   }
 
   /**
@@ -396,7 +420,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * @author jent - Mike Jensen
    */
   protected class RecurringRunnableWrapper extends LimiterRunnableWrapper
-                                           implements Wrapper  {
+                                           implements Wrapper {
     private final long recurringDelay;
     private final TaskPriority priority;
     private final DelayedExecutionRunnable<?> delayRunnable;

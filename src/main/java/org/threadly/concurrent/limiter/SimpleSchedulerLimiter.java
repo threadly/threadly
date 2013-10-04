@@ -1,5 +1,6 @@
 package org.threadly.concurrent.limiter;
 
+import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.VirtualRunnable;
 
@@ -96,7 +97,8 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionRunnable<T> extends VirtualRunnable {
+  protected class DelayedExecutionRunnable<T> extends VirtualRunnable
+                                              implements RunnableContainerInterface {
     private final Runnable runnable;
 
     public DelayedExecutionRunnable(Runnable runnable) {
@@ -106,6 +108,11 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
     @Override
     public void run() {
       execute(runnable);
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return runnable;
     }
   }
 

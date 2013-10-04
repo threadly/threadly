@@ -5,6 +5,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 
+import org.threadly.concurrent.CallableContainerInterface;
+import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.future.FutureFuture;
@@ -279,7 +281,9 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionCallable<T> extends VirtualRunnable {
+  protected class DelayedExecutionCallable<T> extends VirtualRunnable
+                                              implements CallableContainerInterface<T>, 
+                                                         RunnableContainerInterface {
     private final Callable<T> callable;
     private final FutureFuture<T> future;
 
@@ -292,6 +296,20 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
     @Override
     public void run() {
       doSubmit(callable, future);
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      if (callable instanceof RunnableContainerInterface) {
+        return ((RunnableContainerInterface)callable).getContainedRunnable();
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public Callable<T> getContainedCallable() {
+      return callable;
     }
   }
 
