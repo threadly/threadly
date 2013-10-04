@@ -595,21 +595,26 @@ public class PriorityScheduledExecutorTest {
     
     PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
     try {
-      TestRunnable task = new TestRunnable();
-      scheduler.scheduleWithFixedDelay(task, 0, runFrequency, priority);
-      task.blockTillStarted();
+      TestRunnable removedTask = new TestRunnable();
+      TestRunnable keptTask = new TestRunnable();
+      scheduler.scheduleWithFixedDelay(removedTask, 0, runFrequency, priority);
+      scheduler.scheduleWithFixedDelay(keptTask, 0, runFrequency, priority);
+      removedTask.blockTillStarted();
       
       assertFalse(scheduler.remove(new TestRunnable()));
       
-      assertTrue(scheduler.remove(task));
+      assertTrue(scheduler.remove(removedTask));
       
-      // verify no longer running
-      int runCount = task.getRunCount();
+      // verify removed is no longer running, and the kept task continues to run
+      int keptRunCount = keptTask.getRunCount();
+      int runCount = removedTask.getRunCount();
       TestUtils.sleep(runFrequency * 10);
 
       // may be +1 if the task was running while the remove was called
-      assertTrue(task.getRunCount() == runCount || 
-                 task.getRunCount() == runCount + 1);
+      assertTrue(removedTask.getRunCount() == runCount || 
+                 removedTask.getRunCount() == runCount + 1);
+      
+      assertTrue(keptTask.getRunCount() > keptRunCount);
     } finally {
       scheduler.shutdownNow();
     }
