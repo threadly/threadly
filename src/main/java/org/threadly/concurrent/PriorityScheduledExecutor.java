@@ -547,21 +547,84 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         if (tw.task.equals(task)) {
           tw.cancel();
           it.remove();
+          
           return true;
+        } else if (tw.task instanceof RunnableContainerInterface) {
+          // search if this is actually being wrapped by another object
+          RunnableContainerInterface rci = (RunnableContainerInterface)tw.task;
+          while (rci != null) {
+            Runnable containedTask = rci.getContainedRunnable();
+            if (containedTask != null) {
+              if (containedTask.equals(task)) {
+                tw.cancel();
+                it.remove();
+                
+                return true;
+              } else if (containedTask instanceof RunnableContainerInterface) {
+                rci = (RunnableContainerInterface)containedTask;
+              } else {
+                rci = null;
+              }
+            } else {
+              rci = null;
+            }
+          }
         }
       }
     }
+    
+    return false;
+  }
+  
+  protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
+                                               Callable<?> task) {
+    synchronized (queue.getLock()) {
+      Iterator<TaskWrapper> it = queue.iterator();
+      while (it.hasNext()) {
+        TaskWrapper tw = it.next();
+        if (tw.task instanceof CallableContainerInterface<?>) {
+          CallableContainerInterface<?> cci = (CallableContainerInterface<?>)tw.task;
+          while (cci != null) {
+            Callable<?> callable = cci.getContainedCallable();
+            if (callable.equals(task)) {
+              tw.cancel();
+              it.remove();
+              
+              return true;
+            } else if (callable instanceof CallableContainerInterface<?>) {
+              cci = (CallableContainerInterface<?>)callable;
+            } else {
+              cci = null;
+            }
+          }
+        }
+      }
+    }
+    
     return false;
   }
 
   /**
-   * Removes the task from the execution queue.  It is possible
+   * Removes the runnable task from the execution queue.  It is possible
    * for the task to still run until this call has returned.
    * 
    * @param task The original task provided to the executor
    * @return true if the task was found and removed
    */
   public boolean remove(Runnable task) {
+    return removeFromTaskQueue(highPriorityQueue, task) || 
+             removeFromTaskQueue(lowPriorityQueue, task);
+  }
+
+  /**
+   * Removes the callable task from the execution queue.  It is 
+   * possible for the callable to still run until this call has 
+   * returned.
+   * 
+   * @param task The original callable provided to the executor
+   * @return true if the callable was found and removed
+   */
+  public boolean remove(Callable<?> task) {
     return removeFromTaskQueue(highPriorityQueue, task) || 
              removeFromTaskQueue(lowPriorityQueue, task);
   }

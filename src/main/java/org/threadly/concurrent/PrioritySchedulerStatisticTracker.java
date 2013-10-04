@@ -689,7 +689,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * 
    * @author jent - Mike Jensen
    */
-  protected class Wrapper {
+  protected abstract class Wrapper {
     public final boolean callable;
     public final TaskPriority priority;
     public final boolean recurring;
@@ -708,7 +708,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * 
    * @author jent - Mike Jensen
    */
-  protected class RunnableStatWrapper extends Wrapper implements Runnable {
+  protected class RunnableStatWrapper extends Wrapper 
+                                      implements Runnable, 
+                                                 RunnableContainerInterface {
     private final Runnable toRun;
     
     public RunnableStatWrapper(Runnable toRun, 
@@ -728,6 +730,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
         trackTaskFinish(this);
       }
     }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return toRun;
+    }
   }
 
   /**
@@ -735,7 +742,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * 
    * @author jent - Mike Jensen
    */
-  protected class CallableStatWrapper<T> extends Wrapper implements Callable<T> {
+  protected class CallableStatWrapper<T> extends Wrapper 
+                                         implements Callable<T>, 
+                                                    CallableContainerInterface<T>, 
+                                                    RunnableContainerInterface {
     private final Callable<T> toRun;
     
     public CallableStatWrapper(Callable<T> toRun, 
@@ -754,6 +764,20 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       } finally {
         trackTaskFinish(this);
       }
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      if (toRun instanceof RunnableContainerInterface) {
+        return ((RunnableContainerInterface)toRun).getContainedRunnable();
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public Callable<T> getContainedCallable() {
+      return toRun;
     }
   }
 }

@@ -3,6 +3,8 @@ package org.threadly.concurrent.limiter;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.threadly.concurrent.CallableContainerInterface;
+import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.VirtualCallable;
 import org.threadly.concurrent.future.FutureFuture.TaskCanceler;
 import org.threadly.concurrent.future.StaticCancellationException;
@@ -30,7 +32,9 @@ abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter {
    * @param <T> type for return of callable contained within wrapper
    */
   protected class LimiterCallableWrapper<T> extends VirtualCallable<T>
-                                            implements TaskCanceler {
+                                            implements TaskCanceler, 
+                                                       CallableContainerInterface<T>, 
+                                                       RunnableContainerInterface {
     private final Callable<T> callable;
     private final AtomicInteger runStatus;  // 0 = not started, -1 = canceled, 1 = running
     
@@ -75,6 +79,20 @@ abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter {
     @Override
     public boolean cancel() {
       return runStatus.compareAndSet(0, -1);
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      if (callable instanceof RunnableContainerInterface) {
+        return ((RunnableContainerInterface)callable).getContainedRunnable();
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public Callable<T> getContainedCallable() {
+      return callable;
     }
   }
 }

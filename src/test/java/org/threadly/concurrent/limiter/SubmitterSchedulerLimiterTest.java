@@ -376,6 +376,40 @@ public class SubmitterSchedulerLimiterTest {
     
     SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
+  
+  @Test
+  public void removeRunnableTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    try {
+      SubmitterSchedulerLimiter limiter = new SubmitterSchedulerLimiter(scheduler, 2);
+      
+      TestRunnable task = new TestRunnable();
+      limiter.schedule(task, 1000 * 10);
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      
+      assertTrue(scheduler.remove(task));
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void removeCallableTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    try {
+      SubmitterSchedulerLimiter limiter = new SubmitterSchedulerLimiter(scheduler, 1);
+      
+      TestCallable task = new TestCallable();
+      limiter.submitScheduled(task, 1000 * 10);
+      
+      assertFalse(scheduler.remove(new TestCallable()));
+      
+      assertTrue(scheduler.remove(task));
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
 
   private class SchedulerLimiterFactory implements SubmitterSchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
