@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
+import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
@@ -147,6 +148,27 @@ public class SimpleSchedulerLimiterTest {
       
       assertTrue(scheduler.remove(task));
     } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void removeBlockedRunnableTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    BlockingTestRunnable blockingRunnable = new BlockingTestRunnable();
+    try {
+      SimpleSchedulerLimiter limiter = new SimpleSchedulerLimiter(scheduler, 2);
+      scheduler.execute(blockingRunnable);
+      scheduler.execute(blockingRunnable);
+      blockingRunnable.blockTillStarted();
+      
+      TestRunnable task = new TestRunnable();
+      limiter.execute(task);
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      assertTrue(scheduler.remove(task));
+    } finally {
+      blockingRunnable.unblock();
       scheduler.shutdownNow();
     }
   }
