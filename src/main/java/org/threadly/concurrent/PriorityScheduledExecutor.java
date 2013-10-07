@@ -1,6 +1,5 @@
 package org.threadly.concurrent;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -25,6 +24,7 @@ import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.ExceptionUtils;
 
 /**
  * Executor to run tasks, schedule tasks.  
@@ -1121,12 +1121,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             nextTask.run();
           }
         } catch (Throwable t) {
-          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-          if (handler != null) {
-            handler.uncaughtException(thread, t);
-          } else {
-            t.printStackTrace(System.err);
-          }
+          ExceptionUtils.handleUncaughtException(t);
         } finally {
           nextTask = null;
           if (running) {

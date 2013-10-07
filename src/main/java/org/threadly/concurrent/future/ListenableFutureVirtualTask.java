@@ -1,6 +1,5 @@
 package org.threadly.concurrent.future;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -102,12 +101,7 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
         if (throwException) {
           throw e;
         } else {
-          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-          if (handler != null) {
-            handler.uncaughtException(Thread.currentThread(), e);
-          } else {
-            e.printStackTrace();
-          }
+          ExceptionUtils.handleUncaughtException(e);
         }
       }
     }

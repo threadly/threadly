@@ -1,6 +1,5 @@
 package org.threadly.concurrent;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,6 +13,7 @@ import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.ExceptionUtils;
 
 /**
  * TaskDistributor is designed to take a multi-threaded pool
@@ -263,12 +263,7 @@ public class TaskExecutorDistributor {
               next.run();
             }
           } catch (Throwable t) {
-            UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
-            if (ueh != null) {
-              ueh.uncaughtException(Thread.currentThread(), t);
-            } else {
-              t.printStackTrace();
-            }
+            ExceptionUtils.handleUncaughtException(t);
           }
         }
       }

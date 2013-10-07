@@ -1,6 +1,5 @@
 package org.threadly.concurrent.future;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -16,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
+import org.threadly.util.ExceptionUtils;
 
 /**
  * This is a future which can be executed.  Allowing you to construct the future with 
@@ -106,12 +106,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
         if (throwException) {
           throw e;
         } else {
-          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-          if (handler != null) {
-            handler.uncaughtException(Thread.currentThread(), e);
-          } else {
-            e.printStackTrace();
-          }
+          ExceptionUtils.handleUncaughtException(e);
         }
       }
     }
