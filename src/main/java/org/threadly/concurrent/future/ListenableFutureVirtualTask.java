@@ -1,6 +1,5 @@
 package org.threadly.concurrent.future;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -12,6 +11,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.concurrent.CallableContainerInterface;
+import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.VirtualCallable;
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -30,7 +31,10 @@ import org.threadly.util.ExceptionUtils;
  * @param <T> type of future implementation
  */
 public class ListenableFutureVirtualTask<T> extends VirtualRunnable 
-                                            implements ListenableRunnableFuture<T> {
+                                            implements ListenableRunnableFuture<T>, 
+                                                       CallableContainerInterface<T>, 
+                                                       RunnableContainerInterface {
+  protected final Runnable runnable;
   protected final Callable<T> callable;
   protected final VirtualLock lock;
   protected final Map<Runnable, Executor> listeners;
@@ -48,7 +52,7 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
    * @param lock lock to be used internally
    */
   public ListenableFutureVirtualTask(Runnable task, T result, VirtualLock lock) {
-    this(VirtualCallable.fromRunnable(task, result), lock);
+    this(task, VirtualCallable.fromRunnable(task, result), lock);
   }
   
   /**
@@ -57,8 +61,14 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
    * @param task callable to be run
    * @param lock lock to be used internally
    */
+
   public ListenableFutureVirtualTask(Callable<T> task, VirtualLock lock) {
-    this.callable = task;
+    this(null, task, lock);
+  }
+  
+  private ListenableFutureVirtualTask(Runnable runnable, Callable<T> callable, VirtualLock lock) {
+    this.runnable = runnable;
+    this.callable = callable;
     this.lock = lock;
     this.listeners = new HashMap<Runnable, Executor>();
     this.canceled = false;
@@ -91,12 +101,7 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
         if (throwException) {
           throw e;
         } else {
-          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-          if (handler != null) {
-            handler.uncaughtException(Thread.currentThread(), e);
-          } else {
-            e.printStackTrace();
-          }
+          ExceptionUtils.handleException(e);
         }
       }
     }
@@ -222,5 +227,21 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
         listeners.put(listener, executor);
       }
     }
+  }
+
+  @Override
+  public Runnable getContainedRunnable() {
+    if (runnable != null) {
+      return runnable;
+    } else if (callable instanceof RunnableContainerInterface) {
+      return ((RunnableContainerInterface)callable).getContainedRunnable();
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public Callable<T> getContainedCallable() {
+    return callable;
   }
 }

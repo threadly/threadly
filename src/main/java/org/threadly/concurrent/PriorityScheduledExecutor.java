@@ -1,6 +1,5 @@
 package org.threadly.concurrent;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -25,6 +24,7 @@ import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.ExceptionUtils;
 
 /**
  * Executor to run tasks, schedule tasks.  
@@ -538,30 +538,134 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     return new PrioritySchedulerLimiter(this, maxConcurrency, subPoolName);
   }
   
+  /**
+   * Checks if the start runnable equals the compareTo runnable, or if 
+   * the compareTo runnable is contained within a wrapper of the startRunnable.
+   * 
+   * @param startRunnable runnable to start search at
+   * @param compareTo runnable to be comparing against
+   * @return true if they are equivalent, or the compareTo runnable is contained within the start
+   */
+  protected static boolean isContained(Runnable startRunnable, 
+                                       Runnable compareTo) {
+    if (startRunnable.equals(compareTo)) {
+      return true;
+    } else if (startRunnable instanceof RunnableContainerInterface) {
+      // search if this is actually being wrapped by another object
+      RunnableContainerInterface rci = (RunnableContainerInterface)startRunnable;
+      while (true) {
+        Runnable containedTask = rci.getContainedRunnable();
+        if (containedTask != null) {
+          if (containedTask.equals(compareTo)) {
+            return true;
+          } else if (containedTask instanceof RunnableContainerInterface) {
+            // loop again
+            rci = (RunnableContainerInterface)containedTask;
+          } else {
+            return false;
+          }
+        } else {
+          return false;
+        }
+      }
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Checks if the start runnable contains the provided callable.
+   * 
+   * @param startRunnable runnable to start search at
+   * @param compareTo callable to be comparing against
+   * @return true if the compareTo runnable is contained within the runnable
+   */
+  protected static boolean isContained(Runnable startRunnable, 
+                                       Callable<?> compareTo) {
+    if (startRunnable instanceof CallableContainerInterface<?>) {
+      CallableContainerInterface<?> cci = (CallableContainerInterface<?>)startRunnable;
+      while (true) {
+        Callable<?> callable = cci.getContainedCallable();
+        if (callable.equals(compareTo)) {
+          return true;
+        } else if (callable instanceof CallableContainerInterface<?>) {
+          cci = (CallableContainerInterface<?>)callable;
+        } else {
+          return false;
+        }
+      }
+    } else {
+      return false;
+    }
+  }
+  
   protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
                                                Runnable task) {
     synchronized (queue.getLock()) {
       Iterator<TaskWrapper> it = queue.iterator();
       while (it.hasNext()) {
         TaskWrapper tw = it.next();
-        if (tw.task.equals(task)) {
+        if (isContained(tw.task, task)) {
           tw.cancel();
           it.remove();
+          
           return true;
         }
       }
     }
+    
+    return false;
+  }
+  
+  protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
+                                               Callable<?> task) {
+    synchronized (queue.getLock()) {
+      Iterator<TaskWrapper> it = queue.iterator();
+      while (it.hasNext()) {
+        TaskWrapper tw = it.next();
+        if (isContained(tw.task, task)) {
+          tw.cancel();
+          it.remove();
+          
+          return true;
+        }
+      }
+    }
+    
     return false;
   }
 
   /**
-   * Removes the task from the execution queue.  It is possible
+   * Removes the runnable task from the execution queue.  It is possible
    * for the task to still run until this call has returned.
+   * 
+   * Note that this call has high guarantees on the ability to remove the task 
+   * (as in a complete guarantee).  But while this task is called, it will 
+   * reduce the throughput of execution, so should not be used extremely 
+   * frequently.
    * 
    * @param task The original task provided to the executor
    * @return true if the task was found and removed
    */
   public boolean remove(Runnable task) {
+    return removeFromTaskQueue(highPriorityQueue, task) || 
+             removeFromTaskQueue(lowPriorityQueue, task);
+  }
+
+  /**
+   * Removes the callable task from the execution queue.  It is 
+   * possible for the callable to still run until this call has 
+   * returned.
+   * 
+   * Note that this call has high guarantees on the ability to remove the task 
+   * (as in a complete guarantee).  But while this task is called, it will 
+   * reduce the throughput of execution, so should not be used extremely 
+   * frequently.
+   * 
+   * @param task The original callable provided to the executor
+   * @return true if the callable was found and removed
+   */
+  public boolean remove(Callable<?> task) {
     return removeFromTaskQueue(highPriorityQueue, task) || 
              removeFromTaskQueue(lowPriorityQueue, task);
   }
@@ -1017,12 +1121,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             nextTask.run();
           }
         } catch (Throwable t) {
-          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-          if (handler != null) {
-            handler.uncaughtException(thread, t);
-          } else {
-            t.printStackTrace(System.err);
-          }
+          ExceptionUtils.handleException(t);
         } finally {
           nextTask = null;
           if (running) {

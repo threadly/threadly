@@ -238,7 +238,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  protected class AddTask extends VirtualRunnable {
+  protected class AddTask extends VirtualRunnable 
+                          implements RunnableContainerInterface {
     private final Object key;
     private final Runnable task;
     
@@ -251,6 +252,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     public void run() {
       addTask(key, task);
     }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
+    }
   }
   
   /**
@@ -258,7 +264,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecrringTask extends VirtualRunnable {
+  protected class RecrringTask extends VirtualRunnable 
+                               implements RunnableContainerInterface {
     private final Object key;
     private final Runnable task;
     private final long recurringDelay;
@@ -282,6 +289,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
           scheduler.schedule(new AddTask(key, this), recurringDelay);
         }
       }
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
     }
   }
   

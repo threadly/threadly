@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.TestRunnable;
@@ -164,5 +165,26 @@ public class ExecutorLimiterTest {
   public void executeFail() {
     limiter.execute(null);
     fail("Execption should have thrown");
+  }
+  
+  @Test
+  public void removeBlockedRunnableTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    BlockingTestRunnable blockingRunnable = new BlockingTestRunnable();
+    try {
+      ExecutorLimiter limiter = new ExecutorLimiter(scheduler, 2);
+      scheduler.execute(blockingRunnable);
+      scheduler.execute(blockingRunnable);
+      blockingRunnable.blockTillStarted();
+      
+      TestRunnable task = new TestRunnable();
+      limiter.execute(task);
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      assertTrue(scheduler.remove(task));
+    } finally {
+      blockingRunnable.unblock();
+      scheduler.shutdownNow();
+    }
   }
 }

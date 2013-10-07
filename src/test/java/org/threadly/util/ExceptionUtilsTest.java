@@ -2,6 +2,10 @@ package org.threadly.util;
 
 import static org.junit.Assert.*;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.OutputStream;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.StringTokenizer;
 
 import org.junit.Test;
@@ -9,6 +13,64 @@ import org.threadly.util.ExceptionUtils.TransformedException;
 
 @SuppressWarnings("javadoc")
 public class ExceptionUtilsTest {
+  @Test
+  public void handleExceptionWithoutUncaughtExceptionHandler() {
+    // make sure no uncaughtExceptionHandler is set
+    Thread.setDefaultUncaughtExceptionHandler(null);
+    
+    PrintStream originalSystemErr = System.err;
+    try {
+      // set it up so System.err goes to a StringBuffer
+      final StringBuilder sb = new StringBuilder();
+      System.setErr(new PrintStream(new OutputStream() {
+        @Override
+        public void write(int b) throws IOException {
+          sb.append((char)b);
+        }
+      }));
+      
+      // make call
+      Exception e = new Exception();
+      ExceptionUtils.handleException(e);
+      
+      assertTrue(sb.length() > 0);
+      
+      assertTrue(sb.toString().equals(ExceptionUtils.stackToString(e)));
+    } finally {
+      System.setErr(originalSystemErr);
+    }
+  }
+  
+  @Test
+  public void handleExceptionWithUncaughtExceptionHandler() {
+    PrintStream originalSystemErr = System.err;
+    try {
+      // set it up so System.err goes to a StringBuffer
+      final StringBuilder sb = new StringBuilder();
+      System.setErr(new PrintStream(new OutputStream() {
+        @Override
+        public void write(int b) throws IOException {
+          sb.append((char)b);
+        }
+      }));
+      
+      TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
+      Thread.setDefaultUncaughtExceptionHandler(ueh);
+      
+      // make call
+      Exception e = new Exception();
+      ExceptionUtils.handleException(e);
+      
+      assertEquals(sb.length(), 0); // should not have gone to std err
+      
+      assertEquals(ueh.callCount, 1);
+      assertTrue(ueh.calledWithThread == Thread.currentThread());
+      assertTrue(ueh.providedThrowable == e);
+    } finally {
+      System.setErr(originalSystemErr);
+    }
+  }
+  
   @Test
   public void makeRuntimeWithRuntimeTest() {
     RuntimeException testException = new RuntimeException();
@@ -116,5 +178,18 @@ public class ExceptionUtilsTest {
     ExceptionUtils.writeStackTo(null, sb);
     
     assertEquals(sb.length(), 0);
+  }
+  
+  private static class TestUncaughtExceptionHandler implements UncaughtExceptionHandler {
+    private int callCount = 0;
+    private Thread calledWithThread;
+    private Throwable providedThrowable;
+    
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+      callCount++;
+      calledWithThread = t;
+      providedThrowable = e;
+    }
   }
 }

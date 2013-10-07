@@ -2,6 +2,7 @@ package org.threadly.util;
 
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.lang.Thread.UncaughtExceptionHandler;
 
 /**
  * Utilities for doing basic operations with exceptions.
@@ -13,6 +14,26 @@ public class ExceptionUtils {
   
   private ExceptionUtils() {
     // don't construct
+  }
+  
+  /**
+   * This call handles an uncaught throwable.  If a default uncaught exception 
+   * handler is set, then that will be called to handle the uncaught exception.  
+   * If none is set, then the exception will be printed out to std err.
+   * 
+   * @param t throwable to handle
+   */
+  public static void handleException(Throwable t) {
+    if (t == null) {
+      return;
+    }
+    
+    UncaughtExceptionHandler ueHandler = Thread.getDefaultUncaughtExceptionHandler();
+    if (ueHandler != null) {
+       ueHandler.uncaughtException(Thread.currentThread(), t);
+    } else {
+      t.printStackTrace(System.err);
+    }
   }
   
   /**

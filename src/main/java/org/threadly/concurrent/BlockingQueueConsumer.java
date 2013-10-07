@@ -1,8 +1,9 @@
 package org.threadly.concurrent;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadFactory;
+
+import org.threadly.util.ExceptionUtils;
 
 /**
  * Producer consumer problems are very frequent within multi-threaded code.  This class 
@@ -153,12 +154,7 @@ public class BlockingQueueConsumer<T> implements Runnable {
       } catch (InterruptedException e) {
         stop();
       } catch (Throwable t) {
-        UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-        if (handler != null) {
-          handler.uncaughtException(Thread.currentThread(), t);
-        } else {
-          t.printStackTrace();
-        }
+        ExceptionUtils.handleException(t);
       }
     }
   }

@@ -581,6 +581,70 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void removeHighPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.Low);
+  }
+  
+  public static void removeRunnableTest(TaskPriority priority) {
+    int runFrequency = 1;
+    
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    try {
+      TestRunnable removedTask = new TestRunnable();
+      TestRunnable keptTask = new TestRunnable();
+      scheduler.scheduleWithFixedDelay(removedTask, 0, runFrequency, priority);
+      scheduler.scheduleWithFixedDelay(keptTask, 0, runFrequency, priority);
+      removedTask.blockTillStarted();
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      
+      assertTrue(scheduler.remove(removedTask));
+      
+      // verify removed is no longer running, and the kept task continues to run
+      int keptRunCount = keptTask.getRunCount();
+      int runCount = removedTask.getRunCount();
+      TestUtils.sleep(runFrequency * 10);
+
+      // may be +1 if the task was running while the remove was called
+      assertTrue(removedTask.getRunCount() == runCount || 
+                 removedTask.getRunCount() == runCount + 1);
+      
+      assertTrue(keptTask.getRunCount() > keptRunCount);
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void removeHighPriorityCallableTest() {
+    removeCallableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityCallableTest() {
+    removeCallableTest(TaskPriority.Low);
+  }
+  
+  public static void removeCallableTest(TaskPriority priority) {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    try {
+      TestCallable task = new TestCallable();
+      scheduler.submitScheduled(task, 1000 * 10, priority);
+      
+      assertFalse(scheduler.remove(new TestCallable()));
+      
+      assertTrue(scheduler.remove(task));
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
   public void wrapperExecuteTest() {
     WrapperFactory wf = new WrapperFactory();
     try {

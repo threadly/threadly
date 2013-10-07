@@ -12,11 +12,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.junit.Test;
+import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
+import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 import org.threadly.concurrent.future.FutureFuture;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
@@ -337,6 +339,119 @@ public class PrioritySchedulerLimiterTest {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
     SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
+  }
+  
+  @Test
+  public void removeHighPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.Low);
+  }
+  
+  public static void removeRunnableTest(TaskPriority priority) {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    try {
+      PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 2);
+      
+      TestRunnable task = new TestRunnable();
+      limiter.schedule(task, 1000 * 10, priority);
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      
+      assertTrue(scheduler.remove(task));
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void removeHighPriorityCallableTest() {
+    removeCallableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityCallableTest() {
+    removeCallableTest(TaskPriority.Low);
+  }
+  
+  public static void removeCallableTest(TaskPriority priority) {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    try {
+      PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 1);
+      
+      TestCallable task = new TestCallable();
+      limiter.submitScheduled(task, 1000 * 10, priority);
+      
+      assertFalse(scheduler.remove(new TestCallable()));
+      
+      assertTrue(scheduler.remove(task));
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void removeHighPriorityBlockedRunnableTest() {
+    removeBlockedRunnableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityBlockedRunnableTest() {
+    removeBlockedRunnableTest(TaskPriority.Low);
+  }
+  
+  public static void removeBlockedRunnableTest(TaskPriority priority) {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    BlockingTestRunnable blockingRunnable = new BlockingTestRunnable();
+    try {
+      PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 2);
+      scheduler.execute(blockingRunnable, priority);
+      scheduler.execute(blockingRunnable, priority);
+      blockingRunnable.blockTillStarted();
+      
+      TestRunnable task = new TestRunnable();
+      limiter.execute(task, priority);
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      assertTrue(scheduler.remove(task));
+    } finally {
+      blockingRunnable.unblock();
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void removeHighPriorityBlockedCallableTest() {
+    removeBlockedCallableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityBlockedCallableTest() {
+    removeBlockedCallableTest(TaskPriority.Low);
+  }
+  
+  public static void removeBlockedCallableTest(TaskPriority priority) {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    BlockingTestRunnable blockingRunnable = new BlockingTestRunnable();
+    try {
+      PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 2);
+      scheduler.execute(blockingRunnable, priority);
+      scheduler.execute(blockingRunnable, priority);
+      blockingRunnable.blockTillStarted();
+
+      TestCallable task = new TestCallable();
+      limiter.submit(task, priority);
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      
+      assertTrue(scheduler.remove(task));
+    } finally {
+      blockingRunnable.unblock();
+      scheduler.shutdownNow();
+    }
   }
 
   private class SchedulerLimiterFactory implements SubmitterSchedulerFactory {

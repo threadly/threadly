@@ -201,6 +201,65 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void removeHighPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.Low);
+  }
+  
+  public static void removeRunnableTest(TaskPriority priority) {
+    int runFrequency = 1;
+    
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(2, 2, 1000);
+    try {
+      TestRunnable task = new TestRunnable();
+      scheduler.scheduleWithFixedDelay(task, 0, runFrequency, priority);
+      task.blockTillStarted();
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      
+      assertTrue(scheduler.remove(task));
+      
+      // verify no longer running
+      int runCount = task.getRunCount();
+      TestUtils.sleep(runFrequency * 10);
+      
+      // may be +1 if the task was running while the remove was called
+      assertTrue(task.getRunCount() == runCount || 
+                 task.getRunCount() == runCount + 1);
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void removeHighPriorityCallableTest() {
+    removeCallableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityCallableTest() {
+    removeCallableTest(TaskPriority.Low);
+  }
+  
+  public static void removeCallableTest(TaskPriority priority) {
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(2, 2, 1000);
+    try {
+      TestCallable task = new TestCallable();
+      scheduler.submitScheduled(task, 1000 * 10, priority);
+      
+      assertFalse(scheduler.remove(new TestCallable()));
+      
+      assertTrue(scheduler.remove(task));
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
   public void wrapperExecuteTest() {
     WrapperFactory wf = new WrapperFactory();
     try {

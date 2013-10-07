@@ -1,6 +1,5 @@
 package org.threadly.concurrent.future;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -14,6 +13,10 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.concurrent.CallableContainerInterface;
+import org.threadly.concurrent.RunnableContainerInterface;
+import org.threadly.util.ExceptionUtils;
+
 /**
  * This is a future which can be executed.  Allowing you to construct the future with 
  * the interior work, submit it to an executor, and then return this future.
@@ -22,9 +25,13 @@ import java.util.concurrent.TimeoutException;
  * @param <T> type of future implementation
  */
 public class ListenableFutureTask<T> extends FutureTask<T> 
-                                     implements ListenableRunnableFuture<T> {
+                                     implements ListenableRunnableFuture<T>, 
+                                                CallableContainerInterface<T>, 
+                                                RunnableContainerInterface {
   protected final boolean recurring;
   protected final Map<Runnable, Executor> listeners;
+  protected final Runnable runnable;
+  protected final Callable<T> callable;
   
   /**
    * Constructs a runnable future with a runnable work unit.
@@ -44,7 +51,12 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    * @param result result to be provide after run has completed
    */
   public ListenableFutureTask(boolean recurring, Runnable task, T result) {
-    this(recurring, Executors.callable(task, result));
+    super(Executors.callable(task, result));
+
+    this.recurring = recurring;
+    this.listeners = new HashMap<Runnable, Executor>();
+    this.runnable = task;
+    this.callable = null;
   }
 
   /**
@@ -58,6 +70,8 @@ public class ListenableFutureTask<T> extends FutureTask<T>
     
     this.recurring = recurring;
     this.listeners = new HashMap<Runnable, Executor>();
+    this.runnable = null;
+    this.callable = task;
   }
   
   @Override
@@ -92,12 +106,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
         if (throwException) {
           throw e;
         } else {
-          UncaughtExceptionHandler handler = Thread.getDefaultUncaughtExceptionHandler();
-          if (handler != null) {
-            handler.uncaughtException(Thread.currentThread(), e);
-          } else {
-            e.printStackTrace();
-          }
+          ExceptionUtils.handleException(e);
         }
       }
     }
@@ -159,5 +168,21 @@ public class ListenableFutureTask<T> extends FutureTask<T>
         throw e;
       }
     }
+  }
+
+  @Override
+  public Runnable getContainedRunnable() {
+    if (runnable != null) {
+      return runnable;
+    } else if (callable instanceof RunnableContainerInterface) {
+      return ((RunnableContainerInterface)callable).getContainedRunnable();
+    } else {
+      return null;
+    }
+  }
+
+  @Override
+  public Callable<T> getContainedCallable() {
+    return callable;
   }
 }
