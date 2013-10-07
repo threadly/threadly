@@ -17,7 +17,7 @@ import java.util.concurrent.locks.LockSupport;
 public class Clock {
   protected static final boolean UPDATE_CLOCK_AUTOMATICALLY = true;
   protected static final short AUTOMATIC_UPDATE_FREQUENCY_IN_MS = 100;
-  protected static final short STOP_PARK_TIME_IN_NANOS = 10000;
+  protected static final short STOP_PARK_TIME_IN_NANOS = 25000;
   
   private static final Object UPDATE_LOCK = new Object();
   private static volatile long now = System.currentTimeMillis();
