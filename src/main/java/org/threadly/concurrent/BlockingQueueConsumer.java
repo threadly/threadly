@@ -101,7 +101,9 @@ public class BlockingQueueConsumer<T> implements Runnable {
       started = true;
       runningThread = threadFactory.newThread(this);
       runningThread.setDaemon(true);
-      runningThread.setName(threadName);
+      if (threadName != null && threadName.length() > 0) {
+        runningThread.setName(threadName);
+      }
       runningThread.start();
     }
   }
