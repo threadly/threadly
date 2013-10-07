@@ -106,7 +106,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
         if (throwException) {
           throw e;
         } else {
-          ExceptionUtils.handleUncaughtException(e);
+          ExceptionUtils.handleException(e);
         }
       }
     }

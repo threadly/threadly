@@ -101,7 +101,7 @@ public class ListenableFutureVirtualTask<T> extends VirtualRunnable
         if (throwException) {
           throw e;
         } else {
-          ExceptionUtils.handleUncaughtException(e);
+          ExceptionUtils.handleException(e);
         }
       }
     }

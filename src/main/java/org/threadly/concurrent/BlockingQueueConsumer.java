@@ -154,7 +154,7 @@ public class BlockingQueueConsumer<T> implements Runnable {
       } catch (InterruptedException e) {
         stop();
       } catch (Throwable t) {
-        ExceptionUtils.handleUncaughtException(t);
+        ExceptionUtils.handleException(t);
       }
     }
   }

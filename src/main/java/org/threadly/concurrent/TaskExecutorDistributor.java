@@ -263,7 +263,7 @@ public class TaskExecutorDistributor {
               next.run();
             }
           } catch (Throwable t) {
-            ExceptionUtils.handleUncaughtException(t);
+            ExceptionUtils.handleException(t);
           }
         }
       }

@@ -1121,7 +1121,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             nextTask.run();
           }
         } catch (Throwable t) {
-          ExceptionUtils.handleUncaughtException(t);
+          ExceptionUtils.handleException(t);
         } finally {
           nextTask = null;
           if (running) {

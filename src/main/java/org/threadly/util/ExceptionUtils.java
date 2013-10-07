@@ -23,7 +23,7 @@ public class ExceptionUtils {
    * 
    * @param t throwable to handle
    */
-  public static void handleUncaughtException(Throwable t) {
+  public static void handleException(Throwable t) {
     if (t == null) {
       return;
     }
