@@ -12,7 +12,8 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ProfilerTest {
-  private static final int POLL_INTERVAL = 5;
+  private static final int POLL_INTERVAL = 1;
+  private static final int WAIT_TIME_FOR_COLLECTION = 50;
   private static final int MIN_RESPONSE_LENGTH = 10;
   
   private Profiler profiler;
@@ -32,7 +33,7 @@ public class ProfilerTest {
   public void dumpStoppedStringTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(POLL_INTERVAL * 10);
+    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
     
     profiler.stop();
     
@@ -45,7 +46,7 @@ public class ProfilerTest {
   public void dumpStoppedOutputStreamTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(POLL_INTERVAL * 10);
+    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
     
     profiler.stop();
     
@@ -61,7 +62,7 @@ public class ProfilerTest {
   public void dumpStringTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(POLL_INTERVAL * 10);
+    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
     
     String resultStr = profiler.dump();
     
@@ -72,7 +73,7 @@ public class ProfilerTest {
   public void dumpOutputStreamTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(POLL_INTERVAL * 10);
+    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
     
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     profiler.dump(out);
