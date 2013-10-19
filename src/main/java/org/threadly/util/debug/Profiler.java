@@ -135,6 +135,7 @@ public class Profiler implements Runnable {
   public void stop() {
     synchronized (startStopLock) {
       if (collectorThread != null) {
+        collectorThread.interrupt();
         collectorThread = null;
         
         if (outputFile != null) {
