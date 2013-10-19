@@ -12,7 +12,7 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ProfilerTest {
-  private static final int POLL_INTERVAL = 10;
+  private static final int POLL_INTERVAL = 5;
   
   private Profiler profiler;
   
@@ -28,7 +28,20 @@ public class ProfilerTest {
   }
   
   @Test
-  public void dumpTest() throws IOException {
+  public void dumpStoppedStringTest() throws IOException {
+    profiler.start();
+    
+    TestUtils.sleep(POLL_INTERVAL * 10);
+    
+    profiler.stop();
+    
+    String resultStr = profiler.dump();
+
+    assertTrue(resultStr.length() > 1000);
+  }
+  
+  @Test
+  public void dumpStoppedOutputStreamTest() throws IOException {
     profiler.start();
     
     TestUtils.sleep(POLL_INTERVAL * 10);
@@ -38,9 +51,33 @@ public class ProfilerTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     profiler.dump(out);
     
-    String resultStr = new String(out.toByteArray()).trim();
+    String resultStr = out.toString();
     
-    assertTrue(resultStr.length() > 0);
+    assertTrue(resultStr.length() > 1000);
   }
   
+  @Test
+  public void dumpStringTest() throws IOException {
+    profiler.start();
+    
+    TestUtils.sleep(POLL_INTERVAL * 10);
+    
+    String resultStr = profiler.dump();
+
+    assertTrue(resultStr.length() > 1000);
+  }
+  
+  @Test
+  public void dumpOutputStreamTest() throws IOException {
+    profiler.start();
+    
+    TestUtils.sleep(POLL_INTERVAL * 10);
+    
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    profiler.dump(out);
+    
+    String resultStr = out.toString();
+    
+    assertTrue(resultStr.length() > 1000);
+  }
 }

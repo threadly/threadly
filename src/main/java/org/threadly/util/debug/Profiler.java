@@ -1,17 +1,22 @@
 package org.threadly.util.debug;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
-import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.HashMap;
-import java.util.Comparator;
-import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.threadly.util.ExceptionUtils;
 
 /**
  * Tool for profiling a running java application to get an idea 
@@ -26,12 +31,16 @@ import java.util.Arrays;
  * @author jent - Mike Jensen
  */
 public class Profiler implements Runnable {
-  private static final int DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
+  private static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
+  private static final short THREAD_PADDING_AMMOUNT = 10;
+  private static final short NUMBER_TARGET_LINE_LENGTH = 6;
+  private static final String COLLECTOR_THREAD_NAME = "Profiler data collector";
   
   private final Map<String, Map<Trace, Trace>> threadTraces;
   private final File outputFile;
   private final int pollIntervalInMs;
-  private Thread thread = null;
+  private final Object startStopLock;
+  private volatile Thread collectorThread;
   
   /**
    * Constructs a new profiler instance.  The only way 
@@ -77,20 +86,20 @@ public class Profiler implements Runnable {
    * @param pollIntervalInMs frequency to check running threads
    */
   public Profiler(File outputFile, int pollIntervalInMs) {
-    threadTraces = new HashMap<String, Map<Trace, Trace>>();
+    threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>();
     this.outputFile = outputFile;
     this.pollIntervalInMs = pollIntervalInMs;
+    startStopLock = new Object();
+    collectorThread = null;
   }
   
   /**
-   * Reset the current stored staticistics.  The statistics will 
+   * Reset the current stored statistics.  The statistics will 
    * continue to grow in memory until the profiler is either stopped, 
    * or until this is called.
    */
   public void reset() {
-    synchronized (this) { // TODO - make more concurrent
-      threadTraces.clear();
-    }
+    threadTraces.clear();
   }
   
   /**
@@ -104,11 +113,12 @@ public class Profiler implements Runnable {
    * you must call {#link reset()} first.
    */
   public synchronized void start() {
-    synchronized (this) {
-      if (thread == null) {
-        thread = new Thread(this);
-        thread.setPriority(Thread.MAX_PRIORITY);
-        thread.start();
+    synchronized (startStopLock) {
+      if (collectorThread == null) {
+        collectorThread = new Thread(this);
+        collectorThread.setName(COLLECTOR_THREAD_NAME);
+        collectorThread.setPriority(Thread.MAX_PRIORITY);
+        collectorThread.start();
       }
     }
   }
@@ -120,9 +130,9 @@ public class Profiler implements Runnable {
    * results using the {#link dump()} call after it has stopped.
    */
   public void stop() {
-    synchronized (this) {
-      if (thread != null) {
-        thread = null;
+    synchronized (startStopLock) {
+      if (collectorThread != null) {
+        collectorThread = null;
         
         if (outputFile != null) {
           try {
@@ -133,7 +143,7 @@ public class Profiler implements Runnable {
               out.close();
             }
           } catch (IOException e) {
-            throw new RuntimeException(e);
+            ExceptionUtils.handleException(e);
           }
         }
       }
@@ -141,41 +151,41 @@ public class Profiler implements Runnable {
   }
   
   private static String getThreadIdentifier(Thread t) {
-    return t.toString() + ";" + Long.toHexString(t.getId());
+    return t.toString() + ';' + Long.toHexString(t.getId());
   }
   
   @Override
   public void run() {
-    synchronized (this) { // TODO - make more concurrent
-      while (thread != null) {
-        try {
-          wait(pollIntervalInMs);
-        } catch (InterruptedException ignored) {
-          Thread.currentThread().interrupt();
-        }
-        
-        int count = Thread.activeCount();
-        Thread[] threads = new Thread[count + 10];  // we add a little to make sure we get every thread
-        count = Thread.enumerate(threads);
-        for (int i = 0; i < count; i++) {
-          if (threads[i] != thread) {
-            String threadIdentifier = getThreadIdentifier(threads[i]);
-            Trace t = new Trace(threads[i].getStackTrace());
-            
-            Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
-            if (existingTraces == null) {
-              existingTraces = new HashMap<Trace, Trace>();
-              threadTraces.put(threadIdentifier, existingTraces);
-            }
-            
-            Trace existingTrace = existingTraces.get(t);
-            if (existingTrace == null) {
-              existingTraces.put(t, t);
-            } else {
-              existingTrace.count++;
-            }
+    Thread runningThread = Thread.currentThread();
+    while (collectorThread == runningThread) {
+      int count = Thread.activeCount();
+      // we add a little to make sure we get every thread
+      Thread[] threads = new Thread[count + THREAD_PADDING_AMMOUNT];
+      count = Thread.enumerate(threads);
+      for (int i = 0; i < count; i++) {
+        if (threads[i] != runningThread) {  // we skip the Profiler thread
+          String threadIdentifier = getThreadIdentifier(threads[i]);
+          Trace t = new Trace(threads[i].getStackTrace());
+          
+          Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
+          if (existingTraces == null) {
+            existingTraces = new ConcurrentHashMap<Trace, Trace>();
+            threadTraces.put(threadIdentifier, existingTraces);
+          }
+          
+          Trace existingTrace = existingTraces.get(t);
+          if (existingTrace == null) {
+            existingTraces.put(t, t);
+          } else {
+            existingTrace.threadCount++;
           }
         }
+      }
+
+      try {
+        Thread.sleep(pollIntervalInMs);
+      } catch (InterruptedException e) {
+        return;
       }
     }
   }
@@ -184,47 +194,71 @@ public class Profiler implements Runnable {
    * Output all the currently collected statistics to the provided output 
    * stream.
    * 
-   * @param out OutputStream to write results to
-   * @throws IOException exception possible from writing to stream
+   * @return The dumped results as a single String
    */
-  public void dump(OutputStream out) throws IOException {
-    PrintStream ps = new PrintStream(out);
-    Map<Trace, Trace> globalTraces = new HashMap<Trace, Trace>();
+  public String dump() {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    dump(new BufferedOutputStream(baos));
     
-    synchronized (this) { // TODO - make more concurrent
-      // log out individual thread traces
-      Iterator<Entry<String, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
-      while (it.hasNext()) {
-        Entry<String, Map<Trace, Trace>> entry = it.next();
-        ps.println("Profile for thread: " + entry.getKey());
-        dump(entry.getValue().keySet(), ps);
-        
-        // add in this threads trace data to the global trace map
-        Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
-        while (traceIt.hasNext()) {
-          Trace currTrace = traceIt.next();
-          Trace storedTrace = globalTraces.get(currTrace);
-          if (storedTrace == null) {
-            globalTraces.put(currTrace, currTrace);
-          } else {
-            storedTrace.count += currTrace.count;
-          }
+    return baos.toString();
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output 
+   * stream.
+   * 
+   * @param out OutputStream to write results to
+   */
+  public void dump(OutputStream out) {
+    dump(new PrintStream(out, false));
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output 
+   * stream.
+   * 
+   * @param ps PrintStream to write results to
+   */
+  public void dump(PrintStream ps) { 
+    Map<Trace, Trace> globalTraces = new HashMap<Trace, Trace>();
+    // create a local copy so the stats wont change while we are dumping them
+    Map<String, Map<Trace, Trace>> threadTraces = new HashMap<String, Map<Trace, Trace>>(this.threadTraces);
+    
+    // log out individual thread traces
+    Iterator<Entry<String, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
+    while (it.hasNext()) {
+      Entry<String, Map<Trace, Trace>> entry = it.next();
+      ps.println("Profile for thread: " + entry.getKey());
+      dump(entry.getValue().keySet(), false, ps);
+      
+      // add in this threads trace data to the global trace map
+      Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
+      while (traceIt.hasNext()) {
+        Trace currTrace = traceIt.next();
+        Trace storedTrace = globalTraces.get(currTrace);
+        if (storedTrace == null) {
+          // make sure this is reset in case we dump multiple times
+          currTrace.globalCount = currTrace.threadCount;
+          globalTraces.put(currTrace, currTrace);
+        } else {
+          storedTrace.globalCount += currTrace.threadCount;
         }
-        
-        ps.println("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
       }
       
-      // log out global data
-      ps.println("Combined profile for all threads....");
-      dump(globalTraces.keySet(), ps);
+      ps.println("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
     }
+      
+    // log out global data
+    ps.println("Combined profile for all threads....");
+    dump(globalTraces.keySet(), true, ps);
     
     ps.flush();
   }
   
   private static void dump(Set<Trace> traces, 
+                           boolean globalCount, 
                            PrintStream out) {
-    Map<Method, Method> methods = new HashMap<Method, Method>();
+    Map<Function, Function> methods = new HashMap<Function, Function>();
     Trace[] traceArray = new Trace[traces.size()];
     int total = 0;
     int nativeCount = 0;
@@ -233,37 +267,54 @@ public class Profiler implements Runnable {
     for (Trace t: traces) {
       traceArray[index++] = t;
       
-      total += t.count;
+      if (globalCount) {
+        total += t.globalCount;
+      } else {
+        total += t.threadCount;
+      }
       
       if (t.elements.length > 0 && 
           t.elements[0].isNativeMethod()) {
-        nativeCount += t.count;
+        if (globalCount) {
+          nativeCount += t.globalCount;
+        } else {
+          nativeCount += t.threadCount;
+        }
       }
       
-      for (int j = 0; j < t.elements.length; ++j) {
-        Method n = new Method(t.elements[j].getClassName(),
-                              t.elements[j].getMethodName());
-        Method m = methods.get(n);
-        if (m == null) {
+      for (int i = 0; i < t.elements.length; ++i) {
+        Function n = new Function(t.elements[i].getClass(),
+                                  t.elements[i].getMethodName());
+        Function f = methods.get(n);
+        if (f == null) {
           methods.put(n, n);
-          m = n;
+          f = n;
         }
-        m.count += t.count;
-        if (j > 0) {
-          m.childCount += t.count;
+        if (globalCount) {
+          f.count += t.globalCount;
+        } else {
+          f.count += t.threadCount;
+        }
+        if (i > 0) {
+          if (globalCount) {
+            f.childCount += t.globalCount;
+          } else {
+            f.childCount += t.threadCount;
+          }
         }
       }
     }
     
-    Method[] methodArray = methods.keySet().toArray(new Method[methods.size()]);
+    Function[] methodArray = methods.keySet().toArray(new Function[methods.size()]);
     
     out.println(" total count: " + format(total));
     out.println("native count: " + format(nativeCount));
     
     out.println("\nmethods by count: (total, net, name)\n");
     
-    Arrays.sort(methodArray, new Comparator<Method>() {
-      public int compare(Method a, Method b) {
+    Arrays.sort(methodArray, new Comparator<Function>() {
+      @Override
+      public int compare(Function a, Function b) {
         return b.count - a.count;
       }
     });
@@ -274,8 +325,9 @@ public class Profiler implements Runnable {
     
     out.println("\nmethods by net count: (total, net, name)\n");
     
-    Arrays.sort(methodArray, new Comparator<Method>() {
-      public int compare(Method a, Method b) {
+    Arrays.sort(methodArray, new Comparator<Function>() {
+      @Override
+      public int compare(Function a, Function b) {
         return (b.count - b.childCount) - (a.count - a.childCount);
       }
     });
@@ -284,43 +336,60 @@ public class Profiler implements Runnable {
       dump(methodArray[i], out);
     }
     
-    out.println();
-    out.println("traces by count:");
-    out.println();
+    out.println("\ntraces by count:\n");
     
-    Arrays.sort(traceArray, new Comparator<Trace>() {
-      public int compare(Trace a, Trace b) {
-        return b.count - a.count;
-      }
-    });
+    if (globalCount) {
+      Arrays.sort(traceArray, new Comparator<Trace>() {
+        @Override
+        public int compare(Trace a, Trace b) {
+          return b.globalCount - a.globalCount;
+        }
+      });
+    } else {
+      Arrays.sort(traceArray, new Comparator<Trace>() {
+        @Override
+        public int compare(Trace a, Trace b) {
+          return b.threadCount - a.threadCount;
+        }
+      });
+    }
     
     for (int i = 0; i < traceArray.length; i++) {
-      dump(traceArray[i], out);
+      dump(traceArray[i], globalCount, out);
       out.println();
     }
   }
   
-  private static void dump(Trace t, PrintStream out) {
-    out.println(t.count + " time(s):");
+  private static void dump(Trace t, 
+                           boolean globalCount, 
+                           PrintStream out) {
+    int count;
+    if (globalCount) {
+      count = t.globalCount;
+    } else {
+      count = t.threadCount;
+    }
+    out.println(count + " time(s):");
+    
     for (int i = 0; i < t.elements.length; ++i) {
       out.println("  at " + t.elements[i].toString());
     }
   }
   
-  private static void dump(Method m, PrintStream out) {
+  private static void dump(Function m, PrintStream out) {
     out.print(format(m.count));
     out.print(format(m.count - m.childCount));
     out.print(" ");
-    out.print(m.classStr);
+    out.print(m.clazz);
     out.print(".");
-    out.println(m.method);
+    out.println(m.function);
   }
   
   private static String format(int c) {
     String s = Integer.toString(c);
     StringBuilder sb = new StringBuilder();
     
-    while (sb.length() + s.length() < 6) {
+    while (sb.length() + s.length() < NUMBER_TARGET_LINE_LENGTH) {
       sb.append(' ');
     }
     
@@ -329,10 +398,19 @@ public class Profiler implements Runnable {
     return sb.toString();
   }
   
+  /**
+   * Class which represents a stack trace.  The is used so 
+   * we can track how many times a given stack is seen.
+   * 
+   * This stack trace reference will be specific to a single thread.
+   * 
+   * @author jent - Mike Jensen
+   */
   private static class Trace implements Comparable<Trace> {
     private final StackTraceElement[] elements;
     private final int hash;
-    private int count = 1;
+    private int threadCount = 1;  // is increased as seen for a specific thread
+    private int globalCount = 1;  // is only set when dumping the statistics
     
     public Trace(StackTraceElement[] elements) {
       this.elements = elements;
@@ -379,17 +457,24 @@ public class Profiler implements Runnable {
     }
   }
   
-  private static class Method {
-    private final String classStr;
-    private final String method;
+  /**
+   * Class to represent a specific function call.  
+   * This is used so we can track how many times we 
+   * see a given function.
+   * 
+   * @author jent - Mike Jensen
+   */
+  private static class Function {
+    private final Class<?> clazz;
+    private final String function;
     private final int hashCode;
     private int count;
     private int childCount;
     
-    public Method(String classStr, String method) {
-      this.classStr = classStr;
-      this.method = method;
-      this.hashCode = classStr.hashCode() ^ method.hashCode();
+    public Function(Class<?> clazz, String function) {
+      this.clazz = clazz;
+      this.function = function;
+      this.hashCode = clazz.hashCode() ^ function.hashCode();
     }
     
     @Override
@@ -401,11 +486,11 @@ public class Profiler implements Runnable {
     public boolean equals(Object o) {
       if (this == o) {
         return true;
-      } else if (o instanceof Method) {
-        Method m = (Method) o;
+      } else if (o instanceof Function) {
+        Function m = (Function) o;
         return m.hashCode == hashCode && 
-                 m.classStr.equals(classStr) && 
-                 m.method.equals(method);
+                 m.clazz.equals(clazz) && 
+                 m.function.equals(function);
       } else {
         return false;
       }
