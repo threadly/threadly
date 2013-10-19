@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.util.ExceptionUtils;
 
@@ -24,7 +25,12 @@ import org.threadly.util.ExceptionUtils;
  * @param <T> Type of items contained in the queue to be consumed
  */
 public class BlockingQueueConsumer<T> implements Runnable {
-  private static final String DEFAULT_THREAD_NAME = "QueueConsumer";
+  private static final AtomicInteger DEFAULT_CONSUMER_VALUE = new AtomicInteger(0);
+  private static final String DEFAULT_THREAD_PREFIX = "QueueConsumer-";
+  
+  private static String getDefaultThreadName() {
+    return DEFAULT_THREAD_PREFIX + DEFAULT_CONSUMER_VALUE.getAndIncrement();
+  }
   
   protected final BlockingQueue<T> queue;
   protected final ConsumerAcceptor<T> acceptor;
@@ -71,7 +77,7 @@ public class BlockingQueueConsumer<T> implements Runnable {
    * @param threadFactory ThreadFactory to create new thread from
    */
   public void maybeStart(ThreadFactory threadFactory) {
-    maybeStart(threadFactory, DEFAULT_THREAD_NAME);
+    maybeStart(threadFactory, getDefaultThreadName());
   }
   
   /**
@@ -101,7 +107,9 @@ public class BlockingQueueConsumer<T> implements Runnable {
       started = true;
       runningThread = threadFactory.newThread(this);
       runningThread.setDaemon(true);
-      runningThread.setName(threadName);
+      if (threadName != null && threadName.length() > 0) {
+        runningThread.setName(threadName);
+      }
       runningThread.start();
     }
   }
