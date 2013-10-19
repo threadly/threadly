@@ -31,10 +31,13 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  */
 public class Profiler implements Runnable {
-  private static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
-  private static final short THREAD_PADDING_AMMOUNT = 10;
-  private static final short NUMBER_TARGET_LINE_LENGTH = 6;
-  private static final String COLLECTOR_THREAD_NAME = "Profiler data collector";
+  protected static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
+  protected static final short THREAD_PADDING_AMMOUNT = 10;
+  protected static final short NUMBER_TARGET_LINE_LENGTH = 6;
+  protected static final String COLLECTOR_THREAD_NAME = "Profiler data collector";
+  protected static final String THREAD_DELIMITER = "--------------------------------------------------\n";
+  protected static final String FUNCTION_BY_NET_HEADER = "\nfunctions by top count: (total, top, name)\n";
+  protected static final String FUNCTION_BY_COUNT_HEADER = "\nfunction by total count: (total, top, name)\n";
   
   private final Map<String, Map<Trace, Trace>> threadTraces;
   private final File outputFile;
@@ -245,7 +248,7 @@ public class Profiler implements Runnable {
         }
       }
       
-      ps.println("\n-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n");
+      ps.println(THREAD_DELIMITER);
     }
       
     // log out global data
@@ -310,12 +313,12 @@ public class Profiler implements Runnable {
     out.println(" total count: " + format(total));
     out.println("native count: " + format(nativeCount));
     
-    out.println("\nmethods by count: (total, net, name)\n");
+    out.println(FUNCTION_BY_NET_HEADER);
     
     Arrays.sort(methodArray, new Comparator<Function>() {
       @Override
       public int compare(Function a, Function b) {
-        return b.count - a.count;
+        return (b.count - b.childCount) - (a.count - a.childCount);
       }
     });
     
@@ -323,12 +326,12 @@ public class Profiler implements Runnable {
       dump(methodArray[i], out);
     }
     
-    out.println("\nmethods by net count: (total, net, name)\n");
+    out.println(FUNCTION_BY_COUNT_HEADER);
     
     Arrays.sort(methodArray, new Comparator<Function>() {
       @Override
       public int compare(Function a, Function b) {
-        return (b.count - b.childCount) - (a.count - a.childCount);
+        return b.count - a.count;
       }
     });
     
@@ -379,9 +382,9 @@ public class Profiler implements Runnable {
   private static void dump(Function m, PrintStream out) {
     out.print(format(m.count));
     out.print(format(m.count - m.childCount));
-    out.print(" ");
-    out.print(m.clazz);
-    out.print(".");
+    out.print(' ');
+    out.print(m.clazz.getName());
+    out.print('.');
     out.println(m.function);
   }
   

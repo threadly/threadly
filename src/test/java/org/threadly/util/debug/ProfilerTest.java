@@ -13,6 +13,7 @@ import org.threadly.test.concurrent.TestUtils;
 @SuppressWarnings("javadoc")
 public class ProfilerTest {
   private static final int POLL_INTERVAL = 5;
+  private static final int MIN_RESPONSE_LENGTH = 100;
   
   private Profiler profiler;
   
@@ -36,8 +37,8 @@ public class ProfilerTest {
     profiler.stop();
     
     String resultStr = profiler.dump();
-
-    assertTrue(resultStr.length() > 1000);
+    
+    verifyDumpStr(resultStr);
   }
   
   @Test
@@ -53,7 +54,7 @@ public class ProfilerTest {
     
     String resultStr = out.toString();
     
-    assertTrue(resultStr.length() > 1000);
+    verifyDumpStr(resultStr);
   }
   
   @Test
@@ -63,8 +64,8 @@ public class ProfilerTest {
     TestUtils.sleep(POLL_INTERVAL * 10);
     
     String resultStr = profiler.dump();
-
-    assertTrue(resultStr.length() > 1000);
+    
+    verifyDumpStr(resultStr);
   }
   
   @Test
@@ -78,6 +79,19 @@ public class ProfilerTest {
     
     String resultStr = out.toString();
     
-    assertTrue(resultStr.length() > 1000);
+    verifyDumpStr(resultStr);
+  }
+  
+  private static void verifyDumpStr(String resultStr) {
+    assertTrue(resultStr.length() > MIN_RESPONSE_LENGTH);
+    
+    assertTrue(resultStr.contains(Profiler.THREAD_DELIMITER));
+    assertFalse(resultStr.startsWith(Profiler.THREAD_DELIMITER));
+    assertFalse(resultStr.endsWith(Profiler.THREAD_DELIMITER));
+    
+    assertTrue(resultStr.contains(Profiler.FUNCTION_BY_COUNT_HEADER));
+    assertTrue(resultStr.contains(Profiler.FUNCTION_BY_NET_HEADER));
+    
+    System.out.println(resultStr);
   }
 }
