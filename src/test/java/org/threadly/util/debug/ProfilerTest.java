@@ -13,7 +13,7 @@ import org.threadly.test.concurrent.TestUtils;
 @SuppressWarnings("javadoc")
 public class ProfilerTest {
   private static final int POLL_INTERVAL = 5;
-  private static final int MIN_RESPONSE_LENGTH = 100;
+  private static final int MIN_RESPONSE_LENGTH = 10;
   
   private Profiler profiler;
   
