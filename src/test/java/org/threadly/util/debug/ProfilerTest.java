@@ -85,7 +85,6 @@ public class ProfilerTest {
   private static void verifyDumpStr(String resultStr) {
     assertTrue(resultStr.length() > MIN_RESPONSE_LENGTH);
     
-    assertTrue(resultStr.contains(Profiler.THREAD_DELIMITER));
     assertFalse(resultStr.startsWith(Profiler.THREAD_DELIMITER));
     assertFalse(resultStr.endsWith(Profiler.THREAD_DELIMITER));
     
