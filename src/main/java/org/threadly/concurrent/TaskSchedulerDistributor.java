@@ -19,18 +19,36 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   
   /**
    * Constructor which creates scheduler based off provided values.  This is a more full 
-   * featured task distributor, it allows scheduling and recurring tasks
+   * featured task distributor, it allows scheduling and recurring tasks.
    * 
    * @param expectedParallism Expected number of keys that will be used in parallel
    * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
    */
   public TaskSchedulerDistributor(int expectedParallism, int maxThreadCount) {
+    this(expectedParallism, maxThreadCount, Integer.MAX_VALUE);
+  }
+  
+  /**
+   * Constructor which creates scheduler based off provided values.  This is a more full 
+   * featured task distributor, it allows scheduling and recurring tasks.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param expectedParallism Expected number of keys that will be used in parallel
+   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskSchedulerDistributor(int expectedParallism, int maxThreadCount, int maxTasksPerCycle) {
     this(new PriorityScheduledExecutor(Math.min(expectedParallism, maxThreadCount), 
                                        maxThreadCount, 
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
-         new StripedLock(expectedParallism, new NativeLockFactory()));
+         new StripedLock(expectedParallism, new NativeLockFactory()), maxTasksPerCycle);
   }
   
   /**
@@ -41,7 +59,25 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    *                  will be used in parallel.
    */
   public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler) {
-    this(DEFAULT_LOCK_PARALISM, scheduler);
+    this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE);
+  }
+  
+  /**
+   * Constructor to use a provided executor implementation for running tasks.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
+   *                  Ideally has as many possible threads as keys that 
+   *                  will be used in parallel.
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, int maxTasksPerCycle) {
+    this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle);
   }
     
   /**
@@ -53,7 +89,28 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    *                  will be used in parallel. 
    */
   public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler) {
-    this(scheduler, new StripedLock(expectedParallism, new NativeLockFactory()));
+    this(expectedParallism, scheduler, Integer.MAX_VALUE);
+  }
+    
+  /**
+   * Constructor to use a provided scheduler implementation for running tasks.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
+   *                  Ideally has as many possible threads as keys that 
+   *                  will be used in parallel.
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler, 
+                                  int maxTasksPerCycle) {
+    this(scheduler, new StripedLock(expectedParallism, new NativeLockFactory()), 
+         maxTasksPerCycle);
   }
   
   /**
@@ -67,7 +124,28 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    */
   public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
                                   StripedLock sLock) {
-    super(scheduler, sLock);
+    this(scheduler, sLock, Integer.MAX_VALUE);
+  }
+  
+  /**
+   * Constructor to be used in unit tests.  This allows you to provide a StripedLock 
+   * that provides a {@link org.threadly.test.concurrent.lock.TestableLockFactory} so 
+   * that this class can be used with the 
+   * {@link org.threadly.test.concurrent.TestablePriorityScheduler}.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param scheduler scheduler to be used for task worker execution 
+   * @param sLock lock to be used for controlling access to workers
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
+                                  StripedLock sLock, int maxTasksPerCycle) {
+    super(scheduler, sLock, maxTasksPerCycle);
     
     this.scheduler = scheduler;
   }

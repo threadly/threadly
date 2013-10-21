@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 import org.junit.After;
@@ -18,6 +21,7 @@ import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class TaskExecutorDistributorTest {
@@ -57,6 +61,12 @@ public class TaskExecutorDistributorTest {
     }
     try {
       new TaskExecutorDistributor(scheduler, null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new TaskExecutorDistributor(1, 1, -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -367,6 +377,58 @@ public class TaskExecutorDistributorTest {
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
+    }
+  }
+  
+  @Test
+  public void limitExecutionPerCycleTest() {
+    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(3, 3, 1000 * 10, 
+                                                                        TaskPriority.High, 
+                                                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    final AtomicBoolean testComplete = new AtomicBoolean(false);
+    try {
+      final Integer key1 = 1;
+      final Integer key2 = 2;
+      Executor singleThreadedExecutor = scheduler.makeSubPool(1);
+      final TaskExecutorDistributor distributor = new TaskExecutorDistributor(2, singleThreadedExecutor, 2);
+      final AtomicInteger waitingTasks = new AtomicInteger();
+      final AtomicReference<TestRunnable> lastTestRunnable = new AtomicReference<TestRunnable>();
+      scheduler.execute(new Runnable() {  // execute thread to add for key 1
+        @Override
+        public void run() {
+          while (! testComplete.get()) {
+            TestRunnable next = new TestRunnable() {
+              @Override
+              public void handleRunStart() {
+                waitingTasks.decrementAndGet();
+                
+                TestUtils.sleep(20);  // wait to make sure producer is faster than executor
+              }
+            };
+            lastTestRunnable.set(next);
+            waitingTasks.incrementAndGet();
+            distributor.addTask(key1, next);
+          }
+        }
+      });
+      
+      // block till there is for sure a backup of key1 tasks
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return waitingTasks.get() > 10;
+        }
+      }.blockTillTrue();
+      
+      TestRunnable key2Runnable = new TestRunnable();
+      distributor.addTask(key2, key2Runnable);
+      TestRunnable lastKey1Runnable = lastTestRunnable.get();
+      key2Runnable.blockTillStarted();  // will throw exception if not started
+      // verify it ran before the lastKey1Runnable
+      assertFalse(lastKey1Runnable.ranOnce());
+    } finally {
+      testComplete.set(true);
+      scheduler.shutdown();
     }
   }
   

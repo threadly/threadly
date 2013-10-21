@@ -20,6 +20,14 @@ public class TestCallable extends TestCondition
     this(0);
   }
   
+  public TestCallable(long runDurration) {
+    this.runDurration = runDurration;
+    this.creationTime = System.currentTimeMillis();
+    callTime = -1;
+    result = new Object();
+    done = false;
+  }
+  
   /**
    * Call to get the time recorded when the runnable was constructed.
    * 
@@ -41,14 +49,6 @@ public class TestCallable extends TestCondition
   
   protected void handleCallStart() {
     // ignored by default
-  }
-  
-  public TestCallable(long runDurration) {
-    this.runDurration = runDurration;
-    this.creationTime = System.currentTimeMillis();
-    callTime = -1;
-    result = new Object();
-    done = false;
   }
 
   public long getDelayTillFirstRun() {

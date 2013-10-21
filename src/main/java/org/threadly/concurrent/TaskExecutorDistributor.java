@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class TaskExecutorDistributor {
   
   protected final Executor executor;
   protected final StripedLock sLock;
+  protected final int maxTasksPerCycle;
   private final ConcurrentHashMap<Object, TaskQueueWorker> taskWorkers;
   
   /**
@@ -48,12 +50,29 @@ public class TaskExecutorDistributor {
    * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
    */
   public TaskExecutorDistributor(int expectedParallism, int maxThreadCount) {
+    this(expectedParallism, maxThreadCount, Integer.MAX_VALUE);
+  }
+  
+  /**
+   * Constructor which creates executor based off provided values.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param expectedParallism Expected number of keys that will be used in parallel
+   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskExecutorDistributor(int expectedParallism, int maxThreadCount, int maxTasksPerCycle) {
     this(new PriorityScheduledExecutor(Math.min(expectedParallism, maxThreadCount), 
                                        maxThreadCount, 
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
-         new StripedLock(expectedParallism, new NativeLockFactory()));
+         new StripedLock(expectedParallism, new NativeLockFactory()), maxTasksPerCycle);
   }
   
   /**
@@ -64,7 +83,25 @@ public class TaskExecutorDistributor {
    *                 will be used in parallel. 
    */
   public TaskExecutorDistributor(Executor executor) {
-    this(DEFAULT_LOCK_PARALISM, executor);
+    this(DEFAULT_LOCK_PARALISM, executor, Integer.MAX_VALUE);
+  }
+  
+  /**
+   * Constructor to use a provided executor implementation for running tasks.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param executor A multi-threaded executor to distribute tasks to.  
+   *                 Ideally has as many possible threads as keys that 
+   *                 will be used in parallel.
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskExecutorDistributor(Executor executor, int maxTasksPerCycle) {
+    this(DEFAULT_LOCK_PARALISM, executor, maxTasksPerCycle);
   }
     
   /**
@@ -76,7 +113,28 @@ public class TaskExecutorDistributor {
    *                 will be used in parallel. 
    */
   public TaskExecutorDistributor(int expectedParallism, Executor executor) {
-    this(executor, new StripedLock(expectedParallism, new NativeLockFactory()));
+    this(expectedParallism, executor, Integer.MAX_VALUE);
+  }
+    
+  /**
+   * Constructor to use a provided executor implementation for running tasks.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param executor A multi-threaded executor to distribute tasks to.  
+   *                 Ideally has as many possible threads as keys that 
+   *                 will be used in parallel.
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskExecutorDistributor(int expectedParallism, Executor executor, 
+                                 int maxTasksPerCycle) {
+    this(executor, new StripedLock(expectedParallism, new NativeLockFactory()), 
+         maxTasksPerCycle);
   }
   
   /**
@@ -88,16 +146,39 @@ public class TaskExecutorDistributor {
    * @param executor executor to be used for task worker execution 
    * @param sLock lock to be used for controlling access to workers
    */
-  public TaskExecutorDistributor(Executor executor, 
-                                 StripedLock sLock) {
+  public TaskExecutorDistributor(Executor executor, StripedLock sLock) {
+    this(executor, sLock, Integer.MAX_VALUE);
+  }
+  
+  /**
+   * Constructor to be used in unit tests.  This allows you to provide a StripedLock 
+   * that provides a {@link org.threadly.test.concurrent.lock.TestableLockFactory} so 
+   * that this class can be used with the 
+   * {@link org.threadly.test.concurrent.TestablePriorityScheduler}.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * @param executor executor to be used for task worker execution 
+   * @param sLock lock to be used for controlling access to workers
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   */
+  public TaskExecutorDistributor(Executor executor, StripedLock sLock, 
+                                 int maxTasksPerCycle) {
     if (executor == null) {
       throw new IllegalArgumentException("executor can not be null");
     } else if (sLock == null) {
       throw new IllegalArgumentException("striped lock must be provided");
+    } else if (maxTasksPerCycle < 1) {
+      throw new IllegalArgumentException("maxTasksPerCycle must be >= 1");
     }
     
     this.executor = executor;
     this.sLock = sLock;
+    this.maxTasksPerCycle = maxTasksPerCycle;
     int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
                                   CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
     int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel(), 
@@ -240,16 +321,39 @@ public class TaskExecutorDistributor {
     
     @Override
     public void run() {
+      int consumedItems = 0;
       while (true) {
         List<Runnable> nextList;
         synchronized (agentLock) {
-          nextList = queue;
-          
-          if (nextList.isEmpty()) {  // stop consuming tasks
+          if (queue.isEmpty()) {  // nothing left to run
             taskWorkers.remove(mapKey);
             break;
-          } else {  // prepare queue for future tasks
-            queue = new LinkedList<Runnable>();
+          } else {
+            if (consumedItems < maxTasksPerCycle) {
+              if (queue.size() + consumedItems <= maxTasksPerCycle) {
+                // we can run the entire next queue
+                nextList = queue;
+                queue = new LinkedList<Runnable>();
+              } else {
+                // we need to run a subset of the queue, so copy and remove what we can run
+                int nextListSize = maxTasksPerCycle - consumedItems;
+                nextList = new ArrayList<Runnable>(nextListSize);
+                Iterator<Runnable> it = queue.iterator();
+                do {
+                  nextList.add(it.next());
+                  it.remove();
+                } while (nextList.size() < nextListSize);
+              }
+              
+              consumedItems += nextList.size();
+            } else {
+              // re-execute this worker to give other works a chance to run
+              executor.execute(this);
+              /* notice that we never removed from taskWorkers, and thus wont be
+               * executed from people adding new tasks 
+               */
+              break;
+            }
           }
         }
         

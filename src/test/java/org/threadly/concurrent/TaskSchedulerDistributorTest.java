@@ -90,11 +90,26 @@ public class TaskSchedulerDistributorTest {
     return runs;
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new TaskSchedulerDistributor(1, null);
-    
-    fail("Exception should have been thrown");
+    try {
+      new TaskSchedulerDistributor(1, null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new TaskSchedulerDistributor(scheduler, null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new TaskSchedulerDistributor(1, 1, -1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test (expected = IllegalArgumentException.class)
