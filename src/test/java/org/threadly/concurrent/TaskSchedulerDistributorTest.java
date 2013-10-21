@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.After;
@@ -115,6 +116,7 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void constructorTest() {
     // none should throw exception
+    new TaskSchedulerDistributor(scheduler);
     new TaskSchedulerDistributor(scheduler, 1);
     new TaskSchedulerDistributor(1, scheduler);
     new TaskSchedulerDistributor(1, scheduler, 1);
@@ -242,6 +244,50 @@ public class TaskSchedulerDistributorTest {
     }
     try {
       distributor.schedule(null, new TestRunnable(), 100);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void submitScheduledRunnableFail() {
+    try {
+      distributor.submitScheduledTask(new Object(), (Runnable)null, 1000);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduledTask(new Object(), new TestRunnable(), -1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduledTask(null, new TestRunnable(), 100);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void submitScheduledCallableFail() {
+    try {
+      distributor.submitScheduledTask(new Object(), (Callable<?>)null, 1000);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduledTask(new Object(), new TestCallable(), -1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduledTask(null, new TestCallable(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected

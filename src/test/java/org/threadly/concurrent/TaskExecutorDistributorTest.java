@@ -54,6 +54,7 @@ public class TaskExecutorDistributorTest {
   @Test
   public void constructorTest() {
     // none should throw exception
+    new TaskExecutorDistributor(scheduler);
     new TaskExecutorDistributor(scheduler, 1);
     new TaskExecutorDistributor(1, scheduler);
     new TaskExecutorDistributor(1, scheduler, 1);
