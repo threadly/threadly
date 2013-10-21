@@ -5,10 +5,10 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.OutputStream;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.StringTokenizer;
 
 import org.junit.Test;
+import org.threadly.concurrent.TestUncaughtExceptionHandler;
 import org.threadly.util.ExceptionUtils.TransformedException;
 
 @SuppressWarnings("javadoc")
@@ -63,9 +63,9 @@ public class ExceptionUtilsTest {
       
       assertEquals(sb.length(), 0); // should not have gone to std err
       
-      assertEquals(ueh.callCount, 1);
-      assertTrue(ueh.calledWithThread == Thread.currentThread());
-      assertTrue(ueh.providedThrowable == e);
+      assertEquals(ueh.getCallCount(), 1);
+      assertTrue(ueh.getCalledWithThread() == Thread.currentThread());
+      assertTrue(ueh.getCalledWithThrowable() == e);
     } finally {
       System.setErr(originalSystemErr);
     }
@@ -178,18 +178,5 @@ public class ExceptionUtilsTest {
     ExceptionUtils.writeStackTo(null, sb);
     
     assertEquals(sb.length(), 0);
-  }
-  
-  private static class TestUncaughtExceptionHandler implements UncaughtExceptionHandler {
-    private int callCount = 0;
-    private Thread calledWithThread;
-    private Throwable providedThrowable;
-    
-    @Override
-    public void uncaughtException(Thread t, Throwable e) {
-      callCount++;
-      calledWithThread = t;
-      providedThrowable = e;
-    }
   }
 }

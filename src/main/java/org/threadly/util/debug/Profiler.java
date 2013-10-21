@@ -263,14 +263,11 @@ public class Profiler implements Runnable {
                            boolean globalCount, 
                            PrintStream out) {
     Map<Function, Function> methods = new HashMap<Function, Function>();
-    Trace[] traceArray = new Trace[traces.size()];
+    Trace[] traceArray = traces.toArray(new Trace[traces.size()]);
     int total = 0;
     int nativeCount = 0;
     
-    int index = 0;
-    for (Trace t: traces) {
-      traceArray[index++] = t;
-      
+    for (Trace t: traceArray) {
       if (globalCount) {
         total += t.globalCount;
       } else {

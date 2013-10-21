@@ -112,6 +112,17 @@ public class TaskSchedulerDistributorTest {
     }
   }
   
+  @Test
+  public void constructorTest() {
+    // none should throw exception
+    new TaskSchedulerDistributor(scheduler, 1);
+    new TaskSchedulerDistributor(1, scheduler);
+    new TaskSchedulerDistributor(1, scheduler, 1);
+    StripedLock sLock = new StripedLock(1, new NativeLockFactory());
+    new TaskSchedulerDistributor(scheduler, sLock);
+    new TaskSchedulerDistributor(scheduler, sLock, 1);
+  }
+  
   @Test (expected = IllegalArgumentException.class)
   public void getSubmitterSchedulerForKeyFail() {
     distributor.getSubmitterSchedulerForKey(null);

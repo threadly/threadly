@@ -52,6 +52,17 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
+  public void constructorTest() {
+    // none should throw exception
+    new TaskExecutorDistributor(scheduler, 1);
+    new TaskExecutorDistributor(1, scheduler);
+    new TaskExecutorDistributor(1, scheduler, 1);
+    StripedLock sLock = new StripedLock(1, new NativeLockFactory());
+    new TaskExecutorDistributor(scheduler, sLock);
+    new TaskExecutorDistributor(scheduler, sLock, 1);
+  }
+  
+  @Test
   public void constructorFail() {
     try {
       new TaskExecutorDistributor(1, null);
@@ -378,6 +389,26 @@ public class TaskExecutorDistributorTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+  }
+  
+  @Test
+  public void taskExceptionTest() {
+    Integer key = 1;
+    TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
+    final RuntimeException testException = new RuntimeException();
+    Thread.setDefaultUncaughtExceptionHandler(ueh);
+    TestRunnable exceptionRunnable = new TestRunnable() { 
+      @Override
+      public void handleRunFinish() {
+        throw testException;
+      }
+    };
+    TestRunnable followRunnable = new TestRunnable();
+    distributor.addTask(key, exceptionRunnable);
+    distributor.addTask(key, followRunnable);
+    exceptionRunnable.blockTillStarted();
+    followRunnable.blockTillStarted();  // verify that it ran despite the exception
+    assertTrue(ueh.getCalledWithThrowable() == testException);
   }
   
   @Test
