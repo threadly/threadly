@@ -44,6 +44,7 @@ public class Profiler implements Runnable {
   private final int pollIntervalInMs;
   private final Object startStopLock;
   private volatile Thread collectorThread;
+  private volatile Thread dumpingThread;
   
   /**
    * Constructs a new profiler instance.  The only way 
@@ -94,6 +95,7 @@ public class Profiler implements Runnable {
     this.pollIntervalInMs = pollIntervalInMs;
     startStopLock = new Object();
     collectorThread = null;
+    dumpingThread = null;
   }
   
   /**
@@ -167,9 +169,12 @@ public class Profiler implements Runnable {
       Thread[] threads = new Thread[count + THREAD_PADDING_AMMOUNT];
       count = Thread.enumerate(threads);
       for (int i = 0; i < count; i++) {
-        if (threads[i] != runningThread) {  // we skip the Profiler thread
-          String threadIdentifier = getThreadIdentifier(threads[i]);
-          Trace t = new Trace(threads[i].getStackTrace());
+        Thread currentThread = threads[i];
+        // we skip the Profiler threads (collector thread, and dumping thread if one exists)
+        if (currentThread != runningThread && 
+            currentThread != dumpingThread) {
+          String threadIdentifier = getThreadIdentifier(currentThread);
+          Trace t = new Trace(currentThread.getStackTrace());
           
           Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
           if (existingTraces == null) {
@@ -223,40 +228,45 @@ public class Profiler implements Runnable {
    * 
    * @param ps PrintStream to write results to
    */
-  public void dump(PrintStream ps) { 
-    Map<Trace, Trace> globalTraces = new HashMap<Trace, Trace>();
-    // create a local copy so the stats wont change while we are dumping them
-    Map<String, Map<Trace, Trace>> threadTraces = new HashMap<String, Map<Trace, Trace>>(this.threadTraces);
-    
-    // log out individual thread traces
-    Iterator<Entry<String, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
-    while (it.hasNext()) {
-      Entry<String, Map<Trace, Trace>> entry = it.next();
-      ps.println("Profile for thread: " + entry.getKey());
-      dump(entry.getValue().keySet(), false, ps);
+  public void dump(PrintStream ps) {
+    dumpingThread = Thread.currentThread();
+    try {
+      Map<Trace, Trace> globalTraces = new HashMap<Trace, Trace>();
+      // create a local copy so the stats wont change while we are dumping them
+      Map<String, Map<Trace, Trace>> threadTraces = new HashMap<String, Map<Trace, Trace>>(this.threadTraces);
       
-      // add in this threads trace data to the global trace map
-      Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
-      while (traceIt.hasNext()) {
-        Trace currTrace = traceIt.next();
-        Trace storedTrace = globalTraces.get(currTrace);
-        if (storedTrace == null) {
-          // make sure this is reset in case we dump multiple times
-          currTrace.globalCount = currTrace.threadCount;
-          globalTraces.put(currTrace, currTrace);
-        } else {
-          storedTrace.globalCount += currTrace.threadCount;
+      // log out individual thread traces
+      Iterator<Entry<String, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
+      while (it.hasNext()) {
+        Entry<String, Map<Trace, Trace>> entry = it.next();
+        ps.println("Profile for thread: " + entry.getKey());
+        dump(entry.getValue().keySet(), false, ps);
+        
+        // add in this threads trace data to the global trace map
+        Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
+        while (traceIt.hasNext()) {
+          Trace currTrace = traceIt.next();
+          Trace storedTrace = globalTraces.get(currTrace);
+          if (storedTrace == null) {
+            // make sure this is reset in case we dump multiple times
+            currTrace.globalCount = currTrace.threadCount;
+            globalTraces.put(currTrace, currTrace);
+          } else {
+            storedTrace.globalCount += currTrace.threadCount;
+          }
         }
+        
+        ps.println(THREAD_DELIMITER);
       }
+        
+      // log out global data
+      ps.println("Combined profile for all threads....");
+      dump(globalTraces.keySet(), true, ps);
       
-      ps.println(THREAD_DELIMITER);
+      ps.flush();
+    } finally {
+      dumpingThread = null;
     }
-      
-    // log out global data
-    ps.println("Combined profile for all threads....");
-    dump(globalTraces.keySet(), true, ps);
-    
-    ps.flush();
   }
   
   private static void dump(Set<Trace> traces, 
