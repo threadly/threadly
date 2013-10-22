@@ -305,7 +305,7 @@ public class Profiler implements Runnable {
       }
       
       for (int i = 0; i < t.elements.length; ++i) {
-        Function n = new Function(t.elements[i].getClass(),
+        Function n = new Function(t.elements[i].getClassName(),
                                   t.elements[i].getMethodName());
         Function f = methods.get(n);
         if (f == null) {
@@ -402,7 +402,7 @@ public class Profiler implements Runnable {
     out.print(format(m.count));
     out.print(format(m.count - m.childCount));
     out.print(' ');
-    out.print(m.clazz.getName());
+    out.print(m.className);
     out.print('.');
     out.println(m.function);
   }
@@ -487,16 +487,16 @@ public class Profiler implements Runnable {
    * @author jent - Mike Jensen
    */
   private static class Function {
-    private final Class<?> clazz;
+    private final String className;
     private final String function;
     private final int hashCode;
     private int count;
     private int childCount;
     
-    public Function(Class<?> clazz, String function) {
-      this.clazz = clazz;
+    public Function(String className, String function) {
+      this.className = className;
       this.function = function;
-      this.hashCode = clazz.hashCode() ^ function.hashCode();
+      this.hashCode = className.hashCode() ^ function.hashCode();
     }
     
     @Override
@@ -511,7 +511,7 @@ public class Profiler implements Runnable {
       } else if (o instanceof Function) {
         Function m = (Function) o;
         return m.hashCode == hashCode && 
-                 m.clazz.equals(clazz) && 
+                 m.className.equals(className) && 
                  m.function.equals(function);
       } else {
         return false;
