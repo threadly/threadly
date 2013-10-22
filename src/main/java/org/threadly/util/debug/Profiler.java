@@ -251,7 +251,7 @@ public class Profiler implements Runnable {
       while (it.hasNext()) {
         Entry<String, Map<Trace, Trace>> entry = it.next();
         ps.println("Profile for thread: " + entry.getKey());
-        dump(entry.getValue().keySet(), false, ps);
+        dumpTraces(entry.getValue().keySet(), false, ps);
         
         // add in this threads trace data to the global trace map
         Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
@@ -272,7 +272,7 @@ public class Profiler implements Runnable {
         
       // log out global data
       ps.println("Combined profile for all threads....");
-      dump(globalTraces.keySet(), true, ps);
+      dumpTraces(globalTraces.keySet(), true, ps);
       
       ps.flush();
     } finally {
@@ -280,9 +280,9 @@ public class Profiler implements Runnable {
     }
   }
   
-  private static void dump(Set<Trace> traces, 
-                           boolean globalCount, 
-                           PrintStream out) {
+  private static void dumpTraces(Set<Trace> traces, 
+                                 boolean globalCount, 
+                                 PrintStream out) {
     Map<Function, Function> methods = new HashMap<Function, Function>();
     Trace[] traceArray = traces.toArray(new Trace[traces.size()]);
     int total = 0;
@@ -342,7 +342,7 @@ public class Profiler implements Runnable {
     });
     
     for (int i = 0; i < methodArray.length; i++) {
-      dump(methodArray[i], out);
+      dumpFunction(methodArray[i], out);
     }
     
     out.println(FUNCTION_BY_COUNT_HEADER);
@@ -355,7 +355,7 @@ public class Profiler implements Runnable {
     });
     
     for (int i = 0; i < methodArray.length; i++) {
-      dump(methodArray[i], out);
+      dumpFunction(methodArray[i], out);
     }
     
     out.println("\ntraces by count:\n");
@@ -377,28 +377,24 @@ public class Profiler implements Runnable {
     }
     
     for (int i = 0; i < traceArray.length; i++) {
-      dump(traceArray[i], globalCount, out);
+      Trace t = traceArray[i];
+      int count;
+      if (globalCount) {
+        count = t.globalCount;
+      } else {
+        count = t.threadCount;
+      }
+      out.println(count + " time(s):");
+      
+      for (int j = 0; i < t.elements.length; j++) {
+        out.println("  at " + t.elements[j].toString());
+      }
+      
       out.println();
     }
   }
   
-  private static void dump(Trace t, 
-                           boolean globalCount, 
-                           PrintStream out) {
-    int count;
-    if (globalCount) {
-      count = t.globalCount;
-    } else {
-      count = t.threadCount;
-    }
-    out.println(count + " time(s):");
-    
-    for (int i = 0; i < t.elements.length; ++i) {
-      out.println("  at " + t.elements[i].toString());
-    }
-  }
-  
-  private static void dump(Function m, PrintStream out) {
+  private static void dumpFunction(Function m, PrintStream out) {
     out.print(format(m.count));
     out.print(format(m.count - m.childCount));
     out.print(' ');
