@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.util.ExceptionUtils;
 
@@ -43,7 +44,7 @@ public class Profiler implements Runnable {
   private final File outputFile;
   private final int pollIntervalInMs;
   private final Object startStopLock;
-  private volatile Thread collectorThread;
+  private final AtomicReference<Thread> collectorThread;
   private volatile Thread dumpingThread;
   
   /**
@@ -94,7 +95,7 @@ public class Profiler implements Runnable {
     this.outputFile = outputFile;
     this.pollIntervalInMs = pollIntervalInMs;
     startStopLock = new Object();
-    collectorThread = null;
+    collectorThread = new AtomicReference<Thread>(null);
     dumpingThread = null;
   }
   
@@ -119,11 +120,14 @@ public class Profiler implements Runnable {
    */
   public synchronized void start() {
     synchronized (startStopLock) {
-      if (collectorThread == null) {
-        collectorThread = new Thread(this);
-        collectorThread.setName(COLLECTOR_THREAD_NAME);
-        collectorThread.setPriority(Thread.MAX_PRIORITY);
-        collectorThread.start();
+      if (collectorThread.get() == null) {
+        Thread thread = new Thread(this);
+        
+        collectorThread.set(thread);
+        
+        thread.setName(COLLECTOR_THREAD_NAME);
+        thread.setPriority(Thread.MAX_PRIORITY);
+        thread.start();
       }
     }
   }
@@ -136,9 +140,10 @@ public class Profiler implements Runnable {
    */
   public void stop() {
     synchronized (startStopLock) {
-      if (collectorThread != null) {
-        collectorThread.interrupt();
-        collectorThread = null;
+      Thread runningThread = collectorThread.get();
+      if (runningThread != null) {
+        runningThread.interrupt();
+        collectorThread.set(null);
         
         if (outputFile != null) {
           try {
@@ -163,7 +168,7 @@ public class Profiler implements Runnable {
   @Override
   public void run() {
     Thread runningThread = Thread.currentThread();
-    while (collectorThread == runningThread) {
+    while (collectorThread.get() == runningThread) {
       int count = Thread.activeCount();
       // we add a little to make sure we get every thread
       Thread[] threads = new Thread[count + THREAD_PADDING_AMMOUNT];
@@ -194,6 +199,7 @@ public class Profiler implements Runnable {
       try {
         Thread.sleep(pollIntervalInMs);
       } catch (InterruptedException e) {
+        collectorThread.compareAndSet(runningThread, null);
         return;
       }
     }
