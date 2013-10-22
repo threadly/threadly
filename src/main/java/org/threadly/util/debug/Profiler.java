@@ -386,7 +386,7 @@ public class Profiler implements Runnable {
       }
       out.println(count + " time(s):");
       
-      for (int j = 0; i < t.elements.length; j++) {
+      for (int j = 0; j < t.elements.length; j++) {
         out.println("  at " + t.elements[j].toString());
       }
       
