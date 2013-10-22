@@ -178,20 +178,25 @@ public class Profiler implements Runnable {
         // we skip the Profiler threads (collector thread, and dumping thread if one exists)
         if (currentThread != runningThread && 
             currentThread != dumpingThread) {
-          String threadIdentifier = getThreadIdentifier(currentThread);
-          Trace t = new Trace(currentThread.getStackTrace());
-          
-          Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
-          if (existingTraces == null) {
-            existingTraces = new ConcurrentHashMap<Trace, Trace>();
-            threadTraces.put(threadIdentifier, existingTraces);
-          }
-          
-          Trace existingTrace = existingTraces.get(t);
-          if (existingTrace == null) {
-            existingTraces.put(t, t);
-          } else {
-            existingTrace.threadCount++;
+          StackTraceElement[] threadStack = currentThread.getStackTrace();
+          if (threadStack.length > 0) {
+            String threadIdentifier = getThreadIdentifier(currentThread);
+            Trace t = new Trace(threadStack);
+            
+            Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
+            if (existingTraces == null) {
+              existingTraces = new ConcurrentHashMap<Trace, Trace>();
+              threadTraces.put(threadIdentifier, existingTraces);
+
+              existingTraces.put(t, t);
+            } else {
+              Trace existingTrace = existingTraces.get(t);
+              if (existingTrace == null) {
+                existingTraces.put(t, t);
+              } else {
+                existingTrace.threadCount++;
+              }
+            }
           }
         }
       }
