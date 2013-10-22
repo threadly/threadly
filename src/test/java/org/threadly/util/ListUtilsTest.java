@@ -21,35 +21,35 @@ public class ListUtilsTest {
     TestDelayed zero = new TestDelayed(0);
     TestDelayed one = new TestDelayed(1);
     TestDelayed ten = new TestDelayed(10);
-    assertTrue(ListUtils.getInsertionEndIndex(list, zero) == 0);
-    assertTrue(ListUtils.getInsertionEndIndex(list, one) == 0);
-    assertTrue(ListUtils.getInsertionEndIndex(list, ten) == 0);
+    assertEquals(0, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(0, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(0, ListUtils.getInsertionEndIndex(list, ten));
     
     list.add(list.size(), zero);
-    assertTrue(ListUtils.getInsertionEndIndex(list, zero) == 1);
-    assertTrue(ListUtils.getInsertionEndIndex(list, one) == 1);
-    assertTrue(ListUtils.getInsertionEndIndex(list, ten) == 1);
+    assertEquals(1, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(1, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(1, ListUtils.getInsertionEndIndex(list, ten));
     
     list.add(list.size(), zero);
-    assertTrue(ListUtils.getInsertionEndIndex(list, zero) == 2);
-    assertTrue(ListUtils.getInsertionEndIndex(list, one) == 2);
-    assertTrue(ListUtils.getInsertionEndIndex(list, ten) == 2);
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, ten));
     
     list.add(list.size(), ten);
-    assertTrue(ListUtils.getInsertionEndIndex(list, zero) == 2);
-    assertTrue(ListUtils.getInsertionEndIndex(list, one) == 2);
-    assertTrue(ListUtils.getInsertionEndIndex(list, ten) == 3);
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(3, ListUtils.getInsertionEndIndex(list, ten));
     
     list.add(list.size(), ten);
-    assertTrue(ListUtils.getInsertionEndIndex(list, zero) == 2);
-    assertTrue(ListUtils.getInsertionEndIndex(list, one) == 2);
-    assertTrue(ListUtils.getInsertionEndIndex(list, ten) == 4);
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(4, ListUtils.getInsertionEndIndex(list, ten));
     
     // do one insert in the middle
     list.add(2, one);
-    assertTrue(ListUtils.getInsertionEndIndex(list, zero) == 2);
-    assertTrue(ListUtils.getInsertionEndIndex(list, one) == 3);
-    assertTrue(ListUtils.getInsertionEndIndex(list, ten) == 5);
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(3, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(5, ListUtils.getInsertionEndIndex(list, ten));
   }
   
   @Test
@@ -60,48 +60,48 @@ public class ListUtilsTest {
     TestDelayed zero = new TestDelayed(0);
     
     // verify against an empty list
-    assertTrue(ListUtils.binarySearch(list, zero) == -1);
-    assertTrue(ListUtils.binarySearch(list, zero, false) == -1);
-    assertTrue(ListUtils.binarySearch(list, zero, true) == -1);
+    assertEquals(-1, ListUtils.binarySearch(list, zero));
+    assertEquals(-1, ListUtils.binarySearch(list, zero, false));
+    assertEquals(-1, ListUtils.binarySearch(list, zero, true));
     
     // add one and verify both contains and missing
     TestDelayed negativeOne = new TestDelayed(-1);
     list.add(negativeOne);
 
-    assertTrue(ListUtils.binarySearch(list, zero) == -2);
-    assertTrue(ListUtils.binarySearch(list, zero, false) == -2);
-    assertTrue(ListUtils.binarySearch(list, zero, true) == -2);
+    assertEquals(-2, ListUtils.binarySearch(list, zero));
+    assertEquals(-2, ListUtils.binarySearch(list, zero, false));
+    assertEquals(-2, ListUtils.binarySearch(list, zero, true));
 
-    assertTrue(ListUtils.binarySearch(list, negativeOne) == 0);
-    assertTrue(ListUtils.binarySearch(list, negativeOne, false) == 0);
-    assertTrue(ListUtils.binarySearch(list, negativeOne, true) == 0);
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne));
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne, false));
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne, true));
     
     // add one more and verify both contains and missing
     TestDelayed ten = new TestDelayed(10);
     list.add(ten);
 
-    assertTrue(ListUtils.binarySearch(list, zero) == -2);
-    assertTrue(ListUtils.binarySearch(list, zero, false) == -2);
-    assertTrue(ListUtils.binarySearch(list, zero, true) == -2);
+    assertEquals(-2, ListUtils.binarySearch(list, zero));
+    assertEquals(-2, ListUtils.binarySearch(list, zero, false));
+    assertEquals(-2, ListUtils.binarySearch(list, zero, true));
 
-    assertTrue(ListUtils.binarySearch(list, negativeOne) == 0);
-    assertTrue(ListUtils.binarySearch(list, negativeOne, false) == 0);
-    assertTrue(ListUtils.binarySearch(list, negativeOne, true) == 0);
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne));
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne, false));
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne, true));
     
-    assertTrue(ListUtils.binarySearch(list, ten) == 1);
-    assertTrue(ListUtils.binarySearch(list, ten, false) == 1);
-    assertTrue(ListUtils.binarySearch(list, ten, true) == 1);
+    assertEquals(1, ListUtils.binarySearch(list, ten));
+    assertEquals(1, ListUtils.binarySearch(list, ten, false));
+    assertEquals(1, ListUtils.binarySearch(list, ten, true));
     
     // add a duplicate entry and verify both contains and missing
     list.add(ten);
 
-    assertTrue(ListUtils.binarySearch(list, zero) == -2);
-    assertTrue(ListUtils.binarySearch(list, zero, false) == -2);
-    assertTrue(ListUtils.binarySearch(list, zero, true) == -2);
+    assertEquals(-2, ListUtils.binarySearch(list, zero));
+    assertEquals(-2, ListUtils.binarySearch(list, zero, false));
+    assertEquals(-2, ListUtils.binarySearch(list, zero, true));
 
-    assertTrue(ListUtils.binarySearch(list, negativeOne) == 0);
-    assertTrue(ListUtils.binarySearch(list, negativeOne, false) == 0);
-    assertTrue(ListUtils.binarySearch(list, negativeOne, true) == 0);
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne));
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne, false));
+    assertEquals(0, ListUtils.binarySearch(list, negativeOne, true));
     long index = ListUtils.binarySearch(list, ten, false);
     assertTrue(index == 1 || index == 2);
     index = ListUtils.binarySearch(list, ten, true);
@@ -119,7 +119,7 @@ public class ListUtilsTest {
         insertionIndex = bsResult;
       }
       list.add(insertionIndex, testItem);
-      assertTrue(ListUtils.binarySearch(list, testItem, true) == insertionIndex);
+      assertEquals(insertionIndex, ListUtils.binarySearch(list, testItem, true));
     }
     
     Random random = new Random(System.currentTimeMillis());

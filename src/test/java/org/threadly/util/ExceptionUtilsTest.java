@@ -61,9 +61,9 @@ public class ExceptionUtilsTest {
       Exception e = new Exception();
       ExceptionUtils.handleException(e);
       
-      assertEquals(sb.length(), 0); // should not have gone to std err
+      assertEquals(0, sb.length()); // should not have gone to std err
       
-      assertEquals(ueh.getCallCount(), 1);
+      assertEquals(1, ueh.getCallCount());
       assertTrue(ueh.getCalledWithThread() == Thread.currentThread());
       assertTrue(ueh.getCalledWithThrowable() == e);
     } finally {
@@ -123,7 +123,7 @@ public class ExceptionUtilsTest {
     assertNotNull(result);
     
     StringTokenizer st = new StringTokenizer(result, "\n");
-    assertEquals(st.countTokens(), testException.getStackTrace().length + 1);
+    assertEquals(testException.getStackTrace().length + 1, st.countTokens());
     assertTrue(result.contains(message));
   }
   
@@ -133,7 +133,7 @@ public class ExceptionUtilsTest {
     
     assertNotNull(result);
     
-    assertEquals(result.length(), 0);
+    assertEquals(0, result.length());
   }
   
   @Test
@@ -146,7 +146,7 @@ public class ExceptionUtilsTest {
     assertNotNull(result);
     
     StringTokenizer st = new StringTokenizer(result, "\n");
-    assertEquals(st.countTokens(), testException.getStackTrace().length + 1);
+    assertEquals(testException.getStackTrace().length + 1, st.countTokens());
     assertTrue(result.contains(message));
   }
   
@@ -155,7 +155,7 @@ public class ExceptionUtilsTest {
     StringBuilder sb = new StringBuilder();
     ExceptionUtils.writeStackTo(null, sb);
     
-    assertEquals(sb.length(), 0);
+    assertEquals(0, sb.length());
   }
   
   @Test
@@ -168,7 +168,7 @@ public class ExceptionUtilsTest {
     assertNotNull(result);
     
     StringTokenizer st = new StringTokenizer(result, "\n");
-    assertEquals(st.countTokens(), testException.getStackTrace().length + 1);
+    assertEquals(testException.getStackTrace().length + 1, st.countTokens());
     assertTrue(result.contains(message));
   }
   
@@ -177,6 +177,6 @@ public class ExceptionUtilsTest {
     StringBuffer sb = new StringBuffer();
     ExceptionUtils.writeStackTo(null, sb);
     
-    assertEquals(sb.length(), 0);
+    assertEquals(0, sb.length());
   }
 }

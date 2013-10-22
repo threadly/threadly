@@ -45,14 +45,14 @@ public class ConcurrentArrayListTest {
   @Test
   public void setFrontPaddingTest() {
     testList.setFrontPadding(1);
-    assertEquals(testList.getFrontPadding(), 1);
+    assertEquals(1, testList.getFrontPadding());
     
     // make some modifications
     testList.add("foo");
     testList.offer("bar");
     testList.remove(0);
     
-    assertEquals(testList.getFrontPadding(), 1);
+    assertEquals(1, testList.getFrontPadding());
   }
 
   @Test (expected = IllegalArgumentException.class)
@@ -63,14 +63,14 @@ public class ConcurrentArrayListTest {
   @Test
   public void setRearPaddingTest() {
     testList.setRearPadding(1);
-    assertEquals(testList.getRearPadding(), 1);
+    assertEquals(1, testList.getRearPadding());
     
     // make some modifications
     testList.add("foo");
     testList.offer("bar");
     testList.remove(0);
     
-    assertEquals(testList.getRearPadding(), 1);
+    assertEquals(1, testList.getRearPadding());
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -130,7 +130,7 @@ public class ConcurrentArrayListTest {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       testList.addFirst(str);
-      assertEquals(testList.getFirst(), str);
+      assertEquals(str, testList.getFirst());
     }
   }
   
@@ -139,7 +139,7 @@ public class ConcurrentArrayListTest {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       testList.addLast(str);
-      assertEquals(testList.getLast(), str);
+      assertEquals(str, testList.getLast());
     }
   }
   
@@ -148,7 +148,7 @@ public class ConcurrentArrayListTest {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       assertTrue(testList.offerFirst(str));
-      assertEquals(testList.getFirst(), str);
+      assertEquals(str, testList.getFirst());
     }
   }
   
@@ -157,7 +157,7 @@ public class ConcurrentArrayListTest {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       assertTrue(testList.offerLast(str));
-      assertEquals(testList.getLast(), str);
+      assertEquals(str, testList.getLast());
     }
   }
   
@@ -186,7 +186,7 @@ public class ConcurrentArrayListTest {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       testList.addFirst(str);
-      assertEquals(testList.peekFirst(), str);
+      assertEquals(str, testList.peekFirst());
     }
   }
   
@@ -195,7 +195,7 @@ public class ConcurrentArrayListTest {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       testList.addLast(str);
-      assertEquals(testList.peekLast(), str);
+      assertEquals(str, testList.peekLast());
     }
   }
   
@@ -222,7 +222,7 @@ public class ConcurrentArrayListTest {
       testList.removeFirstOccurrence(str);
     }
     
-    assertEquals(testList.size(), secondStr.size());
+    assertEquals(secondStr.size(), testList.size());
     
     Iterator<String> it = secondStr.iterator();
     Iterator<String> testIt = testList.iterator();
@@ -250,7 +250,7 @@ public class ConcurrentArrayListTest {
       testList.removeLastOccurrence(str);
     }
     
-    assertEquals(testList.size(), firstStr.size());
+    assertEquals(firstStr.size(), testList.size());
     
     Iterator<String> it = firstStr.iterator();
     Iterator<String> testIt = testList.iterator();
@@ -274,7 +274,7 @@ public class ConcurrentArrayListTest {
       String next = it.next();
       assertTrue(testList.removeFirst() == next);
       removed++;
-      assertEquals(testList.size(), TEST_QTY - removed);
+      assertEquals(TEST_QTY - removed, testList.size());
       assertFalse(testList.peek() == next);
     }
   }
@@ -299,7 +299,7 @@ public class ConcurrentArrayListTest {
       String next = it.next();
       assertTrue(testList.removeLast() == next);
       removed++;
-      assertEquals(testList.size(), TEST_QTY - removed);
+      assertEquals(TEST_QTY - removed, testList.size());
       assertFalse(testList.peekLast() == next);
     }
   }
@@ -324,7 +324,7 @@ public class ConcurrentArrayListTest {
       String next = it.next();
       assertTrue(testList.pollFirst() == next);
       removed++;
-      assertEquals(testList.size(), TEST_QTY - removed);
+      assertEquals(TEST_QTY - removed, testList.size());
       assertFalse(testList.peek() == next);
     }
   }
@@ -344,7 +344,7 @@ public class ConcurrentArrayListTest {
       String next = it.next();
       assertTrue(testList.pollLast() == next);
       removed++;
-      assertEquals(testList.size(), TEST_QTY - removed);
+      assertEquals(TEST_QTY - removed, testList.size());
       assertFalse(testList.peekLast() == next);
     }
   }
@@ -446,18 +446,18 @@ public class ConcurrentArrayListTest {
     }
     
     testList.reposition(TEST_QTY - 1, 0);
-    assertEquals(testList.get(0), Integer.toString(TEST_QTY - 1));
-    assertEquals(testList.get(1), Integer.toString(0));
+    assertEquals(Integer.toString(TEST_QTY - 1), testList.get(0));
+    assertEquals(Integer.toString(0), testList.get(1));
 
     String expectedNext = testList.get(6);
     testList.reposition(0, 5);
-    assertEquals(testList.get(4), // one less than index position because shifted right 
-                 Integer.toString(TEST_QTY - 1));
-    assertEquals(testList.get(6), expectedNext);
+    assertEquals(Integer.toString(TEST_QTY - 1), // one less than index position because shifted right 
+                 testList.get(4));
+    assertEquals(expectedNext, testList.get(6));
     
     testList.reposition(1, 3);  // swap 1 to 2
-    assertEquals(testList.get(1), Integer.toString(2));
-    assertEquals(testList.get(2), Integer.toString(1));
+    assertEquals(Integer.toString(2), testList.get(1));
+    assertEquals(Integer.toString(1), testList.get(2));
   }
   
   /* This also tests the ListIterator forwards, 
@@ -531,10 +531,10 @@ public class ConcurrentArrayListTest {
   public void makeEmptyDataSetTest() {
     DataSet<String> ds = ConcurrentArrayList.makeEmptyDataSet(0, 0);
     
-    assertEquals(ds.size, 0);
+    assertEquals(0, ds.size);
     
     ds = ConcurrentArrayList.makeEmptyDataSet(10, 10);
-    assertEquals(ds.size, 0);
+    assertEquals(0, ds.size);
   }
   
   @Test (expected = IllegalArgumentException.class)

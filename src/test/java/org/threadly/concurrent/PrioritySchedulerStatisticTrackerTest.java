@@ -519,7 +519,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                         TaskPriority.High, 100);
     try {
-      assertEquals(scheduler.getAverageTaskRunTime(), -1);
+      assertEquals(-1, scheduler.getAverageTaskRunTime());
     } finally {
       scheduler.shutdownNow();
     }
@@ -553,8 +553,8 @@ public class PrioritySchedulerStatisticTrackerTest {
       }.blockTillTrue();
       
       List<Long> runTimes = scheduler.getRunTimes();
-      assertEquals(runTimes.size(), 
-                   lowPriorityCount + highPriorityCount);
+      assertEquals(lowPriorityCount + highPriorityCount, 
+                   runTimes.size());
       
       long totalRunTime = 0;
       Iterator<Long> it = runTimes.iterator();
@@ -564,7 +564,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       
       long avgRunTime = totalRunTime / runTimes.size();
       
-      assertEquals(scheduler.getAverageTaskRunTime(), avgRunTime);
+      assertEquals(avgRunTime, scheduler.getAverageTaskRunTime());
     } finally {
       scheduler.shutdownNow();
     }
@@ -593,11 +593,12 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastLowPriorityRunnable.blockTillFinished();
       lastHighPriorityRunnable.blockTillFinished();
       
-      assertEquals(scheduler.getCurrentlyRunningCount(), 0);
+      assertEquals(0, scheduler.getCurrentlyRunningCount());
       
-      assertEquals(scheduler.getTotalExecutionCount(), lowPriorityCount + highPriorityCount);
-      assertEquals(scheduler.getLowPriorityTotalExecutionCount(), lowPriorityCount);
-      assertEquals(scheduler.getHighPriorityTotalExecutionCount(), highPriorityCount);
+      assertEquals(lowPriorityCount + highPriorityCount, 
+                   scheduler.getTotalExecutionCount());
+      assertEquals(lowPriorityCount, scheduler.getLowPriorityTotalExecutionCount());
+      assertEquals(highPriorityCount, scheduler.getHighPriorityTotalExecutionCount());
     } finally {
       scheduler.shutdownNow();
     }
@@ -608,40 +609,40 @@ public class PrioritySchedulerStatisticTrackerTest {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                         TaskPriority.High, 100);
     try {
-      assertTrue(scheduler.getThreadReusePercent() == -1);
-      assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
-      assertTrue(scheduler.getHighPriorityThreadReusePercent() == -1);
+      assertEquals(-1, scheduler.getThreadReusePercent(), 0);
+      assertEquals(-1, scheduler.getLowPriorityThreadReusePercent(), 0);
+      assertEquals(-1, scheduler.getHighPriorityThreadReusePercent(), 0);
       
       TestRunnable tr = new TestRunnable();
       scheduler.execute(tr, TaskPriority.High);
       tr.blockTillFinished();
       
-      assertTrue(scheduler.getThreadReusePercent() == 0);
-      assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
-      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 0);
+      assertEquals(0, scheduler.getThreadReusePercent(), 0);
+      assertEquals(-1, scheduler.getLowPriorityThreadReusePercent(), 0);
+      assertEquals(0, scheduler.getHighPriorityThreadReusePercent(), 0);
       
       tr = new TestRunnable();
       scheduler.execute(tr, TaskPriority.High);
       tr.blockTillFinished();
       
-      assertTrue(scheduler.getThreadReusePercent() == 50);
-      assertTrue(scheduler.getLowPriorityThreadReusePercent() == -1);
-      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+      assertEquals(50, scheduler.getThreadReusePercent(), 0);
+      assertEquals(-1, scheduler.getLowPriorityThreadReusePercent(), 0);
+      assertEquals(50, scheduler.getHighPriorityThreadReusePercent(), 0);
       
       tr = new TestRunnable();
       scheduler.execute(tr, TaskPriority.Low);
       tr.blockTillFinished();
       
-      assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
-      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+      assertEquals(100, scheduler.getLowPriorityThreadReusePercent(), 0);
+      assertEquals(50, scheduler.getHighPriorityThreadReusePercent(), 0);
       
       tr = new TestRunnable();
       scheduler.execute(tr, TaskPriority.Low);
       tr.blockTillFinished();
       
-      assertTrue(scheduler.getThreadReusePercent() == 75);
-      assertTrue(scheduler.getLowPriorityThreadReusePercent() == 100);
-      assertTrue(scheduler.getHighPriorityThreadReusePercent() == 50);
+      assertEquals(75, scheduler.getThreadReusePercent(), 0);
+      assertEquals(100, scheduler.getLowPriorityThreadReusePercent(), 0);
+      assertEquals(50, scheduler.getHighPriorityThreadReusePercent(), 0);
     } finally {
       scheduler.shutdownNow();
     }
@@ -652,7 +653,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                         TaskPriority.High, 100);
     try {
-      assertEquals(scheduler.getMedianTaskRunTime(), -1);
+      assertEquals(-1, scheduler.getMedianTaskRunTime());
     } finally {
       scheduler.shutdownNow();
     }
@@ -697,7 +698,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       List<Long> samples = new ArrayList<Long>(scheduler.getRunTimes());
       Collections.sort(samples);
       
-      assertTrue(scheduler.getMedianTaskRunTime() == samples.get(samples.size() / 2));
+      assertEquals(0, scheduler.getMedianTaskRunTime(), samples.get(samples.size() / 2));
     } finally {
       scheduler.shutdownNow();
     }
@@ -708,7 +709,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                         TaskPriority.High, 100);
     try {
-      assertEquals(scheduler.getAvgExecutionDelay(), -1);
+      assertEquals(-1, scheduler.getAvgExecutionDelay());
     } finally {
       scheduler.shutdownNow();
     }
@@ -742,10 +743,10 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       switch (testPriority) {
         case High:
-          assertEquals(scheduler.getHighPriorityAvgExecutionDelay(), -1);
+          assertEquals(-1, scheduler.getHighPriorityAvgExecutionDelay());
           break;
         case Low:
-          assertEquals(scheduler.getLowPriorityAvgExecutionDelay(), -1);
+          assertEquals(-1, scheduler.getLowPriorityAvgExecutionDelay());
           break;
         default:
           throw new UnsupportedOperationException("Priority not implenented: " + testPriority);
@@ -820,10 +821,10 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       switch (priority) {
         case High:
-          assertTrue(scheduler.getHighPriorityAvgExecutionDelay() == total / samples.size());
+          assertEquals(total / samples.size(), scheduler.getHighPriorityAvgExecutionDelay(), 0);
           break;
         case Low:
-          assertTrue(scheduler.getLowPriorityAvgExecutionDelay() == total / samples.size());
+          assertEquals(total / samples.size(), scheduler.getLowPriorityAvgExecutionDelay(), 0);
           break;
         default:
           throw new UnsupportedOperationException("Priority not implenented: " + priority);
@@ -850,8 +851,8 @@ public class PrioritySchedulerStatisticTrackerTest {
     final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                               TaskPriority.High, 100);
 
-    assertEquals(scheduler.getHighPriorityMedianExecutionDelay(), -1);
-    assertEquals(scheduler.getLowPriorityMedianExecutionDelay(), -1);
+    assertEquals(-1, scheduler.getHighPriorityMedianExecutionDelay());
+    assertEquals(-1, scheduler.getLowPriorityMedianExecutionDelay());
     
     try {
       BlockRunnable lastRunnable = null;
@@ -898,10 +899,10 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       switch (priority) {
         case High:
-          assertTrue(scheduler.getHighPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
+          assertEquals(samples.get(samples.size() / 2), scheduler.getHighPriorityMedianExecutionDelay(), 0);
           break;
         case Low:
-          assertTrue(scheduler.getLowPriorityMedianExecutionDelay() == samples.get(samples.size() / 2));
+          assertEquals(samples.get(samples.size() / 2), scheduler.getLowPriorityMedianExecutionDelay(), 0);
           break;
         default:
           throw new UnsupportedOperationException("Priority not implenented: " + priority);
@@ -934,11 +935,11 @@ public class PrioritySchedulerStatisticTrackerTest {
       br.blockTillStarted();
       TestUtils.sleep(System.currentTimeMillis() - before + checkTime + 1);
       
-      assertEquals(scheduler.getQtyRunningOverTime(checkTime), 1);
+      assertEquals(1, scheduler.getQtyRunningOverTime(checkTime));
       List<Runnable> longRunning = scheduler.getRunnablesRunningOverTime(checkTime);
       br.unblock();
       
-      assertEquals(longRunning.size(), 1);
+      assertEquals(1, longRunning.size());
       assertTrue(longRunning.get(0) == br);
       
       // wait for task to finish now
@@ -949,7 +950,7 @@ public class PrioritySchedulerStatisticTrackerTest {
         }
       }.blockTillTrue();
 
-      assertEquals(scheduler.getQtyRunningOverTime(0), 0);
+      assertEquals(0, scheduler.getQtyRunningOverTime(0));
       longRunning = scheduler.getRunnablesRunningOverTime(0);
 
       assertTrue(longRunning.isEmpty());
@@ -971,11 +972,11 @@ public class PrioritySchedulerStatisticTrackerTest {
       bc.blockTillStarted();
       TestUtils.sleep(System.currentTimeMillis() - before + checkTime + 1);
 
-      assertEquals(scheduler.getQtyRunningOverTime(checkTime), 1);
+      assertEquals(1, scheduler.getQtyRunningOverTime(checkTime));
       List<Callable<?>> longRunning = scheduler.getCallablesRunningOverTime(checkTime);
       bc.unblock();
       
-      assertEquals(longRunning.size(), 1);
+      assertEquals(1, longRunning.size());
       assertTrue(longRunning.get(0) == bc);
       
       // wait for task to finish now
@@ -986,7 +987,7 @@ public class PrioritySchedulerStatisticTrackerTest {
         }
       }.blockTillTrue();
 
-      assertEquals(scheduler.getQtyRunningOverTime(0), 0);
+      assertEquals(0, scheduler.getQtyRunningOverTime(0));
       longRunning = scheduler.getCallablesRunningOverTime(0);
 
       assertTrue(longRunning.isEmpty());

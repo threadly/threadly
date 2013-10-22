@@ -152,7 +152,7 @@ public class TaskSchedulerDistributorTest {
       while (it.hasNext()) {
         TDRunnable tr = it.next();
         tr.blockTillFinished(1000);
-        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertEquals(1, tr.getRunCount()); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
@@ -221,7 +221,7 @@ public class TaskSchedulerDistributorTest {
       while (it.hasNext()) {
         TDRunnable tr = it.next();
         tr.blockTillFinished(1000);
-        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertEquals(1, tr.getRunCount()); // verify each only ran once
         assertTrue(tr.getDelayTillFirstRun() >= scheduleDelay);
         assertTrue(tr.threadTracker.runningConsistent);  // verify that it never run in parallel
       }

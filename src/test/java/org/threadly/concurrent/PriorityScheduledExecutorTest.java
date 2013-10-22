@@ -32,12 +32,12 @@ public class PriorityScheduledExecutorTest {
       PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000, 
                                                          priority, 1000);
       
-      assertEquals(scheduler.getDefaultPriority(), priority);
+      assertEquals(priority, scheduler.getDefaultPriority());
       
       priority = TaskPriority.Low;
       scheduler = factory.make(1, 1, 1000, 
                                priority, 1000);
-      assertEquals(scheduler.getDefaultPriority(), priority);
+      assertEquals(priority, scheduler.getDefaultPriority());
     } finally {
       factory.shutdown();
     }
@@ -92,7 +92,7 @@ public class PriorityScheduledExecutorTest {
     assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
     PrioritySchedulerInterface newScheduler = scheduler.makeWithDefaultPriority(newPriority);
     try {
-      assertEquals(newScheduler.getDefaultPriority(), newPriority);
+      assertEquals(newPriority, newScheduler.getDefaultPriority());
     } finally {
       factory.shutdown();
     }
@@ -108,13 +108,13 @@ public class PriorityScheduledExecutorTest {
     PriorityScheduledExecutor scheduler = factory.make(corePoolSize, 
                                                        corePoolSize + 10, 1000);
     try {
-      assertEquals(scheduler.getCorePoolSize(), corePoolSize);
+      assertEquals(corePoolSize, scheduler.getCorePoolSize());
       
       corePoolSize = 10;
       scheduler.setMaxPoolSize(corePoolSize + 10);
       scheduler.setCorePoolSize(corePoolSize);
       
-      assertEquals(scheduler.getCorePoolSize(), corePoolSize);
+      assertEquals(corePoolSize, scheduler.getCorePoolSize());
     } finally {
       factory.shutdown();
     }
@@ -160,12 +160,12 @@ public class PriorityScheduledExecutorTest {
     int maxPoolSize = 1;
     PriorityScheduledExecutor scheduler = factory.make(1, maxPoolSize, 1000);
     try {
-      assertEquals(scheduler.getMaxPoolSize(), maxPoolSize);
+      assertEquals(maxPoolSize, scheduler.getMaxPoolSize());
       
       maxPoolSize = 10;
       scheduler.setMaxPoolSize(maxPoolSize);
       
-      assertEquals(scheduler.getMaxPoolSize(), maxPoolSize);
+      assertEquals(maxPoolSize, scheduler.getMaxPoolSize());
     } finally {
       factory.shutdown();
     }
@@ -206,12 +206,12 @@ public class PriorityScheduledExecutorTest {
     long lowPriorityWait = 1000;
     PriorityScheduledExecutor scheduler = factory.make(1, 1, lowPriorityWait / 10, TaskPriority.High, lowPriorityWait);
     try {
-      assertEquals(scheduler.getMaxWaitForLowPriority(), lowPriorityWait);
+      assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
       
       lowPriorityWait = Long.MAX_VALUE;
       scheduler.setMaxWaitForLowPriority(lowPriorityWait);
       
-      assertEquals(scheduler.getMaxWaitForLowPriority(), lowPriorityWait);
+      assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
     } finally {
       factory.shutdown();
     }
@@ -233,7 +233,7 @@ public class PriorityScheduledExecutorTest {
         // expected
       }
       
-      assertEquals(scheduler.getMaxWaitForLowPriority(), lowPriorityWait);
+      assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
     } finally {
       factory.shutdown();
     }
@@ -248,12 +248,12 @@ public class PriorityScheduledExecutorTest {
     long keepAliveTime = 1000;
     PriorityScheduledExecutor scheduler = factory.make(1, 1, keepAliveTime);
     try {
-      assertEquals(scheduler.getKeepAliveTime(), keepAliveTime);
+      assertEquals(keepAliveTime, scheduler.getKeepAliveTime());
       
       keepAliveTime = Long.MAX_VALUE;
       scheduler.setKeepAliveTime(keepAliveTime);
       
-      assertEquals(scheduler.getKeepAliveTime(), keepAliveTime);
+      assertEquals(keepAliveTime, scheduler.getKeepAliveTime());
     } finally {
       factory.shutdown();
     }
@@ -284,15 +284,15 @@ public class PriorityScheduledExecutorTest {
     result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                         TaskPriority.High, 0));
     
-    assertEquals(result.getScheduledTaskCount(), 2);
+    assertEquals(2, result.getScheduledTaskCount());
     
     result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                       TaskPriority.Low, 0));
     result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                       TaskPriority.Low, 0));
     
-    assertEquals(result.getScheduledTaskCount(), 4);
-    assertEquals(result.getScheduledTaskCount(null), 4);
+    assertEquals(4, result.getScheduledTaskCount());
+    assertEquals(4, result.getScheduledTaskCount(null));
   }
   
   @Test
@@ -304,14 +304,14 @@ public class PriorityScheduledExecutorTest {
     result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                         TaskPriority.High, 0));
     
-    assertEquals(result.getScheduledTaskCount(TaskPriority.Low), 0);
+    assertEquals(0, result.getScheduledTaskCount(TaskPriority.Low));
     
     result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                       TaskPriority.Low, 0));
     result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                       TaskPriority.Low, 0));
     
-    assertEquals(result.getScheduledTaskCount(TaskPriority.Low), 2);
+    assertEquals(2, result.getScheduledTaskCount(TaskPriority.Low));
   }
   
   @Test
@@ -323,14 +323,14 @@ public class PriorityScheduledExecutorTest {
     result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                         TaskPriority.High, 0));
     
-    assertEquals(result.getScheduledTaskCount(TaskPriority.High), 2);
+    assertEquals(2, result.getScheduledTaskCount(TaskPriority.High));
     
     result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                       TaskPriority.Low, 0));
     result.lowPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                       TaskPriority.Low, 0));
     
-    assertEquals(result.getScheduledTaskCount(TaskPriority.High), 2);
+    assertEquals(2, result.getScheduledTaskCount(TaskPriority.High));
   }
   
   @Test
@@ -342,14 +342,14 @@ public class PriorityScheduledExecutorTest {
     PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
     try {
       // verify nothing at the start
-      assertEquals(scheduler.getCurrentPoolSize(), 0);
+      assertEquals(0, scheduler.getCurrentPoolSize());
       
       TestRunnable tr = new TestRunnable();
       scheduler.execute(tr);
       
-      tr.blockTillFinished();  // wait for execution
+      tr.blockTillStarted();  // wait for execution
       
-      assertEquals(scheduler.getCurrentPoolSize(), 1);
+      assertEquals(1, scheduler.getCurrentPoolSize());
     } finally {
       factory.shutdown();
     }
@@ -406,7 +406,7 @@ public class PriorityScheduledExecutorTest {
       ListenableFuture<?> future = executor.submit(tr);
       
       tr.blockTillStarted();
-      assertEquals(executor.getCurrentPoolSize(), 1);
+      assertEquals(1, executor.getCurrentPoolSize());
       
       assertTrue(future.cancel(true));
       
@@ -418,7 +418,7 @@ public class PriorityScheduledExecutorTest {
         }
       }.blockTillTrue(1000, 5); // will throw an exception if not true
       // verify pool size is still correct
-      assertEquals(executor.getCurrentPoolSize(), 1);
+      assertEquals(1, executor.getCurrentPoolSize());
       // verify interrupted status has been cleared
       assertFalse(executor.availableWorkers.getFirst().thread.isInterrupted());
     } finally {
@@ -905,8 +905,8 @@ public class PriorityScheduledExecutorTest {
                                                   TaskPriority.High, 
                                                   taskDelay));
 
-      assertEquals(scheduler.highPriorityQueue.size(), 1);
-      assertEquals(scheduler.lowPriorityQueue.size(), 0);
+      assertEquals(1, scheduler.highPriorityQueue.size());
+      assertEquals(0, scheduler.lowPriorityQueue.size());
       assertTrue(scheduler.highPriorityConsumer.isRunning());
       assertFalse(scheduler.lowPriorityConsumer.isRunning());
       
@@ -914,8 +914,8 @@ public class PriorityScheduledExecutorTest {
                                                   TaskPriority.Low, 
                                                   taskDelay));
 
-      assertEquals(scheduler.highPriorityQueue.size(), 1);
-      assertEquals(scheduler.lowPriorityQueue.size(), 1);
+      assertEquals(1, scheduler.highPriorityQueue.size());
+      assertEquals(1, scheduler.lowPriorityQueue.size());
       assertTrue(scheduler.highPriorityConsumer.isRunning());
       assertTrue(scheduler.lowPriorityConsumer.isRunning());
     } finally {
@@ -935,7 +935,7 @@ public class PriorityScheduledExecutorTest {
       Worker testWorker = scheduler.makeNewWorker();
       scheduler.workerDone(testWorker);
       
-      assertEquals(scheduler.availableWorkers.size(), 1);
+      assertEquals(1, scheduler.availableWorkers.size());
       
       try {
         Worker returnedWorker = scheduler.getExistingWorker(100);
@@ -961,7 +961,7 @@ public class PriorityScheduledExecutorTest {
       Worker testWorker = scheduler.makeNewWorker();
       scheduler.workerDone(testWorker);
       
-      assertEquals(scheduler.availableWorkers.size(), 1);
+      assertEquals(1, scheduler.availableWorkers.size());
       
       TestUtils.blockTillClockAdvances();
       Clock.accurateTime(); // update clock so scheduler will see it
@@ -969,7 +969,7 @@ public class PriorityScheduledExecutorTest {
       scheduler.lookForExpiredWorkers();
       
       // should not have collected yet due to core size == 1
-      assertEquals(scheduler.availableWorkers.size(), 1);
+      assertEquals(1, scheduler.availableWorkers.size());
 
       scheduler.allowCoreThreadTimeOut(true);
       
@@ -979,7 +979,7 @@ public class PriorityScheduledExecutorTest {
       scheduler.lookForExpiredWorkers();
       
       // verify collected now
-      assertEquals(scheduler.availableWorkers.size(), 0);
+      assertEquals(0, scheduler.availableWorkers.size());
     } finally {
       factory.shutdown();
     }

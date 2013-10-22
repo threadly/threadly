@@ -25,7 +25,7 @@ public class TestRunnableTest {
   
   @Test
   public void constructorTest() {
-    assertEquals(instance.getRunCount(), 0);
+    assertEquals(0, instance.getRunCount());
     assertFalse(instance.ranOnce());
   }
   
@@ -42,7 +42,7 @@ public class TestRunnableTest {
     assertTrue(ttr.handleRunFinishCalled);
     assertTrue(ttr.startCalledBeforeFinish);
     assertTrue(ttr.ranOnce());
-    assertEquals(ttr.getRunCount(), 1);
+    assertEquals(1, ttr.getRunCount());
     assertTrue(ttr.getDelayTillFirstRun() > 0);
 
     TestUtils.blockTillClockAdvances();

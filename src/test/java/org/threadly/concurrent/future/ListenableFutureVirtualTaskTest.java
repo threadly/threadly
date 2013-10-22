@@ -64,19 +64,19 @@ public class ListenableFutureVirtualTaskTest {
     
     ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
     
-    assertEquals(future.listeners.size(), 0); // empty to start
+    assertEquals(0, future.listeners.size()); // empty to start
     
     TestRunnable listener = new TestRunnable();
     
     future.addListener(listener);
     
-    assertEquals(future.listeners.size(), 1); // should now have once now that the runnable has not run yet
+    assertEquals(1, future.listeners.size()); // should now have once now that the runnable has not run yet
     
     future.run(); // this should call the listener
     
     assertTrue(listener.ranOnce()); // verify listener was called
     
-    assertEquals(future.listeners.size(), 0); // empty after listener calls
+    assertEquals(0, future.listeners.size()); // empty after listener calls
     
     TestRunnable postRunListener = new TestRunnable();
     
@@ -84,14 +84,14 @@ public class ListenableFutureVirtualTaskTest {
     
     assertTrue(postRunListener.ranOnce()); // verify listener was called
     
-    assertEquals(future.listeners.size(), 0); // still empty after future ran
+    assertEquals(0, future.listeners.size()); // still empty after future ran
     
     // verify run on correct executor
     TestRunnable executorListener = new TestRunnable();
     TestExecutor executor = new TestExecutor();
     future.addListener(executorListener, executor);
     
-    assertEquals(executor.providedRunnables.size(), 1);
+    assertEquals(1, executor.providedRunnables.size());
     assertTrue(executor.providedRunnables.get(0) == executorListener);
   }
   

@@ -19,7 +19,7 @@ public class DebugLoggerTest {
     
     assertTrue(DebugLogger.getAllStoredMessages(false).equals(testStr));
     
-    assertEquals(DebugLogger.getAllStoredMessages().length(), 0);
+    assertEquals(0, DebugLogger.getAllStoredMessages().length());
   }
   
   @Test
@@ -34,7 +34,7 @@ public class DebugLoggerTest {
     assertTrue(result.contains(testStr1));
     assertTrue(result.contains(testStr2));
     
-    assertEquals(DebugLogger.getAllStoredMessages().length(), 0);
+    assertEquals(0, DebugLogger.getAllStoredMessages().length());
   }
   
   @Test
@@ -44,7 +44,7 @@ public class DebugLoggerTest {
     
     assertTrue(DebugLogger.getOldestLogMessages(2).equals(testStr));
     
-    assertEquals(DebugLogger.getAllStoredMessages().length(), 0);
+    assertEquals(0, DebugLogger.getAllStoredMessages().length());
   }
   
   @Test
@@ -59,7 +59,7 @@ public class DebugLoggerTest {
     assertTrue(result.contains(testStr1));
     assertTrue(result.contains(testStr2));
     
-    assertEquals(DebugLogger.getAllStoredMessages().length(), 0);
+    assertEquals(0, DebugLogger.getAllStoredMessages().length());
   }
   
   @Test

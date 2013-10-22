@@ -22,13 +22,13 @@ public class ListTests {
   
   public static void sizeTest(List<String> testList) {
     for (int i = 0; i < TEST_QTY; i++) {
-      assertEquals(testList.size(), i);
+      assertEquals(i, testList.size());
       testList.add("testStr");
-      assertEquals(testList.size(), i + 1);
+      assertEquals(i + 1, testList.size());
     }
 
     for (int i = TEST_QTY; i >= 0; i--) {
-      assertEquals(testList.size(), i);
+      assertEquals(i, testList.size());
       if (i != 0) {
         testList.remove(0);
       }
@@ -53,7 +53,7 @@ public class ListTests {
     
     testList.addAll(toAddList);
     
-    assertEquals(testList.size(), TEST_QTY);
+    assertEquals(TEST_QTY, testList.size());
     assertTrue(testList.containsAll(toAddList));
     
     Iterator<String> it = toAddList.iterator();
@@ -71,11 +71,11 @@ public class ListTests {
     
     testList.addAll(1, toAddList);
     
-    assertEquals(testList.size(), TEST_QTY + 2);
+    assertEquals(TEST_QTY + 2, testList.size());
     assertTrue(testList.containsAll(toAddList));
     
-    assertEquals(testList.indexOf(Integer.toString(0)), 1);
-    assertEquals(testList.indexOf(Integer.toString(TEST_QTY - 1)), TEST_QTY);
+    assertEquals(1, testList.indexOf(Integer.toString(0)));
+    assertEquals(TEST_QTY, testList.indexOf(Integer.toString(TEST_QTY - 1)));
     
     Iterator<String> it = toAddList.iterator();
     Iterator<String> testIt = testList.iterator();
@@ -92,10 +92,10 @@ public class ListTests {
       String str = Integer.toString(i);
       comparisionList.add(str);
       testList.add(str);
-      assertEquals(testList.get(i), str);
+      assertEquals(str, testList.get(i));
     }
     for (int i = 0; i < TEST_QTY; i++) {
-      assertEquals(testList.get(i), comparisionList.get(i));
+      assertEquals(comparisionList.get(i), testList.get(i));
     }
   }
   
@@ -110,10 +110,10 @@ public class ListTests {
     }
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
-      assertEquals(testList.indexOf(str), comparisionList.indexOf(str));
+      assertEquals(comparisionList.indexOf(str), testList.indexOf(str));
     }
     
-    assertEquals(testList.indexOf("foobar"), -1);
+    assertEquals(-1, testList.indexOf("foobar"));
   }
   
   public static void lastIndexOfTest(List<String> testList) {
@@ -127,10 +127,10 @@ public class ListTests {
     }
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
-      assertEquals(testList.lastIndexOf(str), comparisionList.lastIndexOf(str));
+      assertEquals(comparisionList.lastIndexOf(str), testList.lastIndexOf(str));
     }
     
-    assertEquals(testList.lastIndexOf("foobar"), -1);
+    assertEquals(-1, testList.lastIndexOf("foobar"));
   }
   
   public static void containsTest(List<String> testList) {
@@ -193,9 +193,9 @@ public class ListTests {
   public static void clearTest(List<String> testList) {
     populateIntStrings(testList, TEST_QTY);
     
-    assertEquals(testList.size(), TEST_QTY);
+    assertEquals(TEST_QTY, testList.size());
     testList.clear();
-    assertEquals(testList.size(), 0);
+    assertEquals(0, testList.size());
   }
   
   public static void removeObjectTest(List<String> testList) {
@@ -215,7 +215,7 @@ public class ListTests {
       }
     }
     
-    assertEquals(testList.size(), TEST_QTY - removed);
+    assertEquals(TEST_QTY - removed, testList.size());
   }
   
   public static void removeAllTest(List<String> testList) {
@@ -240,10 +240,10 @@ public class ListTests {
     
     assertFalse(testList.removeAll(noOpList));
     
-    assertEquals(testList.size(), TEST_QTY);
+    assertEquals(TEST_QTY, testList.size());
     
     testList.removeAll(toRemoveList);
-    assertEquals(testList.size(), TEST_QTY - toRemoveList.size());
+    assertEquals(TEST_QTY - toRemoveList.size(), testList.size());
     Iterator<String> it = toRemoveList.iterator();
     while (it.hasNext()) {
       assertFalse(testList.contains(it.next()));
@@ -281,7 +281,7 @@ public class ListTests {
     
     assertTrue(testList.retainAll(new ArrayList<String>(0)));
     
-    assertEquals(testList.size(), 0);
+    assertEquals(0, testList.size());
     
     populateIntStrings(testList, TEST_QTY);
     
@@ -293,7 +293,7 @@ public class ListTests {
     
     assertTrue(testList.retainAll(toRetainList));
     
-    assertEquals(testList.size(), TEST_QTY / 2);
+    assertEquals(TEST_QTY / 2, testList.size());
     
     assertTrue(toRetainList.containsAll(testList));
   }
@@ -439,14 +439,14 @@ public class ListTests {
     testList.add(foo);
     assertFalse(testList.equals(comparisionList));
     
-    assertEquals(testList.subList(0, testList.size()).hashCode(), testList.hashCode());
+    assertEquals(testList.hashCode(), testList.subList(0, testList.size()).hashCode());
   }
   
   public static void subListTest(List<String> testList) {
     populateIntStrings(testList, TEST_QTY);
     
     List<String> completeList = testList.subList(0, TEST_QTY); 
-    assertEquals(completeList.size(), TEST_QTY);
+    assertEquals(TEST_QTY, completeList.size());
     Iterator<String> it1 = testList.iterator();
     Iterator<String> it2 = completeList.iterator();
     for (int i = 0; i < TEST_QTY; i++) {
@@ -454,19 +454,19 @@ public class ListTests {
     }
     
     List<String> smallList = testList.subList(0, 1);
-    assertEquals(smallList.size(), 1);
-    assertEquals(smallList.get(0), testList.get(0));
+    assertEquals(1, smallList.size());
+    assertEquals(testList.get(0), smallList.get(0));
     
     smallList = testList.subList(TEST_QTY - 1, TEST_QTY);
-    assertEquals(smallList.size(), 1);
-    assertEquals(smallList.get(0), testList.get(TEST_QTY - 1));
+    assertEquals(1, smallList.size());
+    assertEquals(testList.get(TEST_QTY - 1), smallList.get(0));
     
     int halfQty = TEST_QTY / 2;
     List<String> mediumList = testList.subList(1, halfQty);
     assertEquals(mediumList.size(), halfQty - 1);
     it1 = mediumList.iterator();
     for (int i = 1; i < halfQty; i++) {
-      assertEquals(it1.next(), testList.get(i));
+      assertEquals(testList.get(i), it1.next());
     }
   }
   

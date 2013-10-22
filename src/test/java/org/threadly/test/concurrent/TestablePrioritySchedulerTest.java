@@ -49,18 +49,18 @@ public class TestablePrioritySchedulerTest {
       testScheduler.execute(tr);
     }
     
-    assertEquals(testScheduler.tick(), RUNNABLE_COUNT); // should execute all
+    assertEquals(RUNNABLE_COUNT, testScheduler.tick()); // should execute all
     
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
-      assertEquals(it.next().getRunCount(), 1);
+      assertEquals(1, it.next().getRunCount());
     }
     
-    assertEquals(testScheduler.tick(), 0); // should not execute anything
+    assertEquals(0, testScheduler.tick()); // should not execute anything
     
     it = runnables.iterator();
     while (it.hasNext()) {
-      assertEquals(it.next().getRunCount(), 1);
+      assertEquals(1, it.next().getRunCount());
     }
   }
   
@@ -76,18 +76,18 @@ public class TestablePrioritySchedulerTest {
       futures.add(future);
     }
     
-    assertEquals(testScheduler.tick(), RUNNABLE_COUNT); // should execute all
+    assertEquals(RUNNABLE_COUNT, testScheduler.tick()); // should execute all
     
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
-      assertEquals(it.next().getRunCount(), 1);
+      assertEquals(1, it.next().getRunCount());
     }
     
-    assertEquals(testScheduler.tick(), 0); // should not execute anything
+    assertEquals(0, testScheduler.tick()); // should not execute anything
     
     it = runnables.iterator();
     while (it.hasNext()) {
-      assertEquals(it.next().getRunCount(), 1);
+      assertEquals(1, it.next().getRunCount());
     }
     
     Iterator<Future<?>> futureIt = futures.iterator();
@@ -107,20 +107,20 @@ public class TestablePrioritySchedulerTest {
     testScheduler.execute(executeRun);
 
     long startTime = System.currentTimeMillis();
-    assertEquals(testScheduler.tick(startTime), 1);
+    assertEquals(1, testScheduler.tick(startTime));
 
-    assertEquals(executeRun.getRunCount(), 1);   // should have run
-    assertEquals(scheduleRun.getRunCount(), 0);  // should NOT have run yet
+    assertEquals(1, executeRun.getRunCount());   // should have run
+    assertEquals(0, scheduleRun.getRunCount());  // should NOT have run yet
     
-    assertEquals(testScheduler.tick(startTime + scheduleDelay), 1);
+    assertEquals(1, testScheduler.tick(startTime + scheduleDelay));
     
-    assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
-    assertEquals(scheduleRun.getRunCount(), 1);  // should have run
+    assertEquals(1, executeRun.getRunCount());   // should NOT have run again
+    assertEquals(1, scheduleRun.getRunCount());  // should have run
     
-    assertEquals(testScheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
+    assertEquals(0, testScheduler.tick(startTime + scheduleDelay)); // should not execute anything
     
-    assertEquals(executeRun.getRunCount(), 1);   // should NOT have run again
-    assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
+    assertEquals(1, executeRun.getRunCount());   // should NOT have run again
+    assertEquals(1, scheduleRun.getRunCount());  // should NOT have run again
   }
   
   @Test
@@ -136,20 +136,20 @@ public class TestablePrioritySchedulerTest {
     assertNotNull(future);
 
     long startTime = System.currentTimeMillis();
-    assertEquals(testScheduler.tick(startTime), 1);
+    assertEquals(1, testScheduler.tick(startTime));
 
-    assertEquals(submitRun.getRunCount(), 1);   // should have run
-    assertEquals(scheduleRun.getRunCount(), 0);  // should NOT have run yet
+    assertEquals(1, submitRun.getRunCount());   // should have run
+    assertEquals(0, scheduleRun.getRunCount());  // should NOT have run yet
     
-    assertEquals(testScheduler.tick(startTime + scheduleDelay), 1);
+    assertEquals(1, testScheduler.tick(startTime + scheduleDelay));
     
-    assertEquals(submitRun.getRunCount(), 1);   // should NOT have run again
-    assertEquals(scheduleRun.getRunCount(), 1);  // should have run
+    assertEquals(1, submitRun.getRunCount());   // should NOT have run again
+    assertEquals(1, scheduleRun.getRunCount());  // should have run
     
-    assertEquals(testScheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
+    assertEquals(0, testScheduler.tick(startTime + scheduleDelay)); // should not execute anything
     
-    assertEquals(submitRun.getRunCount(), 1);   // should NOT have run again
-    assertEquals(scheduleRun.getRunCount(), 1);  // should NOT have run again
+    assertEquals(1, submitRun.getRunCount());   // should NOT have run again
+    assertEquals(1, scheduleRun.getRunCount());  // should NOT have run again
   }
   
   @Test
@@ -163,25 +163,25 @@ public class TestablePrioritySchedulerTest {
     testScheduler.scheduleWithFixedDelay(initialDelay, delay, delay);
 
     long startTime = System.currentTimeMillis();
-    assertEquals(testScheduler.tick(startTime), 1);
+    assertEquals(1, testScheduler.tick(startTime));
     
-    assertEquals(immediateRun.getRunCount(), 1);  // should have run
-    assertEquals(initialDelay.getRunCount(), 0);  // should NOT have run yet
+    assertEquals(1, immediateRun.getRunCount());  // should have run
+    assertEquals(0, initialDelay.getRunCount());  // should NOT have run yet
 
-    assertEquals(testScheduler.tick(startTime + delay), 2);
+    assertEquals(2, testScheduler.tick(startTime + delay));
     
-    assertEquals(immediateRun.getRunCount(), 2);  // should have run again
-    assertEquals(initialDelay.getRunCount(), 1);  // should have run for the first time
+    assertEquals(2, immediateRun.getRunCount());  // should have run again
+    assertEquals(1, initialDelay.getRunCount());  // should have run for the first time
     
-    assertEquals(testScheduler.tick(startTime + (delay * 2)), 2);
+    assertEquals(2, testScheduler.tick(startTime + (delay * 2)));
     
-    assertEquals(immediateRun.getRunCount(), 3);  // should have run again
-    assertEquals(initialDelay.getRunCount(), 2);  // should have run again
+    assertEquals(3, immediateRun.getRunCount());  // should have run again
+    assertEquals(2, initialDelay.getRunCount());  // should have run again
     
-    assertEquals(testScheduler.tick(startTime + (delay * 2)), 0); // should not execute anything
+    assertEquals(0, testScheduler.tick(startTime + (delay * 2))); // should not execute anything
     
-    assertEquals(immediateRun.getRunCount(), 3);  // should NOT have run again
-    assertEquals(initialDelay.getRunCount(), 2);  // should NOT have run again
+    assertEquals(3, immediateRun.getRunCount());  // should NOT have run again
+    assertEquals(2, initialDelay.getRunCount());  // should NOT have run again
   }
   
   @Test
@@ -192,7 +192,7 @@ public class TestablePrioritySchedulerTest {
     }
 
     long now;
-    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), RUNNABLE_COUNT); // should execute all
+    assertEquals(RUNNABLE_COUNT, testScheduler.tick(now = System.currentTimeMillis())); // should execute all
     
     TestUtils.blockTillClockAdvances();
     
@@ -201,7 +201,7 @@ public class TestablePrioritySchedulerTest {
       testScheduler.execute(tr);
     }
     
-    assertEquals(testScheduler.tick(now), RUNNABLE_COUNT); // should execute all again
+    assertEquals(RUNNABLE_COUNT, testScheduler.tick(now)); // should execute all again
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -223,15 +223,15 @@ public class TestablePrioritySchedulerTest {
       testScheduler.execute(st);
       
       if (i == 0) {
-        assertEquals(testScheduler.tick(now), 2);
+        assertEquals(2, testScheduler.tick(now));
       
-        assertEquals(testScheduler.tick(now), 0);
+        assertEquals(0, testScheduler.tick(now));
       } else {
-        assertEquals(testScheduler.tick(now), 1);
+        assertEquals(1, testScheduler.tick(now));
 
         assertTrue(st.running);
         
-        assertEquals(testScheduler.tick(now += i), 1);
+        assertEquals(1, testScheduler.tick(now += i));
       }
     }
   }
@@ -246,15 +246,15 @@ public class TestablePrioritySchedulerTest {
       testScheduler.execute(st);
       
       if (i == 0) {
-        assertEquals(testScheduler.tick(now), 3);
+        assertEquals(3, testScheduler.tick(now));
       
-        assertEquals(testScheduler.tick(now), 0);
+        assertEquals(0, testScheduler.tick(now));
       } else {
-        assertEquals(testScheduler.tick(now), 1);
+        assertEquals(1, testScheduler.tick(now));
 
         assertTrue(st.running);
         
-        assertEquals(testScheduler.tick(now += i), 2);
+        assertEquals(2, testScheduler.tick(now += i));
         
         assertTrue(st.wokenUp);
       }
@@ -278,7 +278,7 @@ public class TestablePrioritySchedulerTest {
       }
     }
     
-    assertEquals(testScheduler.tick(now), runCount);
+    assertEquals(runCount, testScheduler.tick(now));
     
     Iterator<WaitThread> it = toWake.iterator();
     while (it.hasNext()) {
@@ -291,7 +291,7 @@ public class TestablePrioritySchedulerTest {
     
     TestUtils.blockTillClockAdvances();
     
-    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), 0);
+    assertEquals(0, testScheduler.tick(now = System.currentTimeMillis()));
     
     it = toWake.iterator();
     while (it.hasNext()) {
@@ -308,7 +308,7 @@ public class TestablePrioritySchedulerTest {
       });
     }
     
-    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), toWake.size() * 2);
+    assertEquals(toWake.size() * 2, testScheduler.tick(now = System.currentTimeMillis()));
     
     it = toWake.iterator(); // should have all been woken up
     while (it.hasNext()) {
@@ -320,7 +320,7 @@ public class TestablePrioritySchedulerTest {
     }
     
     // nothing more should be left to run
-    assertEquals(testScheduler.tick(now = System.currentTimeMillis()), 0);
+    assertEquals(0, testScheduler.tick(now = System.currentTimeMillis()));
   }
   
   @Test
@@ -332,37 +332,37 @@ public class TestablePrioritySchedulerTest {
     OneTimeRunnable second = testScheduler.new OneTimeRunnable(new TestRunnable(), secondDelay, 
                                                                TaskPriority.High);
     testScheduler.add(second);
-    assertEquals(testScheduler.taskQueue.size(), 1);
+    assertEquals(1, testScheduler.taskQueue.size());
 
     int thirdDelay = secondDelay * 10;
     OneTimeRunnable third = testScheduler.new OneTimeRunnable(new TestRunnable(), thirdDelay, 
                                                               TaskPriority.High);
     testScheduler.add(third);
-    assertEquals(testScheduler.taskQueue.size(), 2);
-    assertEquals(testScheduler.taskQueue.get(0), second);
-    assertEquals(testScheduler.taskQueue.get(1), third);
+    assertEquals(2, testScheduler.taskQueue.size());
+    assertEquals(second, testScheduler.taskQueue.get(0));
+    assertEquals(third, testScheduler.taskQueue.get(1));
 
     OneTimeRunnable first = testScheduler.new OneTimeRunnable(new TestRunnable(), 0, 
                                                               TaskPriority.High);
     testScheduler.add(first);
-    assertEquals(testScheduler.taskQueue.size(), 3);
-    assertEquals(testScheduler.taskQueue.get(0), first);
-    assertEquals(testScheduler.taskQueue.get(1), second);
-    assertEquals(testScheduler.taskQueue.get(2), third);
+    assertEquals(3, testScheduler.taskQueue.size());
+    assertEquals(first, testScheduler.taskQueue.get(0));
+    assertEquals(second, testScheduler.taskQueue.get(1));
+    assertEquals(third, testScheduler.taskQueue.get(2));
     
     // should be returned in name order
-    assertEquals(testScheduler.getNextTask(), first);
-    assertEquals(testScheduler.taskQueue.size(), 2);
+    assertEquals(first, testScheduler.getNextTask());
+    assertEquals(2, testScheduler.taskQueue.size());
     assertNull(testScheduler.getNextTask());
-    assertEquals(testScheduler.taskQueue.size(), 2);
+    assertEquals(2, testScheduler.taskQueue.size());
     testScheduler.updateTime(now += secondDelay);
-    assertEquals(testScheduler.getNextTask(), second);
-    assertEquals(testScheduler.taskQueue.size(), 1);
+    assertEquals(second, testScheduler.getNextTask());
+    assertEquals(1, testScheduler.taskQueue.size());
     assertNull(testScheduler.getNextTask());
-    assertEquals(testScheduler.taskQueue.size(), 1);
+    assertEquals(1, testScheduler.taskQueue.size());
     testScheduler.updateTime(now += thirdDelay);
-    assertEquals(testScheduler.getNextTask(), third);
-    assertEquals(testScheduler.taskQueue.size(), 0);
+    assertEquals(third, testScheduler.getNextTask());
+    assertEquals(0, testScheduler.taskQueue.size());
   }
   
   private class SleepThread extends TestRunnable {

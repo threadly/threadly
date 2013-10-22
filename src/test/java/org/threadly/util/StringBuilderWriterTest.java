@@ -38,7 +38,7 @@ public class StringBuilderWriterTest {
     }
     
     for (int i = start; i <= end; i++) {
-      assertEquals(sb.charAt(i - start), (char)i);
+      assertEquals((char)i, sb.charAt(i - start));
     }
   }
   
@@ -48,11 +48,11 @@ public class StringBuilderWriterTest {
     
     sbw.append(testStr);
     
-    assertEquals(sb.toString(), testStr);
+    assertEquals(testStr, sb.toString());
     
     sbw.append(testStr);
     
-    assertEquals(sb.toString(), testStr + testStr);
+    assertEquals(testStr + testStr, sb.toString());
   }
   
   @Test
@@ -63,7 +63,7 @@ public class StringBuilderWriterTest {
     
     sbw.append(testStr, 0, rangeEnd);
     
-    assertEquals(sb.toString(), testStr.subSequence(rangeStart, rangeEnd));
+    assertEquals(testStr.subSequence(rangeStart, rangeEnd), sb.toString());
   }
   
   @Test
@@ -76,7 +76,7 @@ public class StringBuilderWriterTest {
     }
     
     for (int i = start; i <= end; i++) {
-      assertEquals(sb.charAt(i - start), (char)i);
+      assertEquals((char)i, sb.charAt(i - start));
     }
   }
   
@@ -94,7 +94,7 @@ public class StringBuilderWriterTest {
     sbw.write(data);
     
     for (int i = start; i <= end; i++) {
-      assertEquals(sb.charAt(i - start), (char)i);
+      assertEquals((char)i, sb.charAt(i - start));
     }
   }
   
@@ -115,6 +115,6 @@ public class StringBuilderWriterTest {
     
     String compareStr = new String(data).substring(rangeStart, rangeEnd);
     
-    assertEquals(sb.toString(), compareStr);
+    assertEquals(compareStr, sb.toString());
   }
 }

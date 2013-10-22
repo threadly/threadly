@@ -18,9 +18,9 @@ public class ScheduledFutureDelegateTest<T> {
       TestDelayed td = new TestDelayed(i);
       ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(null, td);
       
-      assertEquals(testItem.getDelay(TimeUnit.MILLISECONDS), td.getDelay(TimeUnit.MILLISECONDS));
-      assertEquals(testItem.getDelay(TimeUnit.NANOSECONDS), td.getDelay(TimeUnit.NANOSECONDS));
-      assertEquals(testItem.getDelay(TimeUnit.SECONDS), td.getDelay(TimeUnit.SECONDS));
+      assertEquals(td.getDelay(TimeUnit.MILLISECONDS), testItem.getDelay(TimeUnit.MILLISECONDS));
+      assertEquals(td.getDelay(TimeUnit.NANOSECONDS), testItem.getDelay(TimeUnit.NANOSECONDS));
+      assertEquals(td.getDelay(TimeUnit.SECONDS), testItem.getDelay(TimeUnit.SECONDS));
 
       TestDelayed tdFail = new TestDelayed(i + 10000);
       assertTrue(testItem.getDelay(TimeUnit.MILLISECONDS) != tdFail.getDelay(TimeUnit.MILLISECONDS));
@@ -35,8 +35,8 @@ public class ScheduledFutureDelegateTest<T> {
       TestDelayed td = new TestDelayed(i);
       ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(null, td);
       
-      assertEquals(testItem.compareTo(td), 0);
-      assertEquals(testItem.compareTo(new TestDelayed(i)), 0);
+      assertEquals(0, testItem.compareTo(td));
+      assertEquals(0, testItem.compareTo(new TestDelayed(i)));
 
       TestDelayed tdGreater = new TestDelayed(i + 1000);
       assertTrue(testItem.compareTo(tdGreater) < 0);
@@ -64,7 +64,7 @@ public class ScheduledFutureDelegateTest<T> {
     
     future.cancel(true);  // cancel through future
     
-    assertEquals(testItem.isCancelled(), true);
+    assertTrue(testItem.isCancelled());
     
     future = new TestFutureImp();
     testItem = new ScheduledFutureDelegate<Object>(future, null);
@@ -73,8 +73,8 @@ public class ScheduledFutureDelegateTest<T> {
     
     testItem.cancel(true);  // cancel through delegate
     
-    assertEquals(testItem.isCancelled(), true);
-    assertEquals(future.isCancelled(), true);
+    assertTrue(testItem.isCancelled());
+    assertTrue(future.isCancelled());
   }
   
   @Test
@@ -135,7 +135,7 @@ public class ScheduledFutureDelegateTest<T> {
     future.addListener(firstListener);
     testItem.addListener(secondListener);
     
-    assertEquals(future.listeners.size(), 2);
+    assertEquals(2, future.listeners.size());
     assertTrue(future.listeners.contains(firstListener));
     assertTrue(future.listeners.contains(secondListener));
   }
@@ -150,7 +150,7 @@ public class ScheduledFutureDelegateTest<T> {
     future.addListener(firstListener, null);
     testItem.addListener(secondListener, null);
     
-    assertEquals(future.listeners.size(), 2);
+    assertEquals(2, future.listeners.size());
     assertTrue(future.listeners.contains(firstListener));
     assertTrue(future.listeners.contains(secondListener));
   }

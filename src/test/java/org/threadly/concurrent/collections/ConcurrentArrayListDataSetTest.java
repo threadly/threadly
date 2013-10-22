@@ -472,108 +472,108 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void sizeTest() {
-    assertEquals(orderedNormal.size, orderedNormal.dataArray.length);
-    assertEquals(removedFromFront.size, orderedNormal.dataArray.length - 1);
-    assertEquals(removed2FromFront.size, orderedNormal.dataArray.length - 2);
-    assertEquals(removedFromEnd.size, orderedNormal.dataArray.length - 1);
-    assertEquals(removed2FromEnd.size, orderedNormal.dataArray.length - 2);
-    assertEquals(removedFromBoth.size, orderedNormal.dataArray.length - 2);
+    assertEquals(orderedNormal.dataArray.length, orderedNormal.size);
+    assertEquals(orderedNormal.dataArray.length - 1, removedFromFront.size);
+    assertEquals(orderedNormal.dataArray.length - 2, removed2FromFront.size);
+    assertEquals(orderedNormal.dataArray.length - 1, removedFromEnd.size);
+    assertEquals(orderedNormal.dataArray.length - 2, removed2FromEnd.size);
+    assertEquals(orderedNormal.dataArray.length - 2, removedFromBoth.size);
   }
 
   @Test
   public void getNormalTest() {
-    assertEquals((Integer)orderedNormal.get(0), (Integer)0);
-    assertEquals((Integer)orderedNormal.get(5), (Integer)5);
-    assertEquals((Integer)orderedNormal.get(9), (Integer)9);
+    assertEquals((Integer)0, (Integer)orderedNormal.get(0));
+    assertEquals((Integer)5, (Integer)orderedNormal.get(5));
+    assertEquals((Integer)9, (Integer)orderedNormal.get(9));
   }
   
   @Test
   public void getFrontRemovedTest() {
-    assertEquals((Integer)removedFromFront.get(0), (Integer)1);
-    assertEquals((Integer)removedFromFront.get(4), (Integer)5);
-    assertEquals((Integer)removedFromFront.get(8), (Integer)9);
+    assertEquals((Integer)1, (Integer)removedFromFront.get(0));
+    assertEquals((Integer)5, (Integer)removedFromFront.get(4));
+    assertEquals((Integer)9, (Integer)removedFromFront.get(8));
   }
   
   @Test
   public void getFront2RemovedTest() {
-    assertEquals((Integer)removed2FromFront.get(0), (Integer)2);
-    assertEquals((Integer)removed2FromFront.get(3), (Integer)5);
-    assertEquals((Integer)removed2FromFront.get(7), (Integer)9);
+    assertEquals((Integer)2, (Integer)removed2FromFront.get(0));
+    assertEquals((Integer)5, (Integer)removed2FromFront.get(3));
+    assertEquals((Integer)9, (Integer)removed2FromFront.get(7));
   }
   
   @Test
   public void getEndRemovedTest() {
-    assertEquals((Integer)removedFromEnd.get(0), (Integer)0);
-    assertEquals((Integer)removedFromEnd.get(5), (Integer)5);
-    assertEquals((Integer)removedFromEnd.get(8), (Integer)8);
+    assertEquals((Integer)0, (Integer)removedFromEnd.get(0));
+    assertEquals((Integer)5, (Integer)removedFromEnd.get(5));
+    assertEquals((Integer)8, (Integer)removedFromEnd.get(8));
   }
   
   @Test
   public void getEnd2RemovedTest() {
-    assertEquals((Integer)removed2FromEnd.get(0), (Integer)0);
-    assertEquals((Integer)removed2FromEnd.get(5), (Integer)5);
-    assertEquals((Integer)removed2FromEnd.get(7), (Integer)7);
+    assertEquals((Integer)0, (Integer)removed2FromEnd.get(0));
+    assertEquals((Integer)5, (Integer)removed2FromEnd.get(5));
+    assertEquals((Integer)7, (Integer)removed2FromEnd.get(7));
   }
   
   @Test
   public void getBothRemovedTest() {
-    assertEquals((Integer)removedFromBoth.get(0), (Integer)1);
-    assertEquals((Integer)removedFromBoth.get(5), (Integer)6);
-    assertEquals((Integer)removedFromBoth.get(7), (Integer)8);
+    assertEquals((Integer)1, (Integer)removedFromBoth.get(0));
+    assertEquals((Integer)6, (Integer)removedFromBoth.get(5));
+    assertEquals((Integer)8, (Integer)removedFromBoth.get(7));
   }
 
   @Test
   public void indexOfNormalTest() {
-    assertEquals((Integer)orderedNormal.indexOf(-1), (Integer)(-1));
-    assertEquals((Integer)orderedNormal.indexOf(0), (Integer)0);
-    assertEquals((Integer)orderedNormal.indexOf(5), (Integer)5);
-    assertEquals((Integer)orderedNormal.indexOf(9), (Integer)9);
-    assertEquals((Integer)orderedNormal.indexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)orderedNormal.indexOf(-1));
+    assertEquals((Integer)0, (Integer)orderedNormal.indexOf(0));
+    assertEquals((Integer)5, (Integer)orderedNormal.indexOf(5));
+    assertEquals((Integer)9, (Integer)orderedNormal.indexOf(9));
+    assertEquals((Integer)(-1), (Integer)orderedNormal.indexOf(10));
   }
   
   @Test
   public void indexOfFrontRemovedTest() {
-    assertEquals((Integer)removedFromFront.indexOf(0), (Integer)(-1));
-    assertEquals((Integer)removedFromFront.indexOf(1), (Integer)0);
-    assertEquals((Integer)removedFromFront.indexOf(5), (Integer)4);
-    assertEquals((Integer)removedFromFront.indexOf(9), (Integer)8);
-    assertEquals((Integer)removedFromFront.indexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromFront.indexOf(0));
+    assertEquals((Integer)0, (Integer)removedFromFront.indexOf(1));
+    assertEquals((Integer)4, (Integer)removedFromFront.indexOf(5));
+    assertEquals((Integer)8, (Integer)removedFromFront.indexOf(9));
+    assertEquals((Integer)(-1), (Integer)removedFromFront.indexOf(10));
   }
   
   @Test
   public void indexOfFront2RemovedTest() {
-    assertEquals((Integer)removed2FromFront.indexOf(0), (Integer)(-1));
-    assertEquals((Integer)removed2FromFront.indexOf(2), (Integer)0);
-    assertEquals((Integer)removed2FromFront.indexOf(5), (Integer)3);
-    assertEquals((Integer)removed2FromFront.indexOf(9), (Integer)7);
-    assertEquals((Integer)removed2FromFront.indexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removed2FromFront.indexOf(0));
+    assertEquals((Integer)0, (Integer)removed2FromFront.indexOf(2));
+    assertEquals((Integer)3, (Integer)removed2FromFront.indexOf(5));
+    assertEquals((Integer)7, (Integer)removed2FromFront.indexOf(9));
+    assertEquals((Integer)(-1), (Integer)removed2FromFront.indexOf(10));
   }
   
   @Test
   public void indexOfEndRemovedTest() {
-    assertEquals((Integer)removedFromEnd.indexOf(-1), (Integer)(-1));
-    assertEquals((Integer)removedFromEnd.indexOf(0), (Integer)0);
-    assertEquals((Integer)removedFromEnd.indexOf(5), (Integer)5);
-    assertEquals((Integer)removedFromEnd.indexOf(8), (Integer)8);
-    assertEquals((Integer)removedFromEnd.indexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.indexOf(-1));
+    assertEquals((Integer)0, (Integer)removedFromEnd.indexOf(0));
+    assertEquals((Integer)5, (Integer)removedFromEnd.indexOf(5));
+    assertEquals((Integer)8, (Integer)removedFromEnd.indexOf(8));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.indexOf(10));
   }
   
   @Test
   public void indexOfEnd2RemovedTest() {
-    assertEquals((Integer)removedFromEnd.indexOf(-1), (Integer)(-1));
-    assertEquals((Integer)removedFromEnd.indexOf(0), (Integer)0);
-    assertEquals((Integer)removedFromEnd.indexOf(5), (Integer)5);
-    assertEquals((Integer)removedFromEnd.indexOf(7), (Integer)7);
-    assertEquals((Integer)removedFromEnd.indexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.indexOf(-1));
+    assertEquals((Integer)0, (Integer)removedFromEnd.indexOf(0));
+    assertEquals((Integer)5, (Integer)removedFromEnd.indexOf(5));
+    assertEquals((Integer)7, (Integer)removedFromEnd.indexOf(7));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.indexOf(10));
   }
   
   @Test
   public void indexOfBothRemovedTest() {
-    assertEquals((Integer)removedFromBoth.indexOf(-1), (Integer)(-1));
-    assertEquals((Integer)removedFromBoth.indexOf(1), (Integer)0);
-    assertEquals((Integer)removedFromBoth.indexOf(5), (Integer)4);
-    assertEquals((Integer)removedFromBoth.indexOf(8), (Integer)7);
-    assertEquals((Integer)removedFromBoth.indexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromBoth.indexOf(-1));
+    assertEquals((Integer)0, (Integer)removedFromBoth.indexOf(1));
+    assertEquals((Integer)4, (Integer)removedFromBoth.indexOf(5));
+    assertEquals((Integer)7, (Integer)removedFromBoth.indexOf(8));
+    assertEquals((Integer)(-1), (Integer)removedFromBoth.indexOf(10));
   }
   
   @Test
@@ -581,66 +581,66 @@ public class ConcurrentArrayListDataSetTest {
     Integer[] dataArray = new Integer[]{ 0, 1, 1, 5, 5, 8, 8, 9 };
     DataSet<Integer> duplicateSet = makeDataSet(dataArray, 0, dataArray.length);
 
-    assertEquals((Integer)duplicateSet.indexOf(-1), (Integer)(-1));
-    assertEquals((Integer)duplicateSet.indexOf(0), (Integer)0);
-    assertEquals((Integer)duplicateSet.indexOf(5), (Integer)3);
-    assertEquals((Integer)duplicateSet.indexOf(8), (Integer)5);
-    assertEquals((Integer)duplicateSet.indexOf(9), (Integer)7);
-    assertEquals((Integer)duplicateSet.indexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)duplicateSet.indexOf(-1));
+    assertEquals((Integer)0, (Integer)duplicateSet.indexOf(0));
+    assertEquals((Integer)3, (Integer)duplicateSet.indexOf(5));
+    assertEquals((Integer)5, (Integer)duplicateSet.indexOf(8));
+    assertEquals((Integer)7, (Integer)duplicateSet.indexOf(9));
+    assertEquals((Integer)(-1), (Integer)duplicateSet.indexOf(10));
   }
 
   @Test
   public void lastIndexOfNormalTest() {
-    assertEquals((Integer)orderedNormal.lastIndexOf(-1), (Integer)(-1));
-    assertEquals((Integer)orderedNormal.lastIndexOf(0), (Integer)0);
-    assertEquals((Integer)orderedNormal.lastIndexOf(5), (Integer)5);
-    assertEquals((Integer)orderedNormal.lastIndexOf(9), (Integer)9);
-    assertEquals((Integer)orderedNormal.lastIndexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)orderedNormal.lastIndexOf(-1));
+    assertEquals((Integer)0, (Integer)orderedNormal.lastIndexOf(0));
+    assertEquals((Integer)5, (Integer)orderedNormal.lastIndexOf(5));
+    assertEquals((Integer)9, (Integer)orderedNormal.lastIndexOf(9));
+    assertEquals((Integer)(-1), (Integer)orderedNormal.lastIndexOf(10));
   }
   
   @Test
   public void lastIndexOfFrontRemovedTest() {
-    assertEquals((Integer)removedFromFront.lastIndexOf(0), (Integer)(-1));
-    assertEquals((Integer)removedFromFront.lastIndexOf(1), (Integer)0);
-    assertEquals((Integer)removedFromFront.lastIndexOf(5), (Integer)4);
-    assertEquals((Integer)removedFromFront.lastIndexOf(9), (Integer)8);
-    assertEquals((Integer)removedFromFront.lastIndexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromFront.lastIndexOf(0));
+    assertEquals((Integer)0, (Integer)removedFromFront.lastIndexOf(1));
+    assertEquals((Integer)4, (Integer)removedFromFront.lastIndexOf(5));
+    assertEquals((Integer)8, (Integer)removedFromFront.lastIndexOf(9));
+    assertEquals((Integer)(-1), (Integer)removedFromFront.lastIndexOf(10));
   }
   
   @Test
   public void lastIndexOfFront2RemovedTest() {
-    assertEquals((Integer)removed2FromFront.lastIndexOf(0), (Integer)(-1));
-    assertEquals((Integer)removed2FromFront.lastIndexOf(2), (Integer)0);
-    assertEquals((Integer)removed2FromFront.lastIndexOf(5), (Integer)3);
-    assertEquals((Integer)removed2FromFront.lastIndexOf(9), (Integer)7);
-    assertEquals((Integer)removed2FromFront.lastIndexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removed2FromFront.lastIndexOf(0));
+    assertEquals((Integer)0, (Integer)removed2FromFront.lastIndexOf(2));
+    assertEquals((Integer)3, (Integer)removed2FromFront.lastIndexOf(5));
+    assertEquals((Integer)7, (Integer)removed2FromFront.lastIndexOf(9));
+    assertEquals((Integer)(-1), (Integer)removed2FromFront.lastIndexOf(10));
   }
   
   @Test
   public void lastIndexOfEndRemovedTest() {
-    assertEquals((Integer)removedFromEnd.lastIndexOf(-1), (Integer)(-1));
-    assertEquals((Integer)removedFromEnd.lastIndexOf(0), (Integer)0);
-    assertEquals((Integer)removedFromEnd.lastIndexOf(5), (Integer)5);
-    assertEquals((Integer)removedFromEnd.lastIndexOf(8), (Integer)8);
-    assertEquals((Integer)removedFromEnd.lastIndexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.lastIndexOf(-1));
+    assertEquals((Integer)0, (Integer)removedFromEnd.lastIndexOf(0));
+    assertEquals((Integer)5, (Integer)removedFromEnd.lastIndexOf(5));
+    assertEquals((Integer)8, (Integer)removedFromEnd.lastIndexOf(8));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.lastIndexOf(10));
   }
   
   @Test
   public void lastIndexOfEnd2RemovedTest() {
-    assertEquals((Integer)removedFromEnd.lastIndexOf(-1), (Integer)(-1));
-    assertEquals((Integer)removedFromEnd.lastIndexOf(0), (Integer)0);
-    assertEquals((Integer)removedFromEnd.lastIndexOf(5), (Integer)5);
-    assertEquals((Integer)removedFromEnd.lastIndexOf(7), (Integer)7);
-    assertEquals((Integer)removedFromEnd.lastIndexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.lastIndexOf(-1));
+    assertEquals((Integer)0, (Integer)removedFromEnd.lastIndexOf(0));
+    assertEquals((Integer)5, (Integer)removedFromEnd.lastIndexOf(5));
+    assertEquals((Integer)7, (Integer)removedFromEnd.lastIndexOf(7));
+    assertEquals((Integer)(-1), (Integer)removedFromEnd.lastIndexOf(10));
   }
   
   @Test
   public void lastIndexOfBothRemovedTest() {
-    assertEquals((Integer)removedFromBoth.lastIndexOf(-1), (Integer)(-1));
-    assertEquals((Integer)removedFromBoth.lastIndexOf(1), (Integer)0);
-    assertEquals((Integer)removedFromBoth.lastIndexOf(5), (Integer)4);
-    assertEquals((Integer)removedFromBoth.lastIndexOf(8), (Integer)7);
-    assertEquals((Integer)removedFromBoth.lastIndexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)removedFromBoth.lastIndexOf(-1));
+    assertEquals((Integer)0, (Integer)removedFromBoth.lastIndexOf(1));
+    assertEquals((Integer)4, (Integer)removedFromBoth.lastIndexOf(5));
+    assertEquals((Integer)7, (Integer)removedFromBoth.lastIndexOf(8));
+    assertEquals((Integer)(-1), (Integer)removedFromBoth.lastIndexOf(10));
   }
   
   @Test
@@ -648,12 +648,12 @@ public class ConcurrentArrayListDataSetTest {
     Integer[] dataArray = new Integer[]{ 0, 1, 1, 5, 5, 8, 8, 9 };
     DataSet<Integer> duplicateSet = makeDataSet(dataArray, 0, dataArray.length);
 
-    assertEquals((Integer)duplicateSet.lastIndexOf(-1), (Integer)(-1));
-    assertEquals((Integer)duplicateSet.lastIndexOf(0), (Integer)0);
-    assertEquals((Integer)duplicateSet.lastIndexOf(5), (Integer)4);
-    assertEquals((Integer)duplicateSet.lastIndexOf(8), (Integer)6);
-    assertEquals((Integer)duplicateSet.lastIndexOf(9), (Integer)7);
-    assertEquals((Integer)duplicateSet.lastIndexOf(10), (Integer)(-1));
+    assertEquals((Integer)(-1), (Integer)duplicateSet.lastIndexOf(-1));
+    assertEquals((Integer)0, (Integer)duplicateSet.lastIndexOf(0));
+    assertEquals((Integer)4, (Integer)duplicateSet.lastIndexOf(5));
+    assertEquals((Integer)6, (Integer)duplicateSet.lastIndexOf(8));
+    assertEquals((Integer)7, (Integer)duplicateSet.lastIndexOf(9));
+    assertEquals((Integer)(-1), (Integer)duplicateSet.lastIndexOf(10));
   }
   
   @Test
@@ -1023,7 +1023,7 @@ public class ConcurrentArrayListDataSetTest {
     DataSet<Integer> result = orderedNormal.removeAll(toRemove);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
-    assertEquals(result.size, orderedNormal.size - toRemove.size() + 1);
+    assertEquals(orderedNormal.size - toRemove.size() + 1, result.size);
   }
   
   @Test
@@ -1036,7 +1036,7 @@ public class ConcurrentArrayListDataSetTest {
     DataSet<Integer> result = removedFromFront.removeAll(toRemove);
     Integer[] expectedResult = new Integer[]{ 2, 3, 4, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
-    assertEquals(result.size, removedFromFront.size - toRemove.size() + 1);
+    assertEquals(removedFromFront.size - toRemove.size() + 1, result.size);
   }
   
   @Test
@@ -1049,7 +1049,7 @@ public class ConcurrentArrayListDataSetTest {
     DataSet<Integer> result = removed2FromFront.removeAll(toRemove);
     Integer[] expectedResult = new Integer[]{ 3, 4, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
-    assertEquals(result.size, removed2FromFront.size - toRemove.size() + 1);
+    assertEquals(removed2FromFront.size - toRemove.size() + 1, result.size);
   }
   
   @Test
@@ -1062,7 +1062,7 @@ public class ConcurrentArrayListDataSetTest {
     DataSet<Integer> result = removedFromEnd.removeAll(toRemove);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 6, 7 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
-    assertEquals(result.size, removedFromEnd.size - toRemove.size() + 1);
+    assertEquals(removedFromEnd.size - toRemove.size() + 1, result.size);
   }
   
   @Test
@@ -1075,7 +1075,7 @@ public class ConcurrentArrayListDataSetTest {
     DataSet<Integer> result = removed2FromEnd.removeAll(toRemove);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 6 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
-    assertEquals(result.size, removed2FromEnd.size - toRemove.size() + 1);
+    assertEquals(removed2FromEnd.size - toRemove.size() + 1, result.size);
   }
   
   @Test
@@ -1088,7 +1088,7 @@ public class ConcurrentArrayListDataSetTest {
     DataSet<Integer> result = removedFromBoth.removeAll(toRemove);
     Integer[] expectedResult = new Integer[]{ 2, 3, 4, 6, 7 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
-    assertEquals(result.size, removedFromBoth.size - toRemove.size() + 1);
+    assertEquals(removedFromBoth.size - toRemove.size() + 1, result.size);
   }
 
   //System.out.println(result); // S.0 .1 .2 .3 .4 .5 .6 .7 .8 .9E

@@ -64,7 +64,7 @@ public class SimpleSchedulerLimiterTest {
     limiter.consumeAvailable();
     
     // should be fully consumed
-    assertEquals(limiter.waitingTasks.size(), 0);
+    assertEquals(0, limiter.waitingTasks.size());
     
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {

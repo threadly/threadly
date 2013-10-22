@@ -212,7 +212,7 @@ public class ScheduledExecutorServiceTest {
     }
     List<Future<Object>> result = scheduler.invokeAll(toInvoke);
     
-    assertEquals(result.size(), toInvoke.size());
+    assertEquals(toInvoke.size(), result.size());
     Iterator<TestCallable> it = toInvoke.iterator();
     Iterator<Future<Object>> resultIt = result.iterator();
     while (it.hasNext()) {

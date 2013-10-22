@@ -1,7 +1,6 @@
 package org.threadly.test.concurrent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -68,20 +67,20 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
                                                                                          TaskPriority.High, 
                                                                                          new NativeLock());
       
-      assertEquals(future.listeners.size(), 0); // empty to start
+      assertEquals(0, future.listeners.size()); // empty to start
       
       TestRunnable listener = new TestRunnable();
       
       future.addListener(listener);
       
-      assertEquals(future.listeners.size(), 1); // should now have once now that the runnable has not run yet
+      assertEquals(1, future.listeners.size()); // should now have once now that the runnable has not run yet
       
       future.run(new NativeLockFactory()); // this should call the listener
       scheduler.tick();
       
       assertTrue(listener.ranOnce()); // verify listener was called
       
-      assertEquals(future.listeners.size(), 0); // empty after listener calls
+      assertEquals(0, future.listeners.size()); // empty after listener calls
       
       TestRunnable postRunListener = new TestRunnable();
       
@@ -90,14 +89,14 @@ public class TestablePrioritySchedulerOneTimeFutureRunnableTest {
       
       assertTrue(postRunListener.ranOnce()); // verify listener was called
       
-      assertEquals(future.listeners.size(), 0); // still empty after future ran
+      assertEquals(0, future.listeners.size()); // still empty after future ran
       
       // verify run on correct executor
       TestRunnable executorListener = new TestRunnable();
       TestExecutor testExecutor = new TestExecutor();
       future.addListener(executorListener, testExecutor);
       
-      assertEquals(testExecutor.providedRunnables.size(), 1);
+      assertEquals(1, testExecutor.providedRunnables.size());
       assertTrue(testExecutor.providedRunnables.get(0) == executorListener);
     } finally {
       executor.shutdown();

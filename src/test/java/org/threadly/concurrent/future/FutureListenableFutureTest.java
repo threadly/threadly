@@ -90,7 +90,7 @@ public class FutureListenableFutureTest {
     final TestFutureImp parentFuture = new TestFutureImp();
     testFuture.setParentFuture(parentFuture);
     
-    assertEquals(parentFuture.listeners.size(), 1);
+    assertEquals(1, parentFuture.listeners.size());
     assertTrue(parentFuture.listeners.get(0) == listener);
   }
   
@@ -104,7 +104,7 @@ public class FutureListenableFutureTest {
     
     testFuture.addListener(listener);
     
-    assertEquals(parentFuture.listeners.size(), 1);
+    assertEquals(1, parentFuture.listeners.size());
     assertTrue(parentFuture.listeners.get(0) == listener);
   }
 }

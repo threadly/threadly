@@ -130,7 +130,7 @@ public class TaskExecutorDistributorTest {
       while (it.hasNext()) {
         TDRunnable tr = it.next();
         tr.blockTillFinished(20 * 1000);
-        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertEquals(1, tr.getRunCount()); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
@@ -181,7 +181,7 @@ public class TaskExecutorDistributorTest {
       while (it.hasNext()) {
         TDRunnable tr = it.next();
         tr.blockTillFinished(20 * 1000);
-        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertEquals(1, tr.getRunCount()); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
@@ -243,7 +243,7 @@ public class TaskExecutorDistributorTest {
       while (it.hasNext()) {
         TDRunnable tr = it.next();
         tr.blockTillFinished(20 * 1000);
-        assertEquals(tr.getRunCount(), 1); // verify each only ran once
+        assertEquals(1, tr.getRunCount()); // verify each only ran once
         assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
@@ -369,7 +369,7 @@ public class TaskExecutorDistributorTest {
       while (it.hasNext()) {
         TDRunnable tr = it.next();
         tr.blockTillFinished(20 * 1000, 2);
-        assertEquals(tr.getRunCount(), 2); // verify each only ran twice
+        assertEquals(2, tr.getRunCount()); // verify each only ran twice
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
       }
     }

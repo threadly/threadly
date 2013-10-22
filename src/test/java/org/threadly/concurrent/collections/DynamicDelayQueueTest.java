@@ -172,7 +172,7 @@ public class DynamicDelayQueueTest {
     
     testQueue.addAll(toAddList);
     
-    assertEquals(testQueue.size(), TEST_QTY);
+    assertEquals(TEST_QTY, testQueue.size());
     assertTrue(testQueue.containsAll(toAddList));
     
     synchronized (testQueue.getLock()) {
@@ -192,7 +192,7 @@ public class DynamicDelayQueueTest {
       int value = 0;
       Iterator<TestDelayed> it = testQueue.iterator();
       while (it.hasNext()) {
-        assertEquals(it.next().getDelay(TimeUnit.MILLISECONDS), value++);
+        assertEquals(value++, it.next().getDelay(TimeUnit.MILLISECONDS));
       }
       
       it = testQueue.iterator();
@@ -221,10 +221,10 @@ public class DynamicDelayQueueTest {
         TestDelayed peek = it.peek();
         assertEquals(it.remove(), peek);
         removed++;
-        assertEquals(testQueue.size(), TEST_QTY - removed);
+        assertEquals(TEST_QTY - removed, testQueue.size());
       }
       
-      assertEquals(removed, TEST_QTY);
+      assertEquals(TEST_QTY, removed);
     }
   }
   
@@ -318,7 +318,7 @@ public class DynamicDelayQueueTest {
     }
     
     testQueue.removeAll(toRemoveList);
-    assertEquals(testQueue.size(), TEST_QTY - toRemoveList.size());
+    assertEquals(TEST_QTY - toRemoveList.size(), testQueue.size());
     Iterator<TestDelayed> it = toRemoveList.iterator();
     while (it.hasNext()) {
       assertFalse(testQueue.contains(it.next()));
@@ -341,7 +341,7 @@ public class DynamicDelayQueueTest {
     
     assertTrue(testQueue.retainAll(new ArrayList<TestDelayed>(0)));
     
-    assertEquals(testQueue.size(), 0);
+    assertEquals(0, testQueue.size());
     
     populatePositive(testQueue);
     
@@ -354,7 +354,7 @@ public class DynamicDelayQueueTest {
     
     assertTrue(testQueue.retainAll(toRetainList));
     
-    assertEquals(testQueue.size(), TEST_QTY / 2);
+    assertEquals(TEST_QTY / 2, testQueue.size());
     
     synchronized (testQueue.getLock()) {
       assertTrue(toRetainList.containsAll(testQueue));
@@ -415,7 +415,7 @@ public class DynamicDelayQueueTest {
    
   @Test
   public void remainingCapacityTest() {
-    assertEquals(testQueue.remainingCapacity(), Integer.MAX_VALUE);
+    assertEquals(Integer.MAX_VALUE, testQueue.remainingCapacity());
   }
   
   @Test
@@ -439,17 +439,17 @@ public class DynamicDelayQueueTest {
     
     testQueue.drainTo(drainToList);
     
-    assertEquals(testQueue.size(), 0);
+    assertEquals(0, testQueue.size());
     assertNull(testQueue.peek());
-    assertEquals(drainToList.size(), TEST_QTY);
+    assertEquals(TEST_QTY, drainToList.size());
     
     populatePositive(testQueue);
     testQueue.drainTo(drainToList); // should only drain the zero entry
     
 
-    assertEquals(testQueue.size(), TEST_QTY - 1);
+    assertEquals(TEST_QTY - 1, testQueue.size());
     assertNull(testQueue.peek());
-    assertEquals(drainToList.size(), TEST_QTY + 1);
+    assertEquals(TEST_QTY + 1, drainToList.size());
   }
   
   @Test
@@ -459,8 +459,8 @@ public class DynamicDelayQueueTest {
     
     testQueue.drainTo(drainToList, TEST_QTY / 2);
     
-    assertEquals(testQueue.size(), TEST_QTY - (TEST_QTY / 2));
-    assertEquals(drainToList.size(), TEST_QTY / 2);
+    assertEquals(TEST_QTY - (TEST_QTY / 2), testQueue.size());
+    assertEquals(TEST_QTY / 2, drainToList.size());
     assertNotNull(testQueue.peek());
   }
   

@@ -36,7 +36,7 @@ public class SubmitterSchedulerInterfaceTest {
         TestRunnable tr = it.next();
         tr.blockTillFinished();
         
-        assertEquals(tr.getRunCount(), 1);
+        assertEquals(1, tr.getRunCount());
       }
       
       // run one more time now that all workers are already running
@@ -51,7 +51,7 @@ public class SubmitterSchedulerInterfaceTest {
         TestRunnable tr = it.next();
         tr.blockTillFinished(1000, 2);
         
-        assertEquals(tr.getRunCount(), 2);
+        assertEquals(2, tr.getRunCount());
       }
       
       Iterator<Future<?>> futureIt = futures.iterator();
@@ -87,7 +87,7 @@ public class SubmitterSchedulerInterfaceTest {
         TestRunnable tr = it.next();
         tr.blockTillFinished();
         
-        assertEquals(tr.getRunCount(), 1);
+        assertEquals(1, tr.getRunCount());
       }
       
       // run one more time now that all workers are already running
@@ -102,7 +102,7 @@ public class SubmitterSchedulerInterfaceTest {
         TestRunnable tr = it.next();
         tr.blockTillFinished(1000, 2);
         
-        assertEquals(tr.getRunCount(), 2);
+        assertEquals(2, tr.getRunCount());
       }
       
       it = runnables.iterator();
@@ -203,7 +203,7 @@ public class SubmitterSchedulerInterfaceTest {
         assertTrue(executionDelay >= scheduleDelay);
         // should be very timely with a core pool size that matches runnable count
         assertTrue(executionDelay <= (scheduleDelay + 2000));  
-        assertEquals(tr.getRunCount(), 1);
+        assertEquals(1, tr.getRunCount());
       }
       
       Iterator<Future<?>> futureIt = futures.iterator();
@@ -242,7 +242,7 @@ public class SubmitterSchedulerInterfaceTest {
         assertTrue(executionDelay >= scheduleDelay);
         // should be very timely with a core pool size that matches runnable count
         assertTrue(executionDelay <= (scheduleDelay + 2000));  
-        assertEquals(tr.getRunCount(), 1);
+        assertEquals(1, tr.getRunCount());
       }
       
       it = runnables.iterator();

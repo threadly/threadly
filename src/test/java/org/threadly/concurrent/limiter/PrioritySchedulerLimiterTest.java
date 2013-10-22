@@ -103,7 +103,7 @@ public class PrioritySchedulerLimiterTest {
     psl.consumeAvailable();
     
     // should be fully consumed
-    assertEquals(psl.waitingTasks.size(), 0);
+    assertEquals(0, psl.waitingTasks.size());
     
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
@@ -159,7 +159,7 @@ public class PrioritySchedulerLimiterTest {
         TestRunnable tr = it.next();
         tr.blockTillFinished();
         
-        assertEquals(tr.getRunCount(), 1);
+        assertEquals(1, tr.getRunCount());
       }
       
       Iterator<Future<?>> futureIt = futures.iterator();
@@ -272,7 +272,7 @@ public class PrioritySchedulerLimiterTest {
         assertTrue(executionDelay >= scheduleDelay);
         // should be very timely with a core pool size that matches runnable count
         assertTrue(executionDelay <= (scheduleDelay + 2000));  
-        assertEquals(tr.getRunCount(), 1);
+        assertEquals(1, tr.getRunCount());
       }
       
       Iterator<Future<?>> futureIt = futures.iterator();

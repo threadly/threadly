@@ -27,10 +27,10 @@ public class PriorityScheduledExecutorTaskWrapperTest {
     TestWrapper tw1 = new TestWrapper(1);
     TestWrapper tw10 = new TestWrapper(10);
     
-    assertEquals(tw0.compareTo(tw0), 0);
-    assertEquals(tw0.compareTo(tw1), -1);
-    assertEquals(tw10.compareTo(tw1), 1);
-    assertEquals(tw10.compareTo(new TestWrapper(10)), 0);
+    assertEquals(0, tw0.compareTo(tw0));
+    assertEquals(-1, tw0.compareTo(tw1));
+    assertEquals(1, tw10.compareTo(tw1));
+    assertEquals(0, tw10.compareTo(new TestWrapper(10)));
   }
   
   private class TestWrapper extends TaskWrapper {

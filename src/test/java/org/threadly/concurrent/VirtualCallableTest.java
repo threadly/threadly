@@ -19,11 +19,11 @@ public class VirtualCallableTest {
     assertNull(tc.factory); // null after run
     
     assertTrue(tc.runCalled);
-    assertEquals(tc.returnedLock, tlf);
-    assertEquals(tc.factoryAtRunTime, tlf);
+    assertEquals(tlf, tc.returnedLock);
+    assertEquals(tlf, tc.factoryAtRunTime);
     
-    assertEquals(tlf.makeLockCallCount, 2); // 2 calls, one for lock request, one for sleep
-    assertEquals(tlf.sleepCount, 1);
+    assertEquals(2, tlf.makeLockCallCount); // 2 calls, one for lock request, one for sleep
+    assertEquals(1, tlf.sleepCount);
   }
   
   @Test

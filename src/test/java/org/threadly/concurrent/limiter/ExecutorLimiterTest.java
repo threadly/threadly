@@ -63,7 +63,7 @@ public class ExecutorLimiterTest {
   
   @Test
   public void getMaxConcurrencyTest() {
-    assertEquals(limiter.getMaxConcurrency(), PARALLEL_COUNT);
+    assertEquals(PARALLEL_COUNT, limiter.getMaxConcurrency());
   }
   
   @Test
@@ -90,7 +90,7 @@ public class ExecutorLimiterTest {
     limiter.consumeAvailable();
     
     // should be fully consumed
-    assertEquals(limiter.waitingTasks.size(), 0);
+    assertEquals(0, limiter.waitingTasks.size());
     
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
@@ -131,7 +131,7 @@ public class ExecutorLimiterTest {
       TestRunnable tr = it.next();
       tr.blockTillFinished();
       
-      assertEquals(tr.getRunCount(), 1);
+      assertEquals(1, tr.getRunCount());
     }
   }
   
@@ -157,7 +157,7 @@ public class ExecutorLimiterTest {
       TestRunnable tr = it.next();
       tr.blockTillFinished();
       
-      assertEquals(tr.getRunCount(), 1);
+      assertEquals(1, tr.getRunCount());
     }
   }
   

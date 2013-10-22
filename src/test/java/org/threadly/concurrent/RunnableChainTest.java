@@ -38,9 +38,9 @@ public class RunnableChainTest {
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = list.get(i);
       if (i > FAIL_INDEX) {
-        assertEquals(tr.getRunCount(), 0);
+        assertEquals(0, tr.getRunCount());
       } else {
-        assertEquals(tr.getRunCount(), 1);
+        assertEquals(1, tr.getRunCount());
       }
     }
   }
@@ -61,7 +61,7 @@ public class RunnableChainTest {
 
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       TestRunnable tr = list.get(i);
-      assertEquals(tr.getRunCount(), 1);
+      assertEquals(1, tr.getRunCount());
     }
   }
   
@@ -83,7 +83,7 @@ public class RunnableChainTest {
 
     for (int i = 0; i < RUNNABLE_COUNT; i++) {
       ChainRunnable cr = list.get(i);
-      assertEquals(cr.getRunCount(), 1);
+      assertEquals(1, cr.getRunCount());
       assertTrue(cr.factorySetAtRuntime);
     }
   }
