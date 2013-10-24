@@ -91,7 +91,5 @@ public class ProfilerTest {
     
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_COUNT_HEADER));
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_NET_HEADER));
-    
-    System.out.println(resultStr);
   }
 }
