@@ -64,6 +64,31 @@ public class ExceptionUtils {
   }
   
   /**
+   * Gets the root cause of a provided throwable.  If there is no 
+   * cause for the throwable provided into this function, a null 
+   * is returned.
+   * 
+   * @param t starting throwable
+   * @return root cause throwable, or null if there is no cause
+   */
+  public static Throwable getRootCause(final Throwable t) {
+    if (t == null) {
+      throw new IllegalArgumentException("Must provide input throwable");
+    }
+    
+    Throwable result = t;
+    while (result.getCause() != null) {
+      result = result.getCause();
+    }
+    
+    if (result == t) {
+      return null;
+    } else {
+      return result;
+    }
+  }
+  
+  /**
    * Convert throwable's stack and message into a simple string.
    * 
    * @param t throwable which contains stack

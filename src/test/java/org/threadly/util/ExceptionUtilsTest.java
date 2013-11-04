@@ -71,6 +71,30 @@ public class ExceptionUtilsTest {
     }
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void getRootCauseFail() {
+    ExceptionUtils.getRootCause(null);
+    fail("Exception should have thrown");
+  }
+  
+  @Test
+  public void getRootCauseNoCauseTest() {
+    assertNull(ExceptionUtils.getRootCause(new Exception()));
+  }
+  
+  @Test
+  public void getRootCauseTest() {
+    Exception rootCause = new Exception();
+    Exception e1 = new Exception(rootCause);
+    Exception e2 = new Exception(e1);
+    Exception e3 = new Exception(e2);
+    
+    
+    assertTrue(ExceptionUtils.getRootCause(e3) == rootCause);
+    assertTrue(ExceptionUtils.getRootCause(e2) == rootCause);
+    assertTrue(ExceptionUtils.getRootCause(e1) == rootCause);
+  }
+  
   @Test
   public void makeRuntimeWithRuntimeTest() {
     RuntimeException testException = new RuntimeException();
