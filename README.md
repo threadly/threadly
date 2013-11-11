@@ -3,6 +3,8 @@ Threadly
 
 A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of concurrent development and testing needs. This is designed to be a complement to java.util.concurrent and uses java.util.concurrent to help assist in it's implementations where it makes sense. This library is particularly useful for getting legacy concurrent code and getting it under test.
 
+For information about compiling, importing into eclipse, or contributing to the project, please look at the 'BUILD_INSTRUCTIONS' file.
+
 -- General Concurrency Tools --
 
 *    PriorityScheduledExecutor - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
