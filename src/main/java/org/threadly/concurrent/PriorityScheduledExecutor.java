@@ -194,11 +194,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       throw new IllegalArgumentException("corePoolSize must be >= 1");
     } else if (maxPoolSize < corePoolSize) {
       throw new IllegalArgumentException("maxPoolSize must be >= corePoolSize");
-    } else if (keepAliveTimeInMs < 0) {
-      throw new IllegalArgumentException("keepAliveTimeInMs must be >= 0");
-    } else if (maxWaitForLowPriorityInMs < 0) {
-      throw new IllegalArgumentException("maxWaitForLowPriorityInMs must be >= 0");
     }
+    
+    //calls to verify and set values
+    setKeepAliveTime(keepAliveTimeInMs);
+    setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
     
     if (defaultPriority == null) {
       defaultPriority = DEFAULT_PRIORITY;
@@ -233,8 +233,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     shutdownFinishing = false;
     this.corePoolSize = corePoolSize;
     this.maxPoolSize = maxPoolSize;
-    this.keepAliveTimeInMs = keepAliveTimeInMs;
-    this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
     this.allowCorePoolTimeout = false;
     this.lastHighDelay = 0;
     currentPoolSize = 0;

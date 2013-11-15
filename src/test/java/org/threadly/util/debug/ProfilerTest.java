@@ -29,6 +29,24 @@ public class ProfilerTest {
     profiler = null;
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void constructorFail() {
+    new Profiler(-1);
+  }
+  
+  @Test
+  public void getAndSetProfileIntervalTest() {
+    int TEST_VAL = 100;
+    profiler.setPollInterval(TEST_VAL);
+    
+    assertEquals(TEST_VAL, profiler.getPollInterval());
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void setProfileIntervalFail() {
+    profiler.setPollInterval(-1);
+  }
+  
   @Test
   public void dumpStoppedStringTest() throws IOException {
     profiler.start();

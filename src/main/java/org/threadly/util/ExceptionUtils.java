@@ -41,7 +41,7 @@ public class ExceptionUtils {
    * is already runtime then that is just removed.  If it has to produce
    * a new exception the stack is updated to omit this call.
    * 
-   * @param t Throwable which may or may not be a runtimeException
+   * @param t {@link Throwable} which may or may not be a runtimeException
    * @return a runtime exception based on provided exception
    */
   public static RuntimeException makeRuntime(Throwable t) {
@@ -64,12 +64,12 @@ public class ExceptionUtils {
   }
   
   /**
-   * Gets the root cause of a provided throwable.  If there is no 
-   * cause for the throwable provided into this function, a null 
+   * Gets the root cause of a provided {@link Throwable}.  If there is no 
+   * cause for the {@link Throwable} provided into this function, a null 
    * is returned.
    * 
-   * @param t starting throwable
-   * @return root cause throwable, or null if there is no cause
+   * @param t starting {@link Throwable}
+   * @return root cause {@link Throwable}, or null if there is no cause
    */
   public static Throwable getRootCause(final Throwable t) {
     if (t == null) {
@@ -111,7 +111,7 @@ public class ExceptionUtils {
   /**
    * Formats and writes a throwable's stack trace to a provided {@link StringBuilder}.
    * 
-   * @param t throwable which contains stack
+   * @param t {@link Throwable} which contains stack
    * @param sb StringBuilder to write output to
    */
   public static void writeStackTo(Throwable t, StringBuilder sb) {
@@ -121,7 +121,7 @@ public class ExceptionUtils {
   /**
    * Formats and writes a throwable's stack trace to a provided {@link StringBuffer}.
    * 
-   * @param t throwable which contains stack
+   * @param t {@link Throwable} which contains stack
    * @param sb StringBuffer to write output to
    */
   public static void writeStackTo(Throwable t, StringBuffer sb) {
@@ -131,7 +131,7 @@ public class ExceptionUtils {
   /**
    * Formats and writes a throwable's stack trace to a provided {@link Writer}.
    * 
-   * @param t throwable which contains stack
+   * @param t {@link Throwable} which contains stack
    * @param w Writer to write output to
    */
   public static void writeStackTo(Throwable t, Writer w) {

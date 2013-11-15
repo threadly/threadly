@@ -42,9 +42,9 @@ public class Profiler implements Runnable {
   
   private final Map<String, Map<Trace, Trace>> threadTraces;
   private final File outputFile;
-  private final int pollIntervalInMs;
   private final Object startStopLock;
   private final AtomicReference<Thread> collectorThread;
+  private volatile int pollIntervalInMs;
   private volatile Thread dumpingThread;
   
   /**
@@ -91,12 +91,36 @@ public class Profiler implements Runnable {
    * @param pollIntervalInMs frequency to check running threads
    */
   public Profiler(File outputFile, int pollIntervalInMs) {
+    setPollInterval(pollIntervalInMs);
+    
     threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>();
     this.outputFile = outputFile;
-    this.pollIntervalInMs = pollIntervalInMs;
     startStopLock = new Object();
     collectorThread = new AtomicReference<Thread>(null);
     dumpingThread = null;
+  }
+  
+  /**
+   * Change how long the profiler waits before getting additional thread 
+   * stacks.  This value must be >= 0.
+   * 
+   * @param pollIntervalInMs time in milliseconds to wait between thread data dumps
+   */
+  public void setPollInterval(int pollIntervalInMs) {
+    if (pollIntervalInMs < 0) {
+      throw new IllegalArgumentException("PollInterval can not be negative");
+    }
+    this.pollIntervalInMs = pollIntervalInMs;
+  }
+  
+  /**
+   * Call to get the currently set profile interval.  This is the amount 
+   * of time the profiler waits between collecting thread data.
+   * 
+   * @return returns the profile interval in milliseconds
+   */
+  public int getPollInterval() {
+    return pollIntervalInMs;
   }
   
   /**
