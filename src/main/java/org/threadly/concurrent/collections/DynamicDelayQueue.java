@@ -340,12 +340,16 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   public boolean isEmpty() {
     return queue.isEmpty();
   }
-
-  @Override
-  public Iterator<T> iterator() {
+  
+  private void verifyQueueLockForIterator() {
     if (! Thread.holdsLock(queueLock)) {
       throw new IllegalStateException("Must have lock in order to get iterator");
     }
+  }
+
+  @Override
+  public Iterator<T> iterator() {
+    verifyQueueLockForIterator();
     
     return queue.iterator();
   }
@@ -357,9 +361,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
    * @throws InterruptedException Thrown when thread is interrupted
    */
   public ConsumerIterator<T> consumeIterator() throws InterruptedException {
-    if (! Thread.holdsLock(queueLock)) {
-      throw new IllegalStateException("Must have lock in order to get iterator");
-    }
+    verifyQueueLockForIterator();
     
     blockTillAvailable(true);
     

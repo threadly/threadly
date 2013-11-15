@@ -55,6 +55,32 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY = "low priority " + threadNameSuffix;
   }
   
+  protected static final String ERROR_MSG_CORE_SIZE_MUST_BE_AT_LEAST_ONE;
+  protected static final String ERROR_MSG_MAX_SIZE_MUST_BE_AT_LEAST_CORE_SIZE;
+  protected static final String ERROR_MSG_MAX_SIZE_MUST_BE_AT_LEAST_ONE;
+  protected static final String ERROR_MSG_KEEP_ALIVE_TIME_MUST_BE_AT_LEAST_ZERO;
+  protected static final String ERROR_MSG_LOW_PRIORITY_WAIT_MUST_BE_AT_LEAST_ZERO;
+  protected static final String ERROR_MSG_THREADPOOL_SHUTDOWN;
+  protected static final String ERROR_MSG_SUB_POOL_SIZE;
+  protected static final String ERROR_MSG_MUST_PROVIDE_TASK;
+  protected static final String ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO;
+  protected static final String ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO;
+  protected static final String ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO;
+  
+  static {
+    ERROR_MSG_CORE_SIZE_MUST_BE_AT_LEAST_ONE = "corePoolSize must be >= 1";
+    ERROR_MSG_MAX_SIZE_MUST_BE_AT_LEAST_CORE_SIZE = "maxPoolSize must be >= corePoolSize";
+    ERROR_MSG_MAX_SIZE_MUST_BE_AT_LEAST_ONE = "maxPoolSize must be >= 1";
+    ERROR_MSG_KEEP_ALIVE_TIME_MUST_BE_AT_LEAST_ZERO = "keepAliveTimeInMs must be >= 0";
+    ERROR_MSG_LOW_PRIORITY_WAIT_MUST_BE_AT_LEAST_ZERO = "maxWaitForLowPriorityInMs must be >= 0";
+    ERROR_MSG_THREADPOOL_SHUTDOWN = "Threadpool shutdown";
+    ERROR_MSG_SUB_POOL_SIZE = "A sub pool should be smaller than the parent pool";
+    ERROR_MSG_MUST_PROVIDE_TASK = "Must provide task";
+    ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO = "delayInMs must be >= 0";
+    ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO = "initialDelay must be >= 0";
+    ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO = "recurringDelay must be >= 0";
+  }
+  
   protected final TaskPriority defaultPriority;
   protected final VirtualLock highPriorityLock;
   protected final VirtualLock lowPriorityLock;
@@ -191,9 +217,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                                    long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                    long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     if (corePoolSize < 1) {
-      throw new IllegalArgumentException("corePoolSize must be >= 1");
+      throw new IllegalArgumentException(ERROR_MSG_CORE_SIZE_MUST_BE_AT_LEAST_ONE);
     } else if (maxPoolSize < corePoolSize) {
-      throw new IllegalArgumentException("maxPoolSize must be >= corePoolSize");
+      throw new IllegalArgumentException(ERROR_MSG_MAX_SIZE_MUST_BE_AT_LEAST_CORE_SIZE);
     }
     
     //calls to verify and set values
@@ -298,15 +324,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Change the set core pool size.
+   * Change the set core pool size.  If the value is less than the current max 
+   * pool size, the max pool size will also be updated to this value. 
    * 
-   * @param corePoolSize New pool size.  Must be >= 1 and <= the set max pool size.
+   * @param corePoolSize New pool size.  Must be >= 1.
    */
   public void setCorePoolSize(int corePoolSize) {
     if (corePoolSize < 1) {
-      throw new IllegalArgumentException("corePoolSize must be >= 1");
-    } else if (maxPoolSize < corePoolSize) {
-      throw new IllegalArgumentException("maxPoolSize must be >= corePoolSize");
+      throw new IllegalArgumentException(ERROR_MSG_CORE_SIZE_MUST_BE_AT_LEAST_ONE);
+    }
+    
+    if (maxPoolSize < corePoolSize) {
+      this.maxPoolSize = maxPoolSize;
     }
     
     this.corePoolSize = corePoolSize;
@@ -319,9 +348,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    */
   public void setMaxPoolSize(int maxPoolSize) {
     if (maxPoolSize < 1) {
-      throw new IllegalArgumentException("maxPoolSize must be >= 1");
+      throw new IllegalArgumentException(ERROR_MSG_MAX_SIZE_MUST_BE_AT_LEAST_ONE);
     } else if (maxPoolSize < corePoolSize) {
-      throw new IllegalArgumentException("maxPoolSize must be >= corePoolSize");
+      throw new IllegalArgumentException(ERROR_MSG_MAX_SIZE_MUST_BE_AT_LEAST_CORE_SIZE);
     }
     
     this.maxPoolSize = maxPoolSize;
@@ -334,7 +363,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    */
   public void setKeepAliveTime(long keepAliveTimeInMs) {
     if (keepAliveTimeInMs < 0) {
-      throw new IllegalArgumentException("keepAliveTimeInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_KEEP_ALIVE_TIME_MUST_BE_AT_LEAST_ZERO);
     }
     
     this.keepAliveTimeInMs = keepAliveTimeInMs;
@@ -350,7 +379,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    */
   public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
     if (maxWaitForLowPriorityInMs < 0) {
-      throw new IllegalArgumentException("maxWaitForLowPriorityInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_LOW_PRIORITY_WAIT_MUST_BE_AT_LEAST_ZERO);
     }
     
     this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
@@ -507,7 +536,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   protected void verifyNotShutdown() {
     if (isShutdown()) {
-      throw new IllegalStateException("Thread pool shutdown");
+      throw new IllegalStateException(ERROR_MSG_THREADPOOL_SHUTDOWN);
     }
   }
   
@@ -529,8 +558,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
    */
   public PrioritySchedulerInterface makeSubPool(int maxConcurrency, String subPoolName) {
-    if (maxConcurrency > corePoolSize) {
-      throw new IllegalArgumentException("A sub pool should be smaller than the parent pool");
+    if (maxConcurrency >= maxPoolSize) {
+      throw new IllegalArgumentException(ERROR_MSG_SUB_POOL_SIZE);
     }
     
     return new PrioritySchedulerLimiter(this, maxConcurrency, subPoolName);
@@ -717,9 +746,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public void schedule(Runnable task, long delayInMs, 
                        TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = defaultPriority;
@@ -749,9 +778,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                                                  long delayInMs, 
                                                  TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = defaultPriority;
@@ -772,9 +801,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
                                                  TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = defaultPriority;
@@ -797,11 +826,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (initialDelay < 0) {
-      throw new IllegalArgumentException("initialDelay must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO);
     } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException("recurringDelay must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = defaultPriority;
@@ -1081,9 +1110,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     
     public void nextTask(TaskWrapper task) {
       if (! running) {
-        throw new IllegalStateException("Worker has been killed");
+        // worker should still be running if provided a task
+        throw new IllegalStateException();
       } else if (nextTask != null) {
-        throw new IllegalStateException("Already has a task");
+        // worker should need a task if provided a task
+        throw new IllegalStateException();
       }
       
       nextTask = task;

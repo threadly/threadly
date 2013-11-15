@@ -57,7 +57,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     super(maxConcurrency, subPoolName);
     
     if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_SCHEDULER);
     }
     
     this.scheduler = scheduler;
@@ -150,7 +150,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public void execute(Runnable task, TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -174,7 +174,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -203,7 +203,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -233,9 +233,9 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   public void schedule(Runnable task, long delayInMs, 
                        TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -259,9 +259,9 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
                                                  TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -282,9 +282,9 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
                                                  TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -305,11 +305,11 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (initialDelay < 0) {
-      throw new IllegalArgumentException("initialDelay must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO);
     } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException("recurringDelay must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     if (priority == null) {
       priority = scheduler.getDefaultPriority();

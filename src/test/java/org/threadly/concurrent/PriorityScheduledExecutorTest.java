@@ -139,13 +139,6 @@ public class PriorityScheduledExecutorTest {
       } catch (IllegalArgumentException expected) {
         // ignored
       }
-      // verify can't be set higher than max size
-      try {
-        scheduler.setCorePoolSize(maxPoolSize + 1);
-        fail("Exception should have been thrown");
-      } catch (IllegalArgumentException expected) {
-        // ignored
-      }
     } finally {
       factory.shutdown();
     }

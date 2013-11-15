@@ -39,7 +39,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
    * @param maxConcurrency maximum qty of runnables to run in parallel
    */
   public SubmitterSchedulerLimiter(SubmitterSchedulerInterface scheduler, 
-                                int maxConcurrency) {
+                                   int maxConcurrency) {
     this(scheduler, maxConcurrency, null);
   }
   
@@ -51,11 +51,11 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
   public SubmitterSchedulerLimiter(SubmitterSchedulerInterface scheduler, 
-                                int maxConcurrency, String subPoolName) {
+                                   int maxConcurrency, String subPoolName) {
     super(maxConcurrency, subPoolName);
     
     if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_SCHEDULER);
     }
     
     this.scheduler = scheduler;
@@ -97,7 +97,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public void execute(Runnable task) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     
     RunnableFutureWrapper wrapper = new RunnableFutureWrapper(task, null);
@@ -118,7 +118,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public <T> Future<T> submit(Runnable task, T result) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     
     FutureFuture<T> ff = new FutureFuture<T>();
@@ -144,7 +144,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public <T> Future<T> submit(Callable<T> task) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     
     FutureFuture<T> ff = new FutureFuture<T>();
@@ -170,9 +170,9 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public void schedule(Runnable task, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     
     if (delayInMs == 0) {
@@ -191,9 +191,9 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public <T> Future<T> submitScheduled(Runnable task, T result, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
 
     FutureFuture<T> ff = new FutureFuture<T>();
@@ -210,9 +210,9 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   @Override
   public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
 
     FutureFuture<T> ff = new FutureFuture<T>();
@@ -230,11 +230,11 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     } else if (initialDelay < 0) {
-      throw new IllegalArgumentException("initialDelay must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO);
     } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException("recurringDelay must be >= 0");
+      throw new IllegalArgumentException(ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO);
     }
     
     RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay);

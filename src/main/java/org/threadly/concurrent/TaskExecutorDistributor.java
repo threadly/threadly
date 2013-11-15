@@ -38,6 +38,20 @@ public class TaskExecutorDistributor {
   protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 100;
   protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 100;
   
+  protected static final String ERROR_MSG_MUST_PROVIDE_EXECUTOR;
+  protected static final String ERROR_MSG_MUST_PROVIDE_STRIPED_LOCK;
+  protected static final String ERROR_MSG_TASKS_PER_CYCLE_MUST_BE_AT_LEAST_ONE;
+  protected static final String ERROR_MSG_MUST_PROVIDE_KEY;
+  protected static final String ERROR_MSG_MUST_PROVIDE_TASK;
+  
+  static {
+    ERROR_MSG_MUST_PROVIDE_EXECUTOR = "executor can not be null";
+    ERROR_MSG_MUST_PROVIDE_STRIPED_LOCK = "striped lock must be provided";
+    ERROR_MSG_TASKS_PER_CYCLE_MUST_BE_AT_LEAST_ONE = "maxTasksPerCycle must be >= 1";
+    ERROR_MSG_MUST_PROVIDE_KEY = "Must provide thread key";
+    ERROR_MSG_MUST_PROVIDE_TASK = "Must provide task";
+  }
+  
   protected final Executor executor;
   protected final StripedLock sLock;
   protected final int maxTasksPerCycle;
@@ -169,11 +183,11 @@ public class TaskExecutorDistributor {
   public TaskExecutorDistributor(Executor executor, StripedLock sLock, 
                                  int maxTasksPerCycle) {
     if (executor == null) {
-      throw new IllegalArgumentException("executor can not be null");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_EXECUTOR);
     } else if (sLock == null) {
-      throw new IllegalArgumentException("striped lock must be provided");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_STRIPED_LOCK);
     } else if (maxTasksPerCycle < 1) {
-      throw new IllegalArgumentException("maxTasksPerCycle must be >= 1");
+      throw new IllegalArgumentException(ERROR_MSG_TASKS_PER_CYCLE_MUST_BE_AT_LEAST_ONE);
     }
     
     this.executor = executor;
@@ -206,7 +220,7 @@ public class TaskExecutorDistributor {
    */
   public Executor getExecutorForKey(Object threadKey) {
     if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
     }
     
     return new KeyBasedExecutor(threadKey);
@@ -220,9 +234,9 @@ public class TaskExecutorDistributor {
    */
   public void addTask(Object threadKey, Runnable task) {
     if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
     } else if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     
     VirtualLock agentLock = sLock.getLock(threadKey);
@@ -260,9 +274,9 @@ public class TaskExecutorDistributor {
   public <T> ListenableFuture<T> submitTask(Object threadKey, Runnable task, 
                                             T result) {
     if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
     } else if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     
     ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, result, 
@@ -282,9 +296,9 @@ public class TaskExecutorDistributor {
    */
   public <T> ListenableFuture<T> submitTask(Object threadKey, Callable<T> task) {
     if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
     } else if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
+      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
     }
     
     ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, 
