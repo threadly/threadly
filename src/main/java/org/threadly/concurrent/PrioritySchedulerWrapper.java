@@ -15,14 +15,6 @@ import org.threadly.concurrent.future.ListenableFuture;
  * @author jent - Mike Jensen
  */
 public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
-  protected static final String ERROR_MSG_MUST_PROVIDE_SCHEDULER;
-  protected static final String ERROR_MSG_MUST_PROVIDE_DEFAULT_PRIORITY;
-  
-  static {
-    ERROR_MSG_MUST_PROVIDE_SCHEDULER = "Must provide a scheduler";
-    ERROR_MSG_MUST_PROVIDE_DEFAULT_PRIORITY = "Must provide a default priority";
-  }
-  
   protected final PrioritySchedulerInterface scheduler;
   protected final TaskPriority defaultPriority;
   
@@ -35,9 +27,9 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   public PrioritySchedulerWrapper(PrioritySchedulerInterface scheduler, 
                                   TaskPriority defaultPriority) {
     if (scheduler == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_SCHEDULER);
+      throw new IllegalArgumentException("Must provide a scheduler");
     } else if (defaultPriority == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_DEFAULT_PRIORITY);
+      throw new IllegalArgumentException("Must provide a default priority");
     }
     
     this.scheduler = scheduler;

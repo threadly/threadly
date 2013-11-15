@@ -13,24 +13,6 @@ import org.threadly.concurrent.future.FutureFuture.TaskCanceler;
  * @author jent - Mike Jensen
  */
 abstract class AbstractThreadPoolLimiter {
-  protected static final String ERROR_MSG_CONCURRENCY_MUST_BE_AT_LEAST_ONE;
-  protected static final String ERROR_MSG_MUST_PROVIDE_EXECUTOR;
-  protected static final String ERROR_MSG_MUST_PROVIDE_SCHEDULER;
-  protected static final String ERROR_MSG_MUST_PROVIDE_TASK;
-  protected static final String ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO;
-  protected static final String ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO;
-  protected static final String ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO;
-  
-  static {
-    ERROR_MSG_CONCURRENCY_MUST_BE_AT_LEAST_ONE = "Max concurrency must be at least 1";
-    ERROR_MSG_MUST_PROVIDE_EXECUTOR = "Must provide executor";
-    ERROR_MSG_MUST_PROVIDE_SCHEDULER = "Must provide scheduler";
-    ERROR_MSG_MUST_PROVIDE_TASK = "Must provide task";
-    ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO = "delayInMs must be >= 0";
-    ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO = "initialDelay must be >= 0";
-    ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO = "recurringDelay must be >= 0";
-  }
-  
   protected final int maxConcurrency;
   protected final String subPoolName;
   private final AtomicInteger currentlyRunning;
@@ -43,7 +25,7 @@ abstract class AbstractThreadPoolLimiter {
    */
   public AbstractThreadPoolLimiter(int maxConcurrency, String subPoolName) {
     if (maxConcurrency < 1) {
-      throw new IllegalArgumentException(ERROR_MSG_CONCURRENCY_MUST_BE_AT_LEAST_ONE);
+      throw new IllegalArgumentException("max concurrency must be at least 1");
     }
     
     this.maxConcurrency = maxConcurrency;

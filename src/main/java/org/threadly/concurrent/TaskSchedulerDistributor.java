@@ -15,16 +15,6 @@ import org.threadly.concurrent.lock.StripedLock;
  * @author jent - Mike Jensen
  */
 public class TaskSchedulerDistributor extends TaskExecutorDistributor {
-  protected static final String ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO;
-  protected static final String ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO;
-  protected static final String ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO;
-  
-  static {
-    ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO = "delayInMs must be >= 0";
-    ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO = "initialDelay must be >= 0";
-    ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO = "recurringDelay must be >= 0";
-  }
-  
   private final SimpleSchedulerInterface scheduler;
   
   /**
@@ -169,7 +159,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    */
   public SubmitterSchedulerInterface getSubmitterSchedulerForKey(Object threadKey) {
     if (threadKey == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
+      throw new IllegalArgumentException("Must provide thread key");
     }
     
     return new KeyBasedScheduler(threadKey);
@@ -187,11 +177,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                        Runnable task, 
                        long delayInMs) {
     if (threadKey == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
+      throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
+      throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("delayInMs must be >= 0");
     }
     
     if (delayInMs == 0) {
@@ -217,13 +207,13 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                                      long initialDelay, 
                                      long recurringDelay) {
     if (threadKey == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
+      throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
+      throw new IllegalArgumentException("Must provide a task");
     } else if (initialDelay < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("initialDelay must be >= 0");
     } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("recurringDelay must be >= 0");
     }
     
     scheduler.schedule(new AddTask(threadKey, 
@@ -268,11 +258,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                                                      T result, 
                                                      long delayInMs) {
     if (threadKey == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
+      throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
+      throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
     ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, result, 
@@ -302,11 +292,11 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                                                      Callable<T> task, 
                                                      long delayInMs) {
     if (threadKey == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_KEY);
+      throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
+      throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
     ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, sLock.getLock(threadKey));

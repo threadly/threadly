@@ -57,9 +57,9 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   @Override
   public void schedule(Runnable task, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
+      throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("delayInMs must be >= 0");
     }
     
     if (delayInMs == 0) {
@@ -74,11 +74,11 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
     if (task == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
+      throw new IllegalArgumentException("Must provide a task");
     } else if (initialDelay < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_INITIAL_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("initialDelay must be >= 0");
     } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException(ERROR_MSG_RECURRING_DELAY_MUST_BE_AT_LEAST_ZERO);
+      throw new IllegalArgumentException("recurringDelay must be >= 0");
     }
     
     RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay);

@@ -48,7 +48,7 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     super(maxConcurrency, subPoolName);
     
     if (executor == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_EXECUTOR);
+      throw new IllegalArgumentException("Must provide executor");
     }
     
     this.executor = executor;
@@ -71,15 +71,15 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public void execute(Runnable task) {
-    if (task == null) {
-      throw new IllegalArgumentException(ERROR_MSG_MUST_PROVIDE_TASK);
+  public void execute(Runnable command) {
+    if (command == null) {
+      throw new IllegalArgumentException("Must provide runnable");
     }
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
-      executor.execute(new LimiterRunnableWrapper(task));
+      executor.execute(new LimiterRunnableWrapper(command));
     } else {
-      waitingTasks.add(task);
+      waitingTasks.add(command);
       consumeAvailable(); // call to consume in case task finished after first check
     }
   }
