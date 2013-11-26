@@ -1,7 +1,8 @@
 package org.threadly.concurrent.lock;
 
 /**
- * VirtualLock interface so that this item can be easily injected.
+ * <p>VirtualLock interface so that this item can be easily injected.  This can 
+ * allow code to be flexible for unit testing with a testable scheduler.</p>
  * 
  * @author jent - Mike Jensen
  */

@@ -1,8 +1,8 @@
 package org.threadly.concurrent.lock;
 
 /**
- * Factory that can be injected to produce locks that make sense
- * for a given thread pool.
+ * <p>Factory that can be injected to produce locks that make sense
+ * for a given thread pool.</p>
  * 
  * @author jent - Mike Jensen
  */

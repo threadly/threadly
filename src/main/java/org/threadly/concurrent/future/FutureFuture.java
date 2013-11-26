@@ -9,9 +9,9 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * Future implementation which contains a parent {@link Future}.
+ * <p>Future implementation which contains a parent {@link Future}.
  * This allows a future to be returned before an executor has actually produced a future 
- * which this class will rely on.
+ * which this class will rely on.</p>
  * 
  * @author jent - Mike Jensen
  * @param <T> result type returned by .get()
@@ -127,7 +127,11 @@ public class FutureFuture<T> implements Future<T> {
   }
   
   /**
-   * A canceler which this future will use if a parent future has not been set.
+   * <p>A canceler which this future will use if a parent future has not been set.</p>
+   * 
+   * <p>This is used to cancel a future before a future has been provided from the 
+   * executor.  In threadly this is used for canceling futures returned by the Limiters in 
+   * org.threadly.concurrent.limiter.</p>
    * 
    * @author jent - Mike Jensen
    */

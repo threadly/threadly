@@ -5,15 +5,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.util.Clock;
 
 /**
- * This is a small wrapper class for Clock to avoid updating for bulk calls.
+ * <p>This is a small wrapper class for Clock to avoid updating for bulk calls.
  * This is primarily useful for the {@link PriorityScheduledExecutor} when it needs to 
  * do a binary search in a list of delayed items, or sort those delayed items.
  * There is no reason to make a system call for each item, so we just pause getting
- * accurate time for those fast but frequent operations.
+ * accurate time for those fast but frequent operations.</p>
  * 
- * All the functions in this class are protected because it is not intended to be used 
+ * <p>All the functions in this class are protected because it is not intended to be used 
  * outside of this package.  This is a utility class that must be handled carefully, 
- * using it incorrectly could have serious impacts on other classes which depend on it.
+ * using it incorrectly could have serious impacts on other classes which depend on it.</p>
  * 
  * @author jent - Mike Jensen
  */

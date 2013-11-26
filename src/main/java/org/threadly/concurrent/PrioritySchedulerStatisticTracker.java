@@ -16,12 +16,12 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.Clock;
 
 /**
- * An implementation of {@link PriorityScheduledExecutor} which tracks run and usage 
+ * <p>An implementation of {@link PriorityScheduledExecutor} which tracks run and usage 
  * statistics.  This is designed for testing and troubleshooting.  It has a little 
- * more overhead from the normal {@link PriorityScheduledExecutor}.
+ * more overhead from the normal {@link PriorityScheduledExecutor}.</p>
  * 
- * It helps give insight in how long tasks are running, how well the thread pool is 
- * being utilized, as well as execution frequency.
+ * <p>It helps give insight in how long tasks are running, how well the thread pool is 
+ * being utilized, as well as execution frequency.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -685,7 +685,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Wrapper for any task which needs to track statistics.
+   * <p>Wrapper for any task which needs to track statistics.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -704,7 +704,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Wrapper for {@link Runnable} for tracking statistics.
+   * <p>Wrapper for {@link Runnable} for tracking statistics.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -738,7 +738,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
 
   /**
-   * Wrapper for {@link Callable} for tracking statistics.
+   * <p>Wrapper for {@link Callable} for tracking statistics.</p>
    * 
    * @author jent - Mike Jensen
    */

@@ -35,7 +35,7 @@ public class TestConditionTest {
     try {
       dc.blockTillTrue(timeout, 1);
       fail("Exception should have been thrown");
-    } catch (TestCondition.TimeoutException e) {
+    } catch (TestCondition.ConditionTimeoutException e) {
       assertTrue(System.currentTimeMillis() - startTime >= timeout);
     }
   }

@@ -5,12 +5,12 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.future.ListenableFuture;
 
 /**
- * Class to wrap any implementation of {@link PrioritySchedulerInterface}.  The purpose of wrapping 
+ * <p>Class to wrap any implementation of {@link PrioritySchedulerInterface}.  The purpose of wrapping 
  * like this would be to change the default priority from the wrapped instance.  That way 
  * this could be passed into other parts of code and although use the same thread pool, 
  * have different default priorities.  (this could be particularly useful when used 
  * in combination with {@link CallableDistributor}, {@link TaskExecutorDistributor}, or 
- * {@link TaskSchedulerDistributor}.
+ * {@link TaskSchedulerDistributor}.</p>
  * 
  * @author jent - Mike Jensen
  */

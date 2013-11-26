@@ -3,14 +3,14 @@ package org.threadly.util;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * This is a utility class for low-resolution timing which avoids
+ * <p>This is a utility class for low-resolution timing which avoids
  * frequent System.currentTimeMillis() calls (which perform poorly 
- * because they require system calls).
+ * because they require system calls).</p>
  *
- * Each call to Clock.lastKnownTimeMillis() will return the value of
+ * <p>Each call to Clock.lastKnownTimeMillis() will return the value of
  * System.currentTimeMillis() as of the last call to Clock.accurateTime().
  * This means lastKnownTimeMillis() will only be as accurate as the
- * frequency with which accurateTime() is called.
+ * frequency with which accurateTime() is called.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -98,8 +98,8 @@ public class Clock {
   }
   
   /**
-   * Runnable which will regularly update the stored clock time.  
-   * This runnable is designed to run in it's own dedicated thread.
+   * <p>Runnable which will regularly update the stored clock time.  
+   * This runnable is designed to run in its own dedicated thread.</p>
    * 
    * @author jent - Mike Jensen
    */

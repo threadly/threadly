@@ -12,18 +12,18 @@ import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.future.FutureFuture;
 
 /**
- * This class is designed to limit how much parallel execution happens 
+ * <p>This class is designed to limit how much parallel execution happens 
  * on a provided {@link SubmitterSchedulerInterface}.  This allows the 
  * implementor to have one thread pool for all their code, and if 
  * they want certain sections to have less levels of parallelism 
  * (possibly because those those sections would completely consume the 
- * global pool), they can wrap the executor in this class.
+ * global pool), they can wrap the executor in this class.</p>
  * 
- * Thus providing you better control on the absolute thread count and 
- * how much parallelism can occur in different sections of the program.  
+ * <p>Thus providing you better control on the absolute thread count and 
+ * how much parallelism can occur in different sections of the program.</p>  
  * 
- * Thus avoiding from having to create multiple thread pools, and also 
- * using threads more efficiently than multiple thread pools would.
+ * <p>Thus avoiding from having to create multiple thread pools, and also 
+ * using threads more efficiently than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -248,8 +248,8 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   /**
-   * Small runnable that allows scheduled tasks to pass through 
-   * the same execution queue that immediate execution has to.
+   * <p>Small runnable that allows scheduled tasks to pass through 
+   * the same execution queue that immediate execution has to.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -282,8 +282,8 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   /**
-   * Small runnable that allows scheduled tasks to pass through 
-   * the same execution queue that immediate execution has to.
+   * <p>Small runnable that allows scheduled tasks to pass through 
+   * the same execution queue that immediate execution has to.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -320,9 +320,9 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
 
   /**
-   * Wrapper for tasks which are executed in this sub pool, 
+   * <p>Wrapper for tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
-   * after the task completes.
+   * after the task completes.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -371,9 +371,9 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
 
   /**
-   * Wrapper for tasks which are executed in this sub pool, 
+   * <p>Wrapper for tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
-   * after the task completes.
+   * after the task completes.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -420,9 +420,9 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
 
   /**
-   * Wrapper for tasks which are executed in this sub pool, 
+   * <p>Wrapper for tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
-   * after the task completes.
+   * after the task completes.</p>
    * 
    * @author jent - Mike Jensen
    * @param <T> type for return of callable contained within wrapper
@@ -465,7 +465,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   /**
-   * Interface so that we can handle both callables and runnables.
+   * <p>Interface so that we can handle both callables and runnables.</p>
    * 
    * @author jent - Mike Jensen
    */

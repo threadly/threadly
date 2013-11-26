@@ -4,8 +4,11 @@ import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 
 /**
- * Generic runnable implementation that can be used in 
- * unit tests for verifying execution occurred.
+ * <p>Generic runnable implementation that can be used in 
+ * unit tests for verifying execution occurred.</p>
+ * 
+ * <p>This structure is used extensively within threadly's own 
+ * unit tests.  Please use those as examples using this class.</p>
  * 
  * @author jent - Mike Jensen
  */

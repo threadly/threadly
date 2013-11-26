@@ -7,7 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
-import org.threadly.test.concurrent.TestCondition.TimeoutException;
+import org.threadly.test.concurrent.TestCondition.ConditionTimeoutException;
 
 @SuppressWarnings("javadoc")
 public class TestRunnableTest {
@@ -81,7 +81,7 @@ public class TestRunnableTest {
     assertTrue(endTime - startTime >= delay);
   }
   
-  @Test (expected = TimeoutException.class)
+  @Test (expected = ConditionTimeoutException.class)
   public void blockTillRunTestFail() {
     instance.blockTillFinished(10);
     

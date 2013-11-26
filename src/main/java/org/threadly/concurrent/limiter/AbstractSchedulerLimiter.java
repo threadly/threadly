@@ -6,11 +6,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.VirtualCallable;
-import org.threadly.concurrent.future.FutureFuture.TaskCanceler;
+import org.threadly.concurrent.future.FutureFuture;
 import org.threadly.concurrent.future.StaticCancellationException;
 
 /**
- * Abstract limiter for any implementations which need to schedule and handle futures.
+ * <p>Abstract limiter for any implementations which need to schedule and handle futures.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -26,13 +26,13 @@ abstract class AbstractSchedulerLimiter extends AbstractThreadPoolLimiter {
   }
   
   /**
-   * Generic wrapper for callables which are used within the limiters.
+   * <p>Generic wrapper for callables which are used within the limiters.</p>
    * 
    * @author jent - Mike Jensen
    * @param <T> type for return of callable contained within wrapper
    */
   protected class LimiterCallableWrapper<T> extends VirtualCallable<T>
-                                            implements TaskCanceler, 
+                                            implements FutureFuture.TaskCanceler, 
                                                        CallableContainerInterface<T>, 
                                                        RunnableContainerInterface {
     private final Callable<T> callable;

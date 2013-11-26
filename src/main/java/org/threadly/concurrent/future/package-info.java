@@ -1,7 +1,5 @@
 
 /**
- * Package for containing futures to handle results with future executions.
- * 
- * @author jent - Mike Jensen
+ * <p>Implementations of different futures and future utilities.</p>
  */
 package org.threadly.concurrent.future;

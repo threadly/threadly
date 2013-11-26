@@ -1,10 +1,10 @@
 package org.threadly.concurrent;
 
 /**
- * Interface to implement if any classes are containing a runnable.  This 
+ * <p>Interface to implement if any classes are containing a runnable.  This 
  * interface must be implemented in order for the {@link PriorityScheduledExecutor} 
  * remove function to work correctly if that wrapper is ever provided to the 
- * thread pool.
+ * thread pool.</p>
  * 
  * @author jent - Mike Jensen
  */

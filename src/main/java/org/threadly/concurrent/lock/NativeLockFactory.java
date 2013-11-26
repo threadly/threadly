@@ -1,7 +1,8 @@
 package org.threadly.concurrent.lock;
 
 /**
- * Factory to be injected that produces native locks.
+ * <p>Implementation of {@link LockFactory} which produces 
+ * native (blocking) locks.  See {@link NativeLock}.</p>
  * 
  * @author jent - Mike Jensen
  */

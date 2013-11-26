@@ -5,12 +5,13 @@ import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
- * This class helps assist in making concurrent code testable.
- * This class is not strictly required, but it makes the {@link org.threadly.test.concurrent.TestablePriorityScheduler}
- * a drop in replacement instead of having to pass a LockFactory into your code.
+ * <p>This class helps assist in making concurrent code testable.  This class 
+ * is not strictly required, but it makes the 
+ * {@link org.threadly.test.concurrent.TestablePriorityScheduler} a drop in 
+ * replacement instead of having to pass a LockFactory into your code.</p>
  * 
- * The alternative to using this class would be to pass a LockFactory into your code.
- * But in addition if the runnable needs to sleep, it must do it on the scheduler or locks. 
+ * <p>The alternative to using this class would be to pass a LockFactory into your code.
+ * But in addition if the runnable needs to sleep, it must do it on the scheduler or locks.</p> 
  * 
  * @author jent - Mike Jensen
  */

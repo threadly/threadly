@@ -4,11 +4,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.VirtualRunnable;
-import org.threadly.concurrent.future.FutureFuture.TaskCanceler;
+import org.threadly.concurrent.future.FutureFuture;
 
 /**
- * Abstract implementation for classes which limit concurrency 
- * for a parent thread pool.
+ * <p>Abstract implementation for classes which limit concurrency 
+ * for a parent thread pool.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -101,14 +101,14 @@ abstract class AbstractThreadPoolLimiter {
   }
   
   /**
-   * Generic wrapper for runnables which are used within the limiters.
+   * <p>Generic wrapper for runnables which are used within the limiters.
    * This wrapper ensures that handleTaskFinished() will be called 
-   * after the task completes.
+   * after the task completes.</p>
    * 
    * @author jent - Mike Jensen
    */
   protected class LimiterRunnableWrapper extends VirtualRunnable
-                                         implements TaskCanceler, 
+                                         implements FutureFuture.TaskCanceler, 
                                                     RunnableContainerInterface {
     private final Runnable runnable;
     private final AtomicInteger runStatus;  // 0 = not started, -1 = canceled, 1 = running

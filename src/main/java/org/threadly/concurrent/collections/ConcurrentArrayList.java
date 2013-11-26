@@ -15,29 +15,28 @@ import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
- * A thread safe list implementation with an array back end.  Make sure
+ * <p>A thread safe list implementation with an array back end.  Make sure
  * to read the javadocs carefully, as many functions behave subtly different
- * from the java.util.List definition.
+ * from the java.util.List definition.</p>
  * 
- * The design of this implementation is NOT to completely avoid synchronization.  
+ * <p>The design of this implementation is NOT to completely avoid synchronization.  
  * We have a hybrid implementation of volatile and synchronized to allow for cheaper
  * reading, but keeping high consistency.  It works with the idea that the internal
  * data is immutable.  Each read has an immutable version of the data.  Thus making 
- * writes more expensive (almost like a CopyOnWriteArrayList).
+ * writes more expensive (almost like a CopyOnWriteArrayList).</p>
  * 
- * The difference between this and a CopyOnWriteArrayList is that it does allow some 
- * synchronization.  Which can give higher consistency guarantees for some operations.
+ * <p>The difference between this and a CopyOnWriteArrayList is that it does allow some 
+ * synchronization.  Which can give higher consistency guarantees for some operations.</p>
  * 
- * A couple notable points is that subList calls are very cheap, but modifications
- * to sublist are completely independent from their source list.
+ * <p>A couple notable points is that subList calls are very cheap, but modifications
+ * to sublist are completely independent from their source list.</p>
  * 
- * Unlike CopyOnWriteArrayList, Iterators can attempt to modify the state of the backing
+ * <p>Unlike CopyOnWriteArrayList, Iterators can attempt to modify the state of the backing
  * structure (assuming it still makes sense to do so).  Although unlike CopyOnWriteArrayList 
  * iterators, once an Iterator is created it will never see updates to the structure.  
- * For that reason it is impossible to have a ConcurrentModificationExcception.
+ * For that reason it is impossible to have a ConcurrentModificationExcception.</p>
  * 
  * @author jent - Mike Jensen
- *
  * @param <T> type of object to retain
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {

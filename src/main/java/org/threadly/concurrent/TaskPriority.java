@@ -1,7 +1,8 @@
 package org.threadly.concurrent;
 
 /**
- * Priority for tasks given to a thread pool.
+ * <p>Priority to go with tasks when being submitted into implementations 
+ * of {@link PrioritySchedulerInterface}.</p>
  * 
  * @author jent - Mike Jensen
  */

@@ -3,7 +3,7 @@ package org.threadly.concurrent.future;
 import java.util.concurrent.CancellationException;
 
 /**
- * Class to hold a singleton CancellationException to prevent needing to construct it.
+ * <p>Class to hold a singleton CancellationException to prevent needing to construct it.</p>
  * 
  * @author jent - Mike Jensen
  */

@@ -3,9 +3,12 @@ package org.threadly.test.concurrent;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * {@link TestCondition} in unit test, designed to check a condition
+ * <p>{@link TestCondition} in unit test, designed to check a condition
  * for something that is happening in a different thread.  Allowing a 
- * test to efficiently block till the testable action has finished.
+ * test to efficiently block till the testable action has finished.</p>
+ * 
+ * <p>This tool is used often within threadly's own unit tests.  Please 
+ * use those as examples using this class.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -62,23 +65,26 @@ public abstract class TestCondition {
     }
     
     if (! lastResult) {
-      throw new TimeoutException("Still false after " + 
+      throw new ConditionTimeoutException("Still false after " + 
                                    (System.currentTimeMillis() - startTime) + "ms");
     }
   }
   
   /**
-   * Thrown if condition is still false after a given timeout.
+   * <p>Thrown if condition is still false after a given timeout.</p>
+   * 
+   * <p>The reason this exception is public is to allow test implementors to 
+   * catch this exception specifically and handle it if necessary.</p>
    * 
    * @author jent - Mike Jensen
    */
-  public static class TimeoutException extends RuntimeException {
+  public static class ConditionTimeoutException extends RuntimeException {
     private static final long serialVersionUID = 7445447193772617274L;
     
     /**
      * Constructor for new TimeoutException.
      */
-    public TimeoutException() {
+    public ConditionTimeoutException() {
       super();
     }
     
@@ -87,7 +93,7 @@ public abstract class TestCondition {
      * 
      * @param msg Exception message
      */
-    public TimeoutException(String msg) {
+    public ConditionTimeoutException(String msg) {
       super(msg);
     }
   }

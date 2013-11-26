@@ -13,10 +13,10 @@ import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
- * Executor which has no threads itself.  This can be useful for testing.
+ * <p>Executor which has no threads itself.  This can be useful for testing.
  * It has the same semantics that it only progressed forward with .tick(), but
  * since it is running on the calling thread, calls to .wait() and .sleep() will
- * block (possibly forever).
+ * block (possibly forever).</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -204,7 +204,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
   
   /**
-   * Container abstraction to hold runnables for scheduler.
+   * <p>Container abstraction to hold runnables for scheduler.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -236,8 +236,8 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
   
   /**
-   * Runnable container for runnables that only run once
-   * with an optional delay.
+   * <p>Runnable container for runnables that only run once
+   * with an optional delay.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -263,7 +263,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
   
   /**
-   * Container for runnables which run multiple times.
+   * <p>Container for runnables which run multiple times.</p>
    * 
    * @author jent - Mike Jensen
    */

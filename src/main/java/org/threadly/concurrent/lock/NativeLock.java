@@ -1,8 +1,8 @@
 package org.threadly.concurrent.lock;
 
 /**
- * Lock that defaults to the native java calls for wait, signal, and sleep.
- * This is what is used for normal operation.
+ * <p>Lock that defaults to the native java calls for wait, signal, and sleep.
+ * This is what is used for normal operation.</p>
  * 
  * @author jent - Mike Jensen
  */

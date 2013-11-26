@@ -27,7 +27,7 @@ import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * Executor to run tasks, schedule tasks.  
+ * <p>Executor to run tasks, schedule tasks.  
  * Unlike {@link java.util.concurrent.ScheduledThreadPoolExecutor}
  * this scheduled executor's pool size can grow and shrink 
  * based off usage.  It also has the benefit that you can 
@@ -35,7 +35,7 @@ import org.threadly.util.ExceptionUtils;
  * existing workers and not instantly create new threads on 
  * demand.  Thus allowing you to better take the benefits 
  * of a thread pool for tasks which specific execution time 
- * is less important.
+ * is less important.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -1008,9 +1008,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Runnable which will consume tasks from the appropriate 
+   * <p>Runnable which will consume tasks from the appropriate 
    * and given the provided implementation to get a worker 
-   * and execute consumed tasks.
+   * and execute consumed tasks.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -1041,8 +1041,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Runnable which will run on pool threads.  It 
-   * accepts runnables to run, and tracks usage.
+   * <p>Runnable which will run on pool threads.  It 
+   * accepts runnables to run, and tracks usage.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -1142,14 +1142,14 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Behavior for task after it finishes completion.
+   * <p>Behavior for task after it finishes completion.</p>
    * 
    * @author jent - Mike Jensen
    */
-  protected enum TaskType {OneTime, Recurring};
+  protected enum TaskType { OneTime, Recurring };
   
   /**
-   * Abstract implementation for all tasks handled by this pool.
+   * <p>Abstract implementation for all tasks handled by this pool.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -1204,7 +1204,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Wrapper for tasks which only executes once.
+   * <p>Wrapper for tasks which only executes once.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -1241,7 +1241,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Wrapper for tasks which reschedule after completion.
+   * <p>Wrapper for tasks which reschedule after completion.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -1366,7 +1366,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Runnable to be run after all current tasks to finish the shutdown sequence.
+   * <p>Runnable to be run after all current tasks to finish the shutdown sequence.</p>
    * 
    * @author jent - Mike Jensen
    */

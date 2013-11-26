@@ -24,10 +24,10 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * This is a wrapper for {@link PriorityScheduledExecutor} to be a drop in replacement
+ * <p>This is a wrapper for {@link PriorityScheduledExecutor} to be a drop in replacement
  * for any {@link ScheduledExecutorService} (aka the {@link java.util.concurrent.ScheduledThreadPoolExecutor} 
  * interface). It does make some performance sacrifices to adhere to this interface, but those
- * are pretty minimal.
+ * are pretty minimal.</p>
  * 
  * @author jent - Mike Jensen
  */

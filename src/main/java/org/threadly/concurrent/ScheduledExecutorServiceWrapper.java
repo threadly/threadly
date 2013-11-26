@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor}
- * to use that implementation with the {@link SubmitterSchedulerInterface}.
+ * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor}
+ * to use that implementation with the {@link SubmitterSchedulerInterface}.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -125,8 +125,8 @@ public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterf
   }
   
   /**
-   * This is a wrapper to change the result for a given future.  It 
-   * can take a future with type <?> and can return any result desired.
+   * <p>This is a wrapper to change the result for a given future.  It 
+   * can take a future with type <?> and can return any result desired.</p>
    * 
    * @author jent - Mike Jensen
    * @param <T> type for futures result

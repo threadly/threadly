@@ -5,8 +5,8 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.future.ListenableFuture;
 
 /**
- * This interface represents schedulers which can not only execute
- * and schedule tasks, but run based off a given priority as well.
+ * <p>This interface represents schedulers which can not only execute
+ * and schedule tasks, but run based off a given priority as well.</p>
  * 
  * @author jent - Mike Jensen
  */

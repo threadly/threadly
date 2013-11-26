@@ -4,8 +4,8 @@ import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestableExecutor;
 
 /**
- * Lock which is used for a testable scheduler which may not want
- * threads to be blocked.
+ * <p>Lock which is used for a testable scheduler which may not want
+ * threads to be blocked.</p>
  * 
  * @author jent - Mike Jensen
  */

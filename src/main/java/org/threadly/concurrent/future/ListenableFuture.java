@@ -4,9 +4,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 /**
- * Future where you can add a listener which is called once the future has completed.
+ * <p>Future where you can add a listener which is called once the future has completed.
  * The runnable will be called once the future completes either as a cancel, with result, 
- * or with an exception.
+ * or with an exception.</p>
  * 
  * @author jent - Mike Jensen
  * @param <T> type of result for future

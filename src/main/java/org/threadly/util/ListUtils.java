@@ -7,7 +7,7 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A collection of utilities for working with lists.
+ * <p>A collection of utilities for working with lists.</p>
  */
 public class ListUtils {
   private static final int MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;

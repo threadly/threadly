@@ -5,21 +5,21 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
- * Often times when trying to understand a concurrency issue, adding 
+ * <p>Often times when trying to understand a concurrency issue, adding 
  * logging may solve that problem.  This class is designed to help work 
  * around that problem in some situations.  It works by not actually 
- * outputting the logs collected, but storing them in a concurrent structure.
+ * outputting the logs collected, but storing them in a concurrent structure.</p>
  * 
- * It will ensure that when your ready to dump all the logs, they will be 
+ * <p>It will ensure that when your ready to dump all the logs, they will be 
  * returned in the order they were provided.  Since these are not outputted to 
  * the actual log stream, make sure any logging relevant to the issue is 
- * captured by this utility.
+ * captured by this utility.</p>
  * 
- * This utility has several deficiencies, the largest of which is using 
+ * <p>This utility has several deficiencies, the largest of which is using 
  * System.nanoTime() for log ordering.  Since nano time can roll over from 
  * positive to negative, in those rare situations log ordering may be 
  * incorrect.  It is design only as a debugging aid and should NEVER be 
- * included after debugging is completed.
+ * included after debugging is completed.</p>
  * 
  * @author jent - Mike Jensen
  */

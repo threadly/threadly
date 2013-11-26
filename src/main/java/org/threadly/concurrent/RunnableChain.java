@@ -2,26 +2,27 @@ package org.threadly.concurrent;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+
+import org.threadly.util.ExceptionUtils;
 
 /**
- * A class to chain multiple runnables and thus run them all
- * in the same thread.
+ * <p>A class to chain multiple runnables and thus run them all
+ * in the same thread.</p>
  * 
  * @author jent - Mike Jensen
  */
 public class RunnableChain extends VirtualRunnable {
   private final boolean exceptionStopsChain;
-  private final List<? extends Runnable> toRun;
+  private final Iterable<? extends Runnable> toRun;
   
   /**
    * Constructs a runnable chain with a provided list of runnables to iterate over.
    * 
    * @param exceptionStopsChain true for uncaught exception stops the execution of the chain
-   * @param toRun List of runnables to call
+   * @param toRun Iterable collection of runnables to run
    */
   public RunnableChain(boolean exceptionStopsChain, 
-                       List<? extends Runnable> toRun) {
+                       Iterable<? extends Runnable> toRun) {
     if (toRun == null) {
       toRun = new ArrayList<Runnable>(0);
     }
@@ -47,18 +48,13 @@ public class RunnableChain extends VirtualRunnable {
   }
   
   protected void runIsolated() {
-    Throwable toThrow = null;
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {
       try {
         runRunnable(it.next());
       } catch (Throwable t) {
-        toThrow = t;
+        ExceptionUtils.handleException(t);
       }
-    }
-    
-    if (toThrow != null) {
-      throw new RuntimeException("Throwable from runnable chain", toThrow);
     }
   }
   

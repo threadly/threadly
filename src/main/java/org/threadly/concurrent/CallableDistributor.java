@@ -12,14 +12,13 @@ import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.lock.VirtualLock;
 
 /**
- * This abstraction is designed to make submitting {@link Callable} tasks with 
+ * <p>This abstraction is designed to make submitting {@link Callable} tasks with 
  * results easier.  Tasks are submitted and results for those tasks can be 
  * captured when ready using .getNextResult() or .getAllResults().  
  * If multiple callables are submitted with the same key, they are guaranteed to 
- * never run in parallel.
+ * never run in parallel.</p>
  * 
  * @author jent - Mike Jensen
- *
  * @param <K> Key for distributing callables and getting results
  * @param <R> Type of result that is returned
  */
@@ -300,7 +299,7 @@ public class CallableDistributor<K, R> {
   }
   
   /**
-   * Container for a callable which will record the result after completed.
+   * <p>Container for a callable which will record the result after completed.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -331,13 +330,12 @@ public class CallableDistributor<K, R> {
   }
   
   /**
-   * Result from a callable which can be either a computed 
+   * <p>Result from a callable which can be either a computed 
    * result, or an exception due to failure.  These are different 
    * from futures in that they represent the product of work, not 
-   * work that has yet to occur.
+   * work that has yet to occur.</p>
    * 
    * @author jent - Mike Jensen
-   *
    * @param <R> result type
    */
   public static class Result<R> {
@@ -355,7 +353,7 @@ public class CallableDistributor<K, R> {
     }
     
     /**
-     * Will return the result from the callable, or throw an ExecutionException 
+     * Returns the result from the callable, or throws an ExecutionException 
      * if a failure occurred during execution.
      * 
      * @return computed result
@@ -370,7 +368,7 @@ public class CallableDistributor<K, R> {
     }
     
     /**
-     * Will retrieve the stored result, or null if 
+     * Retrieves the stored result, or null if 
      * no result was provided but Exception was thrown.
      * 
      * @return result from execution, null if failure
@@ -381,7 +379,7 @@ public class CallableDistributor<K, R> {
     
     
     /**
-     * Will provide the throwable that may have been thrown during 
+     * Provides the throwable that may have been thrown during 
      * execution, or null if none was thrown.
      * 
      * @return throwable that was thrown during execution, or null if none was thrown

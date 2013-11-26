@@ -7,9 +7,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 /**
- * ListenableFuture implementation which contains a parent {@link ListenableFuture}.
+ * <p>ListenableFuture implementation which contains a parent {@link ListenableFuture}.
  * This allows a future to be returned before an executor has actually produced a future 
- * which this class will rely on.
+ * which this class will rely on.</p>
  * 
  * @author jent - Mike Jensen
  * @param <T> result type returned by .get()
@@ -86,8 +86,8 @@ public class FutureListenableFuture<T> extends FutureFuture<T>
   }
   
   /**
-   * Small structure just to hold listeners that will be registered once 
-   * the parent future is provided.
+   * <p>Small structure just to hold listeners that will be registered once 
+   * the parent future is provided.</p>
    * 
    * @author jent - Mike Jensen
    */

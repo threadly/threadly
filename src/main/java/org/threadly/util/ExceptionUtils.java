@@ -5,7 +5,7 @@ import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
 
 /**
- * Utilities for doing basic operations with exceptions.
+ * <p>Utilities for doing basic operations with exceptions.</p>
  * 
  * @author jent - Mike Jensen
  */

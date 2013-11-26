@@ -17,17 +17,17 @@ import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * TaskDistributor is designed to take a multi-threaded pool
+ * <p>TaskDistributor is designed to take a multi-threaded pool
  * and add tasks with a given key such that those tasks will
  * be run single threaded for any given key.  The thread which
  * runs those tasks may be different each time, but no two tasks
- * with the same key will ever be run in parallel.
+ * with the same key will ever be run in parallel.</p>
  * 
- * Because of that, it is recommended that the executor provided 
+ * <p>Because of that, it is recommended that the executor provided 
  * has as many possible threads as possible keys that could be 
  * provided to be run in parallel.  If this class is starved for 
  * threads some keys may continue to process new tasks, while
- * other keys could be starved.
+ * other keys could be starved.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -296,8 +296,8 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * Worker which will consume through a given queue of tasks.
-   * Each key is represented by one worker at any given time.
+   * <p>Worker which will consume through a given queue of tasks.
+   * Each key is represented by one worker at any given time.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -375,7 +375,7 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * Simple executor implementation that runs on a given key.
+   * <p>Simple executor implementation that runs on a given key.</p>
    * 
    * @author jent - Mike Jensen
    */

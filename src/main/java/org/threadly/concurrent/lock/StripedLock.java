@@ -3,10 +3,10 @@ package org.threadly.concurrent.lock;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * This structure allows for more controlled levels of parallelism.  It helps 
+ * <p>This structure allows for more controlled levels of parallelism.  It helps 
  * in allowing threads to only lock when their interest are the same.  It 
  * is guaranteed that every key provided will return the same lock.  But it 
- * is not guaranteed that two different keys will not have the same lock.
+ * is not guaranteed that two different keys will not have the same lock.</p>
  * 
  * @author jent - Mike Jensen
  */

@@ -7,10 +7,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Implementation which handles the ScheduledFuture interface as well 
+ * <p>Implementation which handles the ScheduledFuture interface as well 
  * as the {@link ListenableFuture} interface.  It does so by delegating to 
  * two implementations.  A delayed object for the ScheduledFuture interface 
- * and a implementation of the {@link ListenableFuture}.
+ * and an implementation of the {@link ListenableFuture}.</p>
  * 
  * @author jent - Mike Jensen
  * @param <T> type of result for future

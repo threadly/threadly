@@ -18,8 +18,8 @@ import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * This is a future which can be executed.  Allowing you to construct the future with 
- * the interior work, submit it to an executor, and then return this future.
+ * <p>This is a future which can be executed.  Allowing you to construct the future with 
+ * the interior work, submit it to an executor, and then return this future.</p>
  * 
  * @author jent - Mike Jensen
  * @param <T> type of future implementation

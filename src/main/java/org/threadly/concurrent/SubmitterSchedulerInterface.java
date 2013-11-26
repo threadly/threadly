@@ -4,8 +4,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
- * A thread pool for scheduling tasks with provided futures.  
- * This scheduler submits tasks and returns futures for when they will be executed.
+ * <p>A thread pool for scheduling tasks with provided futures.  
+ * This scheduler submits tasks and returns futures for when 
+ * they will be completed.</p>
  * 
  * @author jent - Mike Jensen
  */

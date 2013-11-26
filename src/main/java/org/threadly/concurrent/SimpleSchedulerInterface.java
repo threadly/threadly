@@ -3,7 +3,8 @@ package org.threadly.concurrent;
 import java.util.concurrent.Executor;
 
 /**
- * A simple thread pool that accepts scheduling.
+ * <p>An interface for a simple thread pool that 
+ * accepts scheduled and recurring tasks.</p>
  * 
  * @author jent - Mike Jensen
  */

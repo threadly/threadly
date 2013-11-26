@@ -5,18 +5,18 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 
 /**
- * This class is designed to limit how much parallel execution happens 
+ * <p>This class is designed to limit how much parallel execution happens 
  * on a provided {@link Executor}.  This allows the user to have one 
  * thread pool for all their code, and if they want certain sections 
  * to have less levels of parallelism (possibly because those those 
  * sections would completely consume the global pool), they can wrap 
- * the executor in this class.
+ * the executor in this class.</p>
  * 
- * Thus providing you better control on the absolute thread count and 
- * how much parallelism can occur in different sections of the program.  
+ * <p>Thus providing you better control on the absolute thread count and 
+ * how much parallelism can occur in different sections of the program.</p>  
  * 
- * Thus avoiding from having to create multiple thread pools, and also 
- * using threads more efficiently than multiple thread pools would.
+ * <p>Thus avoiding from having to create multiple thread pools, and also 
+ * using threads more efficiently than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
  */

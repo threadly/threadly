@@ -16,13 +16,15 @@ import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
- * This queue is very similar to {@link java.util.concurrent.DelayQueue} but has one major
+ * <p>This queue is very similar to {@link java.util.concurrent.DelayQueue} but has one major
  * difference.  This queue is designed around the idea that items can change their delay.
  * Items enter the queue with Long.MAX_VALUE delay, and then will just call reposition 
- * once they know when their next execution time is.
+ * once they know when their next execution time is.</p>
+ * 
+ * <p>In order to allow an item to be repositioned like this, the item must implement the 
+ * {@link DynamicDelayedUpdater} interface.</p>
  * 
  * @author jent - Mike Jensen
- * 
  * @param <T> Parameter to indicate what type of item is contained in the queue
  */
 public class DynamicDelayQueue<T extends Delayed> implements Queue<T>, 

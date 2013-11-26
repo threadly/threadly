@@ -31,13 +31,14 @@ import org.threadly.util.ExceptionUtils;
 import org.threadly.util.ListUtils;
 
 /**
- * Scheduler which is designed to be used during unit testing.
+ * <p>Scheduler which is designed to be used during unit testing.
  * Although it actually runs multiple threads, it only has one 
- * thread actively executing at a time (thus simulating single threaded).
+ * thread actively executing at a time (thus simulating single threaded).</p>
  * 
- * The scheduler uses .awaits() and .sleep()'s to {@link TestableLock}'s as opportunities
- * to simulate multiple threads.  When you call .tick() you progress forward
- * externally scheduled threads, or possibly threads which are sleeping.
+ * <p>The scheduler uses .awaits() and .sleep()'s to {@link TestableLock}'s as 
+ * opportunities to simulate multiple threads.  When you call .tick() you 
+ * progress forward externally scheduled threads, or possibly threads which 
+ * are sleeping.</p>
  * 
  * @author jent - Mike Jensen
  */

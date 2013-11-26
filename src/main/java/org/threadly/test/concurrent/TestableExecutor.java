@@ -5,8 +5,8 @@ import java.util.concurrent.Executor;
 import org.threadly.test.concurrent.lock.TestableLock;
 
 /**
- * An interface for executor which can handle VirtualRunnable's and VirtualCallables 
- * in a testing situation.
+ * <p>An interface for executor which can handle VirtualRunnable's 
+ * and VirtualCallable's in a testing situation.</p>
  * 
  * @author jent - Mike Jensen
  */

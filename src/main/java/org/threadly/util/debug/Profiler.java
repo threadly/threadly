@@ -136,7 +136,7 @@ public class Profiler implements Runnable {
    * Starts the profiler running in a new thread.
    * 
    * If this profiler had the life cycle of: 
-   * start -> stop -> and now your calling start again
+   * start -> stop -> start
    * 
    * The stats from the previous run will still be included 
    * in this run.  If you wish to clear out previous runs 

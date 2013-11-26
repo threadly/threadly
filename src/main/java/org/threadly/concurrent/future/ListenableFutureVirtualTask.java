@@ -20,12 +20,12 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * A slightly more heavy weight implementation of {@link ListenableFutureTask} which can handle 
+ * <p>A slightly more heavy weight implementation of {@link ListenableFutureTask} which can handle 
  * {@link VirtualCallable} and {@link VirtualRunnable} testable architectures.  The performance 
  * hit from this implementation is extremely minor (and can probably be improved in the future).  
  * But with that said, it should only be used if there is the possibility of needing to support 
  * a {@link VirtualCallable} or {@link VirtualRunnable} inside a TestableScheduler.  Otherwise 
- * the {@link ListenableFutureTask} is almost always a better choice.
+ * the {@link ListenableFutureTask} is almost always a better choice.</p>
  * 
  * @author jent - Mike Jensen
  * @param <T> type of future implementation

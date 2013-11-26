@@ -5,9 +5,9 @@ import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 /**
- * A lock factory that works in conjunction with a testable scheduler.
+ * <p>A lock factory that works in conjunction with a testable scheduler.</p>
  * 
- * @author jent - MIke Jensen
+ * @author jent - Mike Jensen
  */
 public class TestableLockFactory implements LockFactory {
   private final TestablePriorityScheduler scheduler;

@@ -9,8 +9,8 @@ import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 
 /**
- * This is a class which is more full featured than {@link TaskExecutorDistributor}, 
- * but it does require a scheduler implementation in order to be able to perform scheduling.
+ * <p>This is a class which is more full featured than {@link TaskExecutorDistributor}, 
+ * but it does require a scheduler implementation in order to be able to perform scheduling.</p>
  * 
  * @author jent - Mike Jensen
  */
@@ -312,7 +312,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * Task which will run delayed to add a task into the queue when ready.
+   * <p>Task which will run delayed to add a task into the queue when ready.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -338,7 +338,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * Repeating task container.
+   * <p>Repeating task container.</p>
    * 
    * @author jent - Mike Jensen
    */
@@ -376,8 +376,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * Simple simple scheduler implementation that runs all executions and 
-   * scheduling on a given key.
+   * <p>Simple simple scheduler implementation that runs all 
+   * executions and scheduling on a given key.</p>
    * 
    * @author jent - Mike Jensen
    */
