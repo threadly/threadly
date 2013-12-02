@@ -1270,7 +1270,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return TimeUnit.MILLISECONDS.convert(runTime - ClockWrapper.getAccurateTime(), unit);
+      return unit.convert(runTime - ClockWrapper.getAccurateTime(), 
+                          TimeUnit.MILLISECONDS);
     }
     
     @Override
@@ -1318,7 +1319,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       if (executing) {
         return Long.MAX_VALUE;
       } else {
-        return TimeUnit.MILLISECONDS.convert(getNextDelayInMillis(), unit);
+        return unit.convert(getNextDelayInMillis(), 
+                            TimeUnit.MILLISECONDS);
       }
     }
     

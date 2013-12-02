@@ -673,7 +673,7 @@ public class TestablePriorityScheduler implements PrioritySchedulerInterface,
                                                      ExecutionException,
                                                      TimeoutException {
       long startTime = Clock.accurateTime();
-      long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+      long timeoutInMs = unit.toMillis(timeout);
       synchronized (lock) {
         long waitTime = timeoutInMs - (Clock.accurateTime() - startTime);
         while (! done && waitTime > 0) {

@@ -111,7 +111,7 @@ public class FutureFuture<T> implements Future<T> {
                                                    ExecutionException,
                                                    TimeoutException {
     long startTime = Clock.accurateTime();
-    long timeoutInMillis = TimeUnit.MILLISECONDS.convert(timeout, unit);
+    long timeoutInMillis = unit.toMillis(timeout);
     synchronized (this) {
       long remainingWaitTime = timeoutInMillis;
       while (parentFuture == null && remainingWaitTime > 0) {

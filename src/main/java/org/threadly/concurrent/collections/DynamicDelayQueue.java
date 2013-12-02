@@ -211,7 +211,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   @Override
   public T poll(long timeout, TimeUnit unit) throws InterruptedException {
     long startTime = Clock.accurateTime();
-    long timeoutTimeInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+    long timeoutTimeInMs = unit.toMillis(timeout);
     long remainingTimeInMs = timeoutTimeInMs;
     synchronized (queueLock) {
       T next = null;

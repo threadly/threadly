@@ -88,7 +88,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   public boolean awaitTermination(long timeout, 
                                   TimeUnit unit) {
     long startTime = Clock.accurateTime();
-    long waitTimeInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+    long waitTimeInMs = unit.toMillis(timeout);
     Thread currentThread = Thread.currentThread();
     while (! isTerminated() && 
            Clock.accurateTime() - startTime < waitTimeInMs && 
@@ -123,7 +123,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
   public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
                                        long timeout, TimeUnit unit) throws InterruptedException {
     long startTime = Clock.accurateTime();
-    long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+    long timeoutInMs = unit.toMillis(timeout);
     List<Future<T>> resultList = new ArrayList<Future<T>>(tasks.size());
     {
       Iterator<? extends Callable<T>> it = tasks.iterator();
@@ -176,7 +176,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
                          long timeout, TimeUnit unit) throws InterruptedException,
                                                              ExecutionException, 
                                                              TimeoutException {
-    final long timeoutInMs = TimeUnit.MILLISECONDS.convert(timeout, unit);
+    final long timeoutInMs = unit.toMillis(timeout);
     final long startTime = Clock.accurateTime();
     List<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
     ExecutorCompletionService<T> ecs = new ExecutorCompletionService<T>(this);
@@ -232,7 +232,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
       delay = 0;
     }
     
-    long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
+    long delayInMs = unit.toMillis(delay);
 
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(false, command);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
@@ -252,7 +252,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
       delay = 0;
     }
     
-    long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
+    long delayInMs = unit.toMillis(delay);
 
     ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(false, callable);
     OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
@@ -263,11 +263,6 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     return new ScheduledFutureDelegate<V>(taskFuture, ottw);
   }
 
-  /**
-   * Not implemented yet, will always throw UnsupportedOperationException.
-   * 
-   * throws UnsupportedOperationException not yet implemented
-   */
   @Override
   public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable command,
                                                           long initialDelay, long period,
@@ -287,8 +282,8 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
       initialDelay = 0;
     }
     
-    long initialDelayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
-    long delayInMs = TimeUnit.MILLISECONDS.convert(delay, unit);
+    long initialDelayInMs = unit.toMillis(initialDelay);
+    long delayInMs = unit.toMillis(delay);
 
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, command);
     RecurringTaskWrapper rtw = scheduler.new RecurringTaskWrapper(taskFuture, 
