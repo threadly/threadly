@@ -59,6 +59,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected final VirtualLock highPriorityLock;
   protected final VirtualLock lowPriorityLock;
   protected final VirtualLock workersLock;
+  protected final VirtualLock poolSizeChangeLock;
   protected final DynamicDelayQueue<TaskWrapper> highPriorityQueue;
   protected final DynamicDelayQueue<TaskWrapper> lowPriorityQueue;
   protected final Deque<Worker> availableWorkers;        // is locked around workersLock
@@ -67,8 +68,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   protected final TaskConsumer lowPriorityConsumer;    // is locked around lowPriorityLock
   private final AtomicBoolean shutdownStarted;
   private volatile boolean shutdownFinishing; // once true, never goes to false
-  private volatile int corePoolSize;
-  private volatile int maxPoolSize;
+  private volatile int corePoolSize;  // can only be changed when poolSizeChangeLock locked
+  private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
   private volatile long keepAliveTimeInMs;
   private volatile long maxWaitForLowPriorityInMs;
   private volatile boolean allowCorePoolTimeout;
@@ -211,6 +212,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     highPriorityLock = makeLock();
     lowPriorityLock = makeLock();
     workersLock = makeLock();
+    poolSizeChangeLock = makeLock();
     highPriorityQueue = new DynamicDelayQueue<TaskWrapper>(highPriorityLock);
     lowPriorityQueue = new DynamicDelayQueue<TaskWrapper>(lowPriorityLock);
     availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
@@ -298,37 +300,72 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   /**
-   * Change the set core pool size.
+   * Change the set core pool size.  If the value is less than the current max 
+   * pool size, the max pool size will also be updated to this value.
+   * 
+   * If this was a reduction from the previous value, this call will examine idle workers 
+   * to see if they should be expired.  If this call reduced the max pool size, and the 
+   * current running thread count is higher than the new max size, this call will NOT 
+   * block till the pool is reduced.  Instead as those workers complete, they will clean 
+   * up on their own.
    * 
    * @param corePoolSize New pool size.  Must be >= 1 and <= the set max pool size.
    */
   public void setCorePoolSize(int corePoolSize) {
     if (corePoolSize < 1) {
       throw new IllegalArgumentException("corePoolSize must be >= 1");
-    } else if (maxPoolSize < corePoolSize) {
-      throw new IllegalArgumentException("maxPoolSize must be >= corePoolSize");
     }
     
-    this.corePoolSize = corePoolSize;
+    synchronized (poolSizeChangeLock) {
+      boolean lookForExpiredWorkers = this.corePoolSize > corePoolSize;
+      
+      if (maxPoolSize < corePoolSize) {
+        this.maxPoolSize = corePoolSize;
+      }
+      
+      this.corePoolSize = corePoolSize;
+      
+      if (lookForExpiredWorkers) {
+        expireOldWorkers();
+      }
+    }
   }
   
   /**
-   * Change the set max pool size.
+   * Change the set max pool size.  If the value is less than the current core 
+   * pool size, the core pool size will be reduced to match the new max pool size.  
+   * 
+   * If this was a reduction from the previous value, this call will examine idle workers 
+   * to see if they should be expired.  If the current running thread count is higher 
+   * than the new max size, this call will NOT block till the pool is reduced.  
+   * Instead as those workers complete, they will clean up on their own.
    * 
    * @param maxPoolSize New max pool size.  Must be >= 1 and >= the set core pool size.
    */
   public void setMaxPoolSize(int maxPoolSize) {
     if (maxPoolSize < 1) {
       throw new IllegalArgumentException("maxPoolSize must be >= 1");
-    } else if (maxPoolSize < corePoolSize) {
-      throw new IllegalArgumentException("maxPoolSize must be >= corePoolSize");
     }
     
-    this.maxPoolSize = maxPoolSize;
+    synchronized (poolSizeChangeLock) {
+      boolean lookForExpiredWorkers = this.maxPoolSize > maxPoolSize;
+      
+      if (maxPoolSize < corePoolSize) {
+        this.corePoolSize = maxPoolSize;
+      }
+      
+      this.maxPoolSize = maxPoolSize;
+      
+      if (lookForExpiredWorkers) {
+        expireOldWorkers();
+      }
+    }
   }
   
   /**
-   * Change the set idle thread keep alive time.
+   * Change the set idle thread keep alive time.  If this is a reduction in the 
+   * previously set keep alive time, this call will then check for expired worker 
+   * threads.
    * 
    * @param keepAliveTimeInMs New keep alive time in milliseconds.  Must be >= 0.
    */
@@ -337,7 +374,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       throw new IllegalArgumentException("keepAliveTimeInMs must be >= 0");
     }
     
+    boolean checkForExpiredWorkers = this.keepAliveTimeInMs > keepAliveTimeInMs;
+    
     this.keepAliveTimeInMs = keepAliveTimeInMs;
+    
+    if (checkForExpiredWorkers) {
+      expireOldWorkers();
+    }
   }
   
   /**
@@ -416,13 +459,20 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
 
   /**
-   * Changes the setting weather core threads are allowed to 
-   * be killed if they remain idle.
+   * Changes the setting weather core threads are allowed to be killed 
+   * if they remain idle.  If changing to allow core thread timeout, 
+   * this call will then perform a check to look for expired workers.
    * 
    * @param value true if core threads should be expired when idle.
    */
   public void allowCoreThreadTimeOut(boolean value) {
-    allowCorePoolTimeout = value;    
+    boolean checkForExpiredWorkers = ! allowCorePoolTimeout && value;
+    
+    allowCorePoolTimeout = value;
+    
+    if (checkForExpiredWorkers) {
+      expireOldWorkers();
+    }
   }
 
   @Override
@@ -955,13 +1005,14 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
   }
   
-  protected void lookForExpiredWorkers() {
+  protected void expireOldWorkers() {
     synchronized (workersLock) {
       long now = ClockWrapper.getLastKnownTime();
       // we search backwards because the oldest workers will be at the back of the stack
       while ((currentPoolSize > corePoolSize || allowCorePoolTimeout) && 
              ! availableWorkers.isEmpty() && 
-             now - availableWorkers.getLast().getLastRunTime() > keepAliveTimeInMs) {
+             (currentPoolSize > maxPoolSize || // it does not matter how old it is, the max pool size has changed
+                now - availableWorkers.getLast().getLastRunTime() > keepAliveTimeInMs)) {
         Worker w = availableWorkers.removeLast();
         killWorker(w);
       }
@@ -988,7 +1039,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         // always add to the front so older workers are at the back
         availableWorkers.addFirst(worker);
       
-        lookForExpiredWorkers();
+        expireOldWorkers();
             
         workersLock.signal();
       } else {
@@ -1081,9 +1132,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     
     public void nextTask(TaskWrapper task) {
       if (! running) {
-        throw new IllegalStateException("Worker has been killed");
+        throw new IllegalStateException();
       } else if (nextTask != null) {
-        throw new IllegalStateException("Already has a task");
+        throw new IllegalStateException();
       }
       
       nextTask = task;

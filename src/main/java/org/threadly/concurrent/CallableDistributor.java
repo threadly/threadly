@@ -263,7 +263,8 @@ public class CallableDistributor<K, R> {
     synchronized (callLock) {
       AtomicInteger waitingCount = waitingCalls.get(key);
       if (waitingCount == null || waitingCount.get() < 1) {
-        throw new IllegalStateException("Not waiting for result?");
+        // something should always be waiting for result
+        throw new IllegalStateException();
       }
       
       LinkedList<Result<R>> resultList = results.get(key);
@@ -283,7 +284,8 @@ public class CallableDistributor<K, R> {
     synchronized (callLock) {
       AtomicInteger waitingCount = waitingCalls.get(key);
       if (waitingCount == null || waitingCount.get() < 1) {
-        throw new IllegalStateException("Not waiting for result?");
+        // something should always be waiting for result
+        throw new IllegalStateException();
       }
       
       LinkedList<Result<R>> resultList = results.get(key);

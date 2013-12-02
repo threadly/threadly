@@ -21,6 +21,28 @@ import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorTest {
+  private static void ensureIdleWorker(final PriorityScheduledExecutor scheduler) {
+    TestRunnable tr = new TestRunnable();
+    scheduler.execute(tr);
+    tr.blockTillStarted();
+     
+    // block till the worker is finished
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        synchronized (scheduler.workersLock) {
+          return scheduler.availableWorkers.size() != 0;
+        }
+      }
+    }.blockTillTrue();
+    
+    // verify we have a worker
+    assertEquals(1, scheduler.getCurrentPoolSize());
+
+    TestUtils.blockTillClockAdvances();
+    Clock.accurateTime(); // verify clock is different from last recorded worker run time
+  }
+  
   @Test
   public void getDefaultPriorityTest() {
     getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
@@ -121,6 +143,48 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void getAndSetCorePoolSizeAboveMaxTest() {
+    getAndSetCorePoolSizeAboveMaxTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getAndSetCorePoolSizeAboveMaxTest(PriorityScheduledExecutorFactory factory) {
+    int corePoolSize = 1;
+    PriorityScheduledExecutor scheduler = factory.make(corePoolSize, 
+                                                       corePoolSize, 1000);
+    try {
+      corePoolSize = scheduler.getMaxPoolSize() * 2;
+      scheduler.setCorePoolSize(corePoolSize);
+      
+      assertEquals(corePoolSize, scheduler.getCorePoolSize());
+      assertEquals(corePoolSize, scheduler.getMaxPoolSize());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void lowerSetCorePoolSizeCleansWorkerTest() {
+    lowerSetCorePoolSizeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void lowerSetCorePoolSizeCleansWorkerTest(PriorityScheduledExecutorFactory factory) {
+    final int poolSize = 5;
+    PriorityScheduledExecutor scheduler = factory.make(poolSize, poolSize, 0); // must have no keep alive time to work
+    try {
+      ensureIdleWorker(scheduler);
+      // must allow core thread timeout for this to work
+      scheduler.allowCoreThreadTimeOut(true);
+      
+      scheduler.setCorePoolSize(1);
+      
+      // verify worker was cleaned up
+      assertEquals(0, scheduler.getCurrentPoolSize());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void setCorePoolSizeFail() {
     setCorePoolSizeFail(new PriorityScheduledExecutorTestFactory());
   }
@@ -139,13 +203,6 @@ public class PriorityScheduledExecutorTest {
       } catch (IllegalArgumentException expected) {
         // ignored
       }
-      // verify can't be set higher than max size
-      try {
-        scheduler.setCorePoolSize(maxPoolSize + 1);
-        fail("Exception should have been thrown");
-      } catch (IllegalArgumentException expected) {
-        // ignored
-      }
     } finally {
       factory.shutdown();
     }
@@ -157,15 +214,56 @@ public class PriorityScheduledExecutorTest {
   }
   
   public static void getAndSetMaxPoolSizeTest(PriorityScheduledExecutorFactory factory) {
-    int maxPoolSize = 1;
-    PriorityScheduledExecutor scheduler = factory.make(1, maxPoolSize, 1000);
+    final int originalCorePoolSize = 5;
+    int maxPoolSize = originalCorePoolSize;
+    PriorityScheduledExecutor scheduler = factory.make(originalCorePoolSize, maxPoolSize, 1000);
     try {
-      assertEquals(maxPoolSize, scheduler.getMaxPoolSize());
-      
-      maxPoolSize = 10;
+      maxPoolSize *= 2;
       scheduler.setMaxPoolSize(maxPoolSize);
       
       assertEquals(maxPoolSize, scheduler.getMaxPoolSize());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void getAndSetMaxPoolSizeBelowCoreTest() {
+    getAndSetMaxPoolSizeBelowCoreTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getAndSetMaxPoolSizeBelowCoreTest(PriorityScheduledExecutorFactory factory) {
+    final int originalPoolSize = 5;  // must be above 1
+    int maxPoolSize = originalPoolSize;
+    PriorityScheduledExecutor scheduler = factory.make(originalPoolSize, maxPoolSize, 1000);
+    try {
+      maxPoolSize = 1;
+      scheduler.setMaxPoolSize(1);
+      
+      assertEquals(maxPoolSize, scheduler.getMaxPoolSize());
+      assertEquals(maxPoolSize, scheduler.getCorePoolSize());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void lowerSetMaxPoolSizeCleansWorkerTest() {
+    lowerSetMaxPoolSizeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void lowerSetMaxPoolSizeCleansWorkerTest(PriorityScheduledExecutorFactory factory) {
+    final int poolSize = 5;
+    PriorityScheduledExecutor scheduler = factory.make(poolSize, poolSize, 0); // must have no keep alive time to work
+    try {
+      ensureIdleWorker(scheduler);
+      // must allow core thread timeout for this to work
+      scheduler.allowCoreThreadTimeOut(true);
+      
+      scheduler.setMaxPoolSize(1);
+      
+      // verify worker was cleaned up
+      assertEquals(0, scheduler.getCurrentPoolSize());
     } finally {
       factory.shutdown();
     }
@@ -182,12 +280,6 @@ public class PriorityScheduledExecutorTest {
     try {
       try {
         scheduler.setMaxPoolSize(-1); // should throw exception for negative value
-        fail("Exception should have been thrown");
-      } catch (IllegalArgumentException e) {
-        //expected
-      }
-      try {
-        scheduler.setMaxPoolSize(1); // should throw exception for negative value
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         //expected
@@ -254,6 +346,28 @@ public class PriorityScheduledExecutorTest {
       scheduler.setKeepAliveTime(keepAliveTime);
       
       assertEquals(keepAliveTime, scheduler.getKeepAliveTime());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void lowerSetKeepAliveTimeCleansWorkerTest() {
+    lowerSetKeepAliveTimeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void lowerSetKeepAliveTimeCleansWorkerTest(PriorityScheduledExecutorFactory factory) {
+    long keepAliveTime = 1000;
+    final PriorityScheduledExecutor scheduler = factory.make(1, 1, keepAliveTime);
+    try {
+      ensureIdleWorker(scheduler);
+      // must allow core thread timeout for this to work
+      scheduler.allowCoreThreadTimeOut(true);
+      
+      scheduler.setKeepAliveTime(0);
+      
+      // verify worker was cleaned up
+      assertEquals(0, scheduler.getCurrentPoolSize());
     } finally {
       factory.shutdown();
     }
@@ -966,7 +1080,7 @@ public class PriorityScheduledExecutorTest {
       TestUtils.blockTillClockAdvances();
       Clock.accurateTime(); // update clock so scheduler will see it
       
-      scheduler.lookForExpiredWorkers();
+      scheduler.expireOldWorkers();
       
       // should not have collected yet due to core size == 1
       assertEquals(1, scheduler.availableWorkers.size());
@@ -976,7 +1090,7 @@ public class PriorityScheduledExecutorTest {
       TestUtils.blockTillClockAdvances();
       Clock.accurateTime(); // update clock so scheduler will see it
       
-      scheduler.lookForExpiredWorkers();
+      scheduler.expireOldWorkers();
       
       // verify collected now
       assertEquals(0, scheduler.availableWorkers.size());

@@ -71,15 +71,15 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public void execute(Runnable command) {
-    if (command == null) {
+  public void execute(Runnable task) {
+    if (task == null) {
       throw new IllegalArgumentException("Must provide runnable");
     }
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
-      executor.execute(new LimiterRunnableWrapper(command));
+      executor.execute(new LimiterRunnableWrapper(task));
     } else {
-      waitingTasks.add(command);
+      waitingTasks.add(task);
       consumeAvailable(); // call to consume in case task finished after first check
     }
   }

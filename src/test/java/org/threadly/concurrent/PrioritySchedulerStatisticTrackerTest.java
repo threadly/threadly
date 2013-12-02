@@ -47,6 +47,16 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void getAndSetCorePoolSizeAboveMaxTest() {
+    PriorityScheduledExecutorTest.getAndSetCorePoolSizeAboveMaxTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void lowerSetCorePoolSizeCleansWorkerTest() {
+    PriorityScheduledExecutorTest.lowerSetCorePoolSizeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
   public void setCorePoolSizeFail() {
     PriorityScheduledExecutorTest.setCorePoolSizeFail(new PriorityScheduledExecutorTestFactory());
   }
@@ -54,6 +64,16 @@ public class PrioritySchedulerStatisticTrackerTest {
   @Test
   public void getAndSetMaxPoolSizeTest() {
     PriorityScheduledExecutorTest.getAndSetMaxPoolSizeTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void getAndSetMaxPoolSizeBelowCoreTest() {
+    PriorityScheduledExecutorTest.getAndSetMaxPoolSizeBelowCoreTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void lowerSetMaxPoolSizeCleansWorkerTest() {
+    PriorityScheduledExecutorTest.lowerSetMaxPoolSizeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
@@ -74,6 +94,11 @@ public class PrioritySchedulerStatisticTrackerTest {
   @Test
   public void getAndSetKeepAliveTimeTest() {
     PriorityScheduledExecutorTest.getAndSetKeepAliveTimeTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void lowerSetKeepAliveTimeCleansWorkerTest() {
+    PriorityScheduledExecutorTest.lowerSetKeepAliveTimeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
