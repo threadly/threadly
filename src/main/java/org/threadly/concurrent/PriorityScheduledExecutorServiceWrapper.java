@@ -263,6 +263,11 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
     return new ScheduledFutureDelegate<V>(taskFuture, ottw);
   }
 
+ /**
+  * Not implemented yet, will always throw UnsupportedOperationException.
+  * 
+  * throws UnsupportedOperationException not yet implemented
+  */
   @Override
   public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable command,
                                                           long initialDelay, long period,
