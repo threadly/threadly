@@ -173,7 +173,7 @@ public class TaskExecutorDistributor {
     } else if (sLock == null) {
       throw new IllegalArgumentException("striped lock must be provided");
     } else if (maxTasksPerCycle < 1) {
-      throw new IllegalArgumentException("maxTasksPerCycle must be >= 1");
+      throw new IllegalArgumentException("maxTasksPerCycle must be > 0");
     }
     
     this.executor = executor;

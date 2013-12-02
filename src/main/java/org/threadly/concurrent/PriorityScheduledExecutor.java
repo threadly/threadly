@@ -192,7 +192,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                                    long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                    long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     if (corePoolSize < 1) {
-      throw new IllegalArgumentException("corePoolSize must be >= 1");
+      throw new IllegalArgumentException("corePoolSize must be > 0");
     } else if (maxPoolSize < corePoolSize) {
       throw new IllegalArgumentException("maxPoolSize must be >= corePoolSize");
     }
@@ -309,11 +309,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * block till the pool is reduced.  Instead as those workers complete, they will clean 
    * up on their own.
    * 
-   * @param corePoolSize New pool size.  Must be >= 1 and <= the set max pool size.
+   * @param corePoolSize New pool size.  Must be at least one.
    */
   public void setCorePoolSize(int corePoolSize) {
     if (corePoolSize < 1) {
-      throw new IllegalArgumentException("corePoolSize must be >= 1");
+      throw new IllegalArgumentException("corePoolSize must be > 0");
     }
     
     synchronized (poolSizeChangeLock) {
@@ -340,11 +340,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * than the new max size, this call will NOT block till the pool is reduced.  
    * Instead as those workers complete, they will clean up on their own.
    * 
-   * @param maxPoolSize New max pool size.  Must be >= 1 and >= the set core pool size.
+   * @param maxPoolSize New max pool size.  Must be at least one.
    */
   public void setMaxPoolSize(int maxPoolSize) {
     if (maxPoolSize < 1) {
-      throw new IllegalArgumentException("maxPoolSize must be >= 1");
+      throw new IllegalArgumentException("maxPoolSize must be > 0");
     }
     
     synchronized (poolSizeChangeLock) {
@@ -367,7 +367,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * previously set keep alive time, this call will then check for expired worker 
    * threads.
    * 
-   * @param keepAliveTimeInMs New keep alive time in milliseconds.  Must be >= 0.
+   * @param keepAliveTimeInMs New keep alive time in milliseconds.  Must be at least zero.
    */
   public void setKeepAliveTime(long keepAliveTimeInMs) {
     if (keepAliveTimeInMs < 0) {
@@ -389,7 +389,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * will have no impact for the current low priority task attempting to get 
    * a worker.
    * 
-   * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds.  Must be >= 0.
+   * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds.  Must be at least zero.
    */
   public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
     if (maxWaitForLowPriorityInMs < 0) {
