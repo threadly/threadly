@@ -1,5 +1,7 @@
 package org.threadly.test.concurrent;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 
@@ -18,7 +20,9 @@ public class TestRunnable extends VirtualRunnable {
   
   private final long creationTime;
   private final ConcurrentArrayList<Long> runTime;
-  private volatile int runCount;
+  private final AtomicInteger runCount;
+  private final AtomicInteger currentRunningCount;
+  private volatile boolean ranConcurrent;
 
   /**
    * Constructs a new runnable for unit testing.
@@ -26,7 +30,9 @@ public class TestRunnable extends VirtualRunnable {
   public TestRunnable() {
     creationTime = System.currentTimeMillis();
     runTime = new ConcurrentArrayList<Long>();
-    runCount = 0;
+    runCount = new AtomicInteger(0);
+    currentRunningCount = new AtomicInteger(0);
+    ranConcurrent = false;
   }
   
   /**
@@ -44,7 +50,7 @@ public class TestRunnable extends VirtualRunnable {
    * @return true if the runnable has been called once
    */
   public boolean ranOnce() {
-    return runCount == 1;
+    return runCount.get() == 1;
   }
   
   /**
@@ -53,7 +59,7 @@ public class TestRunnable extends VirtualRunnable {
    * @return The number of times the run function has been called
    */
   public int getRunCount() {
-    return runCount;
+    return runCount.get();
   }
   
   /**
@@ -120,7 +126,8 @@ public class TestRunnable extends VirtualRunnable {
     new TestCondition() {
       @Override
       public boolean get() {
-        return runCount >= expectedRunCount;
+        return runCount.get() >= expectedRunCount && 
+                 currentRunningCount.get() == 0;
       }
     }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
@@ -146,18 +153,31 @@ public class TestRunnable extends VirtualRunnable {
     }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
   
+  /**
+   * 
+   * @return
+   */
+  public boolean wasExecutedConcurrently() {
+    return ranConcurrent;
+  }
+  
   @Override
   public final void run() {
+    int startRunningCount = currentRunningCount.incrementAndGet();
+    
     runTime.addLast(System.currentTimeMillis());
-    synchronized (this) {
+    try {
+      handleRunStart();
+    } catch (InterruptedException e) {
+      // ignored
+    } finally {
+      runCount.incrementAndGet();
+      
       try {
-        handleRunStart();
-      } catch (InterruptedException e) {
-        // ignored
-      } finally {
-        runCount++;
-        
         handleRunFinish();
+      } finally {
+        ranConcurrent = currentRunningCount.decrementAndGet() != 0 || // must be first to ensure decrement is called
+                          ranConcurrent || startRunningCount != 1;
       }
     }
   }
@@ -173,7 +193,7 @@ public class TestRunnable extends VirtualRunnable {
    * 
    * @throws InterruptedException only InterruptedExceptions will be swallowed
    */
-  public void handleRunStart() throws InterruptedException {
+  protected void handleRunStart() throws InterruptedException {
     // nothing in default implementation
   }
   
@@ -184,7 +204,7 @@ public class TestRunnable extends VirtualRunnable {
    * This is the last call to be made in the runnable.  If you want a runtime 
    * exception to get thrown to the caller, it must be thrown from here.
    */
-  public void handleRunFinish() {
+  protected void handleRunFinish() {
     // nothing in default implementation
   }
 }
