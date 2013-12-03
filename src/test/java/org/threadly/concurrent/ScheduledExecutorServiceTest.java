@@ -166,19 +166,28 @@ public class ScheduledExecutorServiceTest {
     }
   }
   
-  public static void scheduleWithFixedDelayTest(ScheduledExecutorService scheduler) {
+  private static void recurringScheduleTest(ScheduledExecutorService scheduler, boolean fixedDelay) {
     final int runnableCount = 10;
     final int recurringDelay = 50;
     final int waitCount = 2;
     
     // schedule a task first in case there are any initial startup actions which may be slow
-    scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10, TimeUnit.MILLISECONDS);
+    if (fixedDelay) {
+      scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10, TimeUnit.MILLISECONDS);
+    } else {
+      scheduler.scheduleAtFixedRate(new TestRunnable(), 0, 1000 * 10, TimeUnit.MILLISECONDS);
+    }
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
       TestRunnable tr = new TestRunnable();
-      scheduler.scheduleWithFixedDelay(tr, 0, recurringDelay, 
-                                       TimeUnit.MILLISECONDS);
+      if (fixedDelay) {
+        scheduler.scheduleWithFixedDelay(tr, 0, recurringDelay, 
+                                         TimeUnit.MILLISECONDS);
+      } else {
+        scheduler.scheduleAtFixedRate(tr, 0, recurringDelay, 
+                                      TimeUnit.MILLISECONDS);
+      }
       runnables.add(tr);
     }
     
@@ -191,15 +200,88 @@ public class ScheduledExecutorServiceTest {
       tr.blockTillFinished((runnableCount * (recurringDelay * waitCount)) + 2000, waitCount);
       long executionDelay = tr.getDelayTillRun(waitCount);
       assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
-      // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 2000);
+      
+      if (fixedDelay) {
+        // should be very timely with a core pool size that matches runnable count
+        assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 2000);
+      }
     }
+  }
+  
+  public static void scheduleWithFixedDelayTest(ScheduledExecutorService scheduler) {
+    recurringScheduleTest(scheduler, true);
   }
   
   public static void scheduleWithFixedDelayFail(ScheduledExecutorService scheduler) {
     scheduler.scheduleWithFixedDelay(null, 0, 10, 
                                      TimeUnit.MILLISECONDS);
     fail("Exception should have been thrown");
+  }
+  
+  public static void scheduleAtFixedRateTest(ScheduledExecutorService scheduler) {
+    recurringScheduleTest(scheduler, true);
+  }
+  
+  public static void scheduleAtFixedRateConcurrentTest(ScheduledExecutorService scheduler) {
+    final int periodInMillis = 5;
+    final int runnableSleepTime = periodInMillis * 2;
+    final int testRunCount = 4;
+    
+    TestRunnable tr = new TestRunnable(runnableSleepTime);
+    
+    scheduler.scheduleAtFixedRate(tr, 0, periodInMillis, TimeUnit.MILLISECONDS);
+    
+    // block till we have run enough times to throw exception
+    tr.blockTillFinished(1000 * 10, testRunCount);
+    
+    // let all runnables finish readily
+    tr.setRunDelayInMillis(0);
+    
+    // wait a little extra to give time for additional runs
+    TestUtils.sleep(periodInMillis * 2);
+    
+    assertFalse(tr.ranConcurrently());
+  }
+  
+  public static void scheduleAtFixedRateExceptionTest(ScheduledExecutorService scheduler) {
+    final int periodInMillis = 10;
+    final int runCountTillException = 4;
+    
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      protected void handleRunFinish() {
+        if (this.getRunCount() >= runCountTillException) {
+          throw new RuntimeException();
+        }
+      }
+    };
+    
+    scheduler.scheduleAtFixedRate(tr, 0, periodInMillis, TimeUnit.MILLISECONDS);
+    
+    // block till we have run enough times to throw exception
+    tr.blockTillFinished(1000 * 10, runCountTillException);
+    
+    // wait a little extra to give time for additional runs if possible
+    TestUtils.sleep(periodInMillis * 2);
+    
+    assertEquals(runCountTillException, tr.getRunCount());
+  }
+
+  public static void scheduleAtFixedRateFail(ScheduledExecutorService scheduler) {
+    try {
+      scheduler.scheduleAtFixedRate(null, 0, 10, 
+                                    TimeUnit.MILLISECONDS);
+      fail("Exception should have been thrown");
+    } catch (NullPointerException e) {
+      // expected
+    }
+    try {
+      scheduler.scheduleAtFixedRate(new TestRunnable(), 10, 0, 
+                                    TimeUnit.MILLISECONDS);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   public static void invokeAllTest(ScheduledExecutorService scheduler) throws InterruptedException, 
@@ -213,11 +295,70 @@ public class ScheduledExecutorServiceTest {
     List<Future<Object>> result = scheduler.invokeAll(toInvoke);
     
     assertEquals(toInvoke.size(), result.size());
+    
     Iterator<TestCallable> it = toInvoke.iterator();
     Iterator<Future<Object>> resultIt = result.iterator();
     while (it.hasNext()) {
       assertTrue(resultIt.next().get() == it.next().getReturnedResult());
     }
+  }
+  
+  public static void invokeAllExceptionTest(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                                       ExecutionException {
+    int callableQty = 10;
+    int exceptionCallableIndex = 5;
+    
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+    for (int i = 0; i < callableQty; i++) {
+      TestCallable tc;
+      if (i == exceptionCallableIndex) {
+        tc = new TestCallable(0) {
+          @Override
+          protected void handleCallStart() {
+            throw new RuntimeException();
+          }
+        };
+      } else {
+        tc = new TestCallable(0);
+      }
+      toInvoke.add(tc);
+    }
+    List<Future<Object>> result = scheduler.invokeAll(toInvoke);
+    
+    assertEquals(toInvoke.size(), result.size());
+    
+    Iterator<TestCallable> it = toInvoke.iterator();
+    Iterator<Future<Object>> resultIt = result.iterator();
+    for (int i = 0; i < callableQty; i++) {
+      if (i != exceptionCallableIndex) {
+        assertTrue(resultIt.next().get() == it.next().getReturnedResult());
+      } else {
+        // skip fail entry
+        resultIt.next();
+        it.next();
+      }
+    }
+  }
+  
+  public static void invokeAllTimeoutTest(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                                     ExecutionException {
+    int runTime = 1000 * 10;
+    int callableQty = 10;
+    int timeoutTime = 10;
+    
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+    for (int i = 0; i < callableQty; i++) {
+      toInvoke.add(new TestCallable(runTime));
+    }
+    
+    long startTime = System.currentTimeMillis();
+    List<Future<Object>> result = scheduler.invokeAll(toInvoke, timeoutTime, TimeUnit.MILLISECONDS);
+    long endTime = System.currentTimeMillis();
+    
+    assertEquals(toInvoke.size(), result.size());
+    
+    assertTrue(endTime - startTime >= timeoutTime);
+    assertTrue(endTime - startTime < timeoutTime + 250);
   }
   
   public static void invokeAllFail(ScheduledExecutorService scheduler) throws InterruptedException, 
@@ -249,6 +390,21 @@ public class ScheduledExecutorServiceTest {
     assertNotNull(result);
     
     assertTrue(result == expectedResult);
+  }
+  
+  public static void invokeAnyTimeoutTest(ScheduledExecutorService scheduler) throws InterruptedException, 
+                                                                                     ExecutionException, 
+                                                                                     TimeoutException {
+    int runTime = 1000 * 10;
+    int callableQty = 10;
+    int timeoutTime = 10;
+    
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+
+    toInvoke.add(new TestCallable(runTime));
+    
+    scheduler.invokeAny(toInvoke, timeoutTime, TimeUnit.MILLISECONDS);
+    fail("Exception should have thrown");
   }
   
   public static void invokeAnyFail(ScheduledExecutorService scheduler) throws InterruptedException, 

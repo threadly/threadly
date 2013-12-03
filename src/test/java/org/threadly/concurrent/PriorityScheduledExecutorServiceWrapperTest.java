@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Callable;
@@ -201,6 +200,61 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   }
   
   @Test
+  public void scheduleAtFixedRateTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    executor.prestartAllCoreThreads();
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.scheduleAtFixedRateTest(wrapper);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void scheduleAtFixedRateConcurrentTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    executor.prestartAllCoreThreads();
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.scheduleAtFixedRateConcurrentTest(wrapper);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void scheduleAtFixedRateExceptionTest() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    executor.prestartAllCoreThreads();
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.scheduleAtFixedRateExceptionTest(wrapper);
+      
+      // fixed rate failure should have caused recurring task to be removed
+      assertEquals(0, executor.highPriorityQueue.size());
+      assertEquals(0, executor.lowPriorityQueue.size());
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void scheduleAtFixedRateFail() {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.scheduleAtFixedRateFail(wrapper);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
   public void scheduleWithFixedDelayTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
                                                                        KEEP_ALIVE_TIME);
@@ -237,6 +291,30 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     }
   }
   
+  @Test
+  public void invokeAllExceptionTest() throws InterruptedException, ExecutionException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.invokeAllExceptionTest(wrapper);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void invokeAllTimeoutTest() throws InterruptedException, ExecutionException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.invokeAllTimeoutTest(wrapper);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
   @Test (expected = NullPointerException.class)
   public void invokeAllFail() throws InterruptedException, ExecutionException {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
@@ -256,6 +334,18 @@ public class PriorityScheduledExecutorServiceWrapperTest {
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAnyTest(wrapper);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test (expected = TimeoutException.class)
+  public void invokeAnyTimeoutTest() throws InterruptedException, ExecutionException, TimeoutException {
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                       KEEP_ALIVE_TIME);
+    try {
+      ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
+      ScheduledExecutorServiceTest.invokeAnyTimeoutTest(wrapper);
     } finally {
       executor.shutdownNow();
     }

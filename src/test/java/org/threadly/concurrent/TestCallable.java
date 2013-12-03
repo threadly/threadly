@@ -47,6 +47,9 @@ public class TestCallable extends TestCondition
     blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
   
+  /**
+   * Call to be overridden to provide a specific action on call.
+   */
   protected void handleCallStart() {
     // ignored by default
   }
