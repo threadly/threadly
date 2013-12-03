@@ -1412,7 +1412,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
         }*/
       } finally {
         if (! canceled) {
-          reschedule();
+          try {
+            reschedule();
+          } catch (java.util.NoSuchElementException e) {
+            if (canceled) {
+              /* this is a possible condition where shutting down 
+               * the thread pool occurred while rescheduling the item. 
+               * 
+               * Since this is unlikely, we just swallow the exception here.
+               */
+            } else {
+              /* This condition however would not be expected, 
+               * so we should throw the exception.
+               */
+              throw e;
+            }
+          }
         }
       }
     }
