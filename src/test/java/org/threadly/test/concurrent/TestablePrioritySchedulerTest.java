@@ -219,7 +219,7 @@ public class TestablePrioritySchedulerTest {
     long now = System.currentTimeMillis();
     
     for (int i = 0; i < sleepTime; i++) {
-      final SleepThread st = new SleepThread(i);
+      final TestRunnable st = new TestRunnable(i);
       testScheduler.execute(st);
       
       if (i == 0) {
@@ -229,7 +229,7 @@ public class TestablePrioritySchedulerTest {
       } else {
         assertEquals(1, testScheduler.tick(now));
 
-        assertTrue(st.running);
+        assertTrue(st.isRunning());
         
         assertEquals(1, testScheduler.tick(now += i));
       }
@@ -363,27 +363,6 @@ public class TestablePrioritySchedulerTest {
     testScheduler.updateTime(now += thirdDelay);
     assertEquals(third, testScheduler.getNextTask());
     assertEquals(0, testScheduler.taskQueue.size());
-  }
-  
-  private class SleepThread extends TestRunnable {
-    private final int sleepTime;
-    private volatile boolean running = false;
-    
-    private SleepThread(int sleepTime) {
-      this.sleepTime = sleepTime;
-    }
-    
-    @Override
-    public void handleRunStart() throws InterruptedException {
-      running = true;
-      
-      sleep(sleepTime);
-    }
-    
-    @Override
-    public void handleRunFinish() {
-      running = false;
-    }
   }
   
   private class WaitThread extends TestRunnable {

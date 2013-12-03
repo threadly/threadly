@@ -104,14 +104,13 @@ public class ExecutorLimiterTest {
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
-      TestRunnable tr = new TestRunnable() {
+      TestRunnable tr = new TestRunnable(THREAD_SLEEP_TIME) {
         @Override
         public void handleRunStart() {
           running.incrementAndGet();
           if (running.get() > PARALLEL_COUNT) {
             parallelFailure = true;
           }
-          TestUtils.sleep(THREAD_SLEEP_TIME);
         }
         
         @Override

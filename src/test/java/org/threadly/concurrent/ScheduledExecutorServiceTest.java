@@ -37,12 +37,7 @@ public class ScheduledExecutorServiceTest {
     
     assertFalse(scheduler.isTerminated());
     
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      public void handleRunStart() {
-        TestUtils.sleep(sleepTime);
-      }
-    };
+    TestRunnable tr = new TestRunnable(sleepTime);
     scheduler.execute(tr);
     
     tr.blockTillStarted();
@@ -58,12 +53,7 @@ public class ScheduledExecutorServiceTest {
     
     assertFalse(scheduler.isTerminated());
     
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      public void handleRunStart() {
-        TestUtils.sleep(sleepTime);
-      }
-    };
+    TestRunnable tr = new TestRunnable(sleepTime);
     long start = System.currentTimeMillis();
     scheduler.execute(tr);
     

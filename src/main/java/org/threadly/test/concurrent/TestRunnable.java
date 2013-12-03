@@ -104,6 +104,16 @@ public class TestRunnable extends VirtualRunnable {
   }
   
   /**
+   * Check to see if the run function has started but has not 
+   * completed returned yet.
+   * 
+   * @return True if the runnable's run function is being called currently.
+   */
+  public boolean isRunning() {
+    return currentRunningCount.get() != 0;
+  }
+  
+  /**
    * Getter for the number of times the run function has completed.
    * 
    * @return The number of times the run function has been called
@@ -116,7 +126,7 @@ public class TestRunnable extends VirtualRunnable {
    * This function blocks till the first run completes then
    * will return the time until the first run started it's call.
    * 
-   * @return the amount of time between construction and run being called
+   * @return The amount of time between construction and run being called
    */
   public long getDelayTillFirstRun() {
     return getDelayTillRun(1);
@@ -128,7 +138,7 @@ public class TestRunnable extends VirtualRunnable {
    * 
    * @param runNumber the run count to get delay to
    * 
-   * @return the amount of time between construction and run being called
+   * @return The amount of time between construction and run being called
    */
   public long getDelayTillRun(int runNumber) {
     return getDelayTillRun(runNumber, DEFAULT_TIMEOUT_PER_RUN * runNumber);
@@ -141,7 +151,7 @@ public class TestRunnable extends VirtualRunnable {
    * @param runNumber the run count to get delay to
    * @param timeout timeout to wait for given run count to finish
    * 
-   * @return the amount of time between construction and run being called
+   * @return The amount of time between construction and run being called
    */
   public long getDelayTillRun(int runNumber, int timeout) {
     blockTillFinished(timeout, runNumber);

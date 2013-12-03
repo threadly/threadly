@@ -109,12 +109,7 @@ public class RunnableFutureTest {
     final int timeout = 10;
     final int threadSleepTime = 1000 * 10;
 
-    Future<?> future = ff.make(new TestRunnable() {
-      @Override
-      public void handleRunStart() {
-        TestUtils.sleep(threadSleepTime);
-      }
-    });
+    Future<?> future = ff.make(new TestRunnable(threadSleepTime));
     
     scheduler.getExecutor().execute((Runnable)future);
     
