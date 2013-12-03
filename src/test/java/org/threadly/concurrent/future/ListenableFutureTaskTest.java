@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.future.RunnableFutureTest.FutureFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -80,12 +81,7 @@ public class ListenableFutureTaskTest {
   
   @Test
   public void listenerExceptionAddBeforeRunTest() {
-    TestRunnable listener = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable listener = new TestRuntimeFailureRunnable();
     
     ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRunnable(), null);
     
@@ -97,12 +93,7 @@ public class ListenableFutureTaskTest {
   
   @Test
   public void listenerExceptionAddAfterRunTest() {
-    TestRunnable listener = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable listener = new TestRuntimeFailureRunnable();
     
     ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRunnable(), null);
     
@@ -121,7 +112,7 @@ public class ListenableFutureTaskTest {
   public void getStaticCancelationExceptionTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw StaticCancellationException.instance();
       }
     };
@@ -136,7 +127,7 @@ public class ListenableFutureTaskTest {
   public void getWithTimeoutStaticCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw StaticCancellationException.instance();
       }
     };
@@ -151,7 +142,7 @@ public class ListenableFutureTaskTest {
   public void getCancelationExceptionTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw new CancellationException();
       }
     };
@@ -166,7 +157,7 @@ public class ListenableFutureTaskTest {
   public void getWithTimeoutCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw new CancellationException();
       }
     };
@@ -179,12 +170,7 @@ public class ListenableFutureTaskTest {
   
   @Test (expected = ExecutionException.class)
   public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable tr = new TestRuntimeFailureRunnable();
     
     ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
     
@@ -194,12 +180,7 @@ public class ListenableFutureTaskTest {
   
   @Test (expected = ExecutionException.class)
   public void getWithTimeoutExecutionExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable tr = new TestRuntimeFailureRunnable();
     
     ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
     

@@ -15,7 +15,6 @@ import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
@@ -106,7 +105,7 @@ public class ExecutorLimiterTest {
     for (int i = 0; i < runnableCount; i++) {
       TestRunnable tr = new TestRunnable(THREAD_SLEEP_TIME) {
         @Override
-        public void handleRunStart() {
+        protected void handleRunStart() {
           running.incrementAndGet();
           if (running.get() > PARALLEL_COUNT) {
             parallelFailure = true;
@@ -114,7 +113,7 @@ public class ExecutorLimiterTest {
         }
         
         @Override
-        public void handleRunFinish() {
+        protected void handleRunFinish() {
           running.decrementAndGet();
         }
       };

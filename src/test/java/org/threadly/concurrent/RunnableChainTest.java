@@ -97,7 +97,7 @@ public class RunnableChainTest {
     }
     
     @Override
-    public void handleRunStart() {
+    protected void handleRunStart() {
       factorySetAtRuntime = factory != null;
       if (fail) {
         throw new RuntimeException("Test failure exception");

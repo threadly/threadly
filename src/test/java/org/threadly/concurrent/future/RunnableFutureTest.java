@@ -11,10 +11,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
@@ -56,7 +56,7 @@ public class RunnableFutureTest {
   }
   
   public static void blockTillCompletedFail(BlockingFutureFactory ff) {
-    Runnable r = new FailureRunnable();
+    Runnable r = new TestRuntimeFailureRunnable();
     Future<?> future = ff.make(r, scheduler.makeLock());
     BlockingRunnable br = new BlockingRunnable(future);
     
@@ -105,11 +105,13 @@ public class RunnableFutureTest {
     assertTrue(future.isDone());
   }
   
-  public static void getTimeoutFail(FutureFactory ff) throws InterruptedException, ExecutionException {
+  public static void getTimeoutFail(FutureFactory ff) throws InterruptedException, 
+                                                             ExecutionException {
     final int timeout = 10;
     final int threadSleepTime = 1000 * 10;
 
-    Future<?> future = ff.make(new TestRunnable(threadSleepTime));
+    TestRunnable tr = new TestRunnable(threadSleepTime);
+    Future<?> future = ff.make(tr);
     
     scheduler.getExecutor().execute((Runnable)future);
     
@@ -139,7 +141,7 @@ public class RunnableFutureTest {
   }
   
   public static void isDoneFail(FutureFactory ff) {
-    TestRunnable r = new FailureRunnable();
+    TestRunnable r = new TestRuntimeFailureRunnable();
     RunnableFuture<?> future = ff.make(r);
     scheduler.getExecutor().execute(future);
     try {
@@ -189,13 +191,6 @@ public class RunnableFutureTest {
       } finally {
         blockReleased = true;
       }
-    }
-  }
-  
-  private static class FailureRunnable extends TestRunnable {
-    @Override
-    public void handleRunFinish() {
-      throw new RuntimeException();
     }
   }
 }

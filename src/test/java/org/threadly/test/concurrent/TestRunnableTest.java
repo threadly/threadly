@@ -94,7 +94,7 @@ public class TestRunnableTest {
       private boolean firstRun = true;
       
       @Override
-      public void handleRunStart() throws InterruptedException {
+      protected void handleRunStart() throws InterruptedException {
         if (firstRun) {
           firstRun = false;
           TestUtils.sleep(delay);
@@ -124,12 +124,12 @@ public class TestRunnableTest {
     private boolean startCalledBeforeFinish = false;
     
     @Override
-    public void handleRunStart() {
+    protected void handleRunStart() {
       handleRunStartCalled = true;
     }
     
     @Override
-    public void handleRunFinish() {
+    protected void handleRunFinish() {
       handleRunFinishCalled = true;
       startCalledBeforeFinish = handleRunStartCalled;
     }

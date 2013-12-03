@@ -93,12 +93,7 @@ public class ScheduledExecutorServiceTest {
   
   public static void futureGetExecutionFail(ScheduledExecutorService scheduler) throws InterruptedException, 
                                                                                        ExecutionException {
-    Future<?> f = scheduler.submit(new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException("fail");
-      }
-    });
+    Future<?> f = scheduler.submit(new TestRuntimeFailureRunnable());
     
     f.get();
     fail("Exception should have been thrown");

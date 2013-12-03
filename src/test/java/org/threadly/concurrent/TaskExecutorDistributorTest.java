@@ -338,7 +338,7 @@ public class TaskExecutorDistributorTest {
                 private boolean added = false;
                 
                 @Override
-                public void handleRunFinish() {
+                protected void handleRunFinish() {
                   if (! added) {
                     distributor.addTask(threadTracker, this);
                     added = true;
@@ -398,12 +398,7 @@ public class TaskExecutorDistributorTest {
     TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
     final RuntimeException testException = new RuntimeException();
     Thread.setDefaultUncaughtExceptionHandler(ueh);
-    TestRunnable exceptionRunnable = new TestRunnable() { 
-      @Override
-      public void handleRunFinish() {
-        throw testException;
-      }
-    };
+    TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
     TestRunnable followRunnable = new TestRunnable();
     distributor.addTask(key, exceptionRunnable);
     distributor.addTask(key, followRunnable);
@@ -431,7 +426,7 @@ public class TaskExecutorDistributorTest {
           while (! testComplete.get()) {
             TestRunnable next = new TestRunnable() {
               @Override
-              public void handleRunStart() {
+              protected void handleRunStart() {
                 waitingTasks.decrementAndGet();
                 
                 TestUtils.sleep(20);  // wait to make sure producer is faster than executor
@@ -479,7 +474,7 @@ public class TaskExecutorDistributorTest {
     }
     
     @Override
-    public void handleRunStart() {
+    protected void handleRunStart() {
       threadTracker.running();
       
       if (! verifiedPrevious) {

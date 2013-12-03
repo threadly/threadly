@@ -219,7 +219,7 @@ public class TestablePrioritySchedulerTest {
     long now = System.currentTimeMillis();
     
     for (int i = 0; i < sleepTime; i++) {
-      final TestRunnable st = new TestRunnable(i);
+      final SleepThread st = new SleepThread(i);
       testScheduler.execute(st);
       
       if (i == 0) {
@@ -252,7 +252,7 @@ public class TestablePrioritySchedulerTest {
       } else {
         assertEquals(1, testScheduler.tick(now));
 
-        assertTrue(st.running);
+        assertTrue(st.isRunning());
         
         assertEquals(2, testScheduler.tick(now += i));
         
@@ -282,11 +282,11 @@ public class TestablePrioritySchedulerTest {
     
     Iterator<WaitThread> it = toWake.iterator();
     while (it.hasNext()) {
-      assertTrue(it.next().running);
+      assertTrue(it.next().isRunning());
     }
     it = ignored.iterator();
     while (it.hasNext()) {
-      assertTrue(it.next().running);
+      assertTrue(it.next().isRunning());
     }
     
     TestUtils.blockTillClockAdvances();
@@ -365,10 +365,22 @@ public class TestablePrioritySchedulerTest {
     assertEquals(0, testScheduler.taskQueue.size());
   }
   
+  private class SleepThread extends TestRunnable {
+    private final int sleepTime;
+    
+    private SleepThread(int sleepTime) {
+      this.sleepTime = sleepTime;
+    }
+    
+    @Override
+    protected void handleRunStart() throws InterruptedException {
+      sleep(sleepTime);
+    }
+  }
+  
   private class WaitThread extends TestRunnable {
     private final int waitTime;
     private volatile VirtualLock lock;
-    private volatile boolean running = false;
     private volatile boolean wokenUp = false;
     
     private WaitThread(int waitTime) {
@@ -376,18 +388,16 @@ public class TestablePrioritySchedulerTest {
     }
     
     @Override
-    public void handleRunStart() throws InterruptedException {
+    protected void handleRunStart() throws InterruptedException {
       lock = makeLock();
-      running = true;
       synchronized (lock) {
         lock.await(waitTime);
       }
     }
     
     @Override
-    public void handleRunFinish() {
+    protected void handleRunFinish() {
       wokenUp = true;
-      running = false;
     }
   }
 }

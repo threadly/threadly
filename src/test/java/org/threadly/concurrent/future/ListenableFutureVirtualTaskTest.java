@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.future.RunnableFutureTest.BlockingFutureFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
@@ -97,12 +98,7 @@ public class ListenableFutureVirtualTaskTest {
   
   @Test
   public void listenerExceptionAddBeforeRunTest() {
-    TestRunnable listener = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable listener = new TestRuntimeFailureRunnable();
     
     ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(new TestRunnable(), null, new NativeLock());
     
@@ -114,12 +110,7 @@ public class ListenableFutureVirtualTaskTest {
   
   @Test
   public void listenerExceptionAddAfterRunTest() {
-    TestRunnable listener = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable listener = new TestRuntimeFailureRunnable();
     
     ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(new TestRunnable(), null, new NativeLock());
     
@@ -138,7 +129,7 @@ public class ListenableFutureVirtualTaskTest {
   public void getStaticCancelationExceptionTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw StaticCancellationException.instance();
       }
     };
@@ -153,7 +144,7 @@ public class ListenableFutureVirtualTaskTest {
   public void getWithTimeoutStaticCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw StaticCancellationException.instance();
       }
     };
@@ -168,7 +159,7 @@ public class ListenableFutureVirtualTaskTest {
   public void getCancelationExceptionTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw new CancellationException();
       }
     };
@@ -183,7 +174,7 @@ public class ListenableFutureVirtualTaskTest {
   public void getWithTimeoutCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
     TestRunnable tr = new TestRunnable() {
       @Override
-      public void handleRunFinish() {
+      protected void handleRunFinish() {
         throw new CancellationException();
       }
     };
@@ -196,12 +187,7 @@ public class ListenableFutureVirtualTaskTest {
   
   @Test (expected = ExecutionException.class)
   public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable tr = new TestRuntimeFailureRunnable();
     
     ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
     
@@ -211,12 +197,7 @@ public class ListenableFutureVirtualTaskTest {
   
   @Test (expected = ExecutionException.class)
   public void getWithTimeoutExecutionExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new RuntimeException();
-      }
-    };
+    TestRunnable tr = new TestRuntimeFailureRunnable();
     
     ListenableFutureVirtualTask<Object> future = new ListenableFutureVirtualTask<Object>(tr, null, new NativeLock());
     

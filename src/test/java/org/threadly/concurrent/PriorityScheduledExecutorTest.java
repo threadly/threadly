@@ -507,7 +507,7 @@ public class PriorityScheduledExecutorTest {
     try {
       TestRunnable tr = new TestRunnable() {
         @Override
-        public void handleRunFinish() {
+        protected void handleRunFinish() {
           long startTime = System.currentTimeMillis();
           Thread currentThread = Thread.currentThread();
           while (System.currentTimeMillis() - startTime < taskRunTime && 

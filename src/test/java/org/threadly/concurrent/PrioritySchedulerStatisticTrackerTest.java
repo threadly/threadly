@@ -1069,7 +1069,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     }
     
     @Override
-    public void handleRunFinish() {
+    protected void handleRunFinish() {
       while (! unblock) {
         TestUtils.sleep(10);
       }
