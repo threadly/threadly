@@ -18,21 +18,57 @@ public class TestRunnable extends VirtualRunnable {
   private static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;
   private static final int RUN_CONDITION_POLL_INTERVAL = 20;
   
-  private final long creationTime;
   private final ConcurrentArrayList<Long> runTime;
   private final AtomicInteger runCount;
   private final AtomicInteger currentRunningCount;
+  private final long creationTime;
+  private volatile int runDelayInMillis;
   private volatile boolean ranConcurrent;
 
   /**
    * Constructs a new runnable for unit testing.
    */
   public TestRunnable() {
-    creationTime = System.currentTimeMillis();
-    runTime = new ConcurrentArrayList<Long>();
-    runCount = new AtomicInteger(0);
-    currentRunningCount = new AtomicInteger(0);
-    ranConcurrent = false;
+    this(0);
+  }
+
+  /**
+   * Constructs a new runnable for unit testing.
+   * 
+   * This constructor allows the parameter for the runnable to sleep 
+   * after handleRunStart was called and before handleRunFinish is called.
+   * 
+   * @param runTimeInMillis time for runnable to sleep in milliseconds
+   */
+  public TestRunnable(int runTimeInMillis) {
+    setRunDelayInMillis(runTimeInMillis);
+    this.runTime = new ConcurrentArrayList<Long>();
+    this.runCount = new AtomicInteger(0);
+    this.currentRunningCount = new AtomicInteger(0);
+    this.ranConcurrent = false;
+
+    this.creationTime = System.currentTimeMillis();
+  }
+  
+  /**
+   * Changes the amount of time the runnable will sleep/block 
+   * when called.  This change will only be for future run calls 
+   * that are not already blocking.
+   * 
+   * @param runDelayInMillis new amount to wait when run is called
+   */
+  public void setRunDelayInMillis(int runDelayInMillis) {
+    this.runDelayInMillis = runDelayInMillis;
+  }
+  
+  /**
+   * Getter for the currently set amount of time the {@link TestRunnable} 
+   * will block after handlRunStart and before handleRunFinish is called.
+   * 
+   * @return current set sleep time in milliseconds
+   */
+  public int getRunDelayInMillis() {
+    return runDelayInMillis;
   }
   
   /**
@@ -42,6 +78,20 @@ public class TestRunnable extends VirtualRunnable {
    */
   public long getCreationTime() {
     return creationTime;
+  }
+  
+  /**
+   * Check if this instance has ever been detected to run concurrently.  Keep 
+   * in mind that just because this call returns false does not guarantee the 
+   * runnable is incapable of running parallel.  It does it's best to detect 
+   * a situation where it is started while another instance has not returned 
+   * from the run function.  Adding a delay in handleRunStart, handleRunFinish, 
+   * or in the constructor increases the chances of detecting concurrency.
+   * 
+   * @return True f this instance ran in parallel at least once
+   */
+  public boolean ranConcurrently() {
+    return ranConcurrent;
   }
   
   /**
@@ -126,8 +176,15 @@ public class TestRunnable extends VirtualRunnable {
     new TestCondition() {
       @Override
       public boolean get() {
-        return runCount.get() >= expectedRunCount && 
-                 currentRunningCount.get() == 0;
+        int finishCount = runCount.get();
+        
+        if (finishCount < expectedRunCount) {
+          return false;
+        } else if (finishCount > expectedRunCount) {
+          return true;
+        } else {  // they are equal
+          return currentRunningCount.get() == 0;
+        }
       }
     }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
@@ -153,14 +210,6 @@ public class TestRunnable extends VirtualRunnable {
     }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
   
-  /**
-   * 
-   * @return
-   */
-  public boolean wasExecutedConcurrently() {
-    return ranConcurrent;
-  }
-  
   @Override
   public final void run() {
     int startRunningCount = currentRunningCount.incrementAndGet();
@@ -171,6 +220,10 @@ public class TestRunnable extends VirtualRunnable {
     } catch (InterruptedException e) {
       // ignored
     } finally {
+      if (runDelayInMillis > 0) {
+        TestUtils.sleep(runDelayInMillis);
+      }
+      
       runCount.incrementAndGet();
       
       try {

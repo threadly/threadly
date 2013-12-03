@@ -66,7 +66,7 @@ public abstract class TestCondition {
     
     if (! lastResult) {
       throw new ConditionTimeoutException("Still false after " + 
-                                   (System.currentTimeMillis() - startTime) + "ms");
+                                            (System.currentTimeMillis() - startTime) + "ms");
     }
   }
   

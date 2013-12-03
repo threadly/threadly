@@ -27,6 +27,21 @@ public class TestRunnableTest {
   public void constructorTest() {
     assertEquals(0, instance.getRunCount());
     assertFalse(instance.ranOnce());
+    assertFalse(instance.ranConcurrently());
+    assertEquals(0, instance.getRunDelayInMillis());
+    
+    int delay = 10;
+    instance = new TestRunnable(delay);
+    assertEquals(delay, instance.getRunDelayInMillis());
+  }
+  
+  @Test
+  public void setRunDelayInMillisTest() {
+    int delay = 10;
+    
+    assertEquals(0, instance.getRunDelayInMillis());
+    instance.setRunDelayInMillis(delay);
+    assertEquals(delay, instance.getRunDelayInMillis());
   }
   
   @Test
@@ -54,6 +69,21 @@ public class TestRunnableTest {
     long now = System.currentTimeMillis();
     assertTrue(ttr.getDelayTillRun(2) <= now - start);
     assertTrue(ttr.getDelayTillRun(2) > ttr.getDelayTillFirstRun());
+  }
+  
+  @Test
+  public void runWithDelay() {
+    int delay = 10;
+    int runCount = 2;
+    instance.setRunDelayInMillis(delay);
+    
+    long startTime = System.currentTimeMillis();
+    for (int i = 0; i < runCount; i++) {
+      instance.run();
+    }
+    long endTime = System.currentTimeMillis();
+    
+    assertTrue(endTime - startTime >= (delay * runCount));
   }
   
   @Test
