@@ -16,7 +16,7 @@ public class SimpleSchedulerInterfaceTest {
     try {
       int runnableCount = 10;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, false);
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       for (int i = 0; i < runnableCount; i++) {
@@ -55,7 +55,7 @@ public class SimpleSchedulerInterfaceTest {
   
   public static void executeFail(SimpleSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(1, false);
       
       scheduler.execute(null);
       fail("Execption should have thrown");
@@ -69,7 +69,7 @@ public class SimpleSchedulerInterfaceTest {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(runnableCount, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       for (int i = 0; i < runnableCount; i++) {
@@ -95,7 +95,7 @@ public class SimpleSchedulerInterfaceTest {
   
   public static void scheduleFail(SimpleSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(1, false);
       try {
         scheduler.schedule(null, 1000);
         fail("Exception should have been thrown");
@@ -119,7 +119,7 @@ public class SimpleSchedulerInterfaceTest {
       final int recurringDelay = 50;
       final int waitCount = 2;
       
-      SimpleSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(runnableCount, true);
       
       // schedule a task first in case there are any initial startup actions which may be slow
       scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10);
@@ -148,7 +148,7 @@ public class SimpleSchedulerInterfaceTest {
   
   public static void recurringExecutionFail(SimpleSchedulerFactory factory) {
     try {
-      SimpleSchedulerInterface scheduler = factory.make(1, false);
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(1, false);
       try {
         scheduler.scheduleWithFixedDelay(null, 1000, 1000);
         fail("Exception should have been thrown");
@@ -174,7 +174,8 @@ public class SimpleSchedulerInterfaceTest {
   
   
   public interface SimpleSchedulerFactory {
-    public SimpleSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
+    public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
+                                                        boolean prestartIfAvailable);
 
     public void shutdown();
   }

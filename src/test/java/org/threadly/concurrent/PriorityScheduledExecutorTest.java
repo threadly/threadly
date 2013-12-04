@@ -764,7 +764,7 @@ public class PriorityScheduledExecutorTest {
     try {
       SimpleSchedulerInterfaceTest.executeTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
       scheduler.execute(tr1, TaskPriority.High);
@@ -785,7 +785,7 @@ public class PriorityScheduledExecutorTest {
     try {
       SubmitterExecutorInterfaceTest.submitRunnableTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
       scheduler.submit(tr1, TaskPriority.High);
@@ -806,7 +806,7 @@ public class PriorityScheduledExecutorTest {
     try {
       SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
       scheduler.submit(tr1, tr1, TaskPriority.High);
@@ -827,7 +827,7 @@ public class PriorityScheduledExecutorTest {
     try {
       SubmitterExecutorInterfaceTest.submitCallableTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       TestCallable tc1 = new TestCallable(0);
       TestCallable tc2 = new TestCallable(0);
       scheduler.submit(tc1, TaskPriority.High);
@@ -1115,10 +1115,22 @@ public class PriorityScheduledExecutorTest {
     private FactoryWrapper(PriorityScheduledExecutorFactory factory) {
       this.factory = factory;
     }
+
+    @Override
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
+                                                            boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
+                                                        boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
     
     @Override
-    public SubmitterSchedulerInterface make(int poolSize,
-                                            boolean prestartIfAvailable) {
+    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize,
+                                                              boolean prestartIfAvailable) {
       PriorityScheduledExecutor result = factory.make(poolSize, poolSize, 500);
       if (prestartIfAvailable) {
         result.prestartAllCoreThreads();
@@ -1170,9 +1182,22 @@ public class PriorityScheduledExecutorTest {
       
       return result;
     }
+
+    @Override
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
+                                                            boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
+                                                        boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
     
     @Override
-    public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
+                                                              boolean prestartIfAvailable) {
       PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                        1000);
       if (prestartIfAvailable) {
@@ -1205,9 +1230,22 @@ public class PriorityScheduledExecutorTest {
       
       executors = new LinkedList<PriorityScheduledExecutor>();
     }
+
+    @Override
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
+                                                            boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
+                                                        boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
     
     @Override
-    public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
+                                                              boolean prestartIfAvailable) {
       TaskPriority originalPriority = TaskPriority.Low;
       TaskPriority returnPriority = TaskPriority.High;
       PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 

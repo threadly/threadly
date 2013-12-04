@@ -14,7 +14,9 @@ import java.util.concurrent.Future;
 import org.junit.Test;
 import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest;
+import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
@@ -142,7 +144,7 @@ public class PrioritySchedulerLimiterTest {
     try {
       int runnableCount = 10;
       
-      SubmitterSchedulerInterface scheduler = sf.make(runnableCount, false);
+      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -253,7 +255,7 @@ public class PrioritySchedulerLimiterTest {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SubmitterSchedulerInterface scheduler = sf.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(runnableCount, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -470,9 +472,22 @@ public class PrioritySchedulerLimiterTest {
       executors = new LinkedList<PriorityScheduledExecutor>();
       this.addSubPoolName = addSubPoolName;
     }
+
+    @Override
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
+                                                            boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
+                                                        boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
     
     @Override
-    public PrioritySchedulerLimiter make(int poolSize, boolean prestartIfAvailable) {
+    public PrioritySchedulerLimiter makeSubmitterScheduler(int poolSize, 
+                                                           boolean prestartIfAvailable) {
       PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                          1000 * 10);
       if (prestartIfAvailable) {

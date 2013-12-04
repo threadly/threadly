@@ -547,9 +547,22 @@ public class TaskSchedulerDistributorTest {
       
       executors = new LinkedList<PriorityScheduledExecutor>();
     }
+
+    @Override
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
+                                                            boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
+                                                        boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
     
     @Override
-    public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
+                                                              boolean prestartIfAvailable) {
       PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(poolSize, 
                                                                           poolSize, 
                                                                           1000 * 10);

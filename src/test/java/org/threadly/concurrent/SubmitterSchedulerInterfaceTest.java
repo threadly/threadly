@@ -21,7 +21,7 @@ public class SubmitterSchedulerInterfaceTest {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(runnableCount, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -60,7 +60,7 @@ public class SubmitterSchedulerInterfaceTest {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(runnableCount, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(runnableCount);
@@ -100,7 +100,7 @@ public class SubmitterSchedulerInterfaceTest {
       int runnableCount = 10;
       int scheduleDelay = 50;
       
-      SubmitterSchedulerInterface scheduler = factory.make(runnableCount, true);
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(runnableCount, true);
       
       List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
       List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
@@ -134,7 +134,7 @@ public class SubmitterSchedulerInterfaceTest {
   
   public static void submitScheduledRunnableFail(SubmitterSchedulerFactory factory) {
     try {
-      SubmitterSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
       try {
         scheduler.submitScheduled((Runnable)null, 1000);
         fail("Exception should have been thrown");
@@ -154,7 +154,7 @@ public class SubmitterSchedulerInterfaceTest {
   
   public static void submitScheduledCallableFail(SubmitterSchedulerFactory factory) {
     try {
-      SubmitterSchedulerInterface scheduler = factory.make(1, false);
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
       try {
         scheduler.submitScheduled((Callable<Object>)null, 1000);
         fail("Exception should have been thrown");
@@ -174,8 +174,7 @@ public class SubmitterSchedulerInterfaceTest {
   
   public interface SubmitterSchedulerFactory extends SimpleSchedulerFactory, 
                                                      SubmitterExecutorFactory {
-    public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable);
-
-    public void shutdown();
+    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
+                                                              boolean prestartIfAvailable);
   }
 }

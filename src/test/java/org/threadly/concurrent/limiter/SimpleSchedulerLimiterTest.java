@@ -190,7 +190,7 @@ public class SimpleSchedulerLimiterTest {
     }
     
     @Override
-    public SimpleSchedulerLimiter make(int poolSize, boolean prestartIfAvailable) {
+    public SimpleSchedulerLimiter makeSimpleScheduler(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                          1000 * 10);
       if (prestartIfAvailable) {

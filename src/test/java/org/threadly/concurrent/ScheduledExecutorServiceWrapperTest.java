@@ -129,9 +129,22 @@ public class ScheduledExecutorServiceWrapperTest {
     private SchedulerFactory() {
       executors = new LinkedList<ScheduledThreadPoolExecutor>();
     }
+
+    @Override
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
+                                                            boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
+                                                        boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
     
     @Override
-    public SubmitterSchedulerInterface make(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
+                                                              boolean prestartIfAvailable) {
       ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(poolSize);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();

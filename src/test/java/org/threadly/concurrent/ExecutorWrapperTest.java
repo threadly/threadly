@@ -91,7 +91,7 @@ public class ExecutorWrapperTest {
     }
     
     @Override
-    public SubmitterExecutorInterface make(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
                                                                          1000 * 10);
       if (prestartIfAvailable) {

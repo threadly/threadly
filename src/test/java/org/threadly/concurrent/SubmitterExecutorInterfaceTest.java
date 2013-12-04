@@ -21,7 +21,7 @@ public class SubmitterExecutorInterfaceTest {
     try {
       int runnableCount = 10;
       
-      SubmitterExecutorInterface scheduler = factory.make(runnableCount, false);
+      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
@@ -72,7 +72,7 @@ public class SubmitterExecutorInterfaceTest {
     try {
       int runnableCount = 10;
       
-      SubmitterExecutorInterface scheduler = factory.make(runnableCount, false);
+      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(runnableCount);
@@ -124,7 +124,7 @@ public class SubmitterExecutorInterfaceTest {
     try {
       int runnableCount = 10;
       
-      SubmitterExecutorInterface scheduler = factory.make(runnableCount, false);
+      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(runnableCount, false);
       
       List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
       List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
@@ -161,7 +161,7 @@ public class SubmitterExecutorInterfaceTest {
   
   public static void submitRunnableFail(SubmitterExecutorFactory factory) {
     try {
-      SubmitterExecutorInterface scheduler = factory.make(1, false);
+      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(1, false);
       
       scheduler.submit((Runnable)null);
       fail("Execption should have thrown");
@@ -172,7 +172,7 @@ public class SubmitterExecutorInterfaceTest {
   
   public static void submitCallableFail(SubmitterExecutorFactory factory) {
     try {
-      SubmitterExecutorInterface scheduler = factory.make(1, false);
+      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(1, false);
       
       scheduler.submit((Callable<Object>)null);
       fail("Execption should have thrown");
@@ -182,7 +182,7 @@ public class SubmitterExecutorInterfaceTest {
   }
   
   public interface SubmitterExecutorFactory {
-    public SubmitterExecutorInterface make(int poolSize, boolean prestartIfAvailable);
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable);
 
     public void shutdown();
   }
