@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
 
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureVirtualTask;
@@ -205,11 +206,22 @@ public class TaskExecutorDistributor {
    * @return executor which will only execute based on the provided key
    */
   public Executor getExecutorForKey(Object threadKey) {
+    return getSubmitterForKey(threadKey);
+  }
+  
+  /**
+   * Returns a {@link SubmitterExecutorInterface} implementation where all tasks 
+   * submitted on this executor will run on the provided key.
+   * 
+   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @return executor which will only execute based on the provided key
+   */
+  public SubmitterExecutorInterface getSubmitterForKey(Object threadKey) {
     if (threadKey == null) {
       throw new IllegalArgumentException("Must provide thread key");
     }
     
-    return new KeyBasedExecutor(threadKey);
+    return new KeyBasedSubmitter(threadKey);
   }
   
   /**
@@ -375,20 +387,36 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * <p>Simple executor implementation that runs on a given key.</p>
+   * <p>Simple {@link SubmitterExecutorInterface} implementation 
+   * that runs on a given key.</p>
    * 
    * @author jent - Mike Jensen
    */
-  protected class KeyBasedExecutor implements Executor {
+  protected class KeyBasedSubmitter implements SubmitterExecutorInterface {
     protected final Object threadKey;
     
-    protected KeyBasedExecutor(Object threadKey) {
+    protected KeyBasedSubmitter(Object threadKey) {
       this.threadKey = threadKey;
     }
     
     @Override
     public void execute(Runnable command) {
       addTask(threadKey, command);
+    }
+
+    @Override
+    public Future<?> submit(Runnable task) {
+      return submitTask(threadKey, task);
+    }
+
+    @Override
+    public <T> Future<T> submit(Runnable task, T result) {
+      return submitTask(threadKey, task, result);
+    }
+
+    @Override
+    public <T> Future<T> submit(Callable<T> task) {
+      return submitTask(threadKey, task);
     }
   }
 }

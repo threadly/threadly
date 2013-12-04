@@ -22,21 +22,21 @@ public class ScheduledExecutorServiceWrapperTest {
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.submitRunnableTest(sf);
+    SubmitterExecutorInterfaceTest.submitRunnableTest(sf);
   }
   
   @Test
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.submitRunnableWithResultTest(sf);
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(sf);
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.submitCallableTest(sf);
+    SubmitterExecutorInterfaceTest.submitCallableTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -50,14 +50,14 @@ public class ScheduledExecutorServiceWrapperTest {
   public void submitRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.submitRunnableFail(sf);
+    SubmitterExecutorInterfaceTest.submitRunnableFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.submitCallableFail(sf);
+    SubmitterExecutorInterfaceTest.submitCallableFail(sf);
   }
   
   @Test

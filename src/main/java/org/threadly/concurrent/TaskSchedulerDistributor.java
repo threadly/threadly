@@ -381,7 +381,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  protected class KeyBasedScheduler extends KeyBasedExecutor 
+  protected class KeyBasedScheduler extends KeyBasedSubmitter 
                                     implements SubmitterSchedulerInterface {
     protected KeyBasedScheduler(Object threadKey) {
       super(threadKey);
@@ -398,21 +398,6 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       TaskSchedulerDistributor.this.scheduleWithFixedDelay(threadKey, task, 
                                                            initialDelay, 
                                                            recurringDelay);
-    }
-
-    @Override
-    public ListenableFuture<?> submit(Runnable task) {
-      return submit(task, null);
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submit(Runnable task, T result) {
-      return submitScheduled(task, result, 0);
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submit(Callable<T> task) {
-      return submitScheduled(task, 0);
     }
 
     @Override

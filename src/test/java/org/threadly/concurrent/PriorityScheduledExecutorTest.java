@@ -571,7 +571,7 @@ public class PriorityScheduledExecutorTest {
 
   public static void submitRunnableTest(PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
     try {
-      SubmitterSchedulerInterfaceTest.submitRunnableTest(new FactoryWrapper(priorityFactory));
+      SubmitterExecutorInterfaceTest.submitRunnableTest(new FactoryWrapper(priorityFactory));
 
       PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
       TestRunnable tr1 = new TestRunnable();
@@ -595,7 +595,7 @@ public class PriorityScheduledExecutorTest {
 
   public static void submitRunnableWithResultTest(PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
     try {
-      SubmitterSchedulerInterfaceTest.submitRunnableWithResultTest(new FactoryWrapper(priorityFactory));
+      SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(new FactoryWrapper(priorityFactory));
 
       PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
       TestRunnable tr1 = new TestRunnable();
@@ -619,7 +619,7 @@ public class PriorityScheduledExecutorTest {
 
   public static void submitCallableTest(PriorityScheduledExecutorFactory priorityFactory) throws InterruptedException, ExecutionException {
     try {
-      SubmitterSchedulerInterfaceTest.submitCallableTest(new FactoryWrapper(priorityFactory));
+      SubmitterExecutorInterfaceTest.submitCallableTest(new FactoryWrapper(priorityFactory));
 
       PriorityScheduledExecutor scheduler = priorityFactory.make(2, 2, 1000);
       TestCallable tc1 = new TestCallable(0);
@@ -641,12 +641,12 @@ public class PriorityScheduledExecutorTest {
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
-    SubmitterSchedulerInterfaceTest.submitRunnableFail(new PriorityScheduledExecutorTestFactory());
+    SubmitterExecutorInterfaceTest.submitRunnableFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
-    SubmitterSchedulerInterfaceTest.submitCallableFail(new PriorityScheduledExecutorTestFactory());
+    SubmitterExecutorInterfaceTest.submitCallableFail(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
@@ -783,7 +783,7 @@ public class PriorityScheduledExecutorTest {
   public void wrapperSubmitRunnableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SubmitterSchedulerInterfaceTest.submitRunnableTest(wf);
+      SubmitterExecutorInterfaceTest.submitRunnableTest(wf);
 
       PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestRunnable tr1 = new TestRunnable();
@@ -804,7 +804,7 @@ public class PriorityScheduledExecutorTest {
   public void wrapperSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SubmitterSchedulerInterfaceTest.submitRunnableWithResultTest(wf);
+      SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(wf);
 
       PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestRunnable tr1 = new TestRunnable();
@@ -825,7 +825,7 @@ public class PriorityScheduledExecutorTest {
   public void wrapperSubmitCallableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SubmitterSchedulerInterfaceTest.submitCallableTest(wf);
+      SubmitterExecutorInterfaceTest.submitCallableTest(wf);
 
       PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestCallable tc1 = new TestCallable(0);
@@ -852,14 +852,14 @@ public class PriorityScheduledExecutorTest {
   public void wrapperSubmitRunnableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.submitRunnableFail(wf);
+    SubmitterExecutorInterfaceTest.submitRunnableFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void wrapperSubmitCallableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.submitCallableFail(wf);
+    SubmitterExecutorInterfaceTest.submitCallableFail(wf);
   }
   
   @Test

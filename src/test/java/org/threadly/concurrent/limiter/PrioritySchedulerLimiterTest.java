@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest;
+import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
@@ -183,14 +184,14 @@ public class PrioritySchedulerLimiterTest {
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.submitCallableTest(sf);
+    SubmitterExecutorInterfaceTest.submitCallableTest(sf);
   }
   
   @Test
   public void submitCallableNamedSubPoolTest() throws InterruptedException, ExecutionException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
-    SubmitterSchedulerInterfaceTest.submitCallableTest(sf);
+    SubmitterExecutorInterfaceTest.submitCallableTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -204,14 +205,14 @@ public class PrioritySchedulerLimiterTest {
   public void submitRunnableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.submitRunnableFail(sf);
+    SubmitterExecutorInterfaceTest.submitRunnableFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SubmitterSchedulerInterfaceTest.submitCallableFail(sf);
+    SubmitterExecutorInterfaceTest.submitCallableFail(sf);
   }
   
   @Test

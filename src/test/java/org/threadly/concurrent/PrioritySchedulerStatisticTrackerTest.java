@@ -152,14 +152,14 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void submitRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.submitRunnableFail(sf);
+    SubmitterExecutorInterfaceTest.submitRunnableFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SubmitterSchedulerInterfaceTest.submitCallableFail(sf);
+    SubmitterExecutorInterfaceTest.submitCallableFail(sf);
   }
   
   @Test
@@ -309,7 +309,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperSubmitRunnableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SubmitterSchedulerInterfaceTest.submitRunnableTest(wf);
+      SubmitterExecutorInterfaceTest.submitRunnableTest(wf);
 
       PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestRunnable tr1 = new TestRunnable();
@@ -330,7 +330,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SubmitterSchedulerInterfaceTest.submitRunnableWithResultTest(wf);
+      SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(wf);
 
       PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestRunnable tr1 = new TestRunnable();
@@ -351,7 +351,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperSubmitCallableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SubmitterSchedulerInterfaceTest.submitCallableTest(wf);
+      SubmitterExecutorInterfaceTest.submitCallableTest(wf);
 
       PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.make(2, false);
       TestCallable tc1 = new TestCallable(0);
@@ -378,14 +378,14 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperSubmitRunnableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.submitRunnableFail(wf);
+    SubmitterExecutorInterfaceTest.submitRunnableFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void wrapperSubmitCallableFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SubmitterSchedulerInterfaceTest.submitCallableFail(wf);
+    SubmitterExecutorInterfaceTest.submitCallableFail(wf);
   }
   
   @Test

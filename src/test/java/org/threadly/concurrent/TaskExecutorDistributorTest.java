@@ -2,12 +2,15 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +20,7 @@ import java.util.concurrent.locks.LockSupport;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
@@ -140,6 +144,93 @@ public class TaskExecutorDistributorTest {
   @Test (expected = IllegalArgumentException.class)
   public void getExecutorForKeyFail() {
     distributor.getExecutorForKey(null);
+  }
+
+  @Test
+  public void keyBasedSubmitterSubmitRunnableTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    
+    SubmitterExecutorInterfaceTest.submitRunnableTest(ef);
+  }
+  
+  @Test
+  public void keyBasedSubmitterSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(ef);
+  }
+  
+  @Test
+  public void keyBasedSubmitterSubmitCallableTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    
+    SubmitterExecutorInterfaceTest.submitCallableTest(ef);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void keyBasedSubmitterSubmitRunnableFail() {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    
+    SubmitterExecutorInterfaceTest.submitRunnableFail(ef);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void keyBasedSubmitterSubmitCallableFail() {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    
+    SubmitterExecutorInterfaceTest.submitCallableFail(ef);
+  }
+  
+  @Test
+  public void keyBasedSubmitterConsistentThreadTest() {
+    final Object testLock = new Object();
+    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+
+    scheduler.execute(new Runnable() {
+      @Override
+      public void run() {
+        synchronized (testLock) {
+          for (int i = 0; i < PARALLEL_LEVEL; i++) {
+            ThreadContainer tc = new ThreadContainer();
+            SubmitterExecutorInterface keySubmitter = distributor.getSubmitterForKey(tc);
+            TDRunnable previous = null;
+            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+              TDRunnable tr = new TDRunnable(tc, previous);
+              runs.add(tr);
+              keySubmitter.submit(tr);
+              
+              previous = tr;
+            }
+          }
+        }
+        
+        ready = true;
+      }
+    });
+    
+    // block till ready to ensure other thread got testLock lock
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return ready;
+      }
+    }.blockTillTrue(20 * 1000, 100);
+
+    synchronized (testLock) {
+      Iterator<TDRunnable> it = runs.iterator();
+      while (it.hasNext()) {
+        TDRunnable tr = it.next();
+        tr.blockTillFinished(20 * 1000);
+        assertEquals(1, tr.getRunCount()); // verify each only ran once
+        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
+        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
+      }
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void getSubmitterForKeyFail() {
+    distributor.getSubmitterForKey(null);
   }
   
   @Test
@@ -533,6 +624,42 @@ public class TaskExecutorDistributorTest {
         runningThread = Thread.currentThread();
       } else {
         threadConsistent = threadConsistent && runningThread.equals(Thread.currentThread());
+      }
+    }
+  }
+
+  private class KeyBasedSubmitterFactory implements SubmitterExecutorFactory {
+    private final List<PriorityScheduledExecutor> executors;
+    
+    private KeyBasedSubmitterFactory() {
+      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          // ignored
+        }
+      });
+      
+      executors = new LinkedList<PriorityScheduledExecutor>();
+    }
+    
+    @Override
+    public SubmitterExecutorInterface make(int poolSize, boolean prestartIfAvailable) {
+      PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
+                                                                         1000 * 10);
+      if (prestartIfAvailable) {
+        executor.prestartAllCoreThreads();
+      }
+      executors.add(executor);
+      
+      return new TaskExecutorDistributor(executor).getSubmitterForKey("foo");
+    }
+    
+    @Override
+    public void shutdown() {
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
+      while (it.hasNext()) {
+        it.next().shutdown();
+        it.remove();
       }
     }
   }

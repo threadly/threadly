@@ -2,9 +2,12 @@ package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -13,6 +16,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
+import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestablePriorityScheduler;
@@ -183,6 +188,90 @@ public class ExecutorLimiterTest {
     } finally {
       blockingRunnable.unblock();
       scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void submitRunnableTest() throws InterruptedException, ExecutionException {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
+    
+    SubmitterExecutorInterfaceTest.submitRunnableTest(ef);
+  }
+  
+  @Test
+  public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(true);
+    
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(ef);
+  }
+  
+  @Test
+  public void submitCallableTest() throws InterruptedException, ExecutionException {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
+    
+    SubmitterExecutorInterfaceTest.submitCallableTest(ef);
+  }
+  
+  @Test
+  public void submitCallableNamedSubPoolTest() throws InterruptedException, ExecutionException {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(true);
+    
+    SubmitterExecutorInterfaceTest.submitCallableTest(ef);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitRunnableFail() {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
+    
+    SubmitterExecutorInterfaceTest.submitRunnableFail(ef);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitCallableFail() {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
+    
+    SubmitterExecutorInterfaceTest.submitCallableFail(ef);
+  }
+
+  private class ExecutorLimiterFactory implements SubmitterExecutorFactory {
+    private final List<PriorityScheduledExecutor> executors;
+    private final boolean addSubPoolName;
+    
+    private ExecutorLimiterFactory(boolean addSubPoolName) {
+      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          // ignored
+        }
+      });
+      
+      executors = new LinkedList<PriorityScheduledExecutor>();
+      this.addSubPoolName = addSubPoolName;
+    }
+    
+    @Override
+    public ExecutorLimiter make(int poolSize, boolean prestartIfAvailable) {
+      PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
+                                                                         1000 * 10);
+      if (prestartIfAvailable) {
+        executor.prestartAllCoreThreads();
+      }
+      executors.add(executor);
+      
+      if (addSubPoolName) {
+        return new ExecutorLimiter(executor, poolSize, "TestSubPool");
+      } else {
+        return new ExecutorLimiter(executor, poolSize);
+      }
+    }
+    
+    @Override
+    public void shutdown() {
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
+      while (it.hasNext()) {
+        it.next().shutdown();
+        it.remove();
+      }
     }
   }
 }
