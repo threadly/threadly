@@ -579,7 +579,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
    */
   public PrioritySchedulerInterface makeSubPool(int maxConcurrency, String subPoolName) {
-    if (maxConcurrency > corePoolSize) {
+    if (maxConcurrency > maxPoolSize) {
       throw new IllegalArgumentException("A sub pool should be smaller than the parent pool");
     }
     
