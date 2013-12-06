@@ -259,27 +259,14 @@ public class CallableDistributor<K, R> {
   }
   
   protected void handleSuccessResult(K key, R result) {
-    VirtualLock callLock = sLock.getLock(key);
-    synchronized (callLock) {
-      AtomicInteger waitingCount = waitingCalls.get(key);
-      if (waitingCount == null || waitingCount.get() < 1) {
-        // something should always be waiting for result
-        throw new IllegalStateException();
-      }
-      
-      LinkedList<Result<R>> resultList = results.get(key);
-      if (resultList == null) {
-        resultList = new LinkedList<Result<R>>();
-        results.put(key, resultList);
-      }
-      resultList.add(new Result<R>(result));
-
-      waitingCount.decrementAndGet();
-      callLock.signalAll();
-    }
+    handleResult(key, new Result<R>(result));
   }
   
   protected void handleFailureResult(K key, Throwable t) {
+    handleResult(key, new Result<R>(t));
+  }
+  
+  protected void handleResult(K key, Result<R> r) {
     VirtualLock callLock = sLock.getLock(key);
     synchronized (callLock) {
       AtomicInteger waitingCount = waitingCalls.get(key);
@@ -293,7 +280,7 @@ public class CallableDistributor<K, R> {
         resultList = new LinkedList<Result<R>>();
         results.put(key, resultList);
       }
-      resultList.add(new Result<R>(t));
+      resultList.add(r);
 
       waitingCount.decrementAndGet();
       callLock.signalAll();
@@ -359,7 +346,7 @@ public class CallableDistributor<K, R> {
      * if a failure occurred during execution.
      * 
      * @return computed result
-     * @throws ExecutionException Exception to indicate failure occurred during run
+     * @throws ExecutionException Exception to represent failure occurred during run
      */
     public R get() throws ExecutionException {
       if (failureResult != null) {
@@ -371,14 +358,13 @@ public class CallableDistributor<K, R> {
     
     /**
      * Retrieves the stored result, or null if 
-     * no result was provided but Exception was thrown.
+     * no result was provided or Exception was thrown.
      * 
      * @return result from execution, null if failure
      */
     public R getResult() {
       return successResult;
     }
-    
     
     /**
      * Provides the throwable that may have been thrown during 
