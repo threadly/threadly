@@ -34,8 +34,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   protected final LinkedList<Long> runTimes;
   protected final LinkedList<Boolean> lowPriorityWorkerAvailable;
   protected final LinkedList<Boolean> highPriorityWorkerAvailable;
-  protected final List<Long> lowPriorityExecutionDelay;
-  protected final List<Long> highPriorityExecutionDelay;
+  protected final LinkedList<Long> lowPriorityExecutionDelay;
+  protected final LinkedList<Long> highPriorityExecutionDelay;
   
   /**
    * Constructs a new thread pool, though no threads will be started 
@@ -210,7 +210,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     if (w != null) {  // may be null if shutdown
       Clock.accurateTime(); // update clock for task to ensure it is accurate
       long executionDelay = Math.abs(task.getDelay(TimeUnit.MILLISECONDS));
-      highPriorityExecutionDelay.add(executionDelay);
+      if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
+        synchronized (highPriorityExecutionDelay) {
+          highPriorityExecutionDelay.add(executionDelay * -1);
+          trimList(highPriorityExecutionDelay);
+        }
+      }
       
       w.nextTask(task);
     }
@@ -249,7 +254,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     if (w != null) {  // may be null if shutdown
       Clock.accurateTime(); // update clock for task to ensure it is accurate
       long executionDelay = Math.abs(task.getDelay(TimeUnit.MILLISECONDS));
-      lowPriorityExecutionDelay.add(executionDelay);
+      if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
+        synchronized (lowPriorityExecutionDelay) {
+          lowPriorityExecutionDelay.add(executionDelay * -1);
+          trimList(lowPriorityExecutionDelay);
+        }
+      }
       
       w.nextTask(task);
     }
@@ -339,7 +349,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return average delay for tasks to be executed
    */
   public long getAvgExecutionDelay() {
-    List<Long> resultList = new LinkedList<Long>();
+    List<Long> resultList = new ArrayList<Long>(0);
     synchronized (lowPriorityExecutionDelay) {
       resultList.addAll(lowPriorityExecutionDelay);
     }
@@ -447,13 +457,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       return -1;
     }
     
-    long totalTime = 0;
+    double totalTime = 0;
     Iterator<Long> it = list.iterator();
     while (it.hasNext()) {
       totalTime += it.next();
     }
       
-    return totalTime / list.size();
+    return Math.round(totalTime / list.size());
   }
   
   /**
@@ -675,12 +685,17 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
+  /**
+   * Reduces the list size to be within the max window size.
+   * 
+   * Should have the list synchronized before calling.
+   * 
+   * @param list LinkedList to check size of.
+   */
   @SuppressWarnings("rawtypes")
   protected static void trimList(LinkedList list) {
-    synchronized (list) {
-      while (list.size() > MAX_WINDOW_SIZE) {
-        list.removeFirst();
-      }
+    while (list.size() > MAX_WINDOW_SIZE) {
+      list.removeFirst();
     }
   }
   
