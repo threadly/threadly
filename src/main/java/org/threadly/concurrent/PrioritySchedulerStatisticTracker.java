@@ -183,6 +183,30 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     lowPriorityExecutionDelay = new LinkedList<Long>();
     highPriorityExecutionDelay = new LinkedList<Long>();
   }
+  
+  /**
+   * Clears all collected rolling statistics.  These are the statistics 
+   * used for averages and are limited by window sizes.
+   * 
+   * This does NOT reset the total execution counts.
+   */
+  public void resetCollectedStats() {
+    synchronized (runTimes) {
+      runTimes.clear();
+    }
+    synchronized (lowPriorityWorkerAvailable) {
+      lowPriorityWorkerAvailable.clear();
+    }
+    synchronized (lowPriorityExecutionDelay) {
+      lowPriorityExecutionDelay.clear();
+    }
+    synchronized (highPriorityWorkerAvailable) {
+      highPriorityWorkerAvailable.clear();
+    }
+    synchronized (highPriorityExecutionDelay) {
+      highPriorityExecutionDelay.clear();
+    }
+  }
 
   @Override
   protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
