@@ -1,7 +1,9 @@
 package org.threadly.concurrent;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.Clock;
 
@@ -30,11 +33,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   protected final AtomicInteger totalHighPriorityExecutions;
   protected final AtomicInteger totalLowPriorityExecutions;
   protected final ConcurrentHashMap<Wrapper, Long> runningTasks;
-  protected final LinkedList<Long> runTimes;
-  protected final LinkedList<Boolean> lowPriorityWorkerAvailable;
-  protected final LinkedList<Boolean> highPriorityWorkerAvailable;
-  protected final LinkedList<Long> lowPriorityExecutionDelay;
-  protected final LinkedList<Long> highPriorityExecutionDelay;
+  protected final ConcurrentArrayList<Long> runTimes;
+  protected final ConcurrentArrayList<Boolean> lowPriorityWorkerAvailable;
+  protected final ConcurrentArrayList<Boolean> highPriorityWorkerAvailable;
+  protected final ConcurrentArrayList<Long> lowPriorityExecutionDelay;
+  protected final ConcurrentArrayList<Long> highPriorityExecutionDelay;
   
   /**
    * Constructs a new thread pool, though no threads will be started 
@@ -54,11 +57,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     totalHighPriorityExecutions = new AtomicInteger();
     totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    runTimes = new LinkedList<Long>();
-    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
-    highPriorityWorkerAvailable = new LinkedList<Boolean>();
-    lowPriorityExecutionDelay = new LinkedList<Long>();
-    highPriorityExecutionDelay = new LinkedList<Long>();
+    int endPadding = MAX_WINDOW_SIZE * 2;
+    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
+    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
   }
   
   /**
@@ -79,11 +83,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     totalHighPriorityExecutions = new AtomicInteger();
     totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    runTimes = new LinkedList<Long>();
-    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
-    highPriorityWorkerAvailable = new LinkedList<Boolean>();
-    lowPriorityExecutionDelay = new LinkedList<Long>();
-    highPriorityExecutionDelay = new LinkedList<Long>();
+    int endPadding = MAX_WINDOW_SIZE * 2;
+    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
+    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
   }
   
   /**
@@ -110,11 +115,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     totalHighPriorityExecutions = new AtomicInteger();
     totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    runTimes = new LinkedList<Long>();
-    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
-    highPriorityWorkerAvailable = new LinkedList<Boolean>();
-    lowPriorityExecutionDelay = new LinkedList<Long>();
-    highPriorityExecutionDelay = new LinkedList<Long>();
+    int endPadding = MAX_WINDOW_SIZE * 2;
+    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
+    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
   }
   
   /**
@@ -143,11 +149,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     totalHighPriorityExecutions = new AtomicInteger();
     totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    runTimes = new LinkedList<Long>();
-    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
-    highPriorityWorkerAvailable = new LinkedList<Boolean>();
-    lowPriorityExecutionDelay = new LinkedList<Long>();
-    highPriorityExecutionDelay = new LinkedList<Long>();
+    int endPadding = MAX_WINDOW_SIZE * 2;
+    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
+    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
   }
   
   /**
@@ -176,11 +183,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     totalHighPriorityExecutions = new AtomicInteger();
     totalLowPriorityExecutions = new AtomicInteger();
     runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    runTimes = new LinkedList<Long>();
-    lowPriorityWorkerAvailable = new LinkedList<Boolean>();
-    highPriorityWorkerAvailable = new LinkedList<Boolean>();
-    lowPriorityExecutionDelay = new LinkedList<Long>();
-    highPriorityExecutionDelay = new LinkedList<Long>();
+    int endPadding = MAX_WINDOW_SIZE * 2;
+    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
+    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
   }
   
   /**
@@ -190,21 +198,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * This does NOT reset the total execution counts.
    */
   public void resetCollectedStats() {
-    synchronized (runTimes) {
-      runTimes.clear();
-    }
-    synchronized (lowPriorityWorkerAvailable) {
-      lowPriorityWorkerAvailable.clear();
-    }
-    synchronized (lowPriorityExecutionDelay) {
-      lowPriorityExecutionDelay.clear();
-    }
-    synchronized (highPriorityWorkerAvailable) {
-      highPriorityWorkerAvailable.clear();
-    }
-    synchronized (highPriorityExecutionDelay) {
-      highPriorityExecutionDelay.clear();
-    }
+    runTimes.clear();
+    lowPriorityWorkerAvailable.clear();
+    lowPriorityExecutionDelay.clear();
+    highPriorityWorkerAvailable.clear();
+    highPriorityExecutionDelay.clear();
   }
 
   @Override
@@ -212,7 +210,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     Worker w = null;
     synchronized (workersLock) {
       if (! isShutdown()) {
-        synchronized (highPriorityWorkerAvailable) {
+        synchronized (highPriorityWorkerAvailable.getModificationLock()) {
           highPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
           trimList(highPriorityWorkerAvailable);
         }
@@ -234,7 +232,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       Clock.accurateTime(); // update clock for task to ensure it is accurate
       long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
-        synchronized (highPriorityExecutionDelay) {
+        synchronized (highPriorityExecutionDelay.getModificationLock()) {
           highPriorityExecutionDelay.add(executionDelay * -1);
           trimList(highPriorityExecutionDelay);
         }
@@ -250,14 +248,14 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     synchronized (workersLock) {
       if (! isShutdown()) {
         if (getCurrentPoolSize() >= getMaxPoolSize()) {
-          synchronized (lowPriorityWorkerAvailable) {
+          synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
             lowPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
             trimList(lowPriorityWorkerAvailable);
           }
           w = getExistingWorker(Long.MAX_VALUE);
         } else {
           w = getExistingWorker(getMaxWaitForLowPriority());
-          synchronized (lowPriorityWorkerAvailable) {
+          synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
             lowPriorityWorkerAvailable.add(w != null);
             trimList(lowPriorityWorkerAvailable);
           }
@@ -278,7 +276,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       Clock.accurateTime(); // update clock for task to ensure it is accurate
       long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
-        synchronized (lowPriorityExecutionDelay) {
+        synchronized (lowPriorityExecutionDelay.getModificationLock()) {
           lowPriorityExecutionDelay.add(executionDelay * -1);
           trimList(lowPriorityExecutionDelay);
         }
@@ -353,10 +351,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return median time in milliseconds tasks run
    */
   public long getMedianTaskRunTime() {
-    List<Long> times;
-    synchronized (runTimes) {
-      times = new ArrayList<Long>(runTimes);
-    }
+    List<Long> times = new ArrayList<Long>(runTimes);
     if (times.isEmpty()) {
       return -1;
     }
@@ -372,13 +367,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return average delay for tasks to be executed
    */
   public long getAvgExecutionDelay() {
-    List<Long> resultList = new ArrayList<Long>(0);
-    synchronized (lowPriorityExecutionDelay) {
-      resultList.addAll(lowPriorityExecutionDelay);
-    }
-    synchronized (highPriorityExecutionDelay) {
-      resultList.addAll(highPriorityExecutionDelay);
-    }
+    List<Long> resultList = new ArrayList<Long>(lowPriorityExecutionDelay);
+    resultList.addAll(highPriorityExecutionDelay);
     
     return getAvgTime(resultList);
   }
@@ -411,10 +401,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return median delay for high priority tasks to be executed
    */
   public long getHighPriorityMedianExecutionDelay() {
-    List<Long> times;
-    synchronized (highPriorityExecutionDelay) {
-      times = new ArrayList<Long>(highPriorityExecutionDelay);
-    }
+    List<Long> times = new ArrayList<Long>(highPriorityExecutionDelay);
     if (times.isEmpty()) {
       return -1;
     }
@@ -431,10 +418,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return median delay for low priority tasks to be executed
    */
   public long getLowPriorityMedianExecutionDelay() {
-    List<Long> times;
-    synchronized (lowPriorityExecutionDelay) {
-      times = new ArrayList<Long>(lowPriorityExecutionDelay);
-    }
+    List<Long> times = new ArrayList<Long>(lowPriorityExecutionDelay);
     if (times.isEmpty()) {
       return -1;
     }
@@ -452,10 +436,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return list which represents execution delay samples
    */
   public List<Long> getHighPriorityExecutionDelays() {
-    List<Long> result;
-    synchronized (highPriorityExecutionDelay) {
-      result = new ArrayList<Long>(highPriorityExecutionDelay);
-    }
+    List<Long> result = new ArrayList<Long>(highPriorityExecutionDelay);
+    
     return Collections.unmodifiableList(result);
   }
   
@@ -468,14 +450,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return list which represents execution delay samples
    */
   public List<Long> getLowPriorityExecutionDelays() {
-    List<Long> result;
-    synchronized (lowPriorityExecutionDelay) {
-      result = new ArrayList<Long>(lowPriorityExecutionDelay);
-    }
+    List<Long> result = new ArrayList<Long>(lowPriorityExecutionDelay);
+    
     return Collections.unmodifiableList(result);
   }
   
-  private static long getAvgTime(List<Long> list) {
+  private static long getAvgTime(Collection<Long> list) {
     if (list.isEmpty()) {
       return -1;
     }
@@ -498,10 +478,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return the list of currently recorded run times for tasks
    */
   public List<Long> getRunTimes() {
-    List<Long> result;
-    synchronized (runTimes) {
-      result = new ArrayList<Long>(runTimes);
-    }
+    List<Long> result = new ArrayList<Long>(runTimes);
+    
     return Collections.unmodifiableList(result);
   }
   
@@ -626,13 +604,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return percent of time that threads are able to be reused
    */
   public double getThreadReusePercent() {
-    List<Boolean> totalList = new LinkedList<Boolean>();
-    synchronized (lowPriorityWorkerAvailable) {
-      totalList.addAll(lowPriorityWorkerAvailable);
-    }
-    synchronized (highPriorityWorkerAvailable) {
-      totalList.addAll(highPriorityWorkerAvailable);
-    }
+    List<Boolean> totalList = new ArrayList<Boolean>(lowPriorityWorkerAvailable);
+    totalList.addAll(highPriorityWorkerAvailable);
+      
     return getTruePercent(totalList);
   }
   
@@ -645,9 +619,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return percent of time that threads are able to be reused for high priority tasks
    */
   public double getHighPriorityThreadReusePercent() {
-    synchronized (highPriorityWorkerAvailable) {
-      return getTruePercent(highPriorityWorkerAvailable);
-    }
+    List<Boolean> list = new ArrayList<Boolean>(highPriorityWorkerAvailable);
+    
+    return getTruePercent(list);
   }
   
   /**
@@ -659,12 +633,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @return percent of time that threads are able to be reused for low priority tasks
    */
   public double getLowPriorityThreadReusePercent() {
-    synchronized (lowPriorityWorkerAvailable) {
-      return getTruePercent(lowPriorityWorkerAvailable);
-    }
+    List<Boolean> list = new ArrayList<Boolean>(lowPriorityWorkerAvailable);
+    
+    return getTruePercent(list);
   }
   
-  private static double getTruePercent(List<Boolean> list) {
+  private static double getTruePercent(Collection<Boolean> list) {
     if (list.isEmpty()) {
       return -1;
     }
@@ -680,7 +654,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     return (reuseCount / list.size()) * 100;
   }
   
-  protected synchronized void trackTaskStart(Wrapper taskWrapper) {
+  protected void trackTaskStart(Wrapper taskWrapper) {
     runningTasks.put(taskWrapper, Clock.accurateTime());
     
     switch (taskWrapper.priority) {
@@ -702,7 +676,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
      * thread as trackTaskStart and trackTaskStart was called first.  
      * We make that assumption here.
      */
-    synchronized (runTimes) {
+    synchronized (runTimes.getModificationLock()) {
       runTimes.add(finishTime - startTime);
       trimList(runTimes);
     }
@@ -711,12 +685,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   /**
    * Reduces the list size to be within the max window size.
    * 
-   * Should have the list synchronized before calling.
+   * Should have the list synchronized/locked before calling.
    * 
    * @param list LinkedList to check size of.
    */
   @SuppressWarnings("rawtypes")
-  protected static void trimList(LinkedList list) {
+  protected static void trimList(Deque list) {
     while (list.size() > MAX_WINDOW_SIZE) {
       list.removeFirst();
     }
