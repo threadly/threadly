@@ -9,7 +9,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.future.ListenableFuture;
@@ -233,7 +232,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     
     if (w != null) {  // may be null if shutdown
       Clock.accurateTime(); // update clock for task to ensure it is accurate
-      long executionDelay = Math.abs(task.getDelay(TimeUnit.MILLISECONDS));
+      long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
         synchronized (highPriorityExecutionDelay) {
           highPriorityExecutionDelay.add(executionDelay * -1);
@@ -277,7 +276,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     
     if (w != null) {  // may be null if shutdown
       Clock.accurateTime(); // update clock for task to ensure it is accurate
-      long executionDelay = Math.abs(task.getDelay(TimeUnit.MILLISECONDS));
+      long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
         synchronized (lowPriorityExecutionDelay) {
           lowPriorityExecutionDelay.add(executionDelay * -1);

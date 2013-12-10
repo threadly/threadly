@@ -566,6 +566,48 @@ public class PrioritySchedulerStatisticTrackerTest {
   // tests for statistics tracking
   
   @Test
+  public void resetCollectedStatsTest() {
+    int testRunnableCount = 10;
+    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                              TaskPriority.High, 100);
+    try {
+      // prestart so reuse percent is not zero
+      scheduler.prestartAllCoreThreads();
+      TestRunnable lastRunnable = null;
+      boolean flip = false;
+      for (int i = 0; i < testRunnableCount; i++) {
+        lastRunnable = new TestRunnable(1);
+        if (flip) {
+          scheduler.execute(lastRunnable, TaskPriority.High);
+          flip = false;
+        } else {
+          scheduler.execute(lastRunnable, TaskPriority.Low);
+          flip = true;
+        }
+      }
+      
+      lastRunnable.blockTillFinished();
+      new TestCondition() { // block till all are finished
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentlyRunningCount() == 0;
+        }
+      }.blockTillTrue();
+      
+      // reset stats
+      scheduler.resetCollectedStats();
+      
+      assertEquals(-1, scheduler.getAverageTaskRunTime(), 0);
+      assertEquals(-1, scheduler.getHighPriorityAvgExecutionDelay(), 0);
+      assertEquals(-1, scheduler.getHighPriorityThreadReusePercent(), 0);
+      assertEquals(-1, scheduler.getLowPriorityAvgExecutionDelay(), 0);
+      assertEquals(-1, scheduler.getLowPriorityThreadReusePercent(), 0);
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
   public void getAvgRunTimeNoInputTest() {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                                                                         TaskPriority.High, 100);
@@ -864,18 +906,20 @@ public class PrioritySchedulerStatisticTrackerTest {
           throw new UnsupportedOperationException("Priority not implenented: " + priority);
       }
       
-      long total = 0;
+      double total = 0;
       Iterator<Long> it = samples.iterator();
       while (it.hasNext()) {
         total += it.next();
       }
+      
+      long expectedAvg = Math.round(total / samples.size());
 
       switch (priority) {
         case High:
-          assertEquals(total / samples.size(), scheduler.getHighPriorityAvgExecutionDelay(), 0);
+          assertEquals(expectedAvg, scheduler.getHighPriorityAvgExecutionDelay(), 0);
           break;
         case Low:
-          assertEquals(total / samples.size(), scheduler.getLowPriorityAvgExecutionDelay(), 0);
+          assertEquals(expectedAvg, scheduler.getLowPriorityAvgExecutionDelay(), 0);
           break;
         default:
           throw new UnsupportedOperationException("Priority not implenented: " + priority);
