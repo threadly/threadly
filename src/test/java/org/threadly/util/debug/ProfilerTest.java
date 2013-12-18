@@ -4,10 +4,12 @@ import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.PrioritySchedulerStatisticTracker;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
@@ -29,9 +31,48 @@ public class ProfilerTest {
     profiler = null;
   }
   
+  @Test
+  public void getProfileThreadsIteratorTest() {
+    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    
+    assertNotNull(it);
+    assertTrue(it.hasNext());
+    assertNotNull(it.next());
+  }
+  
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new Profiler(-1);
+  }
+  
+  @Test
+  public void isRunningTest() {
+    assertFalse(profiler.isRunning());
+  }
+  
+  @Test
+  public void startWithoutExecutorTest() {
+    profiler.start(null);
+    
+    assertTrue(profiler.isRunning());
+  }
+  
+  @Test
+  public void startWitExecutorTest() {
+    PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1, 1, 1000);
+    try {
+      assertEquals(0, e.getCurrentPoolSize());
+      assertEquals(0, e.getCurrentlyRunningCount());
+      
+      profiler.start(e);
+      
+      assertTrue(profiler.isRunning());
+      assertEquals(1, e.getCurrentPoolSize());
+      assertEquals(1, e.getCurrentlyRunningCount());
+    } finally {
+      profiler.stop();
+      e.shutdownNow();
+    }
   }
   
   @Test

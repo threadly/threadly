@@ -13,10 +13,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -31,7 +35,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class Profiler implements Runnable {
+public class Profiler {
   protected static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
   protected static final short THREAD_PADDING_AMMOUNT = 10;
   protected static final short NUMBER_TARGET_LINE_LENGTH = 6;
@@ -133,6 +137,15 @@ public class Profiler implements Runnable {
   }
   
   /**
+   * Call to check weather the profile is currently running/started.
+   * 
+   * @return true if there is a thread currently collecting statistics.
+   */
+  public boolean isRunning() {
+    return collectorThread.get() != null;
+  }
+  
+  /**
    * Starts the profiler running in a new thread.
    * 
    * If this profiler had the life cycle of: 
@@ -142,16 +155,73 @@ public class Profiler implements Runnable {
    * in this run.  If you wish to clear out previous runs 
    * you must call {#link reset()} first.
    */
-  public synchronized void start() {
+  public void start() {
+    start(null);
+  }
+  
+  /**
+   * Starts the profiler running in a new thread.
+   * 
+   * If this profiler had the life cycle of: 
+   * start -> stop -> start
+   * 
+   * The stats from the previous run will still be included 
+   * in this run.  If you wish to clear out previous runs 
+   * you must call {#link reset()} first.
+   * 
+   * If an executor is provided, this call will block until the the 
+   * profiler has been started on the provided executor.
+   * 
+   * @param executor executor to execute on, or null if new thread should be created
+   */
+  public void start(Executor executor) {
     synchronized (startStopLock) {
       if (collectorThread.get() == null) {
-        Thread thread = new Thread(this);
-        
-        collectorThread.set(thread);
-        
-        thread.setName(COLLECTOR_THREAD_NAME);
-        thread.setPriority(Thread.MAX_PRIORITY);
-        thread.start();
+        final ProfilerRunner pr = new ProfilerRunner();
+        if (executor == null) {
+          // no executor, so we simply create our own thread
+          Thread thread = new Thread(pr);
+          
+          collectorThread.set(thread);
+          
+          thread.setName(COLLECTOR_THREAD_NAME);
+          thread.setPriority(Thread.MAX_PRIORITY);
+          thread.start();
+        } else {
+          final ListenableFutureTask<Thread> runningThreadFuture;
+          runningThreadFuture = new ListenableFutureTask<Thread>(false, new Runnable() {
+            @Override
+            public void run() {
+              // ignored, this future is just to know once collector thread is set
+            }
+          });
+          
+          executor.execute(new Runnable() {
+            @Override
+            public void run() {
+              try {
+                // if collector thread can't be set, then some other thread has taken over
+                if (! collectorThread.compareAndSet(null, Thread.currentThread())) {
+                  return;
+                }
+              } finally {
+                runningThreadFuture.run();
+              }
+              
+              pr.run();
+            }
+          });
+          
+          // now block till collectorThread has been set and profiler has started on the executor
+          try {
+            runningThreadFuture.get();
+          } catch (InterruptedException e) {
+            return;
+          } catch (ExecutionException e) {
+            // is virtually impossible
+            throw ExceptionUtils.makeRuntime(e.getCause());
+          }
+        }
       }
     }
   }
@@ -187,51 +257,6 @@ public class Profiler implements Runnable {
   
   private static String getThreadIdentifier(Thread t) {
     return t.toString() + ';' + Long.toHexString(t.getId());
-  }
-  
-  @Override
-  public void run() {
-    Thread runningThread = Thread.currentThread();
-    while (collectorThread.get() == runningThread) {
-      int count = Thread.activeCount();
-      // we add a little to make sure we get every thread
-      Thread[] threads = new Thread[count + THREAD_PADDING_AMMOUNT];
-      count = Thread.enumerate(threads);
-      for (int i = 0; i < count; i++) {
-        Thread currentThread = threads[i];
-        // we skip the Profiler threads (collector thread, and dumping thread if one exists)
-        if (currentThread != runningThread && 
-            currentThread != dumpingThread) {
-          StackTraceElement[] threadStack = currentThread.getStackTrace();
-          if (threadStack.length > 0) {
-            String threadIdentifier = getThreadIdentifier(currentThread);
-            Trace t = new Trace(threadStack);
-            
-            Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
-            if (existingTraces == null) {
-              existingTraces = new ConcurrentHashMap<Trace, Trace>();
-              threadTraces.put(threadIdentifier, existingTraces);
-
-              existingTraces.put(t, t);
-            } else {
-              Trace existingTrace = existingTraces.get(t);
-              if (existingTrace == null) {
-                existingTraces.put(t, t);
-              } else {
-                existingTrace.threadCount++;
-              }
-            }
-          }
-        }
-      }
-
-      try {
-        Thread.sleep(pollIntervalInMs);
-      } catch (InterruptedException e) {
-        collectorThread.compareAndSet(runningThread, null);
-        return;
-      }
-    }
   }
   
   /**
@@ -295,8 +320,10 @@ public class Profiler implements Runnable {
       }
         
       // log out global data
-      ps.println("Combined profile for all threads....");
-      dumpTraces(globalTraces.keySet(), true, ps);
+      if (globalTraces.size() > 1) {
+        ps.println("Combined profile for all threads....");
+        dumpTraces(globalTraces.keySet(), true, ps);
+      }
       
       ps.flush();
     } finally {
@@ -438,6 +465,90 @@ public class Profiler implements Runnable {
     sb.append(s);
     
     return sb.toString();
+  }
+  
+  /**
+   * A small call to get an iterator of threads that should be examined for 
+   * this profiler cycle.
+   * 
+   * This is a protected call, so it can be overridden to implement other profilers 
+   * that want to control which threads are being profiled.
+   * 
+   * @return an {@link Iterator} of threads to examine and add data for our profile.
+   */
+  protected Iterator<Thread> getProfileThreadsIterator() {
+    int activeCount = Thread.activeCount();
+    // we add a little to make sure we get every thread
+    final Thread[] threads = new Thread[activeCount + THREAD_PADDING_AMMOUNT];
+    final int enumerateCount = Thread.enumerate(threads);
+    
+    return new Iterator<Thread>() {
+      int currentIndex = 0;
+      
+      @Override
+      public boolean hasNext() {
+        return currentIndex < enumerateCount;
+      }
+
+      @Override
+      public Thread next() {
+        if (hasNext()) {
+          return threads[currentIndex++];
+        } else {
+          throw new NoSuchElementException();
+        }
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+  
+  private class ProfilerRunner implements Runnable {
+    @Override
+    public void run() {
+      Thread runningThread = Thread.currentThread();
+      while (collectorThread.get() == runningThread) {
+        Iterator<Thread> it = getProfileThreadsIterator();
+        while (it.hasNext()) {
+          Thread currentThread = it.next();
+          
+          // we skip the Profiler threads (collector thread, and dumping thread if one exists)
+          if (currentThread != runningThread && 
+              currentThread != dumpingThread) {
+            StackTraceElement[] threadStack = currentThread.getStackTrace();
+            if (threadStack.length > 0) {
+              String threadIdentifier = getThreadIdentifier(currentThread);
+              Trace t = new Trace(threadStack);
+              
+              Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
+              if (existingTraces == null) {
+                existingTraces = new ConcurrentHashMap<Trace, Trace>();
+                threadTraces.put(threadIdentifier, existingTraces);
+  
+                existingTraces.put(t, t);
+              } else {
+                Trace existingTrace = existingTraces.get(t);
+                if (existingTrace == null) {
+                  existingTraces.put(t, t);
+                } else {
+                  existingTrace.threadCount++;
+                }
+              }
+            }
+          }
+        }
+  
+        try {
+          Thread.sleep(pollIntervalInMs);
+        } catch (InterruptedException e) {
+          collectorThread.compareAndSet(runningThread, null);
+          return;
+        }
+      }
+    }
   }
   
   /**
