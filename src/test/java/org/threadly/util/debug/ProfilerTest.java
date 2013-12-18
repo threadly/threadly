@@ -3,8 +3,10 @@ package org.threadly.util.debug;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -32,12 +34,67 @@ public class ProfilerTest {
   }
   
   @Test
+  public void constructorTest() {
+    int testPollInterval = Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS * 10;
+    File dumpFile = new File("foo");
+    Profiler p;
+    
+    p = new Profiler();
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertNull(p.outputFile);
+    assertNotNull(p.startStopLock);
+    
+    p = new Profiler(dumpFile);
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertEquals(dumpFile, p.outputFile);
+    assertNotNull(p.startStopLock);
+    
+    p = new Profiler(testPollInterval);
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(testPollInterval, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertNull(p.outputFile);
+    assertNotNull(p.startStopLock);
+    
+    p = new Profiler(dumpFile, testPollInterval);
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(testPollInterval, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertEquals(dumpFile, p.outputFile);
+    assertNotNull(p.startStopLock);
+  }
+  
+  @Test
   public void getProfileThreadsIteratorTest() {
     Iterator<Thread> it = profiler.getProfileThreadsIterator();
     
     assertNotNull(it);
     assertTrue(it.hasNext());
     assertNotNull(it.next());
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void getProfileThreadsIteratorFail() {
+    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    
+    while (it.hasNext()) {
+      assertNotNull(it.next());
+    }
+    
+    it.next();
+    fail("Exception should have thrown");
   }
   
   @Test (expected = IllegalArgumentException.class)

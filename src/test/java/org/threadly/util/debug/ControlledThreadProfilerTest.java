@@ -3,6 +3,7 @@ package org.threadly.util.debug;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -29,6 +30,53 @@ public class ControlledThreadProfilerTest {
   public void tearDown() {
     profiler.stop();
     profiler = null;
+  }
+  
+  @Test
+  public void constructorTest() {
+    int testPollInterval = Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS * 10;
+    File dumpFile = new File("foo");
+    ControlledThreadProfiler p;
+    
+    p = new ControlledThreadProfiler();
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertNull(p.outputFile);
+    assertNotNull(p.startStopLock);
+    assertEquals(0, p.profiledThreads.size());
+    
+    p = new ControlledThreadProfiler(dumpFile);
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertEquals(dumpFile, p.outputFile);
+    assertNotNull(p.startStopLock);
+    assertEquals(0, p.profiledThreads.size());
+    
+    p = new ControlledThreadProfiler(testPollInterval);
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(testPollInterval, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertNull(p.outputFile);
+    assertNotNull(p.startStopLock);
+    assertEquals(0, p.profiledThreads.size());
+    
+    p = new ControlledThreadProfiler(dumpFile, testPollInterval);
+    assertNotNull(p.threadTraces);
+    assertEquals(0, p.threadTraces.size());
+    assertEquals(testPollInterval, p.pollIntervalInMs);
+    assertNull(p.collectorThread.get());
+    assertNull(p.dumpingThread);
+    assertEquals(dumpFile, p.outputFile);
+    assertNotNull(p.startStopLock);
+    assertEquals(0, p.profiledThreads.size());
   }
   
   @Test

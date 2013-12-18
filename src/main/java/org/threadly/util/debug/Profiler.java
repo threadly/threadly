@@ -44,12 +44,12 @@ public class Profiler {
   protected static final String FUNCTION_BY_NET_HEADER = "\nfunctions by top count: (total, top, name)\n";
   protected static final String FUNCTION_BY_COUNT_HEADER = "\nfunction by total count: (total, top, name)\n";
   
-  private final Map<String, Map<Trace, Trace>> threadTraces;
-  private final File outputFile;
-  private final Object startStopLock;
-  private final AtomicReference<Thread> collectorThread;
-  private volatile int pollIntervalInMs;
-  private volatile Thread dumpingThread;
+  protected final Map<String, Map<Trace, Trace>> threadTraces;
+  protected final File outputFile;
+  protected final Object startStopLock;
+  protected final AtomicReference<Thread> collectorThread;
+  protected volatile int pollIntervalInMs;
+  protected volatile Thread dumpingThread;
   
   /**
    * Constructs a new profiler instance.  The only way 
@@ -565,7 +565,7 @@ public class Profiler {
    * 
    * @author jent - Mike Jensen
    */
-  private static class Trace implements Comparable<Trace> {
+  protected static class Trace implements Comparable<Trace> {
     private final StackTraceElement[] elements;
     private final int hash;
     private int threadCount = 1;  // is increased as seen for a specific thread
@@ -623,7 +623,7 @@ public class Profiler {
    * 
    * @author jent - Mike Jensen
    */
-  private static class Function {
+  protected static class Function {
     private final String className;
     private final String function;
     private final int hashCode;
