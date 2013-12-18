@@ -506,6 +506,12 @@ public class Profiler {
     };
   }
   
+  /**
+   * <p>Class which runs, collecting statistics for the profiler 
+   * to later analyze.</p>
+   * 
+   * @author jent - Mike Jensen
+   */
   private class ProfilerRunner implements Runnable {
     @Override
     public void run() {
