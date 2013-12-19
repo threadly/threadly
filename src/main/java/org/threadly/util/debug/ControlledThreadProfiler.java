@@ -88,13 +88,28 @@ public class ControlledThreadProfiler extends Profiler {
   }
   
   /**
-   * Removed a thread from the set of tracked threads.
+   * Removed a thread from the set of tracked threads.  It is good 
+   * practice to remove a thread from the profiler if it is no 
+   * longer alive.  This profiler makes NO attempt to automatically 
+   * remove dead threads.
    * 
    * @param t Thread to remove from tracked set
    * @return true if the thread was found and removed.
    */
   public boolean removedProfiledThread(Thread t) {
     return profiledThreads.remove(t);
+  }
+  
+  /**
+   * Call to check how many threads are currently being checked 
+   * by the profiler.  Keep in mind that threads that are not alive 
+   * may be skipped by the profiler, but will be included in 
+   * this count.
+   * 
+   * @return count of tracked threads.
+   */
+  public int getProfiledThreadCount() {
+    return profiledThreads.size();
   }
   
   @Override

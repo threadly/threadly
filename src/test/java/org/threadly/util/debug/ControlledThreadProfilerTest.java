@@ -5,7 +5,9 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -145,8 +147,35 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
+  public void getProfiledThreadCountTest() {
+    int testThreadCount = 10;
+    assertEquals(0, profiler.getProfiledThreadCount());
+    
+    List<Thread> addedThreads = new ArrayList<Thread>(testThreadCount);
+    for (int i = 0; i < testThreadCount; i++) {
+      Thread t = new Thread();
+      addedThreads.add(t);
+      profiler.addProfiledThread(t);
+      assertEquals(i + 1, profiler.getProfiledThreadCount());
+    }
+    
+    Iterator<Thread> it = addedThreads.iterator();
+    int removedCount = 0;
+    while (it.hasNext()) {
+      Thread t = it.next();
+      profiler.removedProfiledThread(t);
+      removedCount++;
+      assertEquals(testThreadCount - removedCount, profiler.getProfiledThreadCount());
+    }
+  }
+  
+  @Test
   public void isRunningTest() {
     assertFalse(profiler.isRunning());
+    
+    /* verification of isRunning after start happens in 
+     * startWithoutExecutorTest and startWitExecutorTest
+     */
   }
   
   @Test
