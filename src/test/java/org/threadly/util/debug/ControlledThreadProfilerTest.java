@@ -13,13 +13,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.PrioritySchedulerStatisticTracker;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ControlledThreadProfilerTest {
   private static final int POLL_INTERVAL = 1;
   private static final int WAIT_TIME_FOR_COLLECTION = 50;
-  private static final int MIN_RESPONSE_LENGTH = 10;
   
   private ControlledThreadProfiler profiler;
   
@@ -32,6 +32,15 @@ public class ControlledThreadProfilerTest {
   public void tearDown() {
     profiler.stop();
     profiler = null;
+  }
+  
+  private void blockForProfilerSample() {
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return profiler.getCollectedSampleQty() > 0;
+      }
+    }.blockTillTrue();
   }
   
   @Test
@@ -235,13 +244,13 @@ public class ControlledThreadProfilerTest {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     profiler.stop();
     
     String resultStr = profiler.dump();
     
-    verifyDumpStr(resultStr);
+    ProfilerTest.verifyDumpStr(resultStr);
   }
   
   @Test
@@ -266,7 +275,7 @@ public class ControlledThreadProfilerTest {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     profiler.stop();
     
@@ -275,7 +284,7 @@ public class ControlledThreadProfilerTest {
     
     String resultStr = out.toString();
     
-    verifyDumpStr(resultStr);
+    ProfilerTest.verifyDumpStr(resultStr);
   }
   
   @Test
@@ -295,11 +304,11 @@ public class ControlledThreadProfilerTest {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     String resultStr = profiler.dump();
     
-    verifyDumpStr(resultStr);
+    ProfilerTest.verifyDumpStr(resultStr);
   }
   
   @Test
@@ -322,23 +331,13 @@ public class ControlledThreadProfilerTest {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     profiler.dump(out);
     
     String resultStr = out.toString();
     
-    verifyDumpStr(resultStr);
-  }
-  
-  private static void verifyDumpStr(String resultStr) {
-    assertTrue(resultStr.length() > MIN_RESPONSE_LENGTH);
-    
-    assertFalse(resultStr.startsWith(Profiler.THREAD_DELIMITER));
-    assertFalse(resultStr.endsWith(Profiler.THREAD_DELIMITER));
-    
-    assertTrue(resultStr.contains(Profiler.FUNCTION_BY_COUNT_HEADER));
-    assertTrue(resultStr.contains(Profiler.FUNCTION_BY_NET_HEADER));
+    ProfilerTest.verifyDumpStr(resultStr);
   }
 }

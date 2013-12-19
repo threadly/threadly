@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -45,6 +46,7 @@ public class Profiler {
   protected static final String FUNCTION_BY_COUNT_HEADER = "\nfunction by total count: (total, top, name)\n";
   
   protected final Map<String, Map<Trace, Trace>> threadTraces;
+  protected final AtomicInteger collectedSamples;
   protected final File outputFile;
   protected final Object startStopLock;
   protected final AtomicReference<Thread> collectorThread;
@@ -98,6 +100,7 @@ public class Profiler {
     setPollInterval(pollIntervalInMs);
     
     threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>();
+    collectedSamples = new AtomicInteger(0);
     this.outputFile = outputFile;
     startStopLock = new Object();
     collectorThread = new AtomicReference<Thread>(null);
@@ -128,12 +131,25 @@ public class Profiler {
   }
   
   /**
+   * Call to get an estimate on how many times the profiler has collected a 
+   * sample of the thread stacks.  This number may be lower than the actual 
+   * sample quantity, but should never be higher.  It can be used to ensure a minimum 
+   * level of accuracy from within the profiler.
+   * 
+   * @return the number of times since the start or last reset we have sampled the threads
+   */
+  public int getCollectedSampleQty() {
+    return collectedSamples.get();
+  }
+  
+  /**
    * Reset the current stored statistics.  The statistics will 
    * continue to grow in memory until the profiler is either stopped, 
    * or until this is called.
    */
   public void reset() {
     threadTraces.clear();
+    collectedSamples.set(0);
   }
   
   /**
@@ -517,6 +533,7 @@ public class Profiler {
     public void run() {
       Thread runningThread = Thread.currentThread();
       while (collectorThread.get() == runningThread) {
+        boolean storedSample = false;
         Iterator<Thread> it = getProfileThreadsIterator();
         while (it.hasNext()) {
           Thread currentThread = it.next();
@@ -526,6 +543,7 @@ public class Profiler {
               currentThread != dumpingThread) {
             StackTraceElement[] threadStack = currentThread.getStackTrace();
             if (threadStack.length > 0) {
+              storedSample = true;
               String threadIdentifier = getThreadIdentifier(currentThread);
               Trace t = new Trace(threadStack);
               
@@ -546,7 +564,10 @@ public class Profiler {
             }
           }
         }
-  
+        
+        if (storedSample) {
+          collectedSamples.incrementAndGet();
+        }
         try {
           Thread.sleep(pollIntervalInMs);
         } catch (InterruptedException e) {

@@ -12,12 +12,11 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.PrioritySchedulerStatisticTracker;
-import org.threadly.test.concurrent.TestUtils;
+import org.threadly.test.concurrent.TestCondition;
 
 @SuppressWarnings("javadoc")
 public class ProfilerTest {
   private static final int POLL_INTERVAL = 1;
-  private static final int WAIT_TIME_FOR_COLLECTION = 50;
   private static final int MIN_RESPONSE_LENGTH = 10;
   
   private Profiler profiler;
@@ -31,6 +30,15 @@ public class ProfilerTest {
   public void tearDown() {
     profiler.stop();
     profiler = null;
+  }
+  
+  private void blockForProfilerSample() {
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return profiler.getCollectedSampleQty() > 0;
+      }
+    }.blockTillTrue();
   }
   
   @Test
@@ -149,7 +157,7 @@ public class ProfilerTest {
   public void dumpStoppedStringTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     profiler.stop();
     
@@ -162,7 +170,7 @@ public class ProfilerTest {
   public void dumpStoppedOutputStreamTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     profiler.stop();
     
@@ -178,7 +186,7 @@ public class ProfilerTest {
   public void dumpStringTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     String resultStr = profiler.dump();
     
@@ -189,7 +197,7 @@ public class ProfilerTest {
   public void dumpOutputStreamTest() throws IOException {
     profiler.start();
     
-    TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
+    blockForProfilerSample();
     
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     profiler.dump(out);
@@ -199,7 +207,7 @@ public class ProfilerTest {
     verifyDumpStr(resultStr);
   }
   
-  private static void verifyDumpStr(String resultStr) {
+  protected static void verifyDumpStr(String resultStr) {
     assertTrue(resultStr.length() > MIN_RESPONSE_LENGTH);
     
     assertFalse(resultStr.startsWith(Profiler.THREAD_DELIMITER));
