@@ -565,6 +565,16 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   // tests for statistics tracking
   
+  private static void blockTillSchedulerIdle(final PrioritySchedulerStatisticTracker scheduler) {
+    new TestCondition() { // block till all are finished
+      @Override
+      public boolean get() {
+        return scheduler.getCurrentlyRunningCount() == 0 && 
+                 ! scheduler.getRunTimes().isEmpty();
+      }
+    }.blockTillTrue();
+  }
+  
   @Test
   public void resetCollectedStatsTest() {
     int testRunnableCount = 10;
@@ -587,12 +597,8 @@ public class PrioritySchedulerStatisticTrackerTest {
       }
       
       lastRunnable.blockTillFinished();
-      new TestCondition() { // block till all are finished
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      // block till all are finished
+      blockTillSchedulerIdle(scheduler);
       
       // reset stats
       scheduler.resetCollectedStats();
@@ -638,12 +644,8 @@ public class PrioritySchedulerStatisticTrackerTest {
       }
       
       lastRunnable.blockTillFinished();
-      new TestCondition() { // block till all are finished
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      // block till all are finished
+      blockTillSchedulerIdle(scheduler);
       
       List<Long> runTimes = scheduler.getRunTimes();
       assertEquals(lowPriorityCount + highPriorityCount, 
@@ -781,12 +783,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastRunnable.unblock();
       
       lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      blockTillSchedulerIdle(scheduler);
       
       List<Long> samples = new ArrayList<Long>(scheduler.getRunTimes());
       Collections.sort(samples);
@@ -827,12 +824,7 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       // wait for task to finish now
       br.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      blockTillSchedulerIdle(scheduler);
 
       switch (testPriority) {
         case High:
@@ -887,12 +879,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastRunnable.unblock();
       
       lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      blockTillSchedulerIdle(scheduler);
       
       List<Long> samples;
       switch (priority) {
@@ -971,12 +958,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastRunnable.unblock();
       
       lastRunnable.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      blockTillSchedulerIdle(scheduler);
       
       List<Long> samples;
       switch (priority) {
@@ -1038,12 +1020,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertTrue(longRunning.get(0) == br);
       
       // wait for task to finish now
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      blockTillSchedulerIdle(scheduler);
 
       assertEquals(0, scheduler.getQtyRunningOverTime(0));
       longRunning = scheduler.getRunnablesRunningOverTime(0);
@@ -1075,12 +1052,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertTrue(longRunning.get(0) == bc);
       
       // wait for task to finish now
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentlyRunningCount() == 0;
-        }
-      }.blockTillTrue();
+      blockTillSchedulerIdle(scheduler);
 
       assertEquals(0, scheduler.getQtyRunningOverTime(0));
       longRunning = scheduler.getCallablesRunningOverTime(0);
