@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestCondition;
@@ -12,7 +13,10 @@ public class ClockWrapperTest {
   @Before
   public void setup() {
     Clock.stopClockUpdateThread();
-    
+  }
+  
+  @After
+  public void tearDown() {
     ClockWrapper.REQUESTS_TO_STOP_UPDATING_TIME.set(0);
   }
   
