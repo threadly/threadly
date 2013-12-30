@@ -11,6 +11,11 @@ import org.threadly.util.Clock;
  * There is no reason to make a system call for each item, so we just pause getting
  * accurate time for those fast but frequent operations.</p>
  * 
+ * <p>In addition because the {@link Clock} class may jump large amounts of time as it is 
+ * updated, this class attempts to return a very similar amount of time after stopForcingUpdate 
+ * has been called.  This means that getSemiAccurateTime may be less accurate than the 
+ * {@link Clock} representation in order to ensure consistency.</p>
+ * 
  * <p>All the functions in this class are protected because it is not intended to be used 
  * outside of this package.  This is a utility class that must be handled carefully, 
  * using it incorrectly could have serious impacts on other classes which depend on it.</p>
@@ -18,16 +23,23 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  */
 class ClockWrapper {
-  private static final AtomicInteger REQUESTS_TO_STOP_UPDATING_TIME = new AtomicInteger();
+  protected static final AtomicInteger REQUESTS_TO_STOP_UPDATING_TIME = new AtomicInteger();
+  private static volatile long lastKnownTime = -1;
   
   private ClockWrapper() {
     // don't construct
   }
   
   /**
-   * A call here causes getAccurateTime to use the last known time.
+   * A call here causes getAccurateTime to use the last known time.  If 
+   * this is the first call to stop updating the time, it will ensure the 
+   * clock is updated first.
    */
   protected static void stopForcingUpdate() {
+    if (REQUESTS_TO_STOP_UPDATING_TIME.get() == 0) {
+      lastKnownTime = Clock.accurateTime();
+    }
+    
     REQUESTS_TO_STOP_UPDATING_TIME.incrementAndGet();
   }
   
@@ -38,8 +50,7 @@ class ClockWrapper {
     int newVal = REQUESTS_TO_STOP_UPDATING_TIME.decrementAndGet();
     
     if (newVal < 0) {
-      boolean ableToCorrect = REQUESTS_TO_STOP_UPDATING_TIME.compareAndSet(newVal, 0);
-      throw new IllegalStateException("Should have never become negative...corrected: " + ableToCorrect);
+      throw new IllegalStateException();
     }
   }
   
@@ -47,30 +58,11 @@ class ClockWrapper {
    * Returns an accurate time based on if it has been requested to 
    * stop updating from system clock temporarily or not.
    */
-  protected static long getAccurateTime() {
+  protected static long getSemiAccurateTime() {
     if (REQUESTS_TO_STOP_UPDATING_TIME.get() > 0) {
-      return Clock.lastKnownTimeMillis();
+      return lastKnownTime;
     } else {
       return Clock.accurateTime();
     }
-  }
-  
-  /**
-   * Forces an update to the clock, regardless of requests to stop forcing updates.
-   * 
-   * @return the current time in milliseconds
-   */
-  protected static long updateClock() {
-    return Clock.accurateTime();
-  }
-  
-  /**
-   * Call to get a semi-accurate time, based off the last time
-   * clock has updated, or accurate time has been requested.
-   * 
-   * @return the last stored time in milliseconds
-   */
-  protected static long getLastKnownTime() {
-    return Clock.lastKnownTimeMillis();
   }
 }

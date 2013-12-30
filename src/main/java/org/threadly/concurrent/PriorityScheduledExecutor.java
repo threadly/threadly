@@ -24,6 +24,7 @@ import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.concurrent.lock.LockFactory;
 import org.threadly.concurrent.lock.NativeLock;
 import org.threadly.concurrent.lock.VirtualLock;
+import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -896,7 +897,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   private void addToHighPriorityQueue(TaskWrapper task) {
     ClockWrapper.stopForcingUpdate();
     try {
-      ClockWrapper.updateClock();
       highPriorityQueue.add(task);
     } finally {
       ClockWrapper.resumeForcingUpdate();
@@ -908,7 +908,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   private void addToLowPriorityQueue(TaskWrapper task) {
     ClockWrapper.stopForcingUpdate();
     try {
-      ClockWrapper.updateClock();
       lowPriorityQueue.add(task);
     } finally {
       ClockWrapper.resumeForcingUpdate();
@@ -919,13 +918,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
     synchronized (workersLock) {
-      long startTime = ClockWrapper.getAccurateTime();
+      long startTime = Clock.accurateTime();
       long waitTime = maxWaitTimeInMs;
       while (availableWorkers.isEmpty() && waitTime > 0) {
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
           workersLock.await();
         } else {
-          long elapsedTime = ClockWrapper.getAccurateTime() - startTime;
+          long elapsedTime = Clock.accurateTime() - startTime;
           waitTime = maxWaitTimeInMs - elapsedTime;
           if (waitTime > 0) {
             workersLock.await(waitTime);
@@ -993,7 +992,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             lastHighDelay = 0; // no waiting high priority tasks, so no need to wait on low priority tasks
           } else {
             workersLock.await(waitAmount);
-            ClockWrapper.updateClock(); // update for getDelayEstimateInMillis
+            Clock.accurateTime(); // update for getDelayEstimateInMillis
           }
         }
         
@@ -1025,7 +1024,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   
   protected void expireOldWorkers() {
     synchronized (workersLock) {
-      long now = ClockWrapper.getLastKnownTime();
+      long now = Clock.lastKnownTimeMillis();
       // we search backwards because the oldest workers will be at the back of the stack
       while ((currentPoolSize > corePoolSize || allowCorePoolTimeout) && 
              ! availableWorkers.isEmpty() && 
@@ -1124,7 +1123,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     protected Worker() {
       thread = threadFactory.newThread(this);
       running = false;
-      lastRunTime = ClockWrapper.getLastKnownTime();
+      lastRunTime = Clock.lastKnownTimeMillis();
       nextTask = null;
     }
     
@@ -1197,7 +1196,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
                 shutdownFinishing) {  // if shutting down kill worker
               killWorker(this);
             } else {
-              lastRunTime = ClockWrapper.getLastKnownTime();
+              lastRunTime = Clock.lastKnownTimeMillis();
               workerDone(this);
             }
           }
@@ -1283,18 +1282,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     protected OneTimeTaskWrapper(Runnable task, TaskPriority priority, long delay) {
       super(TaskType.OneTime, task, priority);
       
-      runTime = ClockWrapper.getAccurateTime() + delay;
+      runTime = Clock.accurateTime() + delay;
     }
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return unit.convert(runTime - ClockWrapper.getAccurateTime(), 
+      return unit.convert(runTime - ClockWrapper.getSemiAccurateTime(), 
                           TimeUnit.MILLISECONDS);
     }
     
     @Override
     protected long getDelayEstimateInMillis() {
-      return runTime - ClockWrapper.getLastKnownTime();
+      return runTime - Clock.lastKnownTimeMillis();
     }
     
     @Override
@@ -1329,7 +1328,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       this.recurringDelay = recurringDelay;
       //maxExpectedRuntime = -1;
       executing = false;
-      this.nextRunTime = ClockWrapper.getAccurateTime() + initialDelay;
+      this.nextRunTime = Clock.accurateTime() + initialDelay;
     }
 
     @Override
@@ -1343,12 +1342,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     private long getNextDelayInMillis() {
-      return nextRunTime - ClockWrapper.getAccurateTime();
+      return nextRunTime - ClockWrapper.getSemiAccurateTime();
     }
     
     @Override
     protected long getDelayEstimateInMillis() {
-      return nextRunTime - ClockWrapper.getLastKnownTime();
+      return nextRunTime - Clock.lastKnownTimeMillis();
     }
 
     @Override
@@ -1379,7 +1378,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     private void reschedule() {
-      nextRunTime = ClockWrapper.getAccurateTime() + recurringDelay;
+      nextRunTime = Clock.accurateTime() + recurringDelay;
       
       // now that nextRunTime has been set, resort the queue
       switch (priority) {
@@ -1388,7 +1387,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             if (! shutdownStarted.get()) {
               ClockWrapper.stopForcingUpdate();
               try {
-                ClockWrapper.updateClock();
                 highPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
                 ClockWrapper.resumeForcingUpdate();
@@ -1401,7 +1399,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
             if (! shutdownStarted.get()) {
               ClockWrapper.stopForcingUpdate();
               try {
-                ClockWrapper.updateClock();
                 lowPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
                 ClockWrapper.resumeForcingUpdate();

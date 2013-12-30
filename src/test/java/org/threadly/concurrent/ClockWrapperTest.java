@@ -12,30 +12,32 @@ public class ClockWrapperTest {
   @Before
   public void setup() {
     Clock.stopClockUpdateThread();
+    
+    ClockWrapper.REQUESTS_TO_STOP_UPDATING_TIME.set(0);
   }
   
   @Test
   public void getAccurateTimeTest() {
-    final long startTime = ClockWrapper.getAccurateTime();
+    final long startTime = ClockWrapper.getSemiAccurateTime();
     
-    new TimeChangeCondition(startTime).blockTillTrue();
+    new TimeChangeCondition(startTime, true).blockTillTrue();
     
     long updateTime;
     // verify getting updates
-    assertTrue(startTime != (updateTime = ClockWrapper.getAccurateTime()));
+    assertTrue(startTime != (updateTime = ClockWrapper.getSemiAccurateTime()));
     
     // request stop to updates
     ClockWrapper.stopForcingUpdate();
 
-    new TimeChangeCondition(updateTime).blockTillTrue();
+    new TimeChangeCondition(updateTime, false).blockTillTrue();
     
     // verify no longer getting updates
-    assertEquals(updateTime, ClockWrapper.getAccurateTime());
+    assertEquals(updateTime, ClockWrapper.getSemiAccurateTime());
     
     // allow updates again
     ClockWrapper.resumeForcingUpdate();
     
-    assertTrue(updateTime != ClockWrapper.getAccurateTime());
+    assertTrue(updateTime != ClockWrapper.getSemiAccurateTime());
   }
   
   @Test (expected = IllegalStateException.class)
@@ -43,29 +45,22 @@ public class ClockWrapperTest {
     ClockWrapper.resumeForcingUpdate();
   }
   
-  @Test
-  public void getLastKnownTimeAndUpdateTest() {
-    long originalTime;
-    assertEquals(originalTime = Clock.lastKnownTimeMillis(), ClockWrapper.getLastKnownTime());
-
-    new TimeChangeCondition(originalTime).blockTillTrue();
-    
-    long updateTime = ClockWrapper.updateClock();
-    assertTrue(originalTime != updateTime);
-    assertEquals(Clock.lastKnownTimeMillis(), ClockWrapper.getLastKnownTime());
-    assertEquals(updateTime, ClockWrapper.getLastKnownTime());
-  }
-  
   private class TimeChangeCondition extends TestCondition {
+    private final boolean system;
     private final long time;
     
-    private TimeChangeCondition(long time) {
+    private TimeChangeCondition(long time, boolean system) {
+      this.system = system;
       this.time = time;
     }
     
     @Override
     public boolean get() {
-      return System.currentTimeMillis() != time;
+      if (system) {
+        return System.currentTimeMillis() != time;
+      } else {
+        return Clock.accurateTime() != time;
+      }
     }
     
     @Override
