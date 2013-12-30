@@ -29,13 +29,31 @@ import org.threadly.util.ExceptionUtils;
 /**
  * <p>Executor to run tasks, schedule tasks.  
  * Unlike {@link java.util.concurrent.ScheduledThreadPoolExecutor}
- * this scheduled executor's pool size can grow and shrink 
- * based off usage.  It also has the benefit that you can 
- * provide "low priority" tasks which will attempt to use 
- * existing workers and not instantly create new threads on 
- * demand.  Thus allowing you to better take the benefits 
- * of a thread pool for tasks which specific execution time 
- * is less important.</p>
+ * this scheduled executor's pool size can grow and shrink based off 
+ * usage.  It also has the benefit that you can provide "low priority" 
+ * tasks which will attempt to use existing workers and not instantly 
+ * create new threads on demand.  Thus allowing you to better take 
+ * the benefits of a thread pool for tasks which specific execution 
+ * time is less important.</p>
+ * 
+ * <p>Most tasks provided into this pool will likely want to be 
+ * "high priority", to more closely match the behavior of other 
+ * thread pools.  That is why unless specified by the constructor, 
+ * the default {@link TaskPriority} is High.</p>
+ * 
+ * <p>When providing a "low priority" task, the task wont execute till 
+ * one of the following is true.  The pool is has low load, and there 
+ * are available threads already to run on.  The pool has no available 
+ * threads, but is under it's max size and has waited the maximum wait 
+ * time for a thread to be become available.</p>
+ * 
+ * <p>In all conditions, "low priority" tasks will never be starved.  
+ * They only attempt to allow "high priority" tasks the priority.  
+ * This makes "low priority" tasks ideal which do regular cleanup, or 
+ * in general anything that must run, but cares little if there is a 
+ * 1, or 10 second gap in the execution time.  That amount of tolerance 
+ * for "low priority" tasks is adjustable by setting the 
+ * maxWaitForLowPriorityInMs either in the constructor, or at runtime.</p>
  * 
  * @author jent - Mike Jensen
  */
