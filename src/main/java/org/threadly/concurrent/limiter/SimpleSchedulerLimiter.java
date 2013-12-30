@@ -13,10 +13,11 @@ import org.threadly.concurrent.VirtualRunnable;
  * global pool), they can wrap the executor in this class.</p>
  * 
  * <p>Thus providing you better control on the absolute thread count and 
- * how much parallelism can occur in different sections of the program.</p> 
+ * how much parallelism can occur in different sections of the program.</p>
  * 
- * <p>Thus avoiding from having to create multiple thread pools, and also 
- * using threads more efficiently than multiple thread pools would.</p>
+ * <p>This is an alternative from having to create multiple thread pools.  
+ * By using this you also are able to accomplish more efficiently thread use 
+ * than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
  */

@@ -5,6 +5,9 @@ import java.util.concurrent.CancellationException;
 /**
  * <p>Class to hold a singleton CancellationException to prevent needing to construct it.</p>
  * 
+ * <p>This is not designed to be used by anyone outside of threadly.  If a callable throws this 
+ * exception it will be interpreted as a cancellation rather than an execution exception.</p>
+ * 
  * @author jent - Mike Jensen
  */
 public class StaticCancellationException {

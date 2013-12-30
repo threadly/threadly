@@ -1,5 +1,5 @@
 
 /**
- * <p>Implementations of different futures and future utilities.</p>
+ * <p>Implementations of different futures as well as utilities for handling futures.</p>
  */
 package org.threadly.concurrent.future;

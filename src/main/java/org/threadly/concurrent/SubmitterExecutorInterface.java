@@ -29,7 +29,8 @@ public interface SubmitterExecutorInterface extends Executor {
    * slight increase in load when using submit over execute.  
    * So this should only be used when the future is necessary.
    * 
-   * The future .get() method will return null once the runnable has completed.
+   * The future .get() method will return the provided result 
+   * once the runnable has completed.
    * 
    * @param task runnable to be executed
    * @param result result to be returned from resulting future .get() when runnable completes

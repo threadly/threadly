@@ -16,7 +16,7 @@ import org.threadly.concurrent.lock.VirtualLock;
 
 /**
  * <p>A thread safe list implementation with an array back end.  Make sure
- * to read the javadocs carefully, as many functions behave subtly different
+ * to read the javadocs carefully, as several functions behave subtly different
  * from the java.util.List definition.</p>
  * 
  * <p>The design of this implementation is NOT to completely avoid synchronization.  
@@ -25,8 +25,18 @@ import org.threadly.concurrent.lock.VirtualLock;
  * data is immutable.  Each read has an immutable version of the data.  Thus making 
  * writes more expensive (almost like a CopyOnWriteArrayList).</p>
  * 
- * <p>The difference between this and a CopyOnWriteArrayList is that it does allow some 
- * synchronization.  Which can give higher consistency guarantees for some operations.</p>
+ * <p>There are several differences between this and a CopyOnWriteArrayList.  The first 
+ * being that we don't have to copy the structure on every write operation.  By setting 
+ * the front and/or rear padding, we can add items to the front or end of the list while 
+ * avoiding a copy operation.  In addition removals also do not require a copy operation.  
+ * Furthermore, this implementation differs from  a CopyOnWriteArrayList is that it does 
+ * allow some synchronization.  Which can give higher consistency guarantees for some 
+ * operations by allowing you to synchronize on the modification lock to perform multiple 
+ * atomic operations.</p>
+ * 
+ * <p>The main motivation in implementing this was to avoid array copies as much as possible 
+ * (which for large lists can be costly).  But also the implementation to cheaply reposition 
+ * an item in the list was necessary for other performance benefits.</p>
  * 
  * <p>A couple notable points is that subList calls are very cheap, but modifications
  * to sublist are completely independent from their source list.</p>

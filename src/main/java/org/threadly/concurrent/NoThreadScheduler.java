@@ -13,10 +13,16 @@ import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
- * <p>Executor which has no threads itself.  This can be useful for testing.
- * It has the same semantics that it only progressed forward with .tick(), but
- * since it is running on the calling thread, calls to .wait() and .sleep() will
- * block (possibly forever).</p>
+ * <p>Executor which has no threads itself.  This allows you to have the same 
+ * scheduler abilities (schedule tasks, recurring tasks, etc, etc), without having 
+ * to deal with multiple threads, memory barriers, or other similar concerns.  
+ * This class can be very useful in GUI development (if you want it to run on the GUI 
+ * thread).  It also can be useful in android development in a very similar way.</p>
+ * 
+ * <p>The tasks in this scheduler are only progressed forward with calls to .tick().  
+ * Since it is running on the calling thread, calls to .wait() and .sleep() from sub 
+ * tasks will block (possibly forever).  The call to .tick() will not unblock till there 
+ * is no more work for the scheduler to currently handle.</p>
  * 
  * @author jent - Mike Jensen
  */

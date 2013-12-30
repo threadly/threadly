@@ -12,6 +12,10 @@ import java.util.concurrent.locks.LockSupport;
  * This means lastKnownTimeMillis() will only be as accurate as the
  * frequency with which accurateTime() is called.</p>
  * 
+ * <p>In order to ensure a minimum level of accuracy, by default a thread 
+ * is started to call accurateTime() every 100 milliseconds.  This can be 
+ * disabled by calling stopClockUpdateThread().</p>
+ * 
  * @author jent - Mike Jensen
  */
 public class Clock {
@@ -34,7 +38,7 @@ public class Clock {
   }
   
   /** 
-   * Starts the clock updating automatically (used for testing).
+   * Starts a thread to regularly updated the clock automatically.
    */
   public static void startClockUpdateThread() {
     synchronized (UPDATE_LOCK) {
@@ -53,7 +57,7 @@ public class Clock {
   }
 
   /**
-   * Stops the clock from updating automatically (used for testing).
+   * Stops the clock from updating automatically.
    * 
    * This call blocks until the automatic update thread stops, or 
    * until this thread is interrupted.

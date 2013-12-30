@@ -12,51 +12,25 @@ import org.threadly.concurrent.future.ListenableFuture;
  */
 public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface {
   /**
-   * Executes the task as soon as possible with the given priority.  
+   * Executes the task as soon as possible for the given priority.  
    * 
    * @param task runnable to execute
    * @param priority priority for task
    */
   public void execute(Runnable task, TaskPriority priority);
   
-  /**
-   * Submit a task to run as soon as possible.  There is a 
-   * slight increase in load when using submit over execute.  
-   * So this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return null once the runnable has completed.
-   * 
-   * @param task runnable to be executed
-   * @return a future to know when the task has completed
-   */
+  @Override
   public ListenableFuture<?> submit(Runnable task);
   
-  /**
-   * Submit a task to run as soon as possible.  There is a 
-   * slight increase in load when using submit over execute.  
-   * So this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return null once the runnable has completed.
-   * 
-   * @param task runnable to be executed
-   * @param result result to be returned from resulting future .get() when runnable completes
-   * @return a future to know when the task has completed
-   */
+  @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result);
 
-  /**
-   * Submit a {@link Callable} to run as soon as possible.  This is 
-   * needed when a result needs to be consumed from the 
-   * callable.
-   * 
-   * @param task callable to be executed
-   * @return a future to know when the task has completed and get the result of the callable
-   */
+  @Override
   public <T> ListenableFuture<T> submit(Callable<T> task);
   
   /**
-   * Submit a task to run as soon as possible.  There is a 
-   * slight increase in load when using submit over execute.  
+   * Submit a task to run as soon as possible for the given priority.  
+   * There is a slight increase in load when using submit over execute.  
    * So this should only be used when the future is necessary.
    * 
    * The future .get() method will return null once the runnable has completed.
@@ -68,11 +42,12 @@ public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface 
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority);
   
   /**
-   * Submit a task to run as soon as possible.  There is a 
-   * slight increase in load when using submit over execute.  
+   * Submit a task to run as soon as possible for the given priority.  
+   * There is a slight increase in load when using submit over execute.  
    * So this should only be used when the future is necessary.
    * 
-   * The future .get() method will return null once the runnable has completed.
+   * The future .get() method will return the provided result once the 
+   * runnable has completed.
    * 
    * @param task runnable to be executed
    * @param result result to be returned from resulting future .get() when runnable completes
@@ -83,9 +58,8 @@ public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface 
                                         TaskPriority priority);
 
   /**
-   * Submit a {@link Callable} to run as soon as possible.  This is 
-   * needed when a result needs to be consumed from the 
-   * callable.
+   * Submit a {@link Callable} to run as soon as possible for the given priority.  
+   * This is needed when a result needs to be consumed from the callable.
    * 
    * @param task callable to be executed
    * @param priority priority for callable
@@ -102,44 +76,15 @@ public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface 
    */
   public void schedule(Runnable task, long delayInMs, TaskPriority priority);
   
-  /**
-   * Schedule a task with a given delay.  There is a slight 
-   * increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return null once the runnable has completed.
-   * 
-   * @param task runnable to execute
-   * @param delayInMs time in milliseconds to wait to execute task
-   * @return a future to know when the task has completed
-   */
+  @Override
   public ListenableFuture<?> submitScheduled(Runnable task, 
                                              long delayInMs);
   
-  /**
-   * Schedule a task with a given delay.  There is a slight 
-   * increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return null once the runnable has completed.
-   * 
-   * @param task runnable to execute
-   * @param result result to be returned from resulting future .get() when runnable completes
-   * @param delayInMs time in milliseconds to wait to execute task
-   * @return a future to know when the task has completed
-   */
+  @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
                                                  long delayInMs);
   
-  /**
-   * Schedule a {@link Callable} with a given delay.  This is 
-   * needed when a result needs to be consumed from the 
-   * callable.
-   * 
-   * @param task callable to be executed
-   * @param delayInMs time in milliseconds to wait to execute task
-   * @return a future to know when the task has completed and get the result of the callable
-   */
+  @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, 
                                                  long delayInMs);
   
@@ -163,7 +108,8 @@ public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface 
    * a slight increase in load when using submitScheduled over schedule.  So 
    * this should only be used when the future is necessary.
    * 
-   * The future .get() method will return null once the runnable has completed.
+   * The future .get() method will return the provided result 
+   * once the runnable has completed.
    * 
    * @param task runnable to execute
    * @param result result to be returned from resulting future .get() when runnable completes
