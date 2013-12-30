@@ -17,7 +17,7 @@ import org.threadly.concurrent.lock.VirtualLock;
  * @author jent - Mike Jensen
  * @param <T> type to be returned from .call()
  */
-public abstract class VirtualCallable<T> implements Callable<T>  {
+public abstract class VirtualCallable<T> implements Callable<T> {
   protected LockFactory factory = null;
   
   /**
@@ -80,8 +80,8 @@ public abstract class VirtualCallable<T> implements Callable<T>  {
    * @param result result to be provided from the callable after the runnable has run
    * @return {@link VirtualCallable} object which will run the provided task
    */
-  public static <T> VirtualCallable<T> fromRunnable(final Runnable task, 
-                                                    final T result) {
+  public static <T> VirtualCallable<T> fromRunnable(Runnable task, 
+                                                    T result) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task to be run within the callable");
     }
