@@ -19,15 +19,6 @@ public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface 
    */
   public void execute(Runnable task, TaskPriority priority);
   
-  @Override
-  public ListenableFuture<?> submit(Runnable task);
-  
-  @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result);
-
-  @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task);
-  
   /**
    * Submit a task to run as soon as possible for the given priority.  
    * There is a slight increase in load when using submit over execute.  
@@ -75,18 +66,6 @@ public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface 
    * @param priority priority to give task for execution
    */
   public void schedule(Runnable task, long delayInMs, TaskPriority priority);
-  
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, 
-                                             long delayInMs);
-  
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
-                                                 long delayInMs);
-  
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, 
-                                                 long delayInMs);
   
   /**
    * Schedule a task with a given delay and a specified priority.  There is 

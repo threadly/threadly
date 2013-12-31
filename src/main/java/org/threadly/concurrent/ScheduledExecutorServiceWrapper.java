@@ -1,11 +1,11 @@
 package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+
+import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.ListenableFutureTask;
 
 /**
  * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor}
@@ -39,26 +39,34 @@ public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterf
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     return submit(task, null);
   }
 
   @Override
-  public <T> Future<T> submit(Runnable task, T result) {
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
     if (task == null) {
       throw new IllegalArgumentException("Runnable can not be null");
     }
     
-    return scheduler.submit(task, result);
+    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task, result);
+    
+    scheduler.execute(fTask);
+    
+    return fTask;
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     if (task == null) {
       throw new IllegalArgumentException("Callable can not be null");
     }
     
-    return scheduler.submit(task);
+    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task);
+    
+    scheduler.execute(fTask);
+    
+    return fTask;
   }
 
   @Override
@@ -73,35 +81,39 @@ public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterf
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, null, delayInMs);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Runnable task, T result, 
-                                       long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
+                                                 long delayInMs) {
     if (task == null) {
       throw new IllegalArgumentException("Runnable can not be null");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
     
-    Future<?> future = scheduler.schedule(task, delayInMs, 
-                                          TimeUnit.MILLISECONDS);
+    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task, result);
     
-    return new FutureWrapper<T>(future, result);
+    scheduler.schedule(fTask, delayInMs, TimeUnit.MILLISECONDS);
+    
+    return fTask;
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     if (task == null) {
       throw new IllegalArgumentException("Callable can not be null");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
     
-    return scheduler.schedule(task, delayInMs, 
-                              TimeUnit.MILLISECONDS);
+    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task);
+    
+    scheduler.schedule(fTask, delayInMs, TimeUnit.MILLISECONDS);
+    
+    return fTask;
   }
 
   @Override
@@ -122,53 +134,5 @@ public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterf
   @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
-  }
-  
-  /**
-   * <p>This is a wrapper to change the result for a given future.  It 
-   * can take a future with type <?> and can return any result desired.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @param <T> type for futures result
-   */
-  private static class FutureWrapper<T> implements Future<T> {
-    private final Future<?> future;
-    private final T result;
-    
-    private FutureWrapper(Future<?> future, T result) {
-      this.future = future;
-      this.result = result;
-    }
-    
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return future.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return future.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-      return future.isDone();
-    }
-
-    @Override
-    public T get() throws InterruptedException, ExecutionException {
-      future.get(); // blocks
-      
-      return result;
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, 
-                                                     ExecutionException, 
-                                                     TimeoutException {
-      future.get(timeout, unit);  // blocks
-      
-      return result;
-    }
   }
 }

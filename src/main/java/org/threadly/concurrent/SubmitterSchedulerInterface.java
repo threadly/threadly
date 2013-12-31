@@ -1,7 +1,8 @@
 package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+
+import org.threadly.concurrent.future.ListenableFuture;
 
 /**
  * <p>A thread pool for scheduling tasks with provided futures.  
@@ -23,8 +24,8 @@ public interface SubmitterSchedulerInterface extends SimpleSchedulerInterface,
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public Future<?> submitScheduled(Runnable task, 
-                                   long delayInMs);
+  public ListenableFuture<?> submitScheduled(Runnable task, 
+                                             long delayInMs);
   
   /**
    * Schedule a task with a given delay.  There is a slight 
@@ -39,8 +40,8 @@ public interface SubmitterSchedulerInterface extends SimpleSchedulerInterface,
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public <T> Future<T> submitScheduled(Runnable task, T result,  
-                                       long delayInMs);
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result,  
+                                                 long delayInMs);
   
   /**
    * Schedule a {@link Callable} with a given delay.  This is 
@@ -51,6 +52,6 @@ public interface SubmitterSchedulerInterface extends SimpleSchedulerInterface,
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed and get the result of the callable
    */
-  public <T> Future<T> submitScheduled(Callable<T> task, 
-                                       long delayInMs);
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, 
+                                                 long delayInMs);
 }

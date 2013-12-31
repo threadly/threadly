@@ -9,7 +9,6 @@ import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.VirtualRunnable;
-import org.threadly.concurrent.future.FutureFuture;
 import org.threadly.concurrent.future.FutureListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
 
@@ -33,7 +32,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter 
                                       implements PrioritySchedulerInterface {
   protected final PrioritySchedulerInterface scheduler;
-  protected final Queue<Wrapper> waitingTasks;
+  protected final Queue<PriorityWrapper> waitingTasks;
   
   /**
    * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
@@ -62,7 +61,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     }
     
     this.scheduler = scheduler;
-    waitingTasks = new ConcurrentLinkedQueue<Wrapper>();
+    waitingTasks = new ConcurrentLinkedQueue<PriorityWrapper>();
   }
   
   @Override
@@ -75,7 +74,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     synchronized (this) {
       while (! waitingTasks.isEmpty() && canRunTask()) {
         // by entering loop we can now execute task
-        Wrapper next = waitingTasks.poll();
+        PriorityWrapper next = waitingTasks.poll();
         if (next.hasFuture()) {
           if (next.isCallable()) {
             ListenableFuture<?> f = scheduler.submit(next.getCallable(), next.getPriority());
@@ -189,7 +188,8 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   private <T> void doSubmit(Runnable task, T result, 
-                            TaskPriority priority, FutureFuture<T> ff) {
+                            TaskPriority priority, 
+                            FutureListenableFuture<T> ff) {
     PriorityRunnableWrapper wrapper = new PriorityRunnableWrapper(task, priority, ff);
     ff.setTaskCanceler(wrapper);
     
@@ -218,7 +218,8 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   private <T> void doSubmit(Callable<T> task, 
-                            TaskPriority priority, FutureFuture<T> ff) {
+                            TaskPriority priority, 
+                            FutureListenableFuture<T> ff) {
     PriorityCallableWrapper<T> wrapper = new PriorityCallableWrapper<T>(task, priority, ff);
     ff.setTaskCanceler(wrapper);
     
@@ -342,11 +343,11 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     private final Runnable runnable;
     private final T runnableResult;
     private final TaskPriority priority;
-    private final FutureFuture<T> future;
+    private final FutureListenableFuture<T> future;
 
     public DelayedExecutionRunnable(Runnable runnable, T runnableResult, 
                                     TaskPriority priority, 
-                                    FutureFuture<T> future) {
+                                    FutureListenableFuture<T> future) {
       this.runnable = runnable;
       this.runnableResult = runnableResult;
       this.priority = priority;
@@ -383,11 +384,11 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
                                                          RunnableContainerInterface {
     private final Callable<T> callable;
     private final TaskPriority priority;
-    private final FutureFuture<T> future;
+    private final FutureListenableFuture<T> future;
 
     public DelayedExecutionCallable(Callable<T> runnable, 
                                     TaskPriority priority, 
-                                    FutureFuture<T> future) {
+                                    FutureListenableFuture<T> future) {
       this.callable = runnable;
       this.priority = priority;
       this.future = future;
@@ -421,7 +422,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * @author jent - Mike Jensen
    */
   protected class RecurringRunnableWrapper extends LimiterRunnableWrapper
-                                           implements Wrapper {
+                                           implements PriorityWrapper {
     private final long recurringDelay;
     private final TaskPriority priority;
     private final DelayedExecutionRunnable<?> delayRunnable;
@@ -452,7 +453,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
     }
 
     @Override
-    public FutureFuture<?> getFuture() {
+    public FutureListenableFuture<?> getFuture() {
       throw new UnsupportedOperationException();
     }
 
@@ -484,53 +485,21 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class PriorityRunnableWrapper extends LimiterRunnableWrapper
-                                          implements Wrapper  {
+  protected class PriorityRunnableWrapper extends RunnableFutureWrapper
+                                          implements PriorityWrapper  {
     private final TaskPriority priority;
-    private final FutureFuture<?> future;
     
     public PriorityRunnableWrapper(Runnable runnable, 
                                    TaskPriority priority, 
-                                   FutureFuture<?> future) {
-      super(runnable);
+                                   FutureListenableFuture<?> future) {
+      super(runnable, future);
       
       this.priority = priority;
-      this.future = future;
-    }
-    
-    @Override
-    protected void doAfterRunTasks() {
-      // nothing to do here
-    }
-
-    @Override
-    public boolean isCallable() {
-      return false;
-    }
-
-    @Override
-    public FutureFuture<?> getFuture() {
-      return future;
     }
 
     @Override
     public TaskPriority getPriority() {
       return priority;
-    }
-
-    @Override
-    public boolean hasFuture() {
-      return future != null;
-    }
-
-    @Override
-    public Callable<?> getCallable() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Runnable getRunnable() {
-      return this;
     }
   }
 
@@ -542,62 +511,32 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * @author jent - Mike Jensen
    * @param <T> type for return of callable contained within wrapper
    */
-  protected class PriorityCallableWrapper<T> extends LimiterCallableWrapper<T>
-                                             implements Wrapper {
+  protected class PriorityCallableWrapper<T> extends CallableFutureWrapper<T>
+                                             implements PriorityWrapper {
     private final TaskPriority priority;
-    private final FutureFuture<?> future;
     
     public PriorityCallableWrapper(Callable<T> callable, 
                                    TaskPriority priority, 
-                                   FutureFuture<?> future) {
-      super(callable);
+                                   FutureListenableFuture<?> future) {
+      super(callable, future);
       
       this.priority = priority;
-      this.future = future;
-    }
-
-    @Override
-    public boolean isCallable() {
-      return true;
-    }
-
-    @Override
-    public FutureFuture<?> getFuture() {
-      return future;
     }
 
     @Override
     public TaskPriority getPriority() {
       return priority;
     }
-
-    @Override
-    public boolean hasFuture() {
-      return future != null;
-    }
-
-    @Override
-    public Callable<?> getCallable() {
-      return this;
-    }
-
-    @Override
-    public Runnable getRunnable() {
-      throw new UnsupportedOperationException();
-    }
   }
   
   /**
-   * <p>Interface so that we can handle both callables and runnables.</p>
+   * <p>Interface so that we can handle both callables and runnables.  
+   * This also provides us the ability to get the original priority the 
+   * task was submitted with.</p>
    * 
    * @author jent - Mike Jensen
    */
-  private interface Wrapper {
-    public boolean isCallable();
-    public FutureFuture<?> getFuture();
+  protected interface PriorityWrapper extends Wrapper {
     public TaskPriority getPriority();
-    public boolean hasFuture();
-    public Callable<?> getCallable();
-    public Runnable getRunnable();
   }
 }

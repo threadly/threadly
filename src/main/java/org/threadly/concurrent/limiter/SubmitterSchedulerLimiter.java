@@ -9,7 +9,8 @@ import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.VirtualRunnable;
-import org.threadly.concurrent.future.FutureFuture;
+import org.threadly.concurrent.future.FutureListenableFuture;
+import org.threadly.concurrent.future.ListenableFuture;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens 
@@ -40,7 +41,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
    * @param maxConcurrency maximum qty of runnables to run in parallel
    */
   public SubmitterSchedulerLimiter(SubmitterSchedulerInterface scheduler, 
-                                int maxConcurrency) {
+                                   int maxConcurrency) {
     this(scheduler, maxConcurrency, null);
   }
   
@@ -52,7 +53,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
   public SubmitterSchedulerLimiter(SubmitterSchedulerInterface scheduler, 
-                                int maxConcurrency, String subPoolName) {
+                                   int maxConcurrency, String subPoolName) {
     super(maxConcurrency, subPoolName);
     
     if (scheduler == null) {
@@ -112,17 +113,17 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
 
   @Override
-  public Future<?> submit(Runnable task) {
+  public ListenableFuture<?> submit(Runnable task) {
     return submit(task, null);
   }
 
   @Override
-  public <T> Future<T> submit(Runnable task, T result) {
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide task");
     }
     
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     
     doSubmit(task, result, ff);
     
@@ -130,7 +131,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   private <T> void doSubmit(Runnable task, T result, 
-                            FutureFuture<T> ff) {
+                            FutureListenableFuture<T> ff) {
     RunnableFutureWrapper wrapper = new RunnableFutureWrapper(task, ff);
     ff.setTaskCanceler(wrapper);
     
@@ -143,12 +144,12 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
 
   @Override
-  public <T> Future<T> submit(Callable<T> task) {
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide task");
     }
     
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     
     doSubmit(task, ff);
     
@@ -156,7 +157,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
   
   private <T> void doSubmit(Callable<T> task, 
-                            FutureFuture<T> ff) {
+                            FutureListenableFuture<T> ff) {
     CallableFutureWrapper<T> wrapper = new CallableFutureWrapper<T>(task, ff);
     ff.setTaskCanceler(wrapper);
     
@@ -185,19 +186,19 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
 
   @Override
-  public Future<?> submitScheduled(Runnable task, long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, null, delayInMs);
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Runnable task, T result, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     if (delayInMs == 0) {
       doSubmit(task, result, ff);
     } else {
@@ -209,14 +210,14 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
   }
 
   @Override
-  public <T> Future<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     if (task == null) {
       throw new IllegalArgumentException("Must provide a task");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    FutureFuture<T> ff = new FutureFuture<T>();
+    FutureListenableFuture<T> ff = new FutureListenableFuture<T>();
     if (delayInMs == 0) {
       doSubmit(task, ff);
     } else {
@@ -258,10 +259,10 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
                                               implements RunnableContainerInterface {
     private final Runnable runnable;
     private final T runnableResult;
-    private final FutureFuture<T> future;
+    private final FutureListenableFuture<T> future;
 
     public DelayedExecutionRunnable(Runnable runnable, T runnableResult, 
-                                    FutureFuture<T> future) {
+                                    FutureListenableFuture<T> future) {
       this.runnable = runnable;
       this.runnableResult = runnableResult;
       this.future = future;
@@ -292,10 +293,10 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
                                               implements CallableContainerInterface<T>, 
                                                          RunnableContainerInterface {
     private final Callable<T> callable;
-    private final FutureFuture<T> future;
+    private final FutureListenableFuture<T> future;
 
     public DelayedExecutionCallable(Callable<T> runnable, 
-                                    FutureFuture<T> future) {
+                                    FutureListenableFuture<T> future) {
       this.callable = runnable;
       this.future = future;
     }
@@ -351,7 +352,7 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
     }
 
     @Override
-    public FutureFuture<?> getFuture() {
+    public FutureListenableFuture<?> getFuture() {
       throw new UnsupportedOperationException();
     }
 
@@ -369,112 +370,5 @@ public class SubmitterSchedulerLimiter extends AbstractSchedulerLimiter
     public Runnable getRunnable() {
       return this;
     }
-  }
-
-  /**
-   * <p>Wrapper for tasks which are executed in this sub pool, 
-   * this ensures that handleTaskFinished() will be called 
-   * after the task completes.</p>
-   * 
-   * @author jent - Mike Jensen
-   */
-  protected class RunnableFutureWrapper extends LimiterRunnableWrapper
-                                        implements Wrapper  {
-    private final FutureFuture<?> future;
-    
-    public RunnableFutureWrapper(Runnable runnable, 
-                                 FutureFuture<?> future) {
-      super(runnable);
-      
-      this.future = future;
-    }
-    
-    @Override
-    protected void doAfterRunTasks() {
-      // nothing to do here
-    }
-
-    @Override
-    public boolean isCallable() {
-      return false;
-    }
-
-    @Override
-    public FutureFuture<?> getFuture() {
-      return future;
-    }
-
-    @Override
-    public boolean hasFuture() {
-      return future != null;
-    }
-
-    @Override
-    public Callable<?> getCallable() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Runnable getRunnable() {
-      return this;
-    }
-  }
-
-  /**
-   * <p>Wrapper for tasks which are executed in this sub pool, 
-   * this ensures that handleTaskFinished() will be called 
-   * after the task completes.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @param <T> type for return of callable contained within wrapper
-   */
-  protected class CallableFutureWrapper<T> extends LimiterCallableWrapper<T>
-                                           implements Wrapper {
-    private final FutureFuture<?> future;
-    
-    public CallableFutureWrapper(Callable<T> callable, 
-                                 FutureFuture<?> future) {
-      super(callable);
-      
-      this.future = future;
-    }
-
-    @Override
-    public boolean isCallable() {
-      return true;
-    }
-
-    @Override
-    public FutureFuture<?> getFuture() {
-      return future;
-    }
-
-    @Override
-    public boolean hasFuture() {
-      return future != null;
-    }
-
-    @Override
-    public Callable<?> getCallable() {
-      return this;
-    }
-
-    @Override
-    public Runnable getRunnable() {
-      throw new UnsupportedOperationException();
-    }
-  }
-  
-  /**
-   * <p>Interface so that we can handle both callables and runnables.</p>
-   * 
-   * @author jent - Mike Jensen
-   */
-  private interface Wrapper {
-    public boolean isCallable();
-    public FutureFuture<?> getFuture();
-    public boolean hasFuture();
-    public Callable<?> getCallable();
-    public Runnable getRunnable();
   }
 }

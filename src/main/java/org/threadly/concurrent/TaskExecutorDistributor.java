@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureVirtualTask;
@@ -405,17 +404,17 @@ public class TaskExecutorDistributor {
     }
 
     @Override
-    public Future<?> submit(Runnable task) {
+    public ListenableFuture<?> submit(Runnable task) {
       return submitTask(threadKey, task);
     }
 
     @Override
-    public <T> Future<T> submit(Runnable task, T result) {
+    public <T> ListenableFuture<T> submit(Runnable task, T result) {
       return submitTask(threadKey, task, result);
     }
 
     @Override
-    public <T> Future<T> submit(Callable<T> task) {
+    public <T> ListenableFuture<T> submit(Callable<T> task) {
       return submitTask(threadKey, task);
     }
   }

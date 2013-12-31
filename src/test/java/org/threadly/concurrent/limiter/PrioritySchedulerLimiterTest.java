@@ -23,7 +23,7 @@ import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
-import org.threadly.concurrent.future.FutureFuture;
+import org.threadly.concurrent.future.FutureListenableFuture;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -85,7 +85,7 @@ public class PrioritySchedulerLimiterTest {
         runnables.add(tr);
         if (flip2) {
           psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, 
-                                                               new FutureFuture<Object>()));
+                                                               new FutureListenableFuture<Object>()));
           flip2 = false;
         } else {
           psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, null));
@@ -98,7 +98,7 @@ public class PrioritySchedulerLimiterTest {
           public Object call() throws Exception {
             return new Object();
           }
-        }, TaskPriority.High, new FutureFuture<Object>()));
+        }, TaskPriority.High, new FutureListenableFuture<Object>()));
         flip1 = true;
       }
     }
