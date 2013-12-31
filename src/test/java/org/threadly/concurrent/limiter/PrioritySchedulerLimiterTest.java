@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -84,21 +83,18 @@ public class PrioritySchedulerLimiterTest {
         TestRunnable tr = new TestRunnable();
         runnables.add(tr);
         if (flip2) {
-          psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, 
-                                                               new FutureListenableFuture<Object>()));
+          psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, TaskPriority.High, 
+                                                             new FutureListenableFuture<Object>()));
           flip2 = false;
         } else {
-          psl.waitingTasks.add(psl.new PriorityRunnableWrapper(tr, TaskPriority.High, null));
+          psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, TaskPriority.High, null));
           flip2 = true;
         }
         flip1 = false;
       } else {
-        psl.waitingTasks.add(psl.new PriorityCallableWrapper<Object>(new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return new Object();
-          }
-        }, TaskPriority.High, new FutureListenableFuture<Object>()));
+        psl.waitingTasks.add(psl.new CallableFutureWrapper<Object>(new TestCallable(), 
+                                                                   TaskPriority.High, 
+                                                                   new FutureListenableFuture<Object>()));
         flip1 = true;
       }
     }

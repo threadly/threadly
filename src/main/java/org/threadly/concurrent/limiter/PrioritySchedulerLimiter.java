@@ -3,14 +3,18 @@ package org.threadly.concurrent.limiter;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.TaskPriority;
+import org.threadly.concurrent.VirtualCallable;
 import org.threadly.concurrent.VirtualRunnable;
+import org.threadly.concurrent.future.FutureFuture;
 import org.threadly.concurrent.future.FutureListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.StaticCancellationException;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens 
@@ -29,7 +33,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * 
  * @author jent - Mike Jensen
  */
-public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter 
+public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter 
                                       implements PrioritySchedulerInterface {
   protected final PrioritySchedulerInterface scheduler;
   protected final Queue<PriorityWrapper> waitingTasks;
@@ -156,7 +160,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    PriorityRunnableWrapper wrapper = new PriorityRunnableWrapper(task, priority, null);
+    RunnableFutureWrapper wrapper = new RunnableFutureWrapper(task, priority, null);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
       scheduler.execute(wrapper, priority);
@@ -190,7 +194,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   private <T> void doSubmit(Runnable task, T result, 
                             TaskPriority priority, 
                             FutureListenableFuture<T> ff) {
-    PriorityRunnableWrapper wrapper = new PriorityRunnableWrapper(task, priority, ff);
+    RunnableFutureWrapper wrapper = new RunnableFutureWrapper(task, priority, ff);
     ff.setTaskCanceler(wrapper);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
@@ -220,7 +224,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
   private <T> void doSubmit(Callable<T> task, 
                             TaskPriority priority, 
                             FutureListenableFuture<T> ff) {
-    PriorityCallableWrapper<T> wrapper = new PriorityCallableWrapper<T>(task, priority, ff);
+    CallableFutureWrapper<T> wrapper = new CallableFutureWrapper<T>(task, priority, ff);
     ff.setTaskCanceler(wrapper);
     
     if (canRunTask()) {  // try to avoid adding to queue if we can
@@ -477,7 +481,7 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
       return this;
     }
   }
-
+  
   /**
    * <p>Wrapper for priority tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
@@ -485,24 +489,57 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class PriorityRunnableWrapper extends RunnableFutureWrapper
-                                          implements PriorityWrapper  {
+  protected class RunnableFutureWrapper extends LimiterRunnableWrapper
+                                        implements PriorityWrapper  {
     private final TaskPriority priority;
+    private final FutureListenableFuture<?> future;
     
-    public PriorityRunnableWrapper(Runnable runnable, 
-                                   TaskPriority priority, 
-                                   FutureListenableFuture<?> future) {
-      super(runnable, future);
+    public RunnableFutureWrapper(Runnable runnable, 
+                                 TaskPriority priority, 
+                                 FutureListenableFuture<?> future) {
+      super(runnable);
       
       this.priority = priority;
+      this.future = future;
     }
 
     @Override
     public TaskPriority getPriority() {
       return priority;
     }
+    
+    @Override
+    protected void doAfterRunTasks() {
+      // nothing to do here
+    }
+
+    @Override
+    public boolean isCallable() {
+      return false;
+    }
+
+    @Override
+    public FutureListenableFuture<?> getFuture() {
+      return future;
+    }
+
+    @Override
+    public boolean hasFuture() {
+      return future != null;
+    }
+
+    @Override
+    public Callable<?> getCallable() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Runnable getRunnable() {
+      return this;
+    }
   }
 
+  // TODO - can this class be avoided by turning callables into ListenableFutureTasks sooner?
   /**
    * <p>Wrapper for priority tasks which are executed in this sub pool, 
    * this ensures that handleTaskFinished() will be called 
@@ -511,21 +548,120 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * @author jent - Mike Jensen
    * @param <T> type for return of callable contained within wrapper
    */
-  protected class PriorityCallableWrapper<T> extends CallableFutureWrapper<T>
-                                             implements PriorityWrapper {
+  protected class CallableFutureWrapper<T> extends LimiterCallableWrapper<T>
+                                           implements PriorityWrapper {
     private final TaskPriority priority;
+    private final FutureListenableFuture<?> future;
     
-    public PriorityCallableWrapper(Callable<T> callable, 
-                                   TaskPriority priority, 
-                                   FutureListenableFuture<?> future) {
-      super(callable, future);
+    public CallableFutureWrapper(Callable<T> callable, 
+                                 TaskPriority priority, 
+                                 FutureListenableFuture<?> future) {
+      super(callable);
       
       this.priority = priority;
+      this.future = future;
     }
 
     @Override
     public TaskPriority getPriority() {
       return priority;
+    }
+
+    @Override
+    public boolean isCallable() {
+      return true;
+    }
+
+    @Override
+    public FutureListenableFuture<?> getFuture() {
+      return future;
+    }
+
+    @Override
+    public boolean hasFuture() {
+      return future != null;
+    }
+
+    @Override
+    public Callable<?> getCallable() {
+      return this;
+    }
+
+    @Override
+    public Runnable getRunnable() {
+      throw new UnsupportedOperationException();
+    }
+  }
+  
+  // TODO - can this class be avoided by turning callables into ListenableFutureTasks sooner?
+  /**
+   * <p>Generic wrapper for callables which are used within the limiters.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @param <T> type for return of callable contained within wrapper
+   */
+  protected class LimiterCallableWrapper<T> extends VirtualCallable<T>
+                                            implements FutureFuture.TaskCanceler, 
+                                                       CallableContainerInterface<T>, 
+                                                       RunnableContainerInterface {
+    private final Callable<T> callable;
+    private final AtomicInteger runStatus;  // 0 = not started, -1 = canceled, 1 = running
+    
+    public LimiterCallableWrapper(Callable<T> callable) {
+      this.callable = callable;
+      runStatus = new AtomicInteger(0);
+    }
+    
+    @Override
+    public T call() throws Exception {
+      Thread currentThread = null;
+      String originalThreadName = null;
+      if (subPoolName != null) {
+        currentThread = Thread.currentThread();
+        originalThreadName = currentThread.getName();
+        
+        currentThread.setName(makeSubPoolThreadName(originalThreadName));
+      }
+      
+      try {
+        if (runStatus.compareAndSet(0, 1)) {
+          if (factory != null && 
+              callable instanceof VirtualCallable) {
+            VirtualCallable<T> vc = (VirtualCallable<T>)callable;
+            return vc.call(factory);
+          } else {
+            return callable.call();
+          }
+        } else {
+          throw StaticCancellationException.instance();
+        }
+      } finally {
+        runStatus.compareAndSet(1, 0);
+        handleTaskFinished();
+          
+        if (subPoolName != null) {
+          currentThread.setName(originalThreadName);
+        }
+      }
+    }
+
+    @Override
+    public boolean cancel() {
+      return runStatus.compareAndSet(0, -1);
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      if (callable instanceof RunnableContainerInterface) {
+        return ((RunnableContainerInterface)callable).getContainedRunnable();
+      } else {
+        return null;
+      }
+    }
+
+    @Override
+    public Callable<T> getContainedCallable() {
+      return callable;
     }
   }
   
@@ -536,7 +672,12 @@ public class PrioritySchedulerLimiter extends AbstractSchedulerLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected interface PriorityWrapper extends Wrapper {
+  protected interface PriorityWrapper {
     public TaskPriority getPriority();
+    public boolean isCallable();
+    public FutureListenableFuture<?> getFuture();
+    public boolean hasFuture();
+    public Callable<?> getCallable();
+    public Runnable getRunnable();
   }
 }
