@@ -1,8 +1,13 @@
 package org.threadly.concurrent.limiter;
 
+import java.util.concurrent.Callable;
+
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.VirtualRunnable;
+import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.ListenableFutureTask;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens 
@@ -21,8 +26,8 @@ import org.threadly.concurrent.VirtualRunnable;
  * 
  * @author jent - Mike Jensen
  */
-public class SimpleSchedulerLimiter extends ExecutorLimiter 
-                                    implements SimpleSchedulerInterface {
+public class SchedulerLimiter extends ExecutorLimiter 
+                              implements SubmitterSchedulerInterface {
   protected final SimpleSchedulerInterface scheduler;
   
   /**
@@ -31,8 +36,8 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * @param scheduler {@link SimpleSchedulerInterface} implementation to submit task executions to.
    * @param maxConcurrency maximum qty of runnables to run in parallel
    */
-  public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
-                                int maxConcurrency) {
+  public SchedulerLimiter(SimpleSchedulerInterface scheduler, 
+                          int maxConcurrency) {
     this(scheduler, maxConcurrency, null);
   }
   
@@ -43,8 +48,8 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * @param maxConcurrency maximum qty of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
-  public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
-                                int maxConcurrency, String subPoolName) {
+  public SchedulerLimiter(SimpleSchedulerInterface scheduler, 
+                          int maxConcurrency, String subPoolName) {
     super(scheduler, maxConcurrency, subPoolName);
     
     this.scheduler = scheduler;
@@ -53,6 +58,45 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
+  }
+
+  @Override
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
+    ListenableFutureTask<?> ft = new ListenableFutureTask<Object>(false, task);
+    
+    schedule(ft, delayInMs);
+    
+    return ft;
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
+    ListenableFutureTask<T> ft = new ListenableFutureTask<T>(false, task, result);
+    
+    schedule(ft, delayInMs);
+    
+    return ft;
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Must provide task");
+    }
+    
+    ListenableFutureTask<T> ft = new ListenableFutureTask<T>(false, task);
+    
+    schedule(ft, delayInMs);
+    
+    return ft;
   }
 
   @Override

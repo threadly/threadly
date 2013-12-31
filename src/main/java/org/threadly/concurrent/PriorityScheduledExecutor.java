@@ -661,6 +661,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           return false;
         }
       }
+    } else if (startRunnable instanceof RunnableContainerInterface) {
+      RunnableContainerInterface rci = (RunnableContainerInterface)startRunnable;
+      
+      return isContained(rci.getContainedRunnable(), compareTo);
     } else {
       return false;
     }
