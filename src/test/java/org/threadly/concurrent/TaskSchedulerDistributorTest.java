@@ -14,9 +14,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
-import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
-import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -27,7 +25,7 @@ public class TaskSchedulerDistributorTest {
   
   private volatile boolean ready;
   private PriorityScheduledExecutor scheduler;
-  private VirtualLock agentLock;
+  private Object agentLock;
   private TaskSchedulerDistributor distributor;
   
   @Before
@@ -37,7 +35,7 @@ public class TaskSchedulerDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
-    StripedLock sLock = new StripedLock(1, new NativeLockFactory()); // TODO - test with testable lock
+    StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
     distributor = new TaskSchedulerDistributor(scheduler, sLock);
     ready = false;
@@ -120,7 +118,7 @@ public class TaskSchedulerDistributorTest {
     new TaskSchedulerDistributor(scheduler, 1);
     new TaskSchedulerDistributor(1, scheduler);
     new TaskSchedulerDistributor(1, scheduler, 1);
-    StripedLock sLock = new StripedLock(1, new NativeLockFactory());
+    StripedLock sLock = new StripedLock(1);
     new TaskSchedulerDistributor(scheduler, sLock);
     new TaskSchedulerDistributor(scheduler, sLock, 1);
   }

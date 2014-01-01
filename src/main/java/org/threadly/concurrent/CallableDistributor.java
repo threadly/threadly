@@ -9,7 +9,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.lock.StripedLock;
-import org.threadly.concurrent.lock.VirtualLock;
 
 /**
  * <p>This abstraction is designed to make submitting {@link Callable} tasks with 
@@ -74,8 +73,7 @@ public class CallableDistributor<K, R> {
    * @param taskDistributor TaskDistributor used to execute callables
    */
   public CallableDistributor(TaskExecutorDistributor taskDistributor) {
-    this(taskDistributor, new StripedLock(taskDistributor.sLock.getExpectedConcurrencyLevel(), 
-                                          taskDistributor.sLock.getFactory()));
+    this(taskDistributor, new StripedLock(taskDistributor.sLock.getExpectedConcurrencyLevel()));
   }
   
   /**
@@ -185,7 +183,7 @@ public class CallableDistributor<K, R> {
       throw new IllegalArgumentException("key can not be null");
     }
     
-    VirtualLock callLock = sLock.getLock(key);
+    Object callLock = sLock.getLock(key);
     synchronized (callLock) {
       if (resultsExpected) {
         verifyWaitingForResult(key);
@@ -193,7 +191,7 @@ public class CallableDistributor<K, R> {
       
       LinkedList<Result<R>> resultList = results.get(key);
       while (resultList == null) {
-        callLock.await();
+        callLock.wait();
         
         resultList = results.get(key);
       }
@@ -241,7 +239,7 @@ public class CallableDistributor<K, R> {
       throw new IllegalArgumentException("key can not be null");
     }
 
-    VirtualLock callLock = sLock.getLock(key);
+    Object callLock = sLock.getLock(key);
     synchronized (callLock) {
       if (resultsExpected) {
         verifyWaitingForResult(key);
@@ -249,7 +247,7 @@ public class CallableDistributor<K, R> {
       
       List<Result<R>> resultList = results.remove(key);
       while (resultList == null) {
-        callLock.await();
+        callLock.wait();
         
         resultList = results.remove(key);
       }
@@ -267,7 +265,7 @@ public class CallableDistributor<K, R> {
   }
   
   protected void handleResult(K key, Result<R> r) {
-    VirtualLock callLock = sLock.getLock(key);
+    Object callLock = sLock.getLock(key);
     synchronized (callLock) {
       AtomicInteger waitingCount = waitingCalls.get(key);
       if (waitingCount == null || waitingCount.get() < 1) {
@@ -283,7 +281,7 @@ public class CallableDistributor<K, R> {
       resultList.add(r);
 
       waitingCount.decrementAndGet();
-      callLock.signalAll();
+      callLock.notifyAll();
     }
   }
   

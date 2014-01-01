@@ -12,7 +12,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
-import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -78,11 +77,6 @@ public class RunnableFutureTest {
     }
     
     assertTrue(future.isDone());
-  }
-  
-  public interface BlockingFutureFactory extends FutureFactory {
-    public RunnableFuture<?> make(Runnable run, VirtualLock lock);
-    public <T> RunnableFuture<T> make(Callable<T> callable, VirtualLock lock);
   }
   
   public interface FutureFactory {

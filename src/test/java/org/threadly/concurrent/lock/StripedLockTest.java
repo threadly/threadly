@@ -14,7 +14,7 @@ public class StripedLockTest {
   
   @Before
   public void setup() {
-    sLock = new StripedLock(LOCK_QTY, new NativeLockFactory());
+    sLock = new StripedLock(LOCK_QTY);
   }
   
   @After
@@ -24,14 +24,7 @@ public class StripedLockTest {
   
   @Test (expected = IllegalArgumentException.class)
   public void constructorNegativeConcurrencyFail() {
-    new StripedLock(-10, new NativeLockFactory());
-    
-    fail("Exception should have been thrown");
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void constructorNullFactoryFail() {
-    new StripedLock(0, null);
+    new StripedLock(-10);
     
     fail("Exception should have been thrown");
   }
@@ -44,9 +37,9 @@ public class StripedLockTest {
       testKey2 = new Object();  // verify they will get different locks
     }
     
-    VirtualLock lock1 = sLock.getLock(testKey1);
+    Object lock1 = sLock.getLock(testKey1);
     assertNotNull(lock1);
-    VirtualLock lock2 = sLock.getLock(testKey2);
+    Object lock2 = sLock.getLock(testKey2);
     
     assertTrue(lock1 != lock2);
     assertTrue(sLock.getLock(testKey1) == lock1);
@@ -62,7 +55,7 @@ public class StripedLockTest {
   public void getLockHashCodeTest() {
     Object testKey1 = new Object();
     
-    VirtualLock lock = sLock.getLock(testKey1.hashCode());
+    Object lock = sLock.getLock(testKey1.hashCode());
     assertNotNull(lock);
     
     assertTrue(sLock.getLock(testKey1) == lock);

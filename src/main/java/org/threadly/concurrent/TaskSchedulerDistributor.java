@@ -5,7 +5,6 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 
 /**
@@ -48,7 +47,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
-         new StripedLock(expectedParallism, new NativeLockFactory()), maxTasksPerCycle);
+         new StripedLock(expectedParallism), maxTasksPerCycle);
   }
   
   /**
@@ -109,7 +108,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    */
   public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler, 
                                   int maxTasksPerCycle) {
-    this(scheduler, new StripedLock(expectedParallism, new NativeLockFactory()), 
+    this(scheduler, new StripedLock(expectedParallism), 
          maxTasksPerCycle);
   }
   

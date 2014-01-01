@@ -21,9 +21,6 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
-import org.threadly.concurrent.lock.LockFactory;
-import org.threadly.concurrent.lock.NativeLock;
-import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -58,8 +55,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class PriorityScheduledExecutor implements PrioritySchedulerInterface, 
-                                                  LockFactory {
+public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
@@ -75,10 +71,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
   }
   
   protected final TaskPriority defaultPriority;
-  protected final VirtualLock highPriorityLock;
-  protected final VirtualLock lowPriorityLock;
-  protected final VirtualLock workersLock;
-  protected final VirtualLock poolSizeChangeLock;
+  protected final Object highPriorityLock;
+  protected final Object lowPriorityLock;
+  protected final Object workersLock;
+  protected final Object poolSizeChangeLock;
   protected final DynamicDelayQueue<TaskWrapper> highPriorityQueue;
   protected final DynamicDelayQueue<TaskWrapper> lowPriorityQueue;
   protected final Deque<Worker> availableWorkers;        // is locked around workersLock
@@ -228,10 +224,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
     }
     
     this.defaultPriority = defaultPriority;
-    highPriorityLock = makeLock();
-    lowPriorityLock = makeLock();
-    workersLock = makeLock();
-    poolSizeChangeLock = makeLock();
+    highPriorityLock = new Object();
+    lowPriorityLock = new Object();
+    workersLock = new Object();
+    poolSizeChangeLock = new Object();
     highPriorityQueue = new DynamicDelayQueue<TaskWrapper>(highPriorityLock);
     lowPriorityQueue = new DynamicDelayQueue<TaskWrapper>(lowPriorityLock);
     availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
@@ -472,7 +468,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       }
       
       if (startedThreads) {
-        workersLock.signalAll();
+        workersLock.notifyAll();
       }
     }
   }
@@ -926,12 +922,12 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       long waitTime = maxWaitTimeInMs;
       while (availableWorkers.isEmpty() && waitTime > 0) {
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
-          workersLock.await();
+          workersLock.wait();
         } else {
           long elapsedTime = Clock.accurateTime() - startTime;
           waitTime = maxWaitTimeInMs - elapsedTime;
           if (waitTime > 0) {
-            workersLock.await(waitTime);
+            workersLock.wait(waitTime);
           }
         }
       }
@@ -995,7 +991,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
           if (highPriorityQueue.isEmpty()) {
             lastHighDelay = 0; // no waiting high priority tasks, so no need to wait on low priority tasks
           } else {
-            workersLock.await(waitAmount);
+            workersLock.wait(waitAmount);
             Clock.accurateTime(); // update for getDelayEstimateInMillis
           }
         }
@@ -1062,21 +1058,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
       
         expireOldWorkers();
             
-        workersLock.signal();
+        workersLock.notify();
       } else {
         killWorker(worker);
       }
     }
-  }
-
-  @Override
-  public VirtualLock makeLock() {
-    return new NativeLock();
-  }
-  
-  @Override
-  public boolean isNativeLockFactory() {
-    return true;
   }
   
   /**
@@ -1087,10 +1073,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface,
    * @author jent - Mike Jensen
    */
   protected class TaskConsumer extends BlockingQueueConsumer<TaskWrapper> {
-    private final VirtualLock queueLock;
+    private final Object queueLock;
     
     public TaskConsumer(DynamicDelayQueue<TaskWrapper> queue,
-                        VirtualLock queueLock, 
+                        Object queueLock, 
                         ConsumerAcceptor<TaskWrapper> taskAcceptor) {
       super(queue, taskAcceptor);
       
