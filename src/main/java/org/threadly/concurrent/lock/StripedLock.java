@@ -47,10 +47,10 @@ public class StripedLock {
   }
   
   /**
-   * Call to get a striped lock for a given key.
+   * Call to get a lock object for a given key.
    * 
    * @param key to use hashCode() from to determine lock
-   * @return consistent VirtualLock for a given key
+   * @return consistent Object for a given key
    */
   public Object getLock(Object key) {
     if (key == null) {
@@ -61,10 +61,10 @@ public class StripedLock {
   }
   
   /**
-   * Call to get a striped lock for a given hash code.
+   * Call to get a lock object for a given hash code.
    * 
    * @param hashCode to use to determine which lock to return
-   * @return consistent VirtualLock for a given hash code
+   * @return consistent Object for a given hash code
    */
   public Object getLock(int hashCode) {
     int lockIndex = Math.abs(hashCode) % expectedConcurrencyLevel;

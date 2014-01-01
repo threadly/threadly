@@ -44,7 +44,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
 
   /**
    * Constructs a queue, providing the lock that will be called 
-   * on with .await().  Thus it allows you to synchronize around
+   * on with .wait().  Thus it allows you to synchronize around
    * the .take() and have the lock released while the thread blocks.
    * 
    * @param queueLock lock that is used internally
