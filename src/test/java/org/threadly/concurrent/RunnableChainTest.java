@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.concurrent.lock.LockFactory;
-import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -65,32 +63,8 @@ public class RunnableChainTest {
     }
   }
   
-  @Test
-  public void runWithLockFactoryTest() {
-    List<ChainRunnable> list = new ArrayList<ChainRunnable>(RUNNABLE_COUNT);
-    for (int i = 0; i < RUNNABLE_COUNT; i++) {
-      list.add(new ChainRunnable(i == FAIL_INDEX));
-    }
-    
-    LockFactory lf = new NativeLockFactory();
-
-    RunnableChain chain = new RunnableChain(false, list);
-    try {
-      chain.run(lf);
-    } catch (RuntimeException expected) {
-      // ignore expected exception
-    }
-
-    for (int i = 0; i < RUNNABLE_COUNT; i++) {
-      ChainRunnable cr = list.get(i);
-      assertEquals(1, cr.getRunCount());
-      assertTrue(cr.factorySetAtRuntime);
-    }
-  }
-  
   private class ChainRunnable extends TestRunnable {
     private final boolean fail;
-    private volatile boolean factorySetAtRuntime;
     
     private ChainRunnable(boolean fail) {
       this.fail = fail;
@@ -98,11 +72,9 @@ public class RunnableChainTest {
     
     @Override
     protected void handleRunStart() {
-      factorySetAtRuntime = factory != null;
       if (fail) {
         throw new RuntimeException("Test failure exception");
       }
     }
-    
   }
 }

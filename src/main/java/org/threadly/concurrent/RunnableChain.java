@@ -11,7 +11,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  */
-public class RunnableChain extends VirtualRunnable {
+public class RunnableChain implements Runnable {
   private final boolean exceptionStopsChain;
   private final Iterable<? extends Runnable> toRun;
   
@@ -43,7 +43,7 @@ public class RunnableChain extends VirtualRunnable {
   protected void runExceptionsCascade() {
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {
-      runRunnable(it.next());
+      it.next().run();
     }
   }
   
@@ -51,18 +51,10 @@ public class RunnableChain extends VirtualRunnable {
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {
       try {
-        runRunnable(it.next());
+        it.next().run();
       } catch (Throwable t) {
         ExceptionUtils.handleException(t);
       }
-    }
-  }
-  
-  protected void runRunnable(Runnable toRun) {
-    if (factory != null && toRun instanceof VirtualRunnable) {
-      ((VirtualRunnable)toRun).run(factory);
-    } else {
-      toRun.run();
     }
   }
 }

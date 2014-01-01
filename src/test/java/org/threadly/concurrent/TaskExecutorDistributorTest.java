@@ -43,7 +43,7 @@ public class TaskExecutorDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
-    StripedLock sLock = new StripedLock(PARALLEL_LEVEL, new NativeLockFactory()); // TODO - test with testable lock
+    StripedLock sLock = new StripedLock(PARALLEL_LEVEL, new NativeLockFactory());
     distributor = new TaskExecutorDistributor(scheduler, sLock);
     ready = false;
   }
@@ -344,7 +344,7 @@ public class TaskExecutorDistributorTest {
   @Test
   public void submitCallableFail() {
     try {
-      distributor.submitTask(null, VirtualCallable.fromRunnable(new TestRunnable(), null));
+      distributor.submitTask(null, new TestCallable());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected

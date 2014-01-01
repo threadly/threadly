@@ -5,7 +5,6 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
-import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 
@@ -142,8 +141,8 @@ public class SchedulerLimiter extends ExecutorLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionRunnable<T> extends VirtualRunnable
-                                              implements RunnableContainerInterface {
+  protected class DelayedExecutionRunnable<T> implements Runnable, 
+                                                         RunnableContainerInterface {
     private final Runnable runnable;
 
     public DelayedExecutionRunnable(Runnable runnable) {

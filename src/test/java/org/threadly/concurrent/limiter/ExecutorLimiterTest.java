@@ -20,7 +20,6 @@ import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestablePriorityScheduler;
 
 @SuppressWarnings("javadoc")
 public class ExecutorLimiterTest {
@@ -127,32 +126,6 @@ public class ExecutorLimiterTest {
     }
     
     assertFalse(parallelFailure);
-    
-    // verify execution
-    Iterator<TestRunnable> it = runnables.iterator();
-    while (it.hasNext()) {
-      TestRunnable tr = it.next();
-      tr.blockTillFinished();
-      
-      assertEquals(1, tr.getRunCount());
-    }
-  }
-  
-  @Test
-  public void executeTestableSchedulerTest() {
-    int runnableCount = 10;
-    
-    TestablePriorityScheduler testScheduler = new TestablePriorityScheduler(executor);
-    ExecutorLimiter limiter = new ExecutorLimiter(testScheduler, PARALLEL_COUNT);
-    
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-    for (int i = 0; i < runnableCount; i++) {
-      TestRunnable tr = new TestRunnable();
-      limiter.execute(tr);
-      runnables.add(tr);
-    }
-    
-    testScheduler.tick();
     
     // verify execution
     Iterator<TestRunnable> it = runnables.iterator();

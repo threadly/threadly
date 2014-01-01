@@ -292,7 +292,7 @@ public class CallableDistributor<K, R> {
    * 
    * @author jent - Mike Jensen
    */
-  protected class CallableContainer extends VirtualRunnable {
+  protected class CallableContainer implements Runnable {
     private final K key;
     private final Callable<? extends R> callable;
     
@@ -301,16 +301,10 @@ public class CallableDistributor<K, R> {
       this.callable = callable;
     }
     
-    @SuppressWarnings("unchecked")
     @Override
     public void run() {
       try {
-        R result;
-        if (factory != null && callable instanceof VirtualCallable) {
-          result = ((VirtualCallable<R>)callable).call(factory);
-        } else {  // no reason to waste our time
-          result = callable.call();
-        }
+        R result = callable.call();
         handleSuccessResult(key, result);
       } catch (Exception e) {
         handleFailureResult(key, e);

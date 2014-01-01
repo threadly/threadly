@@ -2,7 +2,6 @@ package org.threadly.test.concurrent;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 
 /**
@@ -14,7 +13,7 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
  * 
  * @author jent - Mike Jensen
  */
-public class TestRunnable extends VirtualRunnable {
+public class TestRunnable implements Runnable {
   private static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;
   private static final int RUN_CONDITION_POLL_INTERVAL = 20;
   

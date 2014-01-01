@@ -9,8 +9,6 @@ import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.VirtualCallable;
-import org.threadly.concurrent.VirtualRunnable;
 import org.threadly.concurrent.future.FutureFuture;
 import org.threadly.concurrent.future.FutureListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -342,8 +340,8 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionRunnable<T> extends VirtualRunnable
-                                              implements RunnableContainerInterface {
+  protected class DelayedExecutionRunnable<T> implements Runnable, 
+                                                         RunnableContainerInterface {
     private final Runnable runnable;
     private final T runnableResult;
     private final TaskPriority priority;
@@ -383,8 +381,8 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionCallable<T> extends VirtualRunnable
-                                              implements CallableContainerInterface<T>, 
+  protected class DelayedExecutionCallable<T> implements Runnable, 
+                                                         CallableContainerInterface<T>, 
                                                          RunnableContainerInterface {
     private final Callable<T> callable;
     private final TaskPriority priority;
@@ -600,8 +598,8 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * @author jent - Mike Jensen
    * @param <T> type for return of callable contained within wrapper
    */
-  protected class LimiterCallableWrapper<T> extends VirtualCallable<T>
-                                            implements FutureFuture.TaskCanceler, 
+  protected class LimiterCallableWrapper<T> implements Callable<T>, 
+                                                       FutureFuture.TaskCanceler, 
                                                        CallableContainerInterface<T>, 
                                                        RunnableContainerInterface {
     private final Callable<T> callable;
@@ -625,13 +623,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
       
       try {
         if (runStatus.compareAndSet(0, 1)) {
-          if (factory != null && 
-              callable instanceof VirtualCallable) {
-            VirtualCallable<T> vc = (VirtualCallable<T>)callable;
-            return vc.call(factory);
-          } else {
-            return callable.call();
-          }
+          return callable.call();
         } else {
           throw StaticCancellationException.instance();
         }

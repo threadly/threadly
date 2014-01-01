@@ -195,7 +195,7 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void submitCallableFail() {
     try {
-      distributor.submitTask(null, VirtualCallable.fromRunnable(new TestRunnable(), null));
+      distributor.submitTask(null, new TestCallable());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
