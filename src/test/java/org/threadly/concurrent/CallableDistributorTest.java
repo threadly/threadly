@@ -13,7 +13,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.CallableDistributor.Result;
-import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 
@@ -44,7 +43,7 @@ public class CallableDistributorTest {
   
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
-    new CallableDistributor<String, String>(null, new StripedLock(1));
+    new CallableDistributor<String, String>((TaskExecutorDistributor)null);
   }
   
   @Test (expected = IllegalArgumentException.class)

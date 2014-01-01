@@ -115,17 +115,6 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   /**
    * Constructor to be used in unit tests.
    * 
-   * @param scheduler scheduler to be used for task worker execution 
-   * @param sLock lock to be used for controlling access to workers
-   */
-  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
-                                  StripedLock sLock) {
-    this(scheduler, sLock, Integer.MAX_VALUE);
-  }
-  
-  /**
-   * Constructor to be used in unit tests.
-   * 
    * This constructor allows you to provide a maximum number of tasks for a key before it 
    * yields to another key.  This can make it more fair, and make it so no single key can 
    * starve other keys from running.  The lower this is set however, the less efficient it 
@@ -136,8 +125,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param sLock lock to be used for controlling access to workers
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
-                                  StripedLock sLock, int maxTasksPerCycle) {
+  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
+                                     StripedLock sLock, int maxTasksPerCycle) {
     super(scheduler, sLock, maxTasksPerCycle);
     
     this.scheduler = scheduler;

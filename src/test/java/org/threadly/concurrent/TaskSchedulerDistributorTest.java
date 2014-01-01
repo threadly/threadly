@@ -37,7 +37,8 @@ public class TaskSchedulerDistributorTest {
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
-    distributor = new TaskSchedulerDistributor(scheduler, sLock);
+    distributor = new TaskSchedulerDistributor(scheduler, sLock, 
+                                               Integer.MAX_VALUE);
     ready = false;
   }
   
@@ -98,7 +99,8 @@ public class TaskSchedulerDistributorTest {
       // expected
     }
     try {
-      new TaskSchedulerDistributor(scheduler, null);
+      new TaskSchedulerDistributor(scheduler, null, 
+                                   Integer.MAX_VALUE);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -119,7 +121,6 @@ public class TaskSchedulerDistributorTest {
     new TaskSchedulerDistributor(1, scheduler);
     new TaskSchedulerDistributor(1, scheduler, 1);
     StripedLock sLock = new StripedLock(1);
-    new TaskSchedulerDistributor(scheduler, sLock);
     new TaskSchedulerDistributor(scheduler, sLock, 1);
   }
   

@@ -42,8 +42,7 @@ public class TaskExecutorDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
-    StripedLock sLock = new StripedLock(PARALLEL_LEVEL);
-    distributor = new TaskExecutorDistributor(scheduler, sLock);
+    distributor = new TaskExecutorDistributor(PARALLEL_LEVEL, scheduler);
     ready = false;
   }
   
@@ -62,7 +61,6 @@ public class TaskExecutorDistributorTest {
     new TaskExecutorDistributor(1, scheduler);
     new TaskExecutorDistributor(1, scheduler, 1);
     StripedLock sLock = new StripedLock(1);
-    new TaskExecutorDistributor(scheduler, sLock);
     new TaskExecutorDistributor(scheduler, sLock, 1);
   }
   
@@ -75,7 +73,8 @@ public class TaskExecutorDistributorTest {
       // expected
     }
     try {
-      new TaskExecutorDistributor(scheduler, null);
+      new TaskExecutorDistributor(scheduler, null, 
+                                  Integer.MAX_VALUE);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
