@@ -15,8 +15,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
-import org.threadly.concurrent.lock.NativeLock;
-import org.threadly.concurrent.lock.VirtualLock;
 
 @SuppressWarnings("javadoc")
 public class ConcurrentArrayListTest {
@@ -36,7 +34,7 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void getModificationLockTest() {
-    VirtualLock testLock = new NativeLock();
+    Object testLock = new Object();
     ConcurrentArrayList<String> testList = new ConcurrentArrayList<String>(testLock);
     
     assertTrue(testLock == testList.getModificationLock());

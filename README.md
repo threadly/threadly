@@ -1,7 +1,7 @@
 Threadly
 ========
 
-A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of concurrent development and testing needs. This is designed to be a complement to java.util.concurrent and uses java.util.concurrent to help assist in it's implementations where it makes sense. This library is particularly useful for getting legacy concurrent code and getting it under test.
+A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of concurrent development and testing needs. This is designed to be a complement to java.util.concurrent and uses java.util.concurrent to help assist in it's implementations where it makes sense.
 
 For information about compiling, importing into eclipse, or contributing to the project, please look at the 'BUILD_INSTRUCTIONS' file.
 
@@ -30,10 +30,6 @@ The design is such so that you create one large pool, and then wrap it in one of
 *    ConcurrentArrayList is a thread safe array list that also implements a Dequeue. It may be better performing than a CopyOnWriteArrayList depending on what the use case is. It is able to avoid copies for some operations, primarily adding and removing from the ends of a list (and can be tuned for the specific application to possibly make copies very rare).
 
 -- Unit Test Tools --
-
-*    TestablePriorityScheduler - Probably the largest gem in the tool kit. This scheduler is designed to take blocking and concurrent code and make it more controllable. It only allows one thread to execute at any given time. In addition threads are progressed forward by .tick() calls to the scheduler.
-
-It relies on any code that performs blocking uses an injectable LockFactory, then when under test TestablePriorityScheduler can be provided as the lock factory. When actions like .wait .sleep occur on locks that the testable scheduler produced it will yield those threads and give control to other threads.
 
 *    TestCondition - often times in doing unit test for asynchronous operations you have to wait for a condition to be come true. This class gives a way to easily wait for those conditions to be true, or throw an exception if they do not happen after a given timeout. The implementation of TestRunnable gives a good example of how this can be used.
 

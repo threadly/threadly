@@ -11,9 +11,6 @@ import java.util.RandomAccess;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-import org.threadly.concurrent.lock.NativeLock;
-import org.threadly.concurrent.lock.VirtualLock;
-
 /**
  * <p>A thread safe list implementation with an array back end.  Make sure
  * to read the javadocs carefully, as several functions behave subtly different
@@ -62,7 +59,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     return new DataSet<E>(new Object[0], 0, 0, frontPadding, rearPadding);
   }
   
-  protected final VirtualLock modificationLock;
+  protected final Object modificationLock;
   protected volatile DataSet<T> currentData;
   
   /**
@@ -85,7 +82,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @param rearPadding padding to add to end of array to possible avoid array copies
    */
   public ConcurrentArrayList(int frontPadding, int rearPadding) {
-    this(new NativeLock(), frontPadding, rearPadding);
+    this(new Object(), frontPadding, rearPadding);
   }
 
   /**
@@ -94,7 +91,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * 
    * @param modificationLock lock to synchronize on internally
    */
-  public ConcurrentArrayList(VirtualLock modificationLock) {
+  protected ConcurrentArrayList(Object modificationLock) {
     this(modificationLock, 0, 0);
   }
 
@@ -110,19 +107,19 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @param frontPadding padding to add to front of array to possible avoid array copies
    * @param rearPadding padding to add to end of array to possible avoid array copies
    */
-  public ConcurrentArrayList(VirtualLock modificationLock, 
-                             int frontPadding, int rearPadding) {
+  protected ConcurrentArrayList(Object modificationLock, 
+                                int frontPadding, int rearPadding) {
     this(ConcurrentArrayList.<T>makeEmptyDataSet(frontPadding, 
                                                  rearPadding), 
          modificationLock);
   }
   
   protected ConcurrentArrayList(DataSet<T> startSet, 
-                                VirtualLock modificationLock) {
+                                Object modificationLock) {
     if (startSet == null) {
       throw new IllegalArgumentException("Must provide starting dataSet");
     } else if (modificationLock == null) {
-      modificationLock = new NativeLock();
+      modificationLock = new Object();
     }
     
     this.modificationLock = modificationLock;
@@ -133,11 +130,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * If you want to chain multiple calls together and
    * ensure that no threads modify the structure during 
    * that time you can get the lock to prevent additional 
-   * modifications.
+   * modifications.  
+   * 
+   * This lock should be synchronized on to prevent modifications.
    * 
    * @return lock used internally
    */
-  public VirtualLock getModificationLock() {
+  public Object getModificationLock() {
     return modificationLock;
   }
   

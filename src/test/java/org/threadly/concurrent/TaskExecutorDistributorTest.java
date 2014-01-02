@@ -21,7 +21,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
-import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -43,8 +42,7 @@ public class TaskExecutorDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
-    StripedLock sLock = new StripedLock(PARALLEL_LEVEL, new NativeLockFactory()); // TODO - test with testable lock
-    distributor = new TaskExecutorDistributor(scheduler, sLock);
+    distributor = new TaskExecutorDistributor(PARALLEL_LEVEL, scheduler);
     ready = false;
   }
   
@@ -62,8 +60,7 @@ public class TaskExecutorDistributorTest {
     new TaskExecutorDistributor(scheduler, 1);
     new TaskExecutorDistributor(1, scheduler);
     new TaskExecutorDistributor(1, scheduler, 1);
-    StripedLock sLock = new StripedLock(1, new NativeLockFactory());
-    new TaskExecutorDistributor(scheduler, sLock);
+    StripedLock sLock = new StripedLock(1);
     new TaskExecutorDistributor(scheduler, sLock, 1);
   }
   
@@ -76,7 +73,8 @@ public class TaskExecutorDistributorTest {
       // expected
     }
     try {
-      new TaskExecutorDistributor(scheduler, null);
+      new TaskExecutorDistributor(scheduler, null, 
+                                  Integer.MAX_VALUE);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -344,7 +342,7 @@ public class TaskExecutorDistributorTest {
   @Test
   public void submitCallableFail() {
     try {
-      distributor.submitTask(null, VirtualCallable.fromRunnable(new TestRunnable(), null));
+      distributor.submitTask(null, new TestCallable());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected

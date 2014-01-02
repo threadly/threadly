@@ -6,7 +6,7 @@
   <packaging>jar</packaging>
 
   <name>Threadly</name>
-  <description>A library of tools to assist with concurrent java development, with a large focus on testability.</description>
+  <description>A library of tools to assist with concurrent java development.  Providing a unique priority based thread pool, and ways to distrbute threaded work.</description>
   <url>http://threadly.org</url>
 
   <licenses>

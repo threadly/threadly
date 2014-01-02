@@ -9,7 +9,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.lock.StripedLock;
-import org.threadly.concurrent.lock.VirtualLock;
 
 /**
  * <p>This abstraction is designed to make submitting {@link Callable} tasks with 
@@ -74,26 +73,12 @@ public class CallableDistributor<K, R> {
    * @param taskDistributor TaskDistributor used to execute callables
    */
   public CallableDistributor(TaskExecutorDistributor taskDistributor) {
-    this(taskDistributor, new StripedLock(taskDistributor.sLock.getExpectedConcurrencyLevel(), 
-                                          taskDistributor.sLock.getFactory()));
-  }
-  
-  /**
-   * Constructor for Threadly internal unit testing.  If you need to use a 
-   * {@link CallableDistributor} in your unit testing, you should use the 
-   * constructor where you provide a testable {@link TaskExecutorDistributor}.
-   * 
-   * @param taskDistributor TaskDistributor used to execute callables
-   * @param sLock lock to be used for controlling access to results
-   */
-  protected CallableDistributor(TaskExecutorDistributor taskDistributor, 
-                                StripedLock sLock) {
     if (taskDistributor == null) {
       throw new IllegalArgumentException("Must provide taskDistributor");
     }
     
     this.taskDistributor = taskDistributor;
-    this.sLock = sLock;
+    this.sLock = taskDistributor.sLock;
     int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
                                   CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
     int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel(), 
@@ -185,7 +170,7 @@ public class CallableDistributor<K, R> {
       throw new IllegalArgumentException("key can not be null");
     }
     
-    VirtualLock callLock = sLock.getLock(key);
+    Object callLock = sLock.getLock(key);
     synchronized (callLock) {
       if (resultsExpected) {
         verifyWaitingForResult(key);
@@ -193,7 +178,7 @@ public class CallableDistributor<K, R> {
       
       LinkedList<Result<R>> resultList = results.get(key);
       while (resultList == null) {
-        callLock.await();
+        callLock.wait();
         
         resultList = results.get(key);
       }
@@ -241,7 +226,7 @@ public class CallableDistributor<K, R> {
       throw new IllegalArgumentException("key can not be null");
     }
 
-    VirtualLock callLock = sLock.getLock(key);
+    Object callLock = sLock.getLock(key);
     synchronized (callLock) {
       if (resultsExpected) {
         verifyWaitingForResult(key);
@@ -249,7 +234,7 @@ public class CallableDistributor<K, R> {
       
       List<Result<R>> resultList = results.remove(key);
       while (resultList == null) {
-        callLock.await();
+        callLock.wait();
         
         resultList = results.remove(key);
       }
@@ -267,7 +252,7 @@ public class CallableDistributor<K, R> {
   }
   
   protected void handleResult(K key, Result<R> r) {
-    VirtualLock callLock = sLock.getLock(key);
+    Object callLock = sLock.getLock(key);
     synchronized (callLock) {
       AtomicInteger waitingCount = waitingCalls.get(key);
       if (waitingCount == null || waitingCount.get() < 1) {
@@ -283,7 +268,7 @@ public class CallableDistributor<K, R> {
       resultList.add(r);
 
       waitingCount.decrementAndGet();
-      callLock.signalAll();
+      callLock.notifyAll();
     }
   }
   
@@ -292,7 +277,7 @@ public class CallableDistributor<K, R> {
    * 
    * @author jent - Mike Jensen
    */
-  protected class CallableContainer extends VirtualRunnable {
+  protected class CallableContainer implements Runnable {
     private final K key;
     private final Callable<? extends R> callable;
     
@@ -301,16 +286,10 @@ public class CallableDistributor<K, R> {
       this.callable = callable;
     }
     
-    @SuppressWarnings("unchecked")
     @Override
     public void run() {
       try {
-        R result;
-        if (factory != null && callable instanceof VirtualCallable) {
-          result = ((VirtualCallable<R>)callable).call(factory);
-        } else {  // no reason to waste our time
-          result = callable.call();
-        }
+        R result = callable.call();
         handleSuccessResult(key, result);
       } catch (Exception e) {
         handleFailureResult(key, e);

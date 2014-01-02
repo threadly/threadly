@@ -10,8 +10,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-import org.threadly.concurrent.lock.NativeLock;
-import org.threadly.concurrent.lock.VirtualLock;
 import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
@@ -34,24 +32,24 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   protected static final int QUEUE_REAR_PADDING = 1;
   
   protected final boolean randomAccessQueue;
-  protected final VirtualLock queueLock;
+  protected final Object queueLock;
   protected final ConcurrentArrayList<T> queue;
 
   /**
    * Constructs a new {@link DynamicDelayQueue} queue.
    */
   public DynamicDelayQueue() {
-    this(new NativeLock());
+    this(new Object());
   }
 
   /**
    * Constructs a queue, providing the lock that will be called 
-   * on with .await().  Thus it allows you to synchronize around
+   * on with .wait().  Thus it allows you to synchronize around
    * the .take() and have the lock released while the thread blocks.
    * 
    * @param queueLock lock that is used internally
    */
-  public DynamicDelayQueue(VirtualLock queueLock) {
+  public DynamicDelayQueue(Object queueLock) {
     queue = new ConcurrentArrayList<T>(queueLock, 
                                        QUEUE_FRONT_PADDING, 
                                        QUEUE_REAR_PADDING);
@@ -65,12 +63,12 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
   
   /**
-   * Returns the {@link VirtualLock} that will be called with .await during take.  
+   * Returns the lock} that will be called with .wait during take.  
    * And must be synchronized on while using the iterator.
    * 
    * @return lock synchronized on internally
    */
-  public VirtualLock getLock() {
+  public Object getLock() {
     return queueLock;
   }
   
@@ -83,7 +81,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     synchronized (queueLock) {
       Collections.sort(queue);
       
-      queueLock.signalAll();
+      queueLock.notifyAll();
     }
   }
 
@@ -104,7 +102,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
       
       queue.add(insertionIndex, e);
       
-      queueLock.signal();
+      queueLock.notify();
     }
     
     return true;
@@ -139,7 +137,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
       
       updater.allowDelayUpdate();
       
-      queueLock.signalAll();
+      queueLock.notifyAll();
     }
   }
 
@@ -241,7 +239,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
       if (next == null) {
         synchronized (queueLock) {
           while ((next = queue.peek()) == null) {
-            queueLock.await();
+            queueLock.wait();
           }
         }
       }
@@ -251,7 +249,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
         if (nextDelay > SPIN_LOCK_THRESHOLD || ! allowSpin) {
           synchronized (queueLock) {
             if (queue.peek() == next) {
-              queueLock.await(nextDelay);
+              queueLock.wait(nextDelay);
             } else {
               continue; // start form the beginning
             }
@@ -272,7 +270,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
              */
             synchronized (queueLock) {
               if (next == queue.peek()) {
-                queueLock.await(nextDelay);
+                queueLock.wait(nextDelay);
               } else {
                 // loop
               }

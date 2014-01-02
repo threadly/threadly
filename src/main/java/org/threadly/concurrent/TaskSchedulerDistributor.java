@@ -3,9 +3,8 @@ package org.threadly.concurrent;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureVirtualTask;
+import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.lock.NativeLockFactory;
 import org.threadly.concurrent.lock.StripedLock;
 
 /**
@@ -48,7 +47,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
-         new StripedLock(expectedParallism, new NativeLockFactory()), maxTasksPerCycle);
+         new StripedLock(expectedParallism), maxTasksPerCycle);
   }
   
   /**
@@ -109,29 +108,12 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    */
   public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler, 
                                   int maxTasksPerCycle) {
-    this(scheduler, new StripedLock(expectedParallism, new NativeLockFactory()), 
+    this(scheduler, new StripedLock(expectedParallism), 
          maxTasksPerCycle);
   }
   
   /**
-   * Constructor to be used in unit tests.  This allows you to provide a StripedLock 
-   * that provides a {@link org.threadly.test.concurrent.lock.TestableLockFactory} so 
-   * that this class can be used with the 
-   * {@link org.threadly.test.concurrent.TestablePriorityScheduler}.
-   * 
-   * @param scheduler scheduler to be used for task worker execution 
-   * @param sLock lock to be used for controlling access to workers
-   */
-  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
-                                  StripedLock sLock) {
-    this(scheduler, sLock, Integer.MAX_VALUE);
-  }
-  
-  /**
-   * Constructor to be used in unit tests.  This allows you to provide a StripedLock 
-   * that provides a {@link org.threadly.test.concurrent.lock.TestableLockFactory} so 
-   * that this class can be used with the 
-   * {@link org.threadly.test.concurrent.TestablePriorityScheduler}.
+   * Constructor to be used in unit tests.
    * 
    * This constructor allows you to provide a maximum number of tasks for a key before it 
    * yields to another key.  This can make it more fair, and make it so no single key can 
@@ -143,8 +125,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param sLock lock to be used for controlling access to workers
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
-                                  StripedLock sLock, int maxTasksPerCycle) {
+  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
+                                     StripedLock sLock, int maxTasksPerCycle) {
     super(scheduler, sLock, maxTasksPerCycle);
     
     this.scheduler = scheduler;
@@ -265,8 +247,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, result, 
-                                                                        sLock.getLock(threadKey));
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
     
     if (delayInMs == 0) {
       addTask(threadKey, rf);
@@ -299,7 +280,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureVirtualTask<T>(task, sLock.getLock(threadKey));
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
     
     if (delayInMs == 0) {
       addTask(threadKey, rf);
@@ -316,8 +297,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  protected class AddTask extends VirtualRunnable 
-                          implements RunnableContainerInterface {
+  protected class AddTask implements Runnable, 
+                                     RunnableContainerInterface {
     private final Object key;
     private final Runnable task;
     
@@ -342,8 +323,8 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecrringTask extends VirtualRunnable 
-                               implements RunnableContainerInterface {
+  protected class RecrringTask implements Runnable, 
+                                          RunnableContainerInterface {
     private final Object key;
     private final Runnable task;
     private final long recurringDelay;
@@ -357,11 +338,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     @Override
     public void run() {
       try {
-        if (factory != null && task instanceof VirtualRunnable) {
-          ((VirtualRunnable)task).run(factory);
-        } else {
-          task.run();
-        }
+        task.run();
       } finally {
         if (! scheduler.isShutdown()) {
           scheduler.schedule(new AddTask(key, this), recurringDelay);

@@ -8,12 +8,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * is guaranteed that every key provided will return the same lock.  But it 
  * is not guaranteed that two different keys will not have the same lock.</p>
  * 
+ * <p>Currently this class only provides objects that should be synchronized on.  
+ * Compared to java.util.concurrent.locks.Lock objects which have .lock() and 
+ * .unlock() functionality.  This choice was primarily because of the way the 
+ * internals of threadly work.</p>
+ * 
  * @author jent - Mike Jensen
  */
 public class StripedLock {
   private final int expectedConcurrencyLevel;
-  private final LockFactory lockFactory;
-  private final ConcurrentHashMap<Integer, VirtualLock> locks;
+  private final ConcurrentHashMap<Integer, Object> locks;
   
   /**
    * Constructs a new {@link StripedLock} with a given expected concurrency level.  
@@ -22,19 +26,14 @@ public class StripedLock {
    * used to store the locks.
    * 
    * @param expectedConcurrencyLevel expected level of parallelism
-   * @param lockFactory factory to produce new locks from
    */
-  public StripedLock(int expectedConcurrencyLevel, 
-                     LockFactory lockFactory) {
+  public StripedLock(int expectedConcurrencyLevel) {
     if (expectedConcurrencyLevel <= 0) {
       throw new IllegalArgumentException("expectedConcurrencyLevel must be > 0: " + expectedConcurrencyLevel);
-    } else if (lockFactory == null) {
-      throw new IllegalArgumentException("lockFactory can not be null");
     }
     
     this.expectedConcurrencyLevel = expectedConcurrencyLevel;
-    this.lockFactory = lockFactory;
-    this.locks = new ConcurrentHashMap<Integer, VirtualLock>();
+    this.locks = new ConcurrentHashMap<Integer, Object>();
   }
   
   /**
@@ -46,24 +45,14 @@ public class StripedLock {
   public int getExpectedConcurrencyLevel() {
     return expectedConcurrencyLevel;
   }
-
-  /**
-   * Call to get {@link LockFactory} that this class was 
-   * constructed with.
-   * 
-   * @return the provided lock factory
-   */
-  public LockFactory getFactory() {
-    return lockFactory;
-  }
   
   /**
-   * Call to get a striped lock for a given key.
+   * Call to get a lock object for a given key.
    * 
    * @param key to use hashCode() from to determine lock
-   * @return consistent VirtualLock for a given key
+   * @return consistent Object for a given key
    */
-  public VirtualLock getLock(Object key) {
+  public Object getLock(Object key) {
     if (key == null) {
       return getLock(0);
     } else {
@@ -72,17 +61,17 @@ public class StripedLock {
   }
   
   /**
-   * Call to get a striped lock for a given hash code.
+   * Call to get a lock object for a given hash code.
    * 
    * @param hashCode to use to determine which lock to return
-   * @return consistent VirtualLock for a given hash code
+   * @return consistent Object for a given hash code
    */
-  public VirtualLock getLock(int hashCode) {
+  public Object getLock(int hashCode) {
     int lockIndex = Math.abs(hashCode) % expectedConcurrencyLevel;
-    VirtualLock result = locks.get(lockIndex);
+    Object result = locks.get(lockIndex);
     if (result == null) {
-      result = lockFactory.makeLock();
-      VirtualLock putIfAbsentResult = locks.putIfAbsent(lockIndex, result);
+      result = new Object();
+      Object putIfAbsentResult = locks.putIfAbsent(lockIndex, result);
       if (putIfAbsentResult != null) {
         result = putIfAbsentResult;
       }
