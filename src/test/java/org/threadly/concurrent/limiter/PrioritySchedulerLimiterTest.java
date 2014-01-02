@@ -22,7 +22,6 @@ import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
-import org.threadly.concurrent.future.FutureListenableFuture;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -74,28 +73,17 @@ public class PrioritySchedulerLimiterTest {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
     PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, testQty);
     
-    boolean flip1 = true;
-    boolean flip2 = true;
+    boolean flip = true;
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(testQty);
     for (int i = 0; i < testQty; i++) {
-      
-      if (flip1) {
-        TestRunnable tr = new TestRunnable();
-        runnables.add(tr);
-        if (flip2) {
-          psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, TaskPriority.High, 
-                                                             new FutureListenableFuture<Object>()));
-          flip2 = false;
-        } else {
-          psl.waitingTasks.add(psl.new RunnableFutureWrapper(tr, TaskPriority.High, null));
-          flip2 = true;
-        }
-        flip1 = false;
+      TestRunnable tr = new TestRunnable();
+      runnables.add(tr);
+      if (flip) {
+        psl.waitingTasks.add(psl.new PriorityWrapper(tr, TaskPriority.High));
+        flip = false;
       } else {
-        psl.waitingTasks.add(psl.new CallableFutureWrapper<Object>(new TestCallable(), 
-                                                                   TaskPriority.High, 
-                                                                   new FutureListenableFuture<Object>()));
-        flip1 = true;
+        psl.waitingTasks.add(psl.new PriorityWrapper(tr, TaskPriority.High));
+        flip = true;
       }
     }
     
