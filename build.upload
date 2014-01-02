@@ -77,7 +77,7 @@ uploadArchives {
       pom.project {
         name 'Threadly'
         packaging 'jar'
-        description 'A library of tools to assist with concurrent java development.  Providing a unique priority based thread pool, and ways to distrbute threaded work.'
+        description 'A library of tools to assist with safe concurrent java development.  Providing a unique priority based thread pool, and ways to distrbute threaded work.'
         url 'http://threadly.org/'
  
         scm {
