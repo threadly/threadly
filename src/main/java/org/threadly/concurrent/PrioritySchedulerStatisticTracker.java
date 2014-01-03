@@ -585,13 +585,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     return result;
   }
   
-  /**
-   * Call to check how many tasks are currently being executed 
-   * in this thread pool.
+  /* Override the implementation in PrioritySchedulerExecutor 
+   * because we have the ability to have a cheaper check.
    * 
-   * @return current number of running tasks
+   * @see org.threadly.concurrent.PriorityScheduledExecutor#getCurrentRunningCount()
    */
-  public int getCurrentlyRunningCount() {
+  @Override
+  public int getCurrentRunningCount() {
     return runningTasks.size();
   }
   

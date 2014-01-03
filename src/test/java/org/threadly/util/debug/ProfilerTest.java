@@ -127,13 +127,13 @@ public class ProfilerTest {
     PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1, 1, 1000);
     try {
       assertEquals(0, e.getCurrentPoolSize());
-      assertEquals(0, e.getCurrentlyRunningCount());
+      assertEquals(0, e.getCurrentRunningCount());
       
       profiler.start(e);
       
       assertTrue(profiler.isRunning());
       assertEquals(1, e.getCurrentPoolSize());
-      assertEquals(1, e.getCurrentlyRunningCount());
+      assertEquals(1, e.getCurrentRunningCount());
     } finally {
       profiler.stop();
       e.shutdownNow();

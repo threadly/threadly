@@ -88,8 +88,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   private volatile long keepAliveTimeInMs;
   private volatile long maxWaitForLowPriorityInMs;
   private volatile boolean allowCorePoolTimeout;
-  private long lastHighDelay;   // is locked around workersLock
   private int currentPoolSize;  // is locked around workersLock
+  private long lastHighDelay;   // is locked around workersLock
 
   /**
    * Constructs a new thread pool, though no threads will be started 
@@ -311,6 +311,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   public int getCurrentPoolSize() {
     synchronized (workersLock) {
       return currentPoolSize;
+    }
+  }
+  
+  /**
+   * Call to check how many tasks are currently being executed 
+   * in this thread pool.
+   * 
+   * @return current number of running tasks
+   */
+  public int getCurrentRunningCount() {
+    synchronized (workersLock) {
+      return currentPoolSize - availableWorkers.size();
     }
   }
   

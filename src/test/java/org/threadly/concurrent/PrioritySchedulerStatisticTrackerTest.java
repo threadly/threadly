@@ -569,7 +569,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     new TestCondition() { // block till all are finished
       @Override
       public boolean get() {
-        return scheduler.getCurrentlyRunningCount() == 0 && 
+        return scheduler.getCurrentRunningCount() == 0 && 
                  ! scheduler.getRunTimes().isEmpty();
       }
     }.blockTillTrue();
@@ -688,7 +688,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastLowPriorityRunnable.blockTillFinished();
       lastHighPriorityRunnable.blockTillFinished();
       
-      assertEquals(0, scheduler.getCurrentlyRunningCount());
+      assertEquals(0, scheduler.getCurrentRunningCount());
       
       assertEquals(lowPriorityCount + highPriorityCount, 
                    scheduler.getTotalExecutionCount());
