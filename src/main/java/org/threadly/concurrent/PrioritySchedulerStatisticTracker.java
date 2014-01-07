@@ -655,7 +655,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   protected void trackTaskStart(Wrapper taskWrapper) {
-    runningTasks.put(taskWrapper, Clock.accurateTime());
+    runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.accurateTime());
     
     switch (taskWrapper.priority) {
       case High:
@@ -671,15 +671,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   
   protected void trackTaskFinish(Wrapper taskWrapper) {
     long finishTime = Clock.accurateTime();
-    Long startTime = runningTasks.remove(taskWrapper);
-    /* start time will never be null if this is called in the same 
-     * thread as trackTaskStart and trackTaskStart was called first.  
-     * We make that assumption here.
-     */
     synchronized (runTimes.getModificationLock()) {
-      runTimes.add(finishTime - startTime);
+      runTimes.add(finishTime - taskWrapper.startTime);
       trimList(runTimes);
     }
+    runningTasks.remove(taskWrapper);
   }
   
   /**
@@ -705,6 +701,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     public final boolean callable;
     public final TaskPriority priority;
     public final boolean recurring;
+    // set when trackTaskStart called, and only read from trackTaskFinish
+    // so should only be accessed and used from within the same thread
+    private long startTime;
     
     public Wrapper(boolean callable, 
                    TaskPriority priority, 
@@ -712,6 +711,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       this.callable = callable;
       this.priority = priority;
       this.recurring = recurring;
+      startTime = -1;
     }
   }
   
