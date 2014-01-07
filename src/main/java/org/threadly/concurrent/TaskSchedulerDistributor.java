@@ -51,7 +51,9 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   }
   
   /**
-   * Constructor to use a provided executor implementation for running tasks.
+   * Constructor to use a provided executor implementation for running tasks.  
+   * 
+   * This constructs with a default expected level of concurrency of 16.
    * 
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
@@ -68,7 +70,9 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * yields to another key.  This can make it more fair, and make it so no single key can 
    * starve other keys from running.  The lower this is set however, the less efficient it 
    * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.
+   * it must copy the subset of the task queue which it can run.  
+   * 
+   * This constructs with a default expected level of concurrency of 16.
    * 
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 

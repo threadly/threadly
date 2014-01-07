@@ -487,7 +487,7 @@ public class TaskSchedulerDistributorTest {
     }
     
     @Override
-    protected void handleRunStart() {
+    public void handleRunStart() {
       threadTracker.running();
       
       if (previousRunnable != null) {
@@ -498,7 +498,7 @@ public class TaskSchedulerDistributorTest {
     }
     
     @Override
-    protected void handleRunFinish() {
+    public void handleRunFinish() {
       threadTracker.done();
     }
   }

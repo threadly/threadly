@@ -427,7 +427,7 @@ public class TaskExecutorDistributorTest {
                 private boolean added = false;
                 
                 @Override
-                protected void handleRunFinish() {
+                public void handleRunFinish() {
                   if (! added) {
                     distributor.addTask(threadTracker, this);
                     added = true;
@@ -515,7 +515,7 @@ public class TaskExecutorDistributorTest {
           while (! testComplete.get()) {
             TestRunnable next = new TestRunnable() {
               @Override
-              protected void handleRunStart() {
+              public void handleRunStart() {
                 waitingTasks.decrementAndGet();
                 
                 TestUtils.sleep(20);  // wait to make sure producer is faster than executor
@@ -563,7 +563,7 @@ public class TaskExecutorDistributorTest {
     }
     
     @Override
-    protected void handleRunStart() {
+    public void handleRunStart() {
       threadTracker.running();
       
       if (! verifiedPrevious) {

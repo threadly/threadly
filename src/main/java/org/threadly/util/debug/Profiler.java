@@ -56,7 +56,9 @@ public class Profiler {
   /**
    * Constructs a new profiler instance.  The only way 
    * to get results from this instance is to call "dump" 
-   * with a provided output stream to get the results to.
+   * with a provided output stream to get the results to.  
+   * 
+   * This uses a default poll interval of 100 milliseconds.
    */
   public Profiler() {
     this(null, DEFAULT_POLL_INTERVAL_IN_MILLIS);
@@ -67,7 +69,9 @@ public class Profiler {
    * results to the provided output file when "stop" is called.
    * 
    * If the output file is null, this will behave the same as the 
-   * empty constructor.
+   * empty constructor.  
+   * 
+   * This uses a default poll interval of 100 milliseconds.
    * 
    * @param outputFile file to dump results to on stop
    */

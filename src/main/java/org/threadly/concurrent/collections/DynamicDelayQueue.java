@@ -29,7 +29,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
                                                              BlockingQueue<T> {
   protected static final int SPIN_LOCK_THRESHOLD = 5;
   protected static final int QUEUE_FRONT_PADDING = 0;
-  protected static final int QUEUE_REAR_PADDING = 1;
+  protected static final int QUEUE_REAR_PADDING = 2;
   
   protected final boolean randomAccessQueue;
   protected final Object queueLock;

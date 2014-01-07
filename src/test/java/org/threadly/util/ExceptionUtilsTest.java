@@ -79,7 +79,8 @@ public class ExceptionUtilsTest {
   
   @Test
   public void getRootCauseNoCauseTest() {
-    assertNull(ExceptionUtils.getRootCause(new Exception()));
+    Exception e = new Exception();
+    assertTrue(e == ExceptionUtils.getRootCause(e));
   }
   
   @Test

@@ -7,7 +7,7 @@ public class BlockingTestRunnable extends TestRunnable {
   private boolean unblocked = false;
   
   @Override
-  protected void handleRunStart() throws InterruptedException {
+  public void handleRunStart() throws InterruptedException {
     synchronized (this) {
       while (! unblocked) {
         this.wait();

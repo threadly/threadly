@@ -25,7 +25,7 @@ public class TestRuntimeFailureRunnable extends TestRunnable {
   }
 
   @Override
-  protected void handleRunFinish() {
+  public void handleRunFinish() {
     if (toThrowException != null) {
       throw toThrowException;
     } else {

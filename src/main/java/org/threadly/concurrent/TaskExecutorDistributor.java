@@ -31,7 +31,7 @@ import org.threadly.util.ExceptionUtils;
  */
 public class TaskExecutorDistributor {
   protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;
-  protected static final int DEFAULT_LOCK_PARALISM = 10;
+  protected static final int DEFAULT_LOCK_PARALISM = 16;
   protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = (float)0.75;  // 0.75 is ConcurrentHashMap default
   protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 100;
   protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 100;
@@ -74,7 +74,9 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * Constructor to use a provided executor implementation for running tasks.
+   * Constructor to use a provided executor implementation for running tasks.  
+   * 
+   * This constructs with a default expected level of concurrency of 16.
    * 
    * @param executor A multi-threaded executor to distribute tasks to.  
    *                 Ideally has as many possible threads as keys that 
@@ -91,7 +93,9 @@ public class TaskExecutorDistributor {
    * yields to another key.  This can make it more fair, and make it so no single key can 
    * starve other keys from running.  The lower this is set however, the less efficient it 
    * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.
+   * it must copy the subset of the task queue which it can run.  
+   * 
+   * This constructs with a default expected level of concurrency of 16.
    * 
    * @param executor A multi-threaded executor to distribute tasks to.  
    *                 Ideally has as many possible threads as keys that 

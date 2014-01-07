@@ -234,7 +234,7 @@ public class ScheduledExecutorServiceTest {
     
     TestRunnable tr = new TestRunnable() {
       @Override
-      protected void handleRunFinish() {
+      public void handleRunFinish() {
         if (this.getRunCount() >= runCountTillException) {
           throw new RuntimeException();
         }

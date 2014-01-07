@@ -65,13 +65,13 @@ public class ExceptionUtils {
   
   /**
    * Gets the root cause of a provided {@link Throwable}.  If there is no 
-   * cause for the {@link Throwable} provided into this function, a null 
-   * is returned.
+   * cause for the {@link Throwable} provided into this function, the original 
+   * {@link Throwable} is returned.
    * 
    * @param t starting {@link Throwable}
-   * @return root cause {@link Throwable}, or null if there is no cause
+   * @return root cause {@link Throwable}
    */
-  public static Throwable getRootCause(final Throwable t) {
+  public static Throwable getRootCause(Throwable t) {
     if (t == null) {
       throw new IllegalArgumentException("Must provide input throwable");
     }
@@ -81,11 +81,7 @@ public class ExceptionUtils {
       result = result.getCause();
     }
     
-    if (result == t) {
-      return null;
-    } else {
-      return result;
-    }
+    return result;
   }
   
   /**

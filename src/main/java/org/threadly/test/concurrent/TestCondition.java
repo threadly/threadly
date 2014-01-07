@@ -2,6 +2,8 @@ package org.threadly.test.concurrent;
 
 import java.util.concurrent.locks.LockSupport;
 
+import org.threadly.util.Clock;
+
 /**
  * <p>{@link TestCondition} in unit test, designed to check a condition
  * for something that is happening in a different thread.  Allowing a 
@@ -29,7 +31,7 @@ public abstract class TestCondition {
    * Blocks till condition is true, useful for asynchronism operations, 
    * waiting for them to complete in other threads during unit tests.
    * 
-   * This uses a default timeout of 10 seconds, and a poll interval of 20ms
+   * This uses a default timeout of 10 seconds, and a poll interval of 10ms
    */
   public void blockTillTrue() {
     blockTillTrue(DEFAULT_TIMEOUT, DEFAULT_POLL_INTERVAL);
@@ -39,34 +41,35 @@ public abstract class TestCondition {
    * Blocks till condition is true, useful for asynchronism operations, 
    * waiting for them to complete in other threads during unit tests.
    * 
-   * This uses the default poll interval of 20ms
+   * This uses the default poll interval of 10ms
    * 
-   * @param timeout time to wait for value to become true
+   * @param timeoutInMillis time to wait for value to become true
    */
-  public void blockTillTrue(int timeout) {
-    blockTillTrue(timeout, DEFAULT_POLL_INTERVAL);
+  public void blockTillTrue(int timeoutInMillis) {
+    blockTillTrue(timeoutInMillis, DEFAULT_POLL_INTERVAL);
   }
   
   /**
    * Blocks till condition is true, useful for asynchronism operations, 
    * waiting for them to complete in other threads during unit tests.
    * 
-   * @param timeout time to wait for value to become true
-   * @param pollInterval time to sleep between checks
+   * @param timeoutInMillis time to wait for value to become true
+   * @param pollIntervalInMillis time to sleep between checks
    */
-  public void blockTillTrue(int timeout, int pollInterval) {
-    long startTime = System.currentTimeMillis();
+  public void blockTillTrue(int timeoutInMillis, int pollIntervalInMillis) {
+    long startTime = Clock.accurateTime();
+    long now = Clock.lastKnownTimeMillis();
     boolean lastResult;
     while (! (lastResult = get()) && 
-           System.currentTimeMillis() - startTime < timeout) {
-      if (pollInterval > SPIN_THRESHOLD) {
-        LockSupport.parkNanos(NANOS_IN_MILLISECOND * pollInterval);
+           (now = Clock.accurateTime()) - startTime < timeoutInMillis) {
+      if (pollIntervalInMillis > SPIN_THRESHOLD) {
+        LockSupport.parkNanos(NANOS_IN_MILLISECOND * pollIntervalInMillis);
       }
     }
     
     if (! lastResult) {
       throw new ConditionTimeoutException("Still false after " + 
-                                            (System.currentTimeMillis() - startTime) + "ms");
+                                            (now - startTime) + "ms");
     }
   }
   

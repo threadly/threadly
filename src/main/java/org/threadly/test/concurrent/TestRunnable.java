@@ -159,7 +159,8 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Blocks until run has completed at least once.
+   * Blocks until run has completed at least once.  Will throw an 
+   * exception if runnable does not run within 10 seconds.
    */
   public void blockTillFinished() {
     blockTillFinished(DEFAULT_TIMEOUT_PER_RUN, 1);
@@ -168,7 +169,7 @@ public class TestRunnable implements Runnable {
   /**
    * Blocks until run has completed at least once.
    * 
-   * @param timeout time to wait for run to be called
+   * @param timeout time to wait for run to be called before throwing exception
    */
   public void blockTillFinished(int timeout) {
     blockTillFinished(timeout, 1);
@@ -177,19 +178,21 @@ public class TestRunnable implements Runnable {
   /**
    * Blocks until run completed been called the provided qty of times.
    * 
-   * @param timeout time to wait for run to be called
+   * @param timeout time to wait for run to be called before throwing exception
    * @param expectedRunCount run count to wait for
    */
   public void blockTillFinished(int timeout, 
-                                final int expectedRunCount) {
+                                int expectedRunCount) {
+    final int f_expectedRunCount = expectedRunCount;
+    
     new TestCondition() {
       @Override
       public boolean get() {
         int finishCount = runCount.get();
         
-        if (finishCount < expectedRunCount) {
+        if (finishCount < f_expectedRunCount) {
           return false;
-        } else if (finishCount > expectedRunCount) {
+        } else if (finishCount > f_expectedRunCount) {
           return true;
         } else {  // they are equal
           return currentRunningCount.get() == 0;
@@ -199,7 +202,8 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Blocks until run has been called at least once.
+   * Blocks until run has been called at least once.  Will throw an 
+   * exception if run is not called within 10 seconds.
    */
   public void blockTillStarted() {
     blockTillStarted(DEFAULT_TIMEOUT_PER_RUN);
@@ -208,7 +212,7 @@ public class TestRunnable implements Runnable {
   /**
    * Blocks until run has been called at least once.
    * 
-   * @param timeout time to wait for run to be called
+   * @param timeout time to wait for run to be called before throwing exception
    */
   public void blockTillStarted(int timeout) {
     new TestCondition() {
@@ -255,7 +259,8 @@ public class TestRunnable implements Runnable {
    * 
    * @throws InterruptedException only InterruptedExceptions will be swallowed
    */
-  protected void handleRunStart() throws InterruptedException {
+  public void handleRunStart() throws InterruptedException {
+    // only public to include in javadocs, otherwise could be protected
     // nothing in default implementation
   }
   
@@ -266,7 +271,8 @@ public class TestRunnable implements Runnable {
    * This is the last call to be made in the runnable.  If you want a runtime 
    * exception to get thrown to the caller, it must be thrown from here.
    */
-  protected void handleRunFinish() {
+  public void handleRunFinish() {
+    // only public to include in javadocs, otherwise could be protected
     // nothing in default implementation
   }
 }

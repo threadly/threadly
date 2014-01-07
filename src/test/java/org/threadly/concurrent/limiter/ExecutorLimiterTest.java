@@ -109,7 +109,7 @@ public class ExecutorLimiterTest {
     for (int i = 0; i < runnableCount; i++) {
       TestRunnable tr = new TestRunnable(THREAD_SLEEP_TIME) {
         @Override
-        protected void handleRunStart() {
+        public void handleRunStart() {
           running.incrementAndGet();
           if (running.get() > PARALLEL_COUNT) {
             parallelFailure = true;
@@ -117,7 +117,7 @@ public class ExecutorLimiterTest {
         }
         
         @Override
-        protected void handleRunFinish() {
+        public void handleRunFinish() {
           running.decrementAndGet();
         }
       };
