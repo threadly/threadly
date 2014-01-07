@@ -183,16 +183,16 @@ public class TestRunnable implements Runnable {
    */
   public void blockTillFinished(int timeout, 
                                 int expectedRunCount) {
-    final int f_expectedRunCount = expectedRunCount;
+    final int blockRunCount = expectedRunCount;
     
     new TestCondition() {
       @Override
       public boolean get() {
         int finishCount = runCount.get();
         
-        if (finishCount < f_expectedRunCount) {
+        if (finishCount < blockRunCount) {
           return false;
-        } else if (finishCount > f_expectedRunCount) {
+        } else if (finishCount > blockRunCount) {
           return true;
         } else {  // they are equal
           return currentRunningCount.get() == 0;
