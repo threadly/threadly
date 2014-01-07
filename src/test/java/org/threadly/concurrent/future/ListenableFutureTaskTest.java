@@ -108,66 +108,6 @@ public class ListenableFutureTaskTest {
     assertTrue(listener.ranOnce());
   }
   
-  @Test (expected = CancellationException.class)
-  public void getStaticCancelationExceptionTest() throws InterruptedException, ExecutionException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      protected void handleRunFinish() {
-        throw StaticCancellationException.instance();
-      }
-    };
-    
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
-    
-    future.run();
-    future.get();
-  }
-  
-  @Test (expected = CancellationException.class)
-  public void getWithTimeoutStaticCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      protected void handleRunFinish() {
-        throw StaticCancellationException.instance();
-      }
-    };
-    
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
-    
-    future.run();
-    future.get(100, TimeUnit.MILLISECONDS);
-  }
-  
-  @Test (expected = CancellationException.class)
-  public void getCancelationExceptionTest() throws InterruptedException, ExecutionException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      protected void handleRunFinish() {
-        throw new CancellationException();
-      }
-    };
-    
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
-    
-    future.run();
-    future.get();
-  }
-  
-  @Test (expected = CancellationException.class)
-  public void getWithTimeoutCancelationExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      protected void handleRunFinish() {
-        throw new CancellationException();
-      }
-    };
-    
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
-    
-    future.run();
-    future.get(100, TimeUnit.MILLISECONDS);
-  }
-  
   @Test (expected = ExecutionException.class)
   public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRuntimeFailureRunnable();

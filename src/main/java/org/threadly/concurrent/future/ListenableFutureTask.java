@@ -5,13 +5,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
@@ -135,39 +131,6 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   @Override
   protected void done() {
     callListeners();
-  }
-  
-  @Override
-  public T get() throws InterruptedException, 
-                        ExecutionException {
-    try {
-      return super.get();
-    } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause == StaticCancellationException.instance() || 
-          cause instanceof CancellationException) {
-        throw StaticCancellationException.instance();
-      } else {
-        throw e;
-      }
-    }
-  }
-  
-  @Override
-  public T get(long timeout, TimeUnit unit) throws InterruptedException, 
-                                                   ExecutionException, 
-                                                   TimeoutException {
-    try {
-      return super.get(timeout, unit);
-    } catch (ExecutionException e) {
-      Throwable cause = e.getCause();
-      if (cause == StaticCancellationException.instance() || 
-          cause instanceof CancellationException) {
-        throw StaticCancellationException.instance();
-      } else {
-        throw e;
-      }
-    }
   }
 
   @Override
