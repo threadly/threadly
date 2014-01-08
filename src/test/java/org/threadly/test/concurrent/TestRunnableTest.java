@@ -118,6 +118,32 @@ public class TestRunnableTest {
     fail("Exception should have thrown");
   }
   
+  @Test
+  public void ranConcurrentlyTest() {
+    TestRunnable notConcurrentTR = new TestRunnable();
+    
+    notConcurrentTR.run();
+    notConcurrentTR.run();
+    assertFalse(notConcurrentTR.ranConcurrently());
+    
+    TestRunnable concurrentTR = new TestRunnable() {
+      private boolean ranOnce = false;
+      
+      @Override
+      public void handleRunStart() {
+        if (! ranOnce) {
+          // used to prevent infinite recursion
+          ranOnce = true;
+          
+          this.run();
+        }
+      }
+    };
+    
+    concurrentTR.run();
+    assertTrue(concurrentTR.ranConcurrently());
+  }
+  
   private class TestTestRunnable extends TestRunnable {
     private boolean handleRunStartCalled = false;
     private boolean handleRunFinishCalled = false;

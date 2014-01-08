@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
 
 import org.junit.After;
 import org.junit.Before;
@@ -31,8 +31,8 @@ public class TaskExecutorDistributorTest {
   private static final int PARALLEL_LEVEL = 100;
   private static final int RUNNABLE_COUNT_PER_LEVEL = 1000;
   
-  private volatile boolean ready;
   private PriorityScheduledExecutor scheduler;
+  private Object agentLock;
   private TaskExecutorDistributor distributor;
   
   @Before
@@ -42,15 +42,38 @@ public class TaskExecutorDistributorTest {
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
-    distributor = new TaskExecutorDistributor(PARALLEL_LEVEL, scheduler);
-    ready = false;
+    StripedLock sLock = new StripedLock(1);
+    agentLock = sLock.getLock(null);  // there should be only one lock
+    distributor = new TaskExecutorDistributor(scheduler, sLock, Integer.MAX_VALUE);
   }
   
   @After
   public void tearDown() {
-    scheduler.shutdown();
-    scheduler = null;
+    scheduler.shutdownNow();
+    agentLock = null;
     distributor = null;
+    scheduler = null;
+  }
+  
+  private List<TDRunnable> populate(AddHandler ah) {
+    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    
+    // hold agent lock to prevent execution till ready
+    synchronized (agentLock) {
+      for (int i = 0; i < PARALLEL_LEVEL; i++) {
+        ThreadContainer tc = new ThreadContainer();
+        TDRunnable previous = null;
+        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+          TDRunnable tr = new TDRunnable(tc, previous);
+          runs.add(tr);
+          ah.addTDRunnable(tc, tr);
+          
+          previous = tr;
+        }
+      }
+    }
+    
+    return runs;
   }
   
   @Test
@@ -94,48 +117,21 @@ public class TaskExecutorDistributorTest {
   
   @Test
   public void keyBasedExecuteConsistentThreadTest() {
-    final Object testLock = new Object();
-    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-
-    scheduler.execute(new Runnable() {
+    List<TDRunnable> runs = populate(new AddHandler() {
       @Override
-      public void run() {
-        synchronized (testLock) {
-          for (int i = 0; i < PARALLEL_LEVEL; i++) {
-            ThreadContainer tc = new ThreadContainer();
-            Executor keyExecutor = distributor.getExecutorForKey(tc);
-            TDRunnable previous = null;
-            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDRunnable tr = new TDRunnable(tc, previous);
-              runs.add(tr);
-              keyExecutor.execute(tr);
-              
-              previous = tr;
-            }
-          }
-        }
-        
-        ready = true;
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        Executor keySubmitter = distributor.getExecutorForKey(key);
+        keySubmitter.execute(tdr);
       }
     });
     
-    // block till ready to ensure other thread got testLock lock
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ready;
-      }
-    }.blockTillTrue(20 * 1000, 100);
-
-    synchronized (testLock) {
-      Iterator<TDRunnable> it = runs.iterator();
-      while (it.hasNext()) {
-        TDRunnable tr = it.next();
-        tr.blockTillFinished(20 * 1000);
-        assertEquals(1, tr.getRunCount()); // verify each only ran once
-        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
-        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
-      }
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
     }
   }
   
@@ -180,49 +176,22 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
-  public void keyBasedSubmitterConsistentThreadTest() {
-    final Object testLock = new Object();
-    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-
-    scheduler.execute(new Runnable() {
+  public void keyBasedSubmitterConsistentThreadTest() throws InterruptedException, TimeoutException {
+    List<TDRunnable> runs = populate(new AddHandler() {
       @Override
-      public void run() {
-        synchronized (testLock) {
-          for (int i = 0; i < PARALLEL_LEVEL; i++) {
-            ThreadContainer tc = new ThreadContainer();
-            SubmitterExecutorInterface keySubmitter = distributor.getSubmitterForKey(tc);
-            TDRunnable previous = null;
-            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDRunnable tr = new TDRunnable(tc, previous);
-              runs.add(tr);
-              keySubmitter.submit(tr);
-              
-              previous = tr;
-            }
-          }
-        }
-        
-        ready = true;
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        SubmitterExecutorInterface keySubmitter = distributor.getSubmitterForKey(key);
+        keySubmitter.submit(tdr);
       }
     });
     
-    // block till ready to ensure other thread got testLock lock
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ready;
-      }
-    }.blockTillTrue(20 * 1000, 100);
-
-    synchronized (testLock) {
-      Iterator<TDRunnable> it = runs.iterator();
-      while (it.hasNext()) {
-        TDRunnable tr = it.next();
-        tr.blockTillFinished(20 * 1000);
-        assertEquals(1, tr.getRunCount()); // verify each only ran once
-        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
-        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
-      }
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(1000 * 20);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
     }
   }
   
@@ -233,47 +202,20 @@ public class TaskExecutorDistributorTest {
   
   @Test
   public void executeConsistentThreadTest() {
-    final Object testLock = new Object();
-    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-
-    scheduler.execute(new Runnable() {
+    List<TDRunnable> runs = populate(new AddHandler() {
       @Override
-      public void run() {
-        synchronized (testLock) {
-          for (int i = 0; i < PARALLEL_LEVEL; i++) {
-            ThreadContainer tc = new ThreadContainer();
-            TDRunnable previous = null;
-            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDRunnable tr = new TDRunnable(tc, previous);
-              runs.add(tr);
-              distributor.addTask(tc, tr);
-              
-              previous = tr;
-            }
-          }
-        }
-        
-        ready = true;
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        distributor.addTask(key, tdr);
       }
     });
-    
-    // block till ready to ensure other thread got testLock lock
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ready;
-      }
-    }.blockTillTrue(20 * 1000, 100);
 
-    synchronized (testLock) {
-      Iterator<TDRunnable> it = runs.iterator();
-      while (it.hasNext()) {
-        TDRunnable tr = it.next();
-        tr.blockTillFinished(20 * 1000);
-        assertEquals(1, tr.getRunCount()); // verify each only ran once
-        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
-        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
-      }
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
     }
   }
   
@@ -295,47 +237,48 @@ public class TaskExecutorDistributorTest {
   
   @Test
   public void submitRunnableConsistentThreadTest() {
-    final Object testLock = new Object();
-    final List<TDRunnable> runs = new ArrayList<TDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-
-    scheduler.execute(new Runnable() {
+    List<TDRunnable> runs = populate(new AddHandler() {
       @Override
-      public void run() {
-        synchronized (testLock) {
-          for (int i = 0; i < PARALLEL_LEVEL; i++) {
-            ThreadContainer tc = new ThreadContainer();
-            TDRunnable previous = null;
-            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDRunnable tr = new TDRunnable(tc, previous);
-              runs.add(tr);
-              distributor.submitTask(tc, tr);
-              
-              previous = tr;
-            }
-          }
-        }
-        
-        ready = true;
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        distributor.submitTask(key, tdr);
       }
     });
     
-    // block till ready to ensure other thread got testLock lock
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ready;
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
+    }
+  }
+  
+  @Test
+  public void submitCallableConsistentThreadTest() {
+    List<TDCallable> runs = new ArrayList<TDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    
+    // hold agent lock to avoid execution till all are submitted
+    synchronized (agentLock) {
+      for (int i = 0; i < PARALLEL_LEVEL; i++) {
+        ThreadContainer tc = new ThreadContainer();
+        TDCallable previous = null;
+        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+          TDCallable tr = new TDCallable(tc, previous);
+          runs.add(tr);
+          distributor.submitTask(tc, tr);
+          
+          previous = tr;
+        }
       }
-    }.blockTillTrue(20 * 1000, 100);
-
-    synchronized (testLock) {
-      Iterator<TDRunnable> it = runs.iterator();
-      while (it.hasNext()) {
-        TDRunnable tr = it.next();
-        tr.blockTillFinished(20 * 1000);
-        assertEquals(1, tr.getRunCount()); // verify each only ran once
-        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
-        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
-      }
+    }
+    
+    Iterator<TDCallable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDCallable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
     }
   }
   
@@ -354,59 +297,14 @@ public class TaskExecutorDistributorTest {
       // expected
     }
   }
-  
-  @Test
-  public void submitCallableConsistentThreadTest() {
-    final Object testLock = new Object();
-    final List<TDCallable> runs = new ArrayList<TDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-
-    scheduler.execute(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (testLock) {
-          for (int i = 0; i < PARALLEL_LEVEL; i++) {
-            ThreadContainer tc = new ThreadContainer();
-            TDCallable previous = null;
-            for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-              TDCallable tr = new TDCallable(tc, previous);
-              runs.add(tr);
-              distributor.submitTask(tc, tr);
-              
-              previous = tr;
-            }
-          }
-        }
-        
-        ready = true;
-      }
-    });
-    
-    // block till ready to ensure other thread got testLock lock
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ready;
-      }
-    }.blockTillTrue(20 * 1000, 100);
-
-    synchronized (testLock) {
-      Iterator<TDCallable> it = runs.iterator();
-      while (it.hasNext()) {
-        TDCallable tr = it.next();
-        tr.blockTillFinished(20 * 1000);
-        assertTrue(tr.threadTracker.threadConsistent);  // verify that all threads for a given key ran in the same thread
-        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
-      }
-    }
-  }
 
   @Test
   public void executeStressTest() {
     final Object testLock = new Object();
     final int expectedCount = (PARALLEL_LEVEL * 2) * (RUNNABLE_COUNT_PER_LEVEL * 2);
     final List<TDRunnable> runs = new ArrayList<TDRunnable>(expectedCount);
-
-    ready = true; // don't make tasks wait
+    
+    // we can't use populate here because we don't want to hold the agentLock
     
     scheduler.execute(new Runnable() {
       private final Map<Integer, ThreadContainer> containers = new HashMap<Integer, ThreadContainer>();
@@ -460,6 +358,7 @@ public class TaskExecutorDistributorTest {
         tr.blockTillFinished(20 * 1000, 2);
         assertEquals(2, tr.getRunCount()); // verify each only ran twice
         assertTrue(tr.previousRanFirst);  // verify runnables were run in order
+        assertFalse(tr.ranConcurrently());  // verify that it never run in parallel
       }
     }
   }
@@ -548,14 +447,14 @@ public class TaskExecutorDistributorTest {
     }
   }
   
-  private class TDRunnable extends TestRunnable {
+  protected static class TDRunnable extends TestRunnable {
     protected final TDRunnable previousRunnable;
     protected final ThreadContainer threadTracker;
-    protected volatile boolean previousRanFirst;
+    private volatile boolean previousRanFirst;
     private volatile boolean verifiedPrevious;
     
-    private TDRunnable(ThreadContainer threadTracker, 
-                       TDRunnable previousRunnable) {
+    protected TDRunnable(ThreadContainer threadTracker, 
+                         TDRunnable previousRunnable) {
       this.threadTracker = threadTracker;
       this.previousRunnable = previousRunnable;
       previousRanFirst = false;
@@ -576,16 +475,20 @@ public class TaskExecutorDistributorTest {
         verifiedPrevious = true;
       }
     }
+    
+    public boolean previousRanFirst() {
+      return previousRanFirst;
+    }
   }
   
-  private class TDCallable extends TestCallable {
+  protected static class TDCallable extends TestCallable {
     protected final TDCallable previousRunnable;
     protected final ThreadContainer threadTracker;
-    protected volatile boolean previousRanFirst;
+    private volatile boolean previousRanFirst;
     private volatile boolean verifiedPrevious;
     
-    private TDCallable(ThreadContainer threadTracker, 
-                       TDCallable previousRunnable) {
+    protected TDCallable(ThreadContainer threadTracker, 
+                         TDCallable previousRunnable) {
       this.threadTracker = threadTracker;
       this.previousRunnable = previousRunnable;
       previousRanFirst = false;
@@ -606,23 +509,26 @@ public class TaskExecutorDistributorTest {
         verifiedPrevious = true;
       }
     }
+    
+    public boolean previousRanFirst() {
+      return previousRanFirst;
+    }
   }
   
-  private class ThreadContainer {
+  protected static class ThreadContainer {
     private Thread runningThread = null;
     private boolean threadConsistent = true;
     
     public synchronized void running() {
-      while (! ready) {
-        LockSupport.parkNanos(1000000 * 10);
-        // spin
-      }
-      
       if (runningThread == null) {
         runningThread = Thread.currentThread();
       } else {
-        threadConsistent = threadConsistent && runningThread.equals(Thread.currentThread());
+        threadConsistent = threadConsistent && runningThread == Thread.currentThread();
       }
+    }
+    
+    public boolean threadConsistent() {
+      return threadConsistent;
     }
   }
 
@@ -661,5 +567,9 @@ public class TaskExecutorDistributorTest {
         it.remove();
       }
     }
+  }
+  
+  private interface AddHandler {
+    public void addTDRunnable(Object key, TDRunnable tdr);
   }
 }

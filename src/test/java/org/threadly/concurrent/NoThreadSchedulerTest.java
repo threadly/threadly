@@ -373,6 +373,7 @@ public class NoThreadSchedulerTest {
     tickFail(threadSafeScheduler);
   }
 
+  @Test (expected = IllegalArgumentException.class)
   public void tickFail() {
     tickFail(notSafeScheduler);
   }

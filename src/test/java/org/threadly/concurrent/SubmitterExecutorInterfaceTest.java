@@ -17,17 +17,69 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SubmitterExecutorInterfaceTest {
+  public static void executeTest(SubmitterExecutorFactory factory) {
+    try {
+      int runnableCount = 10;
+      
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
+      
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
+      for (int i = 0; i < runnableCount; i++) {
+        TestRunnable tr = new TestRunnable();
+        executor.execute(tr);
+        runnables.add(tr);
+      }
+      
+      // verify execution
+      Iterator<TestRunnable> it = runnables.iterator();
+      while (it.hasNext()) {
+        TestRunnable tr = it.next();
+        tr.blockTillFinished();
+        
+        assertEquals(1, tr.getRunCount());
+      }
+      
+      // run one more time now that all workers are already running
+      it = runnables.iterator();
+      while (it.hasNext()) {
+        executor.execute(it.next());
+      }
+      
+      // verify second execution
+      it = runnables.iterator();
+      while (it.hasNext()) {
+        TestRunnable tr = it.next();
+        tr.blockTillFinished(1000, 2);
+        
+        assertEquals(2, tr.getRunCount());
+      }
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  public static void executeFail(SubmitterExecutorFactory factory) {
+    try {
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
+      
+      executor.execute(null);
+      fail("Execption should have thrown");
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
   public static void submitRunnableTest(SubmitterExecutorFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;
       
-      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(runnableCount, false);
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
       for (int i = 0; i < runnableCount; i++) {
         TestRunnable tr = new TestRunnable();
-        Future<?> future = scheduler.submit(tr);
+        Future<?> future = executor.submit(tr);
         assertNotNull(future);
         runnables.add(tr);
         futures.add(future);
@@ -45,7 +97,7 @@ public class SubmitterExecutorInterfaceTest {
       // run one more time now that all workers are already running
       it = runnables.iterator();
       while (it.hasNext()) {
-        scheduler.submit(it.next());
+        executor.submit(it.next());
       }
       
       // verify second execution
@@ -72,13 +124,13 @@ public class SubmitterExecutorInterfaceTest {
     try {
       int runnableCount = 10;
       
-      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(runnableCount, false);
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(runnableCount);
       for (int i = 0; i < runnableCount; i++) {
         TestRunnable tr = new TestRunnable();
-        Future<TestRunnable> future = scheduler.submit(tr, tr);
+        Future<TestRunnable> future = executor.submit(tr, tr);
         assertNotNull(future);
         runnables.add(tr);
         futures.add(future);
@@ -96,7 +148,7 @@ public class SubmitterExecutorInterfaceTest {
       // run one more time now that all workers are already running
       it = runnables.iterator();
       while (it.hasNext()) {
-        scheduler.submit(it.next());
+        executor.submit(it.next());
       }
       
       // verify second execution
@@ -124,13 +176,13 @@ public class SubmitterExecutorInterfaceTest {
     try {
       int runnableCount = 10;
       
-      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(runnableCount, false);
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
       
       List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
       List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
       for (int i = 0; i < runnableCount; i++) {
         TestCallable tc = new TestCallable(0);
-        Future<Object> future = scheduler.submit(tc);
+        Future<Object> future = executor.submit(tc);
         assertNotNull(future);
         callables.add(tc);
         futures.add(future);
@@ -161,9 +213,9 @@ public class SubmitterExecutorInterfaceTest {
   
   public static void submitRunnableFail(SubmitterExecutorFactory factory) {
     try {
-      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(1, false);
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       
-      scheduler.submit((Runnable)null);
+      executor.submit((Runnable)null);
       fail("Execption should have thrown");
     } finally {
       factory.shutdown();
@@ -172,9 +224,9 @@ public class SubmitterExecutorInterfaceTest {
   
   public static void submitCallableFail(SubmitterExecutorFactory factory) {
     try {
-      SubmitterExecutorInterface scheduler = factory.makeSubmitterExecutor(1, false);
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       
-      scheduler.submit((Callable<Object>)null);
+      executor.submit((Callable<Object>)null);
       fail("Execption should have thrown");
     } finally {
       factory.shutdown();

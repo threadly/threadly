@@ -12,58 +12,6 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SimpleSchedulerInterfaceTest {
-  public static void executeTest(SimpleSchedulerFactory factory) {
-    try {
-      int runnableCount = 10;
-      
-      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(runnableCount, false);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
-        TestRunnable tr = new TestRunnable();
-        scheduler.execute(tr);
-        runnables.add(tr);
-      }
-      
-      // verify execution
-      Iterator<TestRunnable> it = runnables.iterator();
-      while (it.hasNext()) {
-        TestRunnable tr = it.next();
-        tr.blockTillFinished();
-        
-        assertEquals(1, tr.getRunCount());
-      }
-      
-      // run one more time now that all workers are already running
-      it = runnables.iterator();
-      while (it.hasNext()) {
-        scheduler.execute(it.next());
-      }
-      
-      // verify second execution
-      it = runnables.iterator();
-      while (it.hasNext()) {
-        TestRunnable tr = it.next();
-        tr.blockTillFinished(1000, 2);
-        
-        assertEquals(2, tr.getRunCount());
-      }
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  public static void executeFail(SimpleSchedulerFactory factory) {
-    try {
-      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(1, false);
-      
-      scheduler.execute(null);
-      fail("Execption should have thrown");
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
   public static void scheduleTest(SimpleSchedulerFactory factory) {
     try {
       int runnableCount = 10;

@@ -15,7 +15,7 @@ public class ScheduledExecutorServiceWrapperTest {
   public void executeTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.executeTest(sf);
+    SubmitterExecutorInterfaceTest.executeTest(sf);
   }
   
   @Test
@@ -43,7 +43,7 @@ public class ScheduledExecutorServiceWrapperTest {
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.executeFail(sf);
+    SubmitterExecutorInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)

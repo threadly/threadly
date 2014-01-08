@@ -3,6 +3,7 @@ package org.threadly.test.concurrent;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.util.Clock;
 
 /**
  * <p>Generic runnable implementation that can be used in 
@@ -46,7 +47,7 @@ public class TestRunnable implements Runnable {
     this.currentRunningCount = new AtomicInteger(0);
     this.ranConcurrent = false;
 
-    this.creationTime = System.currentTimeMillis();
+    this.creationTime = Clock.accurateTime();
   }
   
   /**
@@ -227,7 +228,7 @@ public class TestRunnable implements Runnable {
   public final void run() {
     int startRunningCount = currentRunningCount.incrementAndGet();
     
-    runTime.addLast(System.currentTimeMillis());
+    runTime.addLast(Clock.accurateTime());
     try {
       handleRunStart();
     } catch (InterruptedException e) {

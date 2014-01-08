@@ -15,7 +15,6 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SubmitterSchedulerInterfaceTest {
-  
   public static void submitScheduledRunnableTest(SubmitterSchedulerFactory factory) throws InterruptedException, ExecutionException {
     try {
       int runnableCount = 10;

@@ -145,7 +145,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.executeFail(sf);
+    SubmitterExecutorInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -288,18 +288,11 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperExecuteTest() {
     WrapperFactory wf = new WrapperFactory();
     try {
-      SimpleSchedulerInterfaceTest.executeTest(wf);
+      SubmitterExecutorInterfaceTest.executeTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSimpleScheduler(2, false);
-      TestRunnable tr1 = new TestRunnable();
-      TestRunnable tr2 = new TestRunnable();
-      scheduler.execute(tr1, TaskPriority.High);
-      scheduler.execute(tr2, TaskPriority.Low);
-      scheduler.execute(tr1, TaskPriority.High);
-      scheduler.execute(tr2, TaskPriority.Low);
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       
-      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      PriorityScheduledExecutorTest.executePriorityTest(scheduler);
     } finally {
       wf.shutdown();  // must shutdown here because we created another scheduler after calling executeTest
     }
@@ -311,16 +304,9 @@ public class PrioritySchedulerStatisticTrackerTest {
     try {
       SubmitterExecutorInterfaceTest.submitRunnableTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSimpleScheduler(2, false);
-      TestRunnable tr1 = new TestRunnable();
-      TestRunnable tr2 = new TestRunnable();
-      scheduler.submit(tr1, TaskPriority.High);
-      scheduler.submit(tr2, TaskPriority.Low);
-      scheduler.submit(tr1, TaskPriority.High);
-      scheduler.submit(tr2, TaskPriority.Low);
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       
-      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      PriorityScheduledExecutorTest.submitRunnablePriorityTest(scheduler);
     } finally {
       wf.shutdown();  // must call shutdown here because we called make after submitRunnableTest
     }
@@ -332,16 +318,9 @@ public class PrioritySchedulerStatisticTrackerTest {
     try {
       SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSimpleScheduler(2, false);
-      TestRunnable tr1 = new TestRunnable();
-      TestRunnable tr2 = new TestRunnable();
-      scheduler.submit(tr1, tr1, TaskPriority.High);
-      scheduler.submit(tr2, tr2, TaskPriority.Low);
-      scheduler.submit(tr1, tr1, TaskPriority.High);
-      scheduler.submit(tr2, tr2, TaskPriority.Low);
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       
-      tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
-      tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      PriorityScheduledExecutorTest.submitRunnableWithResultPriorityTest(scheduler);
     } finally {
       wf.shutdown();  // must call shutdown here because we called make after submitRunnableTest
     }
@@ -353,15 +332,9 @@ public class PrioritySchedulerStatisticTrackerTest {
     try {
       SubmitterExecutorInterfaceTest.submitCallableTest(wf);
 
-      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSimpleScheduler(2, false);
-      TestCallable tc1 = new TestCallable(0);
-      TestCallable tc2 = new TestCallable(0);
-      scheduler.submit(tc1, TaskPriority.High);
-      scheduler.submit(tc2, TaskPriority.Low);
-
+      PrioritySchedulerInterface scheduler = (PrioritySchedulerInterface)wf.makeSubmitterScheduler(2, false);
       
-      tc1.blockTillTrue(); // throws exception if fails
-      tc2.blockTillTrue(); // throws exception if fails
+      PriorityScheduledExecutorTest.submitCallablePriorityTest(scheduler);
     } finally {
       wf.shutdown();  // must call shutdown here because we called make after submitCallableTest
     }
@@ -371,7 +344,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperExecuteFail() {
     WrapperFactory wf = new WrapperFactory();
     
-    SimpleSchedulerInterfaceTest.executeFail(wf);
+    SubmitterExecutorInterfaceTest.executeFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)

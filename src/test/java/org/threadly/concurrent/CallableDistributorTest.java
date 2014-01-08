@@ -21,15 +21,17 @@ public class CallableDistributorTest {
   private PriorityScheduledExecutor executor;
   private CallableDistributor<String, String> distributor;
   
-  @Before
-  public void setup() {
+  static {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
       @Override
       public void uncaughtException(Thread t, Throwable e) {
         // ignored
       }
     });
-    
+  }
+  
+  @Before
+  public void setup() {
     executor = new PriorityScheduledExecutor(10, 10, 200);
     distributor = new CallableDistributor<String, String>(executor);
   }

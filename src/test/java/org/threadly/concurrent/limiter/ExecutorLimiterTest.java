@@ -8,7 +8,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
@@ -19,23 +21,19 @@ import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class ExecutorLimiterTest {
   private static final int PARALLEL_COUNT = 2;
   private static final int THREAD_COUNT = PARALLEL_COUNT * 2;
-  private static final int THREAD_SLEEP_TIME = 20;
   
-  private volatile boolean parallelFailure;
-  private AtomicInteger running;
   private PriorityScheduledExecutor executor;
   private ExecutorLimiter limiter;
   
   @Before
   public void setup() {
-    parallelFailure = false;
-    running = new AtomicInteger(0);
     executor = new PriorityScheduledExecutor(PARALLEL_COUNT, THREAD_COUNT, 1000);
     limiter = new ExecutorLimiter(executor, PARALLEL_COUNT);
   }
@@ -45,7 +43,6 @@ public class ExecutorLimiterTest {
     executor.shutdown();
     executor = null;
     limiter = null;
-    running = null;
   }
   
   @Test
@@ -102,30 +99,39 @@ public class ExecutorLimiterTest {
   }
   
   @Test
-  public void executeTest() {
-    int runnableCount = 10;
+  public void executeLimitTest() throws InterruptedException, TimeoutException {
+    executeLimitTest(limiter, PARALLEL_COUNT);
+  }
+  
+  public static void executeLimitTest(Executor limitedExecutor, 
+                                      final int limiterLimit) throws InterruptedException, 
+                                                                     TimeoutException {
+    final int runnableCount = 10;
     
+    final AtomicInteger running = new AtomicInteger(0);
+    final AsyncVerifier verifier = new AsyncVerifier();
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
     for (int i = 0; i < runnableCount; i++) {
-      TestRunnable tr = new TestRunnable(THREAD_SLEEP_TIME) {
+      TestRunnable tr = new TestRunnable(20) {
         @Override
         public void handleRunStart() {
-          running.incrementAndGet();
-          if (running.get() > PARALLEL_COUNT) {
-            parallelFailure = true;
+          int runningCount = running.incrementAndGet();
+          if (runningCount > limiterLimit) {
+            verifier.fail(runningCount + " currently running");
           }
         }
         
         @Override
         public void handleRunFinish() {
           running.decrementAndGet();
+          verifier.signalComplete();
         }
       };
-      limiter.execute(tr);
+      limitedExecutor.execute(tr);
       runnables.add(tr);
     }
     
-    assertFalse(parallelFailure);
+    verifier.waitForTest(1000 * 10, runnableCount);
     
     // verify execution
     Iterator<TestRunnable> it = runnables.iterator();
@@ -135,6 +141,20 @@ public class ExecutorLimiterTest {
       
       assertEquals(1, tr.getRunCount());
     }
+  }
+  
+  @Test
+  public void executeTest() {
+    ExecutorLimiterFactory sf = new ExecutorLimiterFactory(false);
+    
+    SubmitterExecutorInterfaceTest.executeTest(sf);
+  }
+  
+  @Test
+  public void executeNamedSubPoolTest() {
+    ExecutorLimiterFactory sf = new ExecutorLimiterFactory(true);
+    
+    SubmitterExecutorInterfaceTest.executeTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)

@@ -27,7 +27,9 @@ public class TestUtils {
   }
   
   /**
-   * Blocks until the System clock advances at least 1 millisecond.
+   * Blocks until the System clock advances at least 1 millisecond.  This will 
+   * also ensure that the {@link Clock} class's representation of time has 
+   * advanced.
    */
   public static void blockTillClockAdvances() {
     new TestCondition() {

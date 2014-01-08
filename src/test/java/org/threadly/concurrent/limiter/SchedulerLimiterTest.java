@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.BlockingTestRunnable;
@@ -81,24 +82,39 @@ public class SchedulerLimiterTest {
   }
   
   @Test
+  public void executeLimitTest() throws InterruptedException, TimeoutException {
+    final int limiterLimit = 2;
+    final int threadCount = limiterLimit * 2;
+    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(threadCount, threadCount, 10, 
+                                                                       TaskPriority.High, 100);
+    try {
+      SchedulerLimiter sl = new SchedulerLimiter(executor, limiterLimit);
+      
+      ExecutorLimiterTest.executeLimitTest(sl, limiterLimit);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
   public void executeTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SimpleSchedulerInterfaceTest.executeTest(sf);
+    SubmitterExecutorInterfaceTest.executeTest(sf);
   }
   
   @Test
   public void executeNamedSubPoolTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
-    SimpleSchedulerInterfaceTest.executeTest(sf);
+    SubmitterExecutorInterfaceTest.executeTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void executeFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SimpleSchedulerInterfaceTest.executeFail(sf);
+    SubmitterExecutorInterfaceTest.executeFail(sf);
   }
   
   @Test
