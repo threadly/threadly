@@ -5,6 +5,8 @@ A library of java tools to assist with development of concurrent java applicatio
 
 For information about compiling, importing into eclipse, or contributing to the project, please look at the 'BUILD_INSTRUCTIONS' file.
 
+If you find this library useful, feel free to donate LTC/Litecoin to: LKq3cMy9wn2zkrmkTbuFrL2jAEzvpfPLHp
+
 -- General Concurrency Tools --
 
 *    PriorityScheduledExecutor - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
