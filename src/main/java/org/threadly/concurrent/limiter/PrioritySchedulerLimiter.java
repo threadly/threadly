@@ -80,7 +80,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public void execute(Runnable task) {
-    execute(task, scheduler.getDefaultPriority());
+    execute(task, null);
   }
 
   @Override
@@ -112,7 +112,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submit(task, result, scheduler.getDefaultPriority());
+    return submit(task, result, null);
   }
 
   @Override
@@ -133,7 +133,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task) {
-    return submit(task, scheduler.getDefaultPriority());
+    return submit(task, null);
   }
 
   @Override
@@ -154,7 +154,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, delayInMs, scheduler.getDefaultPriority());
+    return submitScheduled(task, delayInMs, null);
   }
 
   @Override
@@ -175,7 +175,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    return submitScheduled(task, result, delayInMs, scheduler.getDefaultPriority());
+    return submitScheduled(task, result, delayInMs, null);
   }
 
   @Override
@@ -196,7 +196,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    return submitScheduled(task, delayInMs, scheduler.getDefaultPriority());
+    return submitScheduled(task, delayInMs, null);
   }
 
   @Override
@@ -217,7 +217,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
 
   @Override
   public void schedule(Runnable task, long delayInMs) {
-    schedule(task, delayInMs, scheduler.getDefaultPriority());
+    schedule(task, delayInMs, null);
   }
 
   @Override
@@ -243,7 +243,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
     scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
-                           scheduler.getDefaultPriority());
+                           null);
   }
 
   @Override
