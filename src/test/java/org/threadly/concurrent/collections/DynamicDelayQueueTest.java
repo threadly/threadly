@@ -86,6 +86,13 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
+  public void toStringTest() {
+    String testStr = testQueue.toString();
+    assertNotNull(testStr);
+    assertTrue(testStr.length() > 5);
+  }
+  
+  @Test
   public void blockTillAvailableNoSpin() throws InterruptedException {
     final int delayTime = 20;
     
@@ -163,6 +170,11 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
+  public void addNullTest() {
+    assertFalse(testQueue.add(null));
+  }
+  
+  @Test
   public void addAllTest() {
     List<TestDelayed> toAddList = new ArrayList<TestDelayed>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
@@ -182,6 +194,23 @@ public class DynamicDelayQueueTest {
         assertTrue(it.next() == testIt.next());
       }
     }
+  }
+  
+  @Test (expected = NullPointerException.class)
+  public void addLastFail() {
+    testQueue.addLast(null);
+    
+    fail("Exception should have been thrown");
+  }
+  
+  @Test
+  public void repositionNullTest() {
+    testQueue.reposition(null, 100, new DynamicDelayedUpdater() {
+      @Override
+      public void allowDelayUpdate() {
+        fail(); // should not be called
+      }
+    });
   }
   
   @Test
@@ -207,6 +236,7 @@ public class DynamicDelayQueueTest {
   @Test (expected = IllegalStateException.class)
   public void iteratorLockFail() {
     testQueue.iterator();
+    
     fail("Exception should have thrown");
   }
   
@@ -232,6 +262,7 @@ public class DynamicDelayQueueTest {
   @Test (expected = IllegalStateException.class)
   public void consumerIteratorLockFail() throws InterruptedException {
     testQueue.consumeIterator();
+    
     fail("Exception should have thrown");
   }
    
@@ -257,6 +288,22 @@ public class DynamicDelayQueueTest {
     testQueue.clear();
     assertEquals(0, testQueue.size());
   }
+  
+  @Test
+  public void elementTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestDelayed item = new TestDelayed(i * -1);
+      testQueue.add(item);
+      assertEquals(item, testQueue.element());
+    }
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void elementFail() {
+    testQueue.element();
+    
+    fail("Exception should have been thrown");
+  }
      
   @Test
   public void peekTest() {
@@ -265,7 +312,7 @@ public class DynamicDelayQueueTest {
     assertNull(testQueue.peek()); // assert peek in future is null
     
     for (int i = 0; i < TEST_QTY; i++) {
-      item = new TestDelayed(i * - 1);
+      item = new TestDelayed(i * -1);
       testQueue.add(item);
       assertEquals(item, testQueue.peek());
     }
@@ -326,6 +373,15 @@ public class DynamicDelayQueueTest {
     
     comparisonList.removeAll(toRemoveList);  // do operation on comparison list
     assertTrue(testQueue.containsAll(comparisonList));  // verify nothing additional was removed
+  }
+  
+  @Test
+  public void removeTest() {
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestDelayed item = new TestDelayed(i * -1);
+      testQueue.add(item);
+      assertEquals(item, testQueue.remove());
+    }
   }
   
   @Test (expected = NoSuchElementException.class)
@@ -462,6 +518,14 @@ public class DynamicDelayQueueTest {
     assertEquals(TEST_QTY - (TEST_QTY / 2), testQueue.size());
     assertEquals(TEST_QTY / 2, drainToList.size());
     assertNotNull(testQueue.peek());
+  }
+  
+  @Test
+  public void drainToLimitZeroTest() {
+    testQueue.add(new TestDelayed(-1));
+    testQueue.add(new TestDelayed(-2));
+    
+    assertEquals(0, testQueue.drainTo(new ArrayList<TestDelayed>(0), 0));
   }
   
   private class RealTimeDelayed extends TestDelayed {

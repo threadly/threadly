@@ -32,6 +32,21 @@ public class ConcurrentArrayListTest {
     testList = null;
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void constructorFail() {
+    new ConcurrentArrayList<String>(null, new Object());
+    fail("Exception should have thrown");
+  }
+  
+  @Test
+  public void toStringTest() {
+    testList.add("foo");
+    String testStr = testList.toString();
+    
+    assertNotNull(testStr);
+    assertTrue(testStr.length() > 2);
+  }
+  
   @Test
   public void getModificationLockTest() {
     Object testLock = new Object();
@@ -89,6 +104,11 @@ public class ConcurrentArrayListTest {
   @Test
   public void getTest() {
     ListTests.getTest(testList);
+  }
+  
+  @Test (expected = IndexOutOfBoundsException.class)
+  public void getInvalidIndexTest() {
+    testList.get(1);
   }
   
   @Test
@@ -170,6 +190,11 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void addNullTest() {
+    ListTests.addNullTest(testList);
+  }
+  
+  @Test
   public void addAllTest() {
     ListTests.addAllTest(testList);
   }
@@ -204,6 +229,8 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void removeFirstOccurrenceTest() {
+    assertFalse(testList.removeFirstOccurrence(null));
+    
     List<String> firstStr = new ArrayList<String>(TEST_QTY);
     List<String> secondStr = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
@@ -231,6 +258,8 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void removeLastOccurrenceTest() {
+    assertFalse(testList.removeLastOccurrence(null));
+    
     List<String> firstStr = new ArrayList<String>(TEST_QTY);
     List<String> secondStr = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
@@ -419,10 +448,32 @@ public class ConcurrentArrayListTest {
   }
 
   
-  @Test (expected = IndexOutOfBoundsException.class)
+  @Test
   public void repositionObjectIndexFail() {
-    testList.reposition(Integer.toString(0), 1);
-    fail("Exception should have been thrown");
+    try {
+      testList.reposition(Integer.toString(0), 1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.reposition(Integer.toString(0), -1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.reposition(-1, 0);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.reposition(0, -1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
   }
   
   @Test (expected = NoSuchElementException.class)

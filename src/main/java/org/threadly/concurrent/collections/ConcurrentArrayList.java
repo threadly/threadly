@@ -82,7 +82,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @param rearPadding padding to add to end of array to possible avoid array copies
    */
   public ConcurrentArrayList(int frontPadding, int rearPadding) {
-    this(new Object(), frontPadding, rearPadding);
+    this(null, frontPadding, rearPadding);
   }
 
   /**
@@ -202,11 +202,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   
   @Override
   public T get(int index) {
-    if (index < 0 || index >= size()) {
+    try {
+      return currentData.get(index);
+    } catch (ArrayIndexOutOfBoundsException e) {
+      // translate to the expected exception type
       throw new IndexOutOfBoundsException();
     }
-    
-    return currentData.get(index);
   }
 
   @Override

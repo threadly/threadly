@@ -47,8 +47,16 @@ public class ListTests {
     assertTrue(testList.isEmpty());
   }
   
+  public static void addNullTest(List<String> testList) {
+    assertFalse(testList.add(null));
+  }
+  
   public static void addAllTest(List<String> testList) {
     List<String> toAddList = new ArrayList<String>(TEST_QTY);
+    
+    // verify with empty list first
+    assertFalse(testList.addAll(toAddList));
+    
     populateIntStrings(toAddList, TEST_QTY);
     
     testList.addAll(toAddList);
@@ -65,6 +73,10 @@ public class ListTests {
   
   public static void addAllIndexTest(List<String> testList) {
     List<String> toAddList = new ArrayList<String>(TEST_QTY);
+    
+    // verify with empty list first
+    assertFalse(testList.addAll(0, toAddList));
+    
     testList.add("foo");
     testList.add("bar");
     populateIntStrings(toAddList, TEST_QTY);
@@ -220,6 +232,10 @@ public class ListTests {
   
   public static void removeAllTest(List<String> testList) {
     List<String> toRemoveList = new ArrayList<String>(TEST_QTY);
+    
+    // verify returned false on no modification
+    assertFalse(testList.removeAll(toRemoveList));
+    
     List<String> comparisonList = new ArrayList<String>(TEST_QTY);
     boolean flip = false;
     for (int i = 0; i < TEST_QTY; i++) {
@@ -242,7 +258,7 @@ public class ListTests {
     
     assertEquals(TEST_QTY, testList.size());
     
-    testList.removeAll(toRemoveList);
+    assertTrue(testList.removeAll(toRemoveList));
     assertEquals(TEST_QTY - toRemoveList.size(), testList.size());
     Iterator<String> it = toRemoveList.iterator();
     while (it.hasNext()) {
@@ -277,6 +293,9 @@ public class ListTests {
   }
   
   public static void retainAllTest(List<String> testList) {
+    // verify with empty list
+    assertFalse(testList.retainAll(new ArrayList<String>(0)));
+    
     populateIntStrings(testList, TEST_QTY);
     
     assertTrue(testList.retainAll(new ArrayList<String>(0)));
