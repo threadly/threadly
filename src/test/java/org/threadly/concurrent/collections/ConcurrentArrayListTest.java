@@ -13,6 +13,7 @@ import java.util.NoSuchElementException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.TestDelayed;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 
@@ -144,10 +145,23 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void pushTest() {
+    addFirstOrPushTest(false);
+  }
+  
+  @Test
   public void addFirstTest() {
+    addFirstOrPushTest(true);
+  }
+  
+  public void addFirstOrPushTest(boolean addFirst) {
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
-      testList.addFirst(str);
+      if (addFirst) {
+        testList.addFirst(str);
+      } else {
+        testList.push(str);
+      }
       assertEquals(str, testList.getFirst());
     }
   }
@@ -200,8 +214,23 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void addIndexTest() {
+    ListTests.addIndexTest(testList);
+  }
+  
+  @Test
+  public void addIndexFail() {
+    ListTests.addIndexFail(testList);
+  }
+  
+  @Test
   public void addAllIndexTest() {
     ListTests.addAllIndexTest(testList);
+  }
+  
+  @Test
+  public void addAllIndexFail() {
+    ListTests.addAllIndexFail(testList);
   }
   
   @Test
@@ -228,9 +257,13 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
-  public void removeFirstOccurrenceTest() {
+  public void removeFirstOccurrenceNotFoundTest() {
     assertFalse(testList.removeFirstOccurrence(null));
-    
+    assertFalse(testList.removeFirstOccurrence(new Object()));
+  }
+  
+  @Test
+  public void removeFirstOccurrenceTest() {
     List<String> firstStr = new ArrayList<String>(TEST_QTY);
     List<String> secondStr = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
@@ -244,7 +277,7 @@ public class ConcurrentArrayListTest {
     
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
-      testList.removeFirstOccurrence(str);
+      assertTrue(testList.removeFirstOccurrence(str));
     }
     
     assertEquals(secondStr.size(), testList.size());
@@ -257,9 +290,13 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
-  public void removeLastOccurrenceTest() {
+  public void removeLastOccurrenceNotFoundTest() {
     assertFalse(testList.removeLastOccurrence(null));
-    
+    assertFalse(testList.removeLastOccurrence(new Object()));
+  }
+  
+  @Test
+  public void removeLastOccurrenceTest() {
     List<String> firstStr = new ArrayList<String>(TEST_QTY);
     List<String> secondStr = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
@@ -274,7 +311,7 @@ public class ConcurrentArrayListTest {
     
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
-      testList.removeLastOccurrence(str);
+      assertTrue(testList.removeLastOccurrence(str));
     }
     
     assertEquals(firstStr.size(), testList.size());
@@ -287,7 +324,21 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void removeTest() {
+    removeOrPopTest(0);
+  }
+  
+  @Test
   public void removeFirstTest() {
+    removeOrPopTest(1);
+  }
+  
+  @Test
+  public void popTest() {
+    removeOrPopTest(2);
+  }
+  
+  public void removeOrPopTest(int removeType) {
     List<String> compareList = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
@@ -299,7 +350,19 @@ public class ConcurrentArrayListTest {
     int removed = 0;
     while (it.hasNext()) {
       String next = it.next();
-      assertTrue(testList.removeFirst() == next);
+      switch (removeType) {
+        case 0:
+          assertTrue(testList.remove() == next);
+          break;
+        case 1:
+          assertTrue(testList.removeFirst() == next);
+          break;
+        case 2:
+          assertTrue(testList.pop() == next);
+          break;
+        default:
+          throw new UnsupportedOperationException("Unknown remove type: " + removeType);
+      }
       removed++;
       assertEquals(TEST_QTY - removed, testList.size());
       assertFalse(testList.peek() == next);
@@ -337,7 +400,16 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void pollTest() {
+    pollTest(false);
+  }
+  
+  @Test
   public void pollFirstTest() {
+    pollTest(true);
+  }
+  
+  public void pollTest(boolean pollFirst) {
     List<String> compareList = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
@@ -349,7 +421,11 @@ public class ConcurrentArrayListTest {
     int removed = 0;
     while (it.hasNext()) {
       String next = it.next();
-      assertTrue(testList.pollFirst() == next);
+      if (pollFirst) {
+        assertTrue(testList.pollFirst() == next);
+      } else {
+        assertTrue(testList.poll() == next);
+      }
       removed++;
       assertEquals(TEST_QTY - removed, testList.size());
       assertFalse(testList.peek() == next);
@@ -377,6 +453,28 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void elementTest() {
+    String foo = "foo";
+    testList.add(foo);
+    assertEquals(foo, testList.element());
+    
+    testList.add("bar");
+    assertEquals(foo, testList.element());
+  }
+  
+  @Test (expected = NoSuchElementException.class)
+  public void elementFail() {
+    testList.element();
+    
+    fail("Exception should have been thrown");
+  }
+  
+  @Test
+  public void removeMissingObjectTest() {
+    ListTests.removeMissingObjectTest(testList);
+  }
+  
+  @Test
   public void removeObjectTest() {
     ListTests.removeObjectTest(testList);
   }
@@ -384,6 +482,11 @@ public class ConcurrentArrayListTest {
   @Test
   public void removeIndexTest() {
     ListTests.removeIndexTest(testList);
+  }
+  
+  @Test
+  public void removeIndexFail() {
+    ListTests.removeIndexFail(testList);
   }
   
   @Test
@@ -462,18 +565,6 @@ public class ConcurrentArrayListTest {
     } catch (IndexOutOfBoundsException e) {
       // expected
     }
-    try {
-      testList.reposition(-1, 0);
-      fail("Exception should have been thrown");
-    } catch (IndexOutOfBoundsException e) {
-      // expected
-    }
-    try {
-      testList.reposition(0, -1);
-      fail("Exception should have been thrown");
-    } catch (IndexOutOfBoundsException e) {
-      // expected
-    }
   }
   
   @Test (expected = NoSuchElementException.class)
@@ -489,6 +580,9 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void repositionIndexTest() {
+    // should be a no-op
+    testList.reposition(0, 0);
+    
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       testList.add(str);
@@ -507,6 +601,39 @@ public class ConcurrentArrayListTest {
     testList.reposition(1, 3);  // swap 1 to 2
     assertEquals(Integer.toString(2), testList.get(1));
     assertEquals(Integer.toString(1), testList.get(2));
+  }
+  
+  @Test
+  public void repositionIndexFail() {
+    try {
+      testList.reposition(-1, 0);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.reposition(0, -1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.reposition(0, 1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.reposition(1, 0);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void setFail() {
+    ListTests.setFail(testList);
   }
   
   /* This also tests the ListIterator forwards, 

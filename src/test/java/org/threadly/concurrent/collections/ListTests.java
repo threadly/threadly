@@ -71,6 +71,66 @@ public class ListTests {
     }
   }
   
+  public static void setFail(List<String> testList) {
+    try {
+      testList.set(1, "foo");
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.set(-1, "foo");
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+  }
+  
+  public static void addIndexTest(List<String> testList) {
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(i, str);
+    }
+    
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(Integer.toString(i), testList.get(i));
+    }
+    
+    // add a second set of items to the front
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(i, str);
+    }
+    
+    // add a third set of items to the end
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      testList.add(testList.size(), str);
+    }
+    
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < TEST_QTY; j++) {
+        int testIndex = j + (TEST_QTY * i);
+        assertEquals(Integer.toString(j), testList.get(testIndex));
+      }
+    }
+  }
+  
+  public static void addIndexFail(List<String> testList) {
+    try {
+      testList.add(1, "foo");
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.add(-1, "foo");
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+  }
+  
   public static void addAllIndexTest(List<String> testList) {
     List<String> toAddList = new ArrayList<String>(TEST_QTY);
     
@@ -96,6 +156,24 @@ public class ListTests {
       assertTrue(it.next() == testIt.next());
     }
     assertTrue(testIt.next().equals("bar"));
+  }
+  
+  public static void addAllIndexFail(List<String> testList) {
+    List<String> toAdd = new ArrayList<String>(0);
+    toAdd.add("foo");
+    
+    try {
+      testList.addAll(1, toAdd);
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.addAll(-1, toAdd);
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
   }
   
   public static void getTest(List<String> testList) {
@@ -210,6 +288,11 @@ public class ListTests {
     assertEquals(0, testList.size());
   }
   
+  public static void removeMissingObjectTest(List<String> testList) {
+    assertFalse(testList.remove(new Object()));
+    assertFalse(testList.remove("foo"));
+  }
+  
   public static void removeObjectTest(List<String> testList) {
     populateIntStrings(testList, TEST_QTY);
     
@@ -285,10 +368,24 @@ public class ListTests {
     assertTrue(removedItem.equals(Integer.toString(0)));
     removedItems.add(removedItem);
     
-    
     Iterator<String> it = removedItems.iterator();
     while (it.hasNext()) {
       assertFalse(testList.contains(it.next()));
+    }
+  }
+  
+  public static void removeIndexFail(List<String> testList) {
+    try {
+      testList.remove(1);
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.remove(-1);
+      fail("Exception should have thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
     }
   }
   
@@ -440,6 +537,8 @@ public class ListTests {
   }
   
   public static void equalsTest(List<String> testList) {
+    assertFalse(testList.equals(new Object()));
+    
     List<String> comparisionList = new ArrayList<String>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
@@ -447,6 +546,8 @@ public class ListTests {
       testList.add(str);
       assertTrue(testList.equals(comparisionList));
     }
+    // easy test
+    assertTrue(testList.equals(testList));
     
     String foo = "foo";
     comparisionList.add(foo);
@@ -511,6 +612,12 @@ public class ListTests {
     }
     try {
       testList.subList(0, TEST_QTY + 1);
+      fail("Exception should have been thrown");
+    } catch (IndexOutOfBoundsException e) {
+      // expected
+    }
+    try {
+      testList.subList(TEST_QTY + 10, TEST_QTY);
       fail("Exception should have been thrown");
     } catch (IndexOutOfBoundsException e) {
       // expected

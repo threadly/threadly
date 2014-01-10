@@ -105,6 +105,12 @@ public class ConcurrentArrayListDataSetTest {
   }
   
   @Test
+  public void equalsBasicTest() {
+    assertTrue(orderedNormal.equals(orderedNormal));
+    assertFalse(orderedNormal.equals(new Object()));
+  }
+  
+  @Test
   public void equalsEquivelentTest() {
     assertTrue(orderedNormal.equalsEquivelent(orderedNormal));
     assertTrue(removedFromFront.equalsEquivelent(removedFromFront));

@@ -241,7 +241,7 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
-  public void consumerIteratorTest() throws InterruptedException {
+  public void consumerIteratorOverallTest() throws InterruptedException {
     synchronized (testQueue.getLock()) {
       populateNegative(testQueue);
       
@@ -304,7 +304,7 @@ public class DynamicDelayQueueTest {
     
     fail("Exception should have been thrown");
   }
-     
+  
   @Test
   public void peekTest() {
     TestDelayed item = new TestDelayed(100);
@@ -345,6 +345,17 @@ public class DynamicDelayQueueTest {
   @Test
   public void pollTimeoutFail() throws InterruptedException {
     assertNull(testQueue.poll(10, TimeUnit.MILLISECONDS));
+  }
+  
+  @Test
+  public void removeObjectTest() {
+    TestDelayed item = new TestDelayed(0);
+    testQueue.add(item);
+    
+    assertFalse(testQueue.remove(new Object()));
+    assertFalse(testQueue.remove(new TestDelayed(-1)));
+    
+    assertTrue(testQueue.remove(item));
   }
   
   @Test
@@ -451,6 +462,28 @@ public class DynamicDelayQueueTest {
     it.remove();
     
     fail("Exception should have been thrown");
+   }
+   
+   @Test
+   public void consumerIteratorPeekTest() throws InterruptedException {
+     TestDelayed item = new TestDelayed(0);
+     testQueue.add(item);
+     
+     synchronized (testQueue.getLock()) {
+       ConsumerIterator<TestDelayed> it = testQueue.consumeIterator();
+       assertTrue(it.peek() == item);
+     }
+   }
+   
+   @Test
+   public void consumerIteratorRemoveTest() throws InterruptedException {
+     TestDelayed item = new TestDelayed(0);
+     testQueue.add(item);
+     
+     synchronized (testQueue.getLock()) {
+       ConsumerIterator<TestDelayed> it = testQueue.consumeIterator();
+       assertTrue(it.remove() == item);
+     }
    }
    
    @Test (expected = NoSuchElementException.class)

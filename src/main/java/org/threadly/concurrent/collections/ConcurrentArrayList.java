@@ -676,6 +676,10 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       throw new IndexOutOfBoundsException("original index can not be negative");
     }
     
+    if (originalIndex == newIndex) {
+      return;
+    }
+    
     synchronized (modificationLock) {
       if (newIndex > size()) {
         throw new IndexOutOfBoundsException("new index " + newIndex + 
