@@ -214,12 +214,10 @@ public class TaskSchedulerDistributorTest {
   
   @Test
   public void scheduleExecutionTest() {
-    final int scheduleDelay = 50;
-    
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
-        distributor.schedule(key, tdr, scheduleDelay);
+        distributor.schedule(key, tdr, SCHEDULE_DELAY);
       }
     });
     
@@ -228,7 +226,7 @@ public class TaskSchedulerDistributorTest {
       TDRunnable tr = it.next();
       tr.blockTillFinished(1000);
       assertEquals(1, tr.getRunCount()); // verify each only ran once
-      assertTrue(tr.getDelayTillFirstRun() >= scheduleDelay);
+      assertTrue(tr.getDelayTillFirstRun() >= SCHEDULE_DELAY);
     }
   }
   
@@ -300,21 +298,19 @@ public class TaskSchedulerDistributorTest {
   
   @Test
   public void recurringExecutionTest() {
-    final int recurringDelay = 50;
-    
     List<TDRunnable> runs = populate(new AddHandler() {
       int initialDelay = 0;
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
         distributor.scheduleWithFixedDelay(key, tdr, initialDelay++, 
-                                           recurringDelay);
+                                           SCHEDULE_DELAY);
       }
     });
     
     Iterator<TDRunnable> it = runs.iterator();
     while (it.hasNext()) {
       TDRunnable tr = it.next();
-      assertTrue(tr.getDelayTillRun(2) >= recurringDelay);
+      assertTrue(tr.getDelayTillRun(2) >= SCHEDULE_DELAY);
       tr.blockTillFinished(10 * 1000, 3);
       assertFalse(tr.ranConcurrently());  // verify that it never run in parallel
     }

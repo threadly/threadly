@@ -7,13 +7,20 @@ package org.threadly;
  * constants from one class.  In all cases, lower numbers mean faster tests.
  */
 public class TestConstants {
-  enum TestLoad { Stress, Normal, Speedy };
+  /**
+   * A profile for the amount of load and verification to be done.
+   * 
+   *  Speedy - Fastest, minimal testing
+   *  Normal - Good general place to start, still very fast
+   *  Stress - Very slow, but gives a good extensive run
+   */
+  private enum TestLoad { Speedy, Normal, Stress };
   
   /**
    * Can easily adjust all constants in this file by changing the load 
    * profile.
    */
-  private static final TestLoad load = TestLoad.Normal;
+  private static final TestLoad TEST_PROFILE = TestLoad.Normal;
   
   /**
    * Represents the number of iterations, or possibly runnables 
@@ -43,7 +50,7 @@ public class TestConstants {
   public static final int DELAY_TIME;
   
   static {
-    switch (load) {
+    switch (TEST_PROFILE) {
       case Speedy:
         TEST_QTY = 2;
         SCHEDULE_DELAY = 10;
@@ -52,7 +59,7 @@ public class TestConstants {
         break;
       case Normal:
         TEST_QTY = 5;
-        SCHEDULE_DELAY = 25;
+        SCHEDULE_DELAY = 20;
         CYCLE_COUNT = 2;
         DELAY_TIME = 10;
         break;
@@ -63,7 +70,7 @@ public class TestConstants {
         DELAY_TIME = 50;
         break;
       default:
-        throw new UnsupportedOperationException("Load not supported: " + load);
+        throw new UnsupportedOperationException("Load not supported: " + TEST_PROFILE);
     }
   }
 }

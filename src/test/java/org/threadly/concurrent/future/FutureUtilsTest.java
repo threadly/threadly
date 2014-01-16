@@ -54,9 +54,7 @@ public class FutureUtilsTest {
   
   @Test
   public void blockTillAllCompleteTest() throws InterruptedException {
-    int futureCount = 5;
-    
-    List<Future<?>> futures = makeFutures(futureCount, -1);
+    List<Future<?>> futures = makeFutures(TEST_QTY, -1);
     
     FutureUtils.blockTillAllComplete(futures);
     
@@ -68,10 +66,9 @@ public class FutureUtilsTest {
   
   @Test
   public void blockTillAllCompleteErrorTest() throws InterruptedException {
-    int futureCount = 5;
-    int errorIndex = 2;
+    int errorIndex = TEST_QTY / 2;
     
-    List<Future<?>> futures = makeFutures(futureCount, errorIndex);
+    List<Future<?>> futures = makeFutures(TEST_QTY, errorIndex);
     
     FutureUtils.blockTillAllComplete(futures);
     
@@ -88,9 +85,7 @@ public class FutureUtilsTest {
   
   @Test
   public void blockTillAllCompleteOrFirstErrorTest() throws InterruptedException, ExecutionException {
-    int futureCount = 5;
-    
-    List<Future<?>> futures = makeFutures(futureCount, -1);
+    List<Future<?>> futures = makeFutures(TEST_QTY, -1);
     
     FutureUtils.blockTillAllCompleteOrFirstError(futures);
     
@@ -102,10 +97,9 @@ public class FutureUtilsTest {
   
   @Test
   public void blockTillAllCompleteOrFirstErrorErrorTest() throws InterruptedException {
-    int futureCount = 5;
-    int errorIndex = 2;
+    int errorIndex = TEST_QTY / 2;
     
-    List<Future<?>> futures = makeFutures(futureCount, errorIndex);
+    List<Future<?>> futures = makeFutures(TEST_QTY, errorIndex);
     
     FutureUtils.blockTillAllComplete(futures);
 
