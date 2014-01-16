@@ -3,7 +3,6 @@ package org.threadly.concurrent.limiter;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,7 +11,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SimpleSchedulerInterface;
@@ -28,6 +29,11 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SchedulerLimiterTest {
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
+  
   @Test
   public void constructorFail() {
     try {
@@ -43,7 +49,7 @@ public class SchedulerLimiterTest {
     } catch (IllegalArgumentException e) {
       // expected
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -55,29 +61,33 @@ public class SchedulerLimiterTest {
       
       assertNull(limiter.subPoolName);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
   @Test
   public void consumeAvailableTest() {
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
-    SchedulerLimiter limiter = new SchedulerLimiter(executor, TEST_QTY);
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-    for (int i = 0; i < TEST_QTY; i++) {
-      TestRunnable tr = new TestRunnable();
-      runnables.add(tr);
-      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
-    }
-    
-    limiter.consumeAvailable();
-    
-    // should be fully consumed
-    assertEquals(0, limiter.waitingTasks.size());
-    
-    Iterator<TestRunnable> it = runnables.iterator();
-    while (it.hasNext()) {
-      it.next().blockTillFinished();  // throws exception if it does not finish
+    try {
+      SchedulerLimiter limiter = new SchedulerLimiter(executor, TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
+        TestRunnable tr = new TestRunnable();
+        runnables.add(tr);
+        limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
+      }
+      
+      limiter.consumeAvailable();
+      
+      // should be fully consumed
+      assertEquals(0, limiter.waitingTasks.size());
+      
+      Iterator<TestRunnable> it = runnables.iterator();
+      while (it.hasNext()) {
+        it.next().blockTillFinished();  // throws exception if it does not finish
+      }
+    } finally {
+      executor.shutdownNow();
     }
   }
   
@@ -377,13 +387,6 @@ public class SchedulerLimiterTest {
     private final boolean addSubPoolName;
     
     private SchedulerLimiterFactory(boolean addSubPoolName) {
-      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-          // ignored
-        }
-      });
-      
       executors = new LinkedList<PriorityScheduledExecutor>();
       this.addSubPoolName = addSubPoolName;
     }
@@ -392,7 +395,7 @@ public class SchedulerLimiterTest {
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
-        it.next().shutdown();
+        it.next().shutdownNow();
         it.remove();
       }
     }

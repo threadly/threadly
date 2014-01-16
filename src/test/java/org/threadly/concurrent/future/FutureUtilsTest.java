@@ -9,24 +9,27 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest {
-  private PriorityScheduledExecutor scheduler;
+  private static PriorityScheduledExecutor scheduler;
   
-  @Before
-  public void setup() {
+  @BeforeClass
+  public static void setupClass() {
     scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
-  @After
-  public void tearDown() {
+  @AfterClass
+  public static void tearDownClass() {
     scheduler.shutdownNow();
     scheduler = null;
   }

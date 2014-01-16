@@ -2,25 +2,13 @@ package org.threadly.concurrent.lock;
 
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 @SuppressWarnings("javadoc")
 public class StripedLockTest {
   private static final int LOCK_QTY = 10;
   
-  private StripedLock sLock;
-  
-  @Before
-  public void setup() {
-    sLock = new StripedLock(LOCK_QTY);
-  }
-  
-  @After
-  public void tearDown() {
-    sLock = null;
-  }
+  private StripedLock sLock = new StripedLock(LOCK_QTY);
   
   @Test (expected = IllegalArgumentException.class)
   public void constructorNegativeConcurrencyFail() {

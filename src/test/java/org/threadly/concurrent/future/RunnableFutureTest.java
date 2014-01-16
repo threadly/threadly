@@ -3,7 +3,6 @@ package org.threadly.concurrent.future;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -11,23 +10,19 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class RunnableFutureTest {
-  private static final PriorityScheduledExecutor scheduler;
+  private static PriorityScheduledExecutor scheduler;
   
   static {
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-        // ignored
-      }
-    });
-    
     scheduler = new PriorityScheduledExecutor(10, 10, 500);
+    
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
   public static void getTimeoutFail(FutureFactory ff) throws InterruptedException, 

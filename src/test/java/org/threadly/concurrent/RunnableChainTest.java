@@ -6,11 +6,18 @@ import static org.threadly.TestConstants.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class RunnableChainTest {
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
+  
   private static final int FAIL_INDEX = 2;
   
   @Test

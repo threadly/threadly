@@ -3,7 +3,6 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -11,7 +10,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.concurrent.CallableDistributor.Result;
 import org.threadly.test.concurrent.TestCondition;
@@ -19,28 +20,28 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class CallableDistributorTest {
-  private PriorityScheduledExecutor executor;
-  private CallableDistributor<String, String> distributor;
+  private static PriorityScheduledExecutor scheduler;
   
-  static {
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-        // ignored
-      }
-    });
+  @BeforeClass
+  public static void setupClass() {
+    scheduler = new PriorityScheduledExecutor(10, 10, 200);
   }
+  
+  @AfterClass
+  public static void tearDownClass() {
+    scheduler.shutdownNow();
+    scheduler = null;
+  }
+  
+  private CallableDistributor<String, String> distributor;
   
   @Before
   public void setup() {
-    executor = new PriorityScheduledExecutor(10, 10, 200);
-    distributor = new CallableDistributor<String, String>(executor);
+    distributor = new CallableDistributor<String, String>(scheduler);
   }
   
   @After
   public void tearDown() {
-    executor.shutdown();
-    executor = null;
     distributor = null;
   }
   

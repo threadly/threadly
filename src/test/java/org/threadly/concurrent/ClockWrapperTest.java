@@ -3,16 +3,22 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class ClockWrapperTest {
-  @Before
-  public void setup() {
+  @BeforeClass
+  public static void setupClass() {
     Clock.stopClockUpdateThread();
+  }
+  
+  @AfterClass
+  public static void tearDownClass() {
+    Clock.startClockUpdateThread();
   }
   
   @After

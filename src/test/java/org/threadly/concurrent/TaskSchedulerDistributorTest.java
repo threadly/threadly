@@ -3,7 +3,6 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -13,7 +12,9 @@ import java.util.concurrent.ExecutionException;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 import org.threadly.concurrent.TaskExecutorDistributorTest.TDCallable;
 import org.threadly.concurrent.TaskExecutorDistributorTest.TDRunnable;
@@ -25,6 +26,11 @@ import org.threadly.test.concurrent.TestRunnable;
 public class TaskSchedulerDistributorTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
+  
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
   
   private PriorityScheduledExecutor scheduler;
   private Object agentLock;
@@ -474,13 +480,6 @@ public class TaskSchedulerDistributorTest {
     private final List<PriorityScheduledExecutor> executors;
     
     private KeyBasedSubmitterSchedulerFactory() {
-      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-          // ignored
-        }
-      });
-      
       executors = new LinkedList<PriorityScheduledExecutor>();
     }
 

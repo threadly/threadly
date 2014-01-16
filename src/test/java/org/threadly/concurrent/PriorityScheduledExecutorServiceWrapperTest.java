@@ -2,30 +2,27 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorServiceWrapperTest {
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
+  
   private static final int THREAD_COUNT = 1000;
   private static final int KEEP_ALIVE_TIME = 1000;
-  
-  static {
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-        // ignored
-      }
-    });
-  }
   
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {

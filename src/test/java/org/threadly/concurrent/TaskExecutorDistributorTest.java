@@ -19,8 +19,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
@@ -32,17 +35,30 @@ public class TaskExecutorDistributorTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
-  private PriorityScheduledExecutor scheduler;
-  private Object agentLock;
-  private TaskExecutorDistributor distributor;
+  private static PriorityScheduledExecutor scheduler;
   
-  @Before
-  public void setup() {
+  @BeforeClass
+  public static void setupClass() {
     scheduler = new PriorityScheduledExecutor(PARALLEL_LEVEL + 1, 
                                               PARALLEL_LEVEL * 2, 
                                               1000 * 10, 
                                               TaskPriority.High, 
                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
+  
+  @AfterClass
+  public static void tearDownClass() {
+    scheduler.shutdownNow();
+    scheduler = null;
+  }
+  
+  private Object agentLock;
+  private TaskExecutorDistributor distributor;
+  
+  @Before
+  public void setup() {
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
     distributor = new TaskExecutorDistributor(scheduler, sLock, Integer.MAX_VALUE);
@@ -50,10 +66,8 @@ public class TaskExecutorDistributorTest {
   
   @After
   public void tearDown() {
-    scheduler.shutdownNow();
     agentLock = null;
     distributor = null;
-    scheduler = null;
   }
   
   private List<TDRunnable> populate(AddHandler ah) {
@@ -384,16 +398,21 @@ public class TaskExecutorDistributorTest {
   @Test
   public void taskExceptionTest() {
     Integer key = 1;
+    UncaughtExceptionHandler originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
     TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
     final RuntimeException testException = new RuntimeException();
     Thread.setDefaultUncaughtExceptionHandler(ueh);
-    TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
-    TestRunnable followRunnable = new TestRunnable();
-    distributor.addTask(key, exceptionRunnable);
-    distributor.addTask(key, followRunnable);
-    exceptionRunnable.blockTillStarted();
-    followRunnable.blockTillStarted();  // verify that it ran despite the exception
-    assertTrue(ueh.getCalledWithThrowable() == testException);
+    try {
+      TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
+      TestRunnable followRunnable = new TestRunnable();
+      distributor.addTask(key, exceptionRunnable);
+      distributor.addTask(key, followRunnable);
+      exceptionRunnable.blockTillStarted();
+      followRunnable.blockTillStarted();  // verify that it ran despite the exception
+      assertTrue(ueh.getCalledWithThrowable() == testException);
+    } finally {
+      Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler);
+    }
   }
   
   @Test
@@ -444,7 +463,7 @@ public class TaskExecutorDistributorTest {
       assertFalse(lastKey1Runnable.ranOnce());
     } finally {
       testComplete.set(true);
-      scheduler.shutdown();
+      scheduler.shutdownNow();
     }
   }
   
@@ -537,13 +556,6 @@ public class TaskExecutorDistributorTest {
     private final List<PriorityScheduledExecutor> executors;
     
     private KeyBasedSubmitterFactory() {
-      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-          // ignored
-        }
-      });
-      
       executors = new LinkedList<PriorityScheduledExecutor>();
     }
     
@@ -564,7 +576,7 @@ public class TaskExecutorDistributorTest {
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
-        it.next().shutdown();
+        it.next().shutdownNow();
         it.remove();
       }
     }

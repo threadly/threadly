@@ -2,20 +2,20 @@ package org.threadly.util;
 
 import static org.junit.Assert.*;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ClockTest {
-  @Before
-  public void setup() {
+  @BeforeClass
+  public static void setupClass() {
     Clock.stopClockUpdateThread();
   }
   
-  @After
-  public void tearDown() {
+  @AfterClass
+  public static void tearDownClass() {
     Clock.startClockUpdateThread();
   }
   

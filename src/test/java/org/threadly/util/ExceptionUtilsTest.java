@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.OutputStream;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.StringTokenizer;
 
 import org.junit.Test;
@@ -54,18 +55,23 @@ public class ExceptionUtilsTest {
         }
       }));
       
+      UncaughtExceptionHandler originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
       TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
       Thread.setDefaultUncaughtExceptionHandler(ueh);
       
-      // make call
-      Exception e = new Exception();
-      ExceptionUtils.handleException(e);
-      
-      assertEquals(0, sb.length()); // should not have gone to std err
-      
-      assertEquals(1, ueh.getCallCount());
-      assertTrue(ueh.getCalledWithThread() == Thread.currentThread());
-      assertTrue(ueh.getCalledWithThrowable() == e);
+      try {
+        // make call
+        Exception e = new Exception();
+        ExceptionUtils.handleException(e);
+        
+        assertEquals(0, sb.length()); // should not have gone to std err
+        
+        assertEquals(1, ueh.getCallCount());
+        assertTrue(ueh.getCalledWithThread() == Thread.currentThread());
+        assertTrue(ueh.getCalledWithThrowable() == e);
+      } finally {
+        Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler);
+      }
     } finally {
       System.setErr(originalSystemErr);
     }

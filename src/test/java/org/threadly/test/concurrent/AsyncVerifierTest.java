@@ -2,26 +2,29 @@ package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.util.ExceptionUtils;
 
 @SuppressWarnings("javadoc")
 public class AsyncVerifierTest {
-  private static final int ASYNC_WAIT_AMOUNT = 2;
-  
-  static {
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-      @Override
-      public void uncaughtException(Thread t, Throwable e) {
-        // ignored
-      }
-    });
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
+  
+  @AfterClass
+  public static void tearDownClass() {
+    Thread.setDefaultUncaughtExceptionHandler(null);
+  }
+  
+  private static final int ASYNC_WAIT_AMOUNT = 2;
   
   private AsyncVerifier verifier;
   

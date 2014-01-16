@@ -3,7 +3,6 @@ package org.threadly.concurrent.limiter;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -15,7 +14,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
@@ -30,19 +31,28 @@ public class ExecutorLimiterTest {
   private static final int PARALLEL_COUNT = TEST_QTY / 2;
   private static final int THREAD_COUNT = PARALLEL_COUNT * 2;
   
-  private PriorityScheduledExecutor executor;
+  private static PriorityScheduledExecutor scheduler;
+  
+  @BeforeClass
+  public static void setupClass() {
+    scheduler = new PriorityScheduledExecutor(PARALLEL_COUNT, THREAD_COUNT, 1000);
+  }
+  
+  @AfterClass
+  public static void tearDownClass() {
+    scheduler.shutdownNow();
+    scheduler = null;
+  }
+  
   private ExecutorLimiter limiter;
   
   @Before
   public void setup() {
-    executor = new PriorityScheduledExecutor(PARALLEL_COUNT, THREAD_COUNT, 1000);
-    limiter = new ExecutorLimiter(executor, PARALLEL_COUNT);
+    limiter = new ExecutorLimiter(scheduler, PARALLEL_COUNT);
   }
   
   @After
   public void tearDown() {
-    executor.shutdown();
-    executor = null;
     limiter = null;
   }
   
@@ -75,7 +85,7 @@ public class ExecutorLimiterTest {
       
       assertNull(limiter.subPoolName);
     } finally {
-      executor.shutdown();
+      executor.shutdownNow();
     }
   }
   
@@ -230,13 +240,6 @@ public class ExecutorLimiterTest {
     private final boolean addSubPoolName;
     
     private ExecutorLimiterFactory(boolean addSubPoolName) {
-      Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-          // ignored
-        }
-      });
-      
       executors = new LinkedList<PriorityScheduledExecutor>();
       this.addSubPoolName = addSubPoolName;
     }
@@ -261,7 +264,7 @@ public class ExecutorLimiterTest {
     public void shutdown() {
       Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
-        it.next().shutdown();
+        it.next().shutdownNow();
         it.remove();
       }
     }
