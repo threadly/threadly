@@ -1,6 +1,7 @@
 package org.threadly.concurrent.collections;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,8 +12,6 @@ import java.util.NoSuchElementException;
 
 @SuppressWarnings("javadoc")
 public class ListTests {
-  private static final int TEST_QTY = 10;
-  
   public static void populateIntStrings(List<String> testList, int qty) {
     for (int i = 0; i < qty; i++) {
       String str = Integer.toString(i);
@@ -353,15 +352,17 @@ public class ListTests {
   }
   
   public static void removeIndexTest(List<String> testList) {
-    populateIntStrings(testList, TEST_QTY);
+    int testQty = Math.max(4, TEST_QTY);
+    
+    populateIntStrings(testList, testQty);
     
     List<String> removedItems = new LinkedList<String>();
-    String removedItem = testList.remove(TEST_QTY - 1);
-    assertTrue(removedItem.equals(Integer.toString(TEST_QTY - 1)));
+    String removedItem = testList.remove(testQty - 1);
+    assertTrue(removedItem.equals(Integer.toString(testQty - 1)));
     removedItems.add(removedItem);
     
-    removedItem = testList.remove(TEST_QTY / 2);
-    assertTrue(removedItem.equals(Integer.toString(TEST_QTY / 2)));
+    removedItem = testList.remove(testQty / 2);
+    assertTrue(removedItem.equals(Integer.toString(testQty / 2)));
     removedItems.add(removedItem);
     
     removedItem = testList.remove(0);
@@ -563,13 +564,15 @@ public class ListTests {
   }
   
   public static void subListTest(List<String> testList) {
-    populateIntStrings(testList, TEST_QTY);
+    int testQty = Math.max(4, TEST_QTY);
     
-    List<String> completeList = testList.subList(0, TEST_QTY); 
-    assertEquals(TEST_QTY, completeList.size());
+    populateIntStrings(testList, testQty);
+    
+    List<String> completeList = testList.subList(0, testQty); 
+    assertEquals(testQty, completeList.size());
     Iterator<String> it1 = testList.iterator();
     Iterator<String> it2 = completeList.iterator();
-    for (int i = 0; i < TEST_QTY; i++) {
+    for (int i = 0; i < testQty; i++) {
       assertEquals(it1.next(), it2.next());
     }
     
@@ -577,11 +580,11 @@ public class ListTests {
     assertEquals(1, smallList.size());
     assertEquals(testList.get(0), smallList.get(0));
     
-    smallList = testList.subList(TEST_QTY - 1, TEST_QTY);
+    smallList = testList.subList(testQty - 1, testQty);
     assertEquals(1, smallList.size());
-    assertEquals(testList.get(TEST_QTY - 1), smallList.get(0));
+    assertEquals(testList.get(testQty - 1), smallList.get(0));
     
-    int halfQty = TEST_QTY / 2;
+    int halfQty = testQty / 2;
     List<String> mediumList = testList.subList(1, halfQty);
     assertEquals(mediumList.size(), halfQty - 1);
     it1 = mediumList.iterator();

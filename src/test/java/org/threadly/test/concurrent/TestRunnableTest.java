@@ -1,6 +1,7 @@
 package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import org.junit.After;
 import org.junit.Before;
@@ -30,18 +31,15 @@ public class TestRunnableTest {
     assertFalse(instance.ranConcurrently());
     assertEquals(0, instance.getRunDelayInMillis());
     
-    int delay = 10;
-    instance = new TestRunnable(delay);
-    assertEquals(delay, instance.getRunDelayInMillis());
+    instance = new TestRunnable(DELAY_TIME);
+    assertEquals(DELAY_TIME, instance.getRunDelayInMillis());
   }
   
   @Test
   public void setRunDelayInMillisTest() {
-    int delay = 10;
-    
     assertEquals(0, instance.getRunDelayInMillis());
-    instance.setRunDelayInMillis(delay);
-    assertEquals(delay, instance.getRunDelayInMillis());
+    instance.setRunDelayInMillis(DELAY_TIME);
+    assertEquals(DELAY_TIME, instance.getRunDelayInMillis());
   }
   
   @Test
@@ -73,9 +71,8 @@ public class TestRunnableTest {
   
   @Test
   public void runWithDelay() {
-    int delay = 10;
-    int runCount = 2;
-    instance.setRunDelayInMillis(delay);
+    int runCount = TEST_QTY / 2;
+    instance.setRunDelayInMillis(DELAY_TIME);
     
     long startTime = System.currentTimeMillis();
     for (int i = 0; i < runCount; i++) {
@@ -83,13 +80,11 @@ public class TestRunnableTest {
     }
     long endTime = System.currentTimeMillis();
     
-    assertTrue(endTime - startTime >= (delay * runCount));
+    assertTrue(endTime - startTime >= (DELAY_TIME * runCount));
   }
   
   @Test
   public void blockTillRunTest() {
-    final int delay = 100;
-    
     TestRunnable tr = new TestRunnable() {
       private boolean firstRun = true;
       
@@ -97,7 +92,7 @@ public class TestRunnableTest {
       public void handleRunStart() throws InterruptedException {
         if (firstRun) {
           firstRun = false;
-          TestUtils.sleep(delay);
+          TestUtils.sleep(DELAY_TIME);
           run();
         }
       }
@@ -108,12 +103,12 @@ public class TestRunnableTest {
     tr.blockTillFinished(1000, 2);
     long endTime = System.currentTimeMillis();
     
-    assertTrue(endTime - startTime >= delay);
+    assertTrue(endTime - startTime >= DELAY_TIME);
   }
   
   @Test (expected = ConditionTimeoutException.class)
   public void blockTillRunTestFail() {
-    instance.blockTillFinished(10);
+    instance.blockTillFinished(DELAY_TIME);
     
     fail("Exception should have thrown");
   }

@@ -1,6 +1,7 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,8 +18,6 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest {
-  private static final int RUNNABLE_RUN_TIME = 10;
-  
   private PriorityScheduledExecutor scheduler;
   
   @Before
@@ -38,9 +37,9 @@ public class FutureUtilsTest {
     for (int i = 0; i < count; i++) {
       TestRunnable tr;
       if (i == errorIndex) {
-        tr = new TestRuntimeFailureRunnable(RUNNABLE_RUN_TIME);
+        tr = new TestRuntimeFailureRunnable(DELAY_TIME);
       } else {
-        tr = new TestRunnable(RUNNABLE_RUN_TIME);
+        tr = new TestRunnable(DELAY_TIME);
       }
       result.add(scheduler.submit(tr));
     }

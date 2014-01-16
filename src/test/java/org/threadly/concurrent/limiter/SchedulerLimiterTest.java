@@ -1,6 +1,7 @@
 package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
@@ -60,11 +61,10 @@ public class SchedulerLimiterTest {
   
   @Test
   public void consumeAvailableTest() {
-    int testQty = 10;
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
-    SchedulerLimiter limiter = new SchedulerLimiter(executor, testQty);
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(testQty);
-    for (int i = 0; i < testQty; i++) {
+    SchedulerLimiter limiter = new SchedulerLimiter(executor, TEST_QTY);
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
       limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
@@ -83,7 +83,7 @@ public class SchedulerLimiterTest {
   
   @Test
   public void executeLimitTest() throws InterruptedException, TimeoutException {
-    final int limiterLimit = 2;
+    final int limiterLimit = TEST_QTY / 2;
     final int threadCount = limiterLimit * 2;
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(threadCount, threadCount, 10, 
                                                                        TaskPriority.High, 100);
@@ -131,13 +131,11 @@ public class SchedulerLimiterTest {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(nameSubPool);
     
     try {
-      int runnableCount = 10;
+      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(TEST_QTY, false);
       
-      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(runnableCount, false);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<?> future = scheduler.submit(tr);
         assertNotNull(future);

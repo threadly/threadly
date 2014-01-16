@@ -1,6 +1,7 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -16,8 +17,6 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
-  private static final int TEST_QTY = 10;
-  
   private NoThreadScheduler threadSafeScheduler;
   private NoThreadScheduler notSafeScheduler;
   

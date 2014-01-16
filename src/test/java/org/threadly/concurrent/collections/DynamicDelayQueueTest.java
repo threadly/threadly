@@ -1,6 +1,7 @@
 package org.threadly.concurrent.collections;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -18,8 +19,6 @@ import org.threadly.concurrent.collections.DynamicDelayQueue;
 
 @SuppressWarnings("javadoc")
 public class DynamicDelayQueueTest {
-  private static final int TEST_QTY = 10;
-  
   private DynamicDelayQueue<TestDelayed> testQueue;
   
   @Before

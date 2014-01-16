@@ -1,14 +1,13 @@
 package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import org.junit.Test;
 import org.threadly.test.concurrent.TestCondition;
 
 @SuppressWarnings("javadoc")
 public class TestConditionTest {
-  private static final long DELAY_TIME = 100;
-  
   @Test
   public void testBlock() {
     int pollInterval = 20;
@@ -28,15 +27,13 @@ public class TestConditionTest {
   
   @Test
   public void testBlockFail() {
-    int timeout = 10;
-    
-    DelayCondition dc = new DelayCondition(1000);
+    DelayCondition dc = new DelayCondition(DELAY_TIME * 100);
     long startTime = System.currentTimeMillis();
     try {
-      dc.blockTillTrue(timeout, 1);
+      dc.blockTillTrue(DELAY_TIME, 1);
       fail("Exception should have been thrown");
     } catch (TestCondition.ConditionTimeoutException e) {
-      assertTrue(System.currentTimeMillis() - startTime >= timeout);
+      assertTrue(System.currentTimeMillis() - startTime >= DELAY_TIME);
     }
   }
   
@@ -58,6 +55,5 @@ public class TestConditionTest {
       
       return System.currentTimeMillis() - firstGetTime >= delayTime;
     }
-    
   }
 }

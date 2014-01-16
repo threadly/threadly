@@ -1,6 +1,7 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +15,9 @@ import org.threadly.test.concurrent.TestRunnable;
 public class ScheduledFutureDelegateTest<T> {
   @Test
   public void getDelayTest() {
-    for(int i = -10; i <= 10; i++) {
+    int startVal = TEST_QTY * -1;
+    int endVal = TEST_QTY;
+    for(int i = startVal; i <= endVal; i++) {
       TestDelayed td = new TestDelayed(i);
       ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(null, td);
       
@@ -31,7 +34,9 @@ public class ScheduledFutureDelegateTest<T> {
   
   @Test
   public void compareToTest() {
-    for(int i = -10; i <= 10; i++) {
+    int startVal = TEST_QTY * -1;
+    int endVal = TEST_QTY;
+    for(int i = startVal; i <= endVal; i++) {
       TestDelayed td = new TestDelayed(i);
       ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(null, td);
       
@@ -121,7 +126,7 @@ public class ScheduledFutureDelegateTest<T> {
     };
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
     
-    testItem.get(10, TimeUnit.MILLISECONDS);
+    testItem.get(DELAY_TIME, TimeUnit.MILLISECONDS);
     fail("Exception should have thrown");
   }
 

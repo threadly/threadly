@@ -40,5 +40,4 @@ public class CallableDistributorResultTest {
     assertTrue(failureResul.getFailure() == failureException);
     assertNull(successResul.getFailure());
   }
-  
 }

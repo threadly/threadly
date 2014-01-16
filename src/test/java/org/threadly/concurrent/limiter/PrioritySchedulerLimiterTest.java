@@ -1,6 +1,7 @@
 package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
@@ -70,13 +71,12 @@ public class PrioritySchedulerLimiterTest {
   
   @Test
   public void consumeAvailableTest() {
-    int testQty = 10;
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
-    PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, testQty);
+    PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, TEST_QTY);
     
     boolean flip = true;
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(testQty);
-    for (int i = 0; i < testQty; i++) {
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
       if (flip) {
@@ -101,7 +101,7 @@ public class PrioritySchedulerLimiterTest {
   
   @Test
   public void executeLimitTest() throws InterruptedException, TimeoutException {
-    final int limiterLimit = 2;
+    final int limiterLimit = TEST_QTY / 2;
     final int threadCount = limiterLimit * 2;
     PriorityScheduledExecutor executor = new PriorityScheduledExecutor(threadCount, threadCount, 10, 
                                                                        TaskPriority.High, 100);
@@ -116,14 +116,14 @@ public class PrioritySchedulerLimiterTest {
   
   @Test
   public void executeTest() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterExecutorInterfaceTest.executeTest(sf);
   }
   
   @Test
   public void executeNamedSubPoolTest() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(true);
     
     SubmitterExecutorInterfaceTest.executeTest(sf);
   }
@@ -139,16 +139,14 @@ public class PrioritySchedulerLimiterTest {
   }
   
   public void submitRunnableTest(boolean nameSubPool) {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(nameSubPool);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(nameSubPool);
     
     try {
-      int runnableCount = 10;
+      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(TEST_QTY, false);
       
-      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(runnableCount, false);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<?> future = scheduler.submit(tr);
         assertNotNull(future);
@@ -184,56 +182,56 @@ public class PrioritySchedulerLimiterTest {
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterExecutorInterfaceTest.submitCallableTest(sf);
   }
   
   @Test
   public void submitCallableNamedSubPoolTest() throws InterruptedException, ExecutionException {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(true);
     
     SubmitterExecutorInterfaceTest.submitCallableTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterExecutorInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterExecutorInterfaceTest.submitRunnableFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterExecutorInterfaceTest.submitCallableFail(sf);
   }
   
   @Test
   public void scheduleExecutionTest() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleExecutionNamedSubPoolTest() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(true);
     
     SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleExecutionFail() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SimpleSchedulerInterfaceTest.scheduleFail(sf);
   }
@@ -249,19 +247,16 @@ public class PrioritySchedulerLimiterTest {
   }
   
   public void submitScheduledRunnableTest(boolean nameSubPool) {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(nameSubPool);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(nameSubPool);
     // we can't defer to the interface implementation for this check
     try {
-      int runnableCount = 10;
-      int scheduleDelay = 50;
+      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(TEST_QTY, true);
       
-      SubmitterSchedulerInterface scheduler = sf.makeSubmitterScheduler(runnableCount, true);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        Future<?> future = scheduler.submitScheduled(tr, scheduleDelay);
+        Future<?> future = scheduler.submitScheduled(tr, SCHEDULE_DELAY);
         assertNotNull(future);
         runnables.add(tr);
         futures.add(future);
@@ -272,9 +267,9 @@ public class PrioritySchedulerLimiterTest {
       while (it.hasNext()) {
         TestRunnable tr = it.next();
         long executionDelay = tr.getDelayTillFirstRun();
-        assertTrue(executionDelay >= scheduleDelay);
+        assertTrue(executionDelay >= SCHEDULE_DELAY);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (scheduleDelay + 2000));  
+        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));  
         assertEquals(1, tr.getRunCount());
       }
       
@@ -297,49 +292,49 @@ public class PrioritySchedulerLimiterTest {
   
   @Test
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
   public void submitScheduledCallableNamedSubPoolTest() throws InterruptedException, ExecutionException {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(true);
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
   public void submitScheduledRunnableFail() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
   }
   
   @Test
   public void submitScheduledCallableFail() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(sf);
   }
   
   @Test
   public void recurringExecutionTest() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionNamedSubPoolTest() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(true);
     
     SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
   }
   
   @Test
   public void recurringExecutionFail() {
-    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
@@ -457,11 +452,11 @@ public class PrioritySchedulerLimiterTest {
     }
   }
 
-  private class SchedulerLimiterFactory implements SubmitterSchedulerFactory {
+  private class PrioritySchedulerLimiterFactory implements SubmitterSchedulerFactory {
     private final List<PriorityScheduledExecutor> executors;
     private final boolean addSubPoolName;
     
-    private SchedulerLimiterFactory(boolean addSubPoolName) {
+    private PrioritySchedulerLimiterFactory(boolean addSubPoolName) {
       Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
         @Override
         public void uncaughtException(Thread t, Throwable e) {

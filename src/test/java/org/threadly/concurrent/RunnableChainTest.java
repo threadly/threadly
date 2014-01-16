@@ -1,6 +1,7 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,6 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class RunnableChainTest {
-  private static final int RUNNABLE_COUNT = 5;
   private static final int FAIL_INDEX = 2;
   
   @Test
@@ -21,8 +21,8 @@ public class RunnableChainTest {
   
   @Test
   public void exceptionStopsChainTest() {
-    List<TestRunnable> list = new ArrayList<TestRunnable>(RUNNABLE_COUNT);
-    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+    List<TestRunnable> list = new ArrayList<TestRunnable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       list.add(new ChainRunnable(i == FAIL_INDEX));
     }
 
@@ -33,7 +33,7 @@ public class RunnableChainTest {
       // ignore expected exception
     }
 
-    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+    for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = list.get(i);
       if (i > FAIL_INDEX) {
         assertEquals(0, tr.getRunCount());
@@ -45,8 +45,8 @@ public class RunnableChainTest {
   
   @Test
   public void runAllProvidedTest() {
-    List<TestRunnable> list = new ArrayList<TestRunnable>(RUNNABLE_COUNT);
-    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+    List<TestRunnable> list = new ArrayList<TestRunnable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       list.add(new ChainRunnable(i == FAIL_INDEX));
     }
 
@@ -57,7 +57,7 @@ public class RunnableChainTest {
       // ignore expected exception
     }
 
-    for (int i = 0; i < RUNNABLE_COUNT; i++) {
+    for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = list.get(i);
       assertEquals(1, tr.getRunCount());
     }

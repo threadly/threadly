@@ -1,10 +1,7 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,12 +16,10 @@ import org.threadly.test.concurrent.TestRunnable;
 public class SubmitterExecutorInterfaceTest {
   public static void executeTest(SubmitterExecutorFactory factory) {
     try {
-      int runnableCount = 10;
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         executor.execute(tr);
         runnables.add(tr);
@@ -71,13 +66,11 @@ public class SubmitterExecutorInterfaceTest {
   
   public static void submitRunnableTest(SubmitterExecutorFactory factory) throws InterruptedException, ExecutionException {
     try {
-      int runnableCount = 10;
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      List<Future<?>> futures = new ArrayList<Future<?>>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<?> future = executor.submit(tr);
         assertNotNull(future);
@@ -122,13 +115,11 @@ public class SubmitterExecutorInterfaceTest {
   
   public static void submitRunnableWithResultTest(SubmitterExecutorFactory factory) throws InterruptedException, ExecutionException {
     try {
-      int runnableCount = 10;
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<TestRunnable> future = executor.submit(tr, tr);
         assertNotNull(future);
@@ -174,14 +165,12 @@ public class SubmitterExecutorInterfaceTest {
   
   public static void submitCallableTest(SubmitterExecutorFactory factory) throws InterruptedException, ExecutionException {
     try {
-      int runnableCount = 10;
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(runnableCount, false);
-      
-      List<TestCallable> callables = new ArrayList<TestCallable>(runnableCount);
-      List<Future<Object>> futures = new ArrayList<Future<Object>>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
-        TestCallable tc = new TestCallable(0);
+      List<TestCallable> callables = new ArrayList<TestCallable>(TEST_QTY);
+      List<Future<Object>> futures = new ArrayList<Future<Object>>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
+        TestCallable tc = new TestCallable();
         Future<Object> future = executor.submit(tc);
         assertNotNull(future);
         callables.add(tc);

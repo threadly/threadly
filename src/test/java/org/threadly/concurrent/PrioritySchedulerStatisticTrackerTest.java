@@ -1,6 +1,7 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -550,15 +551,14 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void resetCollectedStatsTest() {
-    int testRunnableCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                        TaskPriority.High, 100);
     try {
       // prestart so reuse percent is not zero
       scheduler.prestartAllCoreThreads();
       TestRunnable lastRunnable = null;
       boolean flip = false;
-      for (int i = 0; i < testRunnableCount; i++) {
+      for (int i = 0; i < TEST_QTY; i++) {
         lastRunnable = new TestRunnable(1);
         if (flip) {
           scheduler.execute(lastRunnable, TaskPriority.High);
@@ -599,11 +599,11 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void getAvgRunTimeTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
-                                                                                              highPriorityCount + lowPriorityCount, 
-                                                                                              1000, TaskPriority.High, 100);
+    int lowPriorityCount = TEST_QTY;
+    int highPriorityCount = TEST_QTY * 2;
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
+                                                                                        highPriorityCount + lowPriorityCount, 
+                                                                                        1000, TaskPriority.High, 100);
     try {
       for (int i = 0; i < lowPriorityCount; i++) {
         scheduler.execute(new TestRunnable(), 
@@ -640,8 +640,8 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void getTotalExecutionCountTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
+    int lowPriorityCount = TEST_QTY;
+    int highPriorityCount = TEST_QTY * 2;
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
                                                                                         highPriorityCount + lowPriorityCount, 
                                                                                         1000, TaskPriority.High, 100);
@@ -729,26 +729,26 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void getMedianTaskRunTimeTest() {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
-                                                                                              highPriorityCount + lowPriorityCount, 
-                                                                                              1000, TaskPriority.High, 100);
+    int lowPriorityCount = TEST_QTY;
+    int highPriorityCount = TEST_QTY * 2;
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
+                                                                                        highPriorityCount + lowPriorityCount, 
+                                                                                        1000, TaskPriority.High, 100);
     try {
-      BlockRunnable lastRunnable = null;
+      BlockingTestRunnable lastRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {
         if (lastRunnable != null) {
           TestUtils.blockTillClockAdvances();
           lastRunnable.unblock();
         }
-        lastRunnable = new BlockRunnable();
+        lastRunnable = new BlockingTestRunnable();
         scheduler.execute(lastRunnable, 
                           TaskPriority.Low);
       }
       for (int i = 0; i < highPriorityCount; i++) {
         TestUtils.blockTillClockAdvances();
         lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
+        lastRunnable = new BlockingTestRunnable();
         scheduler.execute(lastRunnable, 
                           TaskPriority.High);
       }
@@ -779,10 +779,10 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
 
   public void getPriorityAvgExecutionDelayNoInputTest(TaskPriority testPriority) {
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                        TaskPriority.High, 100);
     try {
-      BlockRunnable br = new BlockRunnable();
+      BlockingTestRunnable br = new BlockingTestRunnable();
       switch (testPriority) { // submit with opposite priority
         case High:
           scheduler.execute(br, TaskPriority.Low);
@@ -826,25 +826,25 @@ public class PrioritySchedulerStatisticTrackerTest {
   
 
   public void getPriorityAvgExecutionDelayTest(TaskPriority priority) {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
+    int lowPriorityCount = TEST_QTY;
+    int highPriorityCount = TEST_QTY * 2;
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                        TaskPriority.High, 100);
     try {
-      BlockRunnable lastRunnable = null;
+      BlockingTestRunnable lastRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {
         if (lastRunnable != null) {
           TestUtils.blockTillClockAdvances();
           lastRunnable.unblock();
         }
-        lastRunnable = new BlockRunnable();
+        lastRunnable = new BlockingTestRunnable();
         scheduler.execute(lastRunnable, 
                           TaskPriority.Low);
       }
       for (int i = 0; i < highPriorityCount; i++) {
         TestUtils.blockTillClockAdvances();
         lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
+        lastRunnable = new BlockingTestRunnable();
         scheduler.execute(lastRunnable, 
                           TaskPriority.High);
       }
@@ -901,29 +901,29 @@ public class PrioritySchedulerStatisticTrackerTest {
   
 
   public void getPriorityMedianExecutionDelayTest(TaskPriority priority) {
-    int lowPriorityCount = 5;
-    int highPriorityCount = 10;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
+    int lowPriorityCount = TEST_QTY;
+    int highPriorityCount = TEST_QTY * 2;
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                        TaskPriority.High, 100);
 
     assertEquals(-1, scheduler.getHighPriorityMedianExecutionDelay());
     assertEquals(-1, scheduler.getLowPriorityMedianExecutionDelay());
     
     try {
-      BlockRunnable lastRunnable = null;
+      BlockingTestRunnable lastRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {
         if (lastRunnable != null) {
           TestUtils.blockTillClockAdvances();
           lastRunnable.unblock();
         }
-        lastRunnable = new BlockRunnable();
+        lastRunnable = new BlockingTestRunnable();
         scheduler.execute(lastRunnable, 
                           TaskPriority.Low);
       }
       for (int i = 0; i < highPriorityCount; i++) {
         TestUtils.blockTillClockAdvances();
         lastRunnable.unblock();
-        lastRunnable = new BlockRunnable();
+        lastRunnable = new BlockingTestRunnable();
         scheduler.execute(lastRunnable, 
                           TaskPriority.High);
       }
@@ -975,10 +975,10 @@ public class PrioritySchedulerStatisticTrackerTest {
   @Test
   public void getRunnablesRunningOverTimeTest() {
     final int checkTime = 20;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
+                                                                                        TaskPriority.High, 100);
     try {
-      BlockRunnable br = new BlockRunnable();
+      BlockingTestRunnable br = new BlockingTestRunnable();
       scheduler.execute(br);
       
       long before = System.currentTimeMillis();
@@ -1072,21 +1072,6 @@ public class PrioritySchedulerStatisticTrackerTest {
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();
-      }
-    }
-  }
-  
-  private static class BlockRunnable extends TestRunnable {
-    private volatile boolean unblock = false;
-    
-    public void unblock() {
-      unblock = true;
-    }
-    
-    @Override
-    public void handleRunFinish() {
-      while (! unblock) {
-        TestUtils.sleep(10);
       }
     }
   }

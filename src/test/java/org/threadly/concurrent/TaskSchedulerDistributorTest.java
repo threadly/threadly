@@ -1,6 +1,7 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
@@ -22,8 +23,8 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class TaskSchedulerDistributorTest {
-  private static final int PARALLEL_LEVEL = 2;
-  private static final int RUNNABLE_COUNT_PER_LEVEL = 5;
+  private static final int PARALLEL_LEVEL = TEST_QTY;
+  private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
   private PriorityScheduledExecutor scheduler;
   private Object agentLock;

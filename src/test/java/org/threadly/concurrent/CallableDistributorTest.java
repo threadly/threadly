@@ -1,6 +1,7 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
@@ -100,10 +101,9 @@ public class CallableDistributorTest {
   }
   
   public void getNextResultMultipleTest() throws InterruptedException {
-    int testQty = 10;
     String key = "foo";
-    List<TestCallable> callables = new ArrayList<TestCallable>(testQty);
-    for (int i = 0; i < testQty; i++) {
+    List<TestCallable> callables = new ArrayList<TestCallable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       TestCallable tc = new TestCallable(false, 0, Integer.toString(i));
       callables.add(tc);
       distributor.submit(key, tc);
@@ -111,8 +111,8 @@ public class CallableDistributorTest {
     
     assertTrue(distributor.waitingResults(key));
     
-    List<Result<String>> results = new ArrayList<Result<String>>(testQty);
-    for (int i = 0; i < testQty; i++) {
+    List<Result<String>> results = new ArrayList<Result<String>>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       Result<String> result = distributor.getNextResult(key);
       assertNotNull(result);
       assertFalse(results.contains(result));
@@ -141,17 +141,16 @@ public class CallableDistributorTest {
   
   @Test
   public void getAllResultsTest() throws InterruptedException {
-    int testQty = 10;
     String key = "foo";
-    List<TestCallable> callables = new ArrayList<TestCallable>(testQty);
-    for (int i = 0; i < testQty; i++) {
+    List<TestCallable> callables = new ArrayList<TestCallable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       TestCallable tc = new TestCallable(false, 0, Integer.toString(i));
       callables.add(tc);
       distributor.submit(key, tc);
     }
     
-    List<Result<String>> results = new ArrayList<Result<String>>(testQty);
-    while (results.size() != testQty) {
+    List<Result<String>> results = new ArrayList<Result<String>>(TEST_QTY);
+    while (results.size() != TEST_QTY) {
       List<Result<String>> currResults = distributor.getAllResults(key);
       assertNotNull(currResults);
       assertFalse(currResults.isEmpty());

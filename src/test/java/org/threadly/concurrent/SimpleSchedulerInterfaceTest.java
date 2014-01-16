@@ -1,8 +1,7 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -14,15 +13,12 @@ import org.threadly.test.concurrent.TestRunnable;
 public class SimpleSchedulerInterfaceTest {
   public static void scheduleTest(SimpleSchedulerFactory factory) {
     try {
-      int runnableCount = 10;
-      int scheduleDelay = 50;
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(TEST_QTY, true);
       
-      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(runnableCount, true);
-      
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        scheduler.schedule(tr, scheduleDelay);
+        scheduler.schedule(tr, SCHEDULE_DELAY);
         runnables.add(tr);
       }
       
@@ -31,9 +27,9 @@ public class SimpleSchedulerInterfaceTest {
       while (it.hasNext()) {
         TestRunnable tr = it.next();
         long executionDelay = tr.getDelayTillFirstRun();
-        assertTrue(executionDelay >= scheduleDelay);
+        assertTrue(executionDelay >= SCHEDULE_DELAY);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (scheduleDelay + 2000));  
+        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));  
         assertEquals(1, tr.getRunCount());
       }
     } finally {
@@ -63,19 +59,15 @@ public class SimpleSchedulerInterfaceTest {
   
   public static void recurringExecutionTest(SimpleSchedulerFactory factory) {
     try {
-      final int runnableCount = 10;
-      final int recurringDelay = 50;
-      final int waitCount = 2;
-      
-      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(runnableCount, true);
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(TEST_QTY, true);
       
       // schedule a task first in case there are any initial startup actions which may be slow
       scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10);
   
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-      for (int i = 0; i < runnableCount; i++) {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        scheduler.scheduleWithFixedDelay(tr, 0, recurringDelay);
+        scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY);
         runnables.add(tr);
       }
       
@@ -83,11 +75,11 @@ public class SimpleSchedulerInterfaceTest {
       Iterator<TestRunnable> it = runnables.iterator();
       while (it.hasNext()) {
         TestRunnable tr = it.next();
-        tr.blockTillFinished((runnableCount * (recurringDelay * waitCount)) + 2000, waitCount);
-        long executionDelay = tr.getDelayTillRun(waitCount);
-        assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
+        tr.blockTillFinished((TEST_QTY * (SCHEDULE_DELAY * CYCLE_COUNT)) + 2000, CYCLE_COUNT);
+        long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
+        assertTrue(executionDelay >= SCHEDULE_DELAY * (CYCLE_COUNT - 1));
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 2000);
+        assertTrue(executionDelay <= (SCHEDULE_DELAY * (CYCLE_COUNT - 1)) + 2000);
       }
     } finally {
       factory.shutdown();
@@ -119,7 +111,6 @@ public class SimpleSchedulerInterfaceTest {
       factory.shutdown();
     }
   }
-  
   
   public interface SimpleSchedulerFactory {
     public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 

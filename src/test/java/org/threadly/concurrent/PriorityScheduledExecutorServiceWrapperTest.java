@@ -16,7 +16,7 @@ import org.threadly.test.concurrent.TestRunnable;
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorServiceWrapperTest {
   private static final int THREAD_COUNT = 1000;
-  private static final int KEEP_ALIVE_TIME = 200;
+  private static final int KEEP_ALIVE_TIME = 1000;
   
   static {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {

@@ -1,6 +1,7 @@
 package org.threadly.util;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,8 +12,8 @@ import org.threadly.concurrent.TestDelayed;
 
 @SuppressWarnings("javadoc")
 public class ListUtilsTest {
-  private static final int BINARY_SEARCH_RANDOM_SIZE = 100;
-  private static final int INCREMENTAL_SEARCH_COUNT = 100;
+  private static final int BINARY_SEARCH_RANDOM_SIZE = TEST_QTY * 10;
+  private static final int INCREMENTAL_SEARCH_COUNT = TEST_QTY * 10;
   
   @Test
   public void getInsertionEndIndexTest() {

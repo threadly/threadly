@@ -1,6 +1,7 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -152,10 +153,6 @@ public class ScheduledExecutorServiceTest {
   }
   
   private static void recurringScheduleTest(ScheduledExecutorService scheduler, boolean fixedDelay) {
-    final int runnableCount = 10;
-    final int recurringDelay = 50;
-    final int waitCount = 2;
-    
     // schedule a task first in case there are any initial startup actions which may be slow
     if (fixedDelay) {
       scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10, TimeUnit.MILLISECONDS);
@@ -163,14 +160,14 @@ public class ScheduledExecutorServiceTest {
       scheduler.scheduleAtFixedRate(new TestRunnable(), 0, 1000 * 10, TimeUnit.MILLISECONDS);
     }
     
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-    for (int i = 0; i < runnableCount; i++) {
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = new TestRunnable();
       if (fixedDelay) {
-        scheduler.scheduleWithFixedDelay(tr, 0, recurringDelay, 
+        scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY, 
                                          TimeUnit.MILLISECONDS);
       } else {
-        scheduler.scheduleAtFixedRate(tr, 0, recurringDelay, 
+        scheduler.scheduleAtFixedRate(tr, 0, SCHEDULE_DELAY, 
                                       TimeUnit.MILLISECONDS);
       }
       runnables.add(tr);
@@ -182,13 +179,13 @@ public class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillFinished((runnableCount * (recurringDelay * waitCount)) + 2000, waitCount);
-      long executionDelay = tr.getDelayTillRun(waitCount);
-      assertTrue(executionDelay >= recurringDelay * (waitCount - 1));
+      tr.blockTillFinished((TEST_QTY * (SCHEDULE_DELAY * CYCLE_COUNT)) + 2000, CYCLE_COUNT);
+      long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
+      assertTrue(executionDelay >= SCHEDULE_DELAY * (CYCLE_COUNT - 1));
       
       if (fixedDelay) {
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (recurringDelay * (waitCount - 1)) + 2000);
+        assertTrue(executionDelay <= (SCHEDULE_DELAY * (CYCLE_COUNT - 1)) + 2000);
       }
     }
   }
@@ -210,14 +207,13 @@ public class ScheduledExecutorServiceTest {
   public static void scheduleAtFixedRateConcurrentTest(ScheduledExecutorService scheduler) {
     final int periodInMillis = 5;
     final int runnableSleepTime = periodInMillis * 2;
-    final int testRunCount = 4;
     
     TestRunnable tr = new TestRunnable(runnableSleepTime);
     
     scheduler.scheduleAtFixedRate(tr, 0, periodInMillis, TimeUnit.MILLISECONDS);
     
     // block till we have run enough times to throw exception
-    tr.blockTillFinished(1000 * 10, testRunCount);
+    tr.blockTillFinished(1000 * 10, CYCLE_COUNT);
     
     // let all runnables finish readily
     tr.setRunDelayInMillis(0);
@@ -271,10 +267,8 @@ public class ScheduledExecutorServiceTest {
   
   public static void invokeAllTest(ScheduledExecutorService scheduler) throws InterruptedException, 
                                                                               ExecutionException {
-    int callableQty = 10;
-    
-    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
-    for (int i = 0; i < callableQty; i++) {
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       toInvoke.add(new TestCallable(0));
     }
     List<Future<Object>> result = scheduler.invokeAll(toInvoke);
@@ -290,11 +284,10 @@ public class ScheduledExecutorServiceTest {
   
   public static void invokeAllExceptionTest(ScheduledExecutorService scheduler) throws InterruptedException, 
                                                                                        ExecutionException {
-    int callableQty = 10;
-    int exceptionCallableIndex = 5;
+    int exceptionCallableIndex = TEST_QTY / 2;
     
-    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
-    for (int i = 0; i < callableQty; i++) {
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       TestCallable tc;
       if (i == exceptionCallableIndex) {
         tc = new TestCallable(0) {
@@ -314,7 +307,7 @@ public class ScheduledExecutorServiceTest {
     
     Iterator<TestCallable> it = toInvoke.iterator();
     Iterator<Future<Object>> resultIt = result.iterator();
-    for (int i = 0; i < callableQty; i++) {
+    for (int i = 0; i < TEST_QTY; i++) {
       if (i != exceptionCallableIndex) {
         assertTrue(resultIt.next().get() == it.next().getReturnedResult());
       } else {
@@ -328,11 +321,10 @@ public class ScheduledExecutorServiceTest {
   public static void invokeAllTimeoutTest(ScheduledExecutorService scheduler) throws InterruptedException, 
                                                                                      ExecutionException {
     int runTime = 1000 * 10;
-    int callableQty = 10;
-    int timeoutTime = 10;
+    int timeoutTime = 5;
     
-    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
-    for (int i = 0; i < callableQty; i++) {
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       toInvoke.add(new TestCallable(runTime));
     }
     
@@ -356,11 +348,9 @@ public class ScheduledExecutorServiceTest {
   
   public static void invokeAnyTest(ScheduledExecutorService scheduler) throws InterruptedException, 
                                                                               ExecutionException {
-    int callableQty = 10;
-    
-    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
     Object expectedResult = null;
-    for (int i = 0; i < callableQty; i++) {
+    for (int i = 0; i < TEST_QTY; i++) {
       TestCallable tc;
       if (i == 0) {
         tc = new TestCallable(0);
@@ -381,10 +371,9 @@ public class ScheduledExecutorServiceTest {
                                                                                      ExecutionException, 
                                                                                      TimeoutException {
     int runTime = 1000 * 10;
-    int callableQty = 10;
-    int timeoutTime = 10;
+    int timeoutTime = 5;
     
-    List<TestCallable> toInvoke = new ArrayList<TestCallable>(callableQty);
+    List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
 
     toInvoke.add(new TestCallable(runTime));
     

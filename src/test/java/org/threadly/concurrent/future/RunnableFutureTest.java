@@ -1,6 +1,7 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Callable;
@@ -31,8 +32,7 @@ public class RunnableFutureTest {
   
   public static void getTimeoutFail(FutureFactory ff) throws InterruptedException, 
                                                              ExecutionException {
-    final int timeout = 10;
-    final int threadSleepTime = 1000 * 10;
+    final int threadSleepTime = DELAY_TIME * 1000;
 
     TestRunnable tr = new TestRunnable(threadSleepTime);
     Future<?> future = ff.make(tr);
@@ -41,11 +41,11 @@ public class RunnableFutureTest {
     
     long startTime = System.currentTimeMillis();
     try {
-      future.get(timeout, TimeUnit.MILLISECONDS);
+      future.get(DELAY_TIME, TimeUnit.MILLISECONDS);
       fail("Exception should have been thrown");
     } catch (TimeoutException e) {
       long catchTime = System.currentTimeMillis();
-      assertTrue(catchTime - startTime >= timeout);
+      assertTrue(catchTime - startTime >= DELAY_TIME);
     }
   }
   

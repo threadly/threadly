@@ -1,6 +1,7 @@
 package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class ExecutorLimiterTest {
-  private static final int PARALLEL_COUNT = 2;
+  private static final int PARALLEL_COUNT = TEST_QTY / 2;
   private static final int THREAD_COUNT = PARALLEL_COUNT * 2;
   
   private PriorityScheduledExecutor executor;
@@ -106,12 +107,10 @@ public class ExecutorLimiterTest {
   public static void executeLimitTest(Executor limitedExecutor, 
                                       final int limiterLimit) throws InterruptedException, 
                                                                      TimeoutException {
-    final int runnableCount = 10;
-    
     final AtomicInteger running = new AtomicInteger(0);
     final AsyncVerifier verifier = new AsyncVerifier();
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(runnableCount);
-    for (int i = 0; i < runnableCount; i++) {
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = new TestRunnable(20) {
         @Override
         public void handleRunStart() {
@@ -131,7 +130,7 @@ public class ExecutorLimiterTest {
       runnables.add(tr);
     }
     
-    verifier.waitForTest(1000 * 10, runnableCount);
+    verifier.waitForTest(1000 * 10, TEST_QTY);
     
     // verify execution
     Iterator<TestRunnable> it = runnables.iterator();

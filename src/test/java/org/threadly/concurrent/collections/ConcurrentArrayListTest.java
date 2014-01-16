@@ -1,6 +1,7 @@
 package org.threadly.concurrent.collections;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -13,14 +14,11 @@ import java.util.NoSuchElementException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.TestDelayed;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 
 @SuppressWarnings("javadoc")
 public class ConcurrentArrayListTest {
-  private static final int TEST_QTY = 10;
-  
   private ConcurrentArrayList<String> testList;
   
   @Before
@@ -580,21 +578,22 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void repositionIndexTest() {
+    int testQty = Math.max(10, TEST_QTY);
     // should be a no-op
     testList.reposition(0, 0);
     
-    for (int i = 0; i < TEST_QTY; i++) {
+    for (int i = 0; i < testQty; i++) {
       String str = Integer.toString(i);
       testList.add(str);
     }
     
-    testList.reposition(TEST_QTY - 1, 0);
-    assertEquals(Integer.toString(TEST_QTY - 1), testList.get(0));
+    testList.reposition(testQty - 1, 0);
+    assertEquals(Integer.toString(testQty - 1), testList.get(0));
     assertEquals(Integer.toString(0), testList.get(1));
 
     String expectedNext = testList.get(6);
     testList.reposition(0, 5);
-    assertEquals(Integer.toString(TEST_QTY - 1), // one less than index position because shifted right 
+    assertEquals(Integer.toString(testQty - 1), // one less than index position because shifted right 
                  testList.get(4));
     assertEquals(expectedNext, testList.get(6));
     
