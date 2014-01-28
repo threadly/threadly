@@ -286,6 +286,39 @@ public class PriorityScheduledExecutorTest {
       factory.shutdown();
     }
   }
+
+  @Test
+  public void setMaxPoolSizeBlockedThreadsTest() {
+    getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
+  } 
+  
+  public static void setMaxPoolSizeUnblockedThreadTest(PriorityScheduledExecutorFactory factory) {
+    try {
+      PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
+      
+      BlockingTestRunnable btr = new BlockingTestRunnable();
+      try {
+        scheduler.execute(btr);
+        
+        btr.blockTillStarted();
+        
+        TestRunnable tr = new TestRunnable();
+        scheduler.execute(tr);
+        // should not be able to start
+        assertEquals(0, tr.getRunCount());
+        
+        scheduler.setMaxPoolSize(2);
+        
+        // tr should not be able to start, will throw exception if unable to
+        tr.blockTillStarted();
+        assertEquals(1, tr.getRunCount());
+      } finally {
+        btr.unblock();
+      }
+    } finally {
+      factory.shutdown();
+    }
+  }
   
   @Test
   public void getAndSetLowPriorityWaitTest() {

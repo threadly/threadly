@@ -83,6 +83,11 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void setMaxPoolSizeBlockedThreadsTest() {
+    PriorityScheduledExecutorTest.setMaxPoolSizeUnblockedThreadTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
   public void getAndSetLowPriorityWaitTest() {
     PriorityScheduledExecutorTest.getAndSetLowPriorityWaitTest(new PriorityScheduledExecutorTestFactory());
   }
