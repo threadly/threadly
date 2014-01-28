@@ -20,6 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
@@ -35,7 +36,7 @@ public class ExecutorLimiterTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new PriorityScheduledExecutor(PARALLEL_COUNT, THREAD_COUNT, 1000);
+    scheduler = new StrictPriorityScheduledExecutor(PARALLEL_COUNT, THREAD_COUNT, 1000);
   }
   
   @AfterClass
@@ -79,7 +80,7 @@ public class ExecutorLimiterTest {
   
   @Test
   public void constructorEmptySubPoolNameTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
     try {
       ExecutorLimiter limiter = new ExecutorLimiter(executor, 1, " ");
       
@@ -174,7 +175,7 @@ public class ExecutorLimiterTest {
   
   @Test
   public void removeBlockedRunnableTest() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(1, 1, 1000);
     BlockingTestRunnable blockingRunnable = new BlockingTestRunnable();
     try {
       ExecutorLimiter limiter = new ExecutorLimiter(scheduler, 2);
@@ -246,8 +247,8 @@ public class ExecutorLimiterTest {
     
     @Override
     public ExecutorLimiter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
-                                                                         1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }
