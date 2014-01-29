@@ -38,11 +38,11 @@ public class TaskSchedulerDistributorTest {
   
   @Before
   public void setup() {
-    scheduler = new PriorityScheduledExecutor(PARALLEL_LEVEL + 1, 
-                                              PARALLEL_LEVEL * 2, 
-                                              1000 * 10, 
-                                              TaskPriority.High, 
-                                              PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    scheduler = new StrictPriorityScheduledExecutor(PARALLEL_LEVEL + 1, 
+                                                    PARALLEL_LEVEL * 2, 
+                                                    1000 * 10, 
+                                                    TaskPriority.High, 
+                                                    PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
     distributor = new TaskSchedulerDistributor(scheduler, sLock, 
@@ -498,9 +498,8 @@ public class TaskSchedulerDistributorTest {
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
                                                               boolean prestartIfAvailable) {
-      PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(poolSize, 
-                                                                          poolSize, 
-                                                                          1000 * 10);
+      PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                                1000 * 10);
       executors.add(scheduler);
       if (prestartIfAvailable) {
         scheduler.prestartAllCoreThreads();

@@ -39,11 +39,11 @@ public class TaskExecutorDistributorTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new PriorityScheduledExecutor(PARALLEL_LEVEL + 1, 
-                                              PARALLEL_LEVEL * 2, 
-                                              1000 * 10, 
-                                              TaskPriority.High, 
-                                              PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    scheduler = new StrictPriorityScheduledExecutor(PARALLEL_LEVEL + 1, 
+                                                    PARALLEL_LEVEL * 2, 
+                                                    1000 * 10, 
+                                                    TaskPriority.High, 
+                                                    PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
@@ -417,9 +417,9 @@ public class TaskExecutorDistributorTest {
   
   @Test
   public void limitExecutionPerCycleTest() {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(3, 3, 1000 * 10, 
-                                                                        TaskPriority.High, 
-                                                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(3, 3, 1000 * 10, 
+                                                                              TaskPriority.High, 
+                                                                              PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     final AtomicBoolean testComplete = new AtomicBoolean(false);
     try {
       final Integer key1 = 1;
@@ -562,8 +562,8 @@ public class TaskExecutorDistributorTest {
     @Override
     public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, 
                                                             boolean prestartIfAvailable) {
-      PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
-                                                                         1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }

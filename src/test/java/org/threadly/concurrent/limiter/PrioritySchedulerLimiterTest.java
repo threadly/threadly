@@ -18,6 +18,7 @@ import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
@@ -43,7 +44,7 @@ public class PrioritySchedulerLimiterTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
     try {
       new PrioritySchedulerLimiter(executor, 0);
       fail("Exception should have thrown");
@@ -56,7 +57,7 @@ public class PrioritySchedulerLimiterTest {
   
   @Test
   public void constructorEmptySubPoolNameTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
     try {
       PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(executor, 1, " ");
       
@@ -68,16 +69,16 @@ public class PrioritySchedulerLimiterTest {
   
   @Test
   public void getDefaultPriorityTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.Low, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 10, TaskPriority.Low, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
     
-    executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
+    executor = new StrictPriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
   }
   
   @Test
   public void consumeAvailableTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
     try {
       PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, TEST_QTY);
       
@@ -113,8 +114,8 @@ public class PrioritySchedulerLimiterTest {
   public void executeLimitTest() throws InterruptedException, TimeoutException {
     final int limiterLimit = TEST_QTY / 2;
     final int threadCount = limiterLimit * 2;
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(threadCount, threadCount, 10, 
-                                                                       TaskPriority.High, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(threadCount, threadCount, 10, 
+                                                                             TaskPriority.High, 100);
     try {
       PrioritySchedulerLimiter psl = new PrioritySchedulerLimiter(executor, limiterLimit);
       
@@ -360,7 +361,7 @@ public class PrioritySchedulerLimiterTest {
   }
   
   public static void removeRunnableTest(TaskPriority priority) {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(2, 2, 1000);
     try {
       PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 2);
       
@@ -386,7 +387,7 @@ public class PrioritySchedulerLimiterTest {
   }
   
   public static void removeCallableTest(TaskPriority priority) {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(2, 2, 1000);
     try {
       PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 1);
       
@@ -412,7 +413,7 @@ public class PrioritySchedulerLimiterTest {
   }
   
   public static void removeBlockedRunnableTest(TaskPriority priority) {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(1, 1, 1000);
     BlockingTestRunnable blockingRunnable = new BlockingTestRunnable();
     try {
       PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 2);
@@ -442,7 +443,7 @@ public class PrioritySchedulerLimiterTest {
   }
   
   public static void removeBlockedCallableTest(TaskPriority priority) {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(1, 1, 1000);
     BlockingTestRunnable blockingRunnable = new BlockingTestRunnable();
     try {
       PrioritySchedulerLimiter limiter = new PrioritySchedulerLimiter(scheduler, 2);
@@ -486,8 +487,8 @@ public class PrioritySchedulerLimiterTest {
     @Override
     public PrioritySchedulerLimiter makeSubmitterScheduler(int poolSize, 
                                                            boolean prestartIfAvailable) {
-      PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
-                                                                         1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }

@@ -84,8 +84,8 @@ public class ExecutorWrapperTest {
     
     @Override
     public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduledExecutor executor = new PriorityScheduledExecutor(poolSize, poolSize, 
-                                                                         1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }

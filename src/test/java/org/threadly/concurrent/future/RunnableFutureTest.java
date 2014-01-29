@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -20,7 +21,7 @@ public class RunnableFutureTest {
   private static PriorityScheduledExecutor scheduler;
   
   static {
-    scheduler = new PriorityScheduledExecutor(10, 10, 500);
+    scheduler = new StrictPriorityScheduledExecutor(10, 10, 500);
     
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }

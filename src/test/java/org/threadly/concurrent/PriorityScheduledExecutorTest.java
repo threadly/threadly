@@ -66,25 +66,25 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void constructorFail() {
     try {
-      new PriorityScheduledExecutor(0, 1, 1, TaskPriority.High, 1, null);
+      new StrictPriorityScheduledExecutor(0, 1, 1, TaskPriority.High, 1, null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new PriorityScheduledExecutor(2, 1, 1, TaskPriority.High, 1, null);
+      new StrictPriorityScheduledExecutor(2, 1, 1, TaskPriority.High, 1, null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new PriorityScheduledExecutor(1, 1, -1, TaskPriority.High, 1, null);
+      new StrictPriorityScheduledExecutor(1, 1, -1, TaskPriority.High, 1, null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new PriorityScheduledExecutor(1, 1, 1, TaskPriority.High, -1, null);
+      new StrictPriorityScheduledExecutor(1, 1, 1, TaskPriority.High, -1, null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -94,7 +94,7 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void constructorNullPriorityTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 1, null, 1, null);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 1, null, 1, null);
     
     assertTrue(executor.getDefaultPriority() == PriorityScheduledExecutor.DEFAULT_PRIORITY);
   }
@@ -286,6 +286,39 @@ public class PriorityScheduledExecutorTest {
       factory.shutdown();
     }
   }
+
+  @Test
+  public void setMaxPoolSizeBlockedThreadsTest() {
+    getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
+  } 
+  
+  public static void setMaxPoolSizeUnblockedThreadTest(PriorityScheduledExecutorFactory factory) {
+    try {
+      PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
+      
+      BlockingTestRunnable btr = new BlockingTestRunnable();
+      try {
+        scheduler.execute(btr);
+        
+        btr.blockTillStarted();
+        
+        TestRunnable tr = new TestRunnable();
+        scheduler.execute(tr);
+        // should not be able to start
+        assertEquals(0, tr.getRunCount());
+        
+        scheduler.setMaxPoolSize(2);
+        
+        // tr should not be able to start, will throw exception if unable to
+        tr.blockTillStarted();
+        assertEquals(1, tr.getRunCount());
+      } finally {
+        btr.unblock();
+      }
+    } finally {
+      factory.shutdown();
+    }
+  }
   
   @Test
   public void getAndSetLowPriorityWaitTest() {
@@ -389,7 +422,7 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void getScheduledTaskCountTest() {
-    PriorityScheduledExecutor result = new PriorityScheduledExecutor(1, 1, 1000);
+    PriorityScheduledExecutor result = new StrictPriorityScheduledExecutor(1, 1, 1000);
     // add directly to avoid starting the consumer
     result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                         TaskPriority.High, 0));
@@ -409,7 +442,7 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void getScheduledTaskCountLowPriorityTest() {
-    PriorityScheduledExecutor result = new PriorityScheduledExecutor(1, 1, 1000);
+    PriorityScheduledExecutor result = new StrictPriorityScheduledExecutor(1, 1, 1000);
     // add directly to avoid starting the consumer
     result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                         TaskPriority.High, 0));
@@ -428,7 +461,7 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void getScheduledTaskCountHighPriorityTest() {
-    PriorityScheduledExecutor result = new PriorityScheduledExecutor(1, 1, 1000);
+    PriorityScheduledExecutor result = new StrictPriorityScheduledExecutor(1, 1, 1000);
     // add directly to avoid starting the consumer
     result.highPriorityQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 
                                                         TaskPriority.High, 0));
@@ -501,7 +534,7 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void interruptedExecutionTest() {
     final long taskRunTime = 1000 * 10;
-    final PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 1000);
+    final PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 1000);
     try {
       TestRunnable tr = new TestRunnable() {
         @Override
@@ -724,7 +757,7 @@ public class PriorityScheduledExecutorTest {
   public static void removeRunnableTest(TaskPriority priority) {
     int runFrequency = 1;
     
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(2, 2, 1000);
     try {
       TestRunnable removedTask = new TestRunnable();
       TestRunnable keptTask = new TestRunnable();
@@ -762,7 +795,7 @@ public class PriorityScheduledExecutorTest {
   }
   
   public static void removeCallableTest(TaskPriority priority) {
-    PriorityScheduledExecutor scheduler = new PriorityScheduledExecutor(2, 2, 1000);
+    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(2, 2, 1000);
     try {
       TestCallable task = new TestCallable();
       scheduler.submitScheduled(task, 1000 * 10, priority);
@@ -1035,19 +1068,20 @@ public class PriorityScheduledExecutorTest {
   public static void getExistingWorkerTest(PriorityScheduledExecutorFactory factory) {
     PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
     try {
-      // add an idle worker
-      Worker testWorker = scheduler.makeNewWorker();
-      scheduler.workerDone(testWorker);
-      
-      assertEquals(1, scheduler.availableWorkers.size());
-      
-      try {
-        Worker returnedWorker = scheduler.getExistingWorker(100);
-        assertTrue(returnedWorker == testWorker);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
+      synchronized (scheduler.workersLock) {
+        // add an idle worker
+        Worker testWorker = scheduler.makeNewWorker();
+        scheduler.workerDone(testWorker);
+        
+        assertEquals(1, scheduler.availableWorkers.size());
+        
+        try {
+          Worker returnedWorker = scheduler.getExistingWorker(100);
+          assertTrue(returnedWorker == testWorker);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
       }
-      
     } finally {
       factory.shutdown();
     }
@@ -1061,29 +1095,31 @@ public class PriorityScheduledExecutorTest {
   public static void lookForExpiredWorkersTest(PriorityScheduledExecutorFactory factory) {
     PriorityScheduledExecutor scheduler = factory.make(1, 1, 0);
     try {
-      // add an idle worker
-      Worker testWorker = scheduler.makeNewWorker();
-      scheduler.workerDone(testWorker);
-      
-      assertEquals(1, scheduler.availableWorkers.size());
-      
-      TestUtils.blockTillClockAdvances();
-      Clock.accurateTime(); // update clock so scheduler will see it
-      
-      scheduler.expireOldWorkers();
-      
-      // should not have collected yet due to core size == 1
-      assertEquals(1, scheduler.availableWorkers.size());
-
-      scheduler.allowCoreThreadTimeOut(true);
-      
-      TestUtils.blockTillClockAdvances();
-      Clock.accurateTime(); // update clock so scheduler will see it
-      
-      scheduler.expireOldWorkers();
-      
-      // verify collected now
-      assertEquals(0, scheduler.availableWorkers.size());
+      synchronized (scheduler.workersLock) {
+        // add an idle worker
+        Worker testWorker = scheduler.makeNewWorker();
+        scheduler.workerDone(testWorker);
+        
+        assertEquals(1, scheduler.availableWorkers.size());
+        
+        TestUtils.blockTillClockAdvances();
+        Clock.accurateTime(); // update clock so scheduler will see it
+        
+        scheduler.expireOldWorkers();
+        
+        // should not have collected yet due to core size == 1
+        assertEquals(1, scheduler.availableWorkers.size());
+  
+        scheduler.allowCoreThreadTimeOut(true);
+        
+        TestUtils.blockTillClockAdvances();
+        Clock.accurateTime(); // update clock so scheduler will see it
+        
+        scheduler.expireOldWorkers();
+        
+        // verify collected now
+        assertEquals(0, scheduler.availableWorkers.size());
+      }
     } finally {
       factory.shutdown();
     }
@@ -1148,9 +1184,9 @@ public class PriorityScheduledExecutorTest {
                                           long keepAliveTimeInMs,
                                           TaskPriority defaultPriority,
                                           long maxWaitForLowPriority) {
-      PriorityScheduledExecutor result = new PriorityScheduledExecutor(corePoolSize, maxPoolSize, 
-                                                                       keepAliveTimeInMs, defaultPriority, 
-                                                                       maxWaitForLowPriority);
+      PriorityScheduledExecutor result = new StrictPriorityScheduledExecutor(corePoolSize, maxPoolSize, 
+                                                                             keepAliveTimeInMs, defaultPriority, 
+                                                                             maxWaitForLowPriority);
       executors.add(result);
       
       return result;
@@ -1159,8 +1195,8 @@ public class PriorityScheduledExecutorTest {
     @Override
     public PriorityScheduledExecutor make(int corePoolSize, int maxPoolSize, 
                                           long keepAliveTimeInMs) {
-      PriorityScheduledExecutor result = new PriorityScheduledExecutor(corePoolSize, maxPoolSize, 
-                                                                       keepAliveTimeInMs);
+      PriorityScheduledExecutor result = new StrictPriorityScheduledExecutor(corePoolSize, maxPoolSize, 
+                                                                             keepAliveTimeInMs);
       executors.add(result);
       
       return result;
@@ -1181,8 +1217,8 @@ public class PriorityScheduledExecutorTest {
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
                                                               boolean prestartIfAvailable) {
-      PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
-                                                                       1000);
+      PriorityScheduledExecutor result = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                             1000);
       if (prestartIfAvailable) {
         result.prestartAllCoreThreads();
       }
@@ -1224,9 +1260,9 @@ public class PriorityScheduledExecutorTest {
                                                               boolean prestartIfAvailable) {
       TaskPriority originalPriority = TaskPriority.Low;
       TaskPriority returnPriority = TaskPriority.High;
-      PriorityScheduledExecutor result = new PriorityScheduledExecutor(poolSize, poolSize, 
-                                                                       1000, originalPriority, 
-                                                                       500);
+      PriorityScheduledExecutor result = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                             1000, originalPriority, 
+                                                                             500);
       if (prestartIfAvailable) {
         result.prestartAllCoreThreads();
       }

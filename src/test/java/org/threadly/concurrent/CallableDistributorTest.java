@@ -24,7 +24,7 @@ public class CallableDistributorTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new PriorityScheduledExecutor(10, 10, 200);
+    scheduler = new StrictPriorityScheduledExecutor(10, 10, 200);
   }
   
   @AfterClass

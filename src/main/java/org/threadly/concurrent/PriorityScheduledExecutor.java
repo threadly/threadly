@@ -88,6 +88,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   private volatile long keepAliveTimeInMs;
   private volatile long maxWaitForLowPriorityInMs;
   private volatile boolean allowCorePoolTimeout;
+  private int waitingForWorkerCount;  // is locked around workersLock
   private int currentPoolSize;  // is locked around workersLock
   private long lastHighDelay;   // is locked around workersLock
 
@@ -252,6 +253,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     this.maxPoolSize = maxPoolSize;
     this.allowCorePoolTimeout = false;
     this.lastHighDelay = 0;
+    waitingForWorkerCount = 0;
     currentPoolSize = 0;
   }
   
@@ -347,7 +349,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
       boolean lookForExpiredWorkers = this.corePoolSize > corePoolSize;
       
       if (maxPoolSize < corePoolSize) {
-        this.maxPoolSize = corePoolSize;
+        setMaxPoolSize(corePoolSize);
       }
       
       this.corePoolSize = corePoolSize;
@@ -375,7 +377,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     }
     
     synchronized (poolSizeChangeLock) {
-      boolean lookForExpiredWorkers = this.maxPoolSize > maxPoolSize;
+      boolean poolSizeIncrease = maxPoolSize < this.maxPoolSize;
       
       if (maxPoolSize < corePoolSize) {
         this.corePoolSize = maxPoolSize;
@@ -383,7 +385,19 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
       
       this.maxPoolSize = maxPoolSize;
       
-      if (lookForExpiredWorkers) {
+      if (poolSizeIncrease) {
+        // now that pool size increased, start any workers we can for the waiting tasks
+        synchronized (workersLock) {
+          if (waitingForWorkerCount > 0) {
+            while (availableWorkers.size() < waitingForWorkerCount && 
+                   currentPoolSize < this.maxPoolSize) {
+              availableWorkers.add(makeNewWorker());
+            }
+            
+            workersLock.notifyAll();
+          }
+        }
+      } else {
         expireOldWorkers();
       }
     }
@@ -928,9 +942,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
                                    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY);
   }
   
+  
+  /**
+   * This function REQUIRES that workersLock is synchronized before calling.
+   * 
+   * @param maxWaitTimeInMs time to wait for a worker to become available
+   * @return an available worker, or null if no worker became available within the maxWaitTimeInMs
+   * @throws InterruptedException Thrown if thread is interrupted while waiting for worker
+   */
   protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
-    synchronized (workersLock) {
-      long startTime = Clock.accurateTime();
+    long startTime = Clock.accurateTime();
+    waitingForWorkerCount++;
+    try {
       long waitTime = maxWaitTimeInMs;
       while (availableWorkers.isEmpty() && waitTime > 0) {
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
@@ -950,18 +973,23 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         // always remove from the front, to get the newest worker
         return availableWorkers.removeFirst();
       }
+    } finally {
+      waitingForWorkerCount--;
     }
   }
   
+  /**
+   * This function REQUIRES that workersLock is synchronized before calling.
+   * 
+   * @return Newly created worker, started and ready to accept work
+   */
   protected Worker makeNewWorker() {
-    synchronized (workersLock) {
-      Worker w = new Worker();
-      currentPoolSize++;
-      w.start();
-  
-      // will be added to available workers when done with first task
-      return w;
-    }
+    Worker w = new Worker();
+    currentPoolSize++;
+    w.start();
+    
+    // will be added to available workers when done with first task
+    return w;
   }
   
   protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
@@ -1040,8 +1068,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
       // we search backwards because the oldest workers will be at the back of the stack
       while ((currentPoolSize > corePoolSize || allowCorePoolTimeout) && 
              ! availableWorkers.isEmpty() && 
-             (currentPoolSize > maxPoolSize || // it does not matter how old it is, the max pool size has changed
-                now - availableWorkers.getLast().getLastRunTime() > keepAliveTimeInMs)) {
+             (now - availableWorkers.getLast().getLastRunTime() > keepAliveTimeInMs || 
+                currentPoolSize > maxPoolSize)) {  // it does not matter how old it is, the max pool size has changed
         Worker w = availableWorkers.removeLast();
         killWorker(w);
       }

@@ -14,6 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -23,7 +24,7 @@ public class FutureUtilsTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new PriorityScheduledExecutor(1, 1, 1000);
+    scheduler = new StrictPriorityScheduledExecutor(1, 1, 1000);
     
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }

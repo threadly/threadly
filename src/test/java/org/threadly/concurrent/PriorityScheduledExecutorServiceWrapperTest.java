@@ -32,8 +32,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void isTerminatedShortTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.isTerminatedShortTest(wrapper);
@@ -44,8 +44,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void isTerminatedLongTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.isTerminatedLongTest(wrapper);
@@ -56,8 +56,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void awaitTerminationTest() throws InterruptedException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.awaitTerminationTest(wrapper);
@@ -69,8 +69,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test
   public void submitCallableTest() throws InterruptedException, 
                                           ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.submitCallableTest(wrapper);
@@ -82,8 +82,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test
   public void submitWithResultTest() throws InterruptedException, 
                                             ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.submitWithResultTest(wrapper);
@@ -96,8 +96,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   public void futureGetTimeoutFail() throws InterruptedException, 
                                             ExecutionException, 
                                             TimeoutException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.futureGetTimeoutFail(wrapper);
@@ -109,8 +109,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test (expected = ExecutionException.class)
   public void futureGetExecutionFail() throws InterruptedException, 
                                               ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.futureGetExecutionFail(wrapper);
@@ -122,8 +122,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test
   public void futureCancelTest() throws InterruptedException, 
                                         ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.futureCancelTest(wrapper);
@@ -135,8 +135,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test
   public void scheduleRunnableTest() throws InterruptedException, 
                                             ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleRunnableTest(wrapper);
@@ -148,8 +148,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test (expected = NullPointerException.class)
   public void scheduleRunnableFail() throws InterruptedException, 
                                             ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       wrapper.schedule((Runnable)null, 10, TimeUnit.MILLISECONDS);
@@ -161,8 +161,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test
   public void scheduleCallableTest() throws InterruptedException, 
                                             ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleCallableTest(wrapper);
@@ -174,8 +174,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   @Test (expected = NullPointerException.class)
   public void scheduleCallableFail() throws InterruptedException, 
                                             ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       wrapper.schedule((Callable<?>)null, 10, TimeUnit.MILLISECONDS);
@@ -186,8 +186,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void scheduleCallableCancelTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleCallableCancelTest(wrapper);
@@ -198,8 +198,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void scheduleAtFixedRateTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     executor.prestartAllCoreThreads();
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
@@ -211,8 +211,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void scheduleAtFixedRateConcurrentTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     executor.prestartAllCoreThreads();
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
@@ -224,8 +224,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void scheduleAtFixedRateExceptionTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     executor.prestartAllCoreThreads();
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
@@ -241,8 +241,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void scheduleAtFixedRateFail() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleAtFixedRateFail(wrapper);
@@ -253,8 +253,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void scheduleWithFixedDelayTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     executor.prestartAllCoreThreads();
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
@@ -266,8 +266,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test (expected = NullPointerException.class)
   public void scheduleWithFixedDelayFail() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.scheduleWithFixedDelayFail(wrapper);
@@ -278,8 +278,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void invokeAllTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAllTest(wrapper);
@@ -290,8 +290,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void invokeAllExceptionTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAllExceptionTest(wrapper);
@@ -302,8 +302,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void invokeAllTimeoutTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAllTimeoutTest(wrapper);
@@ -314,8 +314,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test (expected = NullPointerException.class)
   public void invokeAllFail() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAllFail(wrapper);
@@ -326,8 +326,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void invokeAnyTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAnyTest(wrapper);
@@ -338,8 +338,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test (expected = TimeoutException.class)
   public void invokeAnyTimeoutTest() throws InterruptedException, ExecutionException, TimeoutException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAnyTimeoutTest(wrapper);
@@ -350,8 +350,8 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void invokeAnyFail() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
-                                                                       KEEP_ALIVE_TIME);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(THREAD_COUNT, THREAD_COUNT, 
+                                                                             KEEP_ALIVE_TIME);
     try {
       ScheduledExecutorService wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       ScheduledExecutorServiceTest.invokeAnyFail(wrapper);
@@ -362,7 +362,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void shutdownTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 200);
     try {
       PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       
@@ -384,7 +384,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   
   @Test
   public void listenableFutureTest() {
-    PriorityScheduledExecutor executor = new PriorityScheduledExecutor(1, 1, 200);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 200);
     try {
       PriorityScheduledExecutorServiceWrapper wrapper = new PriorityScheduledExecutorServiceWrapper(executor);
       TestRunnable futureListener = new TestRunnable();
