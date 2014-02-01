@@ -92,25 +92,17 @@ public class DynamicDelayQueueTest {
   }
   
   @Test
-  public void blockTillAvailableNoSpin() throws InterruptedException {
+  public void blockTillAvailableTest() throws InterruptedException {
     final int delayTime = 20;
     
     long startTime = System.currentTimeMillis();
     testQueue.put(new RealTimeDelayed(delayTime));
-    testQueue.blockTillAvailable(false);
+    synchronized (testQueue.queueLock) {
+      testQueue.blockTillAvailable();
+    }
     long endTime = System.currentTimeMillis();
     
     assertTrue(endTime - startTime >= delayTime);
-  }
-  
-  @Test
-  public void blockTillAvailableSpin() throws InterruptedException {
-    long startTime = System.currentTimeMillis();
-    testQueue.put(new RealTimeDelayed(DynamicDelayQueue.SPIN_LOCK_THRESHOLD));
-    testQueue.blockTillAvailable(true);
-    long endTime = System.currentTimeMillis();
-    
-    assertTrue(endTime - startTime >= DynamicDelayQueue.SPIN_LOCK_THRESHOLD);
   }
   
   @Test

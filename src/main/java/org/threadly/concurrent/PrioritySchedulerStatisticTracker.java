@@ -596,14 +596,14 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to see how frequently tasks are able to run without creating 
-   * a new thread.
+   * Call to see how frequently tasks are able to immediately get a thread
+   * to execute on (and NOT having to create one).
    * 
    * Returns -1 if no statistics have been recorded yet.
    * 
    * @return percent of time that threads are able to be reused
    */
-  public double getThreadReusePercent() {
+  public double getThreadAvailablePercent() {
     List<Boolean> totalList = new ArrayList<Boolean>(lowPriorityWorkerAvailable);
     totalList.addAll(highPriorityWorkerAvailable);
       
@@ -611,28 +611,28 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to see how frequently high priority tasks are able to run without creating 
-   * a new thread.
+   * Call to see how frequently high priority tasks are able to immediately get a 
+   * thread to execute on (and NOT having to create one).
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
    * @return percent of time that threads are able to be reused for high priority tasks
    */
-  public double getHighPriorityThreadReusePercent() {
+  public double getHighPriorityThreadAvailablePercent() {
     List<Boolean> list = new ArrayList<Boolean>(highPriorityWorkerAvailable);
     
     return getTruePercent(list);
   }
   
   /**
-   * Call to see how frequently low priority tasks are able to run without creating 
-   * a new thread.
+   * Call to see how frequently low priority tasks are able to get a thread 
+   * within the max wait time for low priority tasks (and NOT having to create one).
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
    * @return percent of time that threads are able to be reused for low priority tasks
    */
-  public double getLowPriorityThreadReusePercent() {
+  public double getLowPriorityThreadAvailablePercent() {
     List<Boolean> list = new ArrayList<Boolean>(lowPriorityWorkerAvailable);
     
     return getTruePercent(list);

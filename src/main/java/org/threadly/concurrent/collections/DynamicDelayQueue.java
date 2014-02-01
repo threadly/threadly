@@ -27,7 +27,6 @@ import org.threadly.util.ListUtils;
  */
 public class DynamicDelayQueue<T extends Delayed> implements Queue<T>, 
                                                              BlockingQueue<T> {
-  protected static final int SPIN_LOCK_THRESHOLD = 5;
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
@@ -233,68 +232,35 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     return null;
   }
   
-  protected T blockTillAvailable(boolean allowSpin) throws InterruptedException {
-    while (true) { // will break out when ready
-      T next = queue.peek();
+  /**
+   * Must have queueLock synchronized before calling this function!
+   * 
+   * @return a queue item which has a delay of <= 0
+   * @throws InterruptedException thrown if thread interrupted waiting for queue item
+   */
+  protected T blockTillAvailable() throws InterruptedException {
+    T next;
+    long nextDelay = 0;
+    while ((next = queue.peek()) == null || 
+           (nextDelay = next.getDelay(TimeUnit.MILLISECONDS)) > 0) {
       if (next == null) {
-        synchronized (queueLock) {
-          while ((next = queue.peek()) == null) {
-            queueLock.wait();
-          }
-        }
-      }
-      
-      long nextDelay = next.getDelay(TimeUnit.MILLISECONDS);
-      if (nextDelay > 0) {
-        if (nextDelay > SPIN_LOCK_THRESHOLD || ! allowSpin) {
-          synchronized (queueLock) {
-            if (queue.peek() == next) {
-              queueLock.wait(nextDelay);
-            } else {
-              continue; // start form the beginning
-            }
-          }
-        } else {
-          long startTime = Clock.accurateTime();
-          while ((next = queue.peek()) != null && 
-                 (nextDelay = next.getDelay(TimeUnit.MILLISECONDS)) > 0 && 
-                 nextDelay <= SPIN_LOCK_THRESHOLD &&  // in case next changes while spinning
-                 Clock.accurateTime() - startTime < SPIN_LOCK_THRESHOLD * 2) {
-            // spin
-          }
-          if (nextDelay <= 0) {
-            return next;
-          } else if (next != null) {
-            /* clock is advancing but delay is not, so since this is not
-             * a real time delay we just need to wait
-             */
-            synchronized (queueLock) {
-              if (next == queue.peek()) {
-                queueLock.wait(nextDelay);
-              } else {
-                // loop
-              }
-            }
-          }
-        }
+        queueLock.wait();
       } else {
-        return next;
+        queueLock.wait(nextDelay);
       }
     }
+    
+    return next;
   }
 
   @Override
   public T take() throws InterruptedException {
-    T next = blockTillAvailable(true);
+    T next;
     synchronized (queueLock) {
-      if (next == queue.peek()) {
-        queue.remove(0);
-      } else {
-        next = blockTillAvailable(false);
-        queue.remove(0);
-      }
+      next = blockTillAvailable();
+      queue.remove(0);
     }
-   
+
     return next;
   }
 
@@ -361,7 +327,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
       throw new IllegalStateException("Must have lock in order to get iterator");
     }
     
-    blockTillAvailable(true);
+    blockTillAvailable();
     
     return new ConsumerIterator<T>() {
       private T next = null;
