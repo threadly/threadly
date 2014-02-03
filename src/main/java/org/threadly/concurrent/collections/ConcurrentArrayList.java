@@ -952,25 +952,36 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       if (origCurrentIndex == size - 1 && origNewIndex == size) {
         // no-op, moving end item to end
         return this;
-      } else if (origCurrentIndex == origNewIndex) {
-        // no-op, moving to same position
-        return this;
       }
       
       int currentIndex = origCurrentIndex + dataStartIndex;
       int newIndex = origNewIndex + dataStartIndex;
       
       if (newIndex > currentIndex) {  // move right
-        Object[] newData = new Object[size + frontPadding + rearPadding];
+        Object[] newData; // will not be allocated till necessary
         
         if (newIndex == dataEndIndex) {
-          // moving to end can be done with two array copies at most
-          System.arraycopy(dataArray, dataStartIndex, 
-                           newData, frontPadding, origCurrentIndex);
-          System.arraycopy(dataArray, currentIndex + 1, 
-                           newData, frontPadding + origCurrentIndex, 
-                           size - origCurrentIndex - 1);
+          if (currentIndex == dataStartIndex && 
+              dataArray.length - 1 > dataEndIndex && 
+              dataArray[dataEndIndex] == null) {
+            // reposition front item to end without an array copy
+            dataArray[dataEndIndex] = dataArray[currentIndex];
+            
+            return new DataSet<T>(dataArray, dataStartIndex + 1, dataEndIndex + 1, 
+                                  frontPadding, rearPadding);
+          } else {
+            newData = new Object[size + frontPadding + rearPadding];
+            
+            // moving to end can be done with two array copies at most
+            System.arraycopy(dataArray, dataStartIndex, 
+                             newData, frontPadding, origCurrentIndex);
+            System.arraycopy(dataArray, currentIndex + 1, 
+                             newData, frontPadding + origCurrentIndex, 
+                             size - origCurrentIndex - 1);
+          }
         } else {
+          newData = new Object[size + frontPadding + rearPadding];
+          
           // work backwards
           System.arraycopy(dataArray, newIndex,   // write from new position to end
                            newData, frontPadding + origNewIndex, 
@@ -987,16 +998,30 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         
         return new DataSet<T>(newData, frontPadding, rearPadding);
       } else if (newIndex < currentIndex) { // move left
-        Object[] newData = new Object[size + frontPadding + rearPadding];
+        Object[] newData; // will not be allocated till necessary
         
         if (newIndex == dataStartIndex) {
-          // moving to front can be done with two array copies at most
-          System.arraycopy(dataArray, dataStartIndex, 
-                           newData, frontPadding + 1, origCurrentIndex);
-          System.arraycopy(dataArray, currentIndex + 1, 
-                           newData, frontPadding + origCurrentIndex + 1, 
-                           dataEndIndex - currentIndex - 1);
+          if (currentIndex == dataEndIndex - 1 && 
+              dataStartIndex > 0 && 
+              dataArray[dataStartIndex - 1] == null) {
+            // reposition the end item to the front without an array copy
+            dataArray[dataStartIndex - 1] = dataArray[currentIndex];
+            
+            return new DataSet<T>(dataArray, dataStartIndex - 1, dataEndIndex - 1, 
+                                  frontPadding, rearPadding);
+          } else {
+            newData = new Object[size + frontPadding + rearPadding];
+            
+            // moving to front can be done with two array copies at most
+            System.arraycopy(dataArray, dataStartIndex, 
+                             newData, frontPadding + 1, origCurrentIndex);
+            System.arraycopy(dataArray, currentIndex + 1, 
+                             newData, frontPadding + origCurrentIndex + 1, 
+                             dataEndIndex - currentIndex - 1);
+          }
         } else {
+          newData = new Object[size + frontPadding + rearPadding];
+          
           // work forward
           System.arraycopy(dataArray, dataStartIndex,   // write from start to new position
                            newData, frontPadding, origNewIndex);
@@ -1013,7 +1038,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         newData[frontPadding + origNewIndex] = dataArray[currentIndex];
         
         return new DataSet<T>(newData, frontPadding, rearPadding);
-      } else {  // equal
+      } else {
+        // no-op, moving to same position
         return this;
       }
     }
@@ -1066,35 +1092,37 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     public DataSet<T> addToFront(T e) {
-      if (dataStartIndex == 0 || dataArray[dataStartIndex - 1] != null) {
+      if (dataStartIndex > 0 && dataArray[dataStartIndex - 1] == null) {
+        // there is space in the current array
+        dataArray[dataStartIndex - 1] = e;
+        
+        return new DataSet<T>(dataArray, dataStartIndex - 1, dataEndIndex, 
+                              frontPadding, rearPadding);
+      } else {
         Object[] newData = new Object[size + 1 + frontPadding + rearPadding];
+        
         newData[frontPadding] = e;
         System.arraycopy(dataArray, dataStartIndex, 
                          newData, frontPadding + 1, 
                          size);
+        
         return new DataSet<T>(newData, frontPadding, rearPadding);
-      } else {
-        // there is space in the current array
-        dataArray[dataStartIndex - 1] = e;
-        return new DataSet<T>(dataArray, dataStartIndex - 1, dataEndIndex, 
-                              frontPadding, rearPadding);
       }
     }
     
     public DataSet<T> addToEnd(T e) {
-      int index = size;
-      if (dataArray.length - 1 < index || dataArray[index] != null) {
-        Object[] newData = getArrayCopy(index + 1);
-        
-        newData[index + frontPadding] = e;
-        
-        return new DataSet<T>(newData, frontPadding, rearPadding);
-      } else {
+      if (dataArray.length - 1 > dataEndIndex && dataArray[dataEndIndex + 1] == null) {
         // there is space in the current array
-        dataArray[index] = e;
+        dataArray[dataEndIndex] = e;
         
         return new DataSet<T>(dataArray, dataStartIndex, dataEndIndex + 1, 
                               frontPadding, rearPadding);
+      } else { 
+        Object[] newData = getArrayCopy(size + 1);
+        
+        newData[size + frontPadding] = e;
+        
+        return new DataSet<T>(newData, frontPadding, rearPadding);
       }
     }
 

@@ -32,12 +32,12 @@ public class ClockWrapperTest {
     
     new TimeChangeCondition(startTime, true).blockTillTrue();
     
-    long updateTime;
     // verify getting updates
-    assertTrue(startTime != (updateTime = ClockWrapper.getSemiAccurateTime()));
+    assertTrue(startTime != ClockWrapper.getSemiAccurateTime());
     
     // request stop to updates
     ClockWrapper.stopForcingUpdate();
+    long updateTime = ClockWrapper.getSemiAccurateTime();
 
     new TimeChangeCondition(updateTime, false).blockTillTrue();
     

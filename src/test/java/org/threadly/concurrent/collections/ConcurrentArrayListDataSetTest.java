@@ -206,6 +206,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionNormalMoveFrontTest() {
     // move front to middle
     DataSet<Integer> result = orderedNormal.reposition(0, 5);
+    assertEquals(orderedNormal.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 0, 5, 6, 7, 8, 9 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move front to end
@@ -218,6 +219,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionNormalMoveMiddleTest() {
     // move middle to start
     DataSet<Integer> result = orderedNormal.reposition(1, 0);
+    assertEquals(orderedNormal.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 0, 2, 3, 4, 5, 6, 7, 8, 9 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move middle to middle right
@@ -238,6 +240,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionNormalMoveEndTest() {
     // move end to middle
     DataSet<Integer> result = orderedNormal.reposition(9, 5);
+    assertEquals(orderedNormal.size, result.size);
     Integer[] expectedResult = new Integer[]{ 0, 1, 2, 3, 4, 9, 5, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move end to start
@@ -250,6 +253,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionFrontRemovedMoveFrontTest() {
     // move front to middle
     DataSet<Integer> result = removedFromFront.reposition(0, 5);
+    assertEquals(removedFromFront.size, result.size);
     Integer[] expectedResult = new Integer[]{ 2, 3, 4, 5, 1, 6, 7, 8, 9 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move front to end
@@ -262,6 +266,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionFrontRemovedMoveMiddleTest() {
     // move middle to start
     DataSet<Integer> result = removedFromFront.reposition(1, 0);
+    assertEquals(removedFromFront.size, result.size);
     Integer[] expectedResult = new Integer[]{ 2, 1, 3, 4, 5, 6, 7, 8, 9 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move middle to middle right
@@ -282,6 +287,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionFrontRemovedMoveEndTest() {
     // move end to middle
     DataSet<Integer> result = removedFromFront.reposition(8, 5);
+    assertEquals(removedFromFront.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 5, 9, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move end to start
@@ -294,6 +300,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionFront2RemovedMoveFrontTest() {
     // move front to middle
     DataSet<Integer> result = removed2FromFront.reposition(0, 4);
+    assertEquals(removed2FromFront.size, result.size);
     Integer[] expectedResult = new Integer[]{ 3, 4, 5, 2, 6, 7, 8, 9 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move front to end
@@ -306,6 +313,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionFront2RemovedMoveMiddleTest() {
     // move middle to start
     DataSet<Integer> result = removed2FromFront.reposition(1, 0);
+    assertEquals(removed2FromFront.size, result.size);
     Integer[] expectedResult = new Integer[]{ 3, 2, 4, 5, 6, 7, 8, 9 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move middle to middle right
@@ -326,6 +334,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionFront2RemovedMoveEndTest() {
     // move end to middle
     DataSet<Integer> result = removed2FromFront.reposition(7, 4);
+    assertEquals(removed2FromFront.size, result.size);
     Integer[] expectedResult = new Integer[]{ 2, 3, 4, 5, 9, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move end to start
@@ -338,6 +347,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionRearRemovedMoveFrontTest() {
     // move front to middle
     DataSet<Integer> result = removedFromEnd.reposition(0, 5);
+    assertEquals(removedFromEnd.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 0, 5, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move front to end
@@ -350,6 +360,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionRearRemovedMoveMiddleTest() {
     // move middle to start
     DataSet<Integer> result = removedFromEnd.reposition(1, 0);
+    assertEquals(removedFromEnd.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 0, 2, 3, 4, 5, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move middle to middle right
@@ -370,6 +381,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionRearRemovedMoveEndTest() {
     // move end to middle
     DataSet<Integer> result = removedFromEnd.reposition(8, 5);
+    assertEquals(removedFromEnd.size, result.size);
     Integer[] expectedResult = new Integer[]{ 0, 1, 2, 3, 4, 8, 5, 6, 7 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move end to start
@@ -382,6 +394,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionRear2RemovedMoveFrontTest() {
     // move front to middle
     DataSet<Integer> result = removed2FromEnd.reposition(0, 5);
+    assertEquals(removed2FromEnd.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 4, 0, 5, 6, 7 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move front to end
@@ -394,6 +407,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionRear2RemovedMoveMiddleTest() {
     // move middle to start
     DataSet<Integer> result = removed2FromEnd.reposition(1, 0);
+    assertEquals(removed2FromEnd.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 0, 2, 3, 4, 5, 6, 7 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move middle to middle right
@@ -414,6 +428,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionRear2RemovedMoveEndTest() {
     // move end to middle
     DataSet<Integer> result = removed2FromEnd.reposition(7, 5);
+    assertEquals(removed2FromEnd.size, result.size);
     Integer[] expectedResult = new Integer[]{ 0, 1, 2, 3, 4, 7, 5, 6 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move end to start
@@ -426,6 +441,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionBothRemovedMoveFrontTest() {
     // move front to middle
     DataSet<Integer> result = removedFromBoth.reposition(0, 4);
+    assertEquals(removedFromBoth.size, result.size);
     Integer[] expectedResult = new Integer[]{ 2, 3, 4, 1, 5, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move front to end
@@ -438,6 +454,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionBothRemovedMoveMiddleTest() {
     // move middle to start
     DataSet<Integer> result = removedFromBoth.reposition(1, 0);
+    assertEquals(removedFromBoth.size, result.size);
     Integer[] expectedResult = new Integer[]{ 2, 1, 3, 4, 5, 6, 7, 8 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move middle to middle right
@@ -458,6 +475,7 @@ public class ConcurrentArrayListDataSetTest {
   public void repositionBothRemovedMoveEndTest() {
     // move end to middle
     DataSet<Integer> result = removedFromBoth.reposition(7, 3);
+    assertEquals(removedFromBoth.size, result.size);
     Integer[] expectedResult = new Integer[]{ 1, 2, 3, 8, 4, 5, 6, 7 };
     assertTrue(result.equals(makeDataSet(expectedResult, 0, expectedResult.length)));
     // move end to start
@@ -467,13 +485,71 @@ public class ConcurrentArrayListDataSetTest {
   }
   
   @Test
-  public void repositionTestEqual() {
+  public void repositionEqualTest() {
     assertTrue(orderedNormal.reposition(0, 0) == orderedNormal);
     assertTrue(removedFromFront.reposition(0, 0) == removedFromFront);
     assertTrue(removed2FromFront.reposition(0, 0) == removed2FromFront);
     assertTrue(removedFromEnd.reposition(0, 0) == removedFromEnd);
     assertTrue(removed2FromEnd.reposition(0, 0) == removed2FromEnd);
     assertTrue(removedFromBoth.reposition(0, 0) == removedFromBoth);
+    
+    assertTrue(orderedNormal.reposition(1, 1) == orderedNormal);
+    assertTrue(removedFromFront.reposition(1, 1) == removedFromFront);
+    assertTrue(removed2FromFront.reposition(1, 1) == removed2FromFront);
+    assertTrue(removedFromEnd.reposition(1, 1) == removedFromEnd);
+    assertTrue(removed2FromEnd.reposition(1, 1) == removed2FromEnd);
+    assertTrue(removedFromBoth.reposition(1, 1) == removedFromBoth);
+    
+    assertTrue(orderedNormal.reposition(orderedNormal.size - 1, orderedNormal.size) == orderedNormal);
+    assertTrue(removedFromFront.reposition(removedFromFront.size - 1, removedFromFront.size) == removedFromFront);
+    assertTrue(removed2FromFront.reposition(removed2FromFront.size - 1, removed2FromFront.size) == removed2FromFront);
+    assertTrue(removedFromEnd.reposition(removedFromEnd.size - 1, removedFromEnd.size) == removedFromEnd);
+    assertTrue(removed2FromEnd.reposition(removed2FromEnd.size - 1, removed2FromEnd.size) == removed2FromEnd);
+    assertTrue(removedFromBoth.reposition(removedFromBoth.size - 1, removedFromBoth.size) == removedFromBoth);
+  }
+  
+  @Test
+  public void optimizedRepositionToEndTest() {
+    DataSet<Integer> testSet = new DataSet<Integer>(new Integer[]{ null, null, 0, 1, 2, 3, 4, 5, null, null}, 
+                                                    2, 8, 2, 2);
+    DataSet<Integer> result = testSet.reposition(0, testSet.size);
+    
+    for (int i = 0; i < result.size; i++) {
+      int expected;
+      if (i < result.size - 1) {
+        expected = i + 1;
+      } else {
+        expected = 0;
+      }
+      
+      assertTrue(expected == result.get(i));
+    }
+    
+    assertEquals(testSet.dataEndIndex + 1, result.dataEndIndex);
+    assertEquals(testSet.dataStartIndex + 1, result.dataStartIndex);
+    assertEquals(testSet.size, result.size);
+  }
+  
+  @Test
+  public void optimizedRepositionToFrontTest() {
+    DataSet<Integer> testSet = new DataSet<Integer>(new Integer[]{ null, null, 0, 1, 2, 3, 4, 5, null, null}, 
+                                                    2, 8, 2, 2);
+    DataSet<Integer> result = testSet.reposition(testSet.size - 1, 0);
+    
+    for (int i = 0; i < result.size; i++) {
+      int expected;
+      if (i == 0) {
+        expected = 5;
+      } else {
+        expected = i - 1;
+      }
+      
+      assertTrue(expected == result.get(i));
+    }
+    
+    assertEquals(testSet.dataEndIndex - 1, result.dataEndIndex);
+    assertEquals(testSet.dataStartIndex - 1, result.dataStartIndex);
+    assertEquals(testSet.size, result.size);
   }
   
   @Test
