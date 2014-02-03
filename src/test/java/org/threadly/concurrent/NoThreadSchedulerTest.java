@@ -6,6 +6,7 @@ import static org.threadly.TestConstants.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -198,6 +199,22 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void submitScheduledRunnableFail() {
+    try {
+      scheduler.submitScheduled((Runnable)null, 10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      scheduler.submitScheduled(new TestRunnable(), -10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
   public void submitScheduledCallableTest() {
     long scheduleDelay = 1000 * 10;
     
@@ -223,7 +240,23 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void recurringTest() {
+  public void submitScheduledCallableFail() {
+    try {
+      scheduler.submitScheduled((Callable<?>)null, 10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      scheduler.submitScheduled(new TestCallable(), -10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void scheduleWithFixedDelayTest() {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
@@ -252,6 +285,28 @@ public class NoThreadSchedulerTest {
     
     assertEquals(3, immediateRun.getRunCount());  // should NOT have run again
     assertEquals(2, initialDelay.getRunCount());  // should NOT have run again
+  }
+  
+  @Test
+  public void scheduleWithFixedDelayFail() {
+    try {
+      scheduler.scheduleWithFixedDelay(null, 10, 10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      scheduler.scheduleWithFixedDelay(new TestRunnable(), -10, 10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      scheduler.scheduleWithFixedDelay(new TestRunnable(), 10, -10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test
@@ -321,6 +376,25 @@ public class NoThreadSchedulerTest {
     // neither should be in scheduler any more
     assertFalse(scheduler.remove(immediateRun));
     assertFalse(scheduler.remove(delayRun));
+  }
+  
+  @Test
+  public void removeWhileRunningTest() {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunStart() {
+        assertTrue(scheduler.remove(this));
+      }
+    };
+    
+    scheduler.scheduleWithFixedDelay(tr, 0, 0);
+    
+    assertEquals(1, scheduler.tick());
+    
+    // should be removed for subsequent ticks
+    assertEquals(0, scheduler.tick());
+    
+    assertEquals(1, tr.getRunCount());
   }
 
   @Test (expected = IllegalArgumentException.class)

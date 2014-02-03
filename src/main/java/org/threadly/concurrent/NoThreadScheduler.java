@@ -1,11 +1,11 @@
 package org.threadly.concurrent;
 
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.Clock;
@@ -26,14 +26,18 @@ import org.threadly.util.ListUtils;
  * @author jent - Mike Jensen
  */
 public class NoThreadScheduler implements SubmitterSchedulerInterface {
-  private final LinkedList<RunnableContainer> taskQueue;
+  protected static final int QUEUE_FRONT_PADDING = 0;
+  protected static final int QUEUE_REAR_PADDING = 2;
+  
+  private final ConcurrentArrayList<RunnableContainer> taskQueue;
   private long nowInMillis;
   
   /**
    * Constructs a new {@link NoThreadScheduler} scheduler.
    */
   public NoThreadScheduler() {
-    taskQueue = new LinkedList<RunnableContainer>();
+    taskQueue = new ConcurrentArrayList<RunnableContainer>(QUEUE_FRONT_PADDING, 
+                                                           QUEUE_REAR_PADDING);
     nowInMillis = Clock.accurateTime();
   }
   
@@ -69,6 +73,12 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Task can not be null");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs can not be negative");
+    }
+    
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
     
     add(new OneTimeRunnable(lft, delayInMs));
@@ -78,6 +88,12 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
+    if (task == null) {
+      throw new IllegalArgumentException("Task can not be null");
+    } else if (delayInMs < 0) {
+      throw new IllegalArgumentException("delayInMs can not be negative");
+    }
+    
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
     
     add(new OneTimeRunnable(lft, delayInMs));
@@ -89,11 +105,19 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 
                                      long recurringDelay) {
+    if (task == null) {
+      throw new IllegalArgumentException("Task can not be null");
+    } else if (initialDelay < 0) {
+      throw new IllegalArgumentException("initialDelay can not be negative");
+    } else if (recurringDelay < 0) {
+      throw new IllegalArgumentException("recurringDelay can not be negative");
+    }
+    
     add(new RecurringRunnable(task, initialDelay, recurringDelay));
   }
   
   private void add(RunnableContainer runnable) {
-    synchronized (taskQueue) {
+    synchronized (taskQueue.getModificationLock()) {
       int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable);
         
       taskQueue.add(insertionIndex, runnable);
@@ -175,10 +199,8 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     while ((nextTask = next()) != null && 
            nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
       tasks++;
-      synchronized (taskQueue) {
-        taskQueue.remove(nextTask); // remove the last peeked item
-      }
       
+      // call will remove task from queue, or reposition as necessary
       nextTask.run(currentTime);
     }
     
@@ -220,7 +242,13 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
       }
     }
     
-    public abstract void run(long nowInMs);
+    protected void run(long nowInMs) {
+      prepareForRun(nowInMs);
+      
+      runnable.run();
+    }
+    
+    protected abstract void prepareForRun(long nowInMs);
   }
   
   /**
@@ -239,8 +267,10 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     }
     
     @Override
-    public void run(long nowInMs) {
-      runnable.run();
+    protected void prepareForRun(long nowInMs) {
+      synchronized (taskQueue.getModificationLock()) {
+        taskQueue.remove(this);
+      }
     }
 
     @Override
@@ -267,13 +297,17 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     }
     
     @Override
-    public void run(long nowInMs) {
-      try {
-        runnable.run();
-      } finally {
-        nextRunTime = nowInMs + recurringDelay;
-        add(this);
+    public void prepareForRun(long nowInMs) {
+      synchronized (taskQueue.getModificationLock()) {
+        int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, recurringDelay, 
+                                                            true);
+        
+        /* provide the option to search backwards since the item 
+         * will most likely be towards the back of the queue */
+        taskQueue.reposition(this, insertionIndex, false);
       }
+      
+      nextRunTime = nowInMs + recurringDelay;
     }
 
     @Override
