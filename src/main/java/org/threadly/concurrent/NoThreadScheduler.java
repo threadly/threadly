@@ -29,16 +29,16 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
-  private final ConcurrentArrayList<RunnableContainer> taskQueue;
+  private final ConcurrentArrayList<TaskContainer> taskQueue;
   private long nowInMillis;
   
   /**
    * Constructs a new {@link NoThreadScheduler} scheduler.
    */
   public NoThreadScheduler() {
-    taskQueue = new ConcurrentArrayList<RunnableContainer>(QUEUE_FRONT_PADDING, 
-                                                           QUEUE_REAR_PADDING);
-    nowInMillis = Clock.accurateTime();
+    taskQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, 
+                                                       QUEUE_REAR_PADDING);
+    nowInMillis = Clock.lastKnownTimeMillis();
   }
   
   @Override
@@ -63,7 +63,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
 
   @Override
   public void schedule(Runnable task, long delayInMs) {
-    add(new OneTimeRunnable(task, delayInMs));
+    add(new OneTimeTask(task, delayInMs));
   }
 
   @Override
@@ -81,7 +81,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
     
-    add(new OneTimeRunnable(lft, delayInMs));
+    add(new OneTimeTask(lft, delayInMs));
     
     return lft;
   }
@@ -96,7 +96,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
     
-    add(new OneTimeRunnable(lft, delayInMs));
+    add(new OneTimeTask(lft, delayInMs));
     
     return lft;
   }
@@ -113,10 +113,10 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
       throw new IllegalArgumentException("recurringDelay can not be negative");
     }
     
-    add(new RecurringRunnable(task, initialDelay, recurringDelay));
+    add(new RecurringTask(task, initialDelay, recurringDelay));
   }
   
-  private void add(RunnableContainer runnable) {
+  private void add(TaskContainer runnable) {
     synchronized (taskQueue.getModificationLock()) {
       int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable);
         
@@ -131,10 +131,10 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * @return true if the task was removed
    */
   public boolean remove(Runnable task) {
-    synchronized (taskQueue) {
-      Iterator<RunnableContainer> it = taskQueue.iterator();
+    synchronized (taskQueue.getModificationLock()) {
+      Iterator<TaskContainer> it = taskQueue.iterator();
       while (it.hasNext()) {
-        RunnableContainer rc = it.next();
+        TaskContainer rc = it.next();
         if (ContainerHelper.isContained(rc.runnable, task)) {
           it.remove();
           return true;
@@ -152,10 +152,10 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * @return true if the task was removed
    */
   public boolean remove(Callable<?> task) {
-    synchronized (taskQueue) {
-      Iterator<RunnableContainer> it = taskQueue.iterator();
+    synchronized (taskQueue.getModificationLock()) {
+      Iterator<TaskContainer> it = taskQueue.iterator();
       while (it.hasNext()) {
-        RunnableContainer rc = it.next();
+        TaskContainer rc = it.next();
         if (ContainerHelper.isContained(rc.runnable, task)) {
           it.remove();
           return true;
@@ -195,20 +195,20 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     nowInMillis = currentTime;
     
     int tasks = 0;
-    RunnableContainer nextTask;
+    TaskContainer nextTask;
     while ((nextTask = next()) != null && 
            nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
       tasks++;
       
       // call will remove task from queue, or reposition as necessary
-      nextTask.run(currentTime);
+      nextTask.runTask();
     }
     
     return tasks;
   }
   
-  private RunnableContainer next() {
-    synchronized (taskQueue) {
+  private TaskContainer next() {
+    synchronized (taskQueue.getModificationLock()) {
       return taskQueue.isEmpty() ? null : taskQueue.getFirst();
     }
   }
@@ -218,10 +218,10 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * 
    * @author jent - Mike Jensen
    */
-  private abstract class RunnableContainer implements Delayed {
+  private abstract class TaskContainer implements Delayed, RunnableContainerInterface {
     protected final Runnable runnable;
     
-    protected RunnableContainer(Runnable runnable) {
+    protected TaskContainer(Runnable runnable) {
       this.runnable = runnable;
     }
     
@@ -241,14 +241,19 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
         }
       }
     }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return runnable;
+    }
     
-    protected void run(long nowInMs) {
-      prepareForRun(nowInMs);
+    protected void runTask() {
+      prepareForRun();
       
       runnable.run();
     }
     
-    protected abstract void prepareForRun(long nowInMs);
+    protected abstract void prepareForRun();
   }
   
   /**
@@ -257,18 +262,19 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * 
    * @author jent - Mike Jensen
    */
-  protected class OneTimeRunnable extends RunnableContainer {
+  protected class OneTimeTask extends TaskContainer {
     private final long runTime;
     
-    public OneTimeRunnable(Runnable runnable, long delay) {
+    public OneTimeTask(Runnable runnable, long delay) {
       super(runnable);
       
       this.runTime = nowInMillis + delay;
     }
     
     @Override
-    protected void prepareForRun(long nowInMs) {
+    protected void prepareForRun() {
       synchronized (taskQueue.getModificationLock()) {
+        // can be removed since this is a one time task
         taskQueue.remove(this);
       }
     }
@@ -285,11 +291,11 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecurringRunnable extends RunnableContainer {
+  protected class RecurringTask extends TaskContainer {
     private final long recurringDelay;
     private long nextRunTime;
     
-    public RecurringRunnable(Runnable runnable, long initialDelay, long recurringDelay) {
+    public RecurringTask(Runnable runnable, long initialDelay, long recurringDelay) {
       super(runnable);
       
       this.recurringDelay = recurringDelay;
@@ -297,8 +303,9 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     }
     
     @Override
-    public void prepareForRun(long nowInMs) {
+    public void prepareForRun() {
       synchronized (taskQueue.getModificationLock()) {
+        // reposition to next index in queue before run starts
         int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, recurringDelay, 
                                                             true);
         
@@ -307,7 +314,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
         taskQueue.reposition(this, insertionIndex, false);
       }
       
-      nextRunTime = nowInMs + recurringDelay;
+      nextRunTime = nowInMillis + recurringDelay;
     }
 
     @Override
