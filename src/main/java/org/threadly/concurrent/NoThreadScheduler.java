@@ -2,7 +2,6 @@ package org.threadly.concurrent;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -27,30 +26,14 @@ import org.threadly.util.ListUtils;
  * @author jent - Mike Jensen
  */
 public class NoThreadScheduler implements SubmitterSchedulerInterface {
-  private final boolean threadSafe;
-  private final List<RunnableContainer> taskQueue;
+  private final LinkedList<RunnableContainer> taskQueue;
   private long nowInMillis;
-
-  /**
-   * Constructs a new thread safe scheduler.
-   */
-  public NoThreadScheduler() {
-    this(true);
-  }
   
   /**
-   * Constructs a new thread scheduler.  Making scheduler thread safe causes
-   * some small additional performance reductions (for when that is important).
-   * 
-   * Passing in a false expects that it is always the same thread which is 
-   * adding tasks, removing tasks, and calling tick.  The only operation which 
-   * is always thread safe is the handling of Futures.
-   * 
-   * @param makeThreadSafe Make scheduler able to accept executions from multiple threads
+   * Constructs a new {@link NoThreadScheduler} scheduler.
    */
-  public NoThreadScheduler(boolean makeThreadSafe) {
+  public NoThreadScheduler() {
     taskQueue = new LinkedList<RunnableContainer>();
-    threadSafe = makeThreadSafe;
     nowInMillis = Clock.accurateTime();
   }
   
@@ -110,42 +93,49 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
   
   private void add(RunnableContainer runnable) {
-    if (threadSafe) {
-      synchronized (taskQueue) {
-        int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable);
-        
-        taskQueue.add(insertionIndex, runnable);
-      }
-    } else {
+    synchronized (taskQueue) {
       int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable);
-      
+        
       taskQueue.add(insertionIndex, runnable);
     }
   }
   
   /**
-   * Removes a task (recurring or not) if it is waiting in the 
-   * queue to be executed.
+   * Removes a task (recurring or not) if it is waiting in the queue to be executed.
    * 
    * @param task to remove from execution queue
    * @return true if the task was removed
    */
   public boolean remove(Runnable task) {
-    if (threadSafe) {
-      synchronized (taskQueue) {
-        return removeRunnable(task);
+    synchronized (taskQueue) {
+      Iterator<RunnableContainer> it = taskQueue.iterator();
+      while (it.hasNext()) {
+        RunnableContainer rc = it.next();
+        if (ContainerHelper.isContained(rc.runnable, task)) {
+          it.remove();
+          return true;
+        }
       }
-    } else {
-      return removeRunnable(task);
     }
+    
+    return false;
   }
   
-  private boolean removeRunnable(Runnable task) {
-    Iterator<RunnableContainer> it = taskQueue.iterator();
-    while (it.hasNext()) {
-      if (it.next().runnable.equals(task)) {
-        it.remove();
-        return true;
+  /**
+   * Removes a Callable task if it is waiting in the queue to be executed.
+   * 
+   * @param task to remove from execution queue
+   * @return true if the task was removed
+   */
+  public boolean remove(Callable<?> task) {
+    synchronized (taskQueue) {
+      Iterator<RunnableContainer> it = taskQueue.iterator();
+      while (it.hasNext()) {
+        RunnableContainer rc = it.next();
+        if (ContainerHelper.isContained(rc.runnable, task)) {
+          it.remove();
+          return true;
+        }
       }
     }
     
@@ -171,8 +161,8 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * This progresses tasks based off the time provided.  This is primarily
    * used in testing by providing a possible time in the future (to execute future tasks).
    * 
-   * @param currentTime - Time to provide for looking at task run time
-   * @return qty of steps taken forward.  Returns zero if no events to run.
+   * @param currentTime Time to provide for looking at task run time
+   * @return qty of tasks run in this tick call.
    */
   public int tick(long currentTime) {
     if (nowInMillis > currentTime) {
@@ -181,31 +171,23 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
     nowInMillis = currentTime;
     
     int tasks = 0;
-    RunnableContainer nextTask = next();
-    while (nextTask != null && nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
+    RunnableContainer nextTask;
+    while ((nextTask = next()) != null && 
+           nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
       tasks++;
-      if (threadSafe) {
-        synchronized (taskQueue) {
-          taskQueue.remove(nextTask); // remove the last peeked item
-        }
-      } else {
+      synchronized (taskQueue) {
         taskQueue.remove(nextTask); // remove the last peeked item
       }
       
       nextTask.run(currentTime);
-      nextTask = next();
     }
     
     return tasks;
   }
   
   private RunnableContainer next() {
-    if (threadSafe) {
-      synchronized (taskQueue) {
-        return taskQueue.isEmpty() ? null : taskQueue.get(0);
-      }
-    } else {
-      return taskQueue.isEmpty() ? null : taskQueue.get(0);
+    synchronized (taskQueue) {
+      return taskQueue.isEmpty() ? null : taskQueue.getFirst();
     }
   }
   

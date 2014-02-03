@@ -627,78 +627,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     return new PrioritySchedulerLimiter(this, maxConcurrency, subPoolName);
   }
   
-  /**
-   * Checks if the start runnable equals the compareTo runnable, or if 
-   * the compareTo runnable is contained within a wrapper of the startRunnable.
-   * 
-   * @param startRunnable runnable to start search at
-   * @param compareTo runnable to be comparing against
-   * @return true if they are equivalent, or the compareTo runnable is contained within the start
-   */
-  protected static boolean isContained(Runnable startRunnable, 
-                                       Runnable compareTo) {
-    if (startRunnable.equals(compareTo)) {
-      return true;
-    } else if (startRunnable instanceof RunnableContainerInterface) {
-      // search if this is actually being wrapped by another object
-      RunnableContainerInterface rci = (RunnableContainerInterface)startRunnable;
-      while (true) {
-        Runnable containedTask = rci.getContainedRunnable();
-        if (containedTask != null) {
-          if (containedTask.equals(compareTo)) {
-            return true;
-          } else if (containedTask instanceof RunnableContainerInterface) {
-            // loop again
-            rci = (RunnableContainerInterface)containedTask;
-          } else {
-            return false;
-          }
-        } else {
-          return false;
-        }
-      }
-    } else {
-      return false;
-    }
-  }
-
-  /**
-   * Checks if the start runnable contains the provided callable.
-   * 
-   * @param startRunnable runnable to start search at
-   * @param compareTo callable to be comparing against
-   * @return true if the compareTo runnable is contained within the runnable
-   */
-  protected static boolean isContained(Runnable startRunnable, 
-                                       Callable<?> compareTo) {
-    if (startRunnable instanceof CallableContainerInterface<?>) {
-      CallableContainerInterface<?> cci = (CallableContainerInterface<?>)startRunnable;
-      while (true) {
-        Callable<?> callable = cci.getContainedCallable();
-        if (callable.equals(compareTo)) {
-          return true;
-        } else if (callable instanceof CallableContainerInterface<?>) {
-          cci = (CallableContainerInterface<?>)callable;
-        } else {
-          return false;
-        }
-      }
-    } else if (startRunnable instanceof RunnableContainerInterface) {
-      RunnableContainerInterface rci = (RunnableContainerInterface)startRunnable;
-      
-      return isContained(rci.getContainedRunnable(), compareTo);
-    } else {
-      return false;
-    }
-  }
-  
   protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
                                                Runnable task) {
     synchronized (queue.getLock()) {
       Iterator<TaskWrapper> it = queue.iterator();
       while (it.hasNext()) {
         TaskWrapper tw = it.next();
-        if (isContained(tw.task, task)) {
+        if (ContainerHelper.isContained(tw.task, task)) {
           tw.cancel();
           it.remove();
           
@@ -716,7 +651,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
       Iterator<TaskWrapper> it = queue.iterator();
       while (it.hasNext()) {
         TaskWrapper tw = it.next();
-        if (isContained(tw.task, task)) {
+        if (ContainerHelper.isContained(tw.task, task)) {
           tw.cancel();
           it.remove();
           

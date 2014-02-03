@@ -17,19 +17,16 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
-  private NoThreadScheduler threadSafeScheduler;
-  private NoThreadScheduler notSafeScheduler;
+  private NoThreadScheduler scheduler;
   
   @Before
   public void setup() {
-    threadSafeScheduler = new NoThreadScheduler(true);
-    notSafeScheduler = new NoThreadScheduler(false);
+    scheduler = new NoThreadScheduler();
   }
   
   @After
   public void tearDown() {
-    threadSafeScheduler = null;
-    notSafeScheduler = null;
+    scheduler = null;
   }
   
   private static List<TestRunnable> getRunnableList() {
@@ -52,21 +49,11 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void isShutdownTest() {
-    assertFalse(threadSafeScheduler.isShutdown());
-    assertFalse(notSafeScheduler.isShutdown());
-  }
-  
-  @Test
-  public void threadSafeExecuteTest() {
-    executeTest(threadSafeScheduler);
+    assertFalse(scheduler.isShutdown());
   }
   
   @Test
   public void executeTest() {
-    executeTest(notSafeScheduler);
-  }
-  
-  private static void executeTest(NoThreadScheduler scheduler) {
     List<TestRunnable> runnables = getRunnableList();
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
@@ -91,16 +78,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void threadSafeSubmitRunnableTest() {
-    submitRunnableTest(threadSafeScheduler);
-  }
-  
-  @Test
   public void submitRunnableTest() {
-    submitRunnableTest(notSafeScheduler);
-  }
-  
-  private static void submitRunnableTest(NoThreadScheduler scheduler) {
     List<TestRunnable> runnables = getRunnableList();
     List<Future<?>> futures = new ArrayList<Future<?>>(runnables.size());
     Iterator<TestRunnable> it = runnables.iterator();
@@ -133,20 +111,8 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void threadSafeSubmitCallableTest() throws InterruptedException, 
-                                                    ExecutionException {
-    submitCallableTest(threadSafeScheduler);
-  }
-
-  
-  @Test
   public void submitCallableTest() throws InterruptedException, 
                                           ExecutionException {
-    submitCallableTest(notSafeScheduler);
-  }
-  
-  private static void submitCallableTest(NoThreadScheduler scheduler) throws InterruptedException, 
-                                                                             ExecutionException {
     List<TestCallable> callables = getCallableList();
     List<Future<Object>> futures = new ArrayList<Future<Object>>(callables.size());
     Iterator<TestCallable> it = callables.iterator();
@@ -176,16 +142,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void threadSafeScheduleRunnableTest() {
-    scheduleRunnableTest(threadSafeScheduler);
-  }
-  
-  @Test
   public void scheduleRunnableTest() {
-    scheduleRunnableTest(notSafeScheduler);
-  }
-  
-  private static void scheduleRunnableTest(NoThreadScheduler scheduler) {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable executeRun = new TestRunnable();
@@ -212,16 +169,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void threadSafeSubmitScheduledRunnableTest() {
-    submitScheduledRunnableTest(threadSafeScheduler);
-  }
-  
-  @Test
   public void submitScheduledRunnableTest() {
-    submitScheduledRunnableTest(notSafeScheduler);
-  }
-  
-  private static void submitScheduledRunnableTest(NoThreadScheduler scheduler) {
     long scheduleDelay = 1000 * 10;
     
     TestRunnable submitRun = new TestRunnable();
@@ -250,16 +198,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void threadSafeSubmitScheduledCallableTest() {
-    submitScheduledCallableTest(threadSafeScheduler);
-  }
-  
-  @Test
   public void submitScheduledCallableTest() {
-    submitScheduledCallableTest(notSafeScheduler);
-  }
-  
-  private static void submitScheduledCallableTest(NoThreadScheduler scheduler) {
     long scheduleDelay = 1000 * 10;
     
     TestCallable submitRun = new TestCallable();
@@ -284,16 +223,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void threadSafeRecurringTest() {
-    recurringTest(threadSafeScheduler);
-  }
-  
-  @Test
   public void recurringTest() {
-    recurringTest(notSafeScheduler);
-  }
-  
-  private static void recurringTest(NoThreadScheduler scheduler) {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
@@ -325,16 +255,7 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void threadSafeRemoveTest() {
-    removeTest(threadSafeScheduler);
-  }
-  
-  @Test
-  public void removeTest() {
-    removeTest(notSafeScheduler);
-  }
-  
-  private static void removeTest(NoThreadScheduler scheduler) {
+  public void removeRunnableTest() {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
@@ -367,17 +288,43 @@ public class NoThreadSchedulerTest {
     assertEquals(1, initialDelay.getRunCount());  // should NOT have run
   }
   
-  @Test (expected = IllegalArgumentException.class)
-  public void threadSafeTickFail() {
-    tickFail(threadSafeScheduler);
+  @Test
+  public void removeCallableTest() {
+    long delay = 1000 * 10;
+    
+    TestCallable immediateRun = new TestCallable();
+    TestCallable delayRun = new TestCallable();
+    
+    assertFalse(scheduler.remove(immediateRun));
+    
+    scheduler.submitScheduled(immediateRun, 0);
+    assertTrue(scheduler.remove(immediateRun));
+    assertFalse(scheduler.remove(immediateRun));
+    
+    scheduler.submitScheduled(delayRun, delay);
+    
+    long startTime = System.currentTimeMillis();
+    assertEquals(0, scheduler.tick(startTime));
+    
+    // neither should run yet
+    assertFalse(immediateRun.isDone());
+    assertFalse(delayRun.isDone());
+    
+    scheduler.submitScheduled(immediateRun, 0);
+    
+    assertEquals(2, scheduler.tick(startTime + delay));
+    
+    // both should run now
+    assertTrue(immediateRun.isDone());
+    assertTrue(delayRun.isDone());
+    
+    // neither should be in scheduler any more
+    assertFalse(scheduler.remove(immediateRun));
+    assertFalse(scheduler.remove(delayRun));
   }
 
   @Test (expected = IllegalArgumentException.class)
   public void tickFail() {
-    tickFail(notSafeScheduler);
-  }
-  
-  private static void tickFail(NoThreadScheduler scheduler) {
     long now;
     scheduler.tick(now = System.currentTimeMillis());
     

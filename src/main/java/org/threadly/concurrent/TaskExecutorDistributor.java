@@ -1,9 +1,9 @@
 package org.threadly.concurrent;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -299,7 +299,7 @@ public class TaskExecutorDistributor {
   private class TaskQueueWorker implements Runnable {
     private final Object mapKey;
     private final Object agentLock;
-    private LinkedList<Runnable> queue;
+    private Deque<Runnable> queue;
     
     private TaskQueueWorker(Object mapKey, 
                             Object agentLock, 
@@ -318,7 +318,7 @@ public class TaskExecutorDistributor {
     public void run() {
       int consumedItems = 0;
       while (true) {
-        List<Runnable> nextList;
+        Deque<Runnable> nextList;
         synchronized (agentLock) {
           if (queue.isEmpty()) {  // nothing left to run
             taskWorkers.remove(mapKey);
@@ -332,7 +332,7 @@ public class TaskExecutorDistributor {
               } else {
                 // we need to run a subset of the queue, so copy and remove what we can run
                 int nextListSize = maxTasksPerCycle - consumedItems;
-                nextList = new ArrayList<Runnable>(nextListSize);
+                nextList = new ArrayDeque<Runnable>(nextListSize);
                 Iterator<Runnable> it = queue.iterator();
                 do {
                   nextList.add(it.next());
