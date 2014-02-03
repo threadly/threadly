@@ -27,6 +27,12 @@ public class StringBufferWriterTest {
     sbw = null;
   }
   
+  @SuppressWarnings("resource")
+  @Test (expected = IllegalArgumentException.class)
+  public void constructorFail() {
+    new StringBufferWriter(null);
+  }
+  
   @Test
   public void appendCharTest() throws IOException {
     int start = 0;
@@ -116,5 +122,29 @@ public class StringBufferWriterTest {
     String compareStr = new String(data).substring(rangeStart, rangeEnd);
     
     assertEquals(compareStr, sb.toString());
+  }
+  
+  @Test
+  public void lengthTest() {
+    assertEquals(sb.length(), sbw.length());
+    sb.append("foo");
+    assertEquals(sb.length(), sbw.length());
+  }
+  
+  @Test
+  public void charAtTest() {
+    sb.append("foo");
+    for (int i = 0; i < sb.length(); i++) {
+      assertEquals(sb.charAt(i), sbw.charAt(i));
+    }
+  }
+  
+  @Test
+  public void subSequenceTest() {
+    sb.append("0123456789");
+    
+    for (int i = 2; i < sb.length(); i++) {
+      assertEquals(sb.subSequence(1, i), sbw.subSequence(1, i));
+    }
   }
 }

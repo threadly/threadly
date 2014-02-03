@@ -218,7 +218,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * 
    * @author jent - Mike Jensen
    */
-  private abstract class TaskContainer implements Delayed, RunnableContainerInterface {
+  protected abstract class TaskContainer implements Delayed, RunnableContainerInterface {
     protected final Runnable runnable;
     
     protected TaskContainer(Runnable runnable) {
