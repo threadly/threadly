@@ -1,9 +1,8 @@
 package org.threadly.concurrent;
 
 import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -35,6 +34,7 @@ public class TaskExecutorDistributor {
   protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = (float)0.75;  // 0.75 is ConcurrentHashMap default
   protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 100;
   protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 100;
+  protected static final int ARRAY_DEQUE_INITIAL_SIZE = 8;  // minimum is 8, should be 2^X
   
   protected final Executor executor;
   protected final StripedLock sLock;
@@ -299,26 +299,26 @@ public class TaskExecutorDistributor {
   private class TaskQueueWorker implements Runnable {
     private final Object mapKey;
     private final Object agentLock;
-    private Deque<Runnable> queue;
+    private Queue<Runnable> queue;
     
     private TaskQueueWorker(Object mapKey, 
                             Object agentLock, 
                             Runnable firstTask) {
       this.mapKey = mapKey;
       this.agentLock = agentLock;
-      this.queue = new LinkedList<Runnable>();
+      this.queue = new ArrayDeque<Runnable>(ARRAY_DEQUE_INITIAL_SIZE);
       queue.add(firstTask);
     }
     
     public void add(Runnable task) {
-      queue.addLast(task);
+      queue.add(task);
     }
     
     @Override
     public void run() {
       int consumedItems = 0;
       while (true) {
-        Deque<Runnable> nextList;
+        Queue<Runnable> nextList;
         synchronized (agentLock) {
           if (queue.isEmpty()) {  // nothing left to run
             taskWorkers.remove(mapKey);
@@ -328,7 +328,7 @@ public class TaskExecutorDistributor {
               if (queue.size() + consumedItems <= maxTasksPerCycle) {
                 // we can run the entire next queue
                 nextList = queue;
-                queue = new LinkedList<Runnable>();
+                queue = new ArrayDeque<Runnable>(ARRAY_DEQUE_INITIAL_SIZE);
               } else {
                 // we need to run a subset of the queue, so copy and remove what we can run
                 int nextListSize = maxTasksPerCycle - consumedItems;
