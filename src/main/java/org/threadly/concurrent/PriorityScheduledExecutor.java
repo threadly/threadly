@@ -259,8 +259,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   
   /**
    * If a section of code wants a different default priority, or wanting to provide 
-   * a specific default priority in for {@link CallableDistributor}, 
-   * {@link TaskExecutorDistributor}, or {@link TaskSchedulerDistributor}.
+   * a specific default priority in for {@link TaskExecutorDistributor}, 
+   * or {@link TaskSchedulerDistributor}.
    * 
    * @param priority default priority for PrioritySchedulerInterface implementation
    * @return a PrioritySchedulerInterface with the default priority specified
