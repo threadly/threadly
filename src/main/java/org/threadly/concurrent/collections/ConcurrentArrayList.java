@@ -1237,7 +1237,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       if (origIndex == 0) {
         // add to front
         if (toAdd.length <= dataStartIndex && 
-            dataArray[dataStartIndex - 1] != null) {  // if previous one is null, all previous ones are null
+            dataArray[dataStartIndex - 1] == null) {  // if previous one is null, all previous ones are null
           // we can copy the new items in, without copying our existing array
           System.arraycopy(toAdd, 0, 
                            dataArray, dataStartIndex - toAdd.length, 
