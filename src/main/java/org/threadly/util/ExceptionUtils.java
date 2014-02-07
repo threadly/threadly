@@ -8,6 +8,7 @@ import java.lang.Thread.UncaughtExceptionHandler;
  * <p>Utilities for doing basic operations with exceptions.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class ExceptionUtils {
   private static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 32;

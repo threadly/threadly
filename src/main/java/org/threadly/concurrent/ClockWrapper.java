@@ -21,6 +21,7 @@ import org.threadly.util.Clock;
  * using it incorrectly could have serious impacts on other classes which depend on it.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 class ClockWrapper {
   protected static final AtomicInteger REQUESTS_TO_STOP_UPDATING_TIME = new AtomicInteger();

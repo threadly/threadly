@@ -24,6 +24,7 @@ import org.threadly.concurrent.future.ListenableFutureTask;
  * than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class SchedulerLimiter extends ExecutorLimiter 
                               implements SubmitterSchedulerInterface {

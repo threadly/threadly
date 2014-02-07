@@ -13,6 +13,7 @@ import org.threadly.util.Clock;
  * main test thread until "signalComplete" is called from the other thread</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class AsyncVerifier {
   private static final int DEFAULT_TIMEOUT = 1000 * 10;

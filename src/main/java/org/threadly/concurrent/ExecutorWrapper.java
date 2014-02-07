@@ -15,6 +15,7 @@ import org.threadly.concurrent.future.ListenableFutureTask;
  * executor to use ListenableFutures.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class ExecutorWrapper implements SubmitterExecutorInterface {
   protected final Executor executor;

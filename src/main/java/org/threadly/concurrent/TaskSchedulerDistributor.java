@@ -12,6 +12,7 @@ import org.threadly.concurrent.lock.StripedLock;
  * but it does require a scheduler implementation in order to be able to perform scheduling.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   private final SimpleSchedulerInterface scheduler;

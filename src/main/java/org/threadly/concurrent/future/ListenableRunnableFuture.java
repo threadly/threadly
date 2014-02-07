@@ -12,6 +12,7 @@ import java.util.concurrent.RunnableFuture;
  * interface.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> type of future implementation
  */
 public interface ListenableRunnableFuture<T> extends ListenableFuture<T>, 

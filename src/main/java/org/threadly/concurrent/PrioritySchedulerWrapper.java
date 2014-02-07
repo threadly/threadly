@@ -12,6 +12,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * in combination with {@link TaskExecutorDistributor}, or {@link TaskSchedulerDistributor}.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   protected final PrioritySchedulerInterface scheduler;

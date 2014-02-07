@@ -13,6 +13,7 @@ import org.threadly.util.Clock;
  * unit tests.  Please use those as examples using this class.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class TestRunnable implements Runnable {
   private static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;

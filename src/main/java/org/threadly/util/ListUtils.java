@@ -8,6 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * <p>A collection of utilities for working with lists.</p>
+ * 
+ * @since 1.0.0
  */
 public class ListUtils {
   private static final int MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;

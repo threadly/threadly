@@ -9,6 +9,7 @@ import org.threadly.concurrent.RunnableContainerInterface;
  * for a parent thread pool.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 abstract class AbstractThreadPoolLimiter {
   protected final int maxConcurrency;

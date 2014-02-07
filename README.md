@@ -27,8 +27,6 @@ The design is such so that you create one large pool, and then wrap it in one of
 
 *    TaskExecutorDistributor and TaskSchedulerDistributor provide you the ability to execute (or schedule) tasks with a given key such that tasks with the same key hash code will NEVER run concurrently. This is designed as an ability to help the developer from having to deal with concurrent issues when ever possible. It allows you to have multiple runnables or tasks that share memory, but don't force the developer to deal with synchronization and memory barriers (assuming they all share the same key).  These now also allow you to continue to use Future's with the key based execution.
 
-*    CallableDistributor allows you to execute callable's with a given key. All callable's with the same key will never run concurrently (using TaskExecutorDistributor as the back end). Then another thread can easily reap the results from those callable's by requesting them via known keys.
-
 *    ConcurrentArrayList is a thread safe array list that also implements a Dequeue. It may be better performing than a CopyOnWriteArrayList depending on what the use case is. It is able to avoid copies for some operations, primarily adding and removing from the ends of a list (and can be tuned for the specific application to possibly make copies very rare).
 
 -- Unit Test Tools --

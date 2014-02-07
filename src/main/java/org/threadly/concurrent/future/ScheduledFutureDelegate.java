@@ -13,6 +13,7 @@ import java.util.concurrent.TimeoutException;
  * and an implementation of the {@link ListenableFuture}.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> type of result for future
  */
 public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {

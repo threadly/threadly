@@ -24,6 +24,7 @@ import org.threadly.util.ListUtils;
  * is no more work for the scheduler to currently handle.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class NoThreadScheduler implements SubmitterSchedulerInterface {
   protected static final int QUEUE_FRONT_PADDING = 0;

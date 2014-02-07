@@ -8,6 +8,7 @@ import java.util.concurrent.Future;
  * <p>A collection of small utilities for handling futures.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class FutureUtils {
   /**

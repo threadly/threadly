@@ -6,6 +6,7 @@ import java.io.Writer;
  * <p>Class to wrap a {@link StringBuffer} to implement the {@link Writer} interface.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class StringBufferWriter extends Writer implements CharSequence {
   private final StringBuffer sb;

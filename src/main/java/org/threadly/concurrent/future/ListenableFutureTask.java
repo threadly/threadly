@@ -18,6 +18,7 @@ import org.threadly.util.ExceptionUtils;
  * the interior work, submit it to an executor, and then return this future.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> type of future implementation
  */
 public class ListenableFutureTask<T> extends FutureTask<T> 

@@ -54,6 +54,7 @@ import org.threadly.util.ExceptionUtils;
  * maxWaitForLowPriorityInMs either in the constructor, or at runtime.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;

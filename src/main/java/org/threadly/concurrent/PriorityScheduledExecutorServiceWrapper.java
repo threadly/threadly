@@ -31,6 +31,7 @@ import org.threadly.util.ExceptionUtils;
  * read the javadocs for if you need).</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecutorService {
   private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS = 1000000 * 100;  // 100ms

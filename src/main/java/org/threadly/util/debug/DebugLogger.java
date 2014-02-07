@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * included after debugging is completed.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class DebugLogger {
   private static final boolean LOG_TIME_DEFAULT = false;

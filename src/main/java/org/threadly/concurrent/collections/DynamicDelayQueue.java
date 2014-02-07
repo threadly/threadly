@@ -23,10 +23,12 @@ import org.threadly.util.ListUtils;
  * {@link DynamicDelayedUpdater} interface.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> Parameter to indicate what type of item is contained in the queue
  */
 public class DynamicDelayQueue<T extends Delayed> implements Queue<T>, 
                                                              BlockingQueue<T> {
+  // tuned for performance
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
@@ -221,7 +223,8 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
           if (next == null) {
             waitTime = remainingTimeInMs;
           } else {
-            waitTime = Math.min(next.getDelay(TimeUnit.MILLISECONDS), remainingTimeInMs);
+            waitTime = Math.min(next.getDelay(TimeUnit.MILLISECONDS), 
+                                remainingTimeInMs);
           }
           queueLock.wait(waitTime);
           next = null;

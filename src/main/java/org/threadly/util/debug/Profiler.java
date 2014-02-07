@@ -35,6 +35,7 @@ import org.threadly.util.ExceptionUtils;
  * continue to consume more and more memory.
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class Profiler {
   protected static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;

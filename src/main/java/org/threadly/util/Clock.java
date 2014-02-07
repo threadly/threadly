@@ -17,6 +17,7 @@ import java.util.concurrent.locks.LockSupport;
  * disabled by calling stopClockUpdateThread().</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class Clock {
   protected static final boolean UPDATE_CLOCK_AUTOMATICALLY = true;

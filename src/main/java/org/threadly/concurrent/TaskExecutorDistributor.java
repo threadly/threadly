@@ -27,6 +27,7 @@ import org.threadly.util.ExceptionUtils;
  * other keys could be starved.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class TaskExecutorDistributor {
   protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;

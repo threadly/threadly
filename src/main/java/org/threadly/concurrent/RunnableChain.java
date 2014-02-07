@@ -10,6 +10,7 @@ import org.threadly.util.ExceptionUtils;
  * within the same thread.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class RunnableChain implements Runnable {
   private final boolean exceptionStopsChain;

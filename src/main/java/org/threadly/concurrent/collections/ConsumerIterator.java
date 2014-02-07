@@ -6,6 +6,7 @@ package org.threadly.concurrent.collections;
  * iterates over the structure.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <E> Parameter for types of item to be returned by next() and peek()
  */
 public interface ConsumerIterator<E> {

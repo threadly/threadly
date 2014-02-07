@@ -10,6 +10,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * for when they will be completed.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public interface SubmitterSchedulerInterface extends SimpleSchedulerInterface, 
                                                      SubmitterExecutorInterface {

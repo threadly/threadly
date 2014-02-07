@@ -9,6 +9,7 @@ package org.threadly.concurrent;
  * task.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public enum TaskPriority { 
   /**

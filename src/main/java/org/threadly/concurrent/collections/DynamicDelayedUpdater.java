@@ -8,6 +8,7 @@ package org.threadly.concurrent.collections;
  * done in conjunction with the DynamicDelayQueue.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public interface DynamicDelayedUpdater {
   /**

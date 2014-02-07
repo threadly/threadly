@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
  * or with an exception.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> type of result for future
  */
 public interface ListenableFuture<T> extends Future<T> {

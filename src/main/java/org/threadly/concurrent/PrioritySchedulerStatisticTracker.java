@@ -26,6 +26,7 @@ import org.threadly.util.Clock;
  * being utilized, as well as execution frequency.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor {
   private static final int MAX_WINDOW_SIZE = 1000;
@@ -205,6 +206,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     highPriorityExecutionDelay.clear();
   }
 
+  // Overridden so we can track the availability for workers for high priority tasks
   @Override
   protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
@@ -241,7 +243,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       w.nextTask(task);
     }
   }
-  
+
+  // Overridden so we can track the availability for workers for low priority tasks
   @Override
   protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
@@ -669,6 +672,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
+  /**
+   * Used to track how long tasks are tacking to complete.
+   * 
+   * @param taskWrapper wrapper for task that completed
+   */
   protected void trackTaskFinish(Wrapper taskWrapper) {
     long finishTime = Clock.accurateTime();
     synchronized (runTimes.getModificationLock()) {

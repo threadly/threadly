@@ -26,6 +26,7 @@ import org.threadly.concurrent.future.ListenableFutureTask;
  * than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter 
                                       implements PrioritySchedulerInterface {
@@ -86,7 +87,7 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   @Override
   public void execute(Runnable task, TaskPriority priority) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide runnable");
+      throw new IllegalArgumentException("Must provide task");
     } else if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }

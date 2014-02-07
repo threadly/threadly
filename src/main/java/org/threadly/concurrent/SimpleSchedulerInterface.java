@@ -7,6 +7,7 @@ import java.util.concurrent.Executor;
  * accepts scheduled and recurring tasks.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public interface SimpleSchedulerInterface extends Executor {
   /**

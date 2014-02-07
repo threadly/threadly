@@ -12,6 +12,7 @@ import org.threadly.concurrent.future.ListenableFutureTask;
  * to use that implementation with the {@link SubmitterSchedulerInterface}.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterface {
   private final ScheduledExecutorService scheduler;

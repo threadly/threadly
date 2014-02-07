@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * internals of threadly work.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public class StripedLock {
   private final int expectedConcurrencyLevel;

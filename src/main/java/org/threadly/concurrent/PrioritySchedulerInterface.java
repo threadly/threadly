@@ -9,6 +9,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * and schedule tasks, but run based off a given priority as well.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface {
   /**

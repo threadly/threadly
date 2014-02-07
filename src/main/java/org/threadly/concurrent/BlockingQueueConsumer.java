@@ -22,6 +22,7 @@ import org.threadly.util.ExceptionUtils;
  * grow, and consume memory.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> Type of items contained in the queue to be consumed
  */
 public class BlockingQueueConsumer<T> {

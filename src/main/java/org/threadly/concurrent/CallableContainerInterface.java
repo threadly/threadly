@@ -9,6 +9,7 @@ import java.util.concurrent.Callable;
  * thread pool.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> Type for type of callable contained
  */
 public interface CallableContainerInterface<T> {

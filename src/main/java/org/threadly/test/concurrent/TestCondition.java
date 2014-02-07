@@ -13,6 +13,7 @@ import org.threadly.util.Clock;
  * use those as examples using this class.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  */
 public abstract class TestCondition {
   private static final int NANOS_IN_MILLISECOND = 1000000;

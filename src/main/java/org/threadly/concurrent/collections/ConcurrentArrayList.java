@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
-import java.util.concurrent.Delayed;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>A thread safe list implementation with an array back end.  Make sure
@@ -44,6 +42,7 @@ import java.util.concurrent.TimeUnit;
  * For that reason it is impossible to have a ConcurrentModificationExcception.</p>
  * 
  * @author jent - Mike Jensen
+ * @since 1.0.0
  * @param <T> type of object to retain
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
@@ -361,6 +360,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   
   @Override
   public void addFirst(T e) {
+    // nulls can't be accepted because of how we attempt to prevent array copies
     if (e == null) {
       throw new UnsupportedOperationException("This structure can not accept nulls");
     }
@@ -372,6 +372,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public void addLast(T e) {
+    // nulls can't be accepted because of how we attempt to prevent array copies
     if (e == null) {
       throw new UnsupportedOperationException("This structure can not accept nulls");
     }
@@ -931,7 +932,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     protected DataSet(Object[] dataArray, 
                       int frontPadding, 
                       int rearPadding) {
-      this(dataArray, frontPadding, dataArray.length - rearPadding, 
+      this(dataArray, frontPadding, 
+           dataArray.length - rearPadding, 
            frontPadding, rearPadding);
     }
     
@@ -948,6 +950,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       this.rearPadding = rearPadding;
     }
 
+    /**
+     * Call to reposition one index to a new index.
+     * 
+     * @param origCurrentIndex original index to move
+     * @param origNewIndex new index position
+     * @return a new {@link DataSet} which represents the change (or the same reference if the inputs are a no-op)
+     */
     public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
       if (origCurrentIndex == size - 1 && origNewIndex == size) {
         // no-op, moving end item to end
@@ -1044,6 +1053,15 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
     
+    /**
+     * Used to get a newly sized array which copies the beginning items till 
+     * the new size is reached (or all items if the newSize is larger).  The 
+     * newly created array will also respect the front and rear padding, which 
+     * is NOT included in the newSize provided.
+     * 
+     * @param newSize size for data within the new array
+     * @return a new array
+     */
     private Object[] getArrayCopy(int newSize) {
       Object[] newData = new Object[newSize + frontPadding + rearPadding];
 
@@ -1053,6 +1071,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       return newData;
     }
 
+    /**
+     * Returns the item at a given index, this function 
+     * handles the front padding for you.
+     * 
+     * @param index index of item
+     * @return stored item
+     */
     @SuppressWarnings("unchecked")
     public T get(int index) {
       index += dataStartIndex;
@@ -1060,6 +1085,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       return (T)dataArray[index];
     }
 
+    /**
+     * Call to check for the index of a given item.  The 
+     * return index has already had the front padding removed 
+     * from the actual index.
+     * 
+     * @param o Object to search for
+     * @return index of item, or -1 if not found
+     */
     public int indexOf(Object o) {
       for (int i = dataStartIndex; i < dataEndIndex; i++) {
         if (dataArray[i].equals(o)) {
@@ -1070,6 +1103,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       return -1;
     }
 
+    /**
+     * Call to check for the last index of a given item.  The 
+     * return index has already had the front padding removed 
+     * from the actual index.
+     * 
+     * @param o Object to search for
+     * @return index of item, or -1 if not found
+     */
     public int lastIndexOf(Object o) {
       for (int i = dataEndIndex - 1; i >= dataStartIndex; i--) {
         if (dataArray[i].equals(o)) {
@@ -1080,6 +1121,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       return -1;
     }
 
+    /**
+     * Sets a specific index with a given element.
+     * 
+     * @param index index to set the item at
+     * @param element element to place in the array
+     * @return a new {@link DataSet} which represents the change
+     */
     public DataSet<T> set(int index, T element) {
       if (index == size) {
         return addToEnd(element);
@@ -1091,6 +1139,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
 
+    /**
+     * Adds an item to the front of the structure.
+     * 
+     * @param e item to be added
+     * @return a new {@link DataSet} which represents the change
+     */
     public DataSet<T> addToFront(T e) {
       if (dataStartIndex > 0 && dataArray[dataStartIndex - 1] == null) {
         // there is space in the current array
@@ -1110,6 +1164,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
     
+    /**
+     * Adds an item to the end of the structure.
+     * 
+     * @param e item to be added
+     * @return a new {@link DataSet} which represents the change
+     */
     public DataSet<T> addToEnd(T e) {
       if (dataArray.length - 1 > dataEndIndex && dataArray[dataEndIndex + 1] == null) {
         // there is space in the current array
@@ -1126,6 +1186,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
 
+    /**
+     * Adds an item at a specific index within the structure.
+     * 
+     * @param origIndex index to place the item
+     * @param element item to be added
+     * @return a new {@link DataSet} which represents the change
+     */
     public DataSet<T> add(int origIndex, T element) {
       if (origIndex == 0) { // add to front
         return addToFront(element);
@@ -1144,30 +1211,34 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
 
+    /**
+     * Adds all items within the collection to the end of the structure.
+     * 
+     * @param c collection to add items from
+     * @return a new {@link DataSet} which represents the change, or this reference if the collection is empty
+     */
     public DataSet<T> addAll(Collection<? extends T> c) {
       return addAll(size, c);
     }
 
+    /**
+     * Adds all items within the collection at a given index.
+     * 
+     * @param origIndex index to start insertion at
+     * @param c collection to add items from
+     * @return a new {@link DataSet} which represents the change, or this reference if the collection is empty
+     */
     public DataSet<T> addAll(int origIndex, Collection<? extends T> c) {
-      if (c.isEmpty()) {
+      if (c == null || c.isEmpty()) {
         return this;
       }
       
       Object[] toAdd = c.toArray();
       if (origIndex == 0) {
         // add to front
-        boolean currentSpaceAvailable = false;
-        if (toAdd.length <= dataStartIndex) {
-          currentSpaceAvailable = true;
-          for (int i = dataStartIndex - 1; i >= dataStartIndex - toAdd.length; i--) {
-            if (dataArray[i] != null) {
-              currentSpaceAvailable = false;
-              break;
-            }
-          }
-        }
-        
-        if (currentSpaceAvailable) {
+        if (toAdd.length <= dataStartIndex && 
+            dataArray[dataStartIndex - 1] != null) {  // if previous one is null, all previous ones are null
+          // we can copy the new items in, without copying our existing array
           System.arraycopy(toAdd, 0, 
                            dataArray, dataStartIndex - toAdd.length, 
                            toAdd.length);
@@ -1189,18 +1260,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         }
       } else if (origIndex == size) {
         // add to end
-        boolean currentSpaceAvailable = false;
-        if (dataEndIndex + toAdd.length <= dataArray.length) {
-          currentSpaceAvailable = true;
-          for (int i = dataEndIndex; i < dataEndIndex + toAdd.length; i++) {
-            if (dataArray[i] != null) {
-              currentSpaceAvailable = false;
-              break;
-            }
-          }
-        }
-        
-        if (currentSpaceAvailable) {
+        if (dataEndIndex + toAdd.length <= dataArray.length && 
+            dataArray[dataEndIndex] == null) {  // if next one is null, all future ones should be
+          // we can copy the new items in, without copying our existing array
           System.arraycopy(toAdd, 0, 
                            dataArray, dataEndIndex, 
                            toAdd.length);
@@ -1233,6 +1295,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
     
+    /**
+     * Removes a specific index from the collection.
+     * 
+     * @param origIndex index to remove from
+     * @return a new {@link DataSet} which represents the change
+     */
     public DataSet<T> remove(int origIndex) {
       int index = origIndex + dataStartIndex;
       
@@ -1255,6 +1323,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
 
+    /**
+     * Removes a specific index from the collection.
+     * 
+     * @param c Collection which contains items to be removed
+     * @return a new {@link DataSet} which represents the change, or the same reference if no modification was necessary
+     */
     public DataSet<T> removeAll(Collection<?> c) {
       Object[] resultArray = null;  // will only be allocated once modification occurs
       
@@ -1265,6 +1339,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
           if (resultArray != null) {
             resultArray[i++] = currItem;
           } else {
+            /* if result array has not been created yet, we will do a single array copy
+             * once a modification occurs. 
+             */
             i++;
           }
         } else {
@@ -1284,6 +1361,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
 
+    /**
+     * Keeps only the items in the provided collection.
+     * 
+     * @param c Collection to examine for items to retain
+     * @return a new {@link DataSet} which represents the change, or the same reference if no modification was necessary
+     */
     public DataSet<T> retainAll(Collection<?> c) {
       Object[] resultArray = null;  // will only be allocated once modification occurs
       
@@ -1387,13 +1470,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         if (i == dataStartIndex) {
           result.append('S');
         }
-        if (dataArray[i] instanceof Delayed) {
-          result.append(i).append('-')
-                .append(((Delayed)dataArray[i]).getDelay(TimeUnit.MILLISECONDS))
-                .append(';').append(dataArray[i]);
-        } else {
-          result.append(i).append('-').append(dataArray[i]);
-        }
+        result.append(i).append('-').append(dataArray[i]);
         if (i == dataEndIndex - 1) {
           result.append('E');
         }
