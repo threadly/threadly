@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
@@ -705,18 +706,27 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException {
-    SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(new PriorityScheduledExecutorTestFactory());
+  public void submitScheduledRunnableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(psetf);
   }
   
   @Test
-  public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
-    SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(new PriorityScheduledExecutorTestFactory());
+  public void submitScheduledRunnableWithResultTest() throws InterruptedException, 
+                                                             ExecutionException, 
+                                                             TimeoutException {
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(psetf);
   }
   
   @Test
-  public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
-    SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(new PriorityScheduledExecutorTestFactory());
+  public void submitScheduledCallableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(psetf);
   }
   
   @Test
@@ -726,22 +736,26 @@ public class PriorityScheduledExecutorTest {
   
   @Test
   public void submitScheduledRunnableFail() {
-    SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(psetf);
   }
   
   @Test
   public void submitScheduledCallableFail() {
-    SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(psetf);
   }
   
   @Test
   public void recurringExecutionTest() {
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(psetf);
   }
   
   @Test
   public void recurringExecutionFail() {
-    SimpleSchedulerInterfaceTest.recurringExecutionFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(psetf);
   }
   
   @Test
@@ -893,21 +907,27 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, ExecutionException {
+  public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, 
+                                                          ExecutionException, 
+                                                          TimeoutException {
     WrapperFactory wf = new WrapperFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
   }
   
   @Test
-  public void wrapperSubmitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+  public void wrapperSubmitScheduledRunnableWithResultTest() throws InterruptedException, 
+                                                                    ExecutionException, 
+                                                                    TimeoutException {
     WrapperFactory wf = new WrapperFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(wf);
   }
   
   @Test
-  public void wrapperSubmitScheduledCallableTest() throws InterruptedException, ExecutionException {
+  public void wrapperSubmitScheduledCallableTest() throws InterruptedException, 
+                                                          ExecutionException, 
+                                                          TimeoutException {
     WrapperFactory wf = new WrapperFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(wf);

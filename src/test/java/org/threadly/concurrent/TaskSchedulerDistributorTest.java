@@ -9,6 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Before;
@@ -428,21 +429,25 @@ public class TaskSchedulerDistributorTest {
   }
   
   @Test
-  public void keyBasedSchedulerSubmitScheduledRunnableTest() throws InterruptedException, ExecutionException {
+  public void keyBasedSchedulerSubmitScheduledRunnableTest() throws InterruptedException, ExecutionException, TimeoutException {
     KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(factory);
   }
   
   @Test
-  public void keyBasedSchedulerSubmitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+  public void keyBasedSchedulerSubmitScheduledRunnableWithResultTest() throws InterruptedException, 
+                                                                              ExecutionException, 
+                                                                              TimeoutException {
     KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(factory);
   }
   
   @Test
-  public void keyBasedSchedulerSubmitScheduledCallableTest() throws InterruptedException, ExecutionException {
+  public void keyBasedSchedulerSubmitScheduledCallableTest() throws InterruptedException, 
+                                                                    ExecutionException, 
+                                                                    TimeoutException {
     KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(factory);

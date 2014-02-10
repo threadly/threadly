@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest.SimpleSchedulerFactory;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
@@ -17,7 +19,8 @@ import org.threadly.test.concurrent.TestRunnable;
 @SuppressWarnings("javadoc")
 public class SubmitterSchedulerInterfaceTest {
   public static void submitScheduledRunnableTest(SubmitterSchedulerFactory factory) throws InterruptedException, 
-                                                                                           ExecutionException {
+                                                                                           ExecutionException, 
+                                                                                           TimeoutException {
     try {
       SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
@@ -45,8 +48,9 @@ public class SubmitterSchedulerInterfaceTest {
       Iterator<Future<?>> futureIt = futures.iterator();
       while (futureIt.hasNext()) {
         Future<?> future = futureIt.next();
+        // future should basically be done already, but we set a bit of a timeout in case of slow systems
+        assertNull(future.get(10, TimeUnit.SECONDS));
         assertTrue(future.isDone());
-        assertNull(future.get());
       }
     } finally {
       factory.shutdown();
@@ -54,7 +58,8 @@ public class SubmitterSchedulerInterfaceTest {
   }
   
   public static void submitScheduledRunnableWithResultTest(SubmitterSchedulerFactory factory) throws InterruptedException, 
-                                                                                                     ExecutionException {
+                                                                                                     ExecutionException, 
+                                                                                                     TimeoutException {
     try {
       SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
@@ -83,8 +88,8 @@ public class SubmitterSchedulerInterfaceTest {
       Iterator<Future<TestRunnable>> futureIt = futures.iterator();
       while (futureIt.hasNext()) {
         Future<?> future = futureIt.next();
+        assertTrue(future.get(10, TimeUnit.SECONDS) == it.next());
         assertTrue(future.isDone());
-        assertTrue(future.get() == it.next());
       }
     } finally {
       factory.shutdown();
@@ -92,7 +97,8 @@ public class SubmitterSchedulerInterfaceTest {
   }
   
   public static void submitScheduledCallableTest(SubmitterSchedulerFactory factory) throws InterruptedException, 
-                                                                                           ExecutionException {
+                                                                                           ExecutionException, 
+                                                                                           TimeoutException {
     try {
       SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
@@ -113,7 +119,7 @@ public class SubmitterSchedulerInterfaceTest {
         Future<Object> future = futureIt.next();
         TestCallable tc = it.next();
   
-        assertTrue(tc.getReturnedResult() == future.get());
+        assertTrue(tc.getReturnedResult() == future.get(10, TimeUnit.SECONDS));
         assertTrue(future.isDone());
         
         long executionDelay = tc.getDelayTillFirstRun();

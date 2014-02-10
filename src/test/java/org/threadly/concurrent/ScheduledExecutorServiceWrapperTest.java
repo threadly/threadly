@@ -5,6 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
@@ -75,21 +76,27 @@ public class ScheduledExecutorServiceWrapperTest {
   }
   
   @Test
-  public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
   @Test
-  public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableWithResultTest() throws InterruptedException, 
+                                                             ExecutionException, 
+                                                             TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(sf);
   }
   
   @Test
-  public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledCallableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);

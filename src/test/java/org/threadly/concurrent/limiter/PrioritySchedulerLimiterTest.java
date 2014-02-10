@@ -302,14 +302,18 @@ public class PrioritySchedulerLimiterTest {
   }
   
   @Test
-  public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledCallableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(false);
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
-  public void submitScheduledCallableNamedSubPoolTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledCallableNamedSubPoolTest() throws InterruptedException, 
+                                                               ExecutionException, 
+                                                               TimeoutException {
     PrioritySchedulerLimiterFactory sf = new PrioritySchedulerLimiterFactory(true);
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);

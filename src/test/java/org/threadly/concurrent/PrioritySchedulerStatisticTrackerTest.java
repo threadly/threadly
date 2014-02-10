@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutorTest.PriorityScheduledExecutorFactory;
@@ -34,117 +35,140 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   @Test
   public void getDefaultPriorityTest() {
-    PriorityScheduledExecutorTest.getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getDefaultPriorityTest(psetf);
   }
   
   @Test
   public void makeWithDefaultPriorityTest() {
-    PriorityScheduledExecutorTest.makeWithDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.makeWithDefaultPriorityTest(psetf);
   }
   
   @Test
   public void getAndSetCorePoolSizeTest() {
-    PriorityScheduledExecutorTest.getAndSetCorePoolSizeTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getAndSetCorePoolSizeTest(psetf);
   }
   
   @Test
   public void getAndSetCorePoolSizeAboveMaxTest() {
-    PriorityScheduledExecutorTest.getAndSetCorePoolSizeAboveMaxTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getAndSetCorePoolSizeAboveMaxTest(psetf);
   }
   
   @Test
   public void lowerSetCorePoolSizeCleansWorkerTest() {
-    PriorityScheduledExecutorTest.lowerSetCorePoolSizeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.lowerSetCorePoolSizeCleansWorkerTest(psetf);
   }
   
   @Test
   public void setCorePoolSizeFail() {
-    PriorityScheduledExecutorTest.setCorePoolSizeFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.setCorePoolSizeFail(psetf);
   }
   
   @Test
   public void getAndSetMaxPoolSizeTest() {
-    PriorityScheduledExecutorTest.getAndSetMaxPoolSizeTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getAndSetMaxPoolSizeTest(psetf);
   }
   
   @Test
   public void getAndSetMaxPoolSizeBelowCoreTest() {
-    PriorityScheduledExecutorTest.getAndSetMaxPoolSizeBelowCoreTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getAndSetMaxPoolSizeBelowCoreTest(psetf);
   }
   
   @Test
   public void lowerSetMaxPoolSizeCleansWorkerTest() {
-    PriorityScheduledExecutorTest.lowerSetMaxPoolSizeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.lowerSetMaxPoolSizeCleansWorkerTest(psetf);
   }
   
   @Test
   public void setMaxPoolSizeFail() {
-    PriorityScheduledExecutorTest.setMaxPoolSizeFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.setMaxPoolSizeFail(psetf);
   }
   
   @Test
   public void setMaxPoolSizeBlockedThreadsTest() {
-    PriorityScheduledExecutorTest.setMaxPoolSizeUnblockedThreadTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.setMaxPoolSizeUnblockedThreadTest(psetf);
   }
   
   @Test
   public void getAndSetLowPriorityWaitTest() {
-    PriorityScheduledExecutorTest.getAndSetLowPriorityWaitTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getAndSetLowPriorityWaitTest(psetf);
   }
   
   @Test
   public void setLowPriorityWaitFail() {
-    PriorityScheduledExecutorTest.setLowPriorityWaitFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.setLowPriorityWaitFail(psetf);
   }
   
   @Test
   public void getAndSetKeepAliveTimeTest() {
-    PriorityScheduledExecutorTest.getAndSetKeepAliveTimeTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getAndSetKeepAliveTimeTest(psetf);
   }
   
   @Test
   public void lowerSetKeepAliveTimeCleansWorkerTest() {
-    PriorityScheduledExecutorTest.lowerSetKeepAliveTimeCleansWorkerTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.lowerSetKeepAliveTimeCleansWorkerTest(psetf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void setKeepAliveTimeFail() {
-    PriorityScheduledExecutorTest.setKeepAliveTimeFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.setKeepAliveTimeFail(psetf);
   }
   
   @Test
   public void getCurrentPoolSizeTest() {
-    PriorityScheduledExecutorTest.getCurrentPoolSizeTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getCurrentPoolSizeTest(psetf);
   }
   
   @Test
   public void makeSubPoolTest() {
-    PriorityScheduledExecutorTest.makeSubPoolTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.makeSubPoolTest(psetf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void makeSubPoolFail() {
-    PriorityScheduledExecutorTest.makeSubPoolFail(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.makeSubPoolFail(psetf);
   }
   
   @Test
   public void executeTest() {
-    PriorityScheduledExecutorTest.executeTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.executeTest(psetf);
   }
   
   @Test
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutorTest.submitRunnableTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.submitRunnableTest(psetf);
   }
   
   @Test
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutorTest.submitRunnableWithResultTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.submitRunnableWithResultTest(psetf);
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
-    PriorityScheduledExecutorTest.submitCallableTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.submitCallableTest(psetf);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -176,21 +200,27 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
   @Test
-  public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableWithResultTest() throws InterruptedException, 
+                                                             ExecutionException, 
+                                                             TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(sf);
   }
   
   @Test
-  public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledCallableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
@@ -375,21 +405,27 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, ExecutionException {
+  public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, 
+                                                          ExecutionException, 
+                                                          TimeoutException {
     WrapperFactory wf = new WrapperFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
   }
   
   @Test
-  public void wrapperSubmitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+  public void wrapperSubmitScheduledRunnableWithResultTest() throws InterruptedException, 
+                                                                    ExecutionException, 
+                                                                    TimeoutException {
     WrapperFactory wf = new WrapperFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(wf);
   }
   
   @Test
-  public void wrapperSubmitScheduledCallableTest() throws InterruptedException, ExecutionException {
+  public void wrapperSubmitScheduledCallableTest() throws InterruptedException, 
+                                                          ExecutionException, 
+                                                          TimeoutException {
     WrapperFactory wf = new WrapperFactory();
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(wf);
@@ -432,27 +468,32 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   @Test
   public void shutdownTest() {
-    PriorityScheduledExecutorTest.shutdownTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.shutdownTest(psetf);
   }
   
   @Test
   public void shutdownNowTest() {
-    PriorityScheduledExecutorTest.shutdownNowTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.shutdownNowTest(psetf);
   }
   
   @Test
   public void addToQueueTest() {
-    PriorityScheduledExecutorTest.addToQueueTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.addToQueueTest(psetf);
   }
   
   @Test
   public void getExistingWorkerTest() {
-    PriorityScheduledExecutorTest.getExistingWorkerTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getExistingWorkerTest(psetf);
   }
   
   @Test
   public void lookForExpiredWorkersTest() {
-    PriorityScheduledExecutorTest.lookForExpiredWorkersTest(new PriorityScheduledExecutorTestFactory());
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.lookForExpiredWorkersTest(psetf);
   }
   
   private class SchedulerFactory implements SubmitterSchedulerFactory {

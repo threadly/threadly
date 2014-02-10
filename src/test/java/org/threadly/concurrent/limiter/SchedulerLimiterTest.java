@@ -252,28 +252,36 @@ public class SchedulerLimiterTest {
   }
   
   @Test
-  public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
   @Test
-  public void submitScheduledRunnableNamedSubPoolTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableNamedSubPoolTest() throws InterruptedException, 
+                                                               ExecutionException, 
+                                                               TimeoutException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
   @Test
-  public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableWithResultTest() throws InterruptedException, 
+                                                             ExecutionException, 
+                                                             TimeoutException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(sf);
   }
   
   @Test
-  public void submitScheduledRunnableWithResultNamedSubPoolTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledRunnableWithResultNamedSubPoolTest() throws InterruptedException, 
+                                                                         ExecutionException, 
+                                                                         TimeoutException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(sf);
@@ -287,14 +295,18 @@ public class SchedulerLimiterTest {
   }
   
   @Test
-  public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledCallableTest() throws InterruptedException, 
+                                                   ExecutionException, 
+                                                   TimeoutException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
-  public void submitScheduledCallableNamedSubPoolTest() throws InterruptedException, ExecutionException {
+  public void submitScheduledCallableNamedSubPoolTest() throws InterruptedException, 
+                                                               ExecutionException, 
+                                                               TimeoutException {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
