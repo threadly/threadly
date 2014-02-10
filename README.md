@@ -5,7 +5,7 @@ A library of java tools to assist with development of concurrent java applicatio
 
 For information about compiling, importing into eclipse, or contributing to the project, please look at the 'BUILD_INSTRUCTIONS' file.
 
-If you find this library useful, feel free to donate LTC/Litecoin to: LKq3cMy9wn2zkrmkTbuFrL2jAEzvpfPLHp
+If you find this library useful, feel free to donate LTC/Litecoin to: LiTeCoinLRQrrP2B6xAq2aZ5WFHpHc28Ry
 
 -- General Concurrency Tools --
 
