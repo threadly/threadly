@@ -303,7 +303,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public boolean addAll(int index, Collection<? extends T> c) {
-    if (c == null || c.isEmpty()) {
+    if (index < 0) {
+      throw new IndexOutOfBoundsException("Index can not be negative");
+    } else if (c == null || c.isEmpty()) {
       return false;
     }
     
@@ -315,10 +317,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     synchronized (modificationLock) {
-      if (index > size()) {
+      if (index > currentData.size) {
         throw new IndexOutOfBoundsException("Index is beyond the array size: " + index);
-      } else if (index < 0) {
-        throw new IndexOutOfBoundsException("Index can not be negative");
       }
       
       currentData = currentData.addAll(index, c);
@@ -435,7 +435,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     synchronized (modificationLock) {
       T result = peekLast();
       if (result != null) {
-        currentData = currentData.remove(size() - 1);
+        currentData = currentData.remove(currentData.size - 1);
       }
       
       return result;
@@ -543,12 +543,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public T remove(int index) {
+    if (index < 0) {
+      throw new IndexOutOfBoundsException("Index can not be negative");
+    }
+    
     DataSet<T> originalSet;
     synchronized (modificationLock) {
-      if (index > size() - 1) {
+      if (index > currentData.size - 1) {
         throw new IndexOutOfBoundsException("Index is beyond the array max index: " + index);
-      } else if (index < 0) {
-        throw new IndexOutOfBoundsException("Index can not be negative");
       }
       
       originalSet = currentData;
@@ -590,12 +592,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public T set(int index, T element) {
+    if (index < 0) {
+      throw new IndexOutOfBoundsException("Index can not be negative");
+    }
+    
     DataSet<T> originalSet;
     synchronized (modificationLock) {
-      if (index > size() - 1) {
+      if (index > currentData.size - 1) {
         throw new IndexOutOfBoundsException("Index is beyond the array max index: " + index);
-      } else if (index < 0) {
-        throw new IndexOutOfBoundsException("Index can not be negative");
       }
       
       originalSet = currentData;
@@ -607,11 +611,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public void add(int index, T element) {
+    if (index < 0) {
+      throw new IndexOutOfBoundsException("Index can not be negative");
+    }
+    
     synchronized (modificationLock) {
-      if (index > size()) {
+      if (index > currentData.size) {
         throw new IndexOutOfBoundsException("Index is beyond the array size: " + index);
-      } else if (index < 0) {
-        throw new IndexOutOfBoundsException("Index can not be negative");
       }
       
       currentData = currentData.add(index, element);
@@ -639,11 +645,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @param searchBackwards true to start from the end and search backwards
    */
   public void reposition(T item, int newIndex, boolean searchBackwards) {
+    if (newIndex < 0) {
+      throw new IndexOutOfBoundsException("New index can not be negative");
+    }
+    
     synchronized (modificationLock) {
-      if (newIndex > size()) {
-        throw new IndexOutOfBoundsException(newIndex + " is beyond the array's size: " + size());
-      } else if (newIndex < 0) {
-        throw new IndexOutOfBoundsException("New index can not be negative");
+      if (newIndex > currentData.size) {
+        throw new IndexOutOfBoundsException(newIndex + " is beyond the array's size: " + 
+                                              currentData.size);
       }
       
       int index;
@@ -682,12 +691,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
     
     synchronized (modificationLock) {
-      if (newIndex > size()) {
+      if (newIndex > currentData.size) {
         throw new IndexOutOfBoundsException("new index " + newIndex + 
-                                              " is beyond the array's length: " + (size() - 1));
-      } else if (originalIndex > size()) {
+                                              " is beyond the array's length: " + currentData.size);
+      } else if (originalIndex > currentData.size) {
         throw new IndexOutOfBoundsException("original index " + originalIndex + 
-                                              " is beyond the array's length: " + (size() - 1));
+                                              " is beyond the array's length: " + currentData.size);
       }
       
       currentData = currentData.reposition(originalIndex, newIndex);
@@ -711,7 +720,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public Iterator<T> descendingIterator() {
-    final ListIterator<T> li = listIterator(size());
+    final ListIterator<T> li = listIterator(currentData.size);
     return new Iterator<T>() {
       @Override
       public boolean hasNext() {
