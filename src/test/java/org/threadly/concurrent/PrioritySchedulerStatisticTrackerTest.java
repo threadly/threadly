@@ -688,9 +688,10 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void getTotalExecutionCountTest() {
     int lowPriorityCount = TEST_QTY;
     int highPriorityCount = TEST_QTY * 2;
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
-                                                                                        highPriorityCount + lowPriorityCount, 
-                                                                                        1000, TaskPriority.High, 100);
+    final PrioritySchedulerStatisticTracker scheduler;
+    scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
+                                                      highPriorityCount + lowPriorityCount, 
+                                                      1000, TaskPriority.High, 100);
     try {
       TestRunnable lastLowPriorityRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {
@@ -707,7 +708,13 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastLowPriorityRunnable.blockTillFinished();
       lastHighPriorityRunnable.blockTillFinished();
       
-      assertEquals(0, scheduler.getCurrentRunningCount());
+      // should not be very long after waiting above
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentRunningCount() == 0;
+        }
+      }.blockTillTrue();
       
       assertEquals(lowPriorityCount + highPriorityCount, 
                    scheduler.getTotalExecutionCount());
