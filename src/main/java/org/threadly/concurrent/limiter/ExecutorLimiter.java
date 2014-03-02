@@ -30,7 +30,7 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 public class ExecutorLimiter extends AbstractThreadPoolLimiter 
                              implements SubmitterExecutorInterface {
   protected final Executor executor;
-  protected final Queue<Runnable> waitingTasks;
+  protected final Queue<LimiterRunnableWrapper> waitingTasks;
   
   /**
    * Construct a new execution limiter that implements the 
@@ -59,7 +59,7 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     }
     
     this.executor = executor;
-    waitingTasks = new ConcurrentLinkedQueue<Runnable>();
+    waitingTasks = new ConcurrentLinkedQueue<LimiterRunnableWrapper>();
   }
   
   @Override
@@ -72,7 +72,8 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     synchronized (this) {
       while (! waitingTasks.isEmpty() && canRunTask()) {
         // by entering loop we can now execute task
-        executor.execute(new LimiterRunnableWrapper(waitingTasks.poll()));
+        LimiterRunnableWrapper lrw = waitingTasks.poll();
+        lrw.submitToExecutor();
       }
     }
   }
@@ -83,12 +84,21 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
       throw new IllegalArgumentException("Must provide runnable");
     }
     
+    LimiterRunnableWrapper lrw = new LimiterRunnableWrapper(executor, task);
+    executeWrapper(lrw);
+  }
+  
+  protected void executeWrapper(LimiterRunnableWrapper lrw) {
     if (canRunTask()) {  // try to avoid adding to queue if we can
-      executor.execute(new LimiterRunnableWrapper(task));
+      lrw.submitToExecutor();
     } else {
-      waitingTasks.add(task);
-      consumeAvailable(); // call to consume in case task finished after first check
+      addToQueue(lrw);
     }
+  }
+  
+  protected void addToQueue(LimiterRunnableWrapper lrw) {
+    waitingTasks.add(lrw);
+    consumeAvailable(); // call to consume in case task finished after first check
   }
 
   @Override

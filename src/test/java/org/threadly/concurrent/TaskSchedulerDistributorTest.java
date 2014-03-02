@@ -373,6 +373,13 @@ public class TaskSchedulerDistributorTest {
   }
   
   @Test
+  public void keyBasedSchedulerScheduleNoDelayTest() {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(factory);
+  }
+  
+  @Test
   public void keyBasedSchedulerScheduleFail() {
     KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
@@ -383,7 +390,14 @@ public class TaskSchedulerDistributorTest {
   public void keyBasedSchedulerRecurringTest() {
     KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(factory);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, factory);
+  }
+  
+  @Test
+  public void keyBasedSchedulerRecurringInitialDelayTest() {
+    KeyBasedSubmitterSchedulerFactory factory = new KeyBasedSubmitterSchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, factory);
   }
   
   @Test

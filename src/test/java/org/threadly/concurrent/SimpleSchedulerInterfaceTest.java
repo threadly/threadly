@@ -29,9 +29,21 @@ public class SimpleSchedulerInterfaceTest {
         long executionDelay = tr.getDelayTillFirstRun();
         assertTrue(executionDelay >= SCHEDULE_DELAY);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));  
+        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));
         assertEquals(1, tr.getRunCount());
       }
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  public static void scheduleNoDelayTest(SimpleSchedulerFactory factory) {
+    try {
+      SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(TEST_QTY, true);
+      
+      TestRunnable tr = new TestRunnable();
+      scheduler.schedule(tr, 0);
+      tr.blockTillStarted();
     } finally {
       factory.shutdown();
     }
@@ -57,17 +69,19 @@ public class SimpleSchedulerInterfaceTest {
     }
   }
   
-  public static void recurringExecutionTest(SimpleSchedulerFactory factory) {
+  public static void recurringExecutionTest(boolean initialDelay, 
+                                            SimpleSchedulerFactory factory) {
     try {
       SimpleSchedulerInterface scheduler = factory.makeSimpleScheduler(TEST_QTY, true);
-      
-      // schedule a task first in case there are any initial startup actions which may be slow
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10);
   
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY);
+        if (initialDelay) {
+          scheduler.scheduleWithFixedDelay(tr, SCHEDULE_DELAY, SCHEDULE_DELAY);
+        } else {
+          scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY);
+        }
         runnables.add(tr);
       }
       
@@ -75,7 +89,15 @@ public class SimpleSchedulerInterfaceTest {
       Iterator<TestRunnable> it = runnables.iterator();
       while (it.hasNext()) {
         TestRunnable tr = it.next();
-        tr.blockTillFinished((TEST_QTY * (SCHEDULE_DELAY * CYCLE_COUNT)) + 2000, CYCLE_COUNT);
+        tr.blockTillFinished((TEST_QTY * (SCHEDULE_DELAY * (CYCLE_COUNT + 1))) + 2000, CYCLE_COUNT);
+        if (initialDelay) {
+          long executionDelay = tr.getDelayTillFirstRun();
+          assertTrue(executionDelay >= SCHEDULE_DELAY);
+          // should be very timely with a core pool size that matches runnable count
+          assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));
+        }
+        
+        // now verify recurring delay
         long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
         assertTrue(executionDelay >= SCHEDULE_DELAY * (CYCLE_COUNT - 1));
         // should be very timely with a core pool size that matches runnable count

@@ -1,11 +1,8 @@
 package org.threadly.concurrent.limiter;
 
-import java.util.Queue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.threadly.concurrent.PrioritySchedulerInterface;
-import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -28,10 +25,9 @@ import org.threadly.concurrent.future.ListenableFutureTask;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter 
+public class PrioritySchedulerLimiter extends SchedulerLimiter 
                                       implements PrioritySchedulerInterface {
   protected final PrioritySchedulerInterface scheduler;
-  protected final Queue<PriorityWrapper> waitingTasks;
   
   /**
    * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
@@ -53,35 +49,9 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    */
   public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
                                   int maxConcurrency, String subPoolName) {
-    super(maxConcurrency, subPoolName);
-    
-    if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler");
-    }
+    super(scheduler, maxConcurrency, subPoolName);
     
     this.scheduler = scheduler;
-    waitingTasks = new ConcurrentLinkedQueue<PriorityWrapper>();
-  }
-  
-  @Override
-  protected void consumeAvailable() {
-    /* must synchronize in queue consumer to avoid 
-     * multiple threads from consuming tasks in parallel 
-     * and possibly emptying after .isEmpty() check but 
-     * before .poll()
-     */
-    synchronized (this) {
-      while (! waitingTasks.isEmpty() && canRunTask()) {
-        // by entering loop we can now execute task
-        PriorityWrapper pw = waitingTasks.poll();
-        scheduler.execute(pw, pw.getPriority());
-      }
-    }
-  }
-
-  @Override
-  public void execute(Runnable task) {
-    execute(task, null);
   }
 
   @Override
@@ -93,90 +63,30 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     }
     
     PriorityWrapper pw = new PriorityWrapper(task, priority);
-    if (canRunTask()) {  // try to avoid adding to queue if we can
-      scheduler.execute(pw, priority);
-    } else {
-      waitingTasks.add(pw);
-      consumeAvailable(); // call to consume in case task finished after first check
-    }
-  }
-
-  @Override
-  public ListenableFuture<?> submit(Runnable task) {
-    return submit(task, null);
+    executeWrapper(pw);
   }
 
   @Override
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
-    return submit(task, null, priority);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submit(task, result, null);
+    return submitScheduled(task, null, 0, priority);
   }
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result, 
                                         TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (priority == null) {
-      priority = scheduler.getDefaultPriority();
-    }
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
-    
-    execute(lft, priority);
-    
-    return lft;
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
-    return submit(task, null);
+    return submitScheduled(task, result, 0, priority);
   }
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task, 
                                         TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (priority == null) {
-      priority = scheduler.getDefaultPriority();
-    }
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
-    
-    execute(lft, priority);
-    
-    return lft;
-  }
-
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, delayInMs, null);
+    return submitScheduled(task, 0, priority);
   }
 
   @Override
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
                                              TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (priority == null) {
-      priority = scheduler.getDefaultPriority();
-    }
-    
-    ListenableFutureTask<?> ft = new ListenableFutureTask<Object>(false, task);
-    
-    schedule(ft, delayInMs, priority);
-    
-    return ft;
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    return submitScheduled(task, result, delayInMs, null);
+    return submitScheduled(task, null, delayInMs, priority);
   }
 
   @Override
@@ -196,11 +106,6 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    return submitScheduled(task, delayInMs, null);
-  }
-
-  @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs, 
                                                  TaskPriority priority) {
     if (task == null) {
@@ -217,11 +122,6 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public void schedule(Runnable task, long delayInMs) {
-    schedule(task, delayInMs, null);
-  }
-
-  @Override
   public void schedule(Runnable task, long delayInMs, 
                        TaskPriority priority) {
     if (task == null) {
@@ -235,16 +135,9 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     if (delayInMs == 0) {
       execute(task, priority);
     } else {
-      scheduler.schedule(new DelayedExecutionRunnable<Object>(task, priority), 
+      scheduler.schedule(new PriorityDelayedRunnable(task, priority), 
                          delayInMs, TaskPriority.High);
     }
-  }
-
-  @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay,
-                                     long recurringDelay) {
-    scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
-                           null);
   }
 
   @Override
@@ -263,16 +156,11 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
     RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay, priority);
     
     if (initialDelay == 0) {
-      execute(rrw);
+      executeWrapper(rrw);
     } else {
-      scheduler.schedule(new DelayedExecutionRunnable<Object>(rrw, priority), 
+      scheduler.schedule(new PriorityDelayedRunnable(rrw, priority), 
                          initialDelay, TaskPriority.High);
     }
-  }
-
-  @Override
-  public boolean isShutdown() {
-    return scheduler.isShutdown();
   }
 
   @Override
@@ -286,24 +174,9 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionRunnable<T> implements Runnable, 
-                                                         RunnableContainerInterface {
-    private final Runnable runnable;
-    private final TaskPriority priority;
-
-    public DelayedExecutionRunnable(Runnable runnable, TaskPriority priority) {
-      this.runnable = runnable;
-      this.priority = priority;
-    }
-    
-    @Override
-    public void run() {
-      execute(runnable, priority);
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return runnable;
+  protected class PriorityDelayedRunnable extends DelayedExecutionRunnable {
+    protected PriorityDelayedRunnable(Runnable runnable, TaskPriority priority) {
+      super(new PriorityWrapper(runnable, priority));
     }
   }
 
@@ -314,17 +187,17 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class RecurringRunnableWrapper extends LimiterRunnableWrapper {
+  protected class RecurringRunnableWrapper extends PriorityWrapper {
     private final long recurringDelay;
-    private final DelayedExecutionRunnable<?> delayRunnable;
+    private final PriorityDelayedRunnable delayRunnable;
     
-    public RecurringRunnableWrapper(Runnable runnable, 
-                                    long recurringDelay, 
-                                    TaskPriority priority) {
-      super(runnable);
+    protected RecurringRunnableWrapper(Runnable runnable, 
+                                       long recurringDelay, 
+                                       TaskPriority priority) {
+      super(runnable, priority);
       
       this.recurringDelay = recurringDelay;
-      delayRunnable = new DelayedExecutionRunnable<Object>(this, priority);
+      delayRunnable = new PriorityDelayedRunnable(this, priority);
     }
     
     @Override
@@ -342,14 +215,15 @@ public class PrioritySchedulerLimiter extends AbstractThreadPoolLimiter
   protected class PriorityWrapper extends LimiterRunnableWrapper {
     private final TaskPriority priority;
     
-    public PriorityWrapper(Runnable runnable, TaskPriority priority) {
-      super(runnable);
+    protected PriorityWrapper(Runnable runnable, TaskPriority priority) {
+      super(scheduler, runnable);
       
       this.priority = priority;
     }
     
-    public TaskPriority getPriority() {
-      return priority;
+    @Override
+    protected void submitToExecutor() {
+      scheduler.execute(this, priority);
     }
   }
 }

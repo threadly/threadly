@@ -38,38 +38,38 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
 
   @Override
   public void execute(Runnable command) {
-    execute(command, defaultPriority);
+    scheduler.execute(command, defaultPriority);
   }
 
   @Override
   public void execute(Runnable task, TaskPriority priority) {
-    schedule(task, 0, priority);
+    scheduler.execute(task, priority);
   }
 
   @Override
   public ListenableFuture<?> submit(Runnable task) {
-    return submit(task, defaultPriority);
+    return scheduler.submit(task, defaultPriority);
   }
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submit(task, result, defaultPriority);
+    return scheduler.submit(task, result, defaultPriority);
   }
 
   @Override
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
-    return submitScheduled(task, 0, priority);
+    return scheduler.submit(task, priority);
   }
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result, 
                                         TaskPriority priority) {
-    return submitScheduled(task, result, 0, priority);
+    return scheduler.submit(task, result, priority);
   }
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task) {
-    return submit(task, defaultPriority);
+    return scheduler.submit(task, defaultPriority);
   }
 
   @Override
@@ -79,7 +79,7 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   
   @Override
   public void schedule(Runnable task, long delayInMs) {
-    schedule(task, delayInMs, defaultPriority);
+    scheduler.schedule(task, delayInMs, defaultPriority);
   }
 
   @Override
@@ -90,12 +90,12 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
 
   @Override
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, delayInMs, defaultPriority);
+    return scheduler.submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    return submitScheduled(task, result, delayInMs, defaultPriority);
+    return scheduler.submitScheduled(task, result, delayInMs, defaultPriority);
   }
 
   @Override
@@ -112,7 +112,7 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    return submitScheduled(task, delayInMs, defaultPriority);
+    return scheduler.submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
@@ -125,8 +125,8 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 
                                      long recurringDelay) {
-    scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
-                           defaultPriority);
+    scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
+                                     defaultPriority);
   }
 
   @Override
