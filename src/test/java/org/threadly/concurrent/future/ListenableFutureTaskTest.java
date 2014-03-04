@@ -47,19 +47,19 @@ public class ListenableFutureTaskTest {
     
     ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
     
-    assertEquals(0, future.listeners.size()); // empty to start
+    assertEquals(0, future.listenerHelper.registeredListenerCount()); // empty to start
     
     TestRunnable listener = new TestRunnable();
     
     future.addListener(listener);
     
-    assertEquals(1, future.listeners.size()); // should now have once now that the runnable has not run yet
+    assertEquals(1, future.listenerHelper.registeredListenerCount()); // should now have once now that the runnable has not run yet
     
     future.run(); // this should call the listener
     
     assertTrue(listener.ranOnce()); // verify listener was called
     
-    assertEquals(0, future.listeners.size()); // empty after listener calls
+    assertEquals(0, future.listenerHelper.registeredListenerCount()); // empty after listener calls
     
     TestRunnable postRunListener = new TestRunnable();
     
@@ -67,7 +67,7 @@ public class ListenableFutureTaskTest {
     
     assertTrue(postRunListener.ranOnce()); // verify listener was called
     
-    assertEquals(0, future.listeners.size()); // still empty after future ran
+    assertEquals(0, future.listenerHelper.registeredListenerCount()); // still empty after future ran
     
     // verify run on correct executor
     TestRunnable executorListener = new TestRunnable();
