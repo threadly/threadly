@@ -1,5 +1,6 @@
 package org.threadly.concurrent.limiter;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.RunnableContainerInterface;
@@ -108,14 +109,20 @@ abstract class AbstractThreadPoolLimiter {
    */
   protected class LimiterRunnableWrapper implements Runnable, 
                                                     RunnableContainerInterface {
+    private final Executor executor;
     private final Runnable runnable;
     
-    public LimiterRunnableWrapper(Runnable runnable) {
+    protected LimiterRunnableWrapper(Executor executor, Runnable runnable) {
+      this.executor = executor;
       this.runnable = runnable;
     }
     
     protected void doAfterRunTasks() {
       // nothing in the default implementation
+    }
+    
+    protected void submitToExecutor() {
+      this.executor.execute(this);
     }
     
     @Override

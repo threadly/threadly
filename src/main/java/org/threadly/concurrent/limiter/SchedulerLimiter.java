@@ -62,15 +62,7 @@ public class SchedulerLimiter extends ExecutorLimiter
 
   @Override
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
-    
-    ListenableFutureTask<?> ft = new ListenableFutureTask<Object>(false, task);
-    
-    schedule(ft, delayInMs);
-    
-    return ft;
+    return submitScheduled(task, null, delayInMs);
   }
 
   @Override
@@ -110,7 +102,7 @@ public class SchedulerLimiter extends ExecutorLimiter
     if (delayInMs == 0) {
       execute(task);
     } else {
-      scheduler.schedule(new DelayedExecutionRunnable<Object>(task), 
+      scheduler.schedule(new DelayedExecutionRunnable(task), 
                          delayInMs);
     }
   }
@@ -129,9 +121,9 @@ public class SchedulerLimiter extends ExecutorLimiter
     RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay);
     
     if (initialDelay == 0) {
-      execute(rrw);
+      executeWrapper(rrw);
     } else {
-      scheduler.schedule(new DelayedExecutionRunnable<Object>(rrw), 
+      scheduler.schedule(new DelayedExecutionRunnable(rrw), 
                          initialDelay);
     }
   }
@@ -142,22 +134,30 @@ public class SchedulerLimiter extends ExecutorLimiter
    * 
    * @author jent - Mike Jensen
    */
-  protected class DelayedExecutionRunnable<T> implements Runnable, 
-                                                         RunnableContainerInterface {
-    private final Runnable runnable;
+  protected class DelayedExecutionRunnable implements Runnable, 
+                                                      RunnableContainerInterface {
+    private final LimiterRunnableWrapper lrw;
 
-    public DelayedExecutionRunnable(Runnable runnable) {
-      this.runnable = runnable;
+    protected DelayedExecutionRunnable(Runnable runnable) {
+      this(new LimiterRunnableWrapper(executor, runnable));
+    }
+
+    protected DelayedExecutionRunnable(LimiterRunnableWrapper lrw) {
+      this.lrw = lrw;
     }
     
     @Override
     public void run() {
-      execute(runnable);
+      if (canRunTask()) {  // we can run in the thread we already have
+        lrw.run();
+      } else {
+        addToQueue(lrw);
+      }
     }
 
     @Override
     public Runnable getContainedRunnable() {
-      return runnable;
+      return lrw.getContainedRunnable();
     }
   }
 
@@ -170,14 +170,14 @@ public class SchedulerLimiter extends ExecutorLimiter
    */
   protected class RecurringRunnableWrapper extends LimiterRunnableWrapper {
     private final long recurringDelay;
-    private final DelayedExecutionRunnable<?> delayRunnable;
+    private final DelayedExecutionRunnable delayRunnable;
     
     public RecurringRunnableWrapper(Runnable runnable, 
                                     long recurringDelay) {
-      super(runnable);
+      super(scheduler, runnable);
       
       this.recurringDelay = recurringDelay;
-      delayRunnable = new DelayedExecutionRunnable<Object>(this);
+      delayRunnable = new DelayedExecutionRunnable(this);
     }
     
     @Override

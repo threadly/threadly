@@ -701,8 +701,13 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void scheduleExecutionTest() {
+  public void scheduleTest() {
     SimpleSchedulerInterfaceTest.scheduleTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  @Test
+  public void scheduleNoDelayTest() {
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(new PriorityScheduledExecutorTestFactory());
   }
   
   @Test
@@ -730,7 +735,7 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void scheduleExecutionFail() {
+  public void scheduleFail() {
     SimpleSchedulerInterfaceTest.scheduleFail(new PriorityScheduledExecutorTestFactory());
   }
   
@@ -749,7 +754,13 @@ public class PriorityScheduledExecutorTest {
   @Test
   public void recurringExecutionTest() {
     PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(psetf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, psetf);
+  }
+  
+  @Test
+  public void recurringExecutionInitialDelayTest() {
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, psetf);
   }
   
   @Test
@@ -907,6 +918,13 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void wrapperScheduleNoDelayTest() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(wf);
+  }
+  
+  @Test
   public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, 
                                                           ExecutionException, 
                                                           TimeoutException {
@@ -934,7 +952,7 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void wrapperScheduleExecutionFail() {
+  public void wrapperScheduleFail() {
     WrapperFactory wf = new WrapperFactory();
     
     SimpleSchedulerInterfaceTest.scheduleFail(wf);
@@ -958,7 +976,14 @@ public class PriorityScheduledExecutorTest {
   public void wrapperRecurringExecutionTest() {
     WrapperFactory wf = new WrapperFactory();
     
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(wf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, wf);
+  }
+  
+  @Test
+  public void wrapperRecurringExecutionInitialDelayTest() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, wf);
   }
   
   @Test

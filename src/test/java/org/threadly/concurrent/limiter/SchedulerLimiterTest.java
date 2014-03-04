@@ -55,6 +55,20 @@ public class SchedulerLimiterTest {
   }
   
   @Test
+  public void isShutdownTest() {
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
+    try {
+      SchedulerLimiter limiter = new SchedulerLimiter(executor, 1);
+      
+      assertFalse(limiter.isShutdown());
+      executor.shutdownNow();
+      assertTrue(limiter.isShutdown());
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
   public void constructorEmptySubPoolNameTest() {
     PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
     try {
@@ -76,7 +90,7 @@ public class SchedulerLimiterTest {
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         runnables.add(tr);
-        limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
+        limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(limiter.executor, tr));
       }
       
       limiter.consumeAvailable();
@@ -210,7 +224,7 @@ public class SchedulerLimiterTest {
   }
   
   @Test
-  public void scheduleExecutionTest() {
+  public void scheduleTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
     SimpleSchedulerInterfaceTest.scheduleTest(sf);
@@ -224,7 +238,21 @@ public class SchedulerLimiterTest {
   }
   
   @Test
-  public void scheduleExecutionFail() {
+  public void scheduleNoDelayTest() {
+    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(sf);
+  }
+  
+  @Test
+  public void scheduleNoDelayExecutionNamedSubPoolTest() {
+    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
+    
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(sf);
+  }
+  
+  @Test
+  public void scheduleFail() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
     SimpleSchedulerInterfaceTest.scheduleFail(sf);
@@ -234,14 +262,28 @@ public class SchedulerLimiterTest {
   public void recurringExecutionTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
     
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, sf);
+  }
+  
+  @Test
+  public void recurringExecutionInitialDelayTest() {
+    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(false);
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, sf);
   }
   
   @Test
   public void recurringExecutionNamedSubPoolTest() {
     SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
     
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, sf);
+  }
+  
+  @Test
+  public void recurringExecutionInitialDelayNamedSubPoolTest() {
+    SchedulerLimiterFactory sf = new SchedulerLimiterFactory(true);
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, sf);
   }
   
   @Test

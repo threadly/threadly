@@ -193,10 +193,17 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void scheduleExecutionTest() {
+  public void scheduleTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
     SimpleSchedulerInterfaceTest.scheduleTest(sf);
+  }
+  
+  @Test
+  public void scheduleNoDelayTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(sf);
   }
   
   @Test
@@ -227,7 +234,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void scheduleExecutionFail() {
+  public void scheduleFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
     SimpleSchedulerInterfaceTest.scheduleFail(sf);
@@ -251,7 +258,14 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, sf);
+  }
+  
+  @Test
+  public void recurringExecutionInitialDelayTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, sf);
   }
   
   @Test
@@ -405,6 +419,13 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void wrapperScheduleNoDelayTest() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(wf);
+  }
+  
+  @Test
   public void wrapperSubmitScheduledRunnableTest() throws InterruptedException, 
                                                           ExecutionException, 
                                                           TimeoutException {
@@ -432,7 +453,7 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void wrapperScheduleExecutionFail() {
+  public void wrapperScheduleFail() {
     WrapperFactory wf = new WrapperFactory();
     
     SimpleSchedulerInterfaceTest.scheduleFail(wf);
@@ -456,7 +477,14 @@ public class PrioritySchedulerStatisticTrackerTest {
   public void wrapperRecurringExecutionTest() {
     WrapperFactory wf = new WrapperFactory();
     
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(wf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, wf);
+  }
+  
+  @Test
+  public void wrapperRecurringExecutionInitialDelayTest() {
+    WrapperFactory wf = new WrapperFactory();
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, wf);
   }
   
   @Test

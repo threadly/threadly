@@ -96,7 +96,7 @@ public class ExecutorLimiterTest {
     for (int i = 0; i < PARALLEL_COUNT; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
-      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
+      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(limiter.executor, tr));
     }
     
     limiter.consumeAvailable();

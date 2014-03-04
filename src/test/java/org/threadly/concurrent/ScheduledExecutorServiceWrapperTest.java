@@ -62,14 +62,21 @@ public class ScheduledExecutorServiceWrapperTest {
   }
   
   @Test
-  public void scheduleExecutionTest() {
+  public void scheduleTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
     SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
-  public void scheduleExecutionFail() {
+  public void scheduleNoDelayTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(sf);
+  }
+  
+  @Test
+  public void scheduleFail() {
     SchedulerFactory sf = new SchedulerFactory();
     
     SimpleSchedulerInterfaceTest.scheduleFail(sf);
@@ -120,7 +127,14 @@ public class ScheduledExecutorServiceWrapperTest {
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
     
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(sf);
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, sf);
+  }
+  
+  @Test
+  public void recurringExecutionInitialDelayTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, sf);
   }
   
   @Test

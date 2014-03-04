@@ -142,7 +142,19 @@ public class SubmitterSchedulerInterfaceTest {
         // expected
       }
       try {
+        scheduler.submitScheduled((Runnable)null, null, 1000);
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
         scheduler.submitScheduled(new TestRunnable(), -1);
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      try {
+        scheduler.submitScheduled(new TestRunnable(), null, -1);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected
