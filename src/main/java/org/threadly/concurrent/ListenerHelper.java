@@ -18,7 +18,7 @@ import org.threadly.util.ExceptionUtils;
  * @since 1.1.0
  */
 public class ListenerHelper {
-  protected final boolean callListenersOnce;
+  protected final boolean callOnce;
   protected final Map<Runnable, Executor> listeners;
   protected boolean done;
   
@@ -29,7 +29,7 @@ public class ListenerHelper {
    * @param callListenersOnce true if listeners should only be called once
    */
   public ListenerHelper(boolean callListenersOnce) {
-    this.callListenersOnce = callListenersOnce;
+    this.callOnce = callListenersOnce;
     this.listeners = new HashMap<Runnable, Executor>();
     done = false;
   }
@@ -43,10 +43,15 @@ public class ListenerHelper {
    * If calling multiple times, this will only have an effect if constructed 
    * with a false, indicating that listeners can expect to be called multiple 
    * times.  In which case all listeners that have registered will be called 
-   * again.
+   * again.  If this was constructed with the expectation of only calling once 
+   * an IllegalStateException will be thrown on subsequent calls. 
    */
   public void callListeners() {
     synchronized (listeners) {
+      if (done && callOnce) {
+        throw new IllegalStateException("Already called");
+      }
+      
       done = true;
       Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
       while (it.hasNext()) {
@@ -54,7 +59,7 @@ public class ListenerHelper {
         runListener(listener.getKey(), listener.getValue(), false);
       }
       
-      if (callListenersOnce) {
+      if (callOnce) {
         listeners.clear();
       }
     }
@@ -92,7 +97,7 @@ public class ListenerHelper {
     }
     
     synchronized (listeners) {
-      if (callListenersOnce && done) {
+      if (callOnce && done) {
         runListener(listener, executor, true);
       } else {
         listeners.put(listener, executor);
@@ -101,7 +106,41 @@ public class ListenerHelper {
   }
   
   /**
-   * Call to see how many listeners were added, and will be called on the next 
+   * Attempts to remove a listener waiting to be called.
+   * 
+   * @param listener listener instance to be removed
+   * @return true if the listener was removed
+   */
+  public boolean removeListener(Runnable listener) {
+    synchronized (listeners) {
+      /* For large listener counts it would be cheaper to 
+       * check containsKey and call remove, but I would like 
+       * to continue to support the container interfaces 
+       * as much as possible.
+       */
+      Iterator<Runnable> it = listeners.keySet().iterator();
+      while (it.hasNext()) {
+        if (ContainerHelper.isContained(it.next(), listener)) {
+          it.remove();
+          return true;
+        }
+      }
+      
+      return false;
+    }
+  }
+  
+  /**
+   * Removes all listeners currently registered. 
+   */
+  public void clearListeners() {
+    synchronized (listeners) {
+      listeners.clear();
+    }
+  }
+  
+  /**
+   * Returns how many listeners were added, and will be ran on the next 
    * call to "callListeners".
    * 
    * @return number of listeners registered to be called

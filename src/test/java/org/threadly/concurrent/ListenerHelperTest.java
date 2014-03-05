@@ -109,7 +109,6 @@ public class ListenerHelperTest {
     assertTrue(onceTR.ranOnce());
     assertTrue(repeatedTR.ranOnce());
     
-    onceHelper.callListeners();
     repeatedHelper.callListeners();
     
     assertTrue(onceTR.ranOnce());
@@ -128,7 +127,6 @@ public class ListenerHelperTest {
     assertTrue(onceTR.ranOnce());
     assertFalse(repeatedTR.ranOnce());
     
-    onceHelper.callListeners();
     repeatedHelper.callListeners();
     
     assertTrue(onceTR.ranOnce());
@@ -149,6 +147,63 @@ public class ListenerHelperTest {
     }
     
     assertTrue(listener.ranOnce());
+  }
+  
+  @Test (expected = RuntimeException.class)
+  public void callListenersFail() {
+    onceHelper.callListeners();
+    // should fail on subsequent calls
+    onceHelper.callListeners();
+  }
+  
+  @Test
+  public void removeListenerTest() {
+    TestRunnable onceTR = new TestRunnable();
+    TestRunnable repeatedTR = new TestRunnable();
+    
+    assertFalse(onceHelper.removeListener(onceTR));
+    assertFalse(repeatedHelper.removeListener(repeatedTR));
+    
+    onceHelper.addListener(onceTR, null);
+    repeatedHelper.addListener(repeatedTR, null);
+    
+    assertTrue(onceHelper.removeListener(onceTR));
+    assertTrue(repeatedHelper.removeListener(repeatedTR));
+  }
+  
+  @Test
+  public void removeListenerAfterCallTest() {
+    TestRunnable onceTR = new TestRunnable();
+    TestRunnable repeatedTR = new TestRunnable();
+    
+    assertFalse(onceHelper.removeListener(onceTR));
+    assertFalse(repeatedHelper.removeListener(repeatedTR));
+    
+    onceHelper.addListener(onceTR, null);
+    repeatedHelper.addListener(repeatedTR, null);
+    
+    onceHelper.callListeners();
+    repeatedHelper.callListeners();
+    
+    assertFalse(onceHelper.removeListener(onceTR));
+    assertTrue(repeatedHelper.removeListener(repeatedTR));
+  }
+  
+  @Test
+  public void clearListenersTest() {
+    TestRunnable onceTR = new TestRunnable();
+    TestRunnable repeatedTR = new TestRunnable();
+    onceHelper.addListener(onceTR, null);
+    repeatedHelper.addListener(repeatedTR, null);
+    
+    onceHelper.clearListeners();
+    repeatedHelper.clearListeners();
+    
+    onceHelper.callListeners();
+    repeatedHelper.callListeners();
+    
+    assertFalse(onceTR.ranOnce());
+    assertFalse(repeatedTR.ranOnce());
   }
   
   private static class TestRunnable extends org.threadly.test.concurrent.TestRunnable {
