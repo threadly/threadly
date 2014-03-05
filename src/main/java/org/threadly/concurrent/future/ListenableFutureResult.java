@@ -47,6 +47,15 @@ public class ListenableFutureResult<T> implements ListenableFuture<T> {
     listenerHelper.addListener(listener, executor);
   }
   
+  // should be synchronized on resultLock before calling
+  private void setDone() {
+    if (done) {
+      throw new IllegalStateException("Already done");
+    }
+    
+    done = true;
+  }
+  
   /**
    * Call to indicate this future is done, and provide the given result.  It 
    * is expected that only this or setFailure are called, and only called 
@@ -56,12 +65,9 @@ public class ListenableFutureResult<T> implements ListenableFuture<T> {
    */
   public void setResult(T result) {
     synchronized (resultLock) {
-      if (done) {
-        throw new IllegalStateException("Already done");
-      }
+      setDone();
       
       this.result = result;
-      done = true;
       
       resultLock.notifyAll();
     }
@@ -83,12 +89,9 @@ public class ListenableFutureResult<T> implements ListenableFuture<T> {
       failure = new Exception();
     }
     synchronized (resultLock) {
-      if (done) {
-        throw new IllegalStateException("Already done");
-      }
+      setDone();
       
       this.failure = failure;
-      done = true;
       
       resultLock.notifyAll();
     }
