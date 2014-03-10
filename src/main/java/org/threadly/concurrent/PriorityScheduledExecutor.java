@@ -1028,15 +1028,15 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   
   protected void workerDone(Worker worker) {
     synchronized (workersLock) {
-      if (! shutdownFinishing) {
+      if (shutdownFinishing) {
+        killWorker(worker);
+      } else {
         // always add to the front so older workers are at the back
         availableWorkers.addFirst(worker);
       
         expireOldWorkers();
             
         workersLock.notify();
-      } else {
-        killWorker(worker);
       }
     }
   }
@@ -1126,17 +1126,25 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     }
     
     public void blockTillNextTask() {
+      boolean checkedInterrupted = false;
       while (nextTask == null && running) {
         LockSupport.park(this);
-        
-        if (Thread.interrupted()) { // check and clear interrupt
-          /* We don't care about checking the shutdown state here because the interrupted status 
-           * was already cleared after the run of the last task.  So someone really wants to kill 
-           * this thread (and hopefully already called shutdown).  We will respect the request to 
-           * allow this thread to die at this point.
-           * 
-           * if (somehow) provided a new task, by the time killWorker returns we will still 
-           * run that task before quitting.
+
+        checkInterrupted();
+        checkedInterrupted = true;
+      }
+      
+      if (! checkedInterrupted) {
+        // must verify thread is not in interrupted status before it runs a task
+        checkInterrupted();
+      }
+    }
+    
+    private void checkInterrupted() {
+      if (Thread.interrupted()) { // check and clear interrupt
+        if (shutdownFinishing) {
+          /* If provided a new task, by the time killWorker returns we will still run that task 
+           * before letting the thread return.
            */
           killWorker(this);
         }
