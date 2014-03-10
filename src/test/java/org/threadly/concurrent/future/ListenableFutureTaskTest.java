@@ -11,13 +11,30 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.future.RunnableFutureTest.FutureFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class ListenableFutureTaskTest {
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
+  
+  @Test
+  public void getCallableResultTest() throws InterruptedException, ExecutionException {
+    RunnableFutureTest.getCallableResultTest(new Factory());
+  }
+  
+  @Test
+  public void getRunnableResultTest() throws InterruptedException, ExecutionException {
+    RunnableFutureTest.getRunnableResultTest(new Factory());
+  }
+  
   @Test
   public void getTimeoutFail() throws InterruptedException, ExecutionException {
     RunnableFutureTest.getTimeoutFail(new Factory());
@@ -131,6 +148,11 @@ public class ListenableFutureTaskTest {
     @Override
     public RunnableFuture<?> make(Runnable run) {
       return new ListenableFutureTask<Object>(false, run);
+    }
+
+    @Override
+    public <T> RunnableFuture<T> make(Runnable run, T result) {
+      return new ListenableFutureTask<T>(false, run, result);
     }
 
     @Override
