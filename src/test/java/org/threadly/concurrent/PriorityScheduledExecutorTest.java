@@ -14,6 +14,7 @@ import org.threadly.concurrent.PriorityScheduledExecutor.Worker;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
@@ -21,25 +22,29 @@ import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class PriorityScheduledExecutorTest {
-  private static void ensureIdleWorker(final PriorityScheduledExecutor scheduler) {
+  private static void ensureIdleWorker(PriorityScheduledExecutor scheduler) {
     TestRunnable tr = new TestRunnable();
     scheduler.execute(tr);
     tr.blockTillStarted();
      
     // block till the worker is finished
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        synchronized (scheduler.workersLock) {
-          return scheduler.availableWorkers.size() != 0;
-        }
-      }
-    }.blockTillTrue();
+    blockTillWorkerAvailable(scheduler);
     
     // verify we have a worker
     assertEquals(1, scheduler.getCurrentPoolSize());
 
     TestUtils.blockTillClockAdvances();
+  }
+  
+  private static void blockTillWorkerAvailable(final PriorityScheduledExecutor scheduler) {
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        synchronized (scheduler.workersLock) {
+          return ! scheduler.availableWorkers.isEmpty();
+        }
+      }
+    }.blockTillTrue();
   }
   
   @Test
@@ -91,7 +96,6 @@ public class PriorityScheduledExecutorTest {
       // expected
     }
   }
-
   
   @Test
   public void constructorNullPriorityTest() {
@@ -533,10 +537,11 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
-  public void interruptedExecutionTest() {
+  public void interruptedDuringRunTest() throws InterruptedException, TimeoutException {
     final long taskRunTime = 1000 * 10;
     final PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 1000);
     try {
+      final AsyncVerifier av = new AsyncVerifier();
       TestRunnable tr = new TestRunnable() {
         @Override
         public void handleRunFinish() {
@@ -546,6 +551,9 @@ public class PriorityScheduledExecutorTest {
                  ! currentThread.isInterrupted()) {
             // spin
           }
+          
+          av.assertTrue(currentThread.isInterrupted());
+          av.signalComplete();
         }
       };
       
@@ -554,19 +562,41 @@ public class PriorityScheduledExecutorTest {
       tr.blockTillStarted();
       assertEquals(1, executor.getCurrentPoolSize());
       
+      // should interrupt
       assertTrue(future.cancel(true));
+      av.waitForTest(); // verify thread was interruped as expected
       
       // verify worker was returned to pool
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return executor.availableWorkers.size() == 1;
-        }
-      }.blockTillTrue(1000, 5); // will throw an exception if not true
+      blockTillWorkerAvailable(executor);
+      
       // verify pool size is still correct
       assertEquals(1, executor.getCurrentPoolSize());
       // verify interrupted status has been cleared
       assertFalse(executor.availableWorkers.getFirst().thread.isInterrupted());
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void interruptedAfterRunTest() throws InterruptedException, TimeoutException {
+    final PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 1000);
+    try {
+      ensureIdleWorker(executor);
+      
+      // send interrupt
+      executor.availableWorkers.getFirst().thread.interrupt();
+      
+      final AsyncVerifier av = new AsyncVerifier();
+      executor.execute(new TestRunnable() {
+        @Override
+        public void handleRunStart() {
+          av.assertFalse(Thread.currentThread().isInterrupted());
+          av.signalComplete();
+        }
+      });
+      
+      av.waitForTest(); // will throw an exception if invalid
     } finally {
       executor.shutdownNow();
     }
