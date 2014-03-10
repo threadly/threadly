@@ -613,12 +613,13 @@ public class PrioritySchedulerStatisticTrackerTest {
   
   // tests for statistics tracking
   
-  private static void blockTillSchedulerIdle(final PrioritySchedulerStatisticTracker scheduler) {
+  private static void blockTillSchedulerIdle(final PrioritySchedulerStatisticTracker scheduler, 
+                                             final int expectedSampleSize) {
     new TestCondition() { // block till all are finished
       @Override
       public boolean get() {
         return scheduler.getCurrentRunningCount() == 0 && 
-                 ! scheduler.getRunTimes().isEmpty();
+                 scheduler.getRunTimes().size() >= expectedSampleSize;
       }
     }.blockTillTrue();
   }
@@ -645,7 +646,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       
       lastRunnable.blockTillFinished();
       // block till all are finished
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, TEST_QTY);
       
       // reset stats
       scheduler.resetCollectedStats();
@@ -691,11 +692,12 @@ public class PrioritySchedulerStatisticTrackerTest {
       }
       
       lastRunnable.blockTillFinished();
+      int expectedCount = lowPriorityCount + highPriorityCount;
       // block till all are finished
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, expectedCount);
       
       List<Long> runTimes = scheduler.getRunTimes();
-      assertEquals(lowPriorityCount + highPriorityCount, 
+      assertEquals(expectedCount, 
                    runTimes.size());
       
       long totalRunTime = 0;
@@ -837,7 +839,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastRunnable.unblock();
       
       lastRunnable.blockTillFinished();
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, lowPriorityCount + highPriorityCount);
       
       List<Long> samples = new ArrayList<Long>(scheduler.getRunTimes());
       Collections.sort(samples);
@@ -878,7 +880,7 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       // wait for task to finish now
       br.blockTillFinished();
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, 1);
 
       switch (testPriority) {
         case High:
@@ -933,7 +935,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastRunnable.unblock();
       
       lastRunnable.blockTillFinished();
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, lowPriorityCount + highPriorityCount);
       
       List<Long> samples;
       switch (priority) {
@@ -1012,7 +1014,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       lastRunnable.unblock();
       
       lastRunnable.blockTillFinished();
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, lowPriorityCount + highPriorityCount);
       
       List<Long> samples;
       switch (priority) {
@@ -1074,7 +1076,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertTrue(longRunning.get(0) == br);
       
       // wait for task to finish now
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, 1);
 
       assertEquals(0, scheduler.getQtyRunningOverTime(0));
       longRunning = scheduler.getRunnablesRunningOverTime(0);
@@ -1106,7 +1108,7 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertTrue(longRunning.get(0) == bc);
       
       // wait for task to finish now
-      blockTillSchedulerIdle(scheduler);
+      blockTillSchedulerIdle(scheduler, 1);
 
       assertEquals(0, scheduler.getQtyRunningOverTime(0));
       longRunning = scheduler.getCallablesRunningOverTime(0);
