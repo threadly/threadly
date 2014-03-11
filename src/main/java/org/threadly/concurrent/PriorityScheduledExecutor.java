@@ -1166,13 +1166,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
           nextTask = null;
           if (running) {
             // only check if still running, otherwise worker has already been killed
-            if (Thread.interrupted() && // clear interrupt
-                shutdownFinishing) {  // if shutting down kill worker
-              killWorker(this);
-            } else {
-              lastRunTime = Clock.lastKnownTimeMillis();
-              workerDone(this);
-            }
+            lastRunTime = Clock.lastKnownTimeMillis();
+            workerDone(this);
           }
         }
       }
