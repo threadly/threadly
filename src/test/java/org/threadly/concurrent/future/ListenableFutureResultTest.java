@@ -126,6 +126,7 @@ public class ListenableFutureResultTest {
     
     PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(1, 1, 100);
     try {
+      scheduler.prestartAllCoreThreads();
       scheduler.schedule(new Runnable() {
         @Override
         public void run() {
@@ -133,7 +134,7 @@ public class ListenableFutureResultTest {
         }
       }, SCHEDULE_DELAY);
       
-      assertTrue(lfr.get(SCHEDULE_DELAY * 4, TimeUnit.MILLISECONDS) == testResult);
+      assertTrue(lfr.get(SCHEDULE_DELAY * 5, TimeUnit.MILLISECONDS) == testResult);
     } finally {
       scheduler.shutdownNow();
     }
