@@ -206,6 +206,29 @@ public class ListenerHelperTest {
     assertFalse(repeatedTR.ranOnce());
   }
   
+  @Test
+  public void addListenerFromCallingThread() {
+    final TestRunnable addedTR = new TestRunnable();
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        repeatedHelper.addListener(addedTR, null);
+      }
+    };
+    repeatedHelper.addListener(tr, null);
+    repeatedHelper.addListener(new TestRunnable(), null);
+    
+    repeatedHelper.callListeners();
+    
+    assertTrue(tr.ranOnce());
+    assertEquals(0, addedTR.getRunCount());
+    
+    repeatedHelper.callListeners();
+    
+    assertEquals(2, tr.getRunCount());
+    assertEquals(1, addedTR.getRunCount());
+  }
+  
   private static class TestRunnable extends org.threadly.test.concurrent.TestRunnable {
     private volatile Thread lastRanThread = null;
     

@@ -18,8 +18,9 @@ import org.threadly.util.ExceptionUtils;
  * @since 1.1.0
  */
 public class ListenerHelper {
+  protected final Object listenersLock;
   protected final boolean callOnce;
-  protected final Map<Runnable, Executor> listeners;
+  protected Map<Runnable, Executor> listeners;
   protected boolean done;
   
   /**
@@ -29,9 +30,10 @@ public class ListenerHelper {
    * @param callListenersOnce true if listeners should only be called once
    */
   public ListenerHelper(boolean callListenersOnce) {
+    this.listenersLock = new Object();
     this.callOnce = callListenersOnce;
-    this.listeners = new HashMap<Runnable, Executor>();
-    done = false;
+    this.listeners = null;
+    this.done = false;
   }
   
   /**
@@ -47,12 +49,20 @@ public class ListenerHelper {
    * an IllegalStateException will be thrown on subsequent calls. 
    */
   public void callListeners() {
-    synchronized (listeners) {
+    synchronized (listenersLock) {
       if (done && callOnce) {
         throw new IllegalStateException("Already called");
       }
       
+      /* Must set done to true before calling listeners in case any listeners
+       * added additional listeners. 
+       */
       done = true;
+      
+      if (listeners == null) {
+        return;
+      }
+      
       Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
       while (it.hasNext()) {
         Entry<Runnable, Executor> listener = it.next();
@@ -60,7 +70,7 @@ public class ListenerHelper {
       }
       
       if (callOnce) {
-        listeners.clear();
+        listeners = null;
       }
     }
   }
@@ -96,11 +106,25 @@ public class ListenerHelper {
       throw new IllegalArgumentException("Can not provide a null listener runnable");
     }
     
-    synchronized (listeners) {
+    boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
+    synchronized (listenersLock) {
       if (callOnce && done) {
         runListener(listener, executor, true);
       } else {
-        listeners.put(listener, executor);
+        if (addingFromCallingThread) {
+          // we must create a new instance of listeners to prevent a ConcurrentModificationException
+          // we know at this point that listeners can not be null
+          Map<Runnable, Executor> newListeners = new HashMap<Runnable, Executor>(listeners.size() + 1);
+          newListeners.putAll(listeners);
+          newListeners.put(listener, executor);
+          
+          listeners = newListeners;
+        } else {
+          if (listeners == null) {
+            listeners = new HashMap<Runnable, Executor>();
+          }
+          listeners.put(listener, executor);
+        }
       }
     }
   }
@@ -112,7 +136,11 @@ public class ListenerHelper {
    * @return true if the listener was removed
    */
   public boolean removeListener(Runnable listener) {
-    synchronized (listeners) {
+    synchronized (listenersLock) {
+      if (listeners == null) {
+        return false;
+      }
+      
       /* For large listener counts it would be cheaper to 
        * check containsKey and call remove, but I would like 
        * to continue to support the container interfaces 
@@ -134,8 +162,8 @@ public class ListenerHelper {
    * Removes all listeners currently registered. 
    */
   public void clearListeners() {
-    synchronized (listeners) {
-      listeners.clear();
+    synchronized (listenersLock) {
+      listeners = null;
     }
   }
   
@@ -146,8 +174,8 @@ public class ListenerHelper {
    * @return number of listeners registered to be called
    */
   public int registeredListenerCount() {
-    synchronized (listeners) {
-      return listeners.size();
+    synchronized (listenersLock) {
+      return listeners == null ? 0 : listeners.size();
     }
   }
 }
