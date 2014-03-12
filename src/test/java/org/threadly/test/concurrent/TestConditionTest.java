@@ -10,11 +10,9 @@ import org.threadly.test.concurrent.TestCondition;
 public class TestConditionTest {
   @Test
   public void testBlock() {
-    int pollInterval = 20;
-    
     DelayCondition dc = new DelayCondition(DELAY_TIME);
     long startTime = System.currentTimeMillis();
-    dc.blockTillTrue(1000, pollInterval);
+    dc.blockTillTrue(DELAY_TIME * 10);
     long endTime = System.currentTimeMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);

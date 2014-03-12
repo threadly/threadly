@@ -6,6 +6,7 @@ import static org.threadly.TestConstants.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestCondition.ConditionTimeoutException;
@@ -137,6 +138,22 @@ public class TestRunnableTest {
     
     concurrentTR.run();
     assertTrue(concurrentTR.ranConcurrently());
+  }
+  
+  @Test
+  public void currentlyRunningTest() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    
+    assertFalse(btr.isRunning());
+    
+    new Thread(btr).start();
+    try {
+      btr.blockTillStarted();
+      
+      assertTrue(btr.isRunning());
+    } finally {
+      btr.unblock();
+    }
   }
   
   private class TestTestRunnable extends TestRunnable {

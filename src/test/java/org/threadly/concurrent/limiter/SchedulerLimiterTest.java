@@ -13,8 +13,8 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTestUtil;
-import org.threadly.concurrent.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.SimpleSchedulerInterfaceTest;
