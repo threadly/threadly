@@ -166,6 +166,10 @@ public class ListenerHelperTest {
     
     onceHelper.addListener(onceTR, null);
     repeatedHelper.addListener(repeatedTR, null);
+
+    // should be false for the opposite
+    assertFalse(onceHelper.removeListener(repeatedTR));
+    assertFalse(repeatedHelper.removeListener(onceTR));
     
     assertTrue(onceHelper.removeListener(onceTR));
     assertTrue(repeatedHelper.removeListener(repeatedTR));
