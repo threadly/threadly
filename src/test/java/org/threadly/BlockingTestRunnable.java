@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly;
 
 import org.threadly.test.concurrent.TestRunnable;
 
