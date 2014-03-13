@@ -31,7 +31,7 @@ The design is such so that you create one large pool, and then wrap it in one of
 
 -- Unit Test Tools --
 
-*    AsyncVerifier - used to verify operations which occured asynchronisly.  The AsyncVerifier allows you to assert failures/sucuesses in other threads, and allow the main test thread to throw exceptions if any failures occur.  Thus blocking the main test thread until the subthreads have completed.
+*    AsyncVerifier - Used to verify operations which occurred asynchronously.  The AsyncVerifier allows you to assert failures/successes in other threads, and allow the main test thread to throw exceptions if any failures occur.  Thus blocking the main test thread until the sub-threads have completed.
 
 *    TestCondition - often times in doing unit test for asynchronous operations you have to wait for a condition to be come true. This class gives a way to easily wait for those conditions to be true, or throw an exception if they do not happen after a given timeout. The implementation of TestRunnable gives a good example of how this can be used.
 
