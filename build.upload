@@ -81,9 +81,9 @@ uploadArchives {
         url 'http://threadly.org/'
  
         scm {
-          url 'scm:git@github.com:jentfoo/threadly.git'
-          connection 'scm:git@github.com:jentfoo/threadly.git'
-          developerConnection 'scm:git@github.com:jentfoo/threadly.git'
+          url 'scm:git@github.com:threadly/threadly.git'
+          connection 'scm:git@github.com:threadly/threadly.git'
+          developerConnection 'scm:git@github.com:threadly/threadly.git'
         }
  
         licenses {
