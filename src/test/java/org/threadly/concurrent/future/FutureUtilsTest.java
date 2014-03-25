@@ -39,7 +39,7 @@ public class FutureUtilsTest {
   }
   
   private static List<ListenableFuture<?>> makeFutures(int count, int errorIndex) {
-    List<ListenableFuture<?>> result = new ArrayList<ListenableFuture<?>>(count);
+    List<ListenableFuture<?>> result = new ArrayList<ListenableFuture<?>>(count + 1);
     
     for (int i = 0; i < count; i++) {
       TestRunnable tr;
@@ -128,22 +128,22 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void makeAllCompleteFutureNullTest() {
-    ListenableFuture<?> f = FutureUtils.makeAllCompleteFuture(null);
+  public void makeCompleteFutureNullTest() {
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(null);
     
     assertTrue(f.isDone());
   }
   
   @Test
-  public void makeAllCompleteFutureEmptyListTest() {
+  public void makeCompleteFutureEmptyListTest() {
     List<ListenableFuture<?>> futures = Collections.emptyList();
-    ListenableFuture<?> f = FutureUtils.makeAllCompleteFuture(futures);
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
     
     assertTrue(f.isDone());
   }
   
   @Test
-  public void makeAllCompleteFutureAlreadyDoneFuturesTest() {
+  public void makeCompleteFutureAlreadyDoneFuturesTest() {
     List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
@@ -152,25 +152,25 @@ public class FutureUtilsTest {
       futures.add(future);
     }
 
-    ListenableFuture<?> f = FutureUtils.makeAllCompleteFuture(futures);
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
     
     assertTrue(f.isDone());
   }
   
   @Test
-  public void makeAllCompleteFutureTest() throws InterruptedException, TimeoutException {
-    makeAllCompleteFutureTest(-1);
+  public void makeCompleteFutureTest() throws InterruptedException, TimeoutException {
+    makeCompleteFutureTest(-1);
   }
   
   @Test
-  public void makeAllCompleteFutureWithErrorTest() throws InterruptedException, TimeoutException {
-    makeAllCompleteFutureTest(TEST_QTY / 2);
+  public void makeCompleteFutureWithErrorTest() throws InterruptedException, TimeoutException {
+    makeCompleteFutureTest(TEST_QTY / 2);
   }
   
-  private static void makeAllCompleteFutureTest(int errorIndex) throws InterruptedException, TimeoutException {
+  private static void makeCompleteFutureTest(int errorIndex) throws InterruptedException, TimeoutException {
     final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
 
-    final ListenableFuture<?> f = FutureUtils.makeAllCompleteFuture(futures);
+    final ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
     
     final AsyncVerifier av = new AsyncVerifier();
     f.addListener(new Runnable() {
@@ -180,7 +180,7 @@ public class FutureUtilsTest {
         
         Iterator<ListenableFuture<?>> it = futures.iterator();
         while (it.hasNext()) {
-          assertTrue(it.next().isDone());
+          av.assertTrue(it.next().isDone());
         }
         
         av.signalComplete();
@@ -188,5 +188,274 @@ public class FutureUtilsTest {
     });
     
     av.waitForTest();
+  }
+  
+  @Test
+  public void makeCompleteListFutureNullTest() {
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(null);
+    
+    assertTrue(f.isDone());
+  }
+  
+  @Test
+  public void makeCompleteListFutureEmptyListTest() {
+    List<ListenableFuture<?>> futures = Collections.emptyList();
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(futures);
+    
+    assertTrue(f.isDone());
+  }
+  
+  @Test
+  public void makeCompleteListFutureAlreadyDoneFuturesTest() throws InterruptedException, ExecutionException {
+    List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
+    
+    for (int i = 0; i < TEST_QTY; i++) {
+      ListenableFutureResult<?> future = new ListenableFutureResult<Object>();
+      if (i == TEST_QTY / 2) {
+        future.setFailure(null);
+      } else {
+        future.setResult(null);
+      }
+      futures.add(future);
+    }
+
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(futures);
+    
+    assertTrue(f.isDone());
+    
+    verifyAllIncluded(futures, f.get(), null);
+  }
+  
+  private static void verifyAllIncluded(List<ListenableFuture<?>> expected, 
+                                        List<ListenableFuture<?>> result, 
+                                        ListenableFuture<?> excludedFuture) {
+    Iterator<ListenableFuture<?>> it = expected.iterator();
+    while (it.hasNext()) {
+      ListenableFuture<?> f = it.next();
+      if (f != excludedFuture) {
+        assertTrue(result.contains(f));
+      }
+    }
+    
+    assertFalse(result.contains(excludedFuture));
+  }
+  
+  @Test
+  public void makeCompleteListFutureTest() throws ExecutionException, InterruptedException, TimeoutException {
+    makeCompleteListFutureTest(-1);
+  }
+  
+  @Test
+  public void makeCompleteListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+    makeCompleteListFutureTest(TEST_QTY / 2);
+  }
+  
+  private static void makeCompleteListFutureTest(int errorIndex) throws ExecutionException, InterruptedException, TimeoutException {
+    final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
+
+    final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(futures);
+    
+    final AsyncVerifier av = new AsyncVerifier();
+    f.addListener(new Runnable() {
+      @Override
+      public void run() {
+        av.assertTrue(f.isDone());
+        
+        Iterator<ListenableFuture<?>> it = futures.iterator();
+        while (it.hasNext()) {
+          av.assertTrue(it.next().isDone());
+        }
+        
+        av.signalComplete();
+      }
+    });
+    
+    av.waitForTest();
+    
+    verifyAllIncluded(futures, f.get(), null);
+  }
+  
+  @Test
+  public void makeSuccessListFutureNullTest() {
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(null);
+    
+    assertTrue(f.isDone());
+  }
+  
+  @Test
+  public void makeSuccessListFutureEmptyListTest() {
+    List<ListenableFuture<?>> futures = Collections.emptyList();
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
+    
+    assertTrue(f.isDone());
+  }
+  
+  @Test
+  public void makeSuccessListFutureAlreadyDoneFuturesTest() throws InterruptedException, ExecutionException {
+    List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
+    ListenableFuture<?> failureFuture = null;
+    
+    for (int i = 0; i < TEST_QTY; i++) {
+      ListenableFutureResult<?> future = new ListenableFutureResult<Object>();
+      if (i == TEST_QTY / 2) {
+        failureFuture = future;
+        future.setFailure(null);
+      } else {
+        future.setResult(null);
+      }
+      futures.add(future);
+    }
+
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
+    
+    assertTrue(f.isDone());
+    
+    verifyAllIncluded(futures, f.get(), failureFuture);
+  }
+  
+  @Test
+  public void makeSuccessListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+    final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    ListenableFutureResult<?> failureFuture = new ListenableFutureResult<Object>();
+    failureFuture.setFailure(null);
+    futures.add(failureFuture);
+
+    final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
+    
+    final AsyncVerifier av = new AsyncVerifier();
+    f.addListener(new Runnable() {
+      @Override
+      public void run() {
+        av.assertTrue(f.isDone());
+        
+        Iterator<ListenableFuture<?>> it = futures.iterator();
+        while (it.hasNext()) {
+          av.assertTrue(it.next().isDone());
+        }
+        
+        av.signalComplete();
+      }
+    });
+    
+    av.waitForTest();
+    
+    verifyAllIncluded(futures, f.get(), failureFuture);
+  }
+  
+  @Test
+  public void makeFailureListFutureNullTest() {
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(null);
+    
+    assertTrue(f.isDone());
+  }
+  
+  @Test
+  public void makeFailureListFutureEmptyListTest() {
+    List<ListenableFuture<?>> futures = Collections.emptyList();
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
+    
+    assertTrue(f.isDone());
+  }
+  
+  @Test
+  public void makeFailureListFutureAlreadyDoneFuturesTest() throws InterruptedException, ExecutionException {
+    List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
+    ListenableFuture<?> failureFuture = null;
+    
+    for (int i = 0; i < TEST_QTY; i++) {
+      ListenableFutureResult<?> future = new ListenableFutureResult<Object>();
+      if (i == TEST_QTY / 2) {
+        failureFuture = future;
+        future.setFailure(null);
+      } else {
+        future.setResult(null);
+      }
+      futures.add(future);
+    }
+
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
+    
+    assertTrue(f.isDone());
+    
+    verifyNoneIncluded(futures, f.get(), failureFuture);
+  }
+  
+  private static void verifyNoneIncluded(List<ListenableFuture<?>> exempt, 
+                                         List<ListenableFuture<?>> result, 
+                                         ListenableFuture<?> includedFuture) {
+    Iterator<ListenableFuture<?>> it = exempt.iterator();
+    while (it.hasNext()) {
+      ListenableFuture<?> f = it.next();
+      if (f != includedFuture) {
+        assertFalse(result.contains(f));
+      }
+    }
+    
+    assertTrue(result.contains(includedFuture));
+  }
+  
+  @Test
+  public void makeFailureListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+    final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    ListenableFutureResult<?> failureFuture = new ListenableFutureResult<Object>();
+    failureFuture.setFailure(null);
+    futures.add(failureFuture);
+
+    final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
+    
+    final AsyncVerifier av = new AsyncVerifier();
+    f.addListener(new Runnable() {
+      @Override
+      public void run() {
+        av.assertTrue(f.isDone());
+        
+        Iterator<ListenableFuture<?>> it = futures.iterator();
+        while (it.hasNext()) {
+          av.assertTrue(it.next().isDone());
+        }
+        
+        av.signalComplete();
+      }
+    });
+    
+    av.waitForTest();
+    
+    verifyNoneIncluded(futures, f.get(), failureFuture);
+  }
+  
+  @Test
+  public void immediateResultFutureNullResultTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(null);
+    
+    assertTrue(testFuture.isDone());
+    assertFalse(testFuture.isCancelled());
+    assertNull(testFuture.get());
+  }
+  
+  @Test
+  public void immediateResultFutureTest() throws InterruptedException, ExecutionException {
+    Object result = new Object();
+    ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(result);
+    
+    assertTrue(testFuture.isDone());
+    assertFalse(testFuture.isCancelled());
+    assertTrue(testFuture.get() == result);
+  }
+  
+  @Test
+  public void immediateFailureFutureTest() {
+    Exception failure = new Exception();
+    ListenableFuture<?> testFuture = FutureUtils.immediateFailureFuture(failure);
+    
+    assertTrue(testFuture.isDone());
+    assertFalse(testFuture.isCancelled());
+    try {
+      testFuture.get();
+      fail("Exception should have thrown");
+    } catch (InterruptedException e) {
+      fail("ExecutionException should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
   }
 }

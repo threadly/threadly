@@ -1,10 +1,15 @@
 package org.threadly.concurrent.future;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.threadly.concurrent.collections.ConcurrentArrayList;
 
 /**
  * <p>A collection of small utilities for handling futures.</p>
@@ -20,7 +25,7 @@ public class FutureUtils {
    * successfully.  If you need to know if any failed, please use 
    * <tt>'blockTillAllCompleteOrFirstError'</tt>.
    * 
-   * @param futures Structure to iterate over
+   * @param futures Structure of futures to iterate over
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
    */
   public static void blockTillAllComplete(Iterable<? extends Future<?>> futures) throws InterruptedException {
@@ -45,7 +50,7 @@ public class FutureUtils {
    * exception is thrown as soon as it is hit.  There also may be additional 
    * futures that errored (but were not hit yet).
    * 
-   * @param futures Structure to iterate over
+   * @param futures Structure of futures to iterate over
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
    * @throws ExecutionException Thrown if future throws exception on .get() call
    */
@@ -71,36 +76,294 @@ public class FutureUtils {
    * 
    * The future returned will return a null result, it is the responsibility of the 
    * caller to get the actual results from the provided futures.  This is designed to 
-   * just be an indicator as to when they have finished.  
-   * 
-   * It is also important that the provided collection is not modified while this is 
-   * being called.  If it is, the returned future's behavior is undefined (it may 
-   * never complete, or it may complete early).
+   * just be an indicator as to when they have finished.
    * 
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @return ListenableFuture which will be done once all futures provided are done
    */
-  public static ListenableFuture<?> makeAllCompleteFuture(Collection<? extends ListenableFuture<?>> futures) {
-    final ListenableFutureResult<?> result = new ListenableFutureResult<Object>();
+  public static ListenableFuture<?> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures) {
+    return new EmptyFutureCollection(futures);
+  }
+  
+  /**
+   * This call is similar to makeCompleteFuture in that it will immediately provide a 
+   * future that can not be canceled, and will not be satifised till all provided 
+   * futures complete.  
+   * 
+   * This future provides a list of the completed futures as the result.  The order 
+   * of this list is NOT deterministic.
+   * 
+   * @param futures Structure of futures to iterate over
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
+      makeCompleteListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
+    return new AllFutureCollection<T>(futures);
+  }
+  
+  /**
+   * This call is similar to makeCompleteFuture in that it will immediately provide a 
+   * future that can not be canceled, and will not be satifised till all provided 
+   * futures complete.  
+   * 
+   * This future provides a list of the futures that completed without throwing 
+   * an exception nor were canceled.  The order of the resulting list is NOT 
+   * deterministic.
+   * 
+   * @param futures Structure of futures to iterate over
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
+      makeSuccessListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
+    return new SuccessFutureCollection<T>(futures);
+  }
+  
+  /**
+   * This call is similar to makeCompleteFuture in that it will immediately provide a 
+   * future that can not be canceled, and will not be satifised till all provided 
+   * futures complete.  
+   * 
+   * This future provides a list of the futures that failed by either throwing an 
+   * exception or were canceled.  The order of the resulting list is NOT 
+   * deterministic.
+   * 
+   * @param futures Structure of futures to iterate over
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
+      makeFailureListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
+    return new FailureFutureCollection<T>(futures);
+  }
+  
+  /**
+   * Constructs a {@link ListenableFuture} that has already had the 
+   * provided result given to it.  Thus the resulting future can not 
+   * error, block, or be canceled.
+   * 
+   * @param result result to be provided in .get() call
+   * @return Already satisfied future
+   */
+  public static <T> ListenableFuture<T> immediateResultFuture(T result) {
+    ListenableFutureResult<T> futureResult = new ListenableFutureResult<T>();
+    futureResult.setResult(result);
+    return futureResult;
+  }
+  
+  /**
+   * Constructs a {@link ListenableFuture} that has failed with the 
+   * given failure.  Thus the resulting future can not block, or be 
+   * canceled.  Calls to .get() will immediately throw an 
+   * ExecutionException.
+   * 
+   * @param failure to provide as cause for ExecutionException thrown from .get() call
+   * @return Already satisfied future
+   */
+  public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
+    ListenableFutureResult<T> futureResult = new ListenableFutureResult<T>();
+    futureResult.setFailure(failure);
+    return futureResult;
+  }
+  
+  /**
+   * <p>A future implementation that will return a List of futures as the result.  The 
+   * future will not be satisfied till all provided futures have completed.</p>
+   * 
+   * @author jent - Mike Jensn
+   * @param <T> type of result returned from the futures
+   */
+  protected abstract static class FutureCollection<T> 
+      extends ListenableFutureResult<List<ListenableFuture<? extends T>>> {
+    protected final AtomicInteger remainingResult;
+    private final AtomicReference<List<ListenableFuture<? extends T>>> buildingResult;
     
-    if (futures == null || futures.isEmpty()) {
-      result.setResult(null);
-    } else {
-      final AtomicInteger remainingFutures = new AtomicInteger(futures.size());
+    protected FutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+      remainingResult = new AtomicInteger(0); // may go negative if results finish before all are added
+      buildingResult = new AtomicReference<List<ListenableFuture<? extends T>>>(null);
       
-      Iterator<? extends ListenableFuture<?>> it = futures.iterator();
-      while (it.hasNext()) {
-        it.next().addListener(new Runnable() {
-          @Override
-          public void run() {
-            if (remainingFutures.decrementAndGet() == 0) {
-              result.setResult(null);
+      int expectedResultCount = 0;
+      if (source != null) {
+        Iterator<? extends ListenableFuture<? extends T>> it = source.iterator();
+        while (it.hasNext()) {
+          expectedResultCount++;
+          final ListenableFuture<? extends T> f = it.next();
+          f.addListener(new Runnable() {
+            @Override
+            public void run() {
+              handleFutureDone(f);
+              
+              if (remainingResult.decrementAndGet() == 0) {
+                setResult(getFinalResultList());
+              }
             }
-          }
-        });
+          });
+        }
+      }
+      
+      if (remainingResult.addAndGet(expectedResultCount) == 0) {
+        setResult(getFinalResultList());
       }
     }
     
-    return result;
+    protected List<ListenableFuture<? extends T>> getBuildingResult() {
+      List<ListenableFuture<? extends T>> result = buildingResult.get();
+      
+      if (result == null) {
+        int rearPadding = remainingResult.get();
+        if (rearPadding < 0) {
+          rearPadding *= -1;
+        }
+        
+        ConcurrentArrayList<ListenableFuture<? extends T>> resultList;
+        resultList = new ConcurrentArrayList<ListenableFuture<? extends T>>(0, rearPadding);
+        
+        if (buildingResult.compareAndSet(null, resultList)) {
+          result = resultList;
+          if (rearPadding != 0) {
+            // set back to zero after construction in hopes that we wont have to expand much
+            resultList.setRearPadding(0);
+          }
+        } else {
+          result = buildingResult.get();
+        }
+      }
+      
+      return result;
+    }
+    
+    /**
+     * Gives the implementing class the option to save or check the completed 
+     * future.
+     * 
+     * @param f {@link ListenableFuture} that has completed
+     */
+    protected abstract void handleFutureDone(ListenableFuture<? extends T> f);
+
+    /**
+     * Will only be called once, and all allocated resources can be freed after this
+     * point.
+     * 
+     * @return List to satisfy ListenableFuture result with
+     */
+    protected List<ListenableFuture<? extends T>> getFinalResultList() {
+      List<ListenableFuture<? extends T>> result;
+      if (buildingResult.get() == null) {
+        result = Collections.emptyList();
+      } else {
+        result = Collections.unmodifiableList(buildingResult.get());
+        buildingResult.set(null);
+      }
+      
+      return result;
+    }
+  }
+
+  
+  /**
+   * <p>A future implementation that will be satisfied till all provided futures 
+   * have completed.</p>
+   * 
+   * @author jent - Mike Jensn
+   */
+  protected static class EmptyFutureCollection extends FutureCollection<Object> {
+    protected EmptyFutureCollection(Iterable<? extends ListenableFuture<?>> source) {
+      super(source);
+    }
+
+    @Override
+    protected void handleFutureDone(ListenableFuture<?> f) {
+      // ignored
+    }
+
+    @Override
+    protected List<ListenableFuture<?>> getFinalResultList() {
+      return Collections.emptyList();
+    }
+  }
+  
+  /**
+   * <p>A future implementation that will return a List of futures as the result.  The 
+   * future will not be satisfied till all provided futures have completed.</p>
+   * 
+   * <p>This implementation will return a result of all the futures that completed.</p>
+   * 
+   * @author jent - Mike Jensn
+   * @param <T> type of result returned from the futures
+   */
+  protected static class AllFutureCollection<T> extends FutureCollection<T> {
+    protected AllFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+      super(source);
+      
+      getBuildingResult();
+    }
+
+    @Override
+    protected void handleFutureDone(ListenableFuture<? extends T> f) {
+      getBuildingResult().add(f);
+    }
+  }
+  
+  /**
+   * <p>A future implementation that will return a List of futures as the result.  The 
+   * future will not be satisfied till all provided futures have completed.</p>
+   * 
+   * <p>This implementation will return a result of all the futures that completed 
+   * successfully.  If the future was canceled or threw an exception it will not be 
+   * included.</p>
+   * 
+   * @author jent - Mike Jensn
+   * @param <T> type of result returned from the futures
+   */
+  protected static class SuccessFutureCollection<T> extends AllFutureCollection<T> {
+    protected SuccessFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+      super(source);
+    }
+
+    @Override
+    protected void handleFutureDone(ListenableFuture<? extends T> f) {
+      try {
+        f.get();
+        
+        // if no exception thrown, add future
+        super.handleFutureDone(f);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        // ignored
+      } catch (CancellationException e) {
+        // ignored
+      }
+    }
+  }
+
+  
+  /**
+   * <p>A future implementation that will return a List of futures as the result.  The 
+   * future will not be satisfied till all provided futures have completed.</p>
+   * 
+   * <p>This implementation will return a result of all the futures that either threw 
+   * an exception during computation, or was canceled.</p>
+   * 
+   * @author jent - Mike Jensn
+   * @param <T> type of result returned from the futures
+   */
+  protected static class FailureFutureCollection<T> extends AllFutureCollection<T> {
+    protected FailureFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+      super(source);
+    }
+
+    @Override
+    protected void handleFutureDone(ListenableFuture<? extends T> f) {
+      try {
+        f.get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException e) {
+        // failed so add it
+        super.handleFutureDone(f);
+      } catch (CancellationException e) {
+        // canceled so add it
+        super.handleFutureDone(f);
+      }
+    }
   }
 }
