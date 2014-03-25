@@ -168,11 +168,17 @@ public class FutureUtilsTest {
   }
   
   private static void makeCompleteFutureTest(int errorIndex) throws InterruptedException, TimeoutException {
-    final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
 
-    final ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
     
+    verifyCompleteFuture(f, futures);
+  }
+  
+  private static void verifyCompleteFuture(final ListenableFuture<?> f, 
+                                           final List<ListenableFuture<?>> futures) throws InterruptedException, TimeoutException {
     final AsyncVerifier av = new AsyncVerifier();
+    
     f.addListener(new Runnable() {
       @Override
       public void run() {
@@ -255,22 +261,7 @@ public class FutureUtilsTest {
 
     final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(futures);
     
-    final AsyncVerifier av = new AsyncVerifier();
-    f.addListener(new Runnable() {
-      @Override
-      public void run() {
-        av.assertTrue(f.isDone());
-        
-        Iterator<ListenableFuture<?>> it = futures.iterator();
-        while (it.hasNext()) {
-          av.assertTrue(it.next().isDone());
-        }
-        
-        av.signalComplete();
-      }
-    });
-    
-    av.waitForTest();
+    verifyCompleteFuture(f, futures);
     
     verifyAllIncluded(futures, f.get(), null);
   }
@@ -322,22 +313,7 @@ public class FutureUtilsTest {
 
     final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
     
-    final AsyncVerifier av = new AsyncVerifier();
-    f.addListener(new Runnable() {
-      @Override
-      public void run() {
-        av.assertTrue(f.isDone());
-        
-        Iterator<ListenableFuture<?>> it = futures.iterator();
-        while (it.hasNext()) {
-          av.assertTrue(it.next().isDone());
-        }
-        
-        av.signalComplete();
-      }
-    });
-    
-    av.waitForTest();
+    verifyCompleteFuture(f, futures);
     
     verifyAllIncluded(futures, f.get(), failureFuture);
   }
@@ -403,22 +379,7 @@ public class FutureUtilsTest {
 
     final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
     
-    final AsyncVerifier av = new AsyncVerifier();
-    f.addListener(new Runnable() {
-      @Override
-      public void run() {
-        av.assertTrue(f.isDone());
-        
-        Iterator<ListenableFuture<?>> it = futures.iterator();
-        while (it.hasNext()) {
-          av.assertTrue(it.next().isDone());
-        }
-        
-        av.signalComplete();
-      }
-    });
-    
-    av.waitForTest();
+    verifyCompleteFuture(f, futures);
     
     verifyNoneIncluded(futures, f.get(), failureFuture);
   }
