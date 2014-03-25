@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
@@ -235,6 +236,8 @@ public class FutureUtilsTest {
   private static void verifyAllIncluded(List<ListenableFuture<?>> expected, 
                                         List<ListenableFuture<?>> result, 
                                         ListenableFuture<?> excludedFuture) {
+    System.out.println(expected);
+    System.out.println(result);
     Iterator<ListenableFuture<?>> it = expected.iterator();
     while (it.hasNext()) {
       ListenableFuture<?> f = it.next();
@@ -257,9 +260,9 @@ public class FutureUtilsTest {
   }
   
   private static void makeCompleteListFutureTest(int errorIndex) throws ExecutionException, InterruptedException, TimeoutException {
-    final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
 
-    final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(futures);
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(futures);
     
     verifyCompleteFuture(f, futures);
     
@@ -306,16 +309,35 @@ public class FutureUtilsTest {
   
   @Test
   public void makeSuccessListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
-    final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
     ListenableFutureResult<?> failureFuture = new ListenableFutureResult<Object>();
     failureFuture.setFailure(null);
     futures.add(failureFuture);
 
-    final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
     
     verifyCompleteFuture(f, futures);
     
     verifyAllIncluded(futures, f.get(), failureFuture);
+  }
+  
+  @Test
+  public void makeSuccessListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    ListenableFutureResult<?> cancelFuture = new ListenableFutureResult<Object>() {
+      @Override
+      public Object get() {
+        throw new CancellationException();
+      }
+    };
+    cancelFuture.setResult(null);
+    futures.add(cancelFuture);
+
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
+    
+    verifyCompleteFuture(f, futures);
+    
+    verifyAllIncluded(futures, f.get(), cancelFuture);
   }
   
   @Test
@@ -372,16 +394,35 @@ public class FutureUtilsTest {
   
   @Test
   public void makeFailureListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
-    final List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
     ListenableFutureResult<?> failureFuture = new ListenableFutureResult<Object>();
     failureFuture.setFailure(null);
     futures.add(failureFuture);
 
-    final ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
     
     verifyCompleteFuture(f, futures);
     
     verifyNoneIncluded(futures, f.get(), failureFuture);
+  }
+  
+  @Test
+  public void makeFailureListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    ListenableFutureResult<?> cancelFuture = new ListenableFutureResult<Object>() {
+      @Override
+      public Object get() {
+        throw new CancellationException();
+      }
+    };
+    cancelFuture.setResult(null);
+    futures.add(cancelFuture);
+
+    ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
+    
+    verifyCompleteFuture(f, futures);
+    
+    verifyNoneIncluded(futures, f.get(), cancelFuture);
   }
   
   @Test
