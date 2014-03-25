@@ -185,12 +185,14 @@ public class FutureUtils {
         Iterator<? extends ListenableFuture<? extends T>> it = source.iterator();
         while (it.hasNext()) {
           expectedResultCount++;
+          
           final ListenableFuture<? extends T> f = it.next();
           f.addListener(new Runnable() {
             @Override
             public void run() {
               handleFutureDone(f);
               
+              // all futures are now done
               if (remainingResult.decrementAndGet() == 0) {
                 setResult(getFinalResultList());
               }
@@ -199,11 +201,19 @@ public class FutureUtils {
         }
       }
       
+      // we need to verify that all futures have not already completed
       if (remainingResult.addAndGet(expectedResultCount) == 0) {
         setResult(getFinalResultList());
       }
     }
     
+    /**
+     * Provides the lazily constructed buildingResult in case any futures 
+     * need to be saved.  This is complex because it may be called very 
+     * early, and we try to keep this as efficient as possible.
+     * 
+     * @return A stored list of futures that can be modified
+     */
     protected List<ListenableFuture<? extends T>> getBuildingResult() {
       List<ListenableFuture<? extends T>> result = buildingResult.get();
       
