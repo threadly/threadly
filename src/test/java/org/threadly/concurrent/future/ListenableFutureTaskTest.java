@@ -14,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.future.RunnableFutureTest.FutureFactory;
 import org.threadly.test.concurrent.TestRunnable;
@@ -122,6 +123,60 @@ public class ListenableFutureTaskTest {
     }
     
     assertTrue(listener.ranOnce());
+  }
+  
+  @Test
+  public void addCallbackTest() {
+    TestCallable tc = new TestCallable();
+    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tc);
+    TestFutureCallback tfc = new TestFutureCallback();
+    future.addCallback(tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    future.run();
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(tc.getReturnedResult() == tfc.getLastResult());
+  }
+  
+  @Test
+  public void addCallbackAlreadyDoneFutureTest() {
+    TestCallable tc = new TestCallable();
+    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tc);
+    future.run();
+    TestFutureCallback tfc = new TestFutureCallback();
+    future.addCallback(tfc);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(tc.getReturnedResult() == tfc.getLastResult());
+  }
+  
+  @Test
+  public void addCallbackExecutionExceptionAlreadyDoneTest() {
+    RuntimeException failure = new RuntimeException();
+    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRuntimeFailureRunnable(failure));
+    future.run();
+    TestFutureCallback tfc = new TestFutureCallback();
+    future.addCallback(tfc);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void addCallbackExecutionExceptionTest() {
+    RuntimeException failure = new RuntimeException();
+    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRuntimeFailureRunnable(failure));
+    TestFutureCallback tfc = new TestFutureCallback();
+    future.addCallback(tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    future.run();
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
   }
   
   @Test (expected = ExecutionException.class)

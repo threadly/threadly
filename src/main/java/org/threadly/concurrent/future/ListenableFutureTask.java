@@ -83,7 +83,17 @@ public class ListenableFutureTask<T> extends FutureTask<T>
 
   @Override
   public void addListener(Runnable listener, Executor executor) {
-    this.listenerHelper.addListener(listener, executor);
+    listenerHelper.addListener(listener, executor);
+  }
+
+  @Override
+  public void addCallback(FutureCallback<? super T> callback) {
+    addCallback(callback, null);
+  }
+
+  @Override
+  public void addCallback(FutureCallback<? super T> callback, Executor executor) {
+    FutureUtils.addCallback(this, callback, executor);
   }
   
   @Override

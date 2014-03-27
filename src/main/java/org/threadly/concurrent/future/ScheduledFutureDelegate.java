@@ -79,4 +79,14 @@ public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> 
   public void addListener(Runnable listener, Executor executor) {
     futureImp.addListener(listener, executor);
   }
+
+  @Override
+  public void addCallback(FutureCallback<? super T> callback) {
+    futureImp.addCallback(callback);
+  }
+
+  @Override
+  public void addCallback(FutureCallback<? super T> callback, Executor executor) {
+    futureImp.addCallback(callback, executor);
+  }
 }

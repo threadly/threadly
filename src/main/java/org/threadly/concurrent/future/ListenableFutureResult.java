@@ -46,6 +46,16 @@ public class ListenableFutureResult<T> implements ListenableFuture<T> {
   public void addListener(Runnable listener, Executor executor) {
     listenerHelper.addListener(listener, executor);
   }
+
+  @Override
+  public void addCallback(FutureCallback<? super T> callback) {
+    addCallback(callback, null);
+  }
+
+  @Override
+  public void addCallback(FutureCallback<? super T> callback, Executor executor) {
+    FutureUtils.addCallback(this, callback, executor);
+  }
   
   // should be synchronized on resultLock before calling
   private void setDone() {

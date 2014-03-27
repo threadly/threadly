@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,6 +19,58 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
  * @since 1.0.0
  */
 public class FutureUtils {
+  /**
+   * Adds a callback to a given future to be called once the future completes.
+   * Please see addListener in {@link ListenableFuture} to understand more about 
+   * how these callbacks are called.
+   * 
+   * The callback of this call will be called either on this thread (if the future 
+   * has already completed), or on the resulting thread.  If the callback has 
+   * high complexity, consider passing an executor in for it to be called on.
+   * 
+   * @param future future to attach callback to
+   * @param callback callback to call once future completes
+   */
+  public static <T> void addCallback(final ListenableFuture<T> future, 
+                                     FutureCallback<? super T> callback) {
+    addCallback(future, callback, null);
+  }
+  
+  /**
+   * Adds a callback to a given future to be called once the future completes.
+   * Please see addListener in {@link ListenableFuture} to understand more about 
+   * how these callbacks are called.
+   * 
+   * @param future future to attach callback to
+   * @param callback callback to call once future completes
+   * @param executor executor to call callback on
+   */
+  public static <T> void addCallback(final ListenableFuture<T> future, 
+                                     final FutureCallback<? super T> callback, 
+                                     Executor executor) {
+    if (future == null) {
+      throw new IllegalArgumentException("Must provide future for callback to listen on");
+    } else if (callback == null) {
+      throw new IllegalArgumentException("Must provide callback to call into");
+    }
+    future.addListener(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          T result = future.get();
+          callback.handleResult(result);
+        } catch (InterruptedException e) {
+          // should not be possible as future already has result
+          throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+          callback.handleFailure(e.getCause());
+        } catch (CancellationException e) {
+          callback.handleFailure(e);
+        }
+      }
+    }, executor);
+  }
+  
   /**
    * This call blocks till all futures in the list have completed.  If the 
    * future completed with an error, the {@link ExecutionException} is swallowed.  

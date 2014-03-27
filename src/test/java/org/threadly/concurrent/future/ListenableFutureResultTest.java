@@ -83,6 +83,56 @@ public class ListenableFutureResultTest {
   }
   
   @Test
+  public void addCallbackTest() {
+    String result = "addCallbackTest";
+    TestFutureCallback tfc = new TestFutureCallback();
+    lfr.addCallback(tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    lfr.setResult(result);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
+  public void addCallbackAlreadyDoneFutureTest() {
+    String result = "addCallbackAlreadyDoneFutureTest";
+    lfr.setResult(result);
+    TestFutureCallback tfc = new TestFutureCallback();
+    lfr.addCallback(tfc);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
+  public void addCallbackExecutionExceptionAlreadyDoneTest() {
+    Throwable failure = new Exception();
+    lfr.setFailure(failure);
+    TestFutureCallback tfc = new TestFutureCallback();
+    lfr.addCallback(tfc);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void addCallbackExecutionExceptionTest() {
+    Throwable failure = new Exception();
+    TestFutureCallback tfc = new TestFutureCallback();
+    lfr.addCallback(tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    lfr.setFailure(failure);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
   public void cancelTest() {
     assertFalse(lfr.cancel(false));
     assertFalse(lfr.cancel(true));

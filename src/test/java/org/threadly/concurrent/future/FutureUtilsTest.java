@@ -56,6 +56,86 @@ public class FutureUtilsTest {
   }
   
   @Test
+  public void addCallbackFail() {
+    try {
+      FutureUtils.addCallback(null, new TestFutureCallback());
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      FutureUtils.addCallback(new ListenableFutureResult<Object>(), null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void addCallbackTest() {
+    Object result = new Object();
+    ListenableFutureResult<Object> future = new ListenableFutureResult<Object>();
+    TestFutureCallback tfc = new TestFutureCallback();
+    FutureUtils.addCallback(future, tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    future.setResult(result);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
+  public void addCallbackAlreadyDoneFutureTest() {
+    Object result = new Object();
+    ListenableFuture<Object> future = FutureUtils.immediateResultFuture(result);
+    TestFutureCallback tfc = new TestFutureCallback();
+    FutureUtils.addCallback(future, tfc);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
+  public void addCallbackExecutionExceptionAlreadyDoneTest() {
+    Throwable failure = new Exception();
+    ListenableFuture<Object> future = FutureUtils.immediateFailureFuture(failure);
+    TestFutureCallback tfc = new TestFutureCallback();
+    FutureUtils.addCallback(future, tfc);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void addCallbackExecutionExceptionTest() {
+    Throwable failure = new Exception();
+    ListenableFutureResult<Object> future = new ListenableFutureResult<Object>();
+    TestFutureCallback tfc = new TestFutureCallback();
+    FutureUtils.addCallback(future, tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    future.setFailure(failure);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void addCallbackCanceledTest() {
+    ListenableFuture<Object> future = new TestFutureImp(true);
+    future.cancel(true);
+    TestFutureCallback tfc = new TestFutureCallback();
+    FutureUtils.addCallback(future, tfc);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertNotNull(tfc.getLastFailure());
+    assertTrue(tfc.getLastFailure() instanceof CancellationException);
+  }
+  
+  @Test
   public void blockTillAllCompleteNullTest() throws InterruptedException {
     FutureUtils.blockTillAllComplete(null); // should return immediately
   }
