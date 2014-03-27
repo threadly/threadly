@@ -18,7 +18,7 @@ import org.threadly.util.Clock;
  * @since 1.1.0
  * @param <T> type of returned object
  */
-public class ListenableFutureResult<T> implements ListenableFuture<T> {
+public class ListenableFutureResult<T> implements ListenableFuture<T>, FutureCallback<T> {
   protected final ListenerHelper listenerHelper;
   protected final Object resultLock;
   private volatile boolean done;
@@ -64,6 +64,38 @@ public class ListenableFutureResult<T> implements ListenableFuture<T> {
     }
     
     done = true;
+  }
+  
+  /**
+   * This call defers to setResult.  It is implemented so that you can construct this, 
+   * return it immediately, but only later provide this as a callback to another 
+   * ListenableFuture implementation.  
+   * 
+   * This should never be invoked by the implementor, this should only be invoked by other 
+   * ListenableFuture's.
+   * 
+   * If this is being used to chain together ListenableFuture's, setResult/setFailure should 
+   * never be called manually (or an exception will occur).
+   */
+  @Override
+  public void handleResult(T result) {
+    setResult(result);
+  }
+  
+  /**
+   * This call defers to setResult.  It is implemented so that you can construct this, 
+   * return it immediately, but only later provide this as a callback to another 
+   * ListenableFuture implementation.  
+   * 
+   * This should never be invoked by the implementor, this should only be invoked by other 
+   * ListenableFuture's.
+   * 
+   * If this is being used to chain together ListenableFuture's, setResult/setFailure should 
+   * never be called manually (or an exception will occur).
+   */
+  @Override
+  public void handleFailure(Throwable t) {
+    setFailure(t);
   }
   
   /**
