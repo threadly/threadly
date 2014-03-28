@@ -701,13 +701,13 @@ public class PrioritySchedulerStatisticTrackerTest {
       assertEquals(expectedCount, 
                    runTimes.size());
       
-      long totalRunTime = 0;
+      double totalRunTime = 0;
       Iterator<Long> it = runTimes.iterator();
       while (it.hasNext()) {
         totalRunTime += it.next();
       }
       
-      long avgRunTime = totalRunTime / runTimes.size();
+      long avgRunTime = Math.round(totalRunTime / runTimes.size());
       
       assertEquals(avgRunTime, scheduler.getAverageTaskRunTime());
     } finally {
@@ -960,10 +960,10 @@ public class PrioritySchedulerStatisticTrackerTest {
 
       switch (priority) {
         case High:
-          assertEquals(expectedAvg, scheduler.getHighPriorityAvgExecutionDelay(), 0);
+          assertEquals(expectedAvg, scheduler.getHighPriorityAvgExecutionDelay());
           break;
         case Low:
-          assertEquals(expectedAvg, scheduler.getLowPriorityAvgExecutionDelay(), 0);
+          assertEquals(expectedAvg, scheduler.getLowPriorityAvgExecutionDelay());
           break;
         default:
           throw new UnsupportedOperationException("Priority not implenented: " + priority);
