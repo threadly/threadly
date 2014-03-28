@@ -173,6 +173,7 @@ public class PrioritySchedulerLimiter extends SchedulerLimiter
    * the same execution queue that immediate execution has to.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.1.0
    */
   protected class PriorityDelayedRunnable extends DelayedExecutionRunnable {
     protected PriorityDelayedRunnable(Runnable runnable, TaskPriority priority) {
@@ -186,6 +187,7 @@ public class PrioritySchedulerLimiter extends SchedulerLimiter
    * after the task completes.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.1.0
    */
   protected class RecurringRunnableWrapper extends PriorityWrapper {
     private final long recurringDelay;
@@ -211,6 +213,7 @@ public class PrioritySchedulerLimiter extends SchedulerLimiter
    * {@link LimiterRunnableWrapper}.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.1.0
    */
   protected class PriorityWrapper extends LimiterRunnableWrapper {
     private final TaskPriority priority;

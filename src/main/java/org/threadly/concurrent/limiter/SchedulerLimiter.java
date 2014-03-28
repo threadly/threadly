@@ -133,6 +133,7 @@ public class SchedulerLimiter extends ExecutorLimiter
    * the same execution queue that immediate execution has to.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.1.0
    */
   protected class DelayedExecutionRunnable implements Runnable, 
                                                       RunnableContainerInterface {
@@ -167,6 +168,7 @@ public class SchedulerLimiter extends ExecutorLimiter
    * after the task completes.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.1.0
    */
   protected class RecurringRunnableWrapper extends LimiterRunnableWrapper {
     private final long recurringDelay;

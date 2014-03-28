@@ -107,6 +107,7 @@ public class Clock {
    * This runnable is designed to run in its own dedicated thread.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   private static class ClockUpdater implements Runnable {
     private volatile boolean runnableFinished = false;

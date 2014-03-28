@@ -106,6 +106,7 @@ abstract class AbstractThreadPoolLimiter {
    * after the task completes.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class LimiterRunnableWrapper implements Runnable, 
                                                     RunnableContainerInterface {

@@ -157,6 +157,7 @@ public class BlockingQueueConsumer<T> {
    * <p>Class which represents our runnable actions for the consumer.</p>
    *  
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   private class ConsumerRunnable implements Runnable {
     @Override
@@ -181,6 +182,7 @@ public class BlockingQueueConsumer<T> {
    * interface on construction of the {@link BlockingQueueConsumer}.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    * @param <T> Type of item this acceptor will receive
    */
   public interface ConsumerAcceptor<T> {

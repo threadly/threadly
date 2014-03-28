@@ -1047,6 +1047,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * and execute consumed tasks.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class TaskConsumer extends BlockingQueueConsumer<TaskWrapper> {
     private final Object queueLock;
@@ -1079,6 +1080,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * accepts runnables to run, and tracks usage.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class Worker implements Runnable {
     protected final Thread thread;
@@ -1182,6 +1184,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * <p>Behavior for task after it finishes completion.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected enum TaskType { OneTime, Recurring };
   
@@ -1189,6 +1192,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * <p>Abstract implementation for all tasks handled by this pool.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected abstract static class TaskWrapper implements Delayed, Runnable {
     public final TaskType taskType;
@@ -1244,6 +1248,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * <p>Wrapper for tasks which only executes once.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected static class OneTimeTaskWrapper extends TaskWrapper {
     private final long runTime;
@@ -1282,6 +1287,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * <p>Wrapper for tasks which reschedule after completion.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class RecurringTaskWrapper extends TaskWrapper 
                                        implements DynamicDelayedUpdater {
@@ -1421,6 +1427,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * <p>Runnable to be run after all current tasks to finish the shutdown sequence.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class ShutdownRunnable implements Runnable {
     @Override

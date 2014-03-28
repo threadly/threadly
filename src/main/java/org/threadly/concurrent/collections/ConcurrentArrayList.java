@@ -814,6 +814,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * to make changes to the parent class.
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class DataSetListIterator implements ListIterator<T> {
     private DataSet<T> dataSet;
@@ -927,6 +928,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * are happening.
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    * 
    * @param <T> type of object that is held
    */

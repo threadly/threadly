@@ -704,6 +704,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * <p>Wrapper for any task which needs to track statistics.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected abstract class Wrapper {
     public final boolean callable;
@@ -727,6 +728,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * <p>Wrapper for {@link Runnable} for tracking statistics.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class RunnableStatWrapper extends Wrapper 
                                       implements Runnable, 
@@ -761,6 +763,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * <p>Wrapper for {@link Callable} for tracking statistics.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class CallableStatWrapper<T> extends Wrapper 
                                          implements Callable<T>, 

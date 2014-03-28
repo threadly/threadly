@@ -301,6 +301,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * <p>Task which will run delayed to add a task into the queue when ready.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class AddTask implements Runnable, 
                                      RunnableContainerInterface {
@@ -327,6 +328,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * <p>Repeating task container.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class RecrringTask implements Runnable, 
                                           RunnableContainerInterface {
@@ -362,6 +364,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * executions and scheduling on a given key.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class KeyBasedScheduler extends KeyBasedSubmitter 
                                     implements SubmitterSchedulerInterface {

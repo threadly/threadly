@@ -218,6 +218,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * <p>Container abstraction to hold runnables for scheduler.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected abstract class TaskContainer implements Delayed, RunnableContainerInterface {
     protected final Runnable runnable;
@@ -262,6 +263,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * with an optional delay.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class OneTimeTask extends TaskContainer {
     private final long runTime;
@@ -291,6 +293,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
    * <p>Container for runnables which run multiple times.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class RecurringTask extends TaskContainer {
     private final long recurringDelay;

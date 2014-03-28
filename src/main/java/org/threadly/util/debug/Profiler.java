@@ -532,6 +532,7 @@ public class Profiler {
    * to later analyze.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   private class ProfilerRunner implements Runnable {
     @Override
@@ -590,6 +591,7 @@ public class Profiler {
    * This stack trace reference will be specific to a single thread.
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected static class Trace implements Comparable<Trace> {
     private final StackTraceElement[] elements;
@@ -648,6 +650,7 @@ public class Profiler {
    * see a given function.
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected static class Function {
     private final String className;

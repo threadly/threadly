@@ -4,8 +4,8 @@ package org.threadly.concurrent.future;
  * <p>Callback for accepting the results of a future once the future has completed.</p>
  * 
  * @author jent - Mike Jensen
- * @param <T> Type of result to be returned from future
  * @since 1.2.0
+ * @param <T> Type of result to be returned from future
  */
 public interface FutureCallback<T> {
   /**

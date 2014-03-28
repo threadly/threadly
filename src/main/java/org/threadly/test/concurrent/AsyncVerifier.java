@@ -241,6 +241,7 @@ public class AsyncVerifier {
    * <p>Small exception to represent when a test failure occurs.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected static class TestFailure extends RuntimeException {
     private static final long serialVersionUID = -4683332806581392944L;

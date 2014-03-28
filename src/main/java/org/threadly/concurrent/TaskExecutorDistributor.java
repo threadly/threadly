@@ -296,6 +296,7 @@ public class TaskExecutorDistributor {
    * Each key is represented by one worker at any given time.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   private class TaskQueueWorker implements Runnable {
     private final Object mapKey;
@@ -371,6 +372,7 @@ public class TaskExecutorDistributor {
    * that runs on a given key.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   protected class KeyBasedSubmitter implements SubmitterExecutorInterface {
     protected final Object threadKey;

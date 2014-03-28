@@ -367,6 +367,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    * <p>It is expected that this does NOT run concurrently, but may run on different threads.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   private static class FixedRateTaskWrapper implements Runnable, RunnableContainerInterface {
     private final Runnable originalTask;
@@ -406,6 +407,7 @@ public class PriorityScheduledExecutorServiceWrapper implements ScheduledExecuto
    * an exception</p>
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   private static class FixedRateSubmitter implements Runnable, RunnableContainerInterface {
     private final PriorityScheduledExecutor scheduler;

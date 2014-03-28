@@ -150,6 +150,7 @@ public class ExceptionUtils {
    * was not a runtime exception.
    * 
    * @author jent - Mike Jensen
+   * @since 1.0.0
    */
   public static class TransformedException extends RuntimeException {
     private static final long serialVersionUID = 4524467217814731188L;
