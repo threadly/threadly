@@ -77,17 +77,17 @@ public class ListenerHelper {
   
   protected void runListener(Runnable listener, Executor executor, 
                              boolean throwException) {
-    if (executor != null) {
-      executor.execute(listener);
-    } else {
-      try {
+    try {
+      if (executor != null) {
+        executor.execute(listener);
+      } else {
         listener.run();
-      } catch (RuntimeException e) {
-        if (throwException) {
-          throw e;
-        } else {
-          ExceptionUtils.handleException(e);
-        }
+      }
+    } catch (RuntimeException e) {
+      if (throwException) {
+        throw e;
+      } else {
+        ExceptionUtils.handleException(e);
       }
     }
   }
