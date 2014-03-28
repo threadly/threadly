@@ -43,6 +43,8 @@ public interface ListenableFuture<T> extends Future<T> {
    * The callback from this call will execute on the same thread the result was 
    * produced on, or on the adding thread if the future is already complete.
    * 
+   * @since 1.2.0
+   * 
    * @param callback the callback to run when the computation is complete
    */
   public void addCallback(FutureCallback<? super T> callback);
@@ -55,6 +57,8 @@ public interface ListenableFuture<T> extends Future<T> {
    * produced on, or on the adding thread if the future is already complete.  If 
    * the callback has high complexity, consider passing an executor in for it to 
    * be called on.
+   * 
+   * @since 1.2.0
    * 
    * @param callback the callback to run when the computation is complete
    * @param executor executor the callback should be called on

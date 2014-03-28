@@ -28,6 +28,8 @@ public class FutureUtils {
    * has already completed), or on the resulting thread.  If the callback has 
    * high complexity, consider passing an executor in for it to be called on.
    * 
+   * @since 1.2.0
+   * 
    * @param future future to attach callback to
    * @param callback callback to call once future completes
    */
@@ -40,6 +42,8 @@ public class FutureUtils {
    * Adds a callback to a given future to be called once the future completes.
    * Please see addListener in {@link ListenableFuture} to understand more about 
    * how these callbacks are called.
+   * 
+   * @since 1.2.0
    * 
    * @param future future to attach callback to
    * @param callback callback to call once future completes
@@ -131,6 +135,8 @@ public class FutureUtils {
    * caller to get the actual results from the provided futures.  This is designed to 
    * just be an indicator as to when they have finished.
    * 
+   * @since 1.2.0
+   * 
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -145,6 +151,8 @@ public class FutureUtils {
    * 
    * This future provides a list of the completed futures as the result.  The order 
    * of this list is NOT deterministic.
+   * 
+   * @since 1.2.0
    * 
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
@@ -163,6 +171,8 @@ public class FutureUtils {
    * an exception nor were canceled.  The order of the resulting list is NOT 
    * deterministic.
    * 
+   * @since 1.2.0
+   * 
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -180,6 +190,8 @@ public class FutureUtils {
    * exception or were canceled.  The order of the resulting list is NOT 
    * deterministic.
    * 
+   * @since 1.2.0
+   * 
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -192,6 +204,8 @@ public class FutureUtils {
    * Constructs a {@link ListenableFuture} that has already had the 
    * provided result given to it.  Thus the resulting future can not 
    * error, block, or be canceled.
+   * 
+   * @since 1.2.0
    * 
    * @param result result to be provided in .get() call
    * @return Already satisfied future
@@ -208,6 +222,8 @@ public class FutureUtils {
    * canceled.  Calls to .get() will immediately throw an 
    * ExecutionException.
    * 
+   * @since 1.2.0
+   * 
    * @param failure to provide as cause for ExecutionException thrown from .get() call
    * @return Already satisfied future
    */
@@ -222,6 +238,7 @@ public class FutureUtils {
    * future will not be satisfied till all provided futures have completed.</p>
    * 
    * @author jent - Mike Jensn
+   * @since 1.2.0
    * @param <T> type of result returned from the futures
    */
   protected abstract static class FutureCollection<T> 
@@ -326,6 +343,7 @@ public class FutureUtils {
    * have completed.</p>
    * 
    * @author jent - Mike Jensn
+   * @since 1.2.0
    */
   protected static class EmptyFutureCollection extends FutureCollection<Object> {
     protected EmptyFutureCollection(Iterable<? extends ListenableFuture<?>> source) {
@@ -350,6 +368,7 @@ public class FutureUtils {
    * <p>This implementation will return a result of all the futures that completed.</p>
    * 
    * @author jent - Mike Jensn
+   * @since 1.2.0
    * @param <T> type of result returned from the futures
    */
   protected static class AllFutureCollection<T> extends FutureCollection<T> {
@@ -374,6 +393,7 @@ public class FutureUtils {
    * included.</p>
    * 
    * @author jent - Mike Jensn
+   * @since 1.2.0
    * @param <T> type of result returned from the futures
    */
   protected static class SuccessFutureCollection<T> extends AllFutureCollection<T> {
@@ -407,6 +427,7 @@ public class FutureUtils {
    * an exception during computation, or was canceled.</p>
    * 
    * @author jent - Mike Jensn
+   * @since 1.2.0
    * @param <T> type of result returned from the futures
    */
   protected static class FailureFutureCollection<T> extends AllFutureCollection<T> {
