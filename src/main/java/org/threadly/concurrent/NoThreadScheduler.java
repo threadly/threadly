@@ -209,9 +209,7 @@ public class NoThreadScheduler implements SubmitterSchedulerInterface {
   }
   
   private TaskContainer next() {
-    synchronized (taskQueue.getModificationLock()) {
-      return taskQueue.isEmpty() ? null : taskQueue.getFirst();
-    }
+    return taskQueue.peekFirst();
   }
   
   /**

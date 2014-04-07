@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduledExecutor.TaskType;
 import org.threadly.concurrent.PriorityScheduledExecutor.TaskWrapper;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -45,16 +44,14 @@ public class PriorityScheduledExecutorTaskWrapperTest {
     }
     
     protected TestWrapper(int delay) {
-      this(TaskType.OneTime, 
-           new TestRunnable(), 
+      this(new TestRunnable(), 
            TaskPriority.High, delay);
     }
     
-    protected TestWrapper(TaskType taskType, 
-                          Runnable task,
+    protected TestWrapper(Runnable task,
                           TaskPriority priority, 
                           int delayInMs) {
-      super(taskType, task, priority);
+      super(task, priority);
       
       this.delayInMs = delayInMs;
       executingCalled = false;

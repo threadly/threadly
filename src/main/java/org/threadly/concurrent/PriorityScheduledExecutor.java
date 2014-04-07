@@ -1181,29 +1181,18 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   }
   
   /**
-   * <p>Behavior for task after it finishes completion.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 1.0.0
-   */
-  protected enum TaskType { OneTime, Recurring };
-  
-  /**
    * <p>Abstract implementation for all tasks handled by this pool.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected abstract static class TaskWrapper implements Delayed, Runnable {
-    public final TaskType taskType;
     public final TaskPriority priority;
     protected final Runnable task;
     protected volatile boolean canceled;
     
-    public TaskWrapper(TaskType taskType, 
-                          Runnable task, 
-                          TaskPriority priority) {
-      this.taskType = taskType;
+    public TaskWrapper(Runnable task, 
+                       TaskPriority priority) {
       this.priority = priority;
       this.task = task;
       canceled = false;
@@ -1254,7 +1243,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     private final long runTime;
     
     protected OneTimeTaskWrapper(Runnable task, TaskPriority priority, long delay) {
-      super(TaskType.OneTime, task, priority);
+      super(task, priority);
       
       runTime = Clock.accurateTime() + delay;
     }
@@ -1298,7 +1287,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     
     protected RecurringTaskWrapper(Runnable task, TaskPriority priority, 
                                    long initialDelay, long recurringDelay) {
-      super(TaskType.Recurring, task, priority);
+      super(task, priority);
       
       this.recurringDelay = recurringDelay;
       //maxExpectedRuntime = -1;

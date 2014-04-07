@@ -369,33 +369,32 @@ public class TaskExecutorDistributor {
         synchronized (workerLock) {
           if (queue == null) {  // nothing left to run
             taskWorkers.remove(mapKey);
-            break;
-          } else {
-            if (consumedItems < maxTasksPerCycle) {
-              if (queue.size() + consumedItems <= maxTasksPerCycle) {
-                // we can run the entire next queue
-                nextList = queue;
-                queue = null;
-              } else {
-                // we need to run a subset of the queue, so copy and remove what we can run
-                int nextListSize = maxTasksPerCycle - consumedItems;
-                nextList = new ArrayDeque<Runnable>(nextListSize);
-                Iterator<Runnable> it = queue.iterator();
-                do {
-                  nextList.add(it.next());
-                  it.remove();
-                } while (nextList.size() < nextListSize);
-              }
-              
-              consumedItems += nextList.size();
+            return;
+          } else if (consumedItems < maxTasksPerCycle) {
+            // we can run at least one task...let's figure out how much we can run
+            if (queue.size() + consumedItems <= maxTasksPerCycle) {
+              // we can run the entire next queue
+              nextList = queue;
+              queue = null;
             } else {
-              // re-execute this worker to give other works a chance to run
-              executor.execute(this);
-              /* notice that we never removed from taskWorkers, and thus wont be
-               * executed from people adding new tasks 
-               */
-              break;
+              // we need to run a subset of the queue, so copy and remove what we can run
+              int nextListSize = maxTasksPerCycle - consumedItems;
+              nextList = new ArrayDeque<Runnable>(nextListSize);
+              Iterator<Runnable> it = queue.iterator();
+              do {
+                nextList.add(it.next());
+                it.remove();
+              } while (nextList.size() < nextListSize);
             }
+            
+            consumedItems += nextList.size();
+          } else {
+            // re-execute this worker to give other works a chance to run
+            executor.execute(this);
+            /* notice that we never removed from taskWorkers, and thus wont be
+             * executed from people adding new tasks 
+             */
+            return;
           }
         }
         

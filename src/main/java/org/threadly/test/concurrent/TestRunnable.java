@@ -233,7 +233,8 @@ public class TestRunnable implements Runnable {
     try {
       handleRunStart();
     } catch (InterruptedException e) {
-      // ignored
+      // ignored, just reset status
+      Thread.currentThread().interrupt();
     } finally {
       if (runDelayInMillis > 0) {
         TestUtils.sleep(runDelayInMillis);
