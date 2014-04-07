@@ -40,7 +40,7 @@ public class TaskExecutorDistributor {
   protected final Executor executor;
   protected final StripedLock sLock;
   protected final int maxTasksPerCycle;
-  private final ConcurrentHashMap<Object, TaskQueueWorker> taskWorkers;
+  protected final ConcurrentHashMap<Object, TaskQueueWorker> taskWorkers;
   
   /**
    * Constructor which creates executor based off provided values.
@@ -188,9 +188,12 @@ public class TaskExecutorDistributor {
    * Returns an executor implementation where all tasks submitted 
    * on this executor will run on the provided key.
    * 
+   * @deprecated use getSubmitterForKey, this will be removed in 2.0.0
+   * 
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @return executor which will only execute based on the provided key
    */
+  @Deprecated
   public Executor getExecutorForKey(Object threadKey) {
     return getSubmitterForKey(threadKey);
   }
@@ -214,7 +217,7 @@ public class TaskExecutorDistributor {
    * Provide a task to be run with a given thread key.
    * 
    * @param threadKey object key where hashCode will be used to determine execution thread
-   * @param task Task to be executed.
+   * @param task Task to be executed
    */
   public void addTask(Object threadKey, Runnable task) {
     if (threadKey == null) {
@@ -223,24 +226,44 @@ public class TaskExecutorDistributor {
       throw new IllegalArgumentException("Must provide task");
     }
     
-    Object agentLock = sLock.getLock(threadKey);
-    synchronized (agentLock) {
-      TaskQueueWorker worker = taskWorkers.get(threadKey);
+    addTask(threadKey, task, executor);
+  }
+  
+  /**
+   * This is a protected implementation to add the task to a worker.  No safety checks are
+   * done at this point, so only provide non-null inputs.
+   * 
+   * You can supply the executor in case extending classes want to use different executors 
+   * than the class was constructed with.
+   * 
+   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @param task Task to be added to worker
+   * @param Executor to run worker on (if it needs to be started).
+   */
+  protected void addTask(Object threadKey, Runnable task, Executor executor) {
+    TaskQueueWorker worker;
+    Object workerLock = sLock.getLock(threadKey);
+    synchronized (workerLock) {
+      worker = taskWorkers.get(threadKey);
       if (worker == null) {
-        worker = new TaskQueueWorker(threadKey, agentLock, task);
+        worker = new TaskQueueWorker(threadKey, workerLock, task);
         taskWorkers.put(threadKey, worker);
-        executor.execute(worker);
       } else {
         worker.add(task);
+        // return so we wont start worker
+        return;
       }
     }
+
+    // must run execute outside of lock
+    executor.execute(worker);
   }
   
   /**
    * Submit a task to be run with a given thread key.
    * 
    * @param threadKey object key where hashCode will be used to determine execution thread
-   * @param task Task to be executed.
+   * @param task Task to be executed
    * @return Future to represent when the execution has occurred
    */
   public ListenableFuture<?> submitTask(Object threadKey, Runnable task) {
@@ -251,7 +274,7 @@ public class TaskExecutorDistributor {
    * Submit a task to be run with a given thread key.
    * 
    * @param threadKey object key where hashCode will be used to determine execution thread
-   * @param task Runnable to be executed.
+   * @param task Runnable to be executed
    * @param result Result to be returned from future when task completes
    * @return Future to represent when the execution has occurred and provide the given result
    */
@@ -265,7 +288,7 @@ public class TaskExecutorDistributor {
     
     ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
     
-    addTask(threadKey, rf);
+    addTask(threadKey, rf, executor);
     
     return rf;
   }
@@ -274,7 +297,7 @@ public class TaskExecutorDistributor {
    * Submit a callable to be run with a given thread key.
    * 
    * @param threadKey object key where hashCode will be used to determine execution thread
-   * @param task Callable to be executed.
+   * @param task Callable to be executed
    * @return Future to represent when the execution has occurred and provide the result from the callable
    */
   public <T> ListenableFuture<T> submitTask(Object threadKey, Callable<T> task) {
@@ -286,7 +309,7 @@ public class TaskExecutorDistributor {
     
     ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
     
-    addTask(threadKey, rf);
+    addTask(threadKey, rf, executor);
     
     return rf;
   }
@@ -298,31 +321,53 @@ public class TaskExecutorDistributor {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  private class TaskQueueWorker implements Runnable {
-    private final Object mapKey;
-    private final Object agentLock;
-    private Queue<Runnable> queue;
+  protected class TaskQueueWorker implements Runnable {
+    protected final Object mapKey;
+    protected final Object workerLock;
+    // we treat the first task special to attempt to avoid constructing the ArrayDeque
+    protected volatile Runnable firstTask;
+    protected Queue<Runnable> queue;  // locked around workerLock
     
-    private TaskQueueWorker(Object mapKey, 
-                            Object agentLock, 
-                            Runnable firstTask) {
+    protected TaskQueueWorker(Object mapKey, 
+                              Object workerLock, 
+                              Runnable firstTask) {
       this.mapKey = mapKey;
-      this.agentLock = agentLock;
-      this.queue = new ArrayDeque<Runnable>(ARRAY_DEQUE_INITIAL_SIZE);
-      queue.add(firstTask);
+      this.workerLock = workerLock;
+      this.queue = null;
+      this.firstTask = firstTask;
     }
     
-    public void add(Runnable task) {
+    // Should hold workerLock before calling into
+    protected void add(Runnable task) {
+      if (queue == null) {
+        queue = new ArrayDeque<Runnable>(ARRAY_DEQUE_INITIAL_SIZE);
+      }
       queue.add(task);
+    }
+    
+    private void runTask(Runnable task) {
+      try {
+        task.run();
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+      }
     }
     
     @Override
     public void run() {
       int consumedItems = 0;
+      // firstTask may be null if we exceeded our maxTasksPerCycle
+      if (firstTask != null) {
+        consumedItems++;
+        runTask(firstTask);
+        // set to null to allow GC
+        firstTask = null;
+      }
+      
       while (true) {
         Queue<Runnable> nextList;
-        synchronized (agentLock) {
-          if (queue.isEmpty()) {  // nothing left to run
+        synchronized (workerLock) {
+          if (queue == null) {  // nothing left to run
             taskWorkers.remove(mapKey);
             break;
           } else {
@@ -330,7 +375,7 @@ public class TaskExecutorDistributor {
               if (queue.size() + consumedItems <= maxTasksPerCycle) {
                 // we can run the entire next queue
                 nextList = queue;
-                queue = new ArrayDeque<Runnable>(ARRAY_DEQUE_INITIAL_SIZE);
+                queue = null;
               } else {
                 // we need to run a subset of the queue, so copy and remove what we can run
                 int nextListSize = maxTasksPerCycle - consumedItems;
@@ -356,12 +401,7 @@ public class TaskExecutorDistributor {
         
         Iterator<Runnable> it = nextList.iterator();
         while (it.hasNext()) {
-          try {
-            Runnable next = it.next();
-            next.run();
-          } catch (Throwable t) {
-            ExceptionUtils.handleException(t);
-          }
+          runTask(it.next());
         }
       }
     }

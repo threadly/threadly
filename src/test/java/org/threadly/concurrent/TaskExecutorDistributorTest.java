@@ -23,6 +23,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.lock.StripedLock;
@@ -135,6 +136,7 @@ public class TaskExecutorDistributorTest {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
+        @SuppressWarnings("deprecation")
         Executor keySubmitter = distributor.getExecutorForKey(key);
         keySubmitter.execute(tdr);
       }
@@ -150,6 +152,7 @@ public class TaskExecutorDistributorTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test (expected = IllegalArgumentException.class)
   public void getExecutorForKeyFail() {
     distributor.getExecutorForKey(null);
@@ -417,6 +420,38 @@ public class TaskExecutorDistributorTest {
   
   @Test
   public void limitExecutionPerCycleTest() {
+    final AtomicInteger execCount = new AtomicInteger(0);
+    TaskExecutorDistributor distributor = new TaskExecutorDistributor(1, new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        execCount.incrementAndGet();
+        
+        new Thread(command).start();
+      }
+    }, 1);
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    
+    distributor.addTask(this, btr);
+    btr.blockTillStarted();
+    
+    // add second task while we know worker is active
+    TestRunnable secondTask = new TestRunnable();
+    distributor.addTask(this, secondTask);
+    
+    assertEquals(1, distributor.taskWorkers.size());
+    assertEquals(1, distributor.taskWorkers.get(this).queue.size());
+    
+    btr.unblock();
+    
+    secondTask.blockTillFinished();
+    
+    // verify worker execed out between task
+    assertEquals(2, execCount.get());
+  }
+  
+  @Test
+  public void limitExecutionPerCycleStressTest() {
     PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(3, 3, 1000 * 10, 
                                                                               TaskPriority.High, 
                                                                               PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
