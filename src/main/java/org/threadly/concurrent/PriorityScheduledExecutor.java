@@ -82,6 +82,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   protected final ThreadFactory threadFactory;
   protected final TaskConsumer highPriorityConsumer;  // is locked around highPriorityLock
   protected final TaskConsumer lowPriorityConsumer;    // is locked around lowPriorityLock
+  protected long lastHighDelay;   // is locked around workersLock
   private final AtomicBoolean shutdownStarted;
   private volatile boolean shutdownFinishing; // once true, never goes to false
   private volatile int corePoolSize;  // can only be changed when poolSizeChangeLock locked
@@ -91,7 +92,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   private volatile boolean allowCorePoolTimeout;
   private int waitingForWorkerCount;  // is locked around workersLock
   private int currentPoolSize;  // is locked around workersLock
-  private long lastHighDelay;   // is locked around workersLock
 
   /**
    * Constructs a new thread pool, though no threads will be started 
@@ -562,6 +562,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         it.remove();
         killWorker(w);
       }
+      
+      // we notify all in case some are waiting for shutdown
+      workersLock.notifyAll();
     }
   }
 
@@ -597,10 +600,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     return awaitingTasks;
   }
   
-  protected void verifyNotShutdown() {
-    if (isShutdown()) {
-      throw new IllegalStateException("Thread pool shutdown");
-    }
+  /**
+   * Check weather the shutdown process is finished.
+   * 
+   * @return true if the scheduler is finishing its shutdown
+   */
+  protected boolean getShutdownFinishing() {
+    return shutdownFinishing;
   }
   
   /**
@@ -842,7 +848,9 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   }
   
   protected void addToQueue(TaskWrapper task) {
-    verifyNotShutdown();
+    if (shutdownStarted.get()) {
+      throw new IllegalStateException("Thread pool shutdown");
+    }
     
     switch (task.priority) {
       case High:
@@ -963,13 +971,14 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         while (currentPoolSize >= maxPoolSize && 
                availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
                ! shutdownFinishing &&
+               ! highPriorityQueue.isEmpty() && // if there are no waiting high priority tasks, we don't care 
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
-          if (highPriorityQueue.isEmpty()) {
-            lastHighDelay = 0; // no waiting high priority tasks, so no need to wait on low priority tasks
-          } else {
-            workersLock.wait(waitAmount);
-            Clock.accurateTime(); // update for getDelayEstimateInMillis
-          }
+          workersLock.wait(waitAmount);
+          Clock.accurateTime(); // update for getDelayEstimateInMillis
+        }
+        // check if we should reset the high delay for future low priority tasks
+        if (highPriorityQueue.isEmpty()) {
+          lastHighDelay = 0;
         }
         
         if (! shutdownFinishing) {  // check again that we are still running
