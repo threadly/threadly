@@ -14,6 +14,7 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class ExecutorWrapperTest {
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new ExecutorWrapper(null);

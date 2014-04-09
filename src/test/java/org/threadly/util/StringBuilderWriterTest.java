@@ -27,7 +27,7 @@ public class StringBuilderWriterTest {
     sbw = null;
   }
   
-  @SuppressWarnings("resource")
+  @SuppressWarnings({ "resource", "unused" })
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new StringBuilderWriter(null);

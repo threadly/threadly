@@ -10,6 +10,7 @@ public class StripedLockTest {
   
   private StripedLock sLock = new StripedLock(LOCK_QTY);
   
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorNegativeConcurrencyFail() {
     new StripedLock(-10);

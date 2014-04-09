@@ -92,6 +92,7 @@ public class TaskExecutorDistributorTest {
     return runs;
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorTest() {
     // none should throw exception
@@ -103,6 +104,7 @@ public class TaskExecutorDistributorTest {
     new TaskExecutorDistributor(scheduler, sLock, 1);
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {

@@ -31,6 +31,7 @@ public class ConcurrentArrayListTest {
     testList = null;
   }
   
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new ConcurrentArrayList<String>(null, new Object());

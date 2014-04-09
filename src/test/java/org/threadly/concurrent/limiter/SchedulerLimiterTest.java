@@ -35,6 +35,7 @@ public class SchedulerLimiterTest {
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {

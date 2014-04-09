@@ -57,6 +57,7 @@ public class ExecutorLimiterTest {
     limiter = null;
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {

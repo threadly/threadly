@@ -105,6 +105,7 @@ public class ProfilerTest {
     fail("Exception should have thrown");
   }
   
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new Profiler(-1);

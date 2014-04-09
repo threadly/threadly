@@ -35,6 +35,7 @@ public class PrioritySchedulerWrapperTest {
     assertEquals(TaskPriority.High, psw.defaultPriority);
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {

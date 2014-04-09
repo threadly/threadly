@@ -24,6 +24,7 @@ public class PriorityScheduledExecutorServiceWrapperTest {
   private static final int THREAD_COUNT = 1000;
   private static final int KEEP_ALIVE_TIME = 1000;
   
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new PriorityScheduledExecutorServiceWrapper(null);

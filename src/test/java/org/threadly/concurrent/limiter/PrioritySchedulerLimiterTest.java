@@ -37,6 +37,7 @@ public class PrioritySchedulerLimiterTest {
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {

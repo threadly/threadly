@@ -70,6 +70,7 @@ public class PriorityScheduledExecutorTest {
     }
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {

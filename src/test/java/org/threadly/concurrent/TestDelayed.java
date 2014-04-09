@@ -40,6 +40,11 @@ public class TestDelayed implements Delayed {
   }
   
   @Override
+  public int hashCode() {
+    return toString().hashCode();
+  }
+  
+  @Override
   public boolean equals(Object o) {
     if (o instanceof TestDelayed) {
       TestDelayed td = (TestDelayed)o;

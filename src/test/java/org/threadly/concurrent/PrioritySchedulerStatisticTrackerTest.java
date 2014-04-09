@@ -23,6 +23,7 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerTest {
+  @SuppressWarnings("unused")
   @Test
   public void constructorTest() {
     new PrioritySchedulerStatisticTracker(1, 1, 1000);

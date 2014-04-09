@@ -13,18 +13,21 @@ import org.threadly.test.concurrent.TestCondition;
 
 @SuppressWarnings("javadoc")
 public class BlockingQueueConsumerTest {
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
-  public void constructorQueueFail() {
-    new BlockingQueueConsumer<Object>(null, new TestAcceptor());
-    
-    fail("Exception should have been thrown");
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void constructorAcceptorFail() {
-    new BlockingQueueConsumer<Object>(new SynchronousQueue<Object>(), null);
-    
-    fail("Exception should have been thrown");
+  public void constructorFail() {
+    try {
+      new BlockingQueueConsumer<Object>(new SynchronousQueue<Object>(), null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new BlockingQueueConsumer<Object>(null, new TestAcceptor());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test

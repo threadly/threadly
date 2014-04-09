@@ -110,6 +110,7 @@ public class ControlledThreadProfilerTest {
     assertFalse(it.hasNext());
   }
   
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new ControlledThreadProfiler(-1);

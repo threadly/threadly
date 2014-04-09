@@ -79,6 +79,7 @@ public class TaskSchedulerDistributorTest {
     return runs;
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {
@@ -102,6 +103,7 @@ public class TaskSchedulerDistributorTest {
     }
   }
   
+  @SuppressWarnings("unused")
   @Test
   public void constructorTest() {
     // none should throw exception
