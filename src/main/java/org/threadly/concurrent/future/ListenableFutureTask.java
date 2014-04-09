@@ -96,6 +96,10 @@ public class ListenableFutureTask<T> extends FutureTask<T>
     FutureUtils.addCallback(this, callback, executor);
   }
   
+  /**
+   * @deprecated Use addListener as an alternative, this will be removed in 2.0.0
+   */
+  @Deprecated
   @Override
   protected void done() {
     listenerHelper.callListeners();

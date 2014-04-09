@@ -18,6 +18,23 @@ import org.threadly.util.ExceptionUtils;
  * @since 1.2.0
  */
 public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
+  private static final SameThreadSubmitterExecutor DEFAULT_INSTANCE;
+  
+  static {
+    DEFAULT_INSTANCE = new SameThreadSubmitterExecutor();
+  }
+  
+  /**
+   * Call to get a default instance of the SameThreadSubmitterExecutor.  Because 
+   * there is no saved or shared state, the same instance can be reused as much 
+   * as desired.
+   * 
+   * @return an instance of SameThreadSubmitterExecutor
+   */
+  public static SameThreadSubmitterExecutor instance() {
+    return DEFAULT_INSTANCE;
+  }
+  
   @Override
   public void execute(Runnable command) {
     if (command == null) {

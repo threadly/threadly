@@ -123,6 +123,7 @@ public class Clock {
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
             } catch (InterruptedException e) {
               clockUpdater = null;  // let thread exit
+              Thread.currentThread().interrupt();
             }
           }
         }

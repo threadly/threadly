@@ -237,6 +237,7 @@ public class Profiler {
           try {
             runningThreadFuture.get();
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             return;
           } catch (ExecutionException e) {
             // is virtually impossible
@@ -578,6 +579,7 @@ public class Profiler {
           Thread.sleep(pollIntervalInMs);
         } catch (InterruptedException e) {
           collectorThread.compareAndSet(runningThread, null);
+          Thread.currentThread().interrupt(); // reset status
           return;
         }
       }

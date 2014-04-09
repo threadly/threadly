@@ -224,7 +224,7 @@ public class TaskSchedulerDistributorTest {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
-        distributor.schedule(key, tdr, SCHEDULE_DELAY);
+        distributor.scheduleTask(key, tdr, SCHEDULE_DELAY);
       }
     });
     
@@ -240,19 +240,19 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void scheduleExecutionFail() {
     try {
-      distributor.schedule(new Object(), null, 1000);
+      distributor.scheduleTask(new Object(), null, 1000);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.schedule(new Object(), new TestRunnable(), -1);
+      distributor.scheduleTask(new Object(), new TestRunnable(), -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.schedule(null, new TestRunnable(), 100);
+      distributor.scheduleTask(null, new TestRunnable(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -309,8 +309,8 @@ public class TaskSchedulerDistributorTest {
       int initialDelay = 0;
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
-        distributor.scheduleWithFixedDelay(key, tdr, initialDelay++, 
-                                           SCHEDULE_DELAY);
+        distributor.scheduleTaskWithFixedDelay(key, tdr, initialDelay++, 
+                                               SCHEDULE_DELAY);
       }
     });
     
@@ -326,29 +326,57 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void recurringExecutionFail() {
     try {
-      distributor.scheduleWithFixedDelay(new Object(), null, 1000, 100);
+      distributor.scheduleTaskWithFixedDelay(new Object(), null, 1000, 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.scheduleWithFixedDelay(new Object(), new TestRunnable(), -1, 100);
+      distributor.scheduleTaskWithFixedDelay(new Object(), new TestRunnable(), -1, 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.scheduleWithFixedDelay(new Object(), new TestRunnable(), 100, -1);
+      distributor.scheduleTaskWithFixedDelay(new Object(), new TestRunnable(), 100, -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.scheduleWithFixedDelay(null, new TestRunnable(), 100, 100);
+      distributor.scheduleTaskWithFixedDelay(null, new TestRunnable(), 100, 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
+  }
+  
+  @Test
+  public void removeRunnableTest() {
+    NoThreadScheduler scheduler = new NoThreadScheduler();
+    TaskSchedulerDistributor distributor = new TaskSchedulerDistributor(scheduler);
+    TestRunnable scheduleRunnable = new TestRunnable();
+    TestRunnable submitScheduledRunnable = new TestRunnable();
+    TestRunnable scheduleWithFixedDelayRunnable = new TestRunnable();
+    
+    distributor.scheduleTask(scheduleRunnable, scheduleRunnable, 10);
+    distributor.submitScheduledTask(submitScheduledRunnable, submitScheduledRunnable, 10);
+    distributor.scheduleTaskWithFixedDelay(scheduleWithFixedDelayRunnable, scheduleWithFixedDelayRunnable, 10, 10);
+    
+    assertTrue(scheduler.remove(scheduleRunnable));
+    assertTrue(scheduler.remove(submitScheduledRunnable));
+    assertTrue(scheduler.remove(scheduleWithFixedDelayRunnable));
+  }
+  
+  @Test
+  public void removeCallableTest() {
+    NoThreadScheduler scheduler = new NoThreadScheduler();
+    TaskSchedulerDistributor distributor = new TaskSchedulerDistributor(scheduler);
+    TestCallable submitScheduledCallable = new TestCallable();
+    
+    distributor.submitScheduledTask(submitScheduledCallable, submitScheduledCallable, 10);
+    
+    assertTrue(scheduler.remove(submitScheduledCallable));
   }
   
   @Test

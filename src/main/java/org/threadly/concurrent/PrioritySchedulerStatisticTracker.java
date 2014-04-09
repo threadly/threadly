@@ -211,7 +211,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
     synchronized (workersLock) {
-      if (! isShutdown()) {
+      if (! getShutdownFinishing()) {
         synchronized (highPriorityWorkerAvailable.getModificationLock()) {
           highPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
           trimList(highPriorityWorkerAvailable);
@@ -220,6 +220,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
           // we can't make the pool any bigger
           w = getExistingWorker(Long.MAX_VALUE);
         } else {
+          lastHighDelay = 0;
+          
           if (availableWorkers.isEmpty()) {
             w = makeNewWorker();
           } else {
@@ -249,27 +251,44 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
     synchronized (workersLock) {
-      if (! isShutdown()) {
-        if (getCurrentPoolSize() >= getMaxPoolSize()) {
-          synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
-            lowPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
-            trimList(lowPriorityWorkerAvailable);
-          }
-          w = getExistingWorker(Long.MAX_VALUE);
-        } else {
-          w = getExistingWorker(getMaxWaitForLowPriority());
-          synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
-            lowPriorityWorkerAvailable.add(w != null);
-            trimList(lowPriorityWorkerAvailable);
-          }
+      if (! getShutdownFinishing()) {
+        // wait for high priority tasks that have been waiting longer than us if all workers are consumed
+        long waitAmount;
+        while (getCurrentPoolSize() >= getMaxPoolSize() && 
+               availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
+               ! getShutdownFinishing() &&
+               ! highPriorityQueue.isEmpty() && // if there are no waiting high priority tasks, we don't care 
+               (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
+          workersLock.wait(waitAmount);
+          Clock.accurateTime(); // update for getDelayEstimateInMillis
         }
-        if (w == null) {
-          // this means we expired past our wait time, so just make a new worker
+        // check if we should reset the high delay for future low priority tasks
+        if (highPriorityQueue.isEmpty()) {
+          lastHighDelay = 0;
+        }
+        
+        if (! getShutdownFinishing()) {  // check again that we are still running
           if (getCurrentPoolSize() >= getMaxPoolSize()) {
-            // more workers were created while waiting, now have exceeded our max
+            synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
+              lowPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
+              trimList(lowPriorityWorkerAvailable);
+            }
             w = getExistingWorker(Long.MAX_VALUE);
           } else {
-            w = makeNewWorker();
+            w = getExistingWorker(getMaxWaitForLowPriority());
+            synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
+              lowPriorityWorkerAvailable.add(w != null);
+              trimList(lowPriorityWorkerAvailable);
+            }
+          }
+          if (w == null) {
+            // this means we expired past our wait time, so create a worker if we can
+            if (getCurrentPoolSize() >= getMaxPoolSize()) {
+              // more workers were created while waiting, now have reached our max
+              w = getExistingWorker(Long.MAX_VALUE);
+            } else {
+              w = makeNewWorker();
+            }
           }
         }
       }

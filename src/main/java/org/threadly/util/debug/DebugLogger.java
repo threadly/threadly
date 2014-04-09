@@ -83,6 +83,7 @@ public class DebugLogger {
       Thread.sleep(100);  // wait for any possibly log messages attempting to be currently stored
     } catch (InterruptedException e) {
       // go ahead and produce results now and quit quickly
+      Thread.currentThread().interrupt();
     }
     
     StringBuilder result = new StringBuilder();

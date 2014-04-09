@@ -156,13 +156,30 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * Schedule a one time task with a given delay that will not run concurrently 
    * based off the thread key.
    * 
+   * @deprecated use scheduleTask, this will be removed in 2.0.0
+   * 
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @param task Task to execute
    * @param delayInMs Time to wait to execute task
    */
+  @Deprecated
   public void schedule(Object threadKey, 
                        Runnable task, 
                        long delayInMs) {
+    scheduleTask(threadKey, task, delayInMs);
+  }
+
+  /**
+   * Schedule a one time task with a given delay that will not run concurrently 
+   * based off the thread key.
+   * 
+   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @param task Task to execute
+   * @param delayInMs Time to wait to execute task
+   */
+  public void scheduleTask(Object threadKey, 
+                           Runnable task, 
+                           long delayInMs) {
     if (threadKey == null) {
       throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
@@ -172,11 +189,31 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     }
     
     if (delayInMs == 0) {
-      addTask(threadKey, task);
+      addTask(threadKey, task, executor);
     } else {
       scheduler.schedule(new AddTask(threadKey, task), 
                          delayInMs);
     }
+  }
+  
+  /**
+   * Schedule a recurring task to run.  The recurring delay time will be
+   * from the point where execution finished.  This task will not run concurrently 
+   * based off the thread key.
+   * 
+   * @deprecated use scheduleTaskWithFixedDelay, this will be removed in 2.0.0
+   * 
+   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @param task Task to be executed.
+   * @param initialDelay Delay in milliseconds until first run.
+   * @param recurringDelay Delay in milliseconds for running task after last finish.
+   */
+  @Deprecated
+  public void scheduleWithFixedDelay(Object threadKey, 
+                                     Runnable task, 
+                                     long initialDelay, 
+                                     long recurringDelay) {
+    scheduleTaskWithFixedDelay(threadKey, task, initialDelay, recurringDelay);
   }
   
   /**
@@ -189,10 +226,10 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param initialDelay Delay in milliseconds until first run.
    * @param recurringDelay Delay in milliseconds for running task after last finish.
    */
-  public void scheduleWithFixedDelay(Object threadKey, 
-                                     Runnable task, 
-                                     long initialDelay, 
-                                     long recurringDelay) {
+  public void scheduleTaskWithFixedDelay(Object threadKey, 
+                                         Runnable task, 
+                                         long initialDelay, 
+                                         long recurringDelay) {
     if (threadKey == null) {
       throw new IllegalArgumentException("Must provide a threadKey");
     } else if (task == null) {
@@ -255,7 +292,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
     
     if (delayInMs == 0) {
-      addTask(threadKey, rf);
+      addTask(threadKey, rf, executor);
     } else {
       scheduler.schedule(new AddTask(threadKey, rf), 
                          delayInMs);
@@ -288,7 +325,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
     
     if (delayInMs == 0) {
-      addTask(threadKey, rf);
+      addTask(threadKey, rf, executor);
     } else {
       scheduler.schedule(new AddTask(threadKey, rf), 
                          delayInMs);
@@ -315,7 +352,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
 
     @Override
     public void run() {
-      addTask(key, task);
+      addTask(key, task, SameThreadSubmitterExecutor.instance());
     }
 
     @Override
