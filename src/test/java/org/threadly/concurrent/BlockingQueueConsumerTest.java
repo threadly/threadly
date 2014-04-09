@@ -14,7 +14,7 @@ import org.threadly.test.concurrent.TestCondition;
 @SuppressWarnings("javadoc")
 public class BlockingQueueConsumerTest {
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
     try {
       new BlockingQueueConsumer<Object>(new SynchronousQueue<Object>(), null);
