@@ -16,14 +16,17 @@ import org.threadly.concurrent.lock.StripedLock;
  */
 public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   private final SimpleSchedulerInterface scheduler;
-  
+
   /**
    * Constructor which creates scheduler based off provided values.  This is a more full 
    * featured task distributor, it allows scheduling and recurring tasks.
    * 
+   * @deprecated Use a constructor that takes a SimpleSchedulerInterface, this will be removed in 2.0.0
+   * 
    * @param expectedParallism Expected number of keys that will be used in parallel
    * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
    */
+  @Deprecated
   public TaskSchedulerDistributor(int expectedParallism, int maxThreadCount) {
     this(expectedParallism, maxThreadCount, Integer.MAX_VALUE);
   }
@@ -38,30 +41,53 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * becomes in part because it has to give up the thread and get it again, but also because 
    * it must copy the subset of the task queue which it can run.
    * 
+   * @deprecated Use a constructor that takes a SimpleSchedulerInterface, this will be removed in 2.0.0
+   * 
    * @param expectedParallism Expected number of keys that will be used in parallel
    * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
+  @Deprecated
   public TaskSchedulerDistributor(int expectedParallism, int maxThreadCount, int maxTasksPerCycle) {
     this(new PriorityScheduledExecutor(Math.min(expectedParallism, maxThreadCount), 
                                        maxThreadCount, 
                                        DEFAULT_THREAD_KEEPALIVE_TIME, 
                                        TaskPriority.High, 
                                        PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
-         new StripedLock(expectedParallism), maxTasksPerCycle);
+         new StripedLock(expectedParallism), maxTasksPerCycle, false);
   }
   
   /**
-   * Constructor to use a provided executor implementation for running tasks.  
+   * Constructor to use a provided scheduler implementation for running tasks.  
    * 
-   * This constructs with a default expected level of concurrency of 16.
+   * This constructs with a default expected level of concurrency of 16.  This also does not 
+   * attempt to have an accurate queue size for the "getTaskQueueSize" call (thus preferring 
+   * high performance).
    * 
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
    *                  will be used in parallel.
    */
   public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler) {
-    this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE);
+    this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, false);
+  }
+  
+  /**
+   * Constructor to use a provided executor implementation for running tasks.  
+   * 
+   * This constructor allows you to specify if you want accurate queue sizes to be 
+   * tracked for given thread keys.  There is a performance hit associated with this, 
+   * so this should only be enabled if "getTaskQueueSize" calls will be used.  
+   * 
+   * This constructs with a default expected level of concurrency of 16.
+   * 
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
+   *                  Ideally has as many possible threads as keys that 
+   *                  will be used in parallel.
+   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   */
+  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, boolean accurateQueueSize) {
+    this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
   
   /**
@@ -73,7 +99,13 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * becomes in part because it has to give up the thread and get it again, but also because 
    * it must copy the subset of the task queue which it can run.  
    * 
-   * This constructs with a default expected level of concurrency of 16.
+   * This also allows you to specify if you want accurate queue sizes to be tracked for 
+   * given thread keys.  There is a performance hit associated with this, so this should 
+   * only be enabled if "getTaskQueueSize" calls will be used.  
+   * 
+   * This constructs with a default expected level of concurrency of 16.  This also does not 
+   * attempt to have an accurate queue size for the "getTaskQueueSize" call (thus preferring 
+   * high performance).
    * 
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
@@ -81,11 +113,40 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
   public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, int maxTasksPerCycle) {
-    this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle);
+    this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, false);
+  }
+  
+  /**
+   * Constructor to use a provided executor implementation for running tasks.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.  
+   * 
+   * This also allows you to specify if you want accurate queue sizes to be tracked for given 
+   * thread keys.  There is a performance hit associated with this, so this should only be 
+   * enabled if "getTaskQueueSize" calls will be used.
+   * 
+   * This constructs with a default expected level of concurrency of 16. 
+   * 
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
+   *                  Ideally has as many possible threads as keys that 
+   *                  will be used in parallel.
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   */
+  public TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, int maxTasksPerCycle, 
+                                  boolean accurateQueueSize) {
+    this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, accurateQueueSize);
   }
     
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
+   * 
+   * This constructor does not attempt to have an accurate queue size for the 
+   * "getTaskQueueSize" call (thus preferring high performance).
    * 
    * @param expectedParallism level of expected qty of threads adding tasks in parallel
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
@@ -93,6 +154,24 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    *                  will be used in parallel. 
    */
   public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler) {
+    this(expectedParallism, scheduler, Integer.MAX_VALUE, false);
+  }
+    
+  /**
+   * Constructor to use a provided scheduler implementation for running tasks.
+   * 
+   * This constructor allows you to specify if you want accurate queue sizes to be 
+   * tracked for given thread keys.  There is a performance hit associated with this, 
+   * so this should only be enabled if "getTaskQueueSize" calls will be used.
+   * 
+   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
+   *                  Ideally has as many possible threads as keys that 
+   *                  will be used in parallel. 
+   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   */
+  public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler, 
+                                  boolean accurateQueueSize) {
     this(expectedParallism, scheduler, Integer.MAX_VALUE);
   }
     
@@ -105,6 +184,9 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * becomes in part because it has to give up the thread and get it again, but also because 
    * it must copy the subset of the task queue which it can run.
    * 
+   * This constructor does not attempt to have an accurate queue size for the 
+   * "getTaskQueueSize" call (thus preferring high performance).
+   * 
    * @param expectedParallism level of expected qty of threads adding tasks in parallel
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
@@ -113,8 +195,33 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    */
   public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler, 
                                   int maxTasksPerCycle) {
+    this(expectedParallism, scheduler, maxTasksPerCycle, false);
+  }
+    
+  /**
+   * Constructor to use a provided scheduler implementation for running tasks.
+   * 
+   * This constructor allows you to provide a maximum number of tasks for a key before it 
+   * yields to another key.  This can make it more fair, and make it so no single key can 
+   * starve other keys from running.  The lower this is set however, the less efficient it 
+   * becomes in part because it has to give up the thread and get it again, but also because 
+   * it must copy the subset of the task queue which it can run.
+   * 
+   * This also allows you to specify if you want accurate queue sizes to be 
+   * tracked for given thread keys.  There is a performance hit associated with this, 
+   * so this should only be enabled if "getTaskQueueSize" calls will be used.
+   * 
+   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
+   *                  Ideally has as many possible threads as keys that 
+   *                  will be used in parallel.
+   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
+   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   */
+  public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler, 
+                                  int maxTasksPerCycle, boolean accurateQueueSize) {
     this(scheduler, new StripedLock(expectedParallism), 
-         maxTasksPerCycle);
+         maxTasksPerCycle, accurateQueueSize);
   }
   
   /**
@@ -130,9 +237,9 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * @param sLock lock to be used for controlling access to workers
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, 
-                                     StripedLock sLock, int maxTasksPerCycle) {
-    super(scheduler, sLock, maxTasksPerCycle);
+  protected TaskSchedulerDistributor(SimpleSchedulerInterface scheduler, StripedLock sLock, 
+                                     int maxTasksPerCycle, boolean accurateQueueSize) {
+    super(scheduler, sLock, maxTasksPerCycle, accurateQueueSize);
     
     this.scheduler = scheduler;
   }
