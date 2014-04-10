@@ -47,7 +47,7 @@ public class TaskSchedulerDistributorTest {
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
     distributor = new TaskSchedulerDistributor(scheduler, sLock, 
-                                               Integer.MAX_VALUE);
+                                               Integer.MAX_VALUE, false);
   }
   
   @After
@@ -79,7 +79,7 @@ public class TaskSchedulerDistributorTest {
     return runs;
   }
   
-  @SuppressWarnings("unused")
+  @SuppressWarnings({ "deprecation", "unused" })
   @Test
   public void constructorFail() {
     try {
@@ -90,7 +90,7 @@ public class TaskSchedulerDistributorTest {
     }
     try {
       new TaskSchedulerDistributor(scheduler, null, 
-                                   Integer.MAX_VALUE);
+                                   Integer.MAX_VALUE, false);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -112,7 +112,7 @@ public class TaskSchedulerDistributorTest {
     new TaskSchedulerDistributor(1, scheduler);
     new TaskSchedulerDistributor(1, scheduler, 1);
     StripedLock sLock = new StripedLock(1);
-    new TaskSchedulerDistributor(scheduler, sLock, 1);
+    new TaskSchedulerDistributor(scheduler, sLock, 1, false);
   }
   
   @Test (expected = IllegalArgumentException.class)
