@@ -211,7 +211,7 @@ public class FutureUtils {
    * @return Already satisfied future
    */
   public static <T> ListenableFuture<T> immediateResultFuture(T result) {
-    ListenableFutureResult<T> futureResult = new ListenableFutureResult<T>();
+    SettableListenableFuture<T> futureResult = new SettableListenableFuture<T>();
     futureResult.setResult(result);
     return futureResult;
   }
@@ -228,7 +228,7 @@ public class FutureUtils {
    * @return Already satisfied future
    */
   public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
-    ListenableFutureResult<T> futureResult = new ListenableFutureResult<T>();
+    SettableListenableFuture<T> futureResult = new SettableListenableFuture<T>();
     futureResult.setFailure(failure);
     return futureResult;
   }
@@ -242,7 +242,7 @@ public class FutureUtils {
    * @param <T> type of result returned from the futures
    */
   protected abstract static class FutureCollection<T> 
-      extends ListenableFutureResult<List<ListenableFuture<? extends T>>> {
+      extends SettableListenableFuture<List<ListenableFuture<? extends T>>> {
     protected final AtomicInteger remainingResult;
     private final AtomicReference<List<ListenableFuture<? extends T>>> buildingResult;
     

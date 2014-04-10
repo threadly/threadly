@@ -64,7 +64,7 @@ public class FutureUtilsTest {
       // expected
     }
     try {
-      FutureUtils.addCallback(new ListenableFutureResult<Object>(), null);
+      FutureUtils.addCallback(new SettableListenableFuture<Object>(), null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -74,7 +74,7 @@ public class FutureUtilsTest {
   @Test
   public void addCallbackTest() {
     Object result = new Object();
-    ListenableFutureResult<Object> future = new ListenableFutureResult<Object>();
+    SettableListenableFuture<Object> future = new SettableListenableFuture<Object>();
     TestFutureCallback tfc = new TestFutureCallback();
     FutureUtils.addCallback(future, tfc);
     
@@ -111,7 +111,7 @@ public class FutureUtilsTest {
   @Test
   public void addCallbackExecutionExceptionTest() {
     Throwable failure = new Exception();
-    ListenableFutureResult<Object> future = new ListenableFutureResult<Object>();
+    SettableListenableFuture<Object> future = new SettableListenableFuture<Object>();
     TestFutureCallback tfc = new TestFutureCallback();
     FutureUtils.addCallback(future, tfc);
     
@@ -228,7 +228,7 @@ public class FutureUtilsTest {
     List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
-      ListenableFutureResult<?> future = new ListenableFutureResult<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
       future.setResult(null);
       futures.add(future);
     }
@@ -297,7 +297,7 @@ public class FutureUtilsTest {
     List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
-      ListenableFutureResult<?> future = new ListenableFutureResult<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
       if (i == TEST_QTY / 2) {
         future.setFailure(null);
       } else {
@@ -370,7 +370,7 @@ public class FutureUtilsTest {
     ListenableFuture<?> failureFuture = null;
     
     for (int i = 0; i < TEST_QTY; i++) {
-      ListenableFutureResult<?> future = new ListenableFutureResult<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
       if (i == TEST_QTY / 2) {
         failureFuture = future;
         future.setFailure(null);
@@ -390,7 +390,7 @@ public class FutureUtilsTest {
   @Test
   public void makeSuccessListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    ListenableFutureResult<?> failureFuture = new ListenableFutureResult<Object>();
+    SettableListenableFuture<?> failureFuture = new SettableListenableFuture<Object>();
     failureFuture.setFailure(null);
     futures.add(failureFuture);
 
@@ -404,7 +404,7 @@ public class FutureUtilsTest {
   @Test
   public void makeSuccessListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    ListenableFutureResult<?> cancelFuture = new ListenableFutureResult<Object>() {
+    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>() {
       @Override
       public Object get() {
         throw new CancellationException();
@@ -441,7 +441,7 @@ public class FutureUtilsTest {
     ListenableFuture<?> failureFuture = null;
     
     for (int i = 0; i < TEST_QTY; i++) {
-      ListenableFutureResult<?> future = new ListenableFutureResult<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
       if (i == TEST_QTY / 2) {
         failureFuture = future;
         future.setFailure(null);
@@ -475,7 +475,7 @@ public class FutureUtilsTest {
   @Test
   public void makeFailureListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    ListenableFutureResult<?> failureFuture = new ListenableFutureResult<Object>();
+    SettableListenableFuture<?> failureFuture = new SettableListenableFuture<Object>();
     failureFuture.setFailure(null);
     futures.add(failureFuture);
 
@@ -489,7 +489,7 @@ public class FutureUtilsTest {
   @Test
   public void makeFailureListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    ListenableFutureResult<?> cancelFuture = new ListenableFutureResult<Object>() {
+    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>() {
       @Override
       public Object get() {
         throw new CancellationException();

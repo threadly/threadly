@@ -15,14 +15,12 @@ import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class ListenableFutureResultTest {
-  @SuppressWarnings("deprecation")
-  private ListenableFutureResult<String> lfr;
+public class SettableListenableFutureTest {
+  private SettableListenableFuture<String> lfr;
   
-  @SuppressWarnings("deprecation")
   @Before
   public void setup() {
-    lfr = new ListenableFutureResult<String>();
+    lfr = new SettableListenableFuture<String>();
   }
   
   @After
