@@ -138,6 +138,12 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void getCurrentRunningCountTest() {
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.getCurrentRunningCountTest(psetf);
+  }
+  
+  @Test
   public void makeSubPoolTest() {
     PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
     PriorityScheduledExecutorTest.makeSubPoolTest(psetf);

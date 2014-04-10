@@ -97,9 +97,13 @@ public class TaskExecutorDistributorTest {
   public void constructorTest() {
     // none should throw exception
     new TaskExecutorDistributor(scheduler);
+    new TaskExecutorDistributor(scheduler, true);
     new TaskExecutorDistributor(scheduler, 1);
+    new TaskExecutorDistributor(scheduler, 1, true);
     new TaskExecutorDistributor(1, scheduler);
+    new TaskExecutorDistributor(1, scheduler, true);
     new TaskExecutorDistributor(1, scheduler, 1);
+    new TaskExecutorDistributor(1, scheduler, 1, true);
     StripedLock sLock = new StripedLock(1);
     new TaskExecutorDistributor(scheduler, sLock, 1, false);
   }
@@ -502,6 +506,60 @@ public class TaskExecutorDistributorTest {
       testComplete.set(true);
       scheduler.shutdownNow();
     }
+  }
+  
+  private static void getTaskQueueSizeSimpleTest(boolean accurateDistributor) {
+    final Object taskKey = new Object();
+    TaskExecutorDistributor ted = new TaskExecutorDistributor(new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        // kidding, don't actually execute, haha
+      }
+    }, accurateDistributor);
+    
+    assertEquals(0, ted.getTaskQueueSize(taskKey));
+    
+    ted.addTask(taskKey, new TestRunnable());
+    
+    // should add as first task
+    assertEquals(1, ted.getTaskQueueSize(taskKey));
+    
+    ted.addTask(taskKey, new TestRunnable());
+    
+    // will now add into the queue
+    assertEquals(2, ted.getTaskQueueSize(taskKey));
+  }
+  
+  private static void getTaskQueueSizeThreadedTest(boolean accurateDistributor) {
+    final Object taskKey = new Object();
+    TaskExecutorDistributor ted = new TaskExecutorDistributor(scheduler, accurateDistributor);
+    
+    assertEquals(0, ted.getTaskQueueSize(taskKey));
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    ted.addTask(taskKey, btr);
+    
+    // add more tasks while remaining blocked
+    ted.addTask(taskKey, new TestRunnable());
+    ted.addTask(taskKey, new TestRunnable());
+    
+    btr.blockTillStarted();
+    
+    assertEquals(2, ted.getTaskQueueSize(taskKey));
+    
+    btr.unblock();
+  }
+  
+  @Test
+  public void getTaskQueueSizeInaccurateTest() {
+    getTaskQueueSizeSimpleTest(false);
+    getTaskQueueSizeThreadedTest(false);
+  }
+  
+  @Test
+  public void getTaskQueueSizeAccurateTest() {
+    getTaskQueueSizeSimpleTest(true);
+    getTaskQueueSizeThreadedTest(true);
   }
   
   protected static class TDRunnable extends TestRunnable {

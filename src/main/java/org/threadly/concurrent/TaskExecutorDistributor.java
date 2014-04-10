@@ -511,7 +511,8 @@ public class TaskExecutorDistributor {
     public int getQueueSize() {
       // the default implementation is very inaccurate
       synchronized (workerLock) {
-        return queue == null ? 0 : queue.size();
+        return (firstTask == null ? 0 : 1) + 
+                 (queue == null ? 0 : queue.size());
       }
     }
     
@@ -537,9 +538,12 @@ public class TaskExecutorDistributor {
       // firstTask may be null if we exceeded our maxTasksPerCycle
       if (firstTask != null) {
         consumedItems++;
-        runTask(firstTask);
+        // we need to set firstTask to null before we run the task (for semi-accurate queue size)
+        Runnable task = firstTask;
         // set to null to allow GC
         firstTask = null;
+        
+        runTask(task);
       }
       
       while (true) {

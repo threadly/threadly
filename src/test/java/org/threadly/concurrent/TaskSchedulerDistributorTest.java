@@ -108,9 +108,13 @@ public class TaskSchedulerDistributorTest {
   public void constructorTest() {
     // none should throw exception
     new TaskSchedulerDistributor(scheduler);
+    new TaskSchedulerDistributor(scheduler, true);
     new TaskSchedulerDistributor(scheduler, 1);
+    new TaskSchedulerDistributor(scheduler, 1, true);
     new TaskSchedulerDistributor(1, scheduler);
+    new TaskSchedulerDistributor(1, scheduler, true);
     new TaskSchedulerDistributor(1, scheduler, 1);
+    new TaskSchedulerDistributor(1, scheduler, 1, true);
     StripedLock sLock = new StripedLock(1);
     new TaskSchedulerDistributor(scheduler, sLock, 1, false);
   }

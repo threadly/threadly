@@ -508,6 +508,34 @@ public class PriorityScheduledExecutorTest {
   }
   
   @Test
+  public void getCurrentRunningCountTest() {
+    getCurrentRunningCountTest(new PriorityScheduledExecutorTestFactory());
+  }
+  
+  public static void getCurrentRunningCountTest(PriorityScheduledExecutorFactory factory) {
+    PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
+    try {
+      // verify nothing at the start
+      assertEquals(0, scheduler.getCurrentRunningCount());
+      
+      BlockingTestRunnable btr = new BlockingTestRunnable();
+      scheduler.execute(btr);
+      
+      btr.blockTillStarted();
+      
+      assertEquals(1, scheduler.getCurrentRunningCount());
+      
+      btr.unblock();
+      
+      blockTillWorkerAvailable(scheduler);
+      
+      assertEquals(0, scheduler.getCurrentRunningCount());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void makeSubPoolTest() {
     makeSubPoolTest(new PriorityScheduledExecutorTestFactory());
   }
