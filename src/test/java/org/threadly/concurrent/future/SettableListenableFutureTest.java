@@ -16,69 +16,69 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SettableListenableFutureTest {
-  private SettableListenableFuture<String> lfr;
+  private SettableListenableFuture<String> slf;
   
   @Before
   public void setup() {
-    lfr = new SettableListenableFuture<String>();
+    slf = new SettableListenableFuture<String>();
   }
   
   @After
   public void tearDown() {
-    lfr = null;
+    slf = null;
   }
   
   @Test (expected = IllegalStateException.class)
   public void setResultResultFail() {
-    lfr.setResult(null);
-    lfr.setResult(null);
+    slf.setResult(null);
+    slf.setResult(null);
   }
   
   @Test (expected = IllegalStateException.class)
   public void setFailureResultFail() {
-    lfr.setFailure(null);
-    lfr.setResult(null);
+    slf.setFailure(null);
+    slf.setResult(null);
   }
   
   @Test (expected = IllegalStateException.class)
   public void setResultFailureFail() {
-    lfr.setResult(null);
-    lfr.setFailure(null);
+    slf.setResult(null);
+    slf.setFailure(null);
   }
   
   @Test (expected = IllegalStateException.class)
   public void setFailureFailureFail() {
-    lfr.setFailure(null);
-    lfr.setFailure(null);
+    slf.setFailure(null);
+    slf.setFailure(null);
   }
   
   @Test
   public void listenersCalledOnResultTest() {
     TestRunnable tr = new TestRunnable();
-    lfr.addListener(tr);
+    slf.addListener(tr);
     
-    lfr.setResult(null);
+    slf.setResult(null);
     
     assertTrue(tr.ranOnce());
     
     // verify new additions also get called
     tr = new TestRunnable();
-    lfr.addListener(tr);
+    slf.addListener(tr);
     assertTrue(tr.ranOnce());
   }
   
   @Test
   public void listenersCalledOnFailureTest() {
     TestRunnable tr = new TestRunnable();
-    lfr.addListener(tr);
+    slf.addListener(tr);
     
-    lfr.setFailure(null);
+    slf.setFailure(null);
     
     assertTrue(tr.ranOnce());
     
     // verify new additions also get called
     tr = new TestRunnable();
-    lfr.addListener(tr);
+    slf.addListener(tr);
     assertTrue(tr.ranOnce());
   }
   
@@ -86,11 +86,11 @@ public class SettableListenableFutureTest {
   public void addCallbackTest() {
     String result = "addCallbackTest";
     TestFutureCallback tfc = new TestFutureCallback();
-    lfr.addCallback(tfc);
+    slf.addCallback(tfc);
     
     assertEquals(0, tfc.getCallCount());
     
-    lfr.setResult(result);
+    slf.setResult(result);
     
     assertEquals(1, tfc.getCallCount());
     assertTrue(result == tfc.getLastResult());
@@ -99,9 +99,9 @@ public class SettableListenableFutureTest {
   @Test
   public void addCallbackAlreadyDoneFutureTest() {
     String result = "addCallbackAlreadyDoneFutureTest";
-    lfr.setResult(result);
+    slf.setResult(result);
     TestFutureCallback tfc = new TestFutureCallback();
-    lfr.addCallback(tfc);
+    slf.addCallback(tfc);
     
     assertEquals(1, tfc.getCallCount());
     assertTrue(result == tfc.getLastResult());
@@ -110,9 +110,9 @@ public class SettableListenableFutureTest {
   @Test
   public void addCallbackExecutionExceptionAlreadyDoneTest() {
     Throwable failure = new Exception();
-    lfr.setFailure(failure);
+    slf.setFailure(failure);
     TestFutureCallback tfc = new TestFutureCallback();
-    lfr.addCallback(tfc);
+    slf.addCallback(tfc);
     
     assertEquals(1, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
@@ -122,11 +122,11 @@ public class SettableListenableFutureTest {
   public void addCallbackExecutionExceptionTest() {
     Throwable failure = new Exception();
     TestFutureCallback tfc = new TestFutureCallback();
-    lfr.addCallback(tfc);
+    slf.addCallback(tfc);
     
     assertEquals(0, tfc.getCallCount());
     
-    lfr.setFailure(failure);
+    slf.setFailure(failure);
     
     assertEquals(1, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
@@ -134,19 +134,19 @@ public class SettableListenableFutureTest {
   
   @Test
   public void cancelTest() {
-    assertFalse(lfr.cancel(false));
-    assertFalse(lfr.cancel(true));
-    assertFalse(lfr.isCancelled());
-    assertFalse(lfr.isDone());
+    assertFalse(slf.cancel(false));
+    assertFalse(slf.cancel(true));
+    assertFalse(slf.isCancelled());
+    assertFalse(slf.isDone());
   }
   
   @Test
   public void isDoneTest() {
-    assertFalse(lfr.isDone());
+    assertFalse(slf.isDone());
     
-    lfr.setResult(null);
+    slf.setResult(null);
 
-    assertTrue(lfr.isDone());
+    assertTrue(slf.isDone());
   }
   
   @Test
@@ -158,11 +158,11 @@ public class SettableListenableFutureTest {
       scheduler.schedule(new Runnable() {
         @Override
         public void run() {
-          lfr.setResult(testResult);
+          slf.setResult(testResult);
         }
       }, SCHEDULE_DELAY);
       
-      assertTrue(lfr.get() == testResult);
+      assertTrue(slf.get() == testResult);
     } finally {
       scheduler.shutdownNow();
     }
@@ -180,11 +180,11 @@ public class SettableListenableFutureTest {
       scheduler.schedule(new Runnable() {
         @Override
         public void run() {
-          lfr.setResult(testResult);
+          slf.setResult(testResult);
         }
       }, SCHEDULE_DELAY);
       
-      assertTrue(lfr.get(SCHEDULE_DELAY * 5, TimeUnit.MILLISECONDS) == testResult);
+      assertTrue(slf.get(SCHEDULE_DELAY * 5, TimeUnit.MILLISECONDS) == testResult);
     } finally {
       scheduler.shutdownNow();
     }
@@ -195,7 +195,7 @@ public class SettableListenableFutureTest {
                                       ExecutionException {
     long startTime = System.currentTimeMillis();
     try {
-      lfr.get(DELAY_TIME, TimeUnit.MILLISECONDS);
+      slf.get(DELAY_TIME, TimeUnit.MILLISECONDS);
       fail("Exception should have thrown");
     } catch (TimeoutException e) {
       // expected
@@ -208,17 +208,17 @@ public class SettableListenableFutureTest {
   @Test (expected = ExecutionException.class)
   public void getNullExceptionTest() throws InterruptedException, 
                                             ExecutionException {
-    lfr.setFailure(null);
-    lfr.get();
+    slf.setFailure(null);
+    slf.get();
   }
   
   @Test
   public void getExecutionExceptionTest() throws InterruptedException {
     Exception failure = new Exception();
-    lfr.setFailure(failure);
+    slf.setFailure(failure);
     
     try {
-      lfr.get();
+      slf.get();
       fail("Exception should have thrown");
     } catch (ExecutionException e) {
       assertTrue(failure == e.getCause());
@@ -229,10 +229,10 @@ public class SettableListenableFutureTest {
   public void getWithTimeoutExecutionExceptionTest() throws InterruptedException, 
                                                             TimeoutException {
     Exception failure = new Exception();
-    lfr.setFailure(failure);
+    slf.setFailure(failure);
     
     try {
-      lfr.get(100, TimeUnit.MILLISECONDS);
+      slf.get(100, TimeUnit.MILLISECONDS);
       fail("Exception should have thrown");
     } catch (ExecutionException e) {
       assertTrue(failure == e.getCause());

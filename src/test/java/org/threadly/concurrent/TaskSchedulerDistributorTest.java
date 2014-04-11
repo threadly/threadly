@@ -79,7 +79,7 @@ public class TaskSchedulerDistributorTest {
     return runs;
   }
   
-  @SuppressWarnings({ "deprecation", "unused" })
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {
@@ -91,12 +91,6 @@ public class TaskSchedulerDistributorTest {
     try {
       new TaskSchedulerDistributor(scheduler, null, 
                                    Integer.MAX_VALUE, false);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new TaskSchedulerDistributor(1, 1, -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected

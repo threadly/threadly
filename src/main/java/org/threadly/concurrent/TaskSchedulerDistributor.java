@@ -18,46 +18,6 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
   private final SimpleSchedulerInterface scheduler;
 
   /**
-   * Constructor which creates scheduler based off provided values.  This is a more full 
-   * featured task distributor, it allows scheduling and recurring tasks.
-   * 
-   * @deprecated Use a constructor that takes a SimpleSchedulerInterface, this will be removed in 2.0.0
-   * 
-   * @param expectedParallism Expected number of keys that will be used in parallel
-   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
-   */
-  @Deprecated
-  public TaskSchedulerDistributor(int expectedParallism, int maxThreadCount) {
-    this(expectedParallism, maxThreadCount, Integer.MAX_VALUE);
-  }
-  
-  /**
-   * Constructor which creates scheduler based off provided values.  This is a more full 
-   * featured task distributor, it allows scheduling and recurring tasks.
-   * 
-   * This constructor allows you to provide a maximum number of tasks for a key before it 
-   * yields to another key.  This can make it more fair, and make it so no single key can 
-   * starve other keys from running.  The lower this is set however, the less efficient it 
-   * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.
-   * 
-   * @deprecated Use a constructor that takes a SimpleSchedulerInterface, this will be removed in 2.0.0
-   * 
-   * @param expectedParallism Expected number of keys that will be used in parallel
-   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
-   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   */
-  @Deprecated
-  public TaskSchedulerDistributor(int expectedParallism, int maxThreadCount, int maxTasksPerCycle) {
-    this(new PriorityScheduledExecutor(Math.min(expectedParallism, maxThreadCount), 
-                                       maxThreadCount, 
-                                       DEFAULT_THREAD_KEEPALIVE_TIME, 
-                                       TaskPriority.High, 
-                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
-         new StripedLock(expectedParallism), maxTasksPerCycle, false);
-  }
-  
-  /**
    * Constructor to use a provided scheduler implementation for running tasks.  
    * 
    * This constructs with a default expected level of concurrency of 16.  This also does not 
@@ -263,23 +223,6 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * Schedule a one time task with a given delay that will not run concurrently 
    * based off the thread key.
    * 
-   * @deprecated use scheduleTask, this will be removed in 2.0.0
-   * 
-   * @param threadKey object key where hashCode will be used to determine execution thread
-   * @param task Task to execute
-   * @param delayInMs Time to wait to execute task
-   */
-  @Deprecated
-  public void schedule(Object threadKey, 
-                       Runnable task, 
-                       long delayInMs) {
-    scheduleTask(threadKey, task, delayInMs);
-  }
-
-  /**
-   * Schedule a one time task with a given delay that will not run concurrently 
-   * based off the thread key.
-   * 
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @param task Task to execute
    * @param delayInMs Time to wait to execute task
@@ -301,26 +244,6 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       scheduler.schedule(new AddTask(threadKey, task), 
                          delayInMs);
     }
-  }
-  
-  /**
-   * Schedule a recurring task to run.  The recurring delay time will be
-   * from the point where execution finished.  This task will not run concurrently 
-   * based off the thread key.
-   * 
-   * @deprecated use scheduleTaskWithFixedDelay, this will be removed in 2.0.0
-   * 
-   * @param threadKey object key where hashCode will be used to determine execution thread
-   * @param task Task to be executed.
-   * @param initialDelay Delay in milliseconds until first run.
-   * @param recurringDelay Delay in milliseconds for running task after last finish.
-   */
-  @Deprecated
-  public void scheduleWithFixedDelay(Object threadKey, 
-                                     Runnable task, 
-                                     long initialDelay, 
-                                     long recurringDelay) {
-    scheduleTaskWithFixedDelay(threadKey, task, initialDelay, recurringDelay);
   }
   
   /**
@@ -518,15 +441,15 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
 
     @Override
     public void schedule(Runnable task, long delayInMs) {
-      TaskSchedulerDistributor.this.schedule(threadKey, task, 
-                                             delayInMs);
+      TaskSchedulerDistributor.this.scheduleTask(threadKey, task, 
+                                                 delayInMs);
     }
 
     @Override
     public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-      TaskSchedulerDistributor.this.scheduleWithFixedDelay(threadKey, task, 
-                                                           initialDelay, 
-                                                           recurringDelay);
+      TaskSchedulerDistributor.this.scheduleTaskWithFixedDelay(threadKey, task, 
+                                                               initialDelay, 
+                                                               recurringDelay);
     }
 
     @Override

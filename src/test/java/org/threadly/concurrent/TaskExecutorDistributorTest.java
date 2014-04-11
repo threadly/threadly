@@ -108,7 +108,7 @@ public class TaskExecutorDistributorTest {
     new TaskExecutorDistributor(scheduler, sLock, 1, false);
   }
   
-  @SuppressWarnings({ "deprecation", "unused" })
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {
@@ -124,44 +124,11 @@ public class TaskExecutorDistributorTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
-    try {
-      new TaskExecutorDistributor(1, 1, -1);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
   }
   
   @Test
   public void getExecutorTest() {
     assertTrue(scheduler == distributor.getExecutor());
-  }
-  
-  @Test
-  public void keyBasedExecuteConsistentThreadTest() {
-    List<TDRunnable> runs = populate(new AddHandler() {
-      @Override
-      public void addTDRunnable(Object key, TDRunnable tdr) {
-        @SuppressWarnings("deprecation")
-        Executor keySubmitter = distributor.getExecutorForKey(key);
-        keySubmitter.execute(tdr);
-      }
-    });
-    
-    Iterator<TDRunnable> it = runs.iterator();
-    while (it.hasNext()) {
-      TDRunnable tr = it.next();
-      tr.blockTillFinished(20 * 1000);
-      assertEquals(1, tr.getRunCount()); // verify each only ran once
-      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
-      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test (expected = IllegalArgumentException.class)
-  public void getExecutorForKeyFail() {
-    distributor.getExecutorForKey(null);
   }
 
   @Test
