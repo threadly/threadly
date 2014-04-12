@@ -146,4 +146,14 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   public TaskPriority getDefaultPriority() {
     return defaultPriority;
   }
+
+  @Override
+  public boolean remove(Runnable task) {
+    return scheduler.remove(task);
+  }
+
+  @Override
+  public boolean remove(Callable<?> task) {
+    return scheduler.remove(task);
+  }
 }

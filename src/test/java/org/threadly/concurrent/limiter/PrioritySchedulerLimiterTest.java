@@ -512,9 +512,9 @@ public class PrioritySchedulerLimiterTest {
       TestRunnable task = new TestRunnable();
       limiter.schedule(task, 1000 * 10, priority);
       
-      assertFalse(scheduler.remove(new TestRunnable()));
+      assertFalse(limiter.remove(new TestRunnable()));
       
-      assertTrue(scheduler.remove(task));
+      assertTrue(limiter.remove(task));
     } finally {
       scheduler.shutdownNow();
     }
@@ -538,9 +538,9 @@ public class PrioritySchedulerLimiterTest {
       TestCallable task = new TestCallable();
       limiter.submitScheduled(task, 1000 * 10, priority);
       
-      assertFalse(scheduler.remove(new TestCallable()));
+      assertFalse(limiter.remove(new TestCallable()));
       
-      assertTrue(scheduler.remove(task));
+      assertTrue(limiter.remove(task));
     } finally {
       scheduler.shutdownNow();
     }

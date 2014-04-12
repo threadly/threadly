@@ -671,8 +671,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   }
 
   /**
-   * Removes the runnable task from the execution queue.  It is possible
-   * for the task to still run until this call has returned.
+   * Removes the runnable task from the execution queue.  It is possible for the 
+   * runnable to still run until this call has returned.
    * 
    * Note that this call has high guarantees on the ability to remove the task 
    * (as in a complete guarantee).  But while this task is called, it will 
@@ -682,15 +682,15 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * @param task The original task provided to the executor
    * @return true if the task was found and removed
    */
+  @Override
   public boolean remove(Runnable task) {
     return removeFromTaskQueue(highPriorityQueue, task) || 
              removeFromTaskQueue(lowPriorityQueue, task);
   }
 
   /**
-   * Removes the callable task from the execution queue.  It is 
-   * possible for the callable to still run until this call has 
-   * returned.
+   * Removes the callable task from the execution queue.  It is possible for the 
+   * callable to still run until this call has returned.
    * 
    * Note that this call has high guarantees on the ability to remove the task 
    * (as in a complete guarantee).  But while this task is called, it will 
@@ -700,6 +700,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * @param task The original callable provided to the executor
    * @return true if the callable was found and removed
    */
+  @Override
   public boolean remove(Callable<?> task) {
     return removeFromTaskQueue(highPriorityQueue, task) || 
              removeFromTaskQueue(lowPriorityQueue, task);
