@@ -106,13 +106,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
 
   @Override
   public Runnable getContainedRunnable() {
-    if (runnable != null) {
-      return runnable;
-    } else if (callable instanceof RunnableContainerInterface) {
-      return ((RunnableContainerInterface)callable).getContainedRunnable();
-    } else {
-      return null;
-    }
+    return runnable;
   }
 
   @Override

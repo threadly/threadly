@@ -414,9 +414,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
       try {
         task.run();
       } finally {
-        if (! scheduler.isShutdown()) {
-          scheduler.schedule(new AddTask(key, this), recurringDelay);
-        }
+        scheduler.schedule(new AddTask(key, this), recurringDelay);
       }
     }
 
@@ -465,11 +463,6 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
     @Override
     public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
       return TaskSchedulerDistributor.this.submitScheduledTask(threadKey, task, delayInMs);
-    }
-
-    @Override
-    public boolean isShutdown() {
-      return scheduler.isShutdown();
     }
   }
 }

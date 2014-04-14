@@ -9,25 +9,31 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.NoThreadScheduler;
+import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
-  private NoThreadScheduler scheduler;
+  private NoThreadScheduler blockingScheduler;
+  private NoThreadScheduler nonblockingScheduler;
   
   @Before
   public void setup() {
-    scheduler = new NoThreadScheduler();
+    blockingScheduler = new NoThreadScheduler(true);
+    nonblockingScheduler = new NoThreadScheduler(false);
   }
   
   @After
   public void tearDown() {
-    scheduler = null;
+    blockingScheduler = null;
+    nonblockingScheduler = null;
   }
   
   private static List<TestRunnable> getRunnableList() {
@@ -50,11 +56,17 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void isShutdownTest() {
-    assertFalse(scheduler.isShutdown());
+    assertFalse(blockingScheduler.isShutdown());
+    assertFalse(nonblockingScheduler.isShutdown());
   }
   
   @Test
-  public void executeTest() {
+  public void executeTest() throws InterruptedException {
+    executeTest(blockingScheduler);
+    executeTest(nonblockingScheduler);
+  }
+  
+  private void executeTest(NoThreadScheduler scheduler) throws InterruptedException {
     List<TestRunnable> runnables = getRunnableList();
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
@@ -69,17 +81,24 @@ public class NoThreadSchedulerTest {
       assertEquals(1, it.next().getRunCount());
     }
     
-    // verify no more run after a second tick
-    assertEquals(scheduler.tick(), 0);
-    
-    it = runnables.iterator();
-    while (it.hasNext()) {
-      assertEquals(1, it.next().getRunCount());
+    if (scheduler == nonblockingScheduler) {
+      // verify no more run after a second tick
+      assertEquals(scheduler.tick(), 0);
+      
+      it = runnables.iterator();
+      while (it.hasNext()) {
+        assertEquals(1, it.next().getRunCount());
+      }
     }
   }
   
   @Test
-  public void submitRunnableTest() {
+  public void submitRunnableTest() throws InterruptedException {
+    submitRunnableTest(blockingScheduler);
+    submitRunnableTest(nonblockingScheduler);
+  }
+  
+  private void submitRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
     List<TestRunnable> runnables = getRunnableList();
     List<Future<?>> futures = new ArrayList<Future<?>>(runnables.size());
     Iterator<TestRunnable> it = runnables.iterator();
@@ -97,12 +116,14 @@ public class NoThreadSchedulerTest {
       assertEquals(1, it.next().getRunCount());
     }
     
-    // verify no more run after a second tick
-    assertEquals(0, scheduler.tick());
-    
-    it = runnables.iterator();
-    while (it.hasNext()) {
-      assertEquals(1, it.next().getRunCount());
+    if (scheduler == nonblockingScheduler) {
+      // verify no more run after a second tick
+      assertEquals(0, scheduler.tick());
+      
+      it = runnables.iterator();
+      while (it.hasNext()) {
+        assertEquals(1, it.next().getRunCount());
+      }
     }
     
     Iterator<Future<?>> futureIt = futures.iterator();
@@ -114,6 +135,12 @@ public class NoThreadSchedulerTest {
   @Test
   public void submitCallableTest() throws InterruptedException, 
                                           ExecutionException {
+    submitCallableTest(blockingScheduler);
+    submitCallableTest(nonblockingScheduler);
+  }
+  
+  private static void submitCallableTest(NoThreadScheduler scheduler) throws InterruptedException, 
+                                                                             ExecutionException {
     List<TestCallable> callables = getCallableList();
     List<Future<Object>> futures = new ArrayList<Future<Object>>(callables.size());
     Iterator<TestCallable> it = callables.iterator();
@@ -143,63 +170,56 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void scheduleRunnableTest() {
-    long scheduleDelay = 1000 * 10;
+  public void scheduleRunnableTest() throws InterruptedException {
+    scheduleRunnableTest(blockingScheduler);
+    scheduleRunnableTest(nonblockingScheduler);
+  }
+  
+  private static void scheduleRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
+    TestRunnable tr = new TestRunnable();
+    scheduler.schedule(tr, SCHEDULE_DELAY);
+    long scheduleTime = System.currentTimeMillis();
     
-    TestRunnable executeRun = new TestRunnable();
-    TestRunnable scheduleRun = new TestRunnable();
+    int runCount = 0;
+    while (runCount == 0) {
+      runCount = scheduler.tick();
+    }
+    long runTime = System.currentTimeMillis();
     
-    scheduler.schedule(scheduleRun, scheduleDelay);
-    scheduler.execute(executeRun);
-
-    long startTime = System.currentTimeMillis();
-    assertEquals(1, scheduler.tick(startTime));
-
-    assertEquals(1, executeRun.getRunCount());   // should have run
-    assertEquals(0, scheduleRun.getRunCount());  // should NOT have run yet
+    assertEquals(1, runCount);
     
-    assertEquals(1, scheduler.tick(startTime + scheduleDelay));
-    
-    assertEquals(1, executeRun.getRunCount());   // should NOT have run again
-    assertEquals(1, scheduleRun.getRunCount());  // should have run
-    
-    assertEquals(scheduler.tick(startTime + scheduleDelay), 0); // should not execute anything
-    
-    assertEquals(1, executeRun.getRunCount());   // should NOT have run again
-    assertEquals(1, scheduleRun.getRunCount());  // should NOT have run again
+    assertTrue(tr.ranOnce());
+    assertTrue((runTime - scheduleTime) >= SCHEDULE_DELAY);
   }
   
   @Test
-  public void submitScheduledRunnableTest() {
-    long scheduleDelay = 1000 * 10;
+  public void submitScheduledRunnableTest() throws InterruptedException {
+    submitScheduledRunnableTest(blockingScheduler);
+    submitScheduledRunnableTest(nonblockingScheduler);
+  }
+  
+  private static void submitScheduledRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
+    TestRunnable tr = new TestRunnable();
+    ListenableFuture<?> future = scheduler.submitScheduled(tr, SCHEDULE_DELAY);
     
-    TestRunnable submitRun = new TestRunnable();
-    TestRunnable scheduleRun = new TestRunnable();
+    int runCount = 0;
+    while (runCount == 0) {
+      runCount = scheduler.tick();
+    }
     
-    Future<?> future = scheduler.submit(submitRun);
-    assertNotNull(future);
-    future = scheduler.submitScheduled(scheduleRun, scheduleDelay);
-    assertNotNull(future);
-
-    long startTime = System.currentTimeMillis();
-    assertEquals(1, scheduler.tick(startTime));
-
-    assertEquals(1, submitRun.getRunCount());   // should have run
-    assertEquals(0, scheduleRun.getRunCount());  // should NOT have run yet
+    assertEquals(1, runCount);
     
-    assertEquals(1, scheduler.tick(startTime + scheduleDelay));
-    
-    assertEquals(1, submitRun.getRunCount());   // should NOT have run again
-    assertEquals(1, scheduleRun.getRunCount());  // should have run
-    
-    assertEquals(0, scheduler.tick(startTime + scheduleDelay)); // should not execute anything
-    
-    assertEquals(1, submitRun.getRunCount());   // should NOT have run again
-    assertEquals(1, scheduleRun.getRunCount());  // should NOT have run again
+    assertTrue(tr.getDelayTillFirstRun() >= SCHEDULE_DELAY);
+    assertTrue(future.isDone());
   }
   
   @Test
   public void submitScheduledRunnableFail() {
+    submitScheduledRunnableFail(blockingScheduler);
+    submitScheduledRunnableFail(nonblockingScheduler);
+  }
+  
+  private static void submitScheduledRunnableFail(NoThreadScheduler scheduler) {
     try {
       scheduler.submitScheduled((Runnable)null, 10);
       fail("Exception should have thrown");
@@ -215,32 +235,34 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void submitScheduledCallableTest() {
-    long scheduleDelay = 1000 * 10;
+  public void submitScheduledCallableTest() throws InterruptedException, ExecutionException {
+    submitScheduledCallableTest(blockingScheduler);
+    submitScheduledCallableTest(nonblockingScheduler);
+  }
+  
+  private static void submitScheduledCallableTest(NoThreadScheduler scheduler) throws InterruptedException, ExecutionException {
+    TestCallable tc = new TestCallable();
+    ListenableFuture<?> future = scheduler.submitScheduled(tc, SCHEDULE_DELAY);
     
-    TestCallable submitRun = new TestCallable();
-    TestCallable scheduleRun = new TestCallable();
+    int runCount = 0;
+    while (runCount == 0) {
+      runCount = scheduler.tick();
+    }
     
-    Future<?> future = scheduler.submit(submitRun);
-    assertNotNull(future);
-    future = scheduler.submitScheduled(scheduleRun, scheduleDelay);
-    assertNotNull(future);
-
-    long startTime = System.currentTimeMillis();
-    assertEquals(1, scheduler.tick(startTime));
-
-    assertTrue(submitRun.isDone());   // should have run
-    assertFalse(scheduleRun.isDone());  // should NOT have run yet
+    assertEquals(1, runCount);
     
-    assertEquals(1, scheduler.tick(startTime + scheduleDelay));
-    
-    assertTrue(scheduleRun.isDone());  // should have run
-    
-    assertEquals(0, scheduler.tick(startTime + scheduleDelay)); // should not execute anything
+    assertTrue(tc.getDelayTillFirstRun() >= SCHEDULE_DELAY);
+    assertTrue(future.isDone());
+    assertTrue(future.get() == tc.getReturnedResult());
   }
   
   @Test
   public void submitScheduledCallableFail() {
+    submitScheduledCallableFail(blockingScheduler);
+    submitScheduledCallableFail(nonblockingScheduler);
+  }
+  
+  private static void submitScheduledCallableFail(NoThreadScheduler scheduler) {
     try {
       scheduler.submitScheduled((Callable<?>)null, 10);
       fail("Exception should have thrown");
@@ -256,39 +278,12 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
-  public void scheduleWithFixedDelayTest() {
-    long delay = 1000 * 10;
-    
-    TestRunnable immediateRun = new TestRunnable();
-    TestRunnable initialDelay = new TestRunnable();
-    
-    scheduler.scheduleWithFixedDelay(immediateRun, 0, delay);
-    scheduler.scheduleWithFixedDelay(initialDelay, delay, delay);
-
-    long startTime = System.currentTimeMillis();
-    assertEquals(1, scheduler.tick(startTime));
-    
-    assertEquals(1, immediateRun.getRunCount());  // should have run
-    assertEquals(0, initialDelay.getRunCount());  // should NOT have run yet
-
-    assertEquals(2, scheduler.tick(startTime + delay));
-    
-    assertEquals(2, immediateRun.getRunCount());  // should have run again
-    assertEquals(1, initialDelay.getRunCount());  // should have run for the first time
-    
-    assertEquals(2, scheduler.tick(startTime + (delay * 2)));
-    
-    assertEquals(3, immediateRun.getRunCount());  // should have run again
-    assertEquals(2, initialDelay.getRunCount());  // should have run again
-    
-    assertEquals(0, scheduler.tick(startTime + (delay * 2))); // should not execute anything
-    
-    assertEquals(3, immediateRun.getRunCount());  // should NOT have run again
-    assertEquals(2, initialDelay.getRunCount());  // should NOT have run again
+  public void scheduleWithFixedDelayFail() {
+    scheduleWithFixedDelayFail(blockingScheduler);
+    scheduleWithFixedDelayFail(nonblockingScheduler);
   }
   
-  @Test
-  public void scheduleWithFixedDelayFail() {
+  private static void scheduleWithFixedDelayFail(NoThreadScheduler scheduler) {
     try {
       scheduler.scheduleWithFixedDelay(null, 10, 10);
       fail("Exception should have thrown");
@@ -311,75 +306,96 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void removeRunnableTest() {
-    long delay = 1000 * 10;
+    removeRunnableTest(blockingScheduler);
+    removeRunnableTest(nonblockingScheduler);
+  }
+  
+  private static void removeRunnableTest(NoThreadScheduler scheduler) {
+    TestRunnable tr = new TestRunnable();
     
+    assertFalse(scheduler.remove(tr));
+    
+    scheduler.execute(tr);
+    assertTrue(scheduler.remove(tr));
+    assertFalse(scheduler.remove(tr));
+    
+    scheduler.submit(tr);
+    assertTrue(scheduler.remove(tr));
+    assertFalse(scheduler.remove(tr));
+    
+    scheduler.submit(tr, new Object());
+    assertTrue(scheduler.remove(tr));
+    assertFalse(scheduler.remove(tr));
+    
+    scheduler.schedule(tr, SCHEDULE_DELAY);
+    assertTrue(scheduler.remove(tr));
+    assertFalse(scheduler.remove(tr));
+    
+    scheduler.submitScheduled(tr, SCHEDULE_DELAY);
+    assertTrue(scheduler.remove(tr));
+    assertFalse(scheduler.remove(tr));
+    
+    scheduler.submitScheduled(tr, new Object(), SCHEDULE_DELAY);
+    assertTrue(scheduler.remove(tr));
+    assertFalse(scheduler.remove(tr));
+    
+    scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY);
+    assertTrue(scheduler.remove(tr));
+    assertFalse(scheduler.remove(tr));
+  }
+  
+  @Test
+  public void removeRecurringRunnableTest() throws InterruptedException {
     TestRunnable immediateRun = new TestRunnable();
     TestRunnable initialDelay = new TestRunnable();
     
-    assertFalse(scheduler.remove(immediateRun));
+    assertFalse(blockingScheduler.remove(immediateRun));
     
-    scheduler.scheduleWithFixedDelay(immediateRun, 0, delay);
-    assertTrue(scheduler.remove(immediateRun));
+    blockingScheduler.scheduleWithFixedDelay(immediateRun, 0, SCHEDULE_DELAY);
+    assertTrue(blockingScheduler.remove(immediateRun));
     
-    scheduler.scheduleWithFixedDelay(immediateRun, 0, delay);
-    scheduler.scheduleWithFixedDelay(initialDelay, delay, delay);
+    blockingScheduler.scheduleWithFixedDelay(immediateRun, 0, SCHEDULE_DELAY);
+    blockingScheduler.scheduleWithFixedDelay(initialDelay, SCHEDULE_DELAY, SCHEDULE_DELAY);
     
-    long startTime = System.currentTimeMillis();
-    assertEquals(1, scheduler.tick(startTime));
+    assertEquals(1, blockingScheduler.tick());
     
     assertEquals(1, immediateRun.getRunCount());   // should have run
     assertEquals(0, initialDelay.getRunCount());  // should NOT have run yet
     
-    assertTrue(scheduler.remove(immediateRun));
+    assertTrue(blockingScheduler.remove(immediateRun));
     
-    assertEquals(1, scheduler.tick(startTime + delay));
+    assertEquals(1, blockingScheduler.tick());
     
     assertEquals(1, immediateRun.getRunCount());   // should NOT have run again
     assertEquals(1, initialDelay.getRunCount());  // should have run
-    
-    assertEquals(0, scheduler.tick(startTime + delay)); // should not execute anything
-    
-    assertEquals(1, immediateRun.getRunCount());   // should NOT have run
-    assertEquals(1, initialDelay.getRunCount());  // should NOT have run
   }
   
   @Test
-  public void removeCallableTest() {
-    long delay = 1000 * 10;
-    
+  public void removeCallableTest() throws InterruptedException {
     TestCallable immediateRun = new TestCallable();
     TestCallable delayRun = new TestCallable();
     
-    assertFalse(scheduler.remove(immediateRun));
+    assertFalse(blockingScheduler.remove(immediateRun));
     
-    scheduler.submitScheduled(immediateRun, 0);
-    assertTrue(scheduler.remove(immediateRun));
-    assertFalse(scheduler.remove(immediateRun));
+    blockingScheduler.submitScheduled(immediateRun, 0);
+    assertTrue(blockingScheduler.remove(immediateRun));
+    assertFalse(blockingScheduler.remove(immediateRun));
     
-    scheduler.submitScheduled(delayRun, delay);
+    blockingScheduler.submitScheduled(delayRun, SCHEDULE_DELAY);
     
-    long startTime = System.currentTimeMillis();
-    assertEquals(0, scheduler.tick(startTime));
+    assertEquals(1, blockingScheduler.tick());
     
-    // neither should run yet
     assertFalse(immediateRun.isDone());
-    assertFalse(delayRun.isDone());
-    
-    scheduler.submitScheduled(immediateRun, 0);
-    
-    assertEquals(2, scheduler.tick(startTime + delay));
-    
-    // both should run now
-    assertTrue(immediateRun.isDone());
     assertTrue(delayRun.isDone());
-    
-    // neither should be in scheduler any more
-    assertFalse(scheduler.remove(immediateRun));
-    assertFalse(scheduler.remove(delayRun));
   }
   
   @Test
-  public void removeWhileRunningTest() {
+  public void removeWhileRunningTest() throws InterruptedException {
+    removeWhileRunningTest(blockingScheduler);
+    removeWhileRunningTest(nonblockingScheduler);
+  }
+  
+  private void removeWhileRunningTest(final NoThreadScheduler scheduler) throws InterruptedException {
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunStart() {
@@ -391,18 +407,66 @@ public class NoThreadSchedulerTest {
     
     assertEquals(1, scheduler.tick());
     
-    // should be removed for subsequent ticks
-    assertEquals(0, scheduler.tick());
-    
-    assertEquals(1, tr.getRunCount());
+    if (scheduler == nonblockingScheduler) {
+      // should be removed for subsequent ticks
+      assertEquals(0, scheduler.tick());
+      
+      assertEquals(1, tr.getRunCount());
+    }
   }
-
-  @Test (expected = IllegalArgumentException.class)
-  public void tickFail() {
-    long now;
-    scheduler.tick(now = System.currentTimeMillis());
+  
+  @Test
+  public void blockTillAvailableExecuteTest() throws InterruptedException, TimeoutException {
+    final AsyncVerifier av = new AsyncVerifier();
+    TestRunnable tickRunnable = new TestRunnable() {
+      @Override
+      public void handleRunStart() {
+        try {
+          int runCount = blockingScheduler.tick();  // should block
+          av.assertEquals(1, runCount);
+          av.signalComplete();
+        } catch (InterruptedException e) {
+          av.fail(e);
+        }
+      }
+    };
+    new Thread(tickRunnable).start();
     
-    scheduler.tick(now - 1);
-    fail("Exception should have been thrown");
+    // should be blocked waiting for task now
+    tickRunnable.blockTillStarted();
+    
+    TestRunnable testTask = new TestRunnable();
+    blockingScheduler.execute(testTask);
+    
+    testTask.blockTillFinished(); // should run without issue
+    
+    av.waitForTest(); // our parent thread should finish quickly
+  }
+  
+  @Test
+  public void blockTillAvailableScheduleTest() throws InterruptedException, TimeoutException {
+    final AsyncVerifier av = new AsyncVerifier();
+    final TestRunnable testTask = new TestRunnable();
+    TestRunnable tickRunnable = new TestRunnable() {
+      @Override
+      public void handleRunStart() {
+        try {
+          long startTime = System.currentTimeMillis();
+          blockingScheduler.schedule(testTask, SCHEDULE_DELAY);
+          int runCount = blockingScheduler.tick();  // should block
+          long finishTime = System.currentTimeMillis();
+          
+          av.assertEquals(1, runCount);
+          av.assertTrue(finishTime - startTime >= SCHEDULE_DELAY);
+          av.assertTrue(testTask.ranOnce());
+          av.signalComplete();
+        } catch (InterruptedException e) {
+          av.fail(e);
+        }
+      }
+    };
+    new Thread(tickRunnable).start();
+    
+    av.waitForTest();
   }
 }

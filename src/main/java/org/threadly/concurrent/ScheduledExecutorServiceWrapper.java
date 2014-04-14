@@ -131,9 +131,4 @@ public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterf
     scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
                                      TimeUnit.MILLISECONDS);
   }
-
-  @Override
-  public boolean isShutdown() {
-    return scheduler.isShutdown();
-  }
 }

@@ -134,35 +134,54 @@ public class TaskExecutorDistributorTest {
   @Test
   public void keyBasedSubmitterSubmitRunnableTest() throws InterruptedException, ExecutionException {
     KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableTest(ef);
+  }
+
+  @Test
+  public void keyBasedSubmitterSubmitRunnableExceptionTest() throws InterruptedException, ExecutionException {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(ef);
   }
   
   @Test
   public void keyBasedSubmitterSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(ef);
+  }
+  
+  @Test
+  public void keyBasedSubmitterSubmitRunnableWithResultExceptionTest() throws InterruptedException {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(ef);
   }
   
   @Test
   public void keyBasedSubmitterSubmitCallableTest() throws InterruptedException, ExecutionException {
     KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableTest(ef);
+  }
+  
+  @Test
+  public void keyBasedSubmitterSubmitCallableExceptionTest() throws InterruptedException {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(ef);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void keyBasedSubmitterSubmitRunnableFail() {
     KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableFail(ef);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void keyBasedSubmitterSubmitRunnableWithResultFail() {
+    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(ef);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void keyBasedSubmitterSubmitCallableFail() {
     KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableFail(ef);
   }
   

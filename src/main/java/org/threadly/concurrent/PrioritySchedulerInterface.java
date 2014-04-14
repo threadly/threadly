@@ -11,7 +11,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface {
+public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
   /**
    * Executes the task as soon as possible for the given priority.  
    * 
@@ -125,24 +125,6 @@ public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface 
    */
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority);
-
-  /**
-   * Removes the runnable task from the execution queue.  It is possible for the 
-   * runnable to still run until this call has returned.
-   * 
-   * @param task The original task provided to the executor
-   * @return true if the task was found and removed
-   */
-  public boolean remove(Runnable task);
-
-  /**
-   * Removes the runnable task from the execution queue.  It is possible for the 
-   * callable to still run until this call has returned.
-   * 
-   * @param task The original callable provided to the executor
-   * @return true if the callable was found and removed
-   */
-  public boolean remove(Callable<?> task);
   
   /**
    * Get the default priority for the scheduler.

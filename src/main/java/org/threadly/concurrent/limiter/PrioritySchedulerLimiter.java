@@ -25,7 +25,7 @@ import org.threadly.concurrent.future.ListenableFutureTask;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public class PrioritySchedulerLimiter extends SchedulerLimiter 
+public class PrioritySchedulerLimiter extends SchedulerServiceLimiter 
                                       implements PrioritySchedulerInterface {
   protected final PrioritySchedulerInterface scheduler;
   
