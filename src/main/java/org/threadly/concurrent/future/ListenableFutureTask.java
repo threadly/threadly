@@ -97,23 +97,16 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   }
   
   /**
-   * @deprecated Use addListener as an alternative, this will be removed in 2.0.0
+   * Can not be overridden, please use addListener as an alternative.
    */
-  @Deprecated
   @Override
-  protected void done() {
+  protected final void done() {
     listenerHelper.callListeners();
   }
 
   @Override
   public Runnable getContainedRunnable() {
-    if (runnable != null) {
-      return runnable;
-    } else if (callable instanceof RunnableContainerInterface) {
-      return ((RunnableContainerInterface)callable).getContainedRunnable();
-    } else {
-      return null;
-    }
+    return runnable;
   }
 
   @Override

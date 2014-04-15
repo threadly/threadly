@@ -11,7 +11,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public interface PrioritySchedulerInterface extends SubmitterSchedulerInterface {
+public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
   /**
    * Executes the task as soon as possible for the given priority.  
    * 

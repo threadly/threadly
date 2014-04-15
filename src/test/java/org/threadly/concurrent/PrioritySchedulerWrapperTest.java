@@ -57,8 +57,11 @@ public class PrioritySchedulerWrapperTest {
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(scheduler, TaskPriority.Low);
     assertEquals(scheduler.isShutdown(), psw.isShutdown());
     
-    scheduler.shutdownNow();
-    assertEquals(scheduler.isShutdown(), psw.isShutdown());
+    TestPriorityScheduler tps = new TestPriorityScheduler();
+    psw = new PrioritySchedulerWrapper(tps, TaskPriority.Low);
+    psw.isShutdown();
+    
+    assertTrue(tps.isShutdownCalled);
   }
   
   @Test
@@ -178,8 +181,29 @@ public class PrioritySchedulerWrapperTest {
     assertTrue(testScheduler.scheduleWithFixedDelayCalled);
   }
   
+  @Test
+  public void removeRunnableTest() {
+    TestPriorityScheduler testScheduler = new TestPriorityScheduler();
+    PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
+    
+    psw.remove(new TestRunnable());
+    
+    assertTrue(testScheduler.removeRunnableCalled);
+  }
+  
+  @Test
+  public void removeCallableTest() {
+    TestPriorityScheduler testScheduler = new TestPriorityScheduler();
+    PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
+    
+    psw.remove(new TestCallable());
+    
+    assertTrue(testScheduler.removeCallableCalled);
+  }
+  
   // TODO - this may be good to move to something like mockito
   private static class TestPriorityScheduler implements PrioritySchedulerInterface {
+    private boolean isShutdownCalled = false;
     private boolean executeCalled = false;
     private boolean scheduleCalled = false;
     private boolean submitRunnableCalled = false;
@@ -189,9 +213,12 @@ public class PrioritySchedulerWrapperTest {
     private boolean submitScheduledRunnableResultCalled = false;
     private boolean submitScheduledCallableCalled = false;
     private boolean scheduleWithFixedDelayCalled = false;
+    private boolean removeRunnableCalled = false;
+    private boolean removeCallableCalled = false;
 
     @Override
     public boolean isShutdown() {
+      isShutdownCalled = true;
       return false;
     }
 
@@ -247,6 +274,18 @@ public class PrioritySchedulerWrapperTest {
     public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
                                        TaskPriority priority) {
       scheduleWithFixedDelayCalled = true;
+    }
+
+    @Override
+    public boolean remove(Runnable task) {
+      removeRunnableCalled = true;
+      return false;
+    }
+
+    @Override
+    public boolean remove(Callable<?> task) {
+      removeCallableCalled = true;
+      return false;
     }
 
     @Override

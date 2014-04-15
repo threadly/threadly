@@ -45,44 +45,6 @@ public class TaskExecutorDistributor {
   protected final ConcurrentHashMap<Object, TaskQueueWorker> taskWorkers;
   
   /**
-   * Constructor which creates executor based off provided values.
-   * 
-   * @deprecated Use a constructor that takes an executor, this will be removed in 2.0.0
-   * 
-   * @param expectedParallism Expected number of keys that will be used in parallel
-   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
-   */
-  @Deprecated
-  public TaskExecutorDistributor(int expectedParallism, int maxThreadCount) {
-    this(expectedParallism, maxThreadCount, Integer.MAX_VALUE);
-  }
-  
-  /**
-   * Constructor which creates executor based off provided values.
-   * 
-   * This constructor allows you to provide a maximum number of tasks for a key before it 
-   * yields to another key.  This can make it more fair, and make it so no single key can 
-   * starve other keys from running.  The lower this is set however, the less efficient it 
-   * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.
-   * 
-   * @deprecated Use a constructor that takes an executor, this will be removed in 2.0.0
-   * 
-   * @param expectedParallism Expected number of keys that will be used in parallel
-   * @param maxThreadCount Max thread count (limits the qty of keys which are handled in parallel)
-   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   */
-  @Deprecated
-  public TaskExecutorDistributor(int expectedParallism, int maxThreadCount, int maxTasksPerCycle) {
-    this(new PriorityScheduledExecutor(Math.min(expectedParallism, maxThreadCount), 
-                                       maxThreadCount, 
-                                       DEFAULT_THREAD_KEEPALIVE_TIME, 
-                                       TaskPriority.High, 
-                                       PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS), 
-         new StripedLock(expectedParallism), maxTasksPerCycle, false);
-  }
-  
-  /**
    * Constructor to use a provided executor implementation for running tasks.  
    * 
    * This constructs with a default expected level of concurrency of 16.  This also does not 
@@ -311,20 +273,6 @@ public class TaskExecutorDistributor {
    */
   public Executor getExecutor() {
     return executor;
-  }
-  
-  /**
-   * Returns an executor implementation where all tasks submitted 
-   * on this executor will run on the provided key.
-   * 
-   * @deprecated use getSubmitterForKey, this will be removed in 2.0.0
-   * 
-   * @param threadKey object key where hashCode will be used to determine execution thread
-   * @return executor which will only execute based on the provided key
-   */
-  @Deprecated
-  public Executor getExecutorForKey(Object threadKey) {
-    return getSubmitterForKey(threadKey);
   }
   
   /**

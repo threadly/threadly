@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -93,6 +94,10 @@ public class ExecutorLimiterTest {
   
   @Test
   public void consumeAvailableTest() {
+    consumeAvailableTest(limiter);
+  }
+
+  protected static void consumeAvailableTest(ExecutorLimiter limiter) {
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(PARALLEL_COUNT);
     for (int i = 0; i < PARALLEL_COUNT; i++) {
       TestRunnable tr = new TestRunnable();
@@ -156,22 +161,87 @@ public class ExecutorLimiterTest {
   
   @Test
   public void executeTest() {
-    ExecutorLimiterFactory sf = new ExecutorLimiterFactory(false);
-    
-    SubmitterExecutorInterfaceTest.executeTest(sf);
+    ExecutorLimiterFactory elf = new ExecutorLimiterFactory(false);
+    SubmitterExecutorInterfaceTest.executeTest(elf);
   }
   
   @Test
   public void executeNamedSubPoolTest() {
-    ExecutorLimiterFactory sf = new ExecutorLimiterFactory(true);
-    
-    SubmitterExecutorInterfaceTest.executeTest(sf);
+    ExecutorLimiterFactory elf = new ExecutorLimiterFactory(true);
+    SubmitterExecutorInterfaceTest.executeTest(elf);
+  }
+  
+  @Test
+  public void executeWithFailureRunnableTest() {
+    ExecutorLimiterFactory elf = new ExecutorLimiterFactory(false);
+    SubmitterExecutorInterfaceTest.executeWithFailureRunnableTest(elf);
+  }
+  
+  @Test
+  public void executeWithFailureRunnableNamedSubPoolTest() {
+    ExecutorLimiterFactory elf = new ExecutorLimiterFactory(true);
+    SubmitterExecutorInterfaceTest.executeWithFailureRunnableTest(elf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void executeFail() {
     limiter.execute(null);
     fail("Execption should have thrown");
+  }
+  
+  @Test
+  public void submitRunnableTest() throws InterruptedException, ExecutionException {
+    submitRunnableTest(false);
+  }
+  
+  @Test
+  public void submitRunnableNamedSubPoolTest() throws InterruptedException, ExecutionException {
+    submitRunnableTest(true);
+  }
+  
+  private void submitRunnableTest(boolean nameSubPool) throws InterruptedException, ExecutionException {
+    ExecutorLimiterFactory elf = new ExecutorLimiterFactory(nameSubPool);
+    
+    try {
+      ExecutorLimiter el = elf.makeSubmitterExecutor(TEST_QTY, false);
+      
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
+        TestRunnable tr = new TestRunnable();
+        Future<?> future = el.submit(tr);
+        assertNotNull(future);
+        runnables.add(tr);
+        futures.add(future);
+      }
+      
+      // verify execution
+      Iterator<TestRunnable> it = runnables.iterator();
+      while (it.hasNext()) {
+        TestRunnable tr = it.next();
+        tr.blockTillFinished();
+        
+        assertEquals(1, tr.getRunCount());
+      }
+      
+      Iterator<Future<?>> futureIt = futures.iterator();
+      while (futureIt.hasNext()) {
+        Future<?> f = futureIt.next();
+        try {
+          f.get();
+        } catch (InterruptedException e) {
+          fail();
+        } catch (ExecutionException e) {
+          fail();
+        }
+        assertTrue(f.isDone());
+      }
+      
+
+      SubmitterExecutorInterfaceTest.submitRunnableTest(elf);
+    } finally {
+      elf.shutdown();
+    }
   }
   
   @Test
@@ -196,44 +266,62 @@ public class ExecutorLimiterTest {
   }
   
   @Test
-  public void submitRunnableTest() throws InterruptedException, ExecutionException {
+  public void submitRunnableExceptionTest() throws InterruptedException, ExecutionException {
     ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
-    
-    SubmitterExecutorInterfaceTest.submitRunnableTest(ef);
+    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(ef);
   }
   
   @Test
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     ExecutorLimiterFactory ef = new ExecutorLimiterFactory(true);
-    
     SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(ef);
+  }
+  
+  @Test
+  public void submitRunnableWithResultExceptionTest() throws InterruptedException {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(true);
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(ef);
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
-    
     SubmitterExecutorInterfaceTest.submitCallableTest(ef);
   }
   
   @Test
   public void submitCallableNamedSubPoolTest() throws InterruptedException, ExecutionException {
     ExecutorLimiterFactory ef = new ExecutorLimiterFactory(true);
-    
     SubmitterExecutorInterfaceTest.submitCallableTest(ef);
+  }
+  
+  @Test
+  public void submitCallableExceptionTest() throws InterruptedException {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(ef);
+  }
+  
+  @Test
+  public void submitCallableExceptionNamedSubPoolTest() throws InterruptedException {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(true);
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(ef);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
     ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
-    
     SubmitterExecutorInterfaceTest.submitRunnableFail(ef);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitRunnableWithResultFail() {
+    ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(ef);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     ExecutorLimiterFactory ef = new ExecutorLimiterFactory(false);
-    
     SubmitterExecutorInterfaceTest.submitCallableFail(ef);
   }
 

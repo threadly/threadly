@@ -13,16 +13,23 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.PriorityScheduledExecutorTest.PriorityScheduledExecutorFactory;
-import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
+import org.threadly.concurrent.SchedulerServiceInterfaceTest.SchedulerServiceFactory;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerTest {
+  @BeforeClass
+  public static void classSetup() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
+  
   @SuppressWarnings("unused")
   @Test
   public void constructorTest() {
@@ -162,6 +169,12 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void executeWithFailureRunnableTest() {
+    PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
+    PriorityScheduledExecutorTest.executeWithFailureRunnableTest(psetf);
+  }
+  
+  @Test
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
     PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
     PriorityScheduledExecutorTest.submitRunnableTest(psetf);
@@ -182,35 +195,36 @@ public class PrioritySchedulerStatisticTrackerTest {
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableFail(sf);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitRunnableWithResultFail() {
+    SchedulerFactory sf = new SchedulerFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableFail(sf);
   }
   
   @Test
   public void scheduleTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleNoDelayTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleNoDelayTest(sf);
   }
   
@@ -219,7 +233,6 @@ public class PrioritySchedulerStatisticTrackerTest {
                                                    ExecutionException, 
                                                    TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
@@ -228,7 +241,6 @@ public class PrioritySchedulerStatisticTrackerTest {
                                                              ExecutionException, 
                                                              TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(sf);
   }
   
@@ -237,50 +249,55 @@ public class PrioritySchedulerStatisticTrackerTest {
                                                    ExecutionException, 
                                                    TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
   public void scheduleFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleFail(sf);
   }
   
   @Test
   public void submitScheduledRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
   }
   
   @Test
   public void submitScheduledCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(sf);
   }
   
   @Test
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionTest(false, sf);
   }
   
   @Test
   public void recurringExecutionInitialDelayTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionTest(true, sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
+  }
+  
+  @Test
+  public void removeRunnableTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    SchedulerServiceInterfaceTest.removeRunnableTest(sf);
+  }
+  
+  @Test
+  public void removeCallableTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    SchedulerServiceInterfaceTest.removeCallableTest(sf);
   }
   
   @Test
@@ -357,6 +374,11 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void wrapperExecuteWithFailureRunnableTest() {
+    SubmitterExecutorInterfaceTest.executeWithFailureRunnableTest(new WrapperFactory());
+  }
+  
+  @Test
   public void wrapperSubmitRunnableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
@@ -368,6 +390,11 @@ public class PrioritySchedulerStatisticTrackerTest {
     } finally {
       wf.shutdown();  // must call shutdown here because we called make after submitRunnableTest
     }
+  }
+  
+  @Test
+  public void wrapperSubmitRunnableExceptionTest() throws InterruptedException {
+    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(new WrapperFactory());
   }
   
   @Test
@@ -385,6 +412,11 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
+  public void wrapperSubmitRunnableWithResultExceptionTest() throws InterruptedException {
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(new WrapperFactory());
+  }
+  
+  @Test
   public void wrapperSubmitCallableTest() throws InterruptedException, ExecutionException {
     WrapperFactory wf = new WrapperFactory();
     try {
@@ -398,38 +430,44 @@ public class PrioritySchedulerStatisticTrackerTest {
     }
   }
   
+  @Test
+  public void wrapperSubmitCallableExceptionTest() throws InterruptedException {
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(new WrapperFactory());
+  }
+  
   @Test (expected = IllegalArgumentException.class)
   public void wrapperExecuteFail() {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterExecutorInterfaceTest.executeFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void wrapperSubmitRunnableFail() {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableFail(wf);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void wrapperSubmitRunnableWithResultFail() {
+    WrapperFactory wf = new WrapperFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(wf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void wrapperSubmitCallableFail() {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableFail(wf);
   }
   
   @Test
   public void wrapperScheduleTest() {
     WrapperFactory wf = new WrapperFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleTest(wf);
   }
   
   @Test
   public void wrapperScheduleNoDelayTest() {
     WrapperFactory wf = new WrapperFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleNoDelayTest(wf);
   }
   
@@ -438,7 +476,6 @@ public class PrioritySchedulerStatisticTrackerTest {
                                                           ExecutionException, 
                                                           TimeoutException {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(wf);
   }
   
@@ -447,7 +484,6 @@ public class PrioritySchedulerStatisticTrackerTest {
                                                                     ExecutionException, 
                                                                     TimeoutException {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(wf);
   }
   
@@ -456,50 +492,55 @@ public class PrioritySchedulerStatisticTrackerTest {
                                                           ExecutionException, 
                                                           TimeoutException {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(wf);
   }
   
   @Test
   public void wrapperScheduleFail() {
     WrapperFactory wf = new WrapperFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleFail(wf);
   }
   
   @Test
   public void wrapperSubmitScheduledRunnableFail() {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(wf);
   }
   
   @Test
   public void wrapperSubmitScheduledCallableFail() {
     WrapperFactory wf = new WrapperFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(wf);
   }
   
   @Test
   public void wrapperRecurringExecutionTest() {
     WrapperFactory wf = new WrapperFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionTest(false, wf);
   }
   
   @Test
   public void wrapperRecurringExecutionInitialDelayTest() {
     WrapperFactory wf = new WrapperFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionTest(true, wf);
   }
   
   @Test
   public void wrapperRecurringExecutionFail() {
-    WrapperFactory sf = new WrapperFactory();
-    
-    SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
+    WrapperFactory wf = new WrapperFactory();
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(wf);
+  }
+  
+  @Test
+  public void wrapperRemoveRunnableTest() {
+    WrapperFactory wf = new WrapperFactory();
+    SchedulerServiceInterfaceTest.removeRunnableTest(wf);
+  }
+  
+  @Test
+  public void wrapperRemoveCallableTest() {
+    WrapperFactory wf = new WrapperFactory();
+    SchedulerServiceInterfaceTest.removeCallableTest(wf);
   }
   
   @Test
@@ -532,7 +573,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     PriorityScheduledExecutorTest.lookForExpiredWorkersTest(psetf);
   }
   
-  private class SchedulerFactory implements SubmitterSchedulerFactory {
+  private class SchedulerFactory implements SchedulerServiceFactory {
     private final List<PriorityScheduledExecutor> executors;
     
     private SchedulerFactory() {
@@ -542,18 +583,23 @@ public class PrioritySchedulerStatisticTrackerTest {
     @Override
     public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
                                                             boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
     public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
                                                         boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      return makeSchedulerService(poolSize, prestartIfAvailable);
     }
     
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
                                                               boolean prestartIfAvailable) {
+      return makeSchedulerService(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduledExecutor result = new PrioritySchedulerStatisticTracker(poolSize, poolSize, 
                                                                                1000);
       if (prestartIfAvailable) {
@@ -574,7 +620,7 @@ public class PrioritySchedulerStatisticTrackerTest {
     }
   }
   
-  private class WrapperFactory implements SubmitterSchedulerFactory {
+  private class WrapperFactory implements SchedulerServiceFactory {
     private final List<PriorityScheduledExecutor> executors;
     
     private WrapperFactory() {
@@ -584,18 +630,23 @@ public class PrioritySchedulerStatisticTrackerTest {
     @Override
     public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
                                                             boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
     public SimpleSchedulerInterface makeSimpleScheduler(int poolSize, 
                                                         boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      return makeSchedulerService(poolSize, prestartIfAvailable);
     }
     
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
                                                               boolean prestartIfAvailable) {
+      return makeSchedulerService(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       TaskPriority originalPriority = TaskPriority.Low;
       TaskPriority returnPriority = TaskPriority.High;
       PriorityScheduledExecutor result = new PrioritySchedulerStatisticTracker(poolSize, poolSize, 

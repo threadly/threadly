@@ -29,11 +29,4 @@ public interface SimpleSchedulerInterface extends Executor {
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 
                                      long recurringDelay);
-
-  /**
-   * Function to check if the thread pool is currently accepting and handling tasks.
-   * 
-   * @return true if thread pool is running
-   */
-  public boolean isShutdown();
 }

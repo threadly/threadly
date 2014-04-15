@@ -44,35 +44,54 @@ public class ExecutorWrapperTest {
   @Test
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
     ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableTest(ef);
+  }
+  
+  @Test
+  public void submitRunnableExceptionTest() throws InterruptedException, ExecutionException {
+    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(ef);
   }
   
   @Test
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(ef);
+  }
+  
+  @Test
+  public void submitRunnableWithResultExceptionTest() throws InterruptedException, ExecutionException {
+    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(ef);
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableTest(ef);
+  }
+  
+  @Test
+  public void submitCallableExceptionTest() throws InterruptedException {
+    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(ef);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
     ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableFail(ef);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitRunnableWithResultFail() {
+    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(ef);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableFail(ef);
   }
 

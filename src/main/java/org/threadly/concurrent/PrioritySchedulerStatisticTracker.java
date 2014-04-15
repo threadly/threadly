@@ -786,8 +786,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    */
   protected class CallableStatWrapper<T> extends Wrapper 
                                          implements Callable<T>, 
-                                                    CallableContainerInterface<T>, 
-                                                    RunnableContainerInterface {
+                                                    CallableContainerInterface<T> {
     private final Callable<T> toRun;
     
     public CallableStatWrapper(Callable<T> toRun, 
@@ -805,15 +804,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
         return toRun.call();
       } finally {
         trackTaskFinish(this);
-      }
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      if (toRun instanceof RunnableContainerInterface) {
-        return ((RunnableContainerInterface)toRun).getContainedRunnable();
-      } else {
-        return null;
       }
     }
 

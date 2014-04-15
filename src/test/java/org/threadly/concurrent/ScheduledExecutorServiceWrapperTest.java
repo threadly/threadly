@@ -15,70 +15,90 @@ public class ScheduledExecutorServiceWrapperTest {
   @Test
   public void executeTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.executeTest(sf);
+  }
+  
+  @Test
+  public void executeWithFailureRunnableTest() {
+    SchedulerFactory sf = new SchedulerFactory();
+    SubmitterExecutorInterfaceTest.executeWithFailureRunnableTest(sf);
   }
   
   @Test
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableTest(sf);
+  }
+  
+  @Test
+  public void submitRunnableExceptionTest() throws InterruptedException, ExecutionException {
+    SchedulerFactory sf = new SchedulerFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(sf);
   }
   
   @Test
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(sf);
+  }
+  
+  @Test
+  public void submitRunnableWithResultExceptionTest() throws InterruptedException {
+    SchedulerFactory sf = new SchedulerFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(sf);
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableTest(sf);
+  }
+  
+  @Test
+  public void submitCallableExceptionTest() throws InterruptedException {
+    SchedulerFactory sf = new SchedulerFactory();
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void executeTestFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.executeFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.submitRunnableFail(sf);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void submitRunnableWithResultFail() {
+    SchedulerFactory sf = new SchedulerFactory();
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(sf);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterExecutorInterfaceTest.submitCallableFail(sf);
   }
   
   @Test
   public void scheduleTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleTest(sf);
   }
   
   @Test
   public void scheduleNoDelayTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleNoDelayTest(sf);
   }
   
   @Test
   public void scheduleFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.scheduleFail(sf);
   }
   
@@ -87,7 +107,6 @@ public class ScheduledExecutorServiceWrapperTest {
                                                    ExecutionException, 
                                                    TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(sf);
   }
   
@@ -96,7 +115,6 @@ public class ScheduledExecutorServiceWrapperTest {
                                                              ExecutionException, 
                                                              TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(sf);
   }
   
@@ -105,42 +123,36 @@ public class ScheduledExecutorServiceWrapperTest {
                                                    ExecutionException, 
                                                    TimeoutException {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(sf);
   }
   
   @Test
   public void submitScheduledRunnableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(sf);
   }
   
   @Test
   public void submitScheduledCallableFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(sf);
   }
   
   @Test
   public void recurringExecutionTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionTest(false, sf);
   }
   
   @Test
   public void recurringExecutionInitialDelayTest() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionTest(true, sf);
   }
   
   @Test
   public void recurringExecutionFail() {
     SchedulerFactory sf = new SchedulerFactory();
-    
     SimpleSchedulerInterfaceTest.recurringExecutionFail(sf);
   }
 

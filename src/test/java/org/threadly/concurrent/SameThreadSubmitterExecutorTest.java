@@ -2,13 +2,13 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.future.ListenableFuture;
 
 @SuppressWarnings("javadoc")
@@ -29,11 +29,6 @@ public class SameThreadSubmitterExecutorTest {
     executor = null;
   }
   
-  @Test (expected = IllegalArgumentException.class)
-  public void executeFail() {
-    executor.execute(null);
-  }
-  
   @Test
   public void executeTest() {
     TestRunnable tr = new TestRunnable();
@@ -41,20 +36,23 @@ public class SameThreadSubmitterExecutorTest {
     
     assertTrue(tr.ranOnce());
     assertTrue(tr.executedThread == Thread.currentThread());
+    
+    SubmitterExecutorInterfaceTest.executeTest(new ExecutorFactory());
   }
   
   @Test
   public void executeExceptionTest() {
-    TestRuntimeFailureRunnable tr = new TestRuntimeFailureRunnable();
-    executor.execute(tr);
-    // no exception should propagate
-    
-    assertTrue(tr.ranOnce());
+    SubmitterExecutorInterfaceTest.executeWithFailureRunnableTest(new ExecutorFactory());
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void executeFail() {
+    SubmitterExecutorInterfaceTest.executeFail(new ExecutorFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
-    executor.submit((Runnable)null);
+    SubmitterExecutorInterfaceTest.submitRunnableFail(new ExecutorFactory());
   }
   
   @Test
@@ -66,28 +64,18 @@ public class SameThreadSubmitterExecutorTest {
     assertTrue(tr.executedThread == Thread.currentThread());
     assertTrue(future.isDone());
     assertTrue(future.get() == null);
+
+    SubmitterExecutorInterfaceTest.submitRunnableTest(new ExecutorFactory());
   }
   
   @Test
   public void submitRunnableExceptionTest() throws InterruptedException {
-    RuntimeException failure = new RuntimeException();
-    TestRuntimeFailureRunnable tr = new TestRuntimeFailureRunnable(failure);
-    ListenableFuture<?> future = executor.submit(tr);
-    // no exception should propagate
-    
-    assertTrue(tr.ranOnce());
-    assertTrue(future.isDone());
-    try {
-      future.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() == failure);
-    }
+    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(new ExecutorFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableWithResultFail() {
-    executor.submit((Runnable)null, new Object());
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(new ExecutorFactory());
   }
   
   @Test
@@ -100,57 +88,28 @@ public class SameThreadSubmitterExecutorTest {
     assertTrue(tr.executedThread == Thread.currentThread());
     assertTrue(future.isDone());
     assertTrue(future.get() == result);
+    
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(new ExecutorFactory());
   }
   
   @Test
   public void submitRunnableWithResultExceptionTest() throws InterruptedException {
-    RuntimeException failure = new RuntimeException();
-    TestRuntimeFailureRunnable tr = new TestRuntimeFailureRunnable(failure);
-    ListenableFuture<?> future = executor.submit(tr, new Object());
-    // no exception should propagate
-    
-    assertTrue(tr.ranOnce());
-    assertTrue(future.isDone());
-    try {
-      future.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() == failure);
-    }
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(new ExecutorFactory());
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
-    executor.submit((Callable<Object>)null);
+    SubmitterExecutorInterfaceTest.submitCallableFail(new ExecutorFactory());
   }
   
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
-    TestCallable tc = new TestCallable();
-    ListenableFuture<?> future = executor.submit(tc);
-    
-    assertTrue(future.isDone());
-    assertTrue(future.get() == tc.getReturnedResult());
+    SubmitterExecutorInterfaceTest.submitCallableTest(new ExecutorFactory());
   }
   
   @Test
   public void submitCallableExceptionTest() throws InterruptedException {
-    final RuntimeException failure = new RuntimeException();
-    ListenableFuture<?> future = executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        throw failure;
-      }
-    });
-    // no exception should propagate
-    
-    assertTrue(future.isDone());
-    try {
-      future.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() == failure);
-    }
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(new ExecutorFactory());
   }
   
   private static class TestRunnable extends org.threadly.test.concurrent.TestRunnable {
@@ -159,6 +118,19 @@ public class SameThreadSubmitterExecutorTest {
     @Override
     public void handleRunStart() {
       executedThread = Thread.currentThread();
+    }
+  }
+  
+  private static class ExecutorFactory implements SubmitterExecutorFactory {
+    @Override
+    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
+                                                            boolean prestartIfAvailable) {
+      return new SameThreadSubmitterExecutor();
+    }
+
+    @Override
+    public void shutdown() {
+      // ignored
     }
   }
 }

@@ -1,7 +1,10 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
@@ -9,6 +12,32 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class ContainerHelperTest {
+  @Test
+  public void removeRunnableFromCollectionTest() {
+    List<TestRunnableContainer> testRunnables = new ArrayList<TestRunnableContainer>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      testRunnables.add(new TestRunnableContainer(new TestRunnable()));
+    }
+    
+    Runnable toRemove = testRunnables.get(TEST_QTY / 2).r;
+    
+    assertTrue(ContainerHelper.remove(testRunnables, toRemove));
+  }
+  
+  @Test
+  public void removeCallableFromCollectionTest() {
+    List<TestRunnableContainer> testRunnables = new ArrayList<TestRunnableContainer>(TEST_QTY);
+    Callable<?> toRemove = null;
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestCallable tc = new TestCallable();
+      if (TEST_QTY / 2 == i) {
+        toRemove = tc;
+      }
+      testRunnables.add(new TestRunnableContainer(new TestCallableContainer(tc)));
+    }
+    
+    assertTrue(ContainerHelper.remove(testRunnables, toRemove));
+  }
   
   @Test
   public void twoDifferentRunnableTest() {
