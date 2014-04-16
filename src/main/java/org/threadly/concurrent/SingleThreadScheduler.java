@@ -15,16 +15,16 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-public class SingleThreadedScheduler implements SchedulerServiceInterface {
+public class SingleThreadScheduler implements SchedulerServiceInterface {
   private static final AtomicInteger NEXT_THREAD_ID = new AtomicInteger(1);
   
   private final AtomicReference<SchedulerManager> sManager;
   
   /**
-   * Constructs a new {@link SingleThreadedScheduler}.  No threads will start until 
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
    * the first task is provided.
    */
-  public SingleThreadedScheduler() {
+  public SingleThreadScheduler() {
     sManager = new AtomicReference<SchedulerManager>(null);
   }
   
@@ -153,7 +153,7 @@ public class SingleThreadedScheduler implements SchedulerServiceInterface {
     protected SchedulerManager() {
       scheduler = new NoThreadScheduler(true);  // true so we wont tight loop in the run
       execThread = new Thread(this);
-      execThread.setName("SingleThreadedScheduler-" + NEXT_THREAD_ID.getAndIncrement());
+      execThread.setName("SingleThreadScheduler-" + NEXT_THREAD_ID.getAndIncrement());
       startStopLock = new Object();
       started = false;
       stopped = false;

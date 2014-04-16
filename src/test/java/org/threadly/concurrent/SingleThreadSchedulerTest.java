@@ -14,7 +14,7 @@ import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest.SchedulerServiceFactory;
 
 @SuppressWarnings("javadoc")
-public class SingleThreadedSchedulerTest {
+public class SingleThreadSchedulerTest {
   @BeforeClass
   public static void setupClass() {
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
@@ -22,7 +22,7 @@ public class SingleThreadedSchedulerTest {
   
   @Test
   public void isShutdownTest() {
-    SingleThreadedScheduler sts = new SingleThreadedScheduler();
+    SingleThreadScheduler sts = new SingleThreadScheduler();
     assertFalse(sts.isShutdown());
     
     sts.shutdown();
@@ -32,135 +32,135 @@ public class SingleThreadedSchedulerTest {
   
   @Test
   public void executeTest() {
-    SubmitterExecutorInterfaceTest.executeTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.executeTest(new SingleThreadSchedulerFactory());
   }
   
   @Test
   public void executeWithFailureRunnableTest() {
-    SubmitterExecutorInterfaceTest.executeWithFailureRunnableTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.executeWithFailureRunnableTest(new SingleThreadSchedulerFactory());
   }
 
   @Test (expected = IllegalArgumentException.class)
   public void executeFail() {
-    SubmitterExecutorInterfaceTest.executeFail(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.executeFail(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
-    SubmitterExecutorInterfaceTest.submitRunnableTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitRunnableTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitRunnableExceptionTest() throws InterruptedException, ExecutionException {
-    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitRunnableWithResultExceptionTest() throws InterruptedException {
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
-    SubmitterExecutorInterfaceTest.submitCallableTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitCallableTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitCallableExceptionTest() throws InterruptedException {
-    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(new SingleThreadSchedulerFactory());
   }
 
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableFail() {
-    SubmitterExecutorInterfaceTest.submitRunnableFail(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitRunnableFail(new SingleThreadSchedulerFactory());
   }
 
   @Test (expected = IllegalArgumentException.class)
   public void submitRunnableWithResultFail() {
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(new SingleThreadSchedulerFactory());
   }
 
   @Test (expected = IllegalArgumentException.class)
   public void submitCallableFail() {
-    SubmitterExecutorInterfaceTest.submitCallableFail(new SingleThreadedSchedulerFactory());
+    SubmitterExecutorInterfaceTest.submitCallableFail(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void scheduleTest() {
-    SimpleSchedulerInterfaceTest.scheduleTest(new SingleThreadedSchedulerFactory());
+    SimpleSchedulerInterfaceTest.scheduleTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void scheduleNoDelayTest() {
-    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(new SingleThreadedSchedulerFactory());
+    SimpleSchedulerInterfaceTest.scheduleNoDelayTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void scheduleFail() {
-    SimpleSchedulerInterfaceTest.scheduleFail(new SingleThreadedSchedulerFactory());
+    SimpleSchedulerInterfaceTest.scheduleFail(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void recurringExecutionTest() {
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, new SingleThreadedSchedulerFactory());
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(false, new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void recurringExecutionWithInitialDelayTest() {
-    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, new SingleThreadedSchedulerFactory());
+    SimpleSchedulerInterfaceTest.recurringExecutionTest(true, new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void recurringExecutionFail() {
-    SimpleSchedulerInterfaceTest.recurringExecutionFail(new SingleThreadedSchedulerFactory());
+    SimpleSchedulerInterfaceTest.recurringExecutionFail(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException, TimeoutException {
-    SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(new SingleThreadedSchedulerFactory());
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException, TimeoutException {
-    SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(new SingleThreadedSchedulerFactory());
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableWithResultTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException, TimeoutException {
-    SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(new SingleThreadedSchedulerFactory());
+    SubmitterSchedulerInterfaceTest.submitScheduledCallableTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitScheduledRunnableFail() {
-    SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(new SingleThreadedSchedulerFactory());
+    SubmitterSchedulerInterfaceTest.submitScheduledRunnableFail(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void submitScheduledCallableFail() {
-    SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(new SingleThreadedSchedulerFactory());
+    SubmitterSchedulerInterfaceTest.submitScheduledCallableFail(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void removeRunnableTest() {
-    SchedulerServiceInterfaceTest.removeRunnableTest(new SingleThreadedSchedulerFactory());
+    SchedulerServiceInterfaceTest.removeRunnableTest(new SingleThreadSchedulerFactory());
   }
 
   @Test
   public void removeCallableTest() {
-    SchedulerServiceInterfaceTest.removeCallableTest(new SingleThreadedSchedulerFactory());
+    SchedulerServiceInterfaceTest.removeCallableTest(new SingleThreadSchedulerFactory());
   }
 
-  private class SingleThreadedSchedulerFactory implements SchedulerServiceFactory {
-    private final List<SingleThreadedScheduler> schedulers = new LinkedList<SingleThreadedScheduler>();
+  private class SingleThreadSchedulerFactory implements SchedulerServiceFactory {
+    private final List<SingleThreadScheduler> schedulers = new LinkedList<SingleThreadScheduler>();
 
     @Override
     public void shutdown() {
-      Iterator<SingleThreadedScheduler> it = schedulers.iterator();
+      Iterator<SingleThreadScheduler> it = schedulers.iterator();
       while (it.hasNext()) {
         it.next().shutdown();
         it.remove();
@@ -186,7 +186,7 @@ public class SingleThreadedSchedulerTest {
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      SingleThreadedScheduler sts = new SingleThreadedScheduler();
+      SingleThreadScheduler sts = new SingleThreadScheduler();
       schedulers.add(sts);
       
       return sts;
