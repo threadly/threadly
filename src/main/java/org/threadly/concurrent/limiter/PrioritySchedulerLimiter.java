@@ -164,16 +164,6 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   }
 
   @Override
-  public boolean remove(Runnable task) {
-    return scheduler.remove(task);
-  }
-
-  @Override
-  public boolean remove(Callable<?> task) {
-    return scheduler.remove(task);
-  }
-
-  @Override
   public TaskPriority getDefaultPriority() {
     return scheduler.getDefaultPriority();
   }
