@@ -6,13 +6,23 @@ import static org.threadly.TestConstants.SCHEDULE_DELAY;
 
 import java.util.concurrent.Callable;
 
+import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
-import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class SchedulerServiceInterfaceTest {
-  public static void removeRunnableTest(SchedulerServiceFactory factory) {
+public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerInterfaceTest {
+  protected abstract SchedulerServiceFactory getSchedulerServiceFactory();
+
+  @Override
+  protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
+    return getSchedulerServiceFactory();
+  }
+  
+  @Test
+  public void removeRunnableTest() {
+    SchedulerServiceFactory factory = getSchedulerServiceFactory();
+    
     SchedulerServiceInterface scheduler = factory.makeSchedulerService(1, false);
     BlockingTestRunnable btr1 = new BlockingTestRunnable();
     BlockingTestRunnable btr2 = new BlockingTestRunnable();
@@ -61,7 +71,10 @@ public class SchedulerServiceInterfaceTest {
     }
   }
 
-  public static void removeCallableTest(SchedulerServiceFactory factory) {
+  @Test
+  public void removeCallableTest() {
+    SchedulerServiceFactory factory = getSchedulerServiceFactory();
+    
     SchedulerServiceInterface scheduler = factory.makeSchedulerService(1, false);
     BlockingTestRunnable btr1 = new BlockingTestRunnable();
     BlockingTestRunnable btr2 = new BlockingTestRunnable();

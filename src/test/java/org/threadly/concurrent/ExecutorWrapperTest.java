@@ -5,15 +5,18 @@ import static org.junit.Assert.*;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 import org.junit.Test;
-import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class ExecutorWrapperTest {
+public class ExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
+  @Override
+  protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
+    return new ExecutorWrapperFactory();
+  }
+  
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
@@ -21,6 +24,7 @@ public class ExecutorWrapperTest {
     fail("Exception should have thrown");
   }
   
+  @Override
   @Test
   public void executeTest() {
     TestExecutor te = new TestExecutor();
@@ -30,69 +34,8 @@ public class ExecutorWrapperTest {
     ew.execute(r);
     
     assertTrue(te.lastCommand == r);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void executeFail() {
-    TestExecutor te = new TestExecutor();
-    ExecutorWrapper ew = new ExecutorWrapper(te);
     
-    ew.execute(null);
-    fail("Exception should have thrown");
-  }
-  
-  @Test
-  public void submitRunnableTest() throws InterruptedException, ExecutionException {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableTest(ef);
-  }
-  
-  @Test
-  public void submitRunnableExceptionTest() throws InterruptedException, ExecutionException {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(ef);
-  }
-  
-  @Test
-  public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(ef);
-  }
-  
-  @Test
-  public void submitRunnableWithResultExceptionTest() throws InterruptedException, ExecutionException {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(ef);
-  }
-  
-  @Test
-  public void submitCallableTest() throws InterruptedException, ExecutionException {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitCallableTest(ef);
-  }
-  
-  @Test
-  public void submitCallableExceptionTest() throws InterruptedException {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(ef);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void submitRunnableFail() {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableFail(ef);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void submitRunnableWithResultFail() {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(ef);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void submitCallableFail() {
-    ExecutorWrapperFactory ef = new ExecutorWrapperFactory();
-    SubmitterExecutorInterfaceTest.submitCallableFail(ef);
+    super.executeTest();
   }
 
   private class ExecutorWrapperFactory implements SubmitterExecutorFactory {
