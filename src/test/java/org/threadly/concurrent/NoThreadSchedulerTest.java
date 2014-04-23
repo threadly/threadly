@@ -177,8 +177,8 @@ public class NoThreadSchedulerTest {
   
   private static void scheduleRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
     TestRunnable tr = new TestRunnable();
-    scheduler.schedule(tr, SCHEDULE_DELAY);
     long scheduleTime = System.currentTimeMillis();
+    scheduler.schedule(tr, SCHEDULE_DELAY);
     
     int runCount = 0;
     while (runCount == 0) {
