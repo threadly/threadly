@@ -7,12 +7,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.concurrent.SchedulerServiceInterfaceTest.SchedulerServiceFactory;
 
 @SuppressWarnings("javadoc")
-public class SingleThreadSchedulerTest extends SubmitterSchedulerInterfaceTest {
+public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
   @Override
-  protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
+  protected SchedulerServiceFactory getSchedulerServiceFactory() {
     return new SingleThreadSchedulerFactory();
   }
   
