@@ -295,7 +295,7 @@ public class PriorityScheduledExecutorTest extends SchedulerServiceInterfaceTest
         
         scheduler.setMaxPoolSize(2);
         
-        // tr should not be able to start, will throw exception if unable to
+        // tr should now be able to start, will throw exception if unable to
         tr.blockTillStarted();
         assertEquals(1, tr.getRunCount());
       } finally {
@@ -727,7 +727,7 @@ public class PriorityScheduledExecutorTest extends SchedulerServiceInterfaceTest
       assertTrue(removedTask.getRunCount() == runCount || 
                  removedTask.getRunCount() == runCount + 1);
       
-      assertTrue(keptTask.getRunCount() > keptRunCount);
+      assertTrue(keptTask.getRunCount() >= keptRunCount);
     } finally {
       factory.shutdown();
     }
