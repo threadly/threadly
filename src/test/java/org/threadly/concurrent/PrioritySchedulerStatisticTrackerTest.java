@@ -96,9 +96,9 @@ public class PrioritySchedulerStatisticTrackerTest {
   }
   
   @Test
-  public void setMaxPoolSizeBlockedThreadsTest() {
+  public void setMaxPoolSizeBlockedThreadTest() {
     PriorityScheduledExecutorTestFactory psetf = new PriorityScheduledExecutorTestFactory();
-    PriorityScheduledExecutorTest.setMaxPoolSizeUnblockedThreadTest(psetf);
+    PriorityScheduledExecutorTest.setMaxPoolSizeBlockedThreadTest(psetf);
   }
   
   @Test

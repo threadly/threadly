@@ -295,11 +295,11 @@ public class PriorityScheduledExecutorTest {
   }
 
   @Test
-  public void setMaxPoolSizeBlockedThreadsTest() {
-    getDefaultPriorityTest(new PriorityScheduledExecutorTestFactory());
+  public void setMaxPoolSizeBlockedThreadTest() {
+    setMaxPoolSizeBlockedThreadTest(new PriorityScheduledExecutorTestFactory());
   } 
   
-  public static void setMaxPoolSizeUnblockedThreadTest(PriorityScheduledExecutorFactory factory) {
+  public static void setMaxPoolSizeBlockedThreadTest(PriorityScheduledExecutorFactory factory) {
     try {
       PriorityScheduledExecutor scheduler = factory.make(1, 1, 1000);
       
@@ -863,7 +863,7 @@ public class PriorityScheduledExecutorTest {
       assertTrue(removedTask.getRunCount() == runCount || 
                  removedTask.getRunCount() == runCount + 1);
       
-      assertTrue(keptTask.getRunCount() > keptRunCount);
+      assertTrue(keptTask.getRunCount() >= keptRunCount);
     } finally {
       scheduler.shutdownNow();
     }
