@@ -1,13 +1,10 @@
 package org.threadly.concurrent.limiter;
 
 import java.util.Queue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 
 import org.threadly.concurrent.SubmitterExecutorInterface;
-import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureTask;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens 
@@ -79,11 +76,7 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   }
 
   @Override
-  public void execute(Runnable task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide runnable");
-    }
-    
+  protected void doExecute(Runnable task) {
     LimiterRunnableWrapper lrw = new LimiterRunnableWrapper(executor, task);
     executeWrapper(lrw);
   }
@@ -99,36 +92,5 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   protected void addToQueue(LimiterRunnableWrapper lrw) {
     waitingTasks.add(lrw);
     consumeAvailable(); // call to consume in case task finished after first check
-  }
-
-  @Override
-  public ListenableFuture<?> submit(Runnable task) {
-    return submit(task, null);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
-    
-    execute(lft);
-    
-    return lft;
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
-    
-    execute(lft);
-    
-    return lft;
   }
 }
