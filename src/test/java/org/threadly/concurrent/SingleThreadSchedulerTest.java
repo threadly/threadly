@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
+import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
@@ -23,6 +24,14 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     sts.shutdown();
     
     assertTrue(sts.isShutdown());
+  }
+  
+  @Test (expected = IllegalStateException.class)
+  public void shutdownExecutionFail() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    sts.shutdown();
+    
+    sts.execute(new TestRunnable());
   }
 
   private class SingleThreadSchedulerFactory implements SchedulerServiceFactory {

@@ -48,6 +48,10 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
       }
     }
     
+    if (result.stopped) {
+      throw new IllegalStateException("Scheduler has been shutdown");
+    }
+    
     return result.scheduler;
   }
   
