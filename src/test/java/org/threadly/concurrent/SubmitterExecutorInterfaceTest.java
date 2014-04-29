@@ -10,12 +10,24 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class SubmitterExecutorInterfaceTest {
-  public static void executeTest(SubmitterExecutorFactory factory) {
+public abstract class SubmitterExecutorInterfaceTest {
+  protected abstract SubmitterExecutorFactory getSubmitterExecutorFactory();
+  
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+  }
+  
+  @Test
+  public void executeTest() {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -54,7 +66,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void executeWithFailureRunnableTest(SubmitterExecutorFactory factory) {
+  @Test
+  public void executeWithFailureRunnableTest() {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -82,7 +96,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void executeFail(SubmitterExecutorFactory factory) {
+  @Test (expected = IllegalArgumentException.class)
+  public void executeFail() {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       
@@ -93,7 +109,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitRunnableTest(SubmitterExecutorFactory factory) throws InterruptedException, ExecutionException {
+  @Test
+  public void submitRunnableTest() throws InterruptedException, ExecutionException {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -142,7 +160,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitRunnableExceptionTest(SubmitterExecutorFactory factory) throws InterruptedException {
+  @Test
+  public void submitRunnableExceptionTest() throws InterruptedException {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -164,7 +184,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitRunnableWithResultTest(SubmitterExecutorFactory factory) throws InterruptedException, ExecutionException {
+  @Test
+  public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -214,7 +236,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitRunnableWithResultExceptionTest(SubmitterExecutorFactory factory) throws InterruptedException {
+  @Test
+  public void submitRunnableWithResultExceptionTest() throws InterruptedException {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -236,7 +260,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitCallableTest(SubmitterExecutorFactory factory) throws InterruptedException, ExecutionException {
+  @Test
+  public void submitCallableTest() throws InterruptedException, ExecutionException {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -273,7 +299,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitCallableExceptionTest(SubmitterExecutorFactory factory) throws InterruptedException {
+  @Test
+  public void submitCallableExceptionTest() throws InterruptedException {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
@@ -297,7 +325,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitRunnableFail(SubmitterExecutorFactory factory) {
+  @Test (expected = IllegalArgumentException.class)
+  public void submitRunnableFail() {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       
@@ -308,7 +338,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
 
-  public static void submitRunnableWithResultFail(SubmitterExecutorFactory factory) {
+  @Test (expected = IllegalArgumentException.class)
+  public void submitRunnableWithResultFail() {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       
@@ -319,7 +351,9 @@ public class SubmitterExecutorInterfaceTest {
     }
   }
   
-  public static void submitCallableFail(SubmitterExecutorFactory factory) {
+  @Test (expected = IllegalArgumentException.class)
+  public void submitCallableFail() {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       

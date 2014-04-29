@@ -7,11 +7,9 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,7 +23,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTestUtil;
-import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -129,60 +126,6 @@ public class TaskExecutorDistributorTest {
   @Test
   public void getExecutorTest() {
     assertTrue(scheduler == distributor.getExecutor());
-  }
-
-  @Test
-  public void keyBasedSubmitterSubmitRunnableTest() throws InterruptedException, ExecutionException {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableTest(ef);
-  }
-
-  @Test
-  public void keyBasedSubmitterSubmitRunnableExceptionTest() throws InterruptedException, ExecutionException {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableExceptionTest(ef);
-  }
-  
-  @Test
-  public void keyBasedSubmitterSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultTest(ef);
-  }
-  
-  @Test
-  public void keyBasedSubmitterSubmitRunnableWithResultExceptionTest() throws InterruptedException {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultExceptionTest(ef);
-  }
-  
-  @Test
-  public void keyBasedSubmitterSubmitCallableTest() throws InterruptedException, ExecutionException {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitCallableTest(ef);
-  }
-  
-  @Test
-  public void keyBasedSubmitterSubmitCallableExceptionTest() throws InterruptedException {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitCallableExceptionTest(ef);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void keyBasedSubmitterSubmitRunnableFail() {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableFail(ef);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void keyBasedSubmitterSubmitRunnableWithResultFail() {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitRunnableWithResultFail(ef);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void keyBasedSubmitterSubmitCallableFail() {
-    KeyBasedSubmitterFactory ef = new KeyBasedSubmitterFactory();
-    SubmitterExecutorInterfaceTest.submitCallableFail(ef);
   }
   
   @Test
@@ -630,36 +573,6 @@ public class TaskExecutorDistributorTest {
     
     public boolean threadConsistent() {
       return threadConsistent;
-    }
-  }
-
-  private class KeyBasedSubmitterFactory implements SubmitterExecutorFactory {
-    private final List<PriorityScheduledExecutor> executors;
-    
-    private KeyBasedSubmitterFactory() {
-      executors = new LinkedList<PriorityScheduledExecutor>();
-    }
-    
-    @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, 
-                                                            boolean prestartIfAvailable) {
-      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
-                                                                               1000 * 10);
-      if (prestartIfAvailable) {
-        executor.prestartAllCoreThreads();
-      }
-      executors.add(executor);
-      
-      return new TaskExecutorDistributor(executor).getSubmitterForKey("foo");
-    }
-    
-    @Override
-    public void shutdown() {
-      Iterator<PriorityScheduledExecutor> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-        it.remove();
-      }
     }
   }
   
