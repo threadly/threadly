@@ -3,6 +3,7 @@ package org.threadly.concurrent.limiter;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableContainerInterface;
 
 /**
@@ -12,7 +13,7 @@ import org.threadly.concurrent.RunnableContainerInterface;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-abstract class AbstractThreadPoolLimiter {
+abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
   protected final int maxConcurrency;
   protected final String subPoolName;
   private final AtomicInteger currentlyRunning;
