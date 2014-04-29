@@ -7,12 +7,33 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.test.concurrent.TestCondition;
 
 @SuppressWarnings("javadoc")
 public class BlockingQueueConsumerTest {
+   private SynchronousQueue<Object> queue;
+   private TestAcceptor acceptor;
+   private BlockingQueueConsumer<Object> queueConsumer;
+   
+  @Before
+  public void setup() {
+    queue = new SynchronousQueue<Object>();
+    acceptor = new TestAcceptor();
+    queueConsumer = new BlockingQueueConsumer<Object>(queue, acceptor);
+  }
+  
+  @After
+  public void tearDown() {
+    queueConsumer.stop();
+    queue = null;
+    acceptor = null;
+    queueConsumer = null;
+  }
+  
   @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
@@ -31,11 +52,32 @@ public class BlockingQueueConsumerTest {
   }
   
   @Test
-  public void consumeTest() throws InterruptedException {
-    SynchronousQueue<Object> queue = new SynchronousQueue<Object>();
-    TestAcceptor acceptor = new TestAcceptor();
-    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<Object>(queue, acceptor);
+  public void doubleStartTest() {
+    // start queue
+    queueConsumer.maybeStart(Executors.defaultThreadFactory());
     
+    assertTrue(queueConsumer.isRunning());
+    
+    // attempt to start again
+    queueConsumer.maybeStart(Executors.defaultThreadFactory());
+    // should still be running without exception
+    assertTrue(queueConsumer.isRunning());
+  }
+  
+  @Test
+  public void doubleStopTest() {
+    queueConsumer.maybeStart(Executors.defaultThreadFactory());
+    assertTrue(queueConsumer.isRunning());
+    
+    queueConsumer.stop();
+    assertFalse(queueConsumer.isRunning());
+    
+    queueConsumer.stop();
+    assertFalse(queueConsumer.isRunning());
+  }
+  
+  @Test
+  public void consumeTest() throws InterruptedException {
     assertFalse(queueConsumer.isRunning());
     
     // start queue

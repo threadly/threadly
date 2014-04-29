@@ -27,10 +27,6 @@ class ClockWrapper {
   protected static final AtomicInteger REQUESTS_TO_STOP_UPDATING_TIME = new AtomicInteger();
   private static volatile long lastKnownTime = -1;
   
-  private ClockWrapper() {
-    // don't construct
-  }
-  
   /**
    * A call here causes getAccurateTime to use the last known time.  If 
    * this is the first call to stop updating the time, it will ensure the 
