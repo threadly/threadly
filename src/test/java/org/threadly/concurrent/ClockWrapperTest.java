@@ -7,6 +7,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestCondition;
+import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
@@ -46,6 +47,8 @@ public class ClockWrapperTest {
     
     // allow updates again
     ClockWrapper.resumeForcingUpdate();
+    
+    TestUtils.blockTillClockAdvances();
     
     assertTrue(updateTime != ClockWrapper.getSemiAccurateTime());
   }

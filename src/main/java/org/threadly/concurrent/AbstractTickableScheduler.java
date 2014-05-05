@@ -126,7 +126,7 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
     add(new RecurringTask(task, initialDelay, recurringDelay));
   }
   
-  private void add(TaskContainer runnable) {
+  protected void add(TaskContainer runnable) {
     synchronized (taskQueue.getModificationLock()) {
       int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable);
         
@@ -174,7 +174,9 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
             taskQueue.getModificationLock().wait();
           } else {
             long nextTaskDelay = nextTask.getDelay(TimeUnit.MILLISECONDS);
-            taskQueue.getModificationLock().wait(nextTaskDelay);
+            if (nextTaskDelay > 0) {
+              taskQueue.getModificationLock().wait(nextTaskDelay);
+            }
           }
         }
       } else {
