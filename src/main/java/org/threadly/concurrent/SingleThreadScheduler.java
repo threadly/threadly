@@ -18,7 +18,7 @@ import org.threadly.util.ExceptionUtils;
 public class SingleThreadScheduler implements SchedulerServiceInterface {
   private static final AtomicInteger NEXT_THREAD_ID = new AtomicInteger(1);
   
-  private final AtomicReference<SchedulerManager> sManager;
+  protected final AtomicReference<SchedulerManager> sManager;
   
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
@@ -35,7 +35,7 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
    * 
    * @return instance of the single threaded scheduler
    */
-  protected SchedulerServiceInterface getScheduler() {
+  protected NoThreadScheduler getScheduler() {
     // we lazily construct and start the manager
     SchedulerManager result = sManager.get();
     if (result == null) {
@@ -148,8 +148,8 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
    * @since 2.0.0
    */
   protected static class SchedulerManager implements Runnable {
-    private final NoThreadScheduler scheduler;
-    private final Thread execThread;
+    protected final NoThreadScheduler scheduler;
+    protected final Thread execThread;
     private final Object startStopLock;
     private volatile boolean stopped;
     private boolean started;
@@ -163,9 +163,14 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
       stopped = false;
     }
     
+    public boolean isStopped() {
+      return stopped;
+    }
+    
     public void start() {
       synchronized (startStopLock) {
         if (! started && ! stopped) {
+          started = true;
           execThread.start();
         }
       }
