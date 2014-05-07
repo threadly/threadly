@@ -541,7 +541,7 @@ public class PriorityScheduledExecutorTest extends SchedulerServiceInterfaceTest
     PriorityScheduledExecutorFactory factory = getPrioritySchedulerFactory();
     try {
       PriorityScheduledExecutor executor = factory.makePriorityScheduler(1, 1, 1000);
-      final AsyncVerifier av = new AsyncVerifier();
+      final AsyncVerifier interruptSentAV = new AsyncVerifier();
       TestRunnable tr = new TestRunnable() {
         @Override
         public void handleRunFinish() {
@@ -552,8 +552,8 @@ public class PriorityScheduledExecutorTest extends SchedulerServiceInterfaceTest
             // spin
           }
           
-          av.assertTrue(currentThread.isInterrupted());
-          av.signalComplete();
+          interruptSentAV.assertTrue(currentThread.isInterrupted());
+          interruptSentAV.signalComplete();
         }
       };
       
@@ -564,15 +564,24 @@ public class PriorityScheduledExecutorTest extends SchedulerServiceInterfaceTest
       
       // should interrupt
       assertTrue(future.cancel(true));
-      av.waitForTest(); // verify thread was interrupted as expected
+      interruptSentAV.waitForTest(); // verify thread was interrupted as expected
       
       // verify worker was returned to pool
       blockTillWorkerAvailable(executor);
-      
       // verify pool size is still correct
       assertEquals(1, executor.getCurrentPoolSize());
+      
       // verify interrupted status has been cleared
-      assertFalse(executor.availableWorkers.getFirst().thread.isInterrupted());
+      final AsyncVerifier interruptClearedAV = new AsyncVerifier();
+      executor.execute(new Runnable() {
+        @Override
+        public void run() {
+          interruptClearedAV.assertFalse(Thread.currentThread().isInterrupted());
+          interruptClearedAV.signalComplete();
+        }
+      });
+      // block till we have verified that the interrupted status has been reset
+      interruptClearedAV.waitForTest();
     } finally {
       factory.shutdown();
     }
