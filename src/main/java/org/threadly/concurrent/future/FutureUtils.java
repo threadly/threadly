@@ -447,13 +447,13 @@ public class FutureUtils {
   }
   
   /**
-   * <p>Abstract class for futures that can't be canceled and are already complete</p>
+   * <p>Abstract class for futures that can't be canceled and are already complete.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.3.0
    * @param <T> type of object returned by the future
    */
-  protected static abstract class ImmediateFuture<T> implements ListenableFuture<T> {
+  protected abstract static class ImmediateFuture<T> implements ListenableFuture<T> {
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
       return false;
