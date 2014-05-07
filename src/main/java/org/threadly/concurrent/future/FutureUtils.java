@@ -7,6 +7,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -211,9 +212,7 @@ public class FutureUtils {
    * @return Already satisfied future
    */
   public static <T> ListenableFuture<T> immediateResultFuture(T result) {
-    SettableListenableFuture<T> futureResult = new SettableListenableFuture<T>();
-    futureResult.setResult(result);
-    return futureResult;
+    return new ImmediateResultFuture<T>(result);
   }
   
   /**
@@ -228,9 +227,7 @@ public class FutureUtils {
    * @return Already satisfied future
    */
   public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
-    SettableListenableFuture<T> futureResult = new SettableListenableFuture<T>();
-    futureResult.setFailure(failure);
-    return futureResult;
+    return new ImmediateFailureFuture<T>(failure);
   }
   
   /**
@@ -336,7 +333,6 @@ public class FutureUtils {
       return result;
     }
   }
-
   
   /**
    * <p>A future implementation that will be satisfied till all provided futures 
@@ -417,7 +413,6 @@ public class FutureUtils {
       }
     }
   }
-
   
   /**
    * <p>A future implementation that will return a List of futures as the result.  The 
@@ -448,6 +443,137 @@ public class FutureUtils {
         // canceled so add it
         super.handleFutureDone(f);
       }
+    }
+  }
+  
+  /**
+   * <p>Abstract class for futures that can't be canceled and are already complete</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 1.3.0
+   * @param <T> type of object returned by the future
+   */
+  protected static abstract class ImmediateFuture<T> implements ListenableFuture<T> {
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      return false;
+    }
+
+    @Override
+    public boolean isCancelled() {
+      return false;
+    }
+
+    @Override
+    public boolean isDone() {
+      return true;
+    }
+
+    @Override
+    public void addListener(Runnable listener) {
+      listener.run();
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor executor) {
+      if (executor != null) {
+        executor.execute(listener);
+      } else {
+        listener.run();
+      }
+    }
+  }
+
+  /**
+   * <p>Implementation of {@link ListenableFuture} that will immediately return 
+   * a result.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 1.3.0
+   * @param <T> type of object returned by the future
+   */
+  protected static class ImmediateResultFuture<T> extends ImmediateFuture<T> {
+    private final T result;
+    
+    public ImmediateResultFuture(T result) {
+      this.result = result;
+    }
+    @Override
+    public T get() {
+      return result;
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) {
+      return result;
+    }
+
+    @Override
+    public void addCallback(FutureCallback<? super T> callback) {
+      callback.handleResult(result);
+    }
+
+    @Override
+    public void addCallback(final FutureCallback<? super T> callback, Executor executor) {
+      if (executor != null) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            callback.handleResult(result);
+          }
+        });
+      } else {
+        callback.handleResult(result);
+      }
+    }
+  }
+
+  /**
+   * <p>Implementation of {@link ListenableFuture} that will immediately return 
+   * a failure.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 1.3.0
+   * @param <T> type of object returned by the future
+   */
+  protected static class ImmediateFailureFuture<T> extends ImmediateFuture<T> {
+    private final Throwable failure;
+    
+    public ImmediateFailureFuture(Throwable failure) {
+      if (failure != null) {
+        this.failure = failure;
+      } else {
+        this.failure = new Exception();
+      }
+    }
+
+    @Override
+    public void addCallback(FutureCallback<? super T> callback) {
+      callback.handleFailure(failure);
+    }
+
+    @Override
+    public void addCallback(final FutureCallback<? super T> callback, Executor executor) {
+      if (executor != null) {
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            callback.handleFailure(failure);
+          }
+        });
+      } else {
+        callback.handleFailure(failure);
+      }
+    }
+
+    @Override
+    public T get() throws ExecutionException {
+      throw new ExecutionException(failure);
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws ExecutionException {
+      throw new ExecutionException(failure);
     }
   }
 }

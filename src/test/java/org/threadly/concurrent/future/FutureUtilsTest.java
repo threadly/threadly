@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.AfterClass;
@@ -17,6 +18,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -316,8 +318,6 @@ public class FutureUtilsTest {
   private static void verifyAllIncluded(List<ListenableFuture<?>> expected, 
                                         List<ListenableFuture<?>> result, 
                                         ListenableFuture<?> excludedFuture) {
-    System.out.println(expected);
-    System.out.println(result);
     Iterator<ListenableFuture<?>> it = expected.iterator();
     while (it.hasNext()) {
       ListenableFuture<?> f = it.next();
@@ -506,22 +506,65 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void immediateResultFutureNullResultTest() throws InterruptedException, ExecutionException {
+  public void immediateResultFutureNullResultTest() throws InterruptedException, ExecutionException, TimeoutException {
     ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(null);
     
     assertTrue(testFuture.isDone());
-    assertFalse(testFuture.isCancelled());
     assertNull(testFuture.get());
+    assertNull(testFuture.get(1, TimeUnit.MILLISECONDS));
   }
   
   @Test
-  public void immediateResultFutureTest() throws InterruptedException, ExecutionException {
+  public void immediateResultFutureTest() throws InterruptedException, ExecutionException, TimeoutException {
     Object result = new Object();
     ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(result);
     
     assertTrue(testFuture.isDone());
-    assertFalse(testFuture.isCancelled());
     assertTrue(testFuture.get() == result);
+    assertTrue(testFuture.get(1, TimeUnit.MILLISECONDS) == result);
+  }
+  
+  @Test
+  public void immediateResultFutureCancelTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(null);
+    
+    assertFalse(testFuture.cancel(true));
+    assertFalse(testFuture.isCancelled());
+  }
+  
+  @Test
+  public void immediateResultFutureAddListenerTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(null);
+    
+    TestRunnable tr = new TestRunnable();
+    testFuture.addListener(tr);
+    assertTrue(tr.ranOnce());
+    
+    tr = new TestRunnable();
+    testFuture.addListener(tr, null);
+    assertTrue(tr.ranOnce());
+    
+    tr = new TestRunnable();
+    testFuture.addListener(tr, new SameThreadSubmitterExecutor());
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void immediateResultFutureAddCallbackTest() throws InterruptedException, ExecutionException {
+    Object result = new Object();
+    ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(result);
+    
+    TestFutureCallback tfc = new TestFutureCallback();
+    testFuture.addCallback(tfc);
+    assertTrue(tfc.getLastResult() == result);
+    
+    tfc = new TestFutureCallback();
+    testFuture.addCallback(tfc, null);
+    assertTrue(tfc.getLastResult() == result);
+    
+    tfc = new TestFutureCallback();
+    testFuture.addCallback(tfc, new SameThreadSubmitterExecutor());
+    assertTrue(tfc.getLastResult() == result);
   }
   
   @Test
@@ -530,7 +573,6 @@ public class FutureUtilsTest {
     ListenableFuture<?> testFuture = FutureUtils.immediateFailureFuture(failure);
     
     assertTrue(testFuture.isDone());
-    assertFalse(testFuture.isCancelled());
     try {
       testFuture.get();
       fail("Exception should have thrown");
@@ -539,5 +581,58 @@ public class FutureUtilsTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() == failure);
     }
+    try {
+      testFuture.get(1, TimeUnit.MILLISECONDS);
+      fail("Exception should have thrown");
+    } catch (InterruptedException e) {
+      fail("ExecutionException should have thrown");
+    } catch (TimeoutException e) {
+      fail("ExecutionException should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
+  }
+  
+  @Test
+  public void immediateFailureFutureCancelTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> testFuture = FutureUtils.immediateFailureFuture(null);
+    
+    assertFalse(testFuture.cancel(true));
+    assertFalse(testFuture.isCancelled());
+  }
+  
+  @Test
+  public void immediateFailureFutureAddListenerTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> testFuture = FutureUtils.immediateFailureFuture(null);
+    
+    TestRunnable tr = new TestRunnable();
+    testFuture.addListener(tr);
+    assertTrue(tr.ranOnce());
+    
+    tr = new TestRunnable();
+    testFuture.addListener(tr, null);
+    assertTrue(tr.ranOnce());
+    
+    tr = new TestRunnable();
+    testFuture.addListener(tr, new SameThreadSubmitterExecutor());
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void immediateFailureFutureAddCallbackTest() throws InterruptedException, ExecutionException {
+    Throwable failure = new Exception();
+    ListenableFuture<?> testFuture = FutureUtils.immediateFailureFuture(failure);
+    
+    TestFutureCallback tfc = new TestFutureCallback();
+    testFuture.addCallback(tfc);
+    assertTrue(tfc.getLastFailure() == failure);
+    
+    tfc = new TestFutureCallback();
+    testFuture.addCallback(tfc, null);
+    assertTrue(tfc.getLastFailure() == failure);
+    
+    tfc = new TestFutureCallback();
+    testFuture.addCallback(tfc, new SameThreadSubmitterExecutor());
+    assertTrue(tfc.getLastFailure() == failure);
   }
 }
