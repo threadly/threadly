@@ -9,18 +9,27 @@ package org.threadly;
 public class TestConstants {
   /**
    * A profile for the amount of load and verification to be done.
-   * 
-   *  Speedy - Fastest, minimal testing
-   *  Normal - Good general place to start, still very fast
-   *  Stress - Very slow, but gives a good extensive run
    */
-  private enum TestLoad { Speedy, Normal, Stress };
+  public enum TestLoad { 
+    /**
+     * Fastest, minimal testing.
+     */
+    Speedy, 
+    /**
+     * Good general place to start, still very fast.
+     */
+    Normal, 
+    /**
+     * Very slow, but gives a good extensive run.
+     */
+    Stress
+  };
   
   /**
    * Can easily adjust all constants in this file by changing the load 
    * profile.
    */
-  private static final TestLoad TEST_PROFILE = TestLoad.Normal;
+  public static final TestLoad TEST_PROFILE = TestLoad.Normal;
   
   /**
    * Represents the number of iterations, or possibly runnables 
