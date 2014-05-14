@@ -67,7 +67,7 @@ public class ListUtils {
                                     randomAccessList);
     if (searchResult >= 0) {
       Iterator<? extends Delayed> it = list.listIterator(searchResult);
-      while (it.hasNext() && it.next().getDelay(TimeUnit.MILLISECONDS) == insertionValueInMillis) {
+      while (it.hasNext() && it.next().getDelay(TimeUnit.MILLISECONDS) <= insertionValueInMillis) {
         searchResult++;
       }
       return searchResult;

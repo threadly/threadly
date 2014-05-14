@@ -133,7 +133,7 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
   
   protected void add(TaskContainer runnable) {
     synchronized (taskQueue.getModificationLock()) {
-      int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable);
+      int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable, true);
         
       taskQueue.add(insertionIndex, runnable);
       
@@ -177,7 +177,9 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
   }
   
   /**
-   * Advances the scheduler forward, running anything that is ready to execute.
+   * Advances the scheduler forward, running anything that is ready to execute.  This call is 
+   * NOT thread safe, calling tick in parallel could cause the same task to be run multiple 
+   * times in parallel.
    * 
    * @return number of tasks that were executed
    * @throws InterruptedException if thread is interrupted while waiting for tasks to run
