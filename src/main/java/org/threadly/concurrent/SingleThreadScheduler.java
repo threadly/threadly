@@ -1,6 +1,8 @@
 package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,14 +20,53 @@ import org.threadly.util.ExceptionUtils;
 public class SingleThreadScheduler implements SchedulerServiceInterface {
   private static final AtomicInteger NEXT_THREAD_ID = new AtomicInteger(1);
   
+  protected final ThreadFactory threadFactory;
   protected final AtomicReference<SchedulerManager> sManager;
   
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
-   * the first task is provided.
+   * the first task is provided.  This defaults to using a daemon thread for the 
+   * scheduler.
    */
   public SingleThreadScheduler() {
+    this(true);
+  }
+  
+  /**
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
+   * the first task is provided.
+   * 
+   * @param daemonThread true if scheduler thread should be a daemon thread
+   */
+  public SingleThreadScheduler(final boolean daemonThread) {
+    this(new ThreadFactory() {
+           private final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
+          
+           @Override
+           public Thread newThread(Runnable runnable) {
+             Thread thread = defaultFactory.newThread(runnable);
+             
+             thread.setDaemon(daemonThread);
+             thread.setName("SingleThreadScheduler-" + NEXT_THREAD_ID.getAndIncrement());
+             
+             return thread;
+           }
+         });
+  }
+  
+  /**
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
+   * the first task is provided.
+   * 
+   * @param threadFactory factory to make thread for scheduler
+   */
+  public SingleThreadScheduler(ThreadFactory threadFactory) {
+    if (threadFactory == null) {
+      throw new IllegalArgumentException("Must provide thread factory");
+    }
+    
     sManager = new AtomicReference<SchedulerManager>(null);
+    this.threadFactory = threadFactory;
   }
   
   /**
@@ -39,7 +80,7 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
     // we lazily construct and start the manager
     SchedulerManager result = sManager.get();
     if (result == null) {
-      result = new SchedulerManager();
+      result = new SchedulerManager(threadFactory);
       if (sManager.compareAndSet(null, result)) {
         // we are the one and only, so start now
         result.start();
@@ -63,7 +104,7 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
   public void shutdown() {
     SchedulerManager sm = sManager.get();
     if (sm == null) {
-      sm = new SchedulerManager();
+      sm = new SchedulerManager(threadFactory);
       if (! sManager.compareAndSet(null, sm)) {
         sm = sManager.get();
       }
@@ -154,10 +195,9 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
     private volatile boolean stopped;
     private boolean started;
     
-    protected SchedulerManager() {
+    protected SchedulerManager(ThreadFactory threadFactory) {
       scheduler = new NoThreadScheduler(true);  // true so we wont tight loop in the run
-      execThread = new Thread(this);
-      execThread.setName("SingleThreadScheduler-" + NEXT_THREAD_ID.getAndIncrement());
+      execThread = threadFactory.newThread(this);
       startStopLock = new Object();
       started = false;
       stopped = false;

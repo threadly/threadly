@@ -16,6 +16,12 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     return new SingleThreadSchedulerFactory();
   }
   
+  @SuppressWarnings("unused")
+  @Test (expected = IllegalArgumentException.class)
+  public void constructorFail() {
+    new SingleThreadScheduler(null);
+  }
+  
   @Test
   public void isShutdownTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
