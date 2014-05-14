@@ -184,7 +184,7 @@ public class SettableListenableFutureTest {
         }
       }, SCHEDULE_DELAY);
       
-      assertTrue(slf.get(SCHEDULE_DELAY * 5, TimeUnit.MILLISECONDS) == testResult);
+      assertTrue(slf.get(SCHEDULE_DELAY * 10, TimeUnit.MILLISECONDS) == testResult);
     } finally {
       scheduler.shutdownNow();
     }
