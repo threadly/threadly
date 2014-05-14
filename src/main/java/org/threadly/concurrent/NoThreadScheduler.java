@@ -34,7 +34,11 @@ public class NoThreadScheduler extends AbstractTickableScheduler {
   
   /**
    * Progresses tasks for the current time.  This will block as it runs
-   * as many scheduled or waiting tasks as possible.
+   * as many scheduled or waiting tasks as possible.  It is CRITICAL that 
+   * only one thread at a time calls the .tick() function.  While this class 
+   * is in general thread safe, if multiple threads call .tick() at the same 
+   * time, it is possible a given task may run more than once.  In order to 
+   * maintain high performance, threadly does not guard against this condition.
    * 
    * Depending on how this class was constructed, this may or may not block 
    * if there are no tasks to run yet.
