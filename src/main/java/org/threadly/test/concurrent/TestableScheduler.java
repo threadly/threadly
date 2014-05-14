@@ -1,6 +1,6 @@
 package org.threadly.test.concurrent;
 
-import org.threadly.concurrent.AbstractTickableScheduler;
+import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.util.Clock;
 
 /**
@@ -18,7 +18,7 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-public class TestableScheduler extends AbstractTickableScheduler {
+public class TestableScheduler extends NoThreadScheduler {
   private long nowInMillis;
   
   /**

@@ -469,4 +469,46 @@ public class NoThreadSchedulerTest {
     
     av.waitForTest();
   }
+  
+  @Test
+  public void hasTaskReadyToRunTest() throws InterruptedException {
+    assertFalse(blockingScheduler.hasTaskReadyToRun());
+    assertFalse(nonblockingScheduler.hasTaskReadyToRun());
+    
+    // schedule in the future
+    blockingScheduler.schedule(new TestRunnable(), 1000 * 15);
+    nonblockingScheduler.schedule(new TestRunnable(), 1000 * 15);
+    
+    // still should have nothing ready to run
+    assertFalse(blockingScheduler.hasTaskReadyToRun());
+    assertFalse(nonblockingScheduler.hasTaskReadyToRun());
+    
+    blockingScheduler.execute(new TestRunnable());
+    nonblockingScheduler.execute(new TestRunnable());
+    
+    // should now have tasks ready to run
+    assertTrue(blockingScheduler.hasTaskReadyToRun());
+    assertTrue(nonblockingScheduler.hasTaskReadyToRun());
+    
+    blockingScheduler.tick();
+    nonblockingScheduler.tick();
+    
+    // should no longer have anything to run
+    assertFalse(blockingScheduler.hasTaskReadyToRun());
+    assertFalse(nonblockingScheduler.hasTaskReadyToRun());
+  }
+  
+  @Test
+  public void clearTasksTest() {
+    blockingScheduler.schedule(new TestRunnable(), 1000 * 15);
+    nonblockingScheduler.schedule(new TestRunnable(), 1000 * 15);
+    blockingScheduler.execute(new TestRunnable());
+    nonblockingScheduler.execute(new TestRunnable());
+    
+    blockingScheduler.clearTasks();
+    nonblockingScheduler.clearTasks();
+    
+    assertEquals(0, blockingScheduler.taskQueue.size());
+    assertEquals(0, nonblockingScheduler.taskQueue.size());
+  }
 }

@@ -50,4 +50,23 @@ public class NoThreadScheduler extends AbstractTickableScheduler {
   public int tick() throws InterruptedException {
     return super.tick();
   }
+  
+  /**
+   * Checks if there are tasks ready to be run on the scheduler.  If this returns 
+   * true, the next .tick() call is guaranteed to run at least one task.
+   * 
+   * @return true if there are task waiting to run.
+   */
+  public boolean hasTaskReadyToRun() {
+    return getNextReadyTask() != null;
+  }
+  
+  /**
+   * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
+   * .tick() is being called.  But will avoid additional tasks from being run on the current 
+   * .tick() call.
+   */
+  public void clearTasks() {
+    taskQueue.clear();
+  }
 }

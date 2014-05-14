@@ -29,8 +29,8 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
-  private final boolean tickBlocksTillAvailable;
-  private final ConcurrentArrayList<TaskContainer> taskQueue;
+  protected final boolean tickBlocksTillAvailable;
+  protected final ConcurrentArrayList<TaskContainer> taskQueue;
   
   /**
    * Constructs a new {@link AbstractTickableScheduler} scheduler.
@@ -43,6 +43,11 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
                                                        QUEUE_REAR_PADDING);
   }
   
+  /**
+   * Abstract call to get the value the scheduler should use to represent the current time.
+   * 
+   * @return current time in milliseconds.
+   */
   protected abstract long nowInMillis();
   
   @Override
@@ -155,12 +160,33 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
     return false;
   }
   
+  /**
+   * Call to get the next task that is ready to be run.  If there are no 
+   * tasks, or the next task still has a remaining delay, this will return 
+   * null.
+   * 
+   * @return next ready task, or null if there are none
+   */
+  protected TaskContainer getNextReadyTask() {
+    TaskContainer nextTask = taskQueue.peekFirst();
+    if (nextTask != null && nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
+      return nextTask;
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Advances the scheduler forward, running anything that is ready to execute.
+   * 
+   * @return number of tasks that were executed
+   * @throws InterruptedException if thread is interrupted while waiting for tasks to run
+   */
   protected int tick() throws InterruptedException {
     int tasks = 0;
     while (true) {  // will break from loop at bottom
       TaskContainer nextTask;
-      while ((nextTask = taskQueue.peekFirst()) != null && 
-             nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
+      while ((nextTask = getNextReadyTask()) != null) {
         tasks++;
         
         // call will remove task from queue, or reposition as necessary
