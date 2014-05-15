@@ -82,7 +82,7 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   }
   
   protected void executeWrapper(LimiterRunnableWrapper lrw) {
-    if (canRunTask()) {  // try to avoid adding to queue if we can
+    if (waitingTasks.isEmpty() && canRunTask()) {
       lrw.submitToExecutor();
     } else {
       addToQueue(lrw);

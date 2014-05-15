@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -22,6 +23,38 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
     return getSubmitterSchedulerFactory();
+  }
+  
+  @Override
+  @Test
+  public void executeInOrderTest() throws InterruptedException, TimeoutException {
+    SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
+    try {
+      SubmitterSchedulerInterface executor = factory.makeSubmitterScheduler(1, false);
+      final AsyncVerifier av = new AsyncVerifier();
+      TestRunnable lastRun = null;
+      long startTime = System.currentTimeMillis();
+      int testQty = 0;
+      while (testQty < TEST_QTY || System.currentTimeMillis() - startTime < 100) {
+        testQty++;
+        final TestRunnable fLastRun = lastRun;
+        lastRun = new TestRunnable() {
+          @Override
+          public void handleRunStart() {
+            if (fLastRun != null) {
+              av.assertTrue(fLastRun.ranOnce());
+            }
+            av.signalComplete();
+          }
+        };
+        executor.schedule(new TestRunnable(), 5);
+        executor.execute(lastRun);
+      }
+      
+      av.waitForTest(10 * 1000, testQty);
+    } finally {
+      factory.shutdown();
+    }
   }
   
   @Test

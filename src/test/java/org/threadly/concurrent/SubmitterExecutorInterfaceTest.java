@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -61,6 +63,37 @@ public abstract class SubmitterExecutorInterfaceTest {
         
         assertEquals(2, tr.getRunCount());
       }
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void executeInOrderTest() throws InterruptedException, TimeoutException {
+    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
+    try {
+      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
+      final AsyncVerifier av = new AsyncVerifier();
+      TestRunnable lastRun = null;
+      long startTime = System.currentTimeMillis();
+      int testQty = 0;
+      while (testQty < TEST_QTY || System.currentTimeMillis() - startTime < 100) {
+        testQty++;
+        final TestRunnable fLastRun = lastRun;
+        lastRun = new TestRunnable() {
+          @Override
+          public void handleRunStart() {
+            if (fLastRun != null) {
+              av.assertTrue(fLastRun.ranOnce());
+            }
+            av.signalComplete();
+          }
+        };
+        
+        executor.execute(lastRun);
+      }
+      
+      av.waitForTest(10 * 1000, testQty);
     } finally {
       factory.shutdown();
     }
