@@ -459,9 +459,7 @@ public class Profiler {
       }
       out.println(count + " time(s):");
       
-      for (int j = 0; j < t.elements.length; j++) {
-        out.println("  at " + t.elements[j].toString());
-      }
+      out.println(ExceptionUtils.stackToString(t.elements));
       
       out.println();
     }

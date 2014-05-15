@@ -160,7 +160,7 @@ public class ExceptionUtilsTest {
   
   @Test
   public void stackToStringNullTest() {
-    String result = ExceptionUtils.stackToString(null);
+    String result = ExceptionUtils.stackToString((Throwable)null);
     
     assertNotNull(result);
     
@@ -184,9 +184,14 @@ public class ExceptionUtilsTest {
   @Test
   public void writeStackToBuilderNullTest() {
     StringBuilder sb = new StringBuilder();
-    ExceptionUtils.writeStackTo(null, sb);
+    ExceptionUtils.writeStackTo((Throwable)null, sb);
     
     assertEquals(0, sb.length());
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void writeStackToBuilderFail() {
+    ExceptionUtils.writeStackTo(new Exception(), (StringBuilder)null);
   }
   
   @Test
@@ -209,5 +214,54 @@ public class ExceptionUtilsTest {
     ExceptionUtils.writeStackTo(null, sb);
     
     assertEquals(0, sb.length());
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void writeStackToBufferFail() {
+    ExceptionUtils.writeStackTo(new Exception(), (StringBuffer)null);
+  }
+  
+  @Test
+  public void stackToStringArrayTest() {
+    Exception testException = new Exception();
+    String result = ExceptionUtils.stackToString(testException.getStackTrace());
+    assertNotNull(result);
+    
+    StringTokenizer st = new StringTokenizer(result, "\n");
+    assertEquals(testException.getStackTrace().length, st.countTokens());
+  }
+  
+  @Test
+  public void stackToStringArrayNullStackTest() {
+    String result = ExceptionUtils.stackToString((StackTraceElement[])null);
+    
+    assertNotNull(result);
+    
+    assertEquals(0, result.length());
+  }
+  
+  @Test
+  public void writeArrayStackToBuilderTest() {
+    Exception testException = new Exception();
+    StringBuilder sb = new StringBuilder();
+    ExceptionUtils.writeStackTo(testException.getStackTrace(), sb);
+    String result = sb.toString();
+    assertNotNull(result);
+    
+    StringTokenizer st = new StringTokenizer(result, "\n");
+    assertEquals(testException.getStackTrace().length, st.countTokens());
+  }
+  
+  @Test
+  public void writeArrayStackToBuilderNullTest() {
+    StringBuilder sb = new StringBuilder();
+    ExceptionUtils.writeStackTo((StackTraceElement[])null, sb);
+    
+    assertEquals(0, sb.length());
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void writeArrayStackFail() {
+    ExceptionUtils.writeStackTo(new Exception().getStackTrace(), null);
   }
 }

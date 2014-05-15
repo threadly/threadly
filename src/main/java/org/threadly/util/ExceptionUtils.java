@@ -146,6 +146,45 @@ public class ExceptionUtils {
   }
   
   /**
+   * Writes the stack trace array out to a string.  This produces a stack trace string in 
+   * a very similar way as the stackToString from a throwable would.
+   * 
+   * @param stack Array of stack elements to build the string off of
+   * @return String which is the stack in a human readable format
+   */
+  public static String stackToString(StackTraceElement[] stack) {
+    StringBuilder sb = new StringBuilder();
+    writeStackTo(stack, sb);
+    
+    return sb.toString();
+  }
+  
+  /**
+   * Writes the stack to the provided StringBuilder.  This produces a stack trace string in 
+   * a very similar way as the writeStackTo from a throwable would.
+   * 
+   * @param stack Array of stack elements to build the string off of
+   * @param sb StringBuilder to write the stack out to
+   */
+  public static void writeStackTo(StackTraceElement[] stack, StringBuilder sb) {
+    if (stack == null) {
+      return;
+    } if (sb == null) {
+      throw new IllegalArgumentException("Must provide string builder to write to");
+    }
+    
+    for (StackTraceElement ste : stack) {
+      sb.append("\t at ").append(ste.getClassName()).append('.').append(ste.getMethodName());
+      if (ste.isNativeMethod()) {
+        sb.append("(Native Method)");
+      } else {
+        sb.append('(').append(ste.getFileName()).append(':').append(ste.getLineNumber()).append(')');
+      }
+      sb.append("\n");
+    }
+  }
+  
+  /**
    * Exception which is constructed from makeRuntime when the exception 
    * was not a runtime exception.
    * 
