@@ -174,7 +174,7 @@ public class ExceptionUtils {
     }
     
     for (StackTraceElement ste : stack) {
-      sb.append("\t at ").append(ste.toString()).append("\n");
+      sb.append("\t at ").append(ste.toString()).append('\n');
     }
   }
   

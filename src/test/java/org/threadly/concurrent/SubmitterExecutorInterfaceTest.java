@@ -77,7 +77,7 @@ public abstract class SubmitterExecutorInterfaceTest {
       TestRunnable lastRun = null;
       long startTime = System.currentTimeMillis();
       int testQty = 0;
-      while (testQty < TEST_QTY || System.currentTimeMillis() - startTime < 100) {
+      while (testQty < TEST_QTY || System.currentTimeMillis() - startTime < 10) {
         testQty++;
         final TestRunnable fLastRun = lastRun;
         lastRun = new TestRunnable() {

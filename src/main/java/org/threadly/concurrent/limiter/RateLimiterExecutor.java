@@ -1,8 +1,5 @@
 package org.threadly.concurrent.limiter;
 
-import java.util.Iterator;
-import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
@@ -34,7 +31,8 @@ import org.threadly.util.Clock;
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
   protected final int permitsPerSecond;
-  private final SortedMap<Long, Integer> givenPermits;
+  private final Object permitLock;
+  private long lastScheduleTime;
   
   /**
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the 
@@ -54,7 +52,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     
     this.scheduler = scheduler;
     this.permitsPerSecond = permitsPerSecond;
-    this.givenPermits = new TreeMap<Long, Integer>();
+    this.permitLock = new Object();
+    this.lastScheduleTime = Clock.lastKnownTimeMillis();
   }
   
   /**
@@ -66,16 +65,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @return minimum delay in milliseconds for the next task to be provided
    */
   public int getMinimumDelay() {
-    synchronized (givenPermits) {
-      // thought not technically necessary, now might be a good time to do some house keeping
-      removeOldPermits();
-      
-      if (givenPermits.isEmpty()) {
-        return 0;
-      } else {
-        long lastScheduledTime = givenPermits.lastKey();
-        return (int)Math.max(0, lastScheduledTime - Clock.lastKnownTimeMillis());
-      }
+    synchronized (permitLock) {
+      return (int)Math.max(0, lastScheduleTime - Clock.lastKnownTimeMillis());
     }
   }
   
@@ -194,39 +185,16 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   }
   
   protected void doExecute(int permits, Runnable task) {
-    synchronized (givenPermits) {
-      removeOldPermits();
-      
-      double totalWaitingPermits = 0;
-      Iterator<Integer> it = givenPermits.values().iterator();
-      while (it.hasNext()) {
-        totalWaitingPermits += it.next();
+    synchronized (permitLock) {
+      int effectiveDelay = (int)(((double)permits / permitsPerSecond) * 1000);
+      long scheduleDelay = lastScheduleTime - Clock.accurateTime();
+      if (scheduleDelay < 0) {
+        scheduleDelay = 0;
       }
       
-      int scheduleDelay = (int)((totalWaitingPermits / permitsPerSecond) * 1000);
-      /* we must add to givenPermits an effective delay otherwise we will remove 
-       * this item on the next check (since it will be in the past).  So effectively 
-       * we are saving the time in the givenPermits to be the time at which the permits 
-       * count will be released.
-       */
-      int effectiveDelay = scheduleDelay + (int)(((totalWaitingPermits + permits) / permitsPerSecond) * 1000);
-      givenPermits.put(Clock.lastKnownTimeMillis() + effectiveDelay, permits);
       scheduler.schedule(task, scheduleDelay);
-    }
-  }
-  
-  /**
-   * Removes permits that were given and no longer are relevant.  You should 
-   * be synchronized on givenPermits before calling!
-   */
-  protected void removeOldPermits() {
-    Iterator<Long> it = givenPermits.keySet().iterator();
-    while (it.hasNext()) {
-      if (it.next() <= Clock.lastKnownTimeMillis()) {
-        it.remove();
-      } else {
-        break;
-      }
+      
+      lastScheduleTime = Clock.lastKnownTimeMillis() + effectiveDelay + scheduleDelay;
     }
   }
 }

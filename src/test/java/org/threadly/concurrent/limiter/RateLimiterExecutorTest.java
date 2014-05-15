@@ -8,12 +8,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.StrictPriorityScheduledExecutor;
@@ -47,14 +45,6 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     return new RateLimiterFactory();
   }
   
-  @Override
-  @Ignore
-  @Test
-  public void executeInOrderTest() throws InterruptedException, TimeoutException {
-    // TODO - does this test make sense for a rate limiter?
-    super.executeInOrderTest();
-  }
-  
   @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
@@ -78,11 +68,11 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     
     limiter.execute(10, new TestRunnable());
     int delay = limiter.getMinimumDelay();
-    assertEquals(delay, 10000, 1000);
+    assertEquals(10000, delay, 1000);
     
     limiter.execute(10, new TestRunnable());
     delay = limiter.getMinimumDelay();
-    assertEquals(delay, 30000, 1000);
+    assertEquals(20000, delay, 1000);
   }
   
   @Test
