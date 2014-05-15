@@ -169,7 +169,7 @@ public class ExceptionUtils {
   public static void writeStackTo(StackTraceElement[] stack, StringBuilder sb) {
     if (stack == null) {
       return;
-    } if (sb == null) {
+    } else if (sb == null) {
       throw new IllegalArgumentException("Must provide string builder to write to");
     }
     
