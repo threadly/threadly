@@ -3,15 +3,15 @@ package org.threadly.concurrent;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.threadly.concurrent.PriorityScheduledExecutor.OneTimeTaskWrapper;
-import org.threadly.concurrent.PriorityScheduledExecutor.RecurringTaskWrapper;
+import org.threadly.concurrent.PriorityScheduler.OneTimeTaskWrapper;
+import org.threadly.concurrent.PriorityScheduler.RecurringTaskWrapper;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.concurrent.future.ScheduledFutureDelegate;
 
 /**
- * <p>This is a wrapper for {@link PriorityScheduledExecutor} to be a drop in replacement for any 
+ * <p>This is a wrapper for {@link PriorityScheduler} to be a drop in replacement for any 
  * {@link java.util.concurrent.ScheduledExecutorService} (aka the 
  * {@link java.util.concurrent.ScheduledThreadPoolExecutor} 
  * interface). It does make some performance sacrifices to adhere to this interface, but those
@@ -21,8 +21,8 @@ import org.threadly.concurrent.future.ScheduledFutureDelegate;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public class PriorityScheduledExecutorServiceWrapper extends AbstractExecutorServiceWrapper {
-  private final PriorityScheduledExecutor scheduler;
+public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrapper {
+  private final PriorityScheduler scheduler;
   
   /**
    * Constructs a new wrapper to adhere to the 
@@ -30,7 +30,7 @@ public class PriorityScheduledExecutorServiceWrapper extends AbstractExecutorSer
    * 
    * @param scheduler scheduler implementation to rely on
    */
-  public PriorityScheduledExecutorServiceWrapper(PriorityScheduledExecutor scheduler) {
+  public PrioritySchedulerServiceWrapper(PriorityScheduler scheduler) {
     super(scheduler);
     
     this.scheduler = scheduler;

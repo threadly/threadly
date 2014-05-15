@@ -11,8 +11,8 @@ import org.threadly.util.ExceptionUtils;
 
 /**
  * <p>A simple and light weight implementation of the {@link SubmitterSchedulerInterface}.  
- * This is designed to be a lighter weight option to the {@link PriorityScheduledExecutor}, 
- * for when multiple threads are either not needed, or not desired.<p>
+ * This is designed to be a lighter weight option to the {@link PriorityScheduler}, for 
+ * when multiple threads are either not needed, or not desired.<p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0

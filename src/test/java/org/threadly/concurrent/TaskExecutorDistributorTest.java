@@ -33,15 +33,15 @@ public class TaskExecutorDistributorTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
-  private static PriorityScheduledExecutor scheduler;
+  private static PriorityScheduler scheduler;
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduledExecutor(PARALLEL_LEVEL + 1, 
+    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL + 1, 
                                                     PARALLEL_LEVEL * 2, 
                                                     1000 * 10, 
                                                     TaskPriority.High, 
-                                                    PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+                                                    PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
@@ -387,9 +387,9 @@ public class TaskExecutorDistributorTest {
   
   @Test
   public void limitExecutionPerCycleStressTest() {
-    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(3, 3, 1000 * 10, 
-                                                                              TaskPriority.High, 
-                                                                              PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    PriorityScheduler scheduler = new StrictPriorityScheduler(3, 3, 1000 * 10, 
+                                                                      TaskPriority.High, 
+                                                                      PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     final AtomicBoolean testComplete = new AtomicBoolean(false);
     try {
       final Integer key1 = 1;

@@ -5,11 +5,11 @@ import static org.junit.Assert.*;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduledExecutor.TaskWrapper;
+import org.threadly.concurrent.PriorityScheduler.TaskWrapper;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class PriorityScheduledExecutorTaskWrapperTest {
+public class PrioritySchedulerTaskWrapperTest {
   @Test
   public void cancelTest() {
     TestWrapper tw = new TestWrapper();

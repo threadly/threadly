@@ -247,8 +247,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * 
    * Although I have implemented this as close to the javaspec as possible, this is a bit of a 
    * hack.  For the longest time this just threw an UnsupportedOperationException, I did not want 
-   * to implement it because the {@link PriorityScheduledExecutor} is just not designed to handle 
-   * this.
+   * to implement it because the {@link PriorityScheduler} is just not designed to handle this.
    * 
    * The largest problem with the Threadly implementation of this is that the rate may not be 
    * as precise as it was in the java implementation.  In addition it is less efficient and wont 

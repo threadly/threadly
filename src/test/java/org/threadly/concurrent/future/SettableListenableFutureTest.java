@@ -10,8 +10,8 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduledExecutor;
-import org.threadly.concurrent.StrictPriorityScheduledExecutor;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -153,7 +153,7 @@ public class SettableListenableFutureTest {
   public void getResultTest() throws InterruptedException, ExecutionException {
     final String testResult = "getResultTest";
     
-    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(1, 1, 100);
+    PriorityScheduler scheduler = new StrictPriorityScheduler(1, 1, 100);
     try {
       scheduler.schedule(new Runnable() {
         @Override
@@ -174,7 +174,7 @@ public class SettableListenableFutureTest {
                                                 TimeoutException {
     final String testResult = "getWithTimeoutResultTest";
     
-    PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(1, 1, 100);
+    PriorityScheduler scheduler = new StrictPriorityScheduler(1, 1, 100);
     try {
       scheduler.prestartAllCoreThreads();
       scheduler.schedule(new Runnable() {

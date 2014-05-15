@@ -13,11 +13,11 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerWrapperTest {
-  private static PriorityScheduledExecutor scheduler;
+  private static PriorityScheduler scheduler;
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduledExecutor(1, 2, 1000);
+    scheduler = new StrictPriorityScheduler(1, 2, 1000);
   }
   
   @AfterClass
