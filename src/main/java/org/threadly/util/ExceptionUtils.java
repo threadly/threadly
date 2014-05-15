@@ -174,13 +174,7 @@ public class ExceptionUtils {
     }
     
     for (StackTraceElement ste : stack) {
-      sb.append("\t at ").append(ste.getClassName()).append('.').append(ste.getMethodName());
-      if (ste.isNativeMethod()) {
-        sb.append("(Native Method)");
-      } else {
-        sb.append('(').append(ste.getFileName()).append(':').append(ste.getLineNumber()).append(')');
-      }
-      sb.append("\n");
+      sb.append("\t at ").append(ste.toString()).append("\n");
     }
   }
   

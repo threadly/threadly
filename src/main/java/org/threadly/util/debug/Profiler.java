@@ -460,8 +460,6 @@ public class Profiler {
       out.println(count + " time(s):");
       
       out.println(ExceptionUtils.stackToString(t.elements));
-      
-      out.println();
     }
   }
   
