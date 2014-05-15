@@ -377,7 +377,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     }
     
     synchronized (poolSizeChangeLock) {
-      boolean poolSizeIncrease = maxPoolSize < this.maxPoolSize;
+      boolean poolSizeIncrease = maxPoolSize > this.maxPoolSize;
       
       if (maxPoolSize < corePoolSize) {
         this.corePoolSize = maxPoolSize;
@@ -390,7 +390,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         synchronized (workersLock) {
           if (waitingForWorkerCount > 0) {
             while (availableWorkers.size() < waitingForWorkerCount && 
-                   currentPoolSize < this.maxPoolSize) {
+                   currentPoolSize <= this.maxPoolSize) {
               availableWorkers.add(makeNewWorker());
             }
             
@@ -488,7 +488,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   public void prestartAllCoreThreads() {
     synchronized (workersLock) {
       boolean startedThreads = false;
-      while (currentPoolSize < corePoolSize) {
+      while (currentPoolSize <= corePoolSize) {
         availableWorkers.addFirst(makeNewWorker());
         startedThreads = true;
       }
@@ -895,15 +895,24 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * @throws InterruptedException Thrown if thread is interrupted while waiting for worker
    */
   protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
-    long startTime = Clock.accurateTime();
+    long startTime = -1;
     waitingForWorkerCount++;
     try {
       long waitTime = maxWaitTimeInMs;
       while (availableWorkers.isEmpty() && waitTime > 0) {
+        long now;
+        if (startTime < 0) {
+          // only set the start time at the first run
+          startTime = Clock.accurateTime();
+          now = startTime;
+        } else {
+          now = Clock.accurateTime();
+        }
+        
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
           workersLock.wait();
         } else {
-          long elapsedTime = Clock.accurateTime() - startTime;
+          long elapsedTime = now - startTime;
           waitTime = maxWaitTimeInMs - elapsedTime;
           if (waitTime > 0) {
             workersLock.wait(waitTime);
