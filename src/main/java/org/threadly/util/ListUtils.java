@@ -46,31 +46,7 @@ public class ListUtils {
    */
   public static int getInsertionEndIndex(List<? extends Delayed> list, 
                                          Delayed key, boolean randomAccessList) {
-    long lastKeyDelay = key.getDelay(TimeUnit.MILLISECONDS);
-    int searchResult = binarySearch(list, lastKeyDelay, 
-                                    randomAccessList);
-    if (searchResult >= 0) {
-      Iterator<? extends Delayed> it = list.listIterator(searchResult);
-      while (it.hasNext()) {
-        Delayed d = it.next();
-        long itemDelay = d.getDelay(TimeUnit.MILLISECONDS);
-        if (itemDelay == lastKeyDelay) {
-          searchResult++;
-        } else if (itemDelay < lastKeyDelay && 
-                   itemDelay <= (lastKeyDelay = key.getDelay(TimeUnit.MILLISECONDS))) {
-          /* we have gone backwards in time, so we will update 
-           * our expected delay and keep doing our linear search
-           */
-          searchResult++;
-        } else {
-          // we should be inserted ahead of this item, so break the loop
-          break;
-        }
-      }
-      return searchResult;
-    } else {
-      return Math.abs(searchResult) - 1;
-    }
+    return getInsertionEndIndex(list, key.getDelay(TimeUnit.MILLISECONDS), randomAccessList);
   }
   
   /**
