@@ -31,7 +31,7 @@ public class TestableScheduler extends NoThreadScheduler {
   }
 
   @Override
-  protected long nowInMillis() {
+  protected long nowInMillis(boolean estimateOkay) {
     return nowInMillis;
   }
   

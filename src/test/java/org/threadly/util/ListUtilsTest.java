@@ -14,9 +14,47 @@ import org.threadly.concurrent.TestDelayed;
 public class ListUtilsTest {
   private static final int BINARY_SEARCH_RANDOM_SIZE = TEST_QTY * 10;
   private static final int INCREMENTAL_SEARCH_COUNT = TEST_QTY * 10;
+
+  @Test
+  public void getInsertionEndIndexStaticValueTest() {
+    List<TestDelayed> list = new ArrayList<TestDelayed>(10);
+
+    int zero = 0;
+    int one = 1;
+    int ten = 10;
+    assertEquals(0, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(0, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(0, ListUtils.getInsertionEndIndex(list, ten));
+    
+    list.add(list.size(), new TestDelayed(zero));
+    assertEquals(1, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(1, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(1, ListUtils.getInsertionEndIndex(list, ten));
+    
+    list.add(list.size(), new TestDelayed(zero));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, ten));
+    
+    list.add(list.size(), new TestDelayed(ten));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(3, ListUtils.getInsertionEndIndex(list, ten));
+    
+    list.add(list.size(), new TestDelayed(ten));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(4, ListUtils.getInsertionEndIndex(list, ten));
+    
+    // do one insert in the middle
+    list.add(2, new TestDelayed(one));
+    assertEquals(2, ListUtils.getInsertionEndIndex(list, zero));
+    assertEquals(3, ListUtils.getInsertionEndIndex(list, one));
+    assertEquals(5, ListUtils.getInsertionEndIndex(list, ten));
+  }
   
   @Test
-  public void getInsertionEndIndexTest() {
+  public void getInsertionEndIndexDelayedTest() {
     List<TestDelayed> list = new ArrayList<TestDelayed>(10);
 
     TestDelayed zero = new TestDelayed(0);

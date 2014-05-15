@@ -99,7 +99,8 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     }
     
     synchronized (queueLock) {
-      int insertionIndex = ListUtils.getInsertionEndIndex(queue, e, randomAccessQueue);
+      int insertionIndex = ListUtils.getInsertionEndIndex(queue, e.getDelay(TimeUnit.MILLISECONDS), 
+                                                          randomAccessQueue);
       
       queue.add(insertionIndex, e);
       

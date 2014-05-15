@@ -46,7 +46,31 @@ public class ListUtils {
    */
   public static int getInsertionEndIndex(List<? extends Delayed> list, 
                                          Delayed key, boolean randomAccessList) {
-    return getInsertionEndIndex(list, key.getDelay(TimeUnit.MILLISECONDS), randomAccessList);
+    long lastKeyDelay = key.getDelay(TimeUnit.MILLISECONDS);
+    int searchResult = binarySearch(list, lastKeyDelay, 
+                                    randomAccessList);
+    if (searchResult >= 0) {
+      Iterator<? extends Delayed> it = list.listIterator(searchResult);
+      while (it.hasNext()) {
+        Delayed d = it.next();
+        long itemDelay = d.getDelay(TimeUnit.MILLISECONDS);
+        if (itemDelay == lastKeyDelay) {
+          searchResult++;
+        } else if (itemDelay < lastKeyDelay && 
+                   itemDelay <= (lastKeyDelay = key.getDelay(TimeUnit.MILLISECONDS))) {
+          /* we have gone backwards in time, so we will update 
+           * our expected delay and keep doing our linear search
+           */
+          searchResult++;
+        } else {
+          // we should be inserted ahead of this item, so break the loop
+          break;
+        }
+      }
+      return searchResult;
+    } else {
+      return Math.abs(searchResult) - 1;
+    }
   }
   
   /**
@@ -54,6 +78,27 @@ public class ListUtils {
    * such that it determines the placement index for a given item.  It is 
    * designed to always place the item after any existing items that match the 
    * key's delay.
+   * 
+   * This may place the item too far back in the queue if the queue's items 
+   * delay time continues to progress while searching for the insertion index.
+   * 
+   * @param list List to search entries for placement
+   * @param insertionValueInMillis delay time in milliseconds to search for insertion point
+   * @return the index to insert the key into the list
+   */
+  public static int getInsertionEndIndex(List<? extends Delayed> list, 
+                                         long insertionValueInMillis) {
+    return getInsertionEndIndex(list, insertionValueInMillis, list instanceof RandomAccess);
+  }
+  
+  /**
+   * This function uses the binary search and adds a small amount of logic
+   * such that it determines the placement index for a given item.  It is 
+   * designed to always place the item after any existing items that match the 
+   * key's delay.
+   * 
+   * This may place the item too far back in the queue if the queue's items 
+   * delay time continues to progress while searching for the insertion index.
    * 
    * @param list List to search entries for placement
    * @param insertionValueInMillis delay time in milliseconds to search for insertion point

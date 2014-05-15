@@ -28,8 +28,12 @@ public class NoThreadScheduler extends AbstractTickableScheduler {
   }
 
   @Override
-  protected long nowInMillis() {
-    return Clock.accurateTime();
+  protected long nowInMillis(boolean estimateOkay) {
+    if (estimateOkay) {
+      return Clock.lastKnownTimeMillis();
+    } else {
+      return Clock.accurateTime();
+    }
   }
   
   /**

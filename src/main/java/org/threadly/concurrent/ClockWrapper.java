@@ -33,11 +33,9 @@ class ClockWrapper {
    * clock is updated first.
    */
   protected static void stopForcingUpdate() {
-    if (REQUESTS_TO_STOP_UPDATING_TIME.get() == 0) {
+    if (REQUESTS_TO_STOP_UPDATING_TIME.getAndIncrement() == 0) {
       lastKnownTime = Clock.accurateTime();
     }
-    
-    REQUESTS_TO_STOP_UPDATING_TIME.incrementAndGet();
   }
   
   /**

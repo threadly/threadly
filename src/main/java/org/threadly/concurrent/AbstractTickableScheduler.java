@@ -1,13 +1,11 @@
 package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
-import org.threadly.util.Clock;
 import org.threadly.util.ListUtils;
 
 /**
@@ -46,9 +44,10 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
   /**
    * Abstract call to get the value the scheduler should use to represent the current time.
    * 
-   * @return current time in milliseconds.
+   * @param estimateOkay true if it is okay to just estimate the time
+   * @return current time in milliseconds
    */
-  protected abstract long nowInMillis();
+  protected abstract long nowInMillis(boolean estimateOkay);
   
   @Override
   public void execute(Runnable task) {
@@ -220,28 +219,12 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract class TaskContainer implements Delayed, RunnableContainerInterface {
+  protected abstract class TaskContainer extends AbstractDelayed 
+                                         implements RunnableContainerInterface {
     protected final Runnable runnable;
     
     protected TaskContainer(Runnable runnable) {
       this.runnable = runnable;
-    }
-    
-    @Override
-    public int compareTo(Delayed o) {
-      if (this == o) {
-        return 0;
-      } else {
-        long thisDelay = this.getDelay(TimeUnit.MILLISECONDS);
-        long otherDelay = o.getDelay(TimeUnit.MILLISECONDS);
-        if (thisDelay == otherDelay) {
-          return 0;
-        } else if (thisDelay > otherDelay) {
-          return 1;
-        } else {
-          return -1;
-        }
-      }
     }
 
     @Override
@@ -271,7 +254,7 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
     public OneTimeTask(Runnable runnable, long delay) {
       super(runnable);
       
-      this.runTime = nowInMillis() + delay;
+      this.runTime = nowInMillis(false) + delay;
     }
     
     @Override
@@ -284,7 +267,7 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
 
     @Override
     public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(runTime - nowInMillis(), 
+      return timeUnit.convert(runTime - nowInMillis(true), 
                               TimeUnit.MILLISECONDS);
     }
   }
@@ -303,27 +286,36 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
       super(runnable);
       
       this.recurringDelay = recurringDelay;
-      nextRunTime = Clock.accurateTime() + initialDelay;
+      nextRunTime = nowInMillis(false) + initialDelay;
     }
     
     @Override
     public void prepareForRun() {
       synchronized (taskQueue.getModificationLock()) {
         // reposition to next index in queue before run starts
-        int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, recurringDelay, 
+        final long startSearchTime = nowInMillis(false);
+        // we create a new delayed item to represent where it will be inserted
+        AbstractDelayed newInsertionDelayed = new AbstractDelayed() {
+          @Override
+          public long getDelay(TimeUnit unit) {
+            return unit.convert(startSearchTime + recurringDelay - nowInMillis(true), 
+                                TimeUnit.MILLISECONDS);
+          }
+        };
+        int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, newInsertionDelayed, 
                                                             true);
         
         /* provide the option to search backwards since the item 
          * will most likely be towards the back of the queue */
         taskQueue.reposition(this, insertionIndex, false);
+        
+        nextRunTime = startSearchTime + recurringDelay;
       }
-      
-      nextRunTime = nowInMillis() + recurringDelay;
     }
 
     @Override
     public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(nextRunTime - nowInMillis(), 
+      return timeUnit.convert(nextRunTime - nowInMillis(true), 
                               TimeUnit.MILLISECONDS);
     }
   }

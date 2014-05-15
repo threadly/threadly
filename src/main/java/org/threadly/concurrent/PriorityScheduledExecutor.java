@@ -6,7 +6,6 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
@@ -1196,7 +1195,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class TaskWrapper implements Delayed, Runnable {
+  protected abstract static class TaskWrapper extends AbstractDelayed 
+                                              implements Runnable {
     public final TaskPriority priority;
     protected final Runnable task;
     protected volatile boolean canceled;
@@ -1219,23 +1219,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     public abstract void executing();
     
     protected abstract long getDelayEstimateInMillis();
-
-    @Override
-    public int compareTo(Delayed o) {
-      if (this == o) {
-        return 0;
-      } else {
-        long thisDelay = this.getDelay(TimeUnit.MILLISECONDS);
-        long otherDelay = o.getDelay(TimeUnit.MILLISECONDS);
-        if (thisDelay == otherDelay) {
-          return 0;
-        } else if (thisDelay > otherDelay) {
-          return 1;
-        } else {
-          return -1;
-        }
-      }
-    }
     
     @Override
     public String toString() {
