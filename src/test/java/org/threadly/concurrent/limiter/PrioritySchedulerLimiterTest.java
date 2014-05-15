@@ -9,11 +9,11 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.PrioritySchedulerWrapper;
 import org.threadly.concurrent.SchedulerServiceInterface;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest.SchedulerServiceFactory;
-import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.TaskPriority;
@@ -52,10 +52,10 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
   
   @Test
   public void getDefaultPriorityTest() {
-    PriorityScheduler executor = new StrictPriorityScheduler(1, 1, 10, TaskPriority.Low, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 10, TaskPriority.Low, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
     
-    executor = new StrictPriorityScheduler(1, 1, 10, TaskPriority.High, 100);
+    executor = new StrictPriorityScheduledExecutor(1, 1, 10, TaskPriority.High, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
   }
   
@@ -90,13 +90,13 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
   }
 
   protected static class PrioritySchedulerLimiterFactory implements SchedulerServiceFactory {
-    private final List<PriorityScheduler> executors;
+    private final List<PriorityScheduledExecutor> executors;
     private final boolean addPriorityToCalls;
     private final boolean addSubPoolName;
     
     public PrioritySchedulerLimiterFactory(boolean addPriorityToCalls, 
                                            boolean addSubPoolName) {
-      executors = new LinkedList<PriorityScheduler>();
+      executors = new LinkedList<PriorityScheduledExecutor>();
       this.addPriorityToCalls = addPriorityToCalls;
       this.addSubPoolName = addSubPoolName;
     }
@@ -115,8 +115,8 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }
@@ -139,7 +139,7 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();

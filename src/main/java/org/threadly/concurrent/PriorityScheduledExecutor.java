@@ -53,9 +53,9 @@ import org.threadly.util.ExceptionUtils;
  * maxWaitForLowPriorityInMs either in the constructor, or at runtime.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.0.0 (existed since 1.0.0 as PriorityScheduledExecutor)
+ * @since 1.0.0
  */
-public class PriorityScheduler implements PrioritySchedulerInterface {
+public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
@@ -65,7 +65,7 @@ public class PriorityScheduler implements PrioritySchedulerInterface {
   protected static final String QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY;
   
   static {
-    String threadNameSuffix = "task consumer for " + PriorityScheduler.class.getSimpleName();
+    String threadNameSuffix = "task consumer for " + PriorityScheduledExecutor.class.getSimpleName();
     QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY = "high priority " + threadNameSuffix;
     QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY = "low priority " + threadNameSuffix;
   }
@@ -103,7 +103,7 @@ public class PriorityScheduler implements PrioritySchedulerInterface {
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
    */
-  public PriorityScheduler(int corePoolSize, int maxPoolSize,
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
          DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
@@ -121,7 +121,7 @@ public class PriorityScheduler implements PrioritySchedulerInterface {
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
    * @param useDaemonThreads boolean for if newly created threads should be daemon
    */
-  public PriorityScheduler(int corePoolSize, int maxPoolSize,
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs, boolean useDaemonThreads) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
          DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
@@ -143,7 +143,7 @@ public class PriorityScheduler implements PrioritySchedulerInterface {
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    */
-  public PriorityScheduler(int corePoolSize, int maxPoolSize,
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                    long maxWaitForLowPriorityInMs) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
@@ -167,7 +167,7 @@ public class PriorityScheduler implements PrioritySchedulerInterface {
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    * @param useDaemonThreads boolean for if newly created threads should be daemon
    */
-  public PriorityScheduler(int corePoolSize, int maxPoolSize,
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                    long maxWaitForLowPriorityInMs, 
                                    final boolean useDaemonThreads) {
@@ -204,7 +204,7 @@ public class PriorityScheduler implements PrioritySchedulerInterface {
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    * @param threadFactory thread factory for producing new threads within executor
    */
-  public PriorityScheduler(int corePoolSize, int maxPoolSize,
+  public PriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
                                    long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                    long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     if (corePoolSize < 1) {

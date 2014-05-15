@@ -7,8 +7,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
@@ -44,17 +44,17 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
   }
 
   protected static class SchedulerLimiterFactory implements SubmitterSchedulerFactory {
-    private final List<PriorityScheduler> executors;
+    private final List<PriorityScheduledExecutor> executors;
     private final boolean addSubPoolName;
     
     public SchedulerLimiterFactory(boolean addSubPoolName) {
-      executors = new LinkedList<PriorityScheduler>();
+      executors = new LinkedList<PriorityScheduledExecutor>();
       this.addSubPoolName = addSubPoolName;
     }
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();
@@ -70,8 +70,8 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize,
                                                               boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }

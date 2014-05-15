@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.TestCallable;
@@ -94,7 +94,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   public void limitTest() throws InterruptedException, ExecutionException {
     int rateLimit = 100;
     final AtomicInteger ranPermits = new AtomicInteger();
-    PriorityScheduler pse = new PriorityScheduler(32, 32, 1000);
+    PriorityScheduledExecutor pse = new PriorityScheduledExecutor(32, 32, 1000);
     try {
       RateLimiterExecutor rls = new RateLimiterExecutor(pse, rateLimit);
       ListenableFuture<?> lastFuture = null;
@@ -181,13 +181,13 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   
   private static class RateLimiterFactory implements SubmitterExecutorFactory {
     private final int rateLimit = TEST_PROFILE == TestLoad.Stress ? 50 : 1000; 
-    private final List<PriorityScheduler> executors = new LinkedList<PriorityScheduler>();
+    private final List<PriorityScheduledExecutor> executors = new LinkedList<PriorityScheduledExecutor>();
 
     @Override
     public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
                                                             boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }
@@ -198,7 +198,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
 
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();

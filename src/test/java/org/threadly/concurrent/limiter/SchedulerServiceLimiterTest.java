@@ -8,10 +8,10 @@ import java.util.List;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
-import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.PriorityScheduledExecutor;
 import org.threadly.concurrent.SchedulerServiceInterface;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest.SchedulerServiceFactory;
-import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.TestCallable;
@@ -91,7 +91,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
   
   @Test
   public void isShutdownTest() {
-    PriorityScheduler executor = new StrictPriorityScheduler(1, 1, 100);
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
     try {
       SchedulerServiceLimiter limiter = new SchedulerServiceLimiter(executor, 1);
       
@@ -104,7 +104,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
   }
   
   protected static class SchedulerLimiterFactory implements SchedulerServiceFactory {
-    private final List<PriorityScheduler> executors;
+    private final List<PriorityScheduledExecutor> executors;
     private final int minLimiterAmount;
     private final boolean addSubPoolName;
     
@@ -113,14 +113,14 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
     }
     
     private SchedulerLimiterFactory(int minLimiterAmount, boolean addSubPoolName) {
-      executors = new LinkedList<PriorityScheduler>();
+      executors = new LinkedList<PriorityScheduledExecutor>();
       this.minLimiterAmount = minLimiterAmount;
       this.addSubPoolName = addSubPoolName;
     }
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();
@@ -141,8 +141,8 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }

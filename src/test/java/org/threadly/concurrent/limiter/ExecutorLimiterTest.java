@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -29,11 +29,11 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   protected static final int PARALLEL_COUNT = TEST_QTY / 2;
   protected static final int THREAD_COUNT = PARALLEL_COUNT * 2;
   
-  protected static PriorityScheduler scheduler;
+  protected static PriorityScheduledExecutor scheduler;
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(PARALLEL_COUNT, THREAD_COUNT, 1000);
+    scheduler = new StrictPriorityScheduledExecutor(PARALLEL_COUNT, THREAD_COUNT, 1000);
     
     SubmitterExecutorInterfaceTest.setupClass();
   }
@@ -192,18 +192,18 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   }
 
   protected static class ExecutorLimiterFactory implements SubmitterExecutorFactory {
-    private final List<PriorityScheduler> executors;
+    private final List<PriorityScheduledExecutor> executors;
     private final boolean addSubPoolName;
     
     protected ExecutorLimiterFactory(boolean addSubPoolName) {
-      executors = new LinkedList<PriorityScheduler>();
+      executors = new LinkedList<PriorityScheduledExecutor>();
       this.addSubPoolName = addSubPoolName;
     }
     
     @Override
     public ExecutorLimiter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
+                                                                               1000 * 10);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();
       }
@@ -218,7 +218,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();

@@ -16,19 +16,19 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
-import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest {
-  private static PriorityScheduler scheduler;
+  private static PriorityScheduledExecutor scheduler;
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(1, 1, 1000);
+    scheduler = new StrictPriorityScheduledExecutor(1, 1, 1000);
     
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }

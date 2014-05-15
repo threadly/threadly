@@ -30,17 +30,17 @@ public class TaskSchedulerDistributorTest {
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
-  private PriorityScheduler scheduler;
+  private PriorityScheduledExecutor scheduler;
   private Object agentLock;
   private TaskSchedulerDistributor distributor;
   
   @Before
   public void setup() {
-    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL + 1, 
+    scheduler = new StrictPriorityScheduledExecutor(PARALLEL_LEVEL + 1, 
                                                     PARALLEL_LEVEL * 2, 
                                                     1000 * 10, 
                                                     TaskPriority.High, 
-                                                    PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+                                                    PriorityScheduledExecutor.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
     distributor = new TaskSchedulerDistributor(scheduler, sLock, 

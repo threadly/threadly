@@ -18,7 +18,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
-public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest {
+public class PrioritySchedulerStatisticTrackerTest extends PriorityScheduledExecutorTest {
   @Override
   protected PriorityScheduledExecutorFactory getPrioritySchedulerFactory() {
     return new PriorityScheduledExecutorTestFactory();
@@ -570,10 +570,10 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   }
   
   private class PriorityScheduledExecutorTestFactory implements PriorityScheduledExecutorFactory {
-    private final List<PriorityScheduler> executors;
+    private final List<PriorityScheduledExecutor> executors;
     
     private PriorityScheduledExecutorTestFactory() {
-      executors = new LinkedList<PriorityScheduler>();
+      executors = new LinkedList<PriorityScheduledExecutor>();
     }
 
     @Override
@@ -590,7 +590,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler result = makePriorityScheduler(poolSize, poolSize, Long.MAX_VALUE);
+      PriorityScheduledExecutor result = makePriorityScheduler(poolSize, poolSize, Long.MAX_VALUE);
       if (prestartIfAvailable) {
         result.prestartAllCoreThreads();
       }
@@ -599,23 +599,23 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     }
 
     @Override
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize,
+    public PriorityScheduledExecutor makePriorityScheduler(int corePoolSize, int maxPoolSize,
                                                            long keepAliveTimeInMs,
                                                            TaskPriority defaultPriority,
                                                            long maxWaitForLowPriority) {
-      PriorityScheduler result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
-                                                                       keepAliveTimeInMs, defaultPriority, 
-                                                                       maxWaitForLowPriority);
+      PriorityScheduledExecutor result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
+                                                                               keepAliveTimeInMs, defaultPriority, 
+                                                                               maxWaitForLowPriority);
       executors.add(result);
       
       return result;
     }
 
     @Override
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
+    public PriorityScheduledExecutor makePriorityScheduler(int corePoolSize, int maxPoolSize, 
                                                            long keepAliveTimeInMs) {
-      PriorityScheduler result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
-                                                                       keepAliveTimeInMs);
+      PriorityScheduledExecutor result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
+                                                                               keepAliveTimeInMs);
       executors.add(result);
       
       return result;
@@ -623,7 +623,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
 
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
+      Iterator<PriorityScheduledExecutor> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();
