@@ -70,6 +70,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY = "low priority " + threadNameSuffix;
   }
   
+  protected final ClockWrapper clockWrapper;
   protected final TaskPriority defaultPriority;
   protected final Object highPriorityLock;
   protected final Object lowPriorityLock;
@@ -224,6 +225,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
       threadFactory = Executors.defaultThreadFactory();
     }
     
+    this.clockWrapper = new ClockWrapper();
     this.defaultPriority = defaultPriority;
     highPriorityLock = new Object();
     lowPriorityLock = new Object();
@@ -865,22 +867,22 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   }
   
   private void addToHighPriorityQueue(TaskWrapper task) {
-    ClockWrapper.stopForcingUpdate();
+    clockWrapper.stopForcingUpdate();
     try {
       highPriorityQueue.add(task);
     } finally {
-      ClockWrapper.resumeForcingUpdate();
+      clockWrapper.resumeForcingUpdate();
     }
     highPriorityConsumer.maybeStart(threadFactory, 
                                     QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY);
   }
   
   private void addToLowPriorityQueue(TaskWrapper task) {
-    ClockWrapper.stopForcingUpdate();
+    clockWrapper.stopForcingUpdate();
     try {
       lowPriorityQueue.add(task);
     } finally {
-      ClockWrapper.resumeForcingUpdate();
+      clockWrapper.resumeForcingUpdate();
     }
     lowPriorityConsumer.maybeStart(threadFactory, 
                                    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY);
@@ -1241,7 +1243,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected static class OneTimeTaskWrapper extends TaskWrapper {
+  protected class OneTimeTaskWrapper extends TaskWrapper {
     private final long runTime;
     
     protected OneTimeTaskWrapper(Runnable task, TaskPriority priority, long delay) {
@@ -1252,7 +1254,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return unit.convert(runTime - ClockWrapper.getSemiAccurateTime(), 
+      return unit.convert(runTime - clockWrapper.getSemiAccurateTime(), 
                           TimeUnit.MILLISECONDS);
     }
     
@@ -1308,7 +1310,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     }
     
     private long getNextDelayInMillis() {
-      return nextRunTime - ClockWrapper.getSemiAccurateTime();
+      return nextRunTime - clockWrapper.getSemiAccurateTime();
     }
     
     @Override
@@ -1351,11 +1353,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         case High:
           synchronized (highPriorityLock) {
             if (! shutdownStarted.get()) {
-              ClockWrapper.stopForcingUpdate();
+              clockWrapper.stopForcingUpdate();
               try {
                 highPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
-                ClockWrapper.resumeForcingUpdate();
+                clockWrapper.resumeForcingUpdate();
               }
             }
           }
@@ -1363,11 +1365,11 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         case Low:
           synchronized (lowPriorityLock) {
             if (! shutdownStarted.get()) {
-              ClockWrapper.stopForcingUpdate();
+              clockWrapper.stopForcingUpdate();
               try {
                 lowPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
-                ClockWrapper.resumeForcingUpdate();
+                clockWrapper.resumeForcingUpdate();
               }
             }
           }

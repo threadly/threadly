@@ -47,7 +47,15 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
    * @param estimateOkay true if it is okay to just estimate the time
    * @return current time in milliseconds
    */
-  protected abstract long nowInMillis(boolean estimateOkay);
+  protected abstract long nowInMillis();
+  
+  protected void startInsertion() {
+    // nothing by default
+  }
+  
+  protected void endInsertion() {
+    // nothing by default
+  }
   
   @Override
   public void execute(Runnable task) {
@@ -132,9 +140,17 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
   
   protected void add(TaskContainer runnable) {
     synchronized (taskQueue.getModificationLock()) {
-      int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable, true);
+      startInsertion();
+      try {
+        // we can only change delay between start/end insertion calls
+        runnable.setInitialDelay();
         
-      taskQueue.add(insertionIndex, runnable);
+        int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable, true);
+          
+        taskQueue.add(insertionIndex, runnable);
+      } finally {
+        endInsertion();
+      }
       
       taskQueue.getModificationLock().notifyAll();
     }
@@ -239,6 +255,8 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
     }
     
     protected abstract void prepareForRun();
+    
+    protected abstract void setInitialDelay();
   }
   
   /**
@@ -249,12 +267,19 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
    * @since 1.0.0
    */
   protected class OneTimeTask extends TaskContainer {
-    private final long runTime;
+    private final long delay;
+    private long runTime;
     
     public OneTimeTask(Runnable runnable, long delay) {
       super(runnable);
       
-      this.runTime = nowInMillis(false) + delay;
+      this.delay = delay;
+      this.runTime = -1;
+    }
+    
+    @Override
+    protected void setInitialDelay() {
+      runTime = nowInMillis() + delay;
     }
     
     @Override
@@ -267,7 +292,7 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
 
     @Override
     public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(runTime - nowInMillis(true), 
+      return timeUnit.convert(runTime - nowInMillis(), 
                               TimeUnit.MILLISECONDS);
     }
   }
@@ -279,43 +304,44 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
    * @since 1.0.0
    */
   protected class RecurringTask extends TaskContainer {
+    private final long initialDelay;
     private final long recurringDelay;
     private long nextRunTime;
     
     public RecurringTask(Runnable runnable, long initialDelay, long recurringDelay) {
       super(runnable);
       
+      this.initialDelay = initialDelay;
       this.recurringDelay = recurringDelay;
-      nextRunTime = nowInMillis(false) + initialDelay;
+      nextRunTime = -1;
+    }
+    
+    @Override
+    protected void setInitialDelay() {
+      nextRunTime = nowInMillis() + initialDelay;
     }
     
     @Override
     public void prepareForRun() {
       synchronized (taskQueue.getModificationLock()) {
-        // reposition to next index in queue before run starts
-        final long startSearchTime = nowInMillis(false);
-        // we create a new delayed item to represent where it will be inserted
-        AbstractDelayed newInsertionDelayed = new AbstractDelayed() {
-          @Override
-          public long getDelay(TimeUnit unit) {
-            return unit.convert(startSearchTime + recurringDelay - nowInMillis(true), 
-                                TimeUnit.MILLISECONDS);
-          }
-        };
-        int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, newInsertionDelayed, 
-                                                            true);
-        
-        /* provide the option to search backwards since the item 
-         * will most likely be towards the back of the queue */
-        taskQueue.reposition(this, insertionIndex, false);
-        
-        nextRunTime = startSearchTime + recurringDelay;
+        startInsertion();
+        try {
+          int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, recurringDelay, true);
+          
+          /* provide the option to search backwards since the item 
+           * will most likely be towards the back of the queue */
+          taskQueue.reposition(this, insertionIndex, false);
+          
+          nextRunTime = nowInMillis() + recurringDelay;
+        } finally {
+          endInsertion();
+        }
       }
     }
 
     @Override
     public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(nextRunTime - nowInMillis(true), 
+      return timeUnit.convert(nextRunTime - nowInMillis(), 
                               TimeUnit.MILLISECONDS);
     }
   }

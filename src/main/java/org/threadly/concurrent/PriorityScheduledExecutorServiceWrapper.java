@@ -69,9 +69,9 @@ public class PriorityScheduledExecutorServiceWrapper extends AbstractExecutorSer
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable command, long delayInMillis) {
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(false, command);
-    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
-                                                     scheduler.getDefaultPriority(), 
-                                                     delayInMillis);
+    OneTimeTaskWrapper ottw = scheduler.new OneTimeTaskWrapper(taskFuture, 
+                                                               scheduler.getDefaultPriority(), 
+                                                               delayInMillis);
     scheduler.addToQueue(ottw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, ottw);
@@ -80,9 +80,9 @@ public class PriorityScheduledExecutorServiceWrapper extends AbstractExecutorSer
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(false, callable);
-    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, 
-                                                     scheduler.getDefaultPriority(), 
-                                                     delayInMillis);
+    OneTimeTaskWrapper ottw = scheduler.new OneTimeTaskWrapper(taskFuture, 
+                                                               scheduler.getDefaultPriority(), 
+                                                               delayInMillis);
     scheduler.addToQueue(ottw);
     
     return new ScheduledFutureDelegate<V>(taskFuture, ottw);

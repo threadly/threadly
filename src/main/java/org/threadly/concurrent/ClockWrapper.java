@@ -24,16 +24,21 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 class ClockWrapper {
-  protected static final AtomicInteger REQUESTS_TO_STOP_UPDATING_TIME = new AtomicInteger();
-  private static volatile long lastKnownTime = -1;
+  protected final AtomicInteger requestsToStopUpdatingTime;
+  private volatile long lastKnownTime = -1;
+  
+  protected ClockWrapper() {
+    requestsToStopUpdatingTime = new AtomicInteger();
+    lastKnownTime = -1;
+  }
   
   /**
    * A call here causes getAccurateTime to use the last known time.  If 
    * this is the first call to stop updating the time, it will ensure the 
    * clock is updated first.
    */
-  protected static void stopForcingUpdate() {
-    if (REQUESTS_TO_STOP_UPDATING_TIME.getAndIncrement() == 0) {
+  protected void stopForcingUpdate() {
+    if (requestsToStopUpdatingTime.getAndIncrement() == 0) {
       lastKnownTime = Clock.accurateTime();
     }
   }
@@ -41,8 +46,8 @@ class ClockWrapper {
   /**
    * This resumes updating the clock for calls to getAccurateTime.
    */
-  protected static void resumeForcingUpdate() {
-    int newVal = REQUESTS_TO_STOP_UPDATING_TIME.decrementAndGet();
+  protected void resumeForcingUpdate() {
+    int newVal = requestsToStopUpdatingTime.decrementAndGet();
     
     if (newVal < 0) {
       throw new IllegalStateException();
@@ -53,8 +58,8 @@ class ClockWrapper {
    * Returns an accurate time based on if it has been requested to 
    * stop updating from system clock temporarily or not.
    */
-  protected static long getSemiAccurateTime() {
-    if (REQUESTS_TO_STOP_UPDATING_TIME.get() > 0) {
+  protected long getSemiAccurateTime() {
+    if (requestsToStopUpdatingTime.get() > 0) {
       return lastKnownTime;
     } else {
       return Clock.accurateTime();

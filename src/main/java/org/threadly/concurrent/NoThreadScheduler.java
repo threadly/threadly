@@ -1,7 +1,5 @@
 package org.threadly.concurrent;
 
-import org.threadly.util.Clock;
-
 /**
  * <p>Executor which has no threads itself.  This allows you to have the same 
  * scheduler abilities (schedule tasks, recurring tasks, etc, etc), without having 
@@ -18,6 +16,8 @@ import org.threadly.util.Clock;
  * @since 2.0.0
  */
 public class NoThreadScheduler extends AbstractTickableScheduler {
+  private final ClockWrapper clockWrapper;
+  
   /**
    * Constructs a new {@link NoThreadScheduler} scheduler.
    * 
@@ -25,15 +25,23 @@ public class NoThreadScheduler extends AbstractTickableScheduler {
    */
   public NoThreadScheduler(boolean tickBlocksTillAvailable) {
     super(tickBlocksTillAvailable);
+    
+    clockWrapper = new ClockWrapper();
   }
 
   @Override
-  protected long nowInMillis(boolean estimateOkay) {
-    if (estimateOkay) {
-      return Clock.lastKnownTimeMillis();
-    } else {
-      return Clock.accurateTime();
-    }
+  protected long nowInMillis() {
+    return clockWrapper.getSemiAccurateTime();
+  }
+  
+  @Override
+  protected void startInsertion() {
+    clockWrapper.stopForcingUpdate();
+  }
+  
+  @Override
+  protected void endInsertion() {
+    clockWrapper.resumeForcingUpdate();
   }
   
   /**

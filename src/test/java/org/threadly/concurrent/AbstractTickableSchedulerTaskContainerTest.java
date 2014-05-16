@@ -94,5 +94,10 @@ public class AbstractTickableSchedulerTaskContainerTest {
       
       prepareCalled = true;
     }
+
+    @Override
+    protected void setInitialDelay() {
+      // ignored
+    }
   }
 }
