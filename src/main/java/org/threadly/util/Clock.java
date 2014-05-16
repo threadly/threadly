@@ -96,7 +96,7 @@ public class Clock {
   /**
    * Updates the clock and returns the accurate time.
    * 
-   * @Deprecated Use accurateTimeMillis()
+   * @deprecated Use accurateTimeMillis()
    * 
    * @return accurate time in milliseconds
    */
