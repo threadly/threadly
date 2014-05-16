@@ -47,7 +47,7 @@ public class TestableScheduler extends NoThreadScheduler {
    * @return qty of steps taken forward.  Returns zero if no events to run.
    */
   public int tick() {
-    return tick(Clock.accurateTime());
+    return tick(Clock.accurateTimeMillis());
   }
   
   /**

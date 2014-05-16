@@ -68,7 +68,7 @@ public class ClockWrapperTest {
       if (system) {
         return System.currentTimeMillis() != time;
       } else {
-        return Clock.accurateTime() != time;
+        return Clock.accurateTimeMillis() != time;
       }
     }
     

@@ -98,7 +98,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     try {
       RateLimiterExecutor rls = new RateLimiterExecutor(pse, rateLimit);
       ListenableFuture<?> lastFuture = null;
-      double startTime = Clock.accurateTime();
+      double startTime = Clock.accurateTimeMillis();
       boolean flip = true;
       for (int i = 0; i < TEST_QTY * 2; i++) {
         final int permit = 5;

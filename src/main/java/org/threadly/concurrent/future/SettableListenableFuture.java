@@ -179,12 +179,12 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   public T get(long timeout, TimeUnit unit) throws InterruptedException, 
                                                    ExecutionException,
                                                    TimeoutException {
-    long startTime = Clock.accurateTime();
+    long startTime = Clock.accurateTimeMillis();
     long timeoutInMs = unit.toMillis(timeout);
     synchronized (resultLock) {
       long remainingInMs;
       while (! done && 
-             (remainingInMs = timeoutInMs - (Clock.accurateTime() - startTime)) > 0) {
+             (remainingInMs = timeoutInMs - (Clock.accurateTimeMillis() - startTime)) > 0) {
         resultLock.wait(remainingInMs);
       }
       

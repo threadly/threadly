@@ -233,7 +233,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
     
     if (w != null) {  // may be null if shutdown
-      Clock.accurateTime(); // update clock for task to ensure it is accurate
+      Clock.accurateTimeMillis(); // update clock for task to ensure it is accurate
       long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
         synchronized (highPriorityExecutionDelay.getModificationLock()) {
@@ -260,7 +260,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
                ! highPriorityQueue.isEmpty() && // if there are no waiting high priority tasks, we don't care 
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
           workersLock.wait(waitAmount);
-          Clock.accurateTime(); // update for getDelayEstimateInMillis
+          Clock.accurateTimeMillis(); // update for getDelayEstimateInMillis
         }
         // check if we should reset the high delay for future low priority tasks
         if (highPriorityQueue.isEmpty()) {
@@ -295,7 +295,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
     
     if (w != null) {  // may be null if shutdown
-      Clock.accurateTime(); // update clock for task to ensure it is accurate
+      Clock.accurateTimeMillis(); // update clock for task to ensure it is accurate
       long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
         synchronized (lowPriorityExecutionDelay.getModificationLock()) {
@@ -545,7 +545,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   public List<Runnable> getRunnablesRunningOverTime(long timeInMs) {
     List<Runnable> result = new LinkedList<Runnable>();
     
-    long now = Clock.accurateTime();
+    long now = Clock.accurateTimeMillis();
     Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
     while (it.hasNext()) {
       Entry<Wrapper, Long> entry = it.next();
@@ -571,7 +571,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   public List<Callable<?>> getCallablesRunningOverTime(long timeInMs) {
     List<Callable<?>> result = new LinkedList<Callable<?>>();
     
-    long now = Clock.accurateTime();
+    long now = Clock.accurateTimeMillis();
     Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
     while (it.hasNext()) {
       Entry<Wrapper, Long> entry = it.next();
@@ -595,7 +595,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   public int getQtyRunningOverTime(long timeInMs) {
     int result = 0;
     
-    long now = Clock.accurateTime();
+    long now = Clock.accurateTimeMillis();
     Iterator<Long> it = runningTasks.values().iterator();
     while (it.hasNext()) {
       Long startTime = it.next();
@@ -677,7 +677,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   protected void trackTaskStart(Wrapper taskWrapper) {
-    runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.accurateTime());
+    runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.accurateTimeMillis());
     
     switch (taskWrapper.priority) {
       case High:
@@ -697,7 +697,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * @param taskWrapper wrapper for task that completed
    */
   protected void trackTaskFinish(Wrapper taskWrapper) {
-    long finishTime = Clock.accurateTime();
+    long finishTime = Clock.accurateTimeMillis();
     synchronized (runTimes.getModificationLock()) {
       runTimes.add(finishTime - taskWrapper.startTime);
       trimList(runTimes);

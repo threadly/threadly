@@ -905,10 +905,10 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
         long now;
         if (startTime < 0) {
           // only set the start time at the first run
-          startTime = Clock.accurateTime();
+          startTime = Clock.accurateTimeMillis();
           now = startTime;
         } else {
-          now = Clock.accurateTime();
+          now = Clock.accurateTimeMillis();
         }
         
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
@@ -985,7 +985,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
                ! highPriorityQueue.isEmpty() && // if there are no waiting high priority tasks, we don't care 
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
           workersLock.wait(waitAmount);
-          Clock.accurateTime(); // update for getDelayEstimateInMillis
+          Clock.accurateTimeMillis(); // update for getDelayEstimateInMillis
         }
         // check if we should reset the high delay for future low priority tasks
         if (highPriorityQueue.isEmpty()) {
@@ -1249,7 +1249,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     protected OneTimeTaskWrapper(Runnable task, TaskPriority priority, long delay) {
       super(task, priority);
       
-      runTime = Clock.accurateTime() + delay;
+      runTime = Clock.accurateTimeMillis() + delay;
     }
 
     @Override
@@ -1296,7 +1296,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
       this.recurringDelay = recurringDelay;
       //maxExpectedRuntime = -1;
       executing = false;
-      this.nextRunTime = Clock.accurateTime() + initialDelay;
+      this.nextRunTime = Clock.accurateTimeMillis() + initialDelay;
     }
 
     @Override
@@ -1346,7 +1346,7 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     }
     
     private void reschedule() {
-      nextRunTime = Clock.accurateTime() + recurringDelay;
+      nextRunTime = Clock.accurateTimeMillis() + recurringDelay;
       
       // now that nextRunTime has been set, resort the queue
       switch (priority) {

@@ -187,7 +187,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected void doExecute(int permits, Runnable task) {
     synchronized (permitLock) {
       int effectiveDelay = (int)(((double)permits / permitsPerSecond) * 1000);
-      long scheduleDelay = lastScheduleTime - Clock.accurateTime();
+      long scheduleDelay = lastScheduleTime - Clock.accurateTimeMillis();
       if (scheduleDelay < 0) {
         scheduleDelay = 0;
       }

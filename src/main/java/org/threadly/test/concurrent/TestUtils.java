@@ -37,11 +37,11 @@ public class TestUtils {
       private static final int TIMEOUT_IN_MS = 1000;
       private static final int POLL_INTERVAL_IN_MS = 1;
       
-      private final long startTime = Clock.accurateTime();
+      private final long startTime = Clock.accurateTimeMillis();
       
       @Override
       public boolean get() {
-        return Clock.accurateTime() != startTime;
+        return Clock.accurateTimeMillis() != startTime;
       }
       
       @Override

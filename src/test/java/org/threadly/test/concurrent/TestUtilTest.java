@@ -10,7 +10,7 @@ import org.threadly.util.Clock;
 public class TestUtilTest {
   @Test
   public void blockTillClockAdvancesTest() {
-    long before = Clock.accurateTime();
+    long before = Clock.accurateTimeMillis();
     TestUtils.blockTillClockAdvances();
     assertTrue(Clock.lastKnownTimeMillis() != before);
   }

@@ -48,7 +48,7 @@ public class TestRunnable implements Runnable {
     this.currentRunningCount = new AtomicInteger(0);
     this.ranConcurrent = false;
 
-    this.creationTime = Clock.accurateTime();
+    this.creationTime = Clock.accurateTimeMillis();
   }
   
   /**
@@ -229,7 +229,7 @@ public class TestRunnable implements Runnable {
   public final void run() {
     int startRunningCount = currentRunningCount.incrementAndGet();
     
-    runTime.addLast(Clock.accurateTime());
+    runTime.addLast(Clock.accurateTimeMillis());
     try {
       handleRunStart();
     } catch (InterruptedException e) {

@@ -96,9 +96,21 @@ public class Clock {
   /**
    * Updates the clock and returns the accurate time.
    * 
+   * @Deprecated Use accurateTimeMillis()
+   * 
    * @return accurate time in milliseconds
    */
+  @Deprecated
   public static long accurateTime() {
+    return accurateTimeMillis();
+  }
+
+  /**
+   * Updates the clock and returns the accurate time in milliseconds.
+   * 
+   * @return accurate time in milliseconds
+   */
+  public static long accurateTimeMillis() {
     return now = System.currentTimeMillis();
   }
   
@@ -118,7 +130,7 @@ public class Clock {
         synchronized (UPDATE_LOCK) {
           while (clockUpdater == this) {
             try {
-              accurateTime();
+              accurateTimeMillis();
               
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
             } catch (InterruptedException e) {

@@ -58,11 +58,11 @@ public abstract class TestCondition {
    * @param pollIntervalInMillis time to sleep between checks
    */
   public void blockTillTrue(int timeoutInMillis, int pollIntervalInMillis) {
-    long startTime = Clock.accurateTime();
+    long startTime = Clock.accurateTimeMillis();
     long now = Clock.lastKnownTimeMillis();
     boolean lastResult;
     while (! (lastResult = get()) && 
-           (now = Clock.accurateTime()) - startTime < timeoutInMillis) {
+           (now = Clock.accurateTimeMillis()) - startTime < timeoutInMillis) {
       if (pollIntervalInMillis > SPIN_THRESHOLD) {
         LockSupport.parkNanos(NANOS_IN_MILLISECOND * pollIntervalInMillis);
       }

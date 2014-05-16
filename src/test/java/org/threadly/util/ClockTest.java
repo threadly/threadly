@@ -28,7 +28,7 @@ public class ClockTest {
     
     // update clock
     long newTime;
-    assertTrue((newTime = Clock.accurateTime()) > before);
+    assertTrue((newTime = Clock.accurateTimeMillis()) > before);
     // verify we get the new time again
     assertTrue(newTime <= Clock.lastKnownTimeMillis());
   }

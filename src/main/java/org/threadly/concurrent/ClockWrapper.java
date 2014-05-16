@@ -39,7 +39,7 @@ class ClockWrapper {
    */
   protected void stopForcingUpdate() {
     if (requestsToStopUpdatingTime.getAndIncrement() == 0) {
-      lastKnownTime = Clock.accurateTime();
+      lastKnownTime = Clock.accurateTimeMillis();
     }
   }
   
@@ -62,7 +62,7 @@ class ClockWrapper {
     if (requestsToStopUpdatingTime.get() > 0) {
       return lastKnownTime;
     } else {
-      return Clock.accurateTime();
+      return Clock.accurateTimeMillis();
     }
   }
 }
