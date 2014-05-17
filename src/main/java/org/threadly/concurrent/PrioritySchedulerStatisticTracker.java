@@ -327,6 +327,52 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
       return new CallableStatWrapper<T>(task, priority, recurring);
     }
   }
+  
+  @Override
+  public void execute(Runnable task) {
+    schedule(task, 0, defaultPriority);
+  }
+  
+  @Override
+  public ListenableFuture<?> submit(Runnable task) {
+    return submitScheduled(task, null, 0, defaultPriority);
+  }
+  
+  @Override
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+    return submitScheduled(task, result, 0, defaultPriority);
+  }
+  
+  @Override
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
+    return submitScheduled(task, 0, defaultPriority);
+  }
+
+  @Override
+  public void schedule(Runnable task, long delayInMs) {
+    schedule(task, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
+    return submitScheduled(task, null, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
+    return submitScheduled(task, result, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
+    return submitScheduled(task, delayInMs, defaultPriority);
+  }
+
+  @Override
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay,
+                                     long recurringDelay) {
+    scheduleWithFixedDelay(task, initialDelay, recurringDelay, defaultPriority);
+  }
 
   @Override
   public void schedule(Runnable task, long delayInMs, TaskPriority priority) {
@@ -337,8 +383,14 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   @Override
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs,
                                              TaskPriority priority) {
+    return submitScheduled(task, null, delayInMs, priority);
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
+                                                 TaskPriority priority) {
     return super.submitScheduled(wrap(task, priority, false), 
-                                 delayInMs, priority);
+                                 result, delayInMs, priority);
   }
 
   @Override

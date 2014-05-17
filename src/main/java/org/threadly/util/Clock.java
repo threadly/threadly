@@ -108,6 +108,7 @@ public class Clock {
   /**
    * Updates the clock and returns the accurate time in milliseconds.
    * 
+   * @since 2.0.0 (existed since 1.0.0 as accurateTime)
    * @return accurate time in milliseconds
    */
   public static long accurateTimeMillis() {

@@ -1,11 +1,7 @@
 package org.threadly.concurrent;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureTask;
 
 /**
  * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor}
@@ -14,7 +10,7 @@ import org.threadly.concurrent.future.ListenableFutureTask;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterface {
+public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler {
   private final ScheduledExecutorService scheduler;
   
   /**
@@ -29,92 +25,10 @@ public class ScheduledExecutorServiceWrapper implements SubmitterSchedulerInterf
     
     this.scheduler = scheduler;
   }
-  
-  @Override
-  public void execute(Runnable command) {
-    if (command == null) {
-      throw new IllegalArgumentException("Runnable can not be null");
-    }
-    
-    scheduler.execute(command);
-  }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task) {
-    return submit(task, null);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    if (task == null) {
-      throw new IllegalArgumentException("Runnable can not be null");
-    }
-    
-    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task, result);
-    
-    scheduler.execute(fTask);
-    
-    return fTask;
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Callable can not be null");
-    }
-    
-    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task);
-    
-    scheduler.execute(fTask);
-    
-    return fTask;
-  }
-
-  @Override
-  public void schedule(Runnable task, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Runnable can not be null");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
-    }
-    
-    scheduler.schedule(task, delayInMs, TimeUnit.MILLISECONDS);
-  }
-
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, null, delayInMs);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
-                                                 long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Runnable can not be null");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
-    }
-    
-    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task, result);
-    
-    scheduler.schedule(fTask, delayInMs, TimeUnit.MILLISECONDS);
-    
-    return fTask;
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Callable can not be null");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
-    }
-    
-    ListenableFutureTask<T> fTask = new ListenableFutureTask<T>(false, task);
-    
-    scheduler.schedule(fTask, delayInMs, TimeUnit.MILLISECONDS);
-    
-    return fTask;
+  protected void doSchedule(Runnable task, long delayInMillis) {
+    scheduler.schedule(task, delayInMillis, TimeUnit.MILLISECONDS);
   }
 
   @Override

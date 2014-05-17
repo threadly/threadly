@@ -55,7 +55,8 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
+public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
+                                       implements PrioritySchedulerInterface {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
@@ -708,23 +709,13 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   }
 
   @Override
-  public void execute(Runnable task) {
-    schedule(task, 0, defaultPriority);
+  protected void doSchedule(Runnable task, long delayInMillis) {
+    addToQueue(new OneTimeTaskWrapper(task, defaultPriority, delayInMillis));
   }
 
   @Override
   public void execute(Runnable task, TaskPriority priority) {
     schedule(task, 0, priority);
-  }
-
-  @Override
-  public ListenableFuture<?> submit(Runnable task) {
-    return submitScheduled(task, null, 0, defaultPriority);
-  }
-  
-  @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submitScheduled(task, result, 0, defaultPriority);
   }
 
   @Override
@@ -738,18 +729,8 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
-    return submitScheduled(task, 0, defaultPriority);
-  }
-
-  @Override
   public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
-  }
-
-  @Override
-  public void schedule(Runnable task, long delayInMs) {
-    schedule(task, delayInMs, defaultPriority);
   }
 
   @Override
@@ -765,16 +746,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     }
 
     addToQueue(new OneTimeTaskWrapper(task, priority, delayInMs));
-  }
-
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, delayInMs, defaultPriority);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    return submitScheduled(task, result, delayInMs, defaultPriority);
   }
 
   @Override
@@ -800,11 +771,6 @@ public class PriorityScheduledExecutor implements PrioritySchedulerInterface {
     addToQueue(new OneTimeTaskWrapper(rf, priority, delayInMs));
     
     return rf;
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    return submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override

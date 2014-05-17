@@ -4,8 +4,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
-import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ListUtils;
 
 /**
@@ -23,7 +21,8 @@ import org.threadly.util.ListUtils;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-public abstract class AbstractTickableScheduler implements SchedulerServiceInterface {
+abstract class AbstractTickableScheduler extends AbstractSubmitterScheduler 
+                                         implements SchedulerServiceInterface {
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
@@ -56,71 +55,10 @@ public abstract class AbstractTickableScheduler implements SchedulerServiceInter
   protected void endInsertion() {
     // nothing by default
   }
-  
-  @Override
-  public void execute(Runnable task) {
-    schedule(task, 0);
-  }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task) {
-    return submit(task, null);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submitScheduled(task, result, 0);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
-    return submitScheduled(task, 0);
-  }
-
-  @Override
-  public void schedule(Runnable task, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Task can not be null");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs can not be negative");
-    }
-    
-    add(new OneTimeTask(task, delayInMs));
-  }
-
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, null, delayInMs);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Task can not be null");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs can not be negative");
-    }
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
-    
-    add(new OneTimeTask(lft, delayInMs));
-    
-    return lft;
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Task can not be null");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs can not be negative");
-    }
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
-    
-    add(new OneTimeTask(lft, delayInMs));
-    
-    return lft;
+  protected void doSchedule(Runnable task, long delayInMillis) {
+    add(new OneTimeTask(task, delayInMillis));
   }
 
   @Override

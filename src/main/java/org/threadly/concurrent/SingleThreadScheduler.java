@@ -6,7 +6,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -17,7 +16,8 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-public class SingleThreadScheduler implements SchedulerServiceInterface {
+public class SingleThreadScheduler extends AbstractSubmitterScheduler
+                                   implements SchedulerServiceInterface {
   private static final AtomicInteger NEXT_THREAD_ID = new AtomicInteger(1);
   
   protected final ThreadFactory threadFactory;
@@ -135,48 +135,15 @@ public class SingleThreadScheduler implements SchedulerServiceInterface {
   }
 
   @Override
-  public void schedule(Runnable task, long delayInMs) {
-    getScheduler().schedule(task, delayInMs);
+  protected void doSchedule(Runnable task, long delayInMillis) {
+    getScheduler().doSchedule(task, delayInMillis);
   }
 
   @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+  public void scheduleWithFixedDelay(Runnable task, 
+                                     long initialDelay, 
+                                     long recurringDelay) {
     getScheduler().scheduleWithFixedDelay(task, initialDelay, recurringDelay);
-  }
-
-  @Override
-  public void execute(Runnable command) {
-    getScheduler().execute(command);
-  }
-
-  @Override
-  public ListenableFuture<?> submit(Runnable task) {
-    return getScheduler().submit(task);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return getScheduler().submit(task, result);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
-    return getScheduler().submit(task);
-  }
-
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return getScheduler().submitScheduled(task, delayInMs);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    return getScheduler().submitScheduled(task, result, delayInMs);
-  }
-
-  @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    return getScheduler().submitScheduled(task, delayInMs);
   }
   
   /**
