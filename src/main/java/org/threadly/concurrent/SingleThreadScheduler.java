@@ -98,8 +98,8 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Stops the scheduler from running more tasks.  Because of how the 
-   * {@link AbstractTickableScheduler} works, this wont actually any 
-   * tasks till after the current tick call finishes.
+   * {@link NoThreadScheduler} works, this wont actually any tasks 
+   * till after the current tick call finishes.
    */
   public void shutdown() {
     SchedulerManager sm = sManager.get();

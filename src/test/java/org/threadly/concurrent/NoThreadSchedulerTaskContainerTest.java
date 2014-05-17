@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.concurrent.AbstractTickableScheduler.TaskContainer;
+import org.threadly.concurrent.NoThreadScheduler.TaskContainer;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class AbstractTickableSchedulerTaskContainerTest {
+public class NoThreadSchedulerTaskContainerTest {
   private static NoThreadScheduler scheduler;
   
   @BeforeClass
