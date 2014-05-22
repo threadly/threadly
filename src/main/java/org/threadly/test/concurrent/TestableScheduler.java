@@ -36,31 +36,55 @@ public class TestableScheduler extends NoThreadScheduler {
   }
   
   /**
-   * Progresses tasks for the current time.  This will block as it runs
-   * as many scheduled or waiting tasks as possible.  This call will NOT 
-   * block if no task are currently ready to run.
+   * Returns the last provided time to the tick call.  If tick has not been called yet, then 
+   * this will represent the time at construction.
    * 
-   * If any tasks throw a RuntimeException, they will be bubbled up to this 
-   * tick call.  Any tasks past that task will not run till the next call to 
-   * tick.  So it is important that the implementor handle those exceptions.  
+   * @return last time the scheduler used for reference on execution
+   */
+  public long getLastTickTime() {
+    return nowInMillis;
+  }
+  
+  /**
+   * This is to provide a convince when advancing the scheduler forward an explicit amount of time.  
+   * Where tick accepts an absolute time, this accepts an amount of time to advance forward.  That 
+   * way the user does not have to track the current time.
    * 
-   * @return qty of steps taken forward.  Returns zero if no events to run.
+   * @param timeInMillis amount in milliseconds to advance the scheduler forward
+   * @return qty of tasks run during this tick call
+   */
+  public int advance(long timeInMillis) {
+    return tick(nowInMillis + timeInMillis);
+  }
+  
+  /**
+   * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
+   * waiting tasks as possible.  This call will NOT block if no task are currently ready to run.
+   * 
+   * If any tasks throw a RuntimeException, they will be bubbled up to this tick call.  Any 
+   * tasks past that task will not run till the next call to tick.  So it is important that the 
+   * implementor handle those exceptions.  
+   * 
+   * @return qty of tasks run during this tick call
    */
   public int tick() {
     return tick(Clock.accurateTimeMillis());
   }
   
   /**
-   * This progresses tasks based off the time provided.  This is primarily used in 
-   * testing by providing a possible time in the future (to execute future tasks).  
-   * This call will NOT block if no task are currently ready to run.  
+   * This progresses tasks based off the time provided.  This is primarily used in testing by 
+   * providing a possible time in the future (to execute future tasks).  This call will NOT 
+   * block if no task are currently ready to run.  
    * 
-   * If any tasks throw a RuntimeException, they will be bubbled up to this 
-   * tick call.  Any tasks past that task will not run till the next call to 
-   * tick.  So it is important that the implementor handle those exceptions.
+   * If any tasks throw a RuntimeException, they will be bubbled up to this tick call.  Any 
+   * tasks past that task will not run till the next call to tick.  So it is important that 
+   * the implementor handle those exceptions.
    * 
-   * @param currentTime Time to provide for looking at task run time
-   * @return qty of tasks run in this tick call.
+   * This call accepts the absolute time in milliseconds.  If you want to advance the scheduler 
+   * a specific amount of time forward, look at the "advance" call.
+   * 
+   * @param currentTime Absolute time to provide for looking at task run time
+   * @return qty of tasks run in this tick call
    */
   public int tick(long currentTime) {
     if (nowInMillis > currentTime) {

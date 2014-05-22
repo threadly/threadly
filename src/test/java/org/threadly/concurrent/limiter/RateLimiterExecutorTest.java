@@ -86,7 +86,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     f = limiter.getFutureTillDelay(0);
     assertFalse(f.isDone());
     
-    scheduler.tick(Clock.lastKnownTimeMillis() + 1000);
+    scheduler.advance(1000);
     assertTrue(f.isDone());
   }
   
