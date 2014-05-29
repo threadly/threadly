@@ -11,7 +11,8 @@ import java.lang.Thread.UncaughtExceptionHandler;
  * @since 1.0.0
  */
 public class ExceptionUtils {
-  private static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 32;
+  private static final short INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE = 16;
+  private static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 64;
   
   private ExceptionUtils() {
     // don't construct
@@ -153,7 +154,7 @@ public class ExceptionUtils {
    * @return String which is the stack in a human readable format
    */
   public static String stackToString(StackTraceElement[] stack) {
-    StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder(stack == null ? 0 : stack.length * INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE);
     writeStackTo(stack, sb);
     
     return sb.toString();
