@@ -42,9 +42,16 @@ public class Profiler {
   protected static final short THREAD_PADDING_AMMOUNT = 10;
   protected static final short NUMBER_TARGET_LINE_LENGTH = 6;
   protected static final String COLLECTOR_THREAD_NAME = "Profiler data collector";
-  protected static final String THREAD_DELIMITER = "--------------------------------------------------\n";
-  protected static final String FUNCTION_BY_NET_HEADER = "\nfunctions by top count: (total, top, name)\n";
-  protected static final String FUNCTION_BY_COUNT_HEADER = "\nfunction by total count: (total, top, name)\n";
+  protected static final String THREAD_DELIMITER = "--------------------------------------------------";
+  protected static final String FUNCTION_BY_NET_HEADER;
+  protected static final String FUNCTION_BY_COUNT_HEADER;
+  
+  static {
+    String prefix = "functions by ";
+    String columns = "(total, top, name)";
+    FUNCTION_BY_NET_HEADER = prefix + "top count: " + columns;
+    FUNCTION_BY_COUNT_HEADER = prefix + "total count: " + columns;
+  }
   
   protected final Map<String, Map<Trace, Trace>> threadTraces;
   protected final AtomicInteger collectedSamples;
@@ -339,6 +346,7 @@ public class Profiler {
         }
         
         ps.println(THREAD_DELIMITER);
+        ps.println();
       }
         
       // log out global data
@@ -405,7 +413,9 @@ public class Profiler {
     out.println(" total count: " + format(total));
     out.println("native count: " + format(nativeCount));
     
+    out.println();
     out.println(FUNCTION_BY_NET_HEADER);
+    out.println();
     
     Arrays.sort(methodArray, new Comparator<Function>() {
       @Override
@@ -418,7 +428,9 @@ public class Profiler {
       dumpFunction(methodArray[i], out);
     }
     
+    out.println();
     out.println(FUNCTION_BY_COUNT_HEADER);
+    out.println();
     
     Arrays.sort(methodArray, new Comparator<Function>() {
       @Override
@@ -431,7 +443,9 @@ public class Profiler {
       dumpFunction(methodArray[i], out);
     }
     
-    out.println("\ntraces by count:\n");
+    out.println();
+    out.println("traces by count:");
+    out.println();
     
     if (globalCount) {
       Arrays.sort(traceArray, new Comparator<Trace>() {

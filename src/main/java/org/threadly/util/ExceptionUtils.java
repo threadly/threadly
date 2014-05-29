@@ -94,7 +94,7 @@ public class ExceptionUtils {
    */
   public static String stackToString(Throwable t) {
     if (t == null) {
-      return "";
+      return StringUtils.EMPTY;
     }
     
     String msg = t.getMessage();
@@ -175,7 +175,7 @@ public class ExceptionUtils {
     }
     
     for (StackTraceElement ste : stack) {
-      sb.append("\t at ").append(ste.toString()).append('\n');
+      sb.append("\t at ").append(ste.toString()).append(StringUtils.NEW_LINE);
     }
   }
   
