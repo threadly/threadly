@@ -257,6 +257,39 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void scheduleWithFixedZeroDelayTest() throws InterruptedException, TimeoutException {
+    final AsyncVerifier av = new AsyncVerifier();
+    final TestRunnable[] testRunnables = new TestRunnable[TEST_QTY];
+    for (int i = 0; i < TEST_QTY; i++) {
+      testRunnables[i] = new TestRunnable();
+    }
+    
+    nonblockingScheduler.scheduleWithFixedDelay(new Runnable() {
+      private int runIndex = -1;
+      
+      @Override
+      public void run() {
+        if (runIndex >= 0) {
+          // verify they ran ahead of us
+          av.assertTrue(testRunnables[runIndex].ranOnce());
+        }
+        
+        if (++runIndex < testRunnables.length) {
+          nonblockingScheduler.execute(testRunnables[runIndex]);
+        } else {  // we are done
+          // remove task so .tick can unblock
+          nonblockingScheduler.remove(this);
+          av.signalComplete();
+        }
+      }
+    }, 0, 0);
+    
+    nonblockingScheduler.tick();
+    
+    av.waitForTest();
+  }
+  
+  @Test
   public void submitScheduledCallableFail() {
     submitScheduledCallableFail(blockingScheduler);
     submitScheduledCallableFail(nonblockingScheduler);
@@ -496,6 +529,23 @@ public class NoThreadSchedulerTest {
     // should no longer have anything to run
     assertFalse(blockingScheduler.hasTaskReadyToRun());
     assertFalse(nonblockingScheduler.hasTaskReadyToRun());
+  }
+  
+  @Test
+  public void hasTaskReadyToRunRunningTaskTest() throws InterruptedException {
+    nonblockingScheduler.scheduleWithFixedDelay(new Runnable() {
+      @Override
+      public void run() {
+        assertFalse(nonblockingScheduler.hasTaskReadyToRun());
+        
+        nonblockingScheduler.execute(new TestRunnable());
+        assertTrue(nonblockingScheduler.hasTaskReadyToRun());
+        
+        nonblockingScheduler.remove(this);
+      }
+    }, 0, 1000);
+    
+    nonblockingScheduler.tick();
   }
   
   @Test
