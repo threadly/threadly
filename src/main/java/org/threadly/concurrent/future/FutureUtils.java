@@ -320,7 +320,7 @@ public class FutureUtils {
      * 
      * @return List to satisfy ListenableFuture result with
      */
-    protected List<ListenableFuture<? extends T>> getFinalResultList() {
+    private List<ListenableFuture<? extends T>> getFinalResultList() {
       List<ListenableFuture<? extends T>> result;
       if (buildingResult.get() == null) {
         result = Collections.emptyList();
@@ -348,11 +348,6 @@ public class FutureUtils {
     @Override
     protected void handleFutureDone(ListenableFuture<?> f) {
       // ignored
-    }
-
-    @Override
-    protected List<ListenableFuture<?>> getFinalResultList() {
-      return Collections.emptyList();
     }
   }
   
