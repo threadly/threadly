@@ -195,13 +195,26 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Checks if there are tasks ready to be run on the scheduler.  If this returns 
-   * true, the next .tick() call is guaranteed to run at least one task.
+   * Checks if there are tasks ready to be run on the scheduler.  Generally this is called from 
+   * the same thread that would call .tick() (but does not have to be).  If .tick() is not 
+   * currently being called, this call indicates if the next .tick() will have at least one task 
+   * to run.  If .tick() is currently running, this call will indicate if there is at least one 
+   * more task to run (not including the task which may currently be running).
    * 
    * @return true if there are task waiting to run.
    */
   public boolean hasTaskReadyToRun() {
-    return getNextReadyTask() != null;
+    synchronized (taskQueue.getModificationLock()) {
+      TaskContainer nextTask = getNextReadyTask();
+      if (nextTask == null) {
+        return false;
+      } else if (nextTask.running && taskQueue.size() == 1) {
+        // only one task should be running at a time, so if the size is > 1 then we know we have task to run
+        return false;
+      } else {
+        return true;
+      }
+    }
   }
   
   /**
@@ -222,9 +235,11 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   protected abstract class TaskContainer extends AbstractDelayed 
                                          implements RunnableContainerInterface {
     protected final Runnable runnable;
+    protected volatile boolean running;
     
     protected TaskContainer(Runnable runnable) {
       this.runnable = runnable;
+      this.running = false;
     }
 
     @Override
@@ -233,13 +248,32 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     }
     
     protected void runTask() {
+      running = true;
       prepareForRun();
-      
-      runnable.run();
+      try {
+        runnable.run();
+      } finally {
+        runComplete();
+        running = false;
+      }
     }
     
+    /**
+     * Called before the task starts.  Allowing the container to do any pre-execution tasks 
+     * necessary.
+     */
     protected abstract void prepareForRun();
     
+    /**
+     * Called after the task completes, weather an exception was thrown or it exited normally.
+     */
+    protected abstract void runComplete();
+    
+    /**
+     * Call to indicate we should set the initial runtime for the task.  This will only be 
+     * called once (before the initial insert into the job queue).  This time must be set 
+     * at this point to ensure the clock is stable with respects to the rest of the job queue.
+     */
     protected abstract void setInitialDelay();
   }
   
@@ -268,10 +302,13 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     
     @Override
     protected void prepareForRun() {
-      synchronized (taskQueue.getModificationLock()) {
-        // can be removed since this is a one time task
-        taskQueue.remove(this);
-      }
+      // can be removed since this is a one time task
+      taskQueue.remove(this);
+    }
+    
+    @Override
+    protected void runComplete() {
+      // nothing done for single execution tasks
     }
 
     @Override
@@ -307,14 +344,23 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     
     @Override
     public void prepareForRun() {
+      // task will only be rescheduled once complete
+    }
+    
+    @Override
+    public void runComplete() {
       synchronized (taskQueue.getModificationLock()) {
         startInsertion();
         try {
+          // almost certainly will be the first item in the queue
+          int currentIndex = taskQueue.indexOf(this);
+          if (currentIndex < 0) {
+            // task was removed from queue, do not re-insert
+            return;
+          }
           int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, recurringDelay, true);
           
-          /* provide the option to search backwards since the item 
-           * will most likely be towards the back of the queue */
-          taskQueue.reposition(this, insertionIndex, false);
+          taskQueue.reposition(currentIndex, insertionIndex);
           
           nextRunTime = nowInMillis() + recurringDelay;
         } finally {

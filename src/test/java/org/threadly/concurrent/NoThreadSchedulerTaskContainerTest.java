@@ -33,18 +33,18 @@ public class NoThreadSchedulerTaskContainerTest {
   
   @Test
   public void compareToTest() {
-    TestContainer tc0 = new TestContainer(0);
+    TestContainer tc0 = new TestContainer(0, false);
     
     assertEquals(0, tc0.compareTo(tc0));
-    assertEquals(0, tc0.compareTo(new TestContainer(0)));
+    assertEquals(0, tc0.compareTo(new TestContainer(0, false)));
     
-    assertTrue(tc0.compareTo(new TestContainer(1)) < 0);
-    assertTrue(tc0.compareTo(new TestContainer(-1)) > 0);
+    assertTrue(tc0.compareTo(new TestContainer(1, false)) < 0);
+    assertTrue(tc0.compareTo(new TestContainer(-1, false)) > 0);
     
     Random r = new Random(Clock.lastKnownTimeMillis());
     List<TestContainer> testList = new ArrayList<TestContainer>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
-      testList.add(new TestContainer(r.nextInt(100)));
+      testList.add(new TestContainer(r.nextInt(100), false));
     }
     
     Collections.sort(testList);
@@ -58,27 +58,44 @@ public class NoThreadSchedulerTaskContainerTest {
   
   @Test
   public void getContainedRunnableTest() {
-    TestContainer tc = new TestContainer(0);
+    TestContainer tc = new TestContainer(0, false);
     
     assertTrue(tc.getContainedRunnable() == tc.runnable);
   }
   
   @Test
-  public void prepareForRunTest() {
-    TestContainer tc = new TestContainer(0);
+  public void runTaskTest() {
+    TestContainer tc = new TestContainer(0, false);
     
     tc.runTask();
     
     assertTrue(tc.prepareCalled);
+    assertTrue(tc.runCompleteCalled);
     assertTrue(((TestRunnable)tc.runnable).ranOnce());
+  }
+  
+  @Test
+  public void runTaskExceptionTest() {
+    TestContainer tc = new TestContainer(0, true);
+    
+    try {
+      tc.runTask();
+      fail("Exception should have thrown");
+    } catch (RuntimeException e) {
+      // expected
+    }
+    
+    assertTrue(tc.prepareCalled);
+    assertTrue(tc.runCompleteCalled);
   }
   
   private class TestContainer extends TaskContainer {
     private final int delay;
     private boolean prepareCalled = false;
+    private boolean runCompleteCalled = false;
     
-    protected TestContainer(int delay) {
-      scheduler.super(new TestRunnable());
+    protected TestContainer(int delay, boolean throwException) {
+      scheduler.super(throwException ? new TestRuntimeFailureRunnable() : new TestRunnable());
       
       this.delay = delay;
     }
@@ -93,6 +110,13 @@ public class NoThreadSchedulerTaskContainerTest {
       assertFalse(prepareCalled);
       
       prepareCalled = true;
+    }
+
+    @Override
+    protected void runComplete() {
+      assertFalse(runCompleteCalled);
+        
+      runCompleteCalled = true;
     }
 
     @Override
