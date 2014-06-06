@@ -169,6 +169,7 @@ public class BlockingQueueConsumer<T> {
           acceptor.acceptConsumedItem(next);
         } catch (InterruptedException e) {
           stop();
+          // reset interrupted status
           Thread.currentThread().interrupt();
         } catch (Throwable t) {
           ExceptionUtils.handleException(t);

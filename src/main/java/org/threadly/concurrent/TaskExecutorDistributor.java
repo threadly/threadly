@@ -380,6 +380,7 @@ public class TaskExecutorDistributor {
   /**
    * Submit a task to be run with a given thread key.
    * 
+   * @param <T> type of result returned from the future
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @param task Runnable to be executed
    * @param result Result to be returned from future when task completes
@@ -403,6 +404,7 @@ public class TaskExecutorDistributor {
   /**
    * Submit a callable to be run with a given thread key.
    * 
+   * @param <T> type of result returned from the future
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @param task Callable to be executed
    * @return Future to represent when the execution has occurred and provide the result from the callable

@@ -198,6 +198,7 @@ public class ListUtils {
         }
         minVal = list.get(min).getDelay(TimeUnit.MILLISECONDS);
         if (randomAccessList) {
+          // if cheap to check, we should see what the value is at this point
           max--;
           maxVal = list.get(max).getDelay(TimeUnit.MILLISECONDS);
         }
@@ -208,6 +209,7 @@ public class ListUtils {
         }
         maxVal = list.get(max).getDelay(TimeUnit.MILLISECONDS);
         if (randomAccessList) {
+          // if cheap to check, we should see what the value is at this point
           min++;
           minVal = list.get(min).getDelay(TimeUnit.MILLISECONDS);
         }

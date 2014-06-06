@@ -342,12 +342,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
     
     DataSet<T> originalSet;
+    DataSet<T> resultSet;
     synchronized (modificationLock) {
       originalSet = currentData;
-      currentData = currentData.retainAll(c);
+      currentData = resultSet = currentData.retainAll(c);
     }
     
-    return ! currentData.equalsExactly(originalSet);
+    return ! resultSet.equalsExactly(originalSet);
   }
 
   @Override
@@ -499,12 +500,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     DataSet<T> originalSet;
+    DataSet<T> resultSet;
     synchronized (modificationLock) {
       originalSet = currentData;
-      currentData = currentData.removeAll(c);
+      currentData = resultSet = currentData.removeAll(c);
     }
     
-    return ! currentData.equalsExactly(originalSet);
+    return ! resultSet.equalsExactly(originalSet);
   }
 
   @Override
@@ -745,7 +747,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * (no copying necessary).
    * 
    * But any modifications to this list will be treated as a completely 
-   * new list, and wont ever reflect on the source list.
+   * new list, and wont ever reflect on the source list.  This is very 
+   * different from other java.util.List implementations, and should be 
+   * noted carefully.
+   * 
+   * @param fromIndex start index (inclusive) for new list to include
+   * @param toIndex end index (exclusive) to be included in new list
+   * @return new independent list
    */
   @Override
   public List<T> subList(int fromIndex, int toIndex) {
@@ -929,7 +937,6 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
-   * 
    * @param <T> type of object that is held
    */
   protected static class DataSet<T> {
@@ -1420,6 +1427,14 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       }
     }
     
+    /**
+     * Call to see if the lists are equivalently equal, meaning that 
+     * they have the same items in the same order.  This is what most 
+     * equals operations for lists expect.
+     * 
+     * @param ds Other DataSet to compare against (can't be null)
+     * @return true if they are equal
+     */
     @SuppressWarnings("rawtypes")
     public boolean equalsEquivelent(DataSet ds) {
       if (this.size != ds.size) {
@@ -1437,6 +1452,15 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       return true;
     }
     
+    /**
+     * This is a call to check if the DataSet is exactly equal.  This is 
+     * unique for the design of this collection.  This can be a quicker 
+     * check, but may result in saying DataSet's are not equal, when they 
+     * basically are equal.
+     * 
+     * @param ds Other DataSet to compare against (can't be null)
+     * @return true if they are equal
+     */
     @SuppressWarnings("rawtypes")
     public boolean equalsExactly(DataSet ds) {
       if (this == ds) {

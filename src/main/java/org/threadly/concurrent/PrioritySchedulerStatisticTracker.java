@@ -205,6 +205,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
         RunnableStatWrapper statWrapper = (RunnableStatWrapper)r;
         result.add(statWrapper.toRun);
       } else {
+        // this typically happens in unit tests, but could happen by an extending class
         result.add(r);
       }
     }
@@ -328,6 +329,15 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
+  /**
+   * Wraps the provided task in our statistic wrapper.  If the task is null, this 
+   * will return null so that the parent class can do error checking.
+   * 
+   * @param task Runnable to wrap
+   * @param priority Priority for runnable to execute
+   * @param recurring true if the task is a recurring task
+   * @return Runnable which is our wrapped implementation
+   */
   private Runnable wrap(Runnable task, 
                         TaskPriority priority, 
                         boolean recurring) {
@@ -338,6 +348,15 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     }
   }
   
+  /**
+   * Wraps the provided task in our statistic wrapper.  If the task is null, this 
+   * will return null so that the parent class can do error checking.
+   * 
+   * @param task Callable to wrap
+   * @param priority Priority for runnable to execute
+   * @param recurring true if the task is a recurring task
+   * @return Runnable which is our wrapped implementation
+   */
   private <T> Callable<T> wrap(Callable<T> task, 
                                TaskPriority priority, 
                                boolean recurring) {
@@ -549,6 +568,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     return Collections.unmodifiableList(result);
   }
   
+  /**
+   * Calculates the average from a collection of long values.
+   * 
+   * @param list List of longs to average against
+   * @return -1 if the list is empty, otherwise the average of the values inside the list
+   */
   private static long getAvgTime(Collection<Long> list) {
     if (list.isEmpty()) {
       return -1;
@@ -732,6 +757,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     return getTruePercent(list);
   }
   
+  /**
+   * Returns the percent as a double (between 0 and 100) of how many items in the list
+   * are true, compared to the total quantity of items in the list.
+   * 
+   * @param list List of booleans to inspect
+   * @return -1 if the list is empty, otherwise the percent of true items in the list
+   */
   private static double getTruePercent(Collection<Boolean> list) {
     if (list.isEmpty()) {
       return -1;
@@ -748,6 +780,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     return (reuseCount / list.size()) * 100;
   }
   
+  /**
+   * Called at the start of execution to track statistics around task execution.
+   * 
+   * @param taskWrapper Wrapper that is about to be executed
+   */
   protected void trackTaskStart(Wrapper taskWrapper) {
     runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.accurateTimeMillis());
     

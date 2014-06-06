@@ -87,6 +87,15 @@ public class ContainerHelper {
     }
   }
 
+  /**
+   * Checks if the compareTo runnable is contained by the provided {@link RunnableContainerInterface}.  
+   * If it's not we check to see if we can continue our search by looking for another 
+   * {@link RunnableContainerInterface}, or a {@link CallableContainerInterface}.
+   * 
+   * @param rci Container to check contents of
+   * @param compareTo Runnable to compare against
+   * @return true if the runnable is contained at some point within the container
+   */
   private static boolean isContained(RunnableContainerInterface rci, Runnable compareTo) {
     while (true) {
       Runnable containedTask = rci.getContainedRunnable();
@@ -108,6 +117,15 @@ public class ContainerHelper {
     }
   }
 
+  /**
+   * Checks if the compareTo runnable is contained by the provided {@link CallableContainerInterface}.  
+   * If it's not we check to see if we can continue our search by looking for another 
+   * {@link RunnableContainerInterface}, or a {@link CallableContainerInterface}.
+   * 
+   * @param cci Container to check contents of
+   * @param compareTo Runnable to compare against
+   * @return true if the runnable is contained at some point within the container
+   */
   private static boolean isContained(CallableContainerInterface<?> cci, Runnable compareTo) {
     while (true) {
       Callable<?> containedTask = cci.getContainedCallable();
@@ -172,6 +190,15 @@ public class ContainerHelper {
     }
   }
 
+  /**
+   * Checks if the compareTo runnable is contained by the provided {@link CallableContainerInterface}.  
+   * If it's not we check to see if we can continue our search by looking for another 
+   * {@link RunnableContainerInterface}, or a {@link CallableContainerInterface}.
+   * 
+   * @param cci Container to check contents of
+   * @param compareTo Callable to compare against
+   * @return true if the callable is contained at some point within the container
+   */
   private static boolean isContained(CallableContainerInterface<?> cci, Callable<?> compareTo) {
     while (true) {
       Callable<?> containedTask = cci.getContainedCallable();

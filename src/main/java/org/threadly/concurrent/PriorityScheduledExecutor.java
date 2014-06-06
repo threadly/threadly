@@ -558,6 +558,9 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     }
   }
   
+  /**
+   * Stops all idle workers, this is expected to be part of the shutdown process.
+   */
   protected void shutdownAllWorkers() {
     synchronized (workersLock) {
       Iterator<Worker> it = availableWorkers.iterator();
@@ -640,6 +643,13 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     return new PrioritySchedulerLimiter(this, maxConcurrency, subPoolName);
   }
   
+  /**
+   * Removes a runnable from the provided queue if it exists.
+   * 
+   * @param queue Queue to search through to look for the provided task
+   * @param task Runnable to search for
+   * @return true if the task was found and removed
+   */
   protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
                                                Runnable task) {
     synchronized (queue.getLock()) {
@@ -657,7 +667,14 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     
     return false;
   }
-  
+
+  /**
+   * Removes a callable from the provided queue if it exists.
+   * 
+   * @param queue Queue to search through to look for the provided task
+   * @param task Callable to search for
+   * @return true if the task was found and removed
+   */
   protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
                                                Callable<?> task) {
     synchronized (queue.getLock()) {
@@ -819,6 +836,12 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     addToQueue(new RecurringTaskWrapper(task, priority, initialDelay, recurringDelay));
   }
   
+  /**
+   * Adds the ready TaskWrapper to the correct queue.  Using the priority specified in the 
+   * task, we pick the correct queue and add it.
+   * 
+   * @param task TaskWrapper to queue for the scheduler
+   */
   protected void addToQueue(TaskWrapper task) {
     if (shutdownStarted.get()) {
       throw new IllegalStateException("Thread pool shutdown");
@@ -836,6 +859,11 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     }
   }
   
+  /**
+   * Adds the task specifically to the high priority queue.
+   * 
+   * @param task TaskWrapper to queue for the scheduler
+   */
   private void addToHighPriorityQueue(TaskWrapper task) {
     clockWrapper.stopForcingUpdate();
     try {
@@ -847,6 +875,11 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
                                     QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY);
   }
   
+  /**
+   * Adds the task specifically to the low priority queue.
+   * 
+   * @param task TaskWrapper to queue for the scheduler
+   */
   private void addToLowPriorityQueue(TaskWrapper task) {
     clockWrapper.stopForcingUpdate();
     try {
@@ -857,7 +890,6 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     lowPriorityConsumer.maybeStart(threadFactory, 
                                    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY);
   }
-  
   
   /**
    * This function REQUIRES that workersLock is synchronized before calling.
@@ -917,6 +949,14 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     return w;
   }
   
+  /**
+   * After a task has been pulled from the queue and is ready to execute it is provided here.  
+   * This function will get an available worker (or create one if necessary and possible), and 
+   * then provide the task to that available worker.
+   * 
+   * @param task Task to execute once we have an available worker
+   * @throws InterruptedException Thrown if thread is interrupted waiting for a worker
+   */
   protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
     synchronized (workersLock) {
@@ -942,7 +982,17 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       w.nextTask(task);
     }
   }
-  
+
+  /**
+   * After a task has been pulled from the queue and is ready to execute it is provided here.  
+   * This function will get an available worker, waiting a bit of time for one to become available 
+   * if none are immediately available.  If after that there is still none available it will 
+   * create one (assuming we have not reached our max pool size).  Then the acquired worker will be 
+   * provided the task to execute.
+   * 
+   * @param task Task to execute once we have an available worker
+   * @throws InterruptedException Thrown if thread is interrupted waiting for a worker
+   */
   protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
     Worker w = null;
     synchronized (workersLock) {
@@ -988,6 +1038,9 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     }
   }
   
+  /**
+   * Checks idle workers to see if any old/unused workers should be killed.
+   */
   protected void expireOldWorkers() {
     synchronized (workersLock) {
       long now = Clock.lastKnownTimeMillis();
@@ -1002,6 +1055,11 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     }
   }
   
+  /**
+   * Shuts down the worker and ensures this now dead worker wont be used.
+   * 
+   * @param w worker to shutdown
+   */
   private void killWorker(Worker w) {
     synchronized (workersLock) {
       /* we check running around workersLock since we want to make sure 
@@ -1016,6 +1074,13 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     }
   }
   
+  /**
+   * Called by the worker after it completes a task.  This is so that we can run 
+   * any after task cleanup, and make sure that the worker is now available for 
+   * future tasks.
+   * 
+   * @param worker worker that is now idle and ready for more tasks
+   */
   protected void workerDone(Worker worker) {
     synchronized (workersLock) {
       if (shutdownFinishing) {
@@ -1084,18 +1149,10 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       lastRunTime = Clock.lastKnownTimeMillis();
       nextTask = null;
     }
-    
-    // should only be called from killWorker
-    public void stop() {
-      if (! running) {
-        return;
-      } else {
-        running = false;
-        
-        LockSupport.unpark(thread);
-      }
-    }
 
+    /**
+     * Starts the thread for the worker to execute tasks on.
+     */
     public void start() {
       if (running) {
         return;
@@ -1105,6 +1162,31 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       }
     }
     
+    /**
+     * Shuts down the worker, if the worker is currently running a task 
+     * that task will complete before shutdown finishes.
+     * 
+     * Currently this is expected that this is only called from "killWorker", 
+     * to ensure we don't leak resources.
+     */
+    public void stop() {
+      if (! running) {
+        return;
+      } else {
+        running = false;
+        
+        LockSupport.unpark(thread);
+      }
+    }
+    
+    /**
+     * Supply the worker with the next task to run.  It is expected that the worker 
+     * has been started before it is provided any tasks.  It must also be complete 
+     * with it's previous task before it can be provided another one to run 
+     * (there is no queuing within the workers).
+     * 
+     * @param task Task to run on this workers thread
+     */
     public void nextTask(TaskWrapper task) {
       if (! running) {
         throw new IllegalStateException();
@@ -1117,7 +1199,11 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       LockSupport.unpark(thread);
     }
     
-    public void blockTillNextTask() {
+    /**
+     * Used internally by the worker to block it's internal thread until 
+     * another task is provided to it.
+     */
+    private void blockTillNextTask() {
       boolean checkedInterrupted = false;
       while (nextTask == null && running) {
         LockSupport.park(this);
@@ -1132,6 +1218,11 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       }
     }
     
+    /**
+     * Checks the interrupted status of the workers thread.  If it is interrupted 
+     * the status will be cleared (unless the pool is shutting down, in which case 
+     * we will gracefully shutdown the worker).
+     */
     private void checkInterrupted() {
       if (Thread.interrupted()) { // check and clear interrupt
         if (shutdownFinishing) {
@@ -1165,6 +1256,11 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       }
     }
     
+    /**
+     * Checks what the last time this worker serviced a task was.
+     * 
+     * @return time in milliseconds since the last worker task
+     */
     public long getLastRunTime() {
       return lastRunTime;
     }
@@ -1189,6 +1285,9 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       canceled = false;
     }
     
+    /**
+     * Attempts to cancel the task from running (assuming it has not started yet).
+     */
     public void cancel() {
       canceled = true;
       
@@ -1197,8 +1296,17 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       }
     }
     
+    /**
+     * Called as the task is being removed from the queue to prepare for execution.
+     */
     public abstract void executing();
     
+    /**
+     * Similar to getDelay, except this implementation is an estimate.  It is only 
+     * in milliseconds, and having some slight inaccuracy is not an issue.
+     * 
+     * @return time in milliseconds till task is ready to run
+     */
     protected abstract long getDelayEstimateInMillis();
     
     @Override
@@ -1279,6 +1387,11 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       }
     }
     
+    /**
+     * Checks what the delay time is till the next execution.
+     *  
+     * @return time in milliseconds till next execution
+     */
     private long getNextDelayInMillis() {
       return nextRunTime - clockWrapper.getSemiAccurateTime();
     }
@@ -1315,6 +1428,9 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
       }
     }
     
+    /**
+     * After the task has completed, this will reschedule the task to run again.
+     */
     private void reschedule() {
       nextRunTime = Clock.accurateTimeMillis() + recurringDelay;
       

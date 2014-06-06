@@ -61,6 +61,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     while (! isTerminated() && 
            Clock.accurateTimeMillis() - startTime < waitTimeInMs && 
            ! currentThread.isInterrupted()) {
+      // just spin till terminated or time expires
       LockSupport.parkNanos(AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS);
     }
     

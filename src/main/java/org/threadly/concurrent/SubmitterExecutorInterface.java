@@ -34,6 +34,7 @@ public interface SubmitterExecutorInterface extends Executor {
    * The future .get() method will return the provided result 
    * once the runnable has completed.
    * 
+   * @param <T> type of result for future
    * @param task runnable to be executed
    * @param result result to be returned from resulting future .get() when runnable completes
    * @return a future to know when the task has completed
@@ -45,6 +46,7 @@ public interface SubmitterExecutorInterface extends Executor {
    * needed when a result needs to be consumed from the 
    * callable.
    * 
+   * @param <T> type of result returned from the future
    * @param task callable to be executed
    * @return a future to know when the task has completed and get the result of the callable
    */

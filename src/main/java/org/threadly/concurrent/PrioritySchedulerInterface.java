@@ -41,6 +41,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * The future .get() method will return the provided result once the 
    * runnable has completed.
    * 
+   * @param <T> type of result returned from the future
    * @param task runnable to be executed
    * @param result result to be returned from resulting future .get() when runnable completes
    * @param priority priority for task
@@ -53,6 +54,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * Submit a {@link Callable} to run as soon as possible for the given priority.  
    * This is needed when a result needs to be consumed from the callable.
    * 
+   * @param <T> type of result returned from the future
    * @param task callable to be executed
    * @param priority priority for callable
    * @return a future to know when the task has completed and get the result of the callable
@@ -91,6 +93,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * The future .get() method will return the provided result 
    * once the runnable has completed.
    * 
+   * @param <T> type of result returned from the future
    * @param task runnable to execute
    * @param result result to be returned from resulting future .get() when runnable completes
    * @param delayInMs time in milliseconds to wait to execute task
@@ -106,6 +109,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * needed when a result needs to be consumed from the 
    * callable.
    * 
+   * @param <T> type of result returned from the future
    * @param task callable to be executed
    * @param delayInMs time in milliseconds to wait to execute task
    * @param priority priority to give task for execution

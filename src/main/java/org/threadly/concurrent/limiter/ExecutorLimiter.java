@@ -81,6 +81,12 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     executeWrapper(lrw);
   }
   
+  /**
+   * Executes the wrapper if there is room in the limiter, otherwise it will queue the wrapper 
+   * to be executed once the limiter has room.
+   * 
+   * @param lrw Wrapper that is ready to execute once there is available slots in the limiter
+   */
   protected void executeWrapper(LimiterRunnableWrapper lrw) {
     if (waitingTasks.isEmpty() && canRunTask()) {
       lrw.submitToExecutor();
@@ -89,6 +95,15 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
     }
   }
   
+  /**
+   * Adds the wrapper to the queue.  After adding to the queue it will be verified that there 
+   * is not available slots in the limiter to consume (it or others) from the queue.
+   * 
+   * It is expected that you already attempted to run the task (by calling "canRunTask" before 
+   * deferring to this.
+   * 
+   * @param lrw {@link LimiterRunnableWrapper} to add to the queue
+   */
   protected void addToQueue(LimiterRunnableWrapper lrw) {
     waitingTasks.add(lrw);
     consumeAvailable(); // call to consume in case task finished after first check

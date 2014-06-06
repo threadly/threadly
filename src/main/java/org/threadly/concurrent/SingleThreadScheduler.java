@@ -98,6 +98,12 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     return result.scheduler;
   }
   
+  /**
+   * Stops the scheduler, constructing if necessary.
+   * 
+   * @param stopImmediately if true after call no additional executions will occur
+   * @return if stopped immediately a list of Runnables that were in queue at stop will be returned
+   */
   private List<Runnable> shutdown(boolean stopImmediately) {
     SchedulerManager sm = sManager.get();
     if (sm == null) {
