@@ -92,6 +92,9 @@ public class PriorityScheduledExecutorServiceWrapper extends AbstractExecutorSer
   protected ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
                                                                 long initialDelayInMs,
                                                                 long delayInMs) {
+    // wrap the task to ensure the correct behavior on exceptions
+    command = new ThrowableHandlingRecurringRunnable(command);
+    
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, command);
     RecurringTaskWrapper rtw = scheduler.new RecurringTaskWrapper(taskFuture, 
                                                                   scheduler.getDefaultPriority(), 

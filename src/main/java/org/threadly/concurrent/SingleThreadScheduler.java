@@ -267,11 +267,11 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
       while (! shutdownFinished) {
         try {
           scheduler.tick();
-        } catch (RuntimeException e) {
-          ExceptionUtils.handleException(e);
         } catch (InterruptedException e) {
           // reset interrupted status
           Thread.interrupted();
+        } catch (Throwable t) {
+          ExceptionUtils.handleException(t);
         }
       }
     }
