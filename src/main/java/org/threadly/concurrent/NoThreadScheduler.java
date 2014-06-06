@@ -1,5 +1,8 @@
 package org.threadly.concurrent;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +32,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   protected final boolean tickBlocksTillAvailable;
   protected final ConcurrentArrayList<TaskContainer> taskQueue;
   protected final ClockWrapper clockWrapper;
+  private volatile boolean cancelTick;  
   
   /**
    * Constructs a new {@link NoThreadScheduler} scheduler.
@@ -40,6 +44,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     taskQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, 
                                                        QUEUE_REAR_PADDING);
     clockWrapper = new ClockWrapper();
+    cancelTick = false;
   }
 
   /**
@@ -70,6 +75,21 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
+   * Call to cancel current or the next tick call.  If currently in a .tick() call 
+   * (weather blocking waiting for tasks, or currently running tasks), this will 
+   * call the .tick() to return.  If a task is currently running it will finish the 
+   * current task before returning.  If not currently in a .tick() call, the next 
+   * tick call will return immediately without running anything.
+   */
+  protected void cancelTick() {
+    synchronized (taskQueue.getModificationLock()) {
+      cancelTick = true;
+      
+      taskQueue.getModificationLock().notifyAll();
+    }
+  }
+  
+  /**
    * Progresses tasks for the current time.  This will block as it runs
    * as many scheduled or waiting tasks as possible.  It is CRITICAL that 
    * only one thread at a time calls the .tick() function.  While this class 
@@ -95,7 +115,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     int tasks = 0;
     while (true) {  // will break from loop at bottom
       TaskContainer nextTask;
-      while ((nextTask = getNextReadyTask()) != null) {
+      while ((nextTask = getNextReadyTask()) != null && ! cancelTick) {
         tasks++;
         
         // call will remove task from queue, or reposition as necessary
@@ -104,6 +124,12 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       
       if (tickBlocksTillAvailable && tasks == 0) {
         synchronized (taskQueue.getModificationLock()) {
+          /* we must check the cancelTick once we have the lock 
+           * since that is when the .notify() would happen.
+           */
+          if (cancelTick) {
+            break;
+          }
           nextTask = taskQueue.peekFirst();
           if (nextTask == null) {
             taskQueue.getModificationLock().wait();
@@ -115,10 +141,19 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
           }
         }
       } else {
-        // we ran a task, or don't want to block, so return
-        return tasks;
+        /* we are ready to return from call, either because we 
+         * ran at least one task, don't want to block, or the 
+         * tick call was canceled.
+         */
+        break;
       }
     }
+    
+    if (cancelTick) {
+      // reset for future tick calls
+      cancelTick = false;
+    }
+    return tasks;
   }
 
   @Override
@@ -183,6 +218,10 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * tasks, or the next task still has a remaining delay, this will return 
    * null.
    * 
+   * If this is being called in parallel with a .tick() call, the returned 
+   * task may already be running.  You must check the TaskContainer.running 
+   * boolean if this condition is important to you.
+   * 
    * @return next ready task, or null if there are none
    */
   protected TaskContainer getNextReadyTask() {
@@ -221,9 +260,25 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
    * .tick() is being called.  But will avoid additional tasks from being run on the current 
    * .tick() call.
+   * 
+   * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
    */
-  public void clearTasks() {
-    taskQueue.clear();
+  public List<Runnable> clearTasks() {
+    synchronized (taskQueue.getModificationLock()) {
+      List<Runnable> result = new ArrayList<Runnable>(taskQueue.size());
+      
+      Iterator<TaskContainer> it = taskQueue.iterator();
+      while (it.hasNext()) {
+        TaskContainer tc = it.next();
+        if (! tc.running) {
+          result.add(tc.runnable);
+        }
+      }
+      
+      taskQueue.clear();
+      
+      return result;
+    }
   }
   
   /**

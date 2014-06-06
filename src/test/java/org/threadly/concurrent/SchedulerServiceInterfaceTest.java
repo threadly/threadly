@@ -1,8 +1,7 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.threadly.TestConstants.SCHEDULE_DELAY;
+import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.Callable;
 

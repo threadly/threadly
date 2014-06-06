@@ -537,7 +537,9 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
           while (it.hasNext()) {
             TaskWrapper tw = it.next();
             tw.cancel();
-            removedTasks.add(tw.task);
+            if (! (tw.task instanceof ShutdownRunnable)) {
+              removedTasks.add(tw.task);
+            }
           }
           lowPriorityQueue.clear();
         }
@@ -571,8 +573,10 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
   }
 
   /**
-   * Stops any new tasks from being submitted to the pool.  But allows all currently scheduled 
-   * tasks to be run.  If scheduled tasks are present they will also be unable to reschedule.
+   * Stops any new tasks from being submitted to the pool.  But allows all tasks which are 
+   * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If 
+   * recurring tasks are present they will also be unable to reschedule.  If shutdown or 
+   * shutdownNow has already been called, this will have no effect.
    * 
    * If you wish to not want to run any queued tasks you should use {#link shutdownNow()).
    */
@@ -1383,7 +1387,10 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
   }
   
   /**
-   * <p>Runnable to be run after all current tasks to finish the shutdown sequence.</p>
+   * <p>Runnable to be run after tasks already ready to execute.  That way this can be 
+   * submitted with a .execute(Runnable) to ensure that the shutdown is fair for tasks 
+   * that were already ready to be run/executed.  Once this runs the shutdown sequence 
+   * will be finished, and no remaining asks in the queue can be executed.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0

@@ -1,5 +1,7 @@
 package org.threadly.concurrent;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -89,19 +91,14 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
       }
     }
     
-    if (result.stopped) {
+    if (result.isStopped()) {
       throw new IllegalStateException("Scheduler has been shutdown");
     }
     
     return result.scheduler;
   }
   
-  /**
-   * Stops the scheduler from running more tasks.  Because of how the 
-   * {@link NoThreadScheduler} works, this wont actually any tasks 
-   * till after the current tick call finishes.
-   */
-  public void shutdown() {
+  private List<Runnable> shutdown(boolean stopImmediately) {
     SchedulerManager sm = sManager.get();
     if (sm == null) {
       sm = new SchedulerManager(threadFactory);
@@ -110,14 +107,38 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
       }
     }
     
-    sm.stop();
+    return sm.stop(stopImmediately);
+  }
+
+  /**
+   * Stops any new tasks from being submitted to the pool.  But allows all tasks which are 
+   * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If 
+   * recurring tasks are present they will also be unable to reschedule.  This call will 
+   * not block to wait for the shutdown of the scheduler to finish.  If shutdown or 
+   * shutdownNow has already been called, this will have no effect.
+   * 
+   * If you wish to not want to run any queued tasks you should use {#link shutdownNow()).
+   */
+  public void shutdown() {
+    shutdown(false);
+  }
+
+  /**
+   * Stops any new tasks from being submitted to the pool.  If any tasks are waiting for 
+   * execution they will be prevented from being run.  If a task is currently running it 
+   * will be allowed to finish (though this call will not block waiting for it to finish).
+   * 
+   * @return returns a list of runnables which were waiting in the queue to be run at time of shutdown
+   */
+  public List<Runnable> shutdownNow() {
+    return shutdown(true);
   }
 
   @Override
   public boolean isShutdown() {
     SchedulerManager sm = sManager.get();
     if (sm != null) {
-      return sm.stopped;
+      return sm.isStopped();
     } else {
       // if not created yet, the not shutdown
       return false;
@@ -159,44 +180,91 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     protected final NoThreadScheduler scheduler;
     protected final Thread execThread;
     private final Object startStopLock;
-    private volatile boolean stopped;
-    private boolean started;
+    private boolean started;  // locked around startStopLock
+    private volatile boolean shutdownStarted;
+    private volatile boolean shutdownFinished;
     
     protected SchedulerManager(ThreadFactory threadFactory) {
       scheduler = new NoThreadScheduler(true);  // true so we wont tight loop in the run
       execThread = threadFactory.newThread(this);
       startStopLock = new Object();
       started = false;
-      stopped = false;
+      shutdownStarted = false;
+      shutdownFinished = false;
     }
     
+    /**
+     * Call to check if stop has been called.
+     * 
+     * @return true if stop has been called (weather shutdown has finished or not)
+     */
     public boolean isStopped() {
-      return stopped;
+      return shutdownStarted;
     }
     
-    public void start() {
+    /**
+     * Call to start the thread to run tasks.  If already started this call will have 
+     * no effect.
+     */
+    protected void start() {
       synchronized (startStopLock) {
-        if (! started && ! stopped) {
+        if (! started && ! shutdownStarted) {
           started = true;
           execThread.start();
         }
       }
     }
     
-    public void stop() {
+    /**
+     * Call to stop the thread which is running tasks.  If this has already been stopped this call 
+     * will have no effect.  Regardless if true or false is passed in, running tasks will NOT be 
+     * Interrupted or stopped.  True will only prevent ANY extra tasks from running, while a false 
+     * will let tasks ready to run complete before shutting down.
+     * 
+     * @param stopImmediately false if the scheduler should let ready tasks run, true stops scheduler immediately
+     * @return if stopImmediately, this will include tasks which were queued to run, otherwise will be an empty list
+     */
+    protected List<Runnable> stop(boolean stopImmediately) {
       synchronized (startStopLock) {
-        stopped = true;
-        
-        if (started) {
-          // send interrupt to unblock if currently waiting for tasks
-          execThread.interrupt();
+        if (! shutdownStarted) {
+          shutdownStarted = true;
+          
+          if (started) {
+            if (stopImmediately) {
+              return finishShutdown();
+            } else {
+              /* add to the end of the ready to execute queue a task which 
+               * will finish the shutdown of the scheduler. 
+               */
+              scheduler.execute(new Runnable() {
+                @Override
+                public void run() {
+                  finishShutdown();
+                }
+              });
+            }
+          }
         }
       }
+
+      return Collections.emptyList();
+    }
+    
+    /**
+     * Finishes shutdown process, and clears any tasks that remain in the queue.
+     * 
+     * @return a list of runnables which remained in the queue after shutdown
+     */
+    private List<Runnable> finishShutdown() {
+      shutdownFinished = true;
+      scheduler.cancelTick();
+      
+      return scheduler.clearTasks();
     }
     
     @Override
     public void run() {
-      while (! stopped) {
+      while (! shutdownFinished) {
         try {
           scheduler.tick();
         } catch (InterruptedException e) {

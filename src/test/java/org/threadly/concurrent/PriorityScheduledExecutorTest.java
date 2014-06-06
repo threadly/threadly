@@ -1,7 +1,9 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.TEST_QTY;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -795,14 +797,79 @@ public class PriorityScheduledExecutorTest extends SchedulerServiceInterfaceTest
   }
   
   @Test
+  public void isShutdownTest() {
+    PriorityScheduledExecutorFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduledExecutor scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      
+      assertFalse(scheduler.isShutdown());
+      
+      scheduler.shutdown();
+      
+      assertTrue(scheduler.isShutdown());
+      
+      scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      scheduler.shutdownNow();
+      
+      assertTrue(scheduler.isShutdown());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void shutdownTest() {
+    PriorityScheduledExecutorFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduledExecutor scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      TestRunnable lastRunnable = null;
+      for (int i = 0; i < TEST_QTY; i++) {
+        /* adding a run time to have chances that there will be 
+         * runnables waiting to execute after shutdown call.
+         */
+        lastRunnable = new TestRunnable(5);
+        scheduler.execute(lastRunnable);
+      }
+      
+      scheduler.shutdown();
+      
+      // runnable should finish
+      lastRunnable.blockTillFinished();
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void shutdownRecurringTest() {
+    PriorityScheduledExecutorFactory factory = getPrioritySchedulerFactory();
+    try {
+      final PriorityScheduledExecutor scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      TestRunnable tr = new TestRunnable();
+      scheduler.scheduleWithFixedDelay(tr, 0, 0);
+      
+      tr.blockTillStarted();
+      
+      scheduler.shutdown();
+      
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentPoolSize() == 0;
+        }
+      }.blockTillTrue();
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void shutdownFail() {
     PriorityScheduledExecutorFactory factory = getPrioritySchedulerFactory();
     try {
       PriorityScheduledExecutor scheduler = factory.makePriorityScheduler(1, 1, 1000);
       
       scheduler.shutdown();
-      
-      assertTrue(scheduler.isShutdown());
       
       try {
         scheduler.execute(new TestRunnable());
@@ -830,12 +897,52 @@ public class PriorityScheduledExecutorTest extends SchedulerServiceInterfaceTest
   @Test
   public void shutdownNowTest() {
     PriorityScheduledExecutorFactory factory = getPrioritySchedulerFactory();
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      PriorityScheduledExecutor scheduler = factory.makePriorityScheduler(1, 1, 1000);
+
+      // execute one runnable which will not complete
+      scheduler.execute(btr);
+      
+      List<TestRunnable> expectedRunnables = new ArrayList<TestRunnable>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
+        TestRunnable tr = new TestRunnable();
+        if (i != 0) {
+          /* currently the PriorityScheduledExecutor can not remove or cancel tasks which 
+           * are waiting for a worker...see issue #75
+           */
+          expectedRunnables.add(tr);
+        }
+        scheduler.execute(tr);
+      }
+      
+      btr.blockTillStarted();
+      
+      List<Runnable> canceledRunnables = scheduler.shutdownNow();
+      // unblock now so that others can run (if the unit test fails)
+      btr.unblock();
+      
+      assertNotNull(canceledRunnables);
+      assertTrue(canceledRunnables.containsAll(expectedRunnables));
+      assertTrue(expectedRunnables.containsAll(canceledRunnables));
+      
+      Iterator<TestRunnable> it = expectedRunnables.iterator();
+      while (it.hasNext()) {
+        assertEquals(0, it.next().getRunCount());
+      }
+    } finally {
+      btr.unblock();
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void shutdownNowFail() {
+    PriorityScheduledExecutorFactory factory = getPrioritySchedulerFactory();
     try {
       PriorityScheduledExecutor scheduler = factory.makePriorityScheduler(1, 1, 1000);
       
       scheduler.shutdownNow();
-      
-      assertTrue(scheduler.isShutdown());
       
       try {
         scheduler.execute(new TestRunnable());
