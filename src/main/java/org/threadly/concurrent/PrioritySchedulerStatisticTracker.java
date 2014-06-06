@@ -192,6 +192,26 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
     highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
   }
   
+  @Override
+  public List<Runnable> shutdownNow() {
+    // we must unwrap our statistic tracker runnables
+    List<Runnable> wrappedRunnables = super.shutdownNow();
+    List<Runnable> result = new ArrayList<Runnable>(wrappedRunnables.size());
+    
+    Iterator<Runnable> it = wrappedRunnables.iterator();
+    while (it.hasNext()) {
+      Runnable r = it.next();
+      if (r instanceof RunnableStatWrapper) {
+        RunnableStatWrapper statWrapper = (RunnableStatWrapper)r;
+        result.add(statWrapper.toRun);
+      } else {
+        result.add(r);
+      }
+    }
+    
+    return result;
+  }
+  
   /**
    * Clears all collected rolling statistics.  These are the statistics 
    * used for averages and are limited by window sizes.
