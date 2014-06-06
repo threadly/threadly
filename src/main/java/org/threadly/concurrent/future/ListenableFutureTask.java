@@ -78,7 +78,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
 
   @Override
   public void addListener(Runnable listener) {
-    addListener(listener, null);
+    listenerHelper.addListener(listener);
   }
 
   @Override

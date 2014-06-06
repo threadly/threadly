@@ -63,8 +63,8 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
       task.run();
       
       return FutureUtils.immediateResultFuture(result);
-    } catch (RuntimeException e) {
-      return FutureUtils.immediateFailureFuture(e);
+    } catch (Throwable t) {
+      return FutureUtils.immediateFailureFuture(t);
     }
   }
 
@@ -78,8 +78,8 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
       T result = task.call();
       
       return FutureUtils.immediateResultFuture(result);
-    } catch (Exception e) {
-      return FutureUtils.immediateFailureFuture(e);
+    } catch (Throwable t) {
+      return FutureUtils.immediateFailureFuture(t);
     }
   }
 }

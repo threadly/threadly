@@ -83,13 +83,27 @@ public class ListenerHelper {
       } else {
         listener.run();
       }
-    } catch (RuntimeException e) {
+    } catch (Throwable t) {
       if (throwException) {
-        throw e;
+        throw ExceptionUtils.makeRuntime(t);
       } else {
-        ExceptionUtils.handleException(e);
+        ExceptionUtils.handleException(t);
       }
     }
+  }
+
+  /**
+   * Adds a listener to be tracked.  If the {@link ListenerHelper} was constructed 
+   * with true (listeners can only be called once) then this listener will be called 
+   * immediately.  This just defers to the other addListener call, providing null 
+   * for the executor.  So when the listener runs, it will be on the same thread as 
+   * the one invoking "callListeners".
+   * 
+   * @param listener runnable to call when trigger event called
+   * @since 2.1.0
+   */
+  public void addListener(Runnable listener) {
+    addListener(listener, null);
   }
 
   /**

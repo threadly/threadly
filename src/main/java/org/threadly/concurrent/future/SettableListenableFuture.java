@@ -40,7 +40,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
 
   @Override
   public void addListener(Runnable listener) {
-    addListener(listener, null);
+    listenerHelper.addListener(listener);
   }
 
   @Override

@@ -84,8 +84,8 @@ public class ListenerHelperTest {
     assertEquals(0, onceHelper.registeredListenerCount());
     assertEquals(0, repeatedHelper.registeredListenerCount());
     
-    onceHelper.addListener(new TestRunnable(), null);
-    repeatedHelper.addListener(new TestRunnable(), null);
+    onceHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(new TestRunnable());
     
     assertEquals(1, onceHelper.registeredListenerCount());
     assertEquals(1, repeatedHelper.registeredListenerCount());
@@ -101,8 +101,8 @@ public class ListenerHelperTest {
   public void addAndCallListenersTest() {
     TestRunnable onceTR = new TestRunnable();
     TestRunnable repeatedTR = new TestRunnable();
-    onceHelper.addListener(onceTR, null);
-    repeatedHelper.addListener(repeatedTR, null);
+    onceHelper.addListener(onceTR);
+    repeatedHelper.addListener(repeatedTR);
     onceHelper.callListeners();
     repeatedHelper.callListeners();
     
@@ -121,8 +121,8 @@ public class ListenerHelperTest {
     TestRunnable repeatedTR = new TestRunnable();
     onceHelper.callListeners();
     repeatedHelper.callListeners();
-    onceHelper.addListener(onceTR, null);
-    repeatedHelper.addListener(repeatedTR, null);
+    onceHelper.addListener(onceTR);
+    repeatedHelper.addListener(repeatedTR);
     
     assertTrue(onceTR.ranOnce());
     assertFalse(repeatedTR.ranOnce());
@@ -140,7 +140,7 @@ public class ListenerHelperTest {
     onceHelper.callListeners();
     
     try {
-      onceHelper.addListener(listener, null);
+      onceHelper.addListener(listener);
       fail("Exception should have thrown");
     } catch (RuntimeException e) {
       // expected
@@ -164,8 +164,8 @@ public class ListenerHelperTest {
     assertFalse(onceHelper.removeListener(onceTR));
     assertFalse(repeatedHelper.removeListener(repeatedTR));
     
-    onceHelper.addListener(onceTR, null);
-    repeatedHelper.addListener(repeatedTR, null);
+    onceHelper.addListener(onceTR);
+    repeatedHelper.addListener(repeatedTR);
 
     // should be false for the opposite
     assertFalse(onceHelper.removeListener(repeatedTR));
@@ -183,8 +183,8 @@ public class ListenerHelperTest {
     assertFalse(onceHelper.removeListener(onceTR));
     assertFalse(repeatedHelper.removeListener(repeatedTR));
     
-    onceHelper.addListener(onceTR, null);
-    repeatedHelper.addListener(repeatedTR, null);
+    onceHelper.addListener(onceTR);
+    repeatedHelper.addListener(repeatedTR);
     
     onceHelper.callListeners();
     repeatedHelper.callListeners();
@@ -197,8 +197,8 @@ public class ListenerHelperTest {
   public void clearListenersTest() {
     TestRunnable onceTR = new TestRunnable();
     TestRunnable repeatedTR = new TestRunnable();
-    onceHelper.addListener(onceTR, null);
-    repeatedHelper.addListener(repeatedTR, null);
+    onceHelper.addListener(onceTR);
+    repeatedHelper.addListener(repeatedTR);
     
     onceHelper.clearListeners();
     repeatedHelper.clearListeners();
@@ -216,11 +216,11 @@ public class ListenerHelperTest {
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunFinish() {
-        repeatedHelper.addListener(addedTR, null);
+        repeatedHelper.addListener(addedTR);
       }
     };
-    repeatedHelper.addListener(tr, null);
-    repeatedHelper.addListener(new TestRunnable(), null);
+    repeatedHelper.addListener(tr);
+    repeatedHelper.addListener(new TestRunnable());
     
     repeatedHelper.callListeners();
     
