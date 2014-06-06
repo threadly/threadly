@@ -301,6 +301,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * 
    * The future .get() method will return null once the runnable has completed.
    * 
+   * @param <T> type of result returned from the future
    * @param threadKey key which hash will be used to determine which thread to run
    * @param task runnable to execute
    * @param result result to be returned from resulting future .get() when runnable completes
@@ -336,6 +337,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * needed when a result needs to be consumed from the 
    * callable.
    * 
+   * @param <T> type of result returned from the future
    * @param threadKey key which hash will be used to determine which thread to run
    * @param task callable to be executed
    * @param delayInMs time in milliseconds to wait to execute task

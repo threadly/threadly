@@ -30,6 +30,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
+   * @param <T> type of result returned from the future
    * @param future future to attach callback to
    * @param callback callback to call once future completes
    */
@@ -45,6 +46,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
+   * @param <T> type of result returned from the future
    * @param future future to attach callback to
    * @param callback callback to call once future completes
    * @param executor executor to call callback on
@@ -154,6 +156,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
+   * @param <T> type of result returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -173,6 +176,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
+   * @param <T> type of result returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -192,6 +196,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
+   * @param <T> type of result returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -207,6 +212,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
+   * @param <T> type of result returned from the future
    * @param result result to be provided in .get() call
    * @return Already satisfied future
    */
@@ -222,6 +228,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
+   * @param <T> type of result returned from the future
    * @param failure to provide as cause for ExecutionException thrown from .get() call
    * @return Already satisfied future
    */

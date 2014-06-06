@@ -137,6 +137,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * task will require/use (instead of defaulting to 1).  The task will be scheduled 
    * out as far as necessary to ensure it conforms to the set rate.
    * 
+   * @param <T> type of result returned from the future
    * @param permits resource permits for this task
    * @param task Runnable to execute when ready
    * @param result result to return from future when task completes
@@ -161,6 +162,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * task will require/use (instead of defaulting to 1).  The task will be scheduled 
    * out as far as necessary to ensure it conforms to the set rate.
    * 
+   * @param <T> type of result returned from the future
    * @param permits resource permits for this task
    * @param task Callable to execute when ready
    * @return Future that will return the callables provided result when the execution has completed
@@ -184,6 +186,14 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     doExecute(1, task);
   }
   
+  /**
+   * Performs the execution by scheduling the task out as necessary.  The provided 
+   * permits will impact the next execution's schedule time to ensure the given 
+   * rate.
+   * 
+   * @param permits number of permits for this task
+   * @param task Runnable to be executed once rate can be maintained
+   */
   protected void doExecute(int permits, Runnable task) {
     synchronized (permitLock) {
       int effectiveDelay = (int)(((double)permits / permitsPerSecond) * 1000);

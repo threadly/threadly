@@ -24,16 +24,6 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   public ImmediateResultListenableFuture(T result) {
     this.result = result;
   }
-  
-  @Override
-  public T get() {
-    return result;
-  }
-
-  @Override
-  public T get(long timeout, TimeUnit unit) {
-    return result;
-  }
 
   @Override
   public void addCallback(FutureCallback<? super T> callback) {
@@ -52,5 +42,15 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
     } else {
       callback.handleResult(result);
     }
+  }
+  
+  @Override
+  public T get() {
+    return result;
+  }
+
+  @Override
+  public T get(long timeout, TimeUnit unit) {
+    return result;
   }
 }

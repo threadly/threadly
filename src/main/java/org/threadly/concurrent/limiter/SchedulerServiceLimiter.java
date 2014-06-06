@@ -58,6 +58,7 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
 
   @Override
   public boolean remove(Runnable task) {
+    // synchronize on this so that we don't consume tasks while trying to remove
     synchronized (this) {
       // try to remove from scheduler first
       if (scheduler.remove(task)) {
@@ -70,6 +71,7 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
 
   @Override
   public boolean remove(Callable<?> task) {
+    // synchronize on this so that we don't consume tasks while trying to remove
     synchronized (this) {
       // try to remove from scheduler first
       if (scheduler.remove(task)) {

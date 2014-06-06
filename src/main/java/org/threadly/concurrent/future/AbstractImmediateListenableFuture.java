@@ -9,17 +9,8 @@ import java.util.concurrent.Executor;
  * @since 1.3.0
  * @param <T> type of object returned by the future
  */
-abstract class AbstractImmediateListenableFuture<T> implements ListenableFuture<T> {
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return false;
-  }
-
+abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
+                                                    implements ListenableFuture<T> {
   @Override
   public boolean isDone() {
     return true;

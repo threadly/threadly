@@ -106,7 +106,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   /**
    * Not implemented for the {@link SingleThreadSchedulerServiceWrapper}.  
-   * Will always throw an unsupported operation exception.
+   * Will always throw an UnsupportedOperationException.
    */
   @Override
   public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,

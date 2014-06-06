@@ -119,10 +119,18 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
       this.runnable = runnable;
     }
     
+    /**
+     * Called immediately after contained task finishes.  That way any additional 
+     * cleanup needed can be run.
+     */
     protected void doAfterRunTasks() {
       // nothing in the default implementation
     }
     
+    /**
+     * Submits this task to the executor.  This can be overridden if it needs to be 
+     * submitted in a different way.
+     */
     protected void submitToExecutor() {
       this.executor.execute(this);
     }

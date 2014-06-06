@@ -284,13 +284,18 @@ public class Profiler {
     }
   }
   
+  /**
+   * Creates an identifier to represent the thread, a combination of the name, and the id.
+   * 
+   * @param t Thread to build identifier for
+   * @return String to represent this thread uniquely
+   */
   private static String getThreadIdentifier(Thread t) {
     return t.toString() + ';' + Long.toHexString(t.getId());
   }
   
   /**
-   * Output all the currently collected statistics to the provided output 
-   * stream.
+   * Output all the currently collected statistics to the provided output stream.
    * 
    * @return The dumped results as a single String
    */
@@ -302,8 +307,7 @@ public class Profiler {
   }
   
   /**
-   * Output all the currently collected statistics to the provided output 
-   * stream.
+   * Output all the currently collected statistics to the provided output stream.
    * 
    * @param out OutputStream to write results to
    */
@@ -312,8 +316,7 @@ public class Profiler {
   }
   
   /**
-   * Output all the currently collected statistics to the provided output 
-   * stream.
+   * Output all the currently collected statistics to the provided output stream.
    * 
    * @param ps PrintStream to write results to
    */
@@ -361,6 +364,13 @@ public class Profiler {
     }
   }
   
+  /**
+   * Dumps the traces in the provided set to the provided output stream.
+   * 
+   * @param traces Set to examine traces to dump statistics about
+   * @param globalCount true if we should examine the global counts of the traces
+   * @param out Output to dump results to
+   */
   private static void dumpTraces(Set<Trace> traces, 
                                  boolean globalCount, 
                                  PrintStream out) {
@@ -477,15 +487,26 @@ public class Profiler {
     }
   }
   
-  private static void dumpFunction(Function m, PrintStream out) {
-    out.print(format(m.count));
-    out.print(format(m.count - m.childCount));
+  /**
+   * Dumps the output for a given function to the provided PrintStream.
+   * @param f Function to format for
+   * @param out PrintStream to print out to
+   */
+  private static void dumpFunction(Function f, PrintStream out) {
+    out.print(format(f.count));
+    out.print(format(f.count - f.childCount));
     out.print(' ');
-    out.print(m.className);
+    out.print(f.className);
     out.print('.');
-    out.println(m.function);
+    out.println(f.function);
   }
   
+  /**
+   * Consistently formats an integer, adding spacing in front of it if necessary.
+   * 
+   * @param c Integer to use to represent within outputted string
+   * @return Consistently sized string to represent the integer
+   */
   private static String format(int c) {
     String s = Integer.toString(c);
     StringBuilder sb = new StringBuilder();

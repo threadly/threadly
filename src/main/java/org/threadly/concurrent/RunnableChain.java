@@ -41,6 +41,10 @@ public class RunnableChain implements Runnable {
     }
   }
   
+  /**
+   * Iterates through the toRun list, executing along the way.  If any exceptions are thrown, 
+   * they will be propagated out of this call.
+   */
   protected void runExceptionsCascade() {
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {
@@ -48,6 +52,10 @@ public class RunnableChain implements Runnable {
     }
   }
   
+  /**
+   * Iterates through the toRun list, executing along the way.  If any exceptions are thrown, 
+   * they will be handled to {@link ExceptionUtils} and will not stop future executions.
+   */
   protected void runIsolated() {
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {

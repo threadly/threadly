@@ -18,7 +18,8 @@ import org.threadly.util.Clock;
  * @since 1.2.0
  * @param <T> type of returned object
  */
-public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureCallback<T> {
+public class SettableListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
+                                         implements ListenableFuture<T>, FutureCallback<T> {
   protected final ListenerHelper listenerHelper;
   protected final Object resultLock;
   private volatile boolean done;
@@ -57,15 +58,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     FutureUtils.addCallback(this, callback, executor);
   }
   
-  // should be synchronized on resultLock before calling
-  private void setDone() {
-    if (done) {
-      throw new IllegalStateException("Already done");
-    }
-    
-    done = true;
-  }
-  
   /**
    * This call defers to setResult.  It is implemented so that you can construct this, 
    * return it immediately, but only later provide this as a callback to another 
@@ -76,6 +68,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * 
    * If this is being used to chain together ListenableFuture's, setResult/setFailure should 
    * never be called manually (or an exception will occur).
+   * 
+   * @param result Result object to provide to the future to be returned from .get() call
    */
   @Override
   public void handleResult(T result) {
@@ -92,6 +86,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * 
    * If this is being used to chain together ListenableFuture's, setResult/setFailure should 
    * never be called manually (or an exception will occur).
+   * 
+   * @param t exception to be provided as the cause from the ExecutionException thrown from .get() call
    */
   @Override
   public void handleFailure(Throwable t) {
@@ -142,17 +138,13 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     listenerHelper.callListeners();
   }
   
-  /**
-   * This has no effect in this implementation.
-   */
-  @Override
-  public boolean cancel(boolean mayInterruptIfRunning) {
-    return false;
-  }
-
-  @Override
-  public boolean isCancelled() {
-    return false;
+  // should be synchronized on resultLock before calling
+  private void setDone() {
+    if (done) {
+      throw new IllegalStateException("Already done");
+    }
+    
+    done = true;
   }
 
   @Override
