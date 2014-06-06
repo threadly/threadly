@@ -9,10 +9,10 @@ import org.threadly.test.concurrent.TestCondition;
 @SuppressWarnings("javadoc")
 public class TestConditionTest {
   @Test
-  public void testBlock() {
+  public void blockTest() {
     DelayCondition dc = new DelayCondition(DELAY_TIME);
     long startTime = System.currentTimeMillis();
-    dc.blockTillTrue(DELAY_TIME * 10);
+    dc.blockTillTrue((DELAY_TIME * 10) + 500);
     long endTime = System.currentTimeMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
@@ -24,7 +24,7 @@ public class TestConditionTest {
   }
   
   @Test
-  public void testBlockFail() {
+  public void blockFail() {
     DelayCondition dc = new DelayCondition(DELAY_TIME * 100);
     long startTime = System.currentTimeMillis();
     try {
