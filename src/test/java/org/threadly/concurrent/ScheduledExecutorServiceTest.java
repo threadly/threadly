@@ -32,7 +32,6 @@ public abstract class ScheduledExecutorServiceTest {
   }
   
   protected abstract ScheduledExecutorService makeScheduler(int poolSize);
-
   
   @Test
   public void shutdownTest() {
@@ -315,6 +314,48 @@ public abstract class ScheduledExecutorServiceTest {
       }
     }
   }
+  
+  @Test
+  public void scheduleWithFixedDelayExceptionTest() {
+    recurringExceptionTest(false);
+  }
+
+  @Test
+  public void scheduleAtFixedRateExceptionTest() {
+    recurringExceptionTest(true);
+  }
+  
+  private void recurringExceptionTest(boolean atFixedRate) {
+    ScheduledExecutorService scheduler = makeScheduler(2);
+    try {
+      final int runCountTillException = 4;
+      
+      TestRunnable tr = new TestRunnable() {
+        @Override
+        public void handleRunFinish() {
+          if (this.getRunCount() >= runCountTillException) {
+            throw new RuntimeException();
+          }
+        }
+      };
+      
+      if (atFixedRate) {
+        scheduler.scheduleAtFixedRate(tr, 0, 1, TimeUnit.MILLISECONDS);
+      } else {
+        scheduler.scheduleWithFixedDelay(tr, 0, 1, TimeUnit.MILLISECONDS);
+      }
+      
+      // block till we have run enough times to throw exception
+      tr.blockTillFinished(1000 * 10, runCountTillException);
+      
+      // wait a little extra to give time for additional runs if possible
+      TestUtils.sleep(SCHEDULE_DELAY);
+      
+      assertEquals(runCountTillException, tr.getRunCount());
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
 
   @Test (expected = NullPointerException.class)
   public void scheduleWithFixedDelayFail() {
@@ -349,36 +390,6 @@ public abstract class ScheduledExecutorServiceTest {
       TestUtils.sleep(periodInMillis * 2);
       
       assertFalse(tr.ranConcurrently());
-    } finally {
-      scheduler.shutdownNow();
-    }
-  }
-
-  @Test
-  public void scheduleAtFixedRateExceptionTest() {
-    ScheduledExecutorService scheduler = makeScheduler(2);
-    try {
-      final int periodInMillis = SCHEDULE_DELAY;
-      final int runCountTillException = 4;
-      
-      TestRunnable tr = new TestRunnable() {
-        @Override
-        public void handleRunFinish() {
-          if (this.getRunCount() >= runCountTillException) {
-            throw new RuntimeException();
-          }
-        }
-      };
-      
-      scheduler.scheduleAtFixedRate(tr, 0, periodInMillis, TimeUnit.MILLISECONDS);
-      
-      // block till we have run enough times to throw exception
-      tr.blockTillFinished(1000 * 10, runCountTillException);
-      
-      // wait a little extra to give time for additional runs if possible
-      TestUtils.sleep(periodInMillis * 2);
-      
-      assertEquals(runCountTillException, tr.getRunCount());
     } finally {
       scheduler.shutdownNow();
     }

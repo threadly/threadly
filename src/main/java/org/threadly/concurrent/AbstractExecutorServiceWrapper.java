@@ -381,4 +381,40 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       }
     }
   }
+  
+  /**
+   * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
+   * recurring task causes the task to stop executing, we have to wrap the task.  That way 
+   * we can remove the recurring task if the error occurs (since {@link SimpleSchedulerInterface} 
+   * will continue to execute the task despite the error.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 2.1.0
+   */
+  protected class ThrowableHandlingRecurringRunnable implements RunnableContainerInterface, Runnable {
+    private final Runnable task;
+    
+    protected ThrowableHandlingRecurringRunnable(Runnable task) {
+      if (task == null) {
+        throw new NullPointerException("Must provide task");
+      }
+      
+      this.task = task;
+    }
+    
+    @Override
+    public void run() {
+      try {
+        task.run();
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+        scheduler.remove(this);
+      }
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
+    }
+  }
 }

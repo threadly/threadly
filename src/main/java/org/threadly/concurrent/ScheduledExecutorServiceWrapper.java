@@ -42,7 +42,8 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
       throw new IllegalArgumentException("recurringDelay must be >= 0");
     }
     
-    scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
+    scheduler.scheduleWithFixedDelay(new ThrowableSurpressingRunnable(task), 
+                                     initialDelay, recurringDelay, 
                                      TimeUnit.MILLISECONDS);
   }
 }

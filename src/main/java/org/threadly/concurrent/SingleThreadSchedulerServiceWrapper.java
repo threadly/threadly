@@ -93,6 +93,9 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   protected ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable task,
                                                                 long initialDelayInMillis,
                                                                 long delayInMillis) {
+    // wrap the task to ensure the correct behavior on exceptions
+    task = new ThrowableHandlingRecurringRunnable(task);
+    
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
     NoThreadScheduler nts = scheduler.getScheduler();
     NoThreadScheduler.RecurringTask ott = nts.new RecurringTask(lft, initialDelayInMillis, delayInMillis);

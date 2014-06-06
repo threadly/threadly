@@ -43,8 +43,8 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
     
     try {
       command.run();
-    } catch (RuntimeException e) {
-      ExceptionUtils.handleException(e);
+    } catch (Throwable t) {
+      ExceptionUtils.handleException(t);
     }
   }
 
