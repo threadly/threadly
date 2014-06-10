@@ -3,14 +3,15 @@ package org.threadly.util;
 import static org.junit.Assert.*;
 
 import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ClockTest {
-  @BeforeClass
-  public static void setupClass() {
+  @Before
+  public void setup() {
     Clock.stopClockUpdateThread();
   }
   
@@ -35,13 +36,15 @@ public class ClockTest {
   
   @Test
   public void automaticUpdateTest() {
-    long before = Clock.lastKnownTimeMillis();
+    final long before = Clock.lastKnownTimeMillis();
     
     Clock.startClockUpdateThread();
 
-    TestUtils.sleep(Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS + 
-                   (Clock.AUTOMATIC_UPDATE_FREQUENCY_IN_MS / 2));
-    
-    assertTrue(Clock.lastKnownTimeMillis() > before);
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return Clock.lastKnownTimeMillis() > before;
+      }
+    }.blockTillTrue();
   }
 }
