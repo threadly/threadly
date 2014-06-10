@@ -21,11 +21,13 @@ It offers the ability to submit tasks with a given priority. Low priority tasks 
 
 The other large difference compared to ScheduledThreadPoolExecutor is that the pool size is dynamic. In ScheduledThreadPoolExecutor you can only provide one size, and that pool can not grow or shrink. In this implementation you have a core size, max size, and workers can be expired if they are no longer used.
 
-*    ExecutorLimiter, SchedulerLimiter and PrioritySchedulerLimiter - These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
+*    ExecutorLimiter, SimpleSchedulerLimiter, SchedulerServiceLimiter and PrioritySchedulerLimiter - These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
 
 The design is such so that you create one large pool, and then wrap it in one of these two wrappers.  You then pass the wrapper to your different parts of code.  It relies on the large pool in order to actually get a thread, but this prevents any one section of code from completely dominating the thread pool.
 
 *    TaskExecutorDistributor and TaskSchedulerDistributor provide you the ability to execute (or schedule) tasks with a given key such that tasks with the same key hash code will NEVER run concurrently. This is designed as an ability to help the developer from having to deal with concurrent issues when ever possible. It allows you to have multiple runnables or tasks that share memory, but don't force the developer to deal with synchronization and memory barriers (assuming they all share the same key).  These now also allow you to continue to use Future's with the key based execution.
+
+*    NoThreadScheduler, sometimes even one thread is too many.  This provides you the ability to schedule tasks, or execute tasks on the scheduler, but they wont be run till you call .tick() on the scheduler.  This allows you to control which thread these tasks run on (since you have to explicitly call the .tick()).  A great example of where this could be useful is if you want to schedule tasks which can only run on a GUI thread.  Another example would be in NIO programming, where you want to modify the selector, you can just call .tick() before you call .select() on the selector to apply any modifications you need in a thread safe way (without worrying about blocking).
 
 *    ConcurrentArrayList is a thread safe array list that also implements a Dequeue. It may be better performing than a CopyOnWriteArrayList depending on what the use case is. It is able to avoid copies for some operations, primarily adding and removing from the ends of a list (and can be tuned for the specific application to possibly make copies very rare).
 
