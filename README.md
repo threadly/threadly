@@ -31,6 +31,17 @@ The design is such so that you create one large pool, and then wrap it in one of
 
 *    ConcurrentArrayList is a thread safe array list that also implements a Dequeue. It may be better performing than a CopyOnWriteArrayList depending on what the use case is. It is able to avoid copies for some operations, primarily adding and removing from the ends of a list (and can be tuned for the specific application to possibly make copies very rare).
 
+*    FutureUtils provides some nice utilities for working with futures. A couple of the nice operations are the ability to combine several futures, and either block till all have finished, or get a future which combines all the results for once they have completed.
+
+*    ListenerHelper, listeners are a very common design pattern for asynchronous designs. Although ListenerHelper can only call Runnable's currently, it can be a great way to notify a possible listener that a an operation or state has changed. I am sure we have all done similar implementations a million times, this is one robust implementation that will hopefully reduce duplicated code in the future.
+
+-- Debugging utilities --
+
+*    DebugLogger - often times logging gives a bad conception of what order of operations things are happening in concurrent designs. Or often times just adding logging can cause race conditions to disappear. DebugLogger attempts to solve those problems (or at least help). It does this by collecting log messages, storing the time which they came in (in nano seconds), and then order them. Then in batches it prints the log messages out. Since we are logging out asynchronously, and we try to have the storage of the log message very cheap, it hopefully will not impact the race condition your attempting to investigate.
+
+*    Profiler and ControlledThreadProfiler - These are utilities for helping to understand where the bottlenecks of your application are. These break down what each thread is doing, as well as the system as a whole. So you can understand where your CPU heavy operations are, where your lock contention exists, and other resources as well.
+
+
 -- Unit Test Tools --
 
 *    AsyncVerifier - Used to verify operations which occurred asynchronously.  The AsyncVerifier allows you to assert failures/successes in other threads, and allow the main test thread to throw exceptions if any failures occur.  Thus blocking the main test thread until the sub-threads have completed.
@@ -38,3 +49,5 @@ The design is such so that you create one large pool, and then wrap it in one of
 *    TestCondition - often times in doing unit test for asynchronous operations you have to wait for a condition to be come true. This class gives a way to easily wait for those conditions to be true, or throw an exception if they do not happen after a given timeout. The implementation of TestRunnable gives a good example of how this can be used.
 
 *    TestRunnable - a runnable structure that has common operations already implemented. It gives two functions handleRunStart and handleRunFinish to allow people to optionally override to provide any test specific operation which is necessary. You can see many examples in our own unit test code of how we are using this.
+
+*    TestableScheduler - this is very similar to "NoThreadScheduler", except it allows you to supply the time, thus allowing things to happen faster than real time. If you have an implementation with a recurring task and you want to unit test what happens when it runs the 5th time, while keeping the unit test fast, you can supply a time faster than real time to cause these executions.
