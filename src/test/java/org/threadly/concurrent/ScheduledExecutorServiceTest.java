@@ -500,7 +500,7 @@ public abstract class ScheduledExecutorServiceTest {
       assertEquals(toInvoke.size(), result.size());
       
       assertTrue(endTime - startTime >= timeoutTime);
-      assertTrue(endTime - startTime < timeoutTime + 250);
+      assertTrue(endTime - startTime < timeoutTime + 500);
     } finally {
       scheduler.shutdownNow();
     }
