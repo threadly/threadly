@@ -15,17 +15,21 @@ import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>TaskDistributor is designed to take a multi-threaded pool
- * and add tasks with a given key such that those tasks will
- * be run single threaded for any given key.  The thread which
- * runs those tasks may be different each time, but no two tasks
- * with the same key will ever be run in parallel.</p>
+ * <p>TaskDistributor is designed such that tasks executed on it for a given key will run  
+ * in a single threaded manner.  It needs a multi-threaded pool supplied to it, to then 
+ * execute those tasks on.  While the thread which runs those tasks may be different  
+ * between multiple executions, no two tasks for the same key will ever be run in parallel.</p>
  * 
- * <p>Because of that, it is recommended that the executor provided 
- * has as many possible threads as possible keys that could be 
- * provided to be run in parallel.  If this class is starved for 
- * threads some keys may continue to process new tasks, while
- * other keys could be starved.</p>
+ * <p>Because of that, it is recommended that the executor provided has as many possible 
+ * threads as possible keys that could be provided to be run in parallel.  If this class is 
+ * starved for threads some keys may continue to process new tasks, while other keys could 
+ * be starved.</p>
+ * 
+ * <p>Assuming that the shared memory (any objects, primitives, etc) are only accessed 
+ * through the same instance of {@link TaskExecutorDistributor}, and assuming that those 
+ * variables are only accessed via the same key.  Then the programer does not need to worry 
+ * about synchronization, or volatile.  The {@link TaskExecutorDistributor} will handle the 
+ * happens-before relationship.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0

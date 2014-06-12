@@ -11,6 +11,10 @@ import org.threadly.concurrent.lock.StripedLock;
  * <p>This is a class which is more full featured than {@link TaskExecutorDistributor}, 
  * but it does require a scheduler implementation in order to be able to perform scheduling.</p>
  * 
+ * <p>The same guarantees and restrictions for the {@link TaskExecutorDistributor} also exist 
+ * for this class.  Please read the javadoc for {@link TaskExecutorDistributor} to understand 
+ * more about how this operates.</p>
+ * 
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
