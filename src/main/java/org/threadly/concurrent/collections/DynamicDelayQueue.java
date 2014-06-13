@@ -2,6 +2,7 @@ package org.threadly.concurrent.collections;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Queue;
@@ -359,7 +360,17 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
         T result;
         if (next != null) {
           result = next;
-          queue.remove(result);
+          synchronized (queueLock) {
+            if (queue.isEmpty()) {
+              throw new ConcurrentModificationException();
+            }
+            
+            T removed = queue.remove(0);
+            if (removed != next) {
+              queue.add(0, removed);
+              throw new ConcurrentModificationException();
+            }
+          }
           next = null;
         } else {
           result = DynamicDelayQueue.this.remove();

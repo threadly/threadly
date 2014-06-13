@@ -5,6 +5,7 @@ import static org.threadly.TestConstants.*;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -493,13 +494,43 @@ public class DynamicDelayQueueTest {
     }
   }
    
+  @Test (expected = ConcurrentModificationException.class)
+  public void consumerIteratorConcurrentModificationFail() throws InterruptedException {
+    synchronized (testQueue.getLock()) {
+      populateNegative(testQueue);
+      
+      ConsumerIterator<TestDelayed> it = testQueue.consumeIterator();
+      assertTrue(it.hasNext());
+      
+      assertNotNull(testQueue.poll());
+      
+      it.remove();
+      fail("Exception should have been thrown");
+    }
+  }
+  
+ @Test (expected = ConcurrentModificationException.class)
+ public void consumerIteratorConcurrentModificationEmptyFail() throws InterruptedException {
+   synchronized (testQueue.getLock()) {
+     testQueue.add(new TestDelayed(-1));
+     
+     ConsumerIterator<TestDelayed> it = testQueue.consumeIterator();
+     assertTrue(it.hasNext());
+     
+     assertNotNull(testQueue.poll());
+     
+     it.remove();
+     fail("Exception should have been thrown");
+   }
+ }
+   
   @Test
   public void remainingCapacityTest() {
     assertEquals(Integer.MAX_VALUE, testQueue.remainingCapacity());
   }
   
   @Test
-  public void toArrayTest() {
+  public void toObjectArrayTest() {
     assertArrayEquals(testQueue.toArray(), new TestDelayed[0]);
     
     TestDelayed[] compare = new TestDelayed[TEST_QTY];
@@ -510,6 +541,25 @@ public class DynamicDelayQueueTest {
     }
     
     assertArrayEquals(testQueue.toArray(), compare);
+  }
+  
+  @Test
+  public void toArrayTest() {
+    TestDelayed[] emptyArray = new TestDelayed[0];
+    assertTrue(testQueue.toArray(emptyArray) == emptyArray);
+    
+    TestDelayed[] compare = new TestDelayed[TEST_QTY];
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestDelayed td = new TestDelayed(i);
+      compare[i] = td;
+      testQueue.add(td);
+    }
+    
+    TestDelayed[] resultArray = new TestDelayed[testQueue.size()];
+    
+    assertTrue(testQueue.toArray(resultArray) == resultArray);
+    assertArrayEquals(resultArray, compare);
+    assertArrayEquals(testQueue.toArray(emptyArray), compare);
   }
   
   @Test

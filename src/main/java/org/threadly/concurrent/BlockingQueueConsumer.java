@@ -33,8 +33,8 @@ public class BlockingQueueConsumer<T> {
     return DEFAULT_THREAD_PREFIX + DEFAULT_CONSUMER_VALUE.getAndIncrement();
   }
   
-  protected final BlockingQueue<T> queue;
-  protected final ConsumerAcceptor<T> acceptor;
+  protected final BlockingQueue<? extends T> queue;
+  protected final ConsumerAcceptor<? super T> acceptor;
   protected volatile boolean started;
   protected volatile boolean stopped;
   protected volatile Thread runningThread;
@@ -46,8 +46,8 @@ public class BlockingQueueConsumer<T> {
    * @param queue queue to consume from
    * @param acceptor acceptor to provide consumed items to
    */
-  public BlockingQueueConsumer(BlockingQueue<T> queue,
-                               ConsumerAcceptor<T> acceptor) {
+  public BlockingQueueConsumer(BlockingQueue<? extends T> queue,
+                               ConsumerAcceptor<? super T> acceptor) {
     if (queue == null) {
       throw new IllegalArgumentException("Must provide a queue to consume from");
     } else if (acceptor == null) {

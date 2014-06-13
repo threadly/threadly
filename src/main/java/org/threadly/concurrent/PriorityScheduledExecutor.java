@@ -66,9 +66,9 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
   protected static final String QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY;
   
   static {
-    String threadNameSuffix = "task consumer for " + PriorityScheduledExecutor.class.getSimpleName();
-    QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY = "high priority " + threadNameSuffix;
-    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY = "low priority " + threadNameSuffix;
+    String threadNameSuffix = " task consumer for " + PriorityScheduledExecutor.class.getSimpleName();
+    QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY = "high priority" + threadNameSuffix;
+    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY = "low priority" + threadNameSuffix;
   }
   
   protected final ClockWrapper clockWrapper;
@@ -1141,7 +1141,7 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
     protected final Thread thread;
     private volatile long lastRunTime;
     private volatile boolean running;
-    private volatile TaskWrapper nextTask;
+    private volatile Runnable nextTask;
     
     protected Worker() {
       thread = threadFactory.newThread(this);
@@ -1187,7 +1187,7 @@ public class PriorityScheduledExecutor extends AbstractSubmitterScheduler
      * 
      * @param task Task to run on this workers thread
      */
-    public void nextTask(TaskWrapper task) {
+    public void nextTask(Runnable task) {
       if (! running) {
         throw new IllegalStateException();
       } else if (nextTask != null) {
