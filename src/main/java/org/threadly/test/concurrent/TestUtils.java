@@ -23,7 +23,8 @@ public class TestUtils {
     try {
       Thread.sleep(time);
     } catch (InterruptedException e) {
-      // ignored
+      // reset interrupted status
+      Thread.currentThread().interrupt();
     }
   }
   
