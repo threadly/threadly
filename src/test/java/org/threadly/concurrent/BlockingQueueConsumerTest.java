@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -91,6 +92,43 @@ public class BlockingQueueConsumerTest {
     acceptor.blockTillTrue(); // will throw exception if never got item
     
     assertTrue(acceptor.acceptedItems.get(0) == item);
+  }
+  
+  @Test
+  public void consumeExceptionTest() throws InterruptedException {
+    UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
+    try {
+      final TestUncaughtExceptionHandler testUeh = new TestUncaughtExceptionHandler();
+      Thread.setDefaultUncaughtExceptionHandler(testUeh);
+      final Exception e = new Exception();
+      BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<Object>(queue, new ConsumerAcceptor<Object>() {
+        @Override
+        public void acceptConsumedItem(Object item) throws Exception {
+          throw e;
+        }
+      });
+      try {
+        queueConsumer.maybeStart(Executors.defaultThreadFactory());
+        
+        Object item = new Object();
+        queue.put(item);
+        
+        // will throw exception if test fails
+        new TestCondition() {
+          @Override
+          public boolean get() {
+            return testUeh.getCalledWithThrowable() == e;
+          }
+        }.blockTillTrue();
+        
+        // verify thread did not die
+        assertTrue(queueConsumer.runningThread.isAlive());
+      } finally {
+        queueConsumer.stop();
+      }
+    } finally {
+      Thread.setDefaultUncaughtExceptionHandler(ueh);
+    }
   }
   
   private static class TestAcceptor extends TestCondition 

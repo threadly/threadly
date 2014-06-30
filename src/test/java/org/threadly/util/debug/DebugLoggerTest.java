@@ -13,6 +13,18 @@ public class DebugLoggerTest {
   }
   
   @Test
+  public void getCurrentMessageQtyTest() {
+    // make sure debug logger is clear
+    DebugLogger.getAllStoredMessages(false);
+    
+    assertEquals(0, DebugLogger.getCurrentMessageQty());
+    
+    DebugLogger.log("testMsg");
+    
+    assertEquals(1, DebugLogger.getCurrentMessageQty());
+  }
+  
+  @Test
   public void getAllSingleTest() {
     String testStr = "foo";
     DebugLogger.log(testStr);

@@ -406,6 +406,9 @@ public class FutureUtils {
         // if no exception thrown, add future
         super.handleFutureDone(f);
       } catch (InterruptedException e) {
+        /* should not be possible since this should only 
+         * be called once the future is already done
+         */
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         // ignored
@@ -436,6 +439,9 @@ public class FutureUtils {
       try {
         f.get();
       } catch (InterruptedException e) {
+        /* should not be possible since this should only 
+         * be called once the future is already done
+         */
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         // failed so add it

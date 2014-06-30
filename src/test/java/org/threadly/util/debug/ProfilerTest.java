@@ -155,6 +155,19 @@ public class ProfilerTest {
   }
   
   @Test
+  public void resetTest() {
+    profiler.start();
+    // verify there are some samples
+    blockForProfilerSample();
+    profiler.stop();
+    
+    profiler.reset();
+    
+    assertEquals(0, profiler.threadTraces.size());
+    assertEquals(0, profiler.getCollectedSampleQty());
+  }
+  
+  @Test
   public void dumpStoppedStringTest() throws IOException {
     profiler.start();
     
