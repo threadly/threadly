@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.event;
 
 import static org.junit.Assert.*;
 
@@ -7,7 +7,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
-import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.concurrent.PriorityScheduledExecutor;
+import org.threadly.concurrent.StrictPriorityScheduledExecutor;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
 
 @SuppressWarnings("javadoc")
 public class ListenerHelperTest {
@@ -16,12 +18,9 @@ public class ListenerHelperTest {
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
-  @SuppressWarnings("deprecation")
   private ListenerHelper onceHelper;
-  @SuppressWarnings("deprecation")
   private ListenerHelper repeatedHelper;
   
-  @SuppressWarnings("deprecation")
   @Before
   public void setup() {
     onceHelper = new ListenerHelper(true);
@@ -32,6 +31,55 @@ public class ListenerHelperTest {
   public void tearDown() {
     onceHelper = null;
     repeatedHelper = null;
+  }
+  
+  @Test
+  public void runListenerNoExecutorTest() {
+    TestRunnable tr = new TestRunnable();
+    onceHelper.runListener(tr, null, true);
+    
+    assertTrue(tr.ranOnce());
+    assertTrue(Thread.currentThread() == tr.lastRanThread);
+  }
+  
+  @Test
+  public void runListenerExecutorTest() {
+    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
+    try {
+      TestRunnable tr = new TestRunnable();
+      onceHelper.runListener(tr, executor, true);
+      tr.blockTillFinished();
+      
+      assertTrue(tr.ranOnce());
+      assertTrue(Thread.currentThread() != tr.lastRanThread);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void runListenerCatchExecptionTest() {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new RuntimeException();
+      }
+    };
+    onceHelper.runListener(tr, null, false);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test (expected = RuntimeException.class)
+  public void runListenerThrowExecptionTest() {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new RuntimeException();
+      }
+    };
+    onceHelper.runListener(tr, null, true);
+    fail("Execption should have thrown");
   }
   
   @Test
@@ -149,6 +197,30 @@ public class ListenerHelperTest {
   }
   
   @Test
+  public void removeListenerFromCallingThreadTest() {
+    final TestRunnable removedRunnable = new TestRunnable();
+    repeatedHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(new Runnable() {
+      @Override
+      public void run() {
+        repeatedHelper.removeListener(removedRunnable);
+      }
+    });
+    repeatedHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(removedRunnable);
+    repeatedHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(new TestRunnable());
+    
+    repeatedHelper.callListeners();
+    
+    // call again and verify it did not run again
+    repeatedHelper.callListeners();
+    assertEquals(1, removedRunnable.getRunCount());
+  }
+  
+  @Test
   public void clearListenersTest() {
     TestRunnable onceTR = new TestRunnable();
     TestRunnable repeatedTR = new TestRunnable();
@@ -186,5 +258,14 @@ public class ListenerHelperTest {
     
     assertEquals(2, tr.getRunCount());
     assertEquals(1, addedTR.getRunCount());
+  }
+  
+  private static class TestRunnable extends org.threadly.test.concurrent.TestRunnable {
+    private volatile Thread lastRanThread = null;
+    
+    @Override
+    public void handleRunStart() {
+      lastRanThread = Thread.currentThread();
+    }
   }
 }
