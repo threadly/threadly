@@ -5,7 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.threadly.concurrent.ListenerHelper;
+import org.threadly.concurrent.event.ListenerHelper;
 import org.threadly.util.Clock;
 
 /**
