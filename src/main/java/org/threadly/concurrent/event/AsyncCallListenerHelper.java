@@ -51,7 +51,7 @@ public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
     return new AsyncCallListenerHelper(listenerInterface, executor);
   }
   
-  private final Executor executor;
+  protected final Executor executor;
 
   /**
    * Constructs a new {@link AsyncCallListenerHelper} that will handle listeners 

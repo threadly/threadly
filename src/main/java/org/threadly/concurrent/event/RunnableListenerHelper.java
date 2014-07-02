@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.threadly.concurrent.ContainerHelper;
 import org.threadly.util.ExceptionUtils;
@@ -25,20 +26,20 @@ import org.threadly.util.ExceptionUtils;
 public class RunnableListenerHelper {
   protected final Object listenersLock;
   protected final boolean callOnce;
+  protected final AtomicBoolean done;
   protected Map<Runnable, Executor> listeners;
-  protected boolean done;
   
   /**
    * Constructs a new {@link RunnableListenerHelper}.  This can call listeners 
-   * one time, or every time callListeners is called.
+   * only once, or every time callListeners is called.
    * 
    * @param callListenersOnce true if listeners should only be called once
    */
   public RunnableListenerHelper(boolean callListenersOnce) {
     this.listenersLock = new Object();
     this.callOnce = callListenersOnce;
+    this.done = new AtomicBoolean(false);
     this.listeners = null;
-    this.done = false;
   }
   
   /**
@@ -54,16 +55,33 @@ public class RunnableListenerHelper {
    * an IllegalStateException will be thrown on subsequent calls. 
    */
   public void callListeners() {
+    verifyCanCallListeners();
+    
+    doCallListeners();
+  }
+  
+  /**
+   * Checks to see if listeners can be called (without the need of synchronization).  
+   * This will throw an exception if we were expected to only call once, and that 
+   * call has already been invoked.
+   * 
+   * Assuming this was constructed to only call listeners once, this call sets 
+   * done to true so that newly added listeners will be executed immediately.
+   */
+  protected void verifyCanCallListeners() {
+    if (callOnce && ! done.compareAndSet(false, true)) {
+      throw new IllegalStateException("Already called listeners");
+    }
+  }
+  
+  /**
+   * This calls the listeners without any safety checks as to weather it is safe 
+   * to do so or not.  It is expected that those checks occurred prior to calling 
+   * this function (either in a different thread, or at some point earlier to 
+   * avoid breaking logic around construction with call listeners once design).
+   */
+  protected void doCallListeners() {
     synchronized (listenersLock) {
-      if (done && callOnce) {
-        throw new IllegalStateException("Already called");
-      }
-      
-      /* Must set done to true before calling listeners in case any listeners
-       * added additional listeners. 
-       */
-      done = true;
-      
       if (listeners == null) {
         return;
       }
@@ -134,7 +152,8 @@ public class RunnableListenerHelper {
     
     boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
-      if (callOnce && done) {
+      // done should only be set to true if we are only calling listeners once
+      if (done.get()) {
         runListener(listener, executor, true);
       } else {
         if (addingFromCallingThread) {
@@ -199,7 +218,9 @@ public class RunnableListenerHelper {
   
   /**
    * Returns how many listeners were added, and will be ran on the next 
-   * call to "callListeners".
+   * call to "callListeners".  If this was constructed to only run once, 
+   * all listeners will be removed after called, and thus this will report 
+   * zero after callListeners has been invoked.
    * 
    * @return number of listeners registered to be called
    */

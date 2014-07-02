@@ -18,8 +18,8 @@ public class RunnableListenerHelperTest {
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
-  private RunnableListenerHelper onceHelper;
-  private RunnableListenerHelper repeatedHelper;
+  protected RunnableListenerHelper onceHelper;
+  protected RunnableListenerHelper repeatedHelper;
   
   @Before
   public void setup() {
