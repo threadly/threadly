@@ -37,7 +37,7 @@ public class CallbackHelper<T> {
    * @return New instance of the {@link CallbackHelper}
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public static <T> CallbackHelper<T> build(Class<T> callbackInterface) {
+  public static <T> CallbackHelper<T> build(Class<? super T> callbackInterface) {
     return new CallbackHelper(callbackInterface);
   }
   
@@ -52,7 +52,7 @@ public class CallbackHelper<T> {
    * @param callbackInterface Interface that callbacks need to implement
    */
   @SuppressWarnings("unchecked")
-  public CallbackHelper(Class<T> callbackInterface) {
+  public CallbackHelper(Class<? super T> callbackInterface) {
     if (callbackInterface == null) {
       throw new IllegalArgumentException("Must provide interface for callbacks");
     } else if (! callbackInterface.isInterface()) {
