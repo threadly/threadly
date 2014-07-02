@@ -71,6 +71,11 @@ public class ListenerHelper<T> {
    * wish to have called on the listeners (of course providing the arguments you want 
    * the listeners to be called with).
    * 
+   * Any calls off the returned instance will execute on all subscribed listeners.  If 
+   * those listeners were provided with an executor the execution for calling that 
+   * listener will happen on the provided executor.  If no executor was provided, the 
+   * execution of the listener will happen on the thread invoking this call.
+   * 
    * @return Implementation of listener interface to have call subscribed listeners
    */
   public T call() {
