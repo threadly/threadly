@@ -51,7 +51,6 @@ public class ListenerHelper<T> {
    * 
    * @param listenerInterface Interface that listeners need to implement
    */
-  @SuppressWarnings("unchecked")
   public ListenerHelper(Class<? super T> listenerInterface) {
     if (listenerInterface == null) {
       throw new IllegalArgumentException("Must provide interface for listeners");
@@ -59,10 +58,24 @@ public class ListenerHelper<T> {
       throw new IllegalArgumentException("listenerInterface must be an interface");
     }
     
-    proxyInstance = (T) Proxy.newProxyInstance(listenerInterface.getClassLoader(), 
-                                               new Class[] { listenerInterface }, 
-                                               new ListenerCaller());
+    proxyInstance = getProxyInstance(listenerInterface);
     listenersLock = new Object();
+  }
+  
+  /**
+   * Constructs an instance of the provided interface to be used as the proxy 
+   * which will end up calling the stored listeners.  This will only be invoked 
+   * once during construction time.  This is designed to allow extending classes 
+   * to provide their own implementations for how listeners are called.
+   * 
+   * @param listenerInterface Interface that listeners need to implement
+   * @return Instance of the interface which will call listeners
+   */
+  @SuppressWarnings("unchecked")
+  protected T getProxyInstance(Class<? super T> listenerInterface) {
+    return (T) Proxy.newProxyInstance(listenerInterface.getClassLoader(), 
+                                      new Class[] { listenerInterface }, 
+                                      new ListenerCaller());
   }
   
   /**
@@ -83,7 +96,8 @@ public class ListenerHelper<T> {
   }
   
   /**
-   *  Adds a listener to be executed on the next .call() to this instance.
+   * Adds a listener to be executed on the next .call() to this instance.  This is the 
+   * same as adding a listener and providing null for the {@link Executor}.
    *  
    * @param listener Listener to be called when .call() occurs
    */
@@ -96,6 +110,13 @@ public class ListenerHelper<T> {
    * executor is provided, on the next .call() a task will be put on the executor 
    * to call this listener.  If none is provided, the listener will be executed 
    * on the thread that is invoking the .call().
+   * 
+   * If an Executor is provided, and that Executor is NOT single threaded, the 
+   * listener may be called concurrently.  You can ensure this wont happen by 
+   * using the {@link org.threadly.concurrent.TaskExecutorDistributor} to get an 
+   * executor from a single key, or by using the 
+   * {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit of one, 
+   * or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}.
    * 
    * @param listener Listener to be called when .call() occurs
    * @param executor Executor to call listener on, or null
@@ -173,14 +194,26 @@ public class ListenerHelper<T> {
    * listeners when the invocation occurs.</p>
    * 
    * @author jent - Mike Jensen
+   * @since 2.2.0
    */
   protected class ListenerCaller implements InvocationHandler {
     @Override
-    public Object invoke(Object proxy, final Method method, final Object[] args) {
+    public Object invoke(Object proxy, Method method, Object[] args) {
+      verifyValidMethod(method);
+      
+      callListeners(method, args);
+      
+      // always returns null
+      return null;
+    }
+    
+    protected void verifyValidMethod(Method method) {
       if (! method.getReturnType().equals(Void.TYPE)) {
         throw new RuntimeException("Can only call listeners with a void return type");
       }
-      
+    }
+    
+    protected void callListeners(final Method method, final Object[] args) {
       synchronized (listenersLock) {
         if (listeners != null) {
           Iterator<Entry<T, Executor>> it = listeners.entrySet().iterator();
@@ -199,9 +232,6 @@ public class ListenerHelper<T> {
           }
         }
       }
-      
-      // always returns null
-      return null;
     }
     
     protected void callListener(T listener, Method method, Object[] args) {

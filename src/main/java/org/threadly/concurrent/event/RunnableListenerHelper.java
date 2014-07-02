@@ -98,7 +98,7 @@ public class RunnableListenerHelper {
   }
 
   /**
-   * Adds a listener to be tracked.  If the {@link RunnableListenerHelper} was constructed 
+   * Adds a listener to be called.  If the {@link RunnableListenerHelper} was constructed 
    * with true (listeners can only be called once) then this listener will be called 
    * immediately.  This just defers to the other addListener call, providing null 
    * for the executor.  So when the listener runs, it will be on the same thread as 
@@ -112,10 +112,17 @@ public class RunnableListenerHelper {
   }
 
   /**
-   * Adds a listener to be tracked.  If the {@link RunnableListenerHelper} was constructed 
+   * Adds a listener to be called.  If the {@link RunnableListenerHelper} was constructed 
    * with true (listeners can only be called once) then this listener will be called 
    * immediately.  If the executor is null it will be called either on this thread 
    * or the thread calling "callListeners" (depending on the previous condition).
+   * 
+   * If an Executor is provided, and that Executor is NOT single threaded, the 
+   * listener may be called concurrently.  You can ensure this wont happen by 
+   * using the {@link org.threadly.concurrent.TaskExecutorDistributor} to get an 
+   * executor from a single key, or by using the 
+   * {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit of one, 
+   * or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}.
    * 
    * @param listener runnable to call when trigger event called
    * @param executor executor listener should run on, or null

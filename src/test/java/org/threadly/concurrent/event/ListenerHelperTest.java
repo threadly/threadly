@@ -16,8 +16,12 @@ import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class ListenerHelperTest {
-  @SuppressWarnings({ "unused", "unchecked", "rawtypes" })
+  protected <T> ListenerHelper<T> makeListenerHelper(Class<T> listenerInterface) {
+    return ListenerHelper.build(listenerInterface);
+  }
+  
   @Test
+  @SuppressWarnings({ "unused", "unchecked", "rawtypes" })
   public void constructorFail() {
     try {
       new ListenerHelper(null);
@@ -35,7 +39,7 @@ public class ListenerHelperTest {
   
   @Test
   public void addListenerTest() {
-    ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp();
     ch.addListener(ti);
     
@@ -45,7 +49,7 @@ public class ListenerHelperTest {
   
   @Test
   public void addListenerWithExecutorTest() {
-    ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp();
     Executor executor = new SameThreadSubmitterExecutor();
     ch.addListener(ti, executor);
@@ -61,7 +65,7 @@ public class ListenerHelperTest {
     int secondCallInt = 1337;
     String secondCallStr = StringUtils.randomString(10);
     final TestImp addedListener = new TestImp();
-    final ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    final ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp() {
       @Override
       public void call(int i, String s) {
@@ -90,12 +94,12 @@ public class ListenerHelperTest {
   
   @Test (expected = IllegalArgumentException.class)
   public void addListenerFail() {
-    ListenerHelper.build(TestInterface.class).addListener(null);
+    makeListenerHelper(TestInterface.class).addListener(null);
   }
   
   @Test
   public void removeListenerTest() {
-    ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp();
     
     assertFalse(ch.removeListener(null));
@@ -120,7 +124,7 @@ public class ListenerHelperTest {
     int secondCallInt = 1337;
     String secondCallStr = StringUtils.randomString(10);
     final TestImp removedListener = new TestImp();
-    final ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    final ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp() {
       @Override
       public void call(int i, String s) {
@@ -155,7 +159,7 @@ public class ListenerHelperTest {
   
   @Test
   public void registeredListenerCountTest() {
-    ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     
     assertEquals(0, ch.registeredListenerCount());
     
@@ -165,7 +169,7 @@ public class ListenerHelperTest {
   
   @Test
   public void clearListenersTest() {
-    ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     ch.addListener(new TestImp());
     ch.addListener(new TestImp());
     assertEquals(2, ch.registeredListenerCount());
@@ -185,11 +189,11 @@ public class ListenerHelperTest {
     callTest(true);
   }
   
-  private static void callTest(boolean useExecutor) {
+  private void callTest(boolean useExecutor) {
     int testInt = 10;
     String testStr = StringUtils.randomString(10);
     List<TestImp> listeners = new ArrayList<TestImp>(TEST_QTY);
-    ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+    ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     
     for (int i = 0; i < TEST_QTY; i++) {
       TestImp ti = new TestImp();
@@ -216,7 +220,7 @@ public class ListenerHelperTest {
     int testInt = 10;
     String testStr = StringUtils.randomString(10);
     List<TestMultipleFunctionImp> listeners = new ArrayList<TestMultipleFunctionImp>(TEST_QTY);
-    ListenerHelper<TestMultipleFunctionInterface> ch = ListenerHelper.build(TestMultipleFunctionInterface.class);
+    ListenerHelper<TestMultipleFunctionInterface> ch = makeListenerHelper(TestMultipleFunctionInterface.class);
     
     for (int i = 0; i < TEST_QTY; i++) {
       TestMultipleFunctionImp ti = new TestMultipleFunctionImp();
@@ -252,7 +256,7 @@ public class ListenerHelperTest {
       TestUncaughtExceptionHandler testHandler = new TestUncaughtExceptionHandler();
       Thread.setDefaultUncaughtExceptionHandler(testHandler);
       final RuntimeException e = new RuntimeException();
-      ListenerHelper<TestInterface> ch = ListenerHelper.build(TestInterface.class);
+      ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
       ch.addListener(new TestInterface() {
         @Override
         public void call(int i, String s) {
@@ -279,20 +283,20 @@ public class ListenerHelperTest {
   @Test (expected = RuntimeException.class)
   public void callFail() {
     @SuppressWarnings("rawtypes")
-    ListenerHelper<List> ch = ListenerHelper.build(List.class);
+    ListenerHelper<List> ch = makeListenerHelper(List.class);
     ch.call().get(0);
   }
   
-  public interface TestInterface {
+  protected interface TestInterface {
     public void call(int i, String s);
   }
   
-  public interface TestMultipleFunctionInterface {
+  protected interface TestMultipleFunctionInterface {
     public void call1(int i);
     public void call2(String s);
   }
   
-  private static class TestImp implements TestInterface {
+  protected static class TestImp implements TestInterface {
     private int lastInt = -1;
     private String lastString = null;
     
@@ -303,7 +307,7 @@ public class ListenerHelperTest {
     }
   }
   
-  private static class TestMultipleFunctionImp implements TestMultipleFunctionInterface {
+  protected static class TestMultipleFunctionImp implements TestMultipleFunctionInterface {
     private int lastCall1Int = -1;
     private String lastCall2String = null;
     
