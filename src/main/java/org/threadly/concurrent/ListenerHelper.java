@@ -12,7 +12,7 @@ package org.threadly.concurrent;
  * @since 1.1.0
  */
 @Deprecated
-public class ListenerHelper extends org.threadly.concurrent.event.ListenerHelper {
+public class ListenerHelper extends org.threadly.concurrent.event.RunnableListenerHelper {
   /**
    * Constructs a new {@link ListenerHelper}.  This can call listeners 
    * one time, or every time callListeners is called.

@@ -7,7 +7,7 @@ import java.util.concurrent.FutureTask;
 
 import org.threadly.concurrent.CallableContainerInterface;
 import org.threadly.concurrent.RunnableContainerInterface;
-import org.threadly.concurrent.event.ListenerHelper;
+import org.threadly.concurrent.event.RunnableListenerHelper;
 
 /**
  * <p>This is a future which can be executed.  Allowing you to construct the future with 
@@ -21,7 +21,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
                                      implements ListenableRunnableFuture<T>, 
                                                 CallableContainerInterface<T>, 
                                                 RunnableContainerInterface {
-  protected final ListenerHelper listenerHelper;
+  protected final RunnableListenerHelper listenerHelper;
   protected final boolean recurring;
   protected final Runnable runnable;
   protected final Callable<T> callable;
@@ -46,7 +46,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   public ListenableFutureTask(boolean recurring, Runnable task, T result) {
     super(Executors.callable(task, result));
 
-    this.listenerHelper = new ListenerHelper(true);
+    this.listenerHelper = new RunnableListenerHelper(true);
     this.recurring = recurring;
     this.runnable = task;
     this.callable = null;
@@ -61,7 +61,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   public ListenableFutureTask(boolean recurring, Callable<T> task) {
     super(task);
 
-    this.listenerHelper = new ListenerHelper(true);
+    this.listenerHelper = new RunnableListenerHelper(true);
     this.recurring = recurring;
     this.runnable = null;
     this.callable = task;

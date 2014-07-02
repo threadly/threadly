@@ -5,7 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.threadly.concurrent.event.ListenerHelper;
+import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.Clock;
 
 /**
@@ -20,7 +20,7 @@ import org.threadly.util.Clock;
  */
 public class SettableListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
                                          implements ListenableFuture<T>, FutureCallback<T> {
-  protected final ListenerHelper listenerHelper;
+  protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
   private volatile boolean done;
   private T result;
@@ -31,7 +31,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
    * immediately and provide a result to the object later when it is ready.
    */
   public SettableListenableFuture() {
-    this.listenerHelper = new ListenerHelper(true);
+    this.listenerHelper = new RunnableListenerHelper(true);
     resultLock = new Object();
     done = false;
     result = null;

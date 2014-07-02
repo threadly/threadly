@@ -1,188 +1,149 @@
 package org.threadly.concurrent.event;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.ContainerHelper;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Class which assist with holding and calling to Runnable listeners.  In parallel 
- * designs it is common to have things subscribe for actions to occur (to later be 
- * alerted once an action occurs).  This class makes it easy to allow things to 
- * register as a listener.</p>
+ * <p>Class which assist with holding and calling to listeners of any interface.  In 
+ * parallel designs it is common to have things subscribe for actions to occur (to 
+ * later be alerted once an action occurs).  This class makes it easy to allow things 
+ * to register as a listener.</p>
  * 
- * <p>For listener designs which are not using runnables, look at {@link CallbackHelper}.  
- * {@link CallbackHelper} allows you to create similar designs while using any any 
- * interface to call back on.</p>
+ * <p>For listener designs which do NOT need to provide arguments for their listeners, 
+ * look at using {@link RunnableListenerHelper}.  {@link RunnableListenerHelper} is 
+ * more efficient and flexible for listeners of that type.  It also has a cleaner and 
+ * easier to use interface.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.2.0 (existed since 1.1.0 as org.threadly.concurrent.ListenerHelper)
+ * @since 2.2.0
+ * @param <T> Interface for listeners to be used
  */
-public class ListenerHelper {
+public class ListenerHelper<T> {
+  /**
+   * This static function allows for quick and easy construction of the 
+   * {@link ListenerHelper}.  It is equivalent to the normal constructor, but 
+   * requires less code to do that construction.
+   * 
+   * @param listenerInterface Interface that listeners need to implement
+   * @return New instance of the {@link ListenerHelper}
+   */
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  public static <T> ListenerHelper<T> build(Class<? super T> listenerInterface) {
+    return new ListenerHelper(listenerInterface);
+  }
+  
+  protected final T proxyInstance;
   protected final Object listenersLock;
-  protected final boolean callOnce;
-  protected Map<Runnable, Executor> listeners;
-  protected boolean done;
+  protected Map<T, Executor> listeners;
   
   /**
-   * Constructs a new {@link ListenerHelper}.  This can call listeners 
-   * one time, or every time callListeners is called.
+   * Constructs a new {@link ListenerHelper} that will handle listeners with 
+   * the provided interface.  The provided class MUST be an interface.
    * 
-   * @param callListenersOnce true if listeners should only be called once
+   * @param listenerInterface Interface that listeners need to implement
    */
-  public ListenerHelper(boolean callListenersOnce) {
-    this.listenersLock = new Object();
-    this.callOnce = callListenersOnce;
-    this.listeners = null;
-    this.done = false;
-  }
-  
-  /**
-   * Will call all listeners that are registered with this helper.  If any 
-   * listeners were provided without an executor, they will execute in the 
-   * calling thread.  No exceptions will be thrown in this calling thread if 
-   * any exceptions occur from the listeners.
-   * 
-   * If calling multiple times, this will only have an effect if constructed 
-   * with a false, indicating that listeners can expect to be called multiple 
-   * times.  In which case all listeners that have registered will be called 
-   * again.  If this was constructed with the expectation of only calling once 
-   * an IllegalStateException will be thrown on subsequent calls. 
-   */
-  public void callListeners() {
-    synchronized (listenersLock) {
-      if (done && callOnce) {
-        throw new IllegalStateException("Already called");
-      }
-      
-      /* Must set done to true before calling listeners in case any listeners
-       * added additional listeners. 
-       */
-      done = true;
-      
-      if (listeners == null) {
-        return;
-      }
-      
-      Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
-      while (it.hasNext()) {
-        Entry<Runnable, Executor> listener = it.next();
-        runListener(listener.getKey(), listener.getValue(), false);
-      }
-      
-      if (callOnce) {
-        listeners = null;
-      }
+  @SuppressWarnings("unchecked")
+  public ListenerHelper(Class<? super T> listenerInterface) {
+    if (listenerInterface == null) {
+      throw new IllegalArgumentException("Must provide interface for listeners");
+    } else if (! listenerInterface.isInterface()) {
+      throw new IllegalArgumentException("listenerInterface must be an interface");
     }
+    
+    proxyInstance = (T) Proxy.newProxyInstance(listenerInterface.getClassLoader(), 
+                                               new Class[] { listenerInterface }, 
+                                               new ListenerCaller());
+    listenersLock = new Object();
   }
   
-  protected void runListener(Runnable listener, Executor executor, 
-                             boolean throwException) {
-    try {
-      if (executor != null) {
-        executor.execute(listener);
-      } else {
-        listener.run();
-      }
-    } catch (Throwable t) {
-      if (throwException) {
-        throw ExceptionUtils.makeRuntime(t);
-      } else {
-        ExceptionUtils.handleException(t);
-      }
-    }
-  }
-
   /**
-   * Adds a listener to be tracked.  If the {@link ListenerHelper} was constructed 
-   * with true (listeners can only be called once) then this listener will be called 
-   * immediately.  This just defers to the other addListener call, providing null 
-   * for the executor.  So when the listener runs, it will be on the same thread as 
-   * the one invoking "callListeners".
+   * Calls to notify the subscribed listeners with the given call.  This returns an 
+   * implementation of the listener interface, you can then call to the function you 
+   * wish to have called on the listeners (of course providing the arguments you want 
+   * the listeners to be called with).
    * 
-   * @param listener runnable to call when trigger event called
-   * @since 2.1.0
+   * @return Implementation of listener interface to have call subscribed listeners
    */
-  public void addListener(Runnable listener) {
+  public T call() {
+    return proxyInstance;
+  }
+  
+  /**
+   *  Adds a listener to be executed on the next .call() to this instance.
+   *  
+   * @param listener Listener to be called when .call() occurs
+   */
+  public void addListener(T listener) {
     addListener(listener, null);
   }
-
+  
   /**
-   * Adds a listener to be tracked.  If the {@link ListenerHelper} was constructed 
-   * with true (listeners can only be called once) then this listener will be called 
-   * immediately.  If the executor is null it will be called either on this thread 
-   * or the thread calling "callListeners" (depending on the previous condition).
+   * Adds a listener to be executed on the next .call() to this instance.  If an 
+   * executor is provided, on the next .call() a task will be put on the executor 
+   * to call this listener.  If none is provided, the listener will be executed 
+   * on the thread that is invoking the .call().
    * 
-   * @param listener runnable to call when trigger event called
-   * @param executor executor listener should run on, or null
+   * @param listener Listener to be called when .call() occurs
+   * @param executor Executor to call listener on, or null
    */
-  public void addListener(Runnable listener, Executor executor) {
+  public void addListener(T listener, Executor executor) {
     if (listener == null) {
-      throw new IllegalArgumentException("Can not provide a null listener runnable");
+      throw new IllegalArgumentException("Can not provide a null listener");
     }
     
     boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
-      if (callOnce && done) {
-        runListener(listener, executor, true);
+      if (addingFromCallingThread) {
+        // we must create a new instance of listeners to prevent a ConcurrentModificationException
+        // we know at this point that listeners can not be null
+        Map<T, Executor> newListeners = new HashMap<T, Executor>(listeners.size() + 1);
+        newListeners.putAll(listeners);
+        newListeners.put(listener, executor);
+        
+        listeners = newListeners;
       } else {
-        if (addingFromCallingThread) {
-          // we must create a new instance of listeners to prevent a ConcurrentModificationException
-          // we know at this point that listeners can not be null
-          Map<Runnable, Executor> newListeners = new HashMap<Runnable, Executor>(listeners.size() + 1);
-          newListeners.putAll(listeners);
-          newListeners.put(listener, executor);
-          
-          listeners = newListeners;
-        } else {
-          if (listeners == null) {
-            listeners = new HashMap<Runnable, Executor>();
-          }
-          listeners.put(listener, executor);
+        if (listeners == null) {
+          listeners = new HashMap<T, Executor>();
         }
+        listeners.put(listener, executor);
       }
     }
   }
-  
+
   /**
    * Attempts to remove a listener waiting to be called.
    * 
    * @param listener listener instance to be removed
    * @return true if the listener was removed
    */
-  public boolean removeListener(Runnable listener) {
+  public boolean removeListener(T listener) {
     boolean removingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
       if (listeners == null) {
         return false;
-      }
-      
-      if (removingFromCallingThread) {
-        listeners = new HashMap<Runnable, Executor>(listeners);
-      }
-      /* For large listener counts it would be cheaper to 
-       * check containsKey and call remove, but I would like 
-       * to continue to support the container interfaces 
-       * as much as possible.
-       */
-      Iterator<Runnable> it = listeners.keySet().iterator();
-      while (it.hasNext()) {
-        if (ContainerHelper.isContained(it.next(), listener)) {
-          it.remove();
-          return true;
+      } else if (listeners.containsKey(listener)) {
+        if (removingFromCallingThread) {
+          listeners = new HashMap<T, Executor>(listeners);
         }
+        listeners.remove(listener);
+        return true;
+      } else {
+        return false;
       }
-      
-      return false;
     }
   }
   
   /**
-   * Removes all listeners currently registered. 
+   * Removes all listener currently registered. 
    */
   public void clearListeners() {
     synchronized (listenersLock) {
@@ -192,13 +153,63 @@ public class ListenerHelper {
   
   /**
    * Returns how many listeners were added, and will be ran on the next 
-   * call to "callListeners".
+   * call.
    * 
    * @return number of listeners registered to be called
    */
   public int registeredListenerCount() {
     synchronized (listenersLock) {
       return listeners == null ? 0 : listeners.size();
+    }
+  }
+  
+  /**
+   * <p>Implementation of {@link InvocationHandler} that calls the provided 
+   * listeners when the invocation occurs.</p>
+   * 
+   * @author jent - Mike Jensen
+   */
+  protected class ListenerCaller implements InvocationHandler {
+    @Override
+    public Object invoke(Object proxy, final Method method, final Object[] args) {
+      if (! method.getReturnType().equals(Void.TYPE)) {
+        throw new RuntimeException("Can only call listeners with a void return type");
+      }
+      
+      synchronized (listenersLock) {
+        if (listeners != null) {
+          Iterator<Entry<T, Executor>> it = listeners.entrySet().iterator();
+          while (it.hasNext()) {
+            final Entry<T, Executor> listener = it.next();
+            if (listener.getValue() != null) {
+              listener.getValue().execute(new Runnable() {
+                @Override
+                public void run() {
+                  callListener(listener.getKey(), method, args);
+                }
+              });
+            } else {
+              callListener(listener.getKey(), method, args);
+            }
+          }
+        }
+      }
+      
+      // always returns null
+      return null;
+    }
+    
+    protected void callListener(T listener, Method method, Object[] args) {
+      try {
+        method.invoke(listener, args);
+      } catch (IllegalAccessException e) {
+        /* should not be possible since only interfaces are allowed, and 
+         * all functions in interfaces are public
+         */
+        ExceptionUtils.handleException(e);
+      } catch (InvocationTargetException e) {
+        ExceptionUtils.handleException(e.getCause());
+      }
     }
   }
 }
