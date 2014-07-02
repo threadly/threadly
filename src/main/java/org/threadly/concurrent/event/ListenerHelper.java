@@ -25,7 +25,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @author jent - Mike Jensen
  * @since 2.2.0
- * @param <T> Interface for listeners to be used
+ * @param <T> Interface for listeners to implement and called into with
  */
 public class ListenerHelper<T> {
   /**

@@ -14,15 +14,22 @@ import java.util.concurrent.Executor;
  * If the listener was added with a provided executor, that listener will still execute on 
  * the provided executor (so not necessarily the executor provided at construction time).<p>
  * 
- * <p>If it is desired that ALL listeners are executed asynchronously from each other, you 
+ * <p>If it is desired that all listeners are executed asynchronously from each other, you 
  * should actually use the normal {@link ListenerHelper}, and instead just ensure that an 
- * executor is provided when each listener is added.  This class is only designed to 
- * ensure that .call() invocations will never block.</p>
+ * executor is provided when each listener is added.  If you want listeners to execute 
+ * concurrently from each other, but not concurrently for any single listener, 
+ * {@link DefaultExecutorListenerHelper} is likely a better choice.  This class is only 
+ * designed to ensure that .call() invocations will never block.</p>
  * 
  * <p>To better clarify when this implementation makes sense compared to 
- * {@link ListenerHelper}, If you have a LOT of quick running listeners, this is the right 
- * class for you.  If you have long running/complex listeners, {@link ListenerHelper} is 
- * the right choice, just ensure that an executor is provided when each listener is added.</p>
+ * {@link ListenerHelper} and {@link DefaultExecutorListenerHelper}.  If you have a LOT of 
+ * quick running listeners, this is the right class for you.  If you have few listeners that 
+ * execute quickly, then the normal {@link ListenerHelper} is likely a better choice.  If 
+ * you have long running/complex listeners, {@link DefaultExecutorListenerHelper} is 
+ * possibly the better choice.  Alternative for the last condition you could use the normal 
+ * {@link ListenerHelper}, and just ensure that an executor is provided for every listener   
+ * (but if you want to ensure a given listener is not executed concurrently the 
+ * {@link DefaultExecutorListenerHelper} will handle this for you).</p>
  * 
  * <p>It is important to note that this class does not ensure ordering of how listeners are 
  * called.  For example if you provided a multi-threaded executor, and are calling the 
@@ -34,7 +41,7 @@ import java.util.concurrent.Executor;
  * 
  * @author jent - Mike Jensen
  * @since 2.2.0
- * @param <T> Interface for listeners to be used
+ * @param <T> Interface for listeners to implement and called into with
  */
 public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
   /**
