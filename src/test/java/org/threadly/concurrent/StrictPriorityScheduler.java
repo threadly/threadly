@@ -5,46 +5,46 @@ import java.util.concurrent.ThreadFactory;
 /**
  * In order to avoid a performance hit by verifying state which would indicate a programmer 
  * error at runtime.  This class functions to verify those little things during unit tests.  
- * For that reason this class extends {@link PriorityScheduledExecutor} to do additional 
+ * For that reason this class extends {@link PriorityScheduler} to do additional 
  * functions, but calls into the super functions to verify the actual behavior. 
  * 
  * @author jent - Mike Jensen
  */
-public class StrictPriorityScheduledExecutor extends PriorityScheduledExecutor {
+public class StrictPriorityScheduler extends PriorityScheduler {
   @SuppressWarnings("javadoc")
-  public StrictPriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
-                                         long keepAliveTimeInMs) {
+  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
+                                 long keepAliveTimeInMs) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs);
   }
 
   @SuppressWarnings("javadoc")
-  public StrictPriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
-                                         long keepAliveTimeInMs, boolean useDaemonThreads) {
+  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
+                                 long keepAliveTimeInMs, boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, useDaemonThreads);
   }
 
   @SuppressWarnings("javadoc")
-  public StrictPriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
-                                         long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                         long maxWaitForLowPriorityInMs) {
+  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
+                                 long keepAliveTimeInMs, TaskPriority defaultPriority, 
+                                 long maxWaitForLowPriorityInMs) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs);
   }
 
   @SuppressWarnings("javadoc")
-  public StrictPriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
-                                         long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                         long maxWaitForLowPriorityInMs, 
-                                         final boolean useDaemonThreads) {
+  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
+                                 long keepAliveTimeInMs, TaskPriority defaultPriority, 
+                                 long maxWaitForLowPriorityInMs, 
+                                 boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs, 
           useDaemonThreads);
   }
 
   @SuppressWarnings("javadoc")
-  public StrictPriorityScheduledExecutor(int corePoolSize, int maxPoolSize,
-                                         long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                         long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
+  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
+                                 long keepAliveTimeInMs, TaskPriority defaultPriority, 
+                                 long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs, 
           threadFactory);

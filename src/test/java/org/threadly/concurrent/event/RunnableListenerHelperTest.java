@@ -7,8 +7,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
-import org.threadly.concurrent.PriorityScheduledExecutor;
-import org.threadly.concurrent.StrictPriorityScheduledExecutor;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 
 @SuppressWarnings("javadoc")
@@ -44,7 +44,7 @@ public class RunnableListenerHelperTest {
   
   @Test
   public void runListenerExecutorTest() {
-    PriorityScheduledExecutor executor = new StrictPriorityScheduledExecutor(1, 1, 100);
+    PriorityScheduler executor = new StrictPriorityScheduler(1, 1, 100);
     try {
       TestRunnable tr = new TestRunnable();
       onceHelper.runListener(tr, executor, true);

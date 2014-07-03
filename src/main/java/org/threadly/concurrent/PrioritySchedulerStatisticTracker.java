@@ -18,9 +18,9 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.Clock;
 
 /**
- * <p>An implementation of {@link PriorityScheduledExecutor} which tracks run and usage 
+ * <p>An implementation of {@link PriorityScheduler} which tracks run and usage 
  * statistics.  This is designed for testing and troubleshooting.  It has a little 
- * more overhead from the normal {@link PriorityScheduledExecutor}.</p>
+ * more overhead from the normal {@link PriorityScheduler}.</p>
  * 
  * <p>It helps give insight in how long tasks are running, how well the thread pool is 
  * being utilized, as well as execution frequency.</p>
@@ -28,6 +28,7 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
+@SuppressWarnings("deprecation")  // TODO - change extends to PriorityScheduler
 public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor {
   private static final int MAX_WINDOW_SIZE = 1000;
   
@@ -707,7 +708,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   /* Override the implementation in PrioritySchedulerExecutor 
    * because we have the ability to have a cheaper check.
    * 
-   * @see org.threadly.concurrent.PriorityScheduledExecutor#getCurrentRunningCount()
+   * @see org.threadly.concurrent.PriorityScheduler#getCurrentRunningCount()
    */
   @Override
   public int getCurrentRunningCount() {

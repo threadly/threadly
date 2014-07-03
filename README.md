@@ -9,13 +9,13 @@ If you find this library useful, feel free to donate LTC/Litecoin to: LiTeCoinLR
 
 -- General Concurrency Tools --
 
-*    PriorityScheduledExecutor - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
+*    PriorityScheduler - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
 
-PriorityScheduledExecutor provides calls that do, and do not return a future, so if a future is not necessary the performance hit can be avoided.
+PriorityScheduler provides calls that do, and do not return a future, so if a future is not necessary the performance hit can be avoided.
 
-If you need a thread pool that implements java.util.concurrent.ScheduledExecutorService you can wrap it in "PriorityScheduledExecutorServiceWrapper".
+If you need a thread pool that implements java.util.concurrent.ScheduledExecutorService you can wrap it in "PrioritySchedulerServiceWrapper".
 
-PriorityScheduledExecutor removes tasks much easier than java.util.concurrent.ScheduledThreadPoolExecutor, by allowing you to just provide the original runnable, instead of requiring you to cast the future that was originally provided.
+PriorityScheduler removes tasks much easier than java.util.concurrent.ScheduledThreadPoolExecutor, by allowing you to just provide the original runnable, instead of requiring you to cast the future that was originally provided.
 
 It offers the ability to submit tasks with a given priority. Low priority tasks will be less aggressive about making new threads, thus taking better advantage of it being a thread pool if the execution time does not have to be very precise. Using multiple priorities also reduces lock contention for higher priority tasks.
 

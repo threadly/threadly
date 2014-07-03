@@ -12,10 +12,10 @@ public class TaskSchedulerDistributorKeyBasedSchedulerTest extends SubmitterSche
   }
 
   private class KeyBasedSubmitterSchedulerFactory implements SubmitterSchedulerFactory {
-    private final List<PriorityScheduledExecutor> executors;
+    private final List<PriorityScheduler> executors;
     
     private KeyBasedSubmitterSchedulerFactory() {
-      executors = new LinkedList<PriorityScheduledExecutor>();
+      executors = new LinkedList<PriorityScheduler>();
     }
 
     @Override
@@ -27,8 +27,8 @@ public class TaskSchedulerDistributorKeyBasedSchedulerTest extends SubmitterSche
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
                                                               boolean prestartIfAvailable) {
-      PriorityScheduledExecutor scheduler = new StrictPriorityScheduledExecutor(poolSize, poolSize, 
-                                                                                1000 * 10);
+      PriorityScheduler scheduler = new StrictPriorityScheduler(poolSize, poolSize, 
+                                                                1000 * 10);
       executors.add(scheduler);
       if (prestartIfAvailable) {
         scheduler.prestartAllCoreThreads();
@@ -41,7 +41,7 @@ public class TaskSchedulerDistributorKeyBasedSchedulerTest extends SubmitterSche
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduledExecutor> it = executors.iterator();
+      Iterator<PriorityScheduler> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
         it.remove();
