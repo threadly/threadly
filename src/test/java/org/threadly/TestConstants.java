@@ -23,7 +23,7 @@ public class TestConstants {
      * Very slow, but gives a good extensive run.
      */
     Stress
-  };
+  }
   
   /**
    * Can easily adjust all constants in this file by changing the load 

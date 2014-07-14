@@ -136,7 +136,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    */
   public TaskSchedulerDistributor(int expectedParallism, SimpleSchedulerInterface scheduler, 
                                   boolean accurateQueueSize) {
-    this(expectedParallism, scheduler, Integer.MAX_VALUE);
+    this(expectedParallism, scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
     
   /**

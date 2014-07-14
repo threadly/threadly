@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -227,7 +226,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpStoppedStringEmptyTest() throws IOException {
+  public void dumpStoppedStringEmptyTest() {
     profiler.start();
     
     TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
@@ -241,7 +240,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpStoppedStringTest() throws IOException {
+  public void dumpStoppedStringTest() {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     
@@ -255,7 +254,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpStoppedOutputStreamEmptyTest() throws IOException {
+  public void dumpStoppedOutputStreamEmptyTest() {
     profiler.start();
     
     TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
@@ -272,7 +271,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpStoppedOutputStreamTest() throws IOException {
+  public void dumpStoppedOutputStreamTest() {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     
@@ -289,7 +288,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpStringEmptyTest() throws IOException {
+  public void dumpStringEmptyTest() {
     profiler.start();
     
     TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
@@ -301,7 +300,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpStringTest() throws IOException {
+  public void dumpStringTest() {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     
@@ -313,7 +312,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpOutputStreamEmptyTest() throws IOException {
+  public void dumpOutputStreamEmptyTest() {
     profiler.start();
     
     TestUtils.sleep(WAIT_TIME_FOR_COLLECTION);
@@ -328,7 +327,7 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
-  public void dumpOutputStreamTest() throws IOException {
+  public void dumpOutputStreamTest() {
     profiler.addProfiledThread(Thread.currentThread());
     profiler.start();
     

@@ -37,7 +37,7 @@ public class TestFutureImp implements ListenableFuture<Object> {
   }
 
   @Override
-  public Object get() throws InterruptedException, ExecutionException {
+  public Object get() throws ExecutionException {
     if (canceled) {
       throw new CancellationException();
     }
@@ -45,7 +45,7 @@ public class TestFutureImp implements ListenableFuture<Object> {
   }
 
   @Override
-  public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public Object get(long timeout, TimeUnit unit) throws TimeoutException {
     if (canceled) {
       throw new CancellationException();
     }

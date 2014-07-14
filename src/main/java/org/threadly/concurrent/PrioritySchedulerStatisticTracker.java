@@ -146,7 +146,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
                                            long maxWaitForLowPriorityInMs, 
                                            final boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-          defaultPriority, maxWaitForLowPriorityInMs);
+          defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads);
     
     totalHighPriorityExecutions = new AtomicInteger();
     totalLowPriorityExecutions = new AtomicInteger();

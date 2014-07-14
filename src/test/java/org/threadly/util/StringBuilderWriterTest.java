@@ -33,6 +33,7 @@ public class StringBuilderWriterTest {
     new StringBuilderWriter(null);
   }
   
+  @SuppressWarnings("resource")
   @Test
   public void appendCharTest() throws IOException {
     int start = 0;

@@ -136,7 +136,7 @@ public class BlockingQueueConsumerTest {
     private final List<Object> acceptedItems = new LinkedList<Object>();
     
     @Override
-    public void acceptConsumedItem(Object item) throws Exception {
+    public void acceptConsumedItem(Object item) {
       synchronized (this) {
         acceptedItems.add(item);
       }

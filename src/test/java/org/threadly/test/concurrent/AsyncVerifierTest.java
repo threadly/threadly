@@ -51,7 +51,7 @@ public class AsyncVerifierTest {
   }
   
   @Test
-  public void signalCompleteAnotherThreadTest() throws InterruptedException, TimeoutException {
+  public void signalCompleteAnotherThreadTest() {
     TestRunnable waitRunnable = new TestRunnable() {
       @Override
       public void handleRunFinish() {

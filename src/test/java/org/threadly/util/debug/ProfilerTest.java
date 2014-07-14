@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -168,7 +167,7 @@ public class ProfilerTest {
   }
   
   @Test
-  public void dumpStoppedStringTest() throws IOException {
+  public void dumpStoppedStringTest() {
     profiler.start();
     
     blockForProfilerSample();
@@ -181,7 +180,7 @@ public class ProfilerTest {
   }
   
   @Test
-  public void dumpStoppedOutputStreamTest() throws IOException {
+  public void dumpStoppedOutputStreamTest() {
     profiler.start();
     
     blockForProfilerSample();
@@ -197,7 +196,7 @@ public class ProfilerTest {
   }
   
   @Test
-  public void dumpStringTest() throws IOException {
+  public void dumpStringTest() {
     profiler.start();
     
     blockForProfilerSample();
@@ -208,7 +207,7 @@ public class ProfilerTest {
   }
   
   @Test
-  public void dumpOutputStreamTest() throws IOException {
+  public void dumpOutputStreamTest() {
     profiler.start();
     
     blockForProfilerSample();

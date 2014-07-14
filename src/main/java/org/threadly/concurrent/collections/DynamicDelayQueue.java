@@ -6,7 +6,6 @@ import java.util.ConcurrentModificationException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Queue;
-import java.util.RandomAccess;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +54,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     queue = new ConcurrentArrayList<T>(queueLock, 
                                        QUEUE_FRONT_PADDING, 
                                        QUEUE_REAR_PADDING);
-    randomAccessQueue = (queue instanceof RandomAccess);
+    randomAccessQueue = true; // must change if switch from ConcurrentArrayList
     this.queueLock = queueLock;
   }
   

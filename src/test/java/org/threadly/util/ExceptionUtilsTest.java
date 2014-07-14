@@ -14,6 +14,7 @@ import org.threadly.util.ExceptionUtils.TransformedException;
 
 @SuppressWarnings("javadoc")
 public class ExceptionUtilsTest {
+  @SuppressWarnings("resource")
   @Test
   public void handleExceptionWithoutUncaughtExceptionHandler() {
     // make sure no uncaughtExceptionHandler is set
@@ -42,6 +43,7 @@ public class ExceptionUtilsTest {
     }
   }
   
+  @SuppressWarnings("resource")
   @Test
   public void handleExceptionWithUncaughtExceptionHandler() {
     PrintStream originalSystemErr = System.err;

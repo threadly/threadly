@@ -18,7 +18,7 @@ public class RunnableFutureTest {
     final Object result = new Object();
     RunnableFuture<Object> future = ff.make(new Callable<Object>() {
       @Override
-      public Object call() throws Exception {
+      public Object call() {
         return result;
       }
     });

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -127,7 +126,7 @@ public class TaskExecutorDistributorTest {
   }
   
   @Test
-  public void keyBasedSubmitterConsistentThreadTest() throws InterruptedException, TimeoutException {
+  public void keyBasedSubmitterConsistentThreadTest() {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {

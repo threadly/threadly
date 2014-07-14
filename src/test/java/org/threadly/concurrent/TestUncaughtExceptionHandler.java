@@ -11,7 +11,7 @@ public class TestUncaughtExceptionHandler implements UncaughtExceptionHandler {
   @Override
   public void uncaughtException(Thread t, Throwable e) {
     callCount++;
-    calledWithThread = t;;
+    calledWithThread = t;
     providedThrowable = e;
   }
 

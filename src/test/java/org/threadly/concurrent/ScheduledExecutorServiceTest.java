@@ -211,8 +211,7 @@ public abstract class ScheduledExecutorServiceTest {
   }
   
   @Test (expected = NullPointerException.class)
-  public void scheduleRunnableFail() throws InterruptedException, 
-                                            ExecutionException {
+  public void scheduleRunnableFail() {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       scheduler.schedule((Runnable)null, 10, TimeUnit.MILLISECONDS);
@@ -222,8 +221,7 @@ public abstract class ScheduledExecutorServiceTest {
   }
   
   @Test (expected = NullPointerException.class)
-  public void scheduleCallableFail() throws InterruptedException, 
-                                            ExecutionException {
+  public void scheduleCallableFail() {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       scheduler.schedule((Callable<?>)null, 10, TimeUnit.MILLISECONDS);
@@ -482,7 +480,7 @@ public abstract class ScheduledExecutorServiceTest {
   }
 
   @Test
-  public void invokeAllTimeoutTest() throws InterruptedException, ExecutionException {
+  public void invokeAllTimeoutTest() throws InterruptedException {
     ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
     try {
       int runTime = 1000 * 10;
@@ -507,7 +505,7 @@ public abstract class ScheduledExecutorServiceTest {
   }
 
   @Test (expected = NullPointerException.class)
-  public void invokeAllFail() throws InterruptedException, ExecutionException {
+  public void invokeAllFail() throws InterruptedException {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       List<TestCallable> toInvoke = new ArrayList<TestCallable>(2);

@@ -112,6 +112,7 @@ public class ExceptionUtils {
    * @param t {@link Throwable} which contains stack
    * @param sb StringBuilder to write output to
    */
+  @SuppressWarnings("resource")
   public static void writeStackTo(Throwable t, StringBuilder sb) {
     writeStackTo(t, new StringBuilderWriter(sb));
   }
@@ -122,6 +123,7 @@ public class ExceptionUtils {
    * @param t {@link Throwable} which contains stack
    * @param sb StringBuffer to write output to
    */
+  @SuppressWarnings("resource")
   public static void writeStackTo(Throwable t, StringBuffer sb) {
     writeStackTo(t, new StringBufferWriter(sb));
   }
