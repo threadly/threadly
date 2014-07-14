@@ -7,19 +7,19 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class ThrowableSurpressingRunnableTest {
+@SuppressWarnings("javadoc")
+public class ThrowableSuppressingRunnableTest {
   @Test
   public void getContainedRunnableTest() {
     TestRunnable tr = new TestRunnable();
-    ThrowableSurpressingRunnable tsr = new ThrowableSurpressingRunnable(tr);
+    ThrowableSuppressingRunnable tsr = new ThrowableSuppressingRunnable(tr);
     
     assertTrue(tsr.getContainedRunnable() == tr);
   }
   
   @Test
   public void nullRunTest() {
-    Runnable tsr = new ThrowableSurpressingRunnable(null);
+    Runnable tsr = new ThrowableSuppressingRunnable(null);
     
     tsr.run();
     // no exception should throw
@@ -28,7 +28,7 @@ public class ThrowableSurpressingRunnableTest {
   @Test
   public void runTest() {
     TestRunnable tr = new TestRunnable();
-    Runnable tsr = new ThrowableSurpressingRunnable(tr);
+    Runnable tsr = new ThrowableSuppressingRunnable(tr);
     
     tsr.run();
     
@@ -43,7 +43,7 @@ public class ThrowableSurpressingRunnableTest {
     Thread.setDefaultUncaughtExceptionHandler(ueh);
     try {
       TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
-      Runnable tsr = new ThrowableSurpressingRunnable(exceptionRunnable);
+      Runnable tsr = new ThrowableSuppressingRunnable(exceptionRunnable);
       
       tsr.run();
       

@@ -1,19 +1,18 @@
 package org.threadly.concurrent;
 
-import org.threadly.util.ExceptionUtils;
-
 /**
  * <p>Class that is designed to wrap a runnable, and prevent any 
  * throwables from proegating out of the run function.  If a throwable 
  * is thrown, it will be provided to 
- * {@link ExceptionUtils}.handleException(Throwable).</p>
+ * {@link org.threadly.util.ExceptionUtils}.handleException(Throwable).</p>
+ * 
+ * @deprecated Use ThrowableSuppressingRunnable
  * 
  * @author jent - Mike Jensen
  * @since 2.1.0
  */
-public class ThrowableSurpressingRunnable implements RunnableContainerInterface, Runnable {
-  private final Runnable task;
-  
+@Deprecated
+public class ThrowableSurpressingRunnable extends ThrowableSuppressingRunnable {
   /**
    * Constructs a new ThrowableSurpressingRunnable with the provided task.  
    * If the task is null, when this is run no operation will occur.
@@ -21,22 +20,6 @@ public class ThrowableSurpressingRunnable implements RunnableContainerInterface,
    * @param task task to be executed and have exceptions prevented from being thrown
    */
   public ThrowableSurpressingRunnable(Runnable task) {
-    this.task = task;
-  }
-  
-  @Override
-  public void run() {
-    try {
-      if (task != null) {
-        task.run();
-      }
-    } catch (Throwable t) {
-      ExceptionUtils.handleException(t);
-    }
-  }
-
-  @Override
-  public Runnable getContainedRunnable() {
-    return task;
+    super(task);
   }
 }

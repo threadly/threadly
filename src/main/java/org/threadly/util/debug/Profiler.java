@@ -21,7 +21,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -216,13 +216,8 @@ public class Profiler {
           thread.setPriority(Thread.MAX_PRIORITY);
           thread.start();
         } else {
-          final ListenableFutureTask<Thread> runningThreadFuture;
-          runningThreadFuture = new ListenableFutureTask<Thread>(false, new Runnable() {
-            @Override
-            public void run() {
-              // ignored, this future is just to know once collector thread is set
-            }
-          });
+          final SettableListenableFuture<?> runningThreadFuture;
+          runningThreadFuture = new SettableListenableFuture<Object>();
           
           executor.execute(new Runnable() {
             @Override
@@ -233,7 +228,7 @@ public class Profiler {
                   return;
                 }
               } finally {
-                runningThreadFuture.run();
+                runningThreadFuture.setResult(null);
               }
               
               pr.run();

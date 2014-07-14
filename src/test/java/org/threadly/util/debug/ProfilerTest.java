@@ -158,7 +158,16 @@ public class ProfilerTest {
     profiler.start();
     // verify there are some samples
     blockForProfilerSample();
+    final Thread runningThread = profiler.collectorThread.get();
     profiler.stop();
+    
+    // verify stopped
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return ! runningThread.isAlive();
+      }
+    }.blockTillTrue();
     
     profiler.reset();
     
