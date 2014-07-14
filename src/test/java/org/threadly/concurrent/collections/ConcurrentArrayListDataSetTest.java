@@ -564,44 +564,44 @@ public class ConcurrentArrayListDataSetTest {
 
   @Test
   public void getNormalTest() {
-    assertEquals((Integer)0, (Integer)orderedNormal.get(0));
-    assertEquals((Integer)5, (Integer)orderedNormal.get(5));
-    assertEquals((Integer)9, (Integer)orderedNormal.get(9));
+    assertEquals((Integer)0, orderedNormal.get(0));
+    assertEquals((Integer)5, orderedNormal.get(5));
+    assertEquals((Integer)9, orderedNormal.get(9));
   }
   
   @Test
   public void getFrontRemovedTest() {
-    assertEquals((Integer)1, (Integer)removedFromFront.get(0));
-    assertEquals((Integer)5, (Integer)removedFromFront.get(4));
-    assertEquals((Integer)9, (Integer)removedFromFront.get(8));
+    assertEquals((Integer)1, removedFromFront.get(0));
+    assertEquals((Integer)5, removedFromFront.get(4));
+    assertEquals((Integer)9, removedFromFront.get(8));
   }
   
   @Test
   public void getFront2RemovedTest() {
-    assertEquals((Integer)2, (Integer)removed2FromFront.get(0));
-    assertEquals((Integer)5, (Integer)removed2FromFront.get(3));
-    assertEquals((Integer)9, (Integer)removed2FromFront.get(7));
+    assertEquals((Integer)2, removed2FromFront.get(0));
+    assertEquals((Integer)5, removed2FromFront.get(3));
+    assertEquals((Integer)9, removed2FromFront.get(7));
   }
   
   @Test
   public void getEndRemovedTest() {
-    assertEquals((Integer)0, (Integer)removedFromEnd.get(0));
-    assertEquals((Integer)5, (Integer)removedFromEnd.get(5));
-    assertEquals((Integer)8, (Integer)removedFromEnd.get(8));
+    assertEquals((Integer)0, removedFromEnd.get(0));
+    assertEquals((Integer)5, removedFromEnd.get(5));
+    assertEquals((Integer)8, removedFromEnd.get(8));
   }
   
   @Test
   public void getEnd2RemovedTest() {
-    assertEquals((Integer)0, (Integer)removed2FromEnd.get(0));
-    assertEquals((Integer)5, (Integer)removed2FromEnd.get(5));
-    assertEquals((Integer)7, (Integer)removed2FromEnd.get(7));
+    assertEquals((Integer)0, removed2FromEnd.get(0));
+    assertEquals((Integer)5, removed2FromEnd.get(5));
+    assertEquals((Integer)7, removed2FromEnd.get(7));
   }
   
   @Test
   public void getBothRemovedTest() {
-    assertEquals((Integer)1, (Integer)removedFromBoth.get(0));
-    assertEquals((Integer)6, (Integer)removedFromBoth.get(5));
-    assertEquals((Integer)8, (Integer)removedFromBoth.get(7));
+    assertEquals((Integer)1, removedFromBoth.get(0));
+    assertEquals((Integer)6, removedFromBoth.get(5));
+    assertEquals((Integer)8, removedFromBoth.get(7));
   }
 
   @Test

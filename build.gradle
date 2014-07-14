@@ -20,6 +20,14 @@ dependencies {
   emma "emma:emma_ant:2.1.5320"
 }
 
+compileJava {
+  options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
+}
+
+compileTestJava {
+  options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
+}
+
 def emmaConvention = new EmmaPluginConvention(project)
 project.convention.plugins.emma = emmaConvention
 
@@ -50,7 +58,7 @@ plugins.withType(JavaPlugin) {
 }
 
 test {
-  testResultsDir = file("$buildDir/test-results/xml")
+  getReports().getJunitXml().setDestination(file("$buildDir/test-results/xml"))
 
   // add EMMA related JVM args to our tests
   jvmArgs "-XX:-UseSplitVerifier", "-Demma.coverage.out.file=$buildDir/tmp/emma/metadata.emma", "-Demma.coverage.out.merge=true"
@@ -83,24 +91,25 @@ test {
   // We create three types (txt, html, xml) of reports here. Running your build script now should
   // result in output like that:
   doLast {
-   def srcDir = sourceSets.main.java.srcDirs.toArray()[0]
-   println "Creating test coverage reports for classes " + srcDir
-   def emmaInstDir = new File(sourceSets.main.output.classesDir.parentFile.parentFile, "tmp/emma")
-   ant.emma(enabled:"true") {
-     new File("$buildDir/reports/emma").mkdirs()
-     report(sourcepath: srcDir) {
-       fileset(dir: emmaInstDir.absolutePath) {
-         include(name:"**/*.emma")
-       }
-       txt(outfile:"$buildDir/reports/emma/coverage.txt")
-       html(outfile:"$buildDir/reports/emma/coverage.html")
-       xml(outfile:"$buildDir/reports/emma/coverage.xml")
-     }
-   }
-   println "Test coverage reports available at $buildDir/reports/emma."
-   println "txt: $buildDir/reports/emma/coverage.txt"
-   println "Test $buildDir/reports/emma/coverage.html"
-   println "Test $buildDir/reports/emma/coverage.xml"
+    def srcDir = sourceSets.main.java.srcDirs.toArray()[0]
+    println "Creating test coverage reports for classes " + srcDir
+    def emmaInstDir = new File(sourceSets.main.output.classesDir.parentFile.parentFile, "tmp/emma")
+    ant.emma(enabled:"true") {
+      new File("$buildDir/reports/emma").mkdirs()
+      report(sourcepath: srcDir) {
+        fileset(dir: emmaInstDir.absolutePath) {
+          include(name:"**/*.emma")
+        }
+        txt(outfile:"$buildDir/reports/emma/coverage.txt")
+        html(outfile:"$buildDir/reports/emma/coverage.html")
+        xml(outfile:"$buildDir/reports/emma/coverage.xml")
+      }
+    }
+
+    println "Test coverage reports available at $buildDir/reports/emma."
+    println "txt: $buildDir/reports/emma/coverage.txt"
+    println "Test $buildDir/reports/emma/coverage.html"
+    println "Test $buildDir/reports/emma/coverage.xml"
   }
 }
 

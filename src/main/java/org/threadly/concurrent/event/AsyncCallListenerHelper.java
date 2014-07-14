@@ -82,7 +82,7 @@ public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
   @SuppressWarnings("unchecked")
   protected T getProxyInstance(Class<? super T> listenerInterface) {
     return (T) Proxy.newProxyInstance(listenerInterface.getClassLoader(), 
-                                      new Class[] { listenerInterface }, 
+                                      new Class<?>[] { listenerInterface }, 
                                       new AsyncListenerCaller());
   }
   
