@@ -144,7 +144,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
-                                           final boolean useDaemonThreads) {
+                                           boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads);
     
