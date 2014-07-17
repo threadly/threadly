@@ -73,7 +73,7 @@ public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
     super(listenerInterface);
     
     if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor for .call() invocation to occur on");
+      throw new IllegalArgumentException("Must provide executor");
     }
     
     this.executor = executor;

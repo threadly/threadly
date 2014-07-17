@@ -4,7 +4,7 @@ import org.threadly.util.ExceptionUtils;
 
 /**
  * <p>Class that is designed to wrap a runnable, and prevent any 
- * throwables from proegating out of the run function.  If a throwable 
+ * throwables from propagating out of the run function.  If a throwable 
  * is thrown, it will be provided to 
  * {@link ExceptionUtils}.handleException(Throwable).</p>
  * 

@@ -20,7 +20,7 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
    */
   public ScheduledExecutorServiceWrapper(ScheduledExecutorService scheduler) {
     if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler implementation");
+      throw new IllegalArgumentException("Must provide scheduler");
     }
     
     this.scheduler = scheduler;
@@ -35,7 +35,7 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
     if (task == null) {
-      throw new IllegalArgumentException("Runnable can not be null");
+      throw new IllegalArgumentException("Must provide task");
     } else if (initialDelay < 0) {
       throw new IllegalArgumentException("initialDelay must be >= 0");
     } else if (recurringDelay < 0) {

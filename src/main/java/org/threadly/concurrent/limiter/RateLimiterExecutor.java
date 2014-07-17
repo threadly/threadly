@@ -45,7 +45,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   public RateLimiterExecutor(SimpleSchedulerInterface scheduler, 
                              int permitsPerSecond) {
     if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler to run on");
+      throw new IllegalArgumentException("Must provide scheduler");
     } else if (permitsPerSecond < 1) {
       throw new IllegalArgumentException("Must allow at least one permit per second");
     }

@@ -48,7 +48,7 @@ public class AsyncCallRunnableListenerHelper extends RunnableListenerHelper {
     super(callListenersOnce);
     
     if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor for .call() invocation to occur on");
+      throw new IllegalArgumentException("Must provide executor");
     }
     
     this.executor = executor;

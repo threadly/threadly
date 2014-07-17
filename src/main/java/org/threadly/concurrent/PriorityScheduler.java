@@ -480,7 +480,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       case Low:
         return lowPriorityQueue.size();
       default:
-        throw new UnsupportedOperationException("Not implemented for priority: " + priority);
+        throw new UnsupportedOperationException();
     }
   }
   
@@ -854,7 +854,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         addToLowPriorityQueue(task);
         break;
       default:
-        throw new UnsupportedOperationException("Priority not implemented: " + task.priority);
+        throw new UnsupportedOperationException();
     }
   }
   

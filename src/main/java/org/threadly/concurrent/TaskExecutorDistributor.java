@@ -232,7 +232,7 @@ public class TaskExecutorDistributor {
   protected TaskExecutorDistributor(Executor executor, StripedLock sLock, 
                                     int maxTasksPerCycle, boolean accurateQueueSize) {
     if (executor == null) {
-      throw new IllegalArgumentException("executor can not be null");
+      throw new IllegalArgumentException("Must provide executor");
     } else if (sLock == null) {
       throw new IllegalArgumentException("striped lock must be provided");
     } else if (maxTasksPerCycle < 1) {

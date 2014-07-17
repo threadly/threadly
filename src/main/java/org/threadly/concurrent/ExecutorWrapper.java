@@ -25,7 +25,7 @@ public class ExecutorWrapper extends AbstractSubmitterExecutor {
    */
   public ExecutorWrapper(Executor executor) {
     if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor implementation");
+      throw new IllegalArgumentException("Must provide executor");
     }
     
     this.executor = executor;

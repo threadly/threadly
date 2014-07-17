@@ -40,7 +40,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    */
   public AbstractExecutorServiceWrapper(SchedulerServiceInterface scheduler) {
     if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler implementation");
+      throw new IllegalArgumentException("Must provide scheduler");
     }
     
     this.scheduler = scheduler;
@@ -196,7 +196,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   @Override
   public ListenableScheduledFuture<?> schedule(Runnable task, long delay, TimeUnit unit) {
     if (task == null) {
-      throw new NullPointerException("Must provide a task");
+      throw new NullPointerException("Must provide task");
     } else if (delay < 0) {
       delay = 0;
     }
@@ -210,7 +210,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   public <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delay,
                                                    TimeUnit unit) {
     if (callable == null) {
-      throw new NullPointerException("Must provide a task");
+      throw new NullPointerException("Must provide task");
     } else if (delay < 0) {
       delay = 0;
     }
@@ -226,7 +226,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                                              long initialDelay,
                                                              long delay, TimeUnit unit) {
     if (task == null) {
-      throw new NullPointerException("Must provide a task");
+      throw new NullPointerException("Must provide task");
     } else if (delay < 0) {
       delay = 0;
     } else if (initialDelay < 0) {
@@ -282,7 +282,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                                           long initialDelay, long period,
                                                           TimeUnit unit) {
     if (task == null) {
-      throw new NullPointerException("Must provide a task");
+      throw new NullPointerException("Must provide task");
     } else if (period <= 0) {
       throw new IllegalArgumentException("period must be > 0");
     }

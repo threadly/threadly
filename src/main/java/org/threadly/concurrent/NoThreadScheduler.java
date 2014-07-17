@@ -166,7 +166,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
                                      long initialDelay, 
                                      long recurringDelay) {
     if (task == null) {
-      throw new IllegalArgumentException("Task can not be null");
+      throw new IllegalArgumentException("Must provide task");
     } else if (initialDelay < 0) {
       throw new IllegalArgumentException("initialDelay can not be negative");
     } else if (recurringDelay < 0) {

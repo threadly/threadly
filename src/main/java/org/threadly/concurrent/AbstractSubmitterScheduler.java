@@ -33,7 +33,7 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
   @Override
   public void schedule(Runnable task, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException("Task can not be null");
+      throw new IllegalArgumentException("Must provide task");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs can not be negative");
     }
@@ -49,7 +49,7 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException("Task can not be null");
+      throw new IllegalArgumentException("Must provide task");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs can not be negative");
     }
@@ -64,7 +64,7 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException("Task can not be null");
+      throw new IllegalArgumentException("Must provide task");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs can not be negative");
     }

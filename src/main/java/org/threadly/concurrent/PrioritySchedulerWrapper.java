@@ -27,9 +27,9 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   public PrioritySchedulerWrapper(PrioritySchedulerInterface scheduler, 
                                   TaskPriority defaultPriority) {
     if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide a scheduler");
+      throw new IllegalArgumentException("Must provide scheduler");
     } else if (defaultPriority == null) {
-      throw new IllegalArgumentException("Must provide a default priority");
+      throw new IllegalArgumentException("Must provide default priority");
     }
     
     this.scheduler = scheduler;

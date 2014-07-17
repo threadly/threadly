@@ -797,7 +797,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
         totalLowPriorityExecutions.incrementAndGet();
         break;
       default:
-        throw new UnsupportedOperationException("Priority not handled: " + taskWrapper.priority);
+        throw new UnsupportedOperationException();
     }
   }
   

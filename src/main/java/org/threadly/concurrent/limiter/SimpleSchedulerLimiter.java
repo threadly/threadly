@@ -89,7 +89,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   @Override
   public void schedule(Runnable task, long delayInMs) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException("Must provide task");
     } else if (delayInMs < 0) {
       throw new IllegalArgumentException("delayInMs must be >= 0");
     }
@@ -106,7 +106,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
     if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
+      throw new IllegalArgumentException("Must provide task");
     } else if (initialDelay < 0) {
       throw new IllegalArgumentException("initialDelay must be >= 0");
     } else if (recurringDelay < 0) {
