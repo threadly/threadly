@@ -27,7 +27,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * <p>Assuming that the shared memory (any objects, primitives, etc) are only accessed 
  * through the same instance of {@link TaskExecutorDistributor}, and assuming that those 
- * variables are only accessed via the same key.  Then the programer does not need to worry 
+ * variables are only accessed via the same key.  Then the programmer does not need to worry 
  * about synchronization, or volatile.  The {@link TaskExecutorDistributor} will handle the 
  * happens-before relationship.</p>
  * 
@@ -139,7 +139,7 @@ public class TaskExecutorDistributor {
    * This constructor does not attempt to have an accurate queue size for the 
    * "getTaskQueueSize" call (thus preferring high performance).
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  
    *                 Ideally has as many possible threads as keys that 
    *                 will be used in parallel. 
@@ -155,7 +155,7 @@ public class TaskExecutorDistributor {
    * tracked for given thread keys.  There is a performance hit associated with this, 
    * so this should only be enabled if "getTaskQueueSize" calls will be used.
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  
    *                 Ideally has as many possible threads as keys that 
    *                 will be used in parallel.
@@ -178,7 +178,7 @@ public class TaskExecutorDistributor {
    * This constructor does not attempt to have an accurate queue size for the 
    * "getTaskQueueSize" call (thus preferring high performance).
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  
    *                 Ideally has as many possible threads as keys that 
    *                 will be used in parallel.
@@ -202,7 +202,7 @@ public class TaskExecutorDistributor {
    * tracked for given thread keys.  There is a performance hit associated with this, 
    * so this should only be enabled if "getTaskQueueSize" calls will be used.
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  
    *                 Ideally has as many possible threads as keys that 
    *                 will be used in parallel.
@@ -301,7 +301,7 @@ public class TaskExecutorDistributor {
    * 
    * If true was not supplied in the constructor for "accurateQueueSize", this will only 
    * report how many tasks have not been accepted by the worker yet.  The accepting of those 
-   * tasks occur in batches, so this number will varry dramatically (and probably be unusable).
+   * tasks occur in batches, so this number will vary dramatically (and probably be unusable).
    * 
    * So it is highly recommended that if your interested in this functionality you supply a 
    * true into the constructor.
@@ -428,7 +428,7 @@ public class TaskExecutorDistributor {
   }
   
   /**
-   * <p>Simple factory interface so we can build the most efficent 
+   * <p>Simple factory interface so we can build the most efficient 
    * TaskQueueWorker implementation for the settings provided at 
    * construction.</p>
    * 

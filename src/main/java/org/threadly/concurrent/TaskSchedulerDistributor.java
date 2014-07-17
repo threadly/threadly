@@ -112,7 +112,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * This constructor does not attempt to have an accurate queue size for the 
    * "getTaskQueueSize" call (thus preferring high performance).
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
    *                  will be used in parallel. 
@@ -128,7 +128,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * tracked for given thread keys.  There is a performance hit associated with this, 
    * so this should only be enabled if "getTaskQueueSize" calls will be used.
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
    *                  will be used in parallel. 
@@ -151,7 +151,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * This constructor does not attempt to have an accurate queue size for the 
    * "getTaskQueueSize" call (thus preferring high performance).
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
    *                  will be used in parallel.
@@ -175,7 +175,7 @@ public class TaskSchedulerDistributor extends TaskExecutorDistributor {
    * tracked for given thread keys.  There is a performance hit associated with this, 
    * so this should only be enabled if "getTaskQueueSize" calls will be used.
    * 
-   * @param expectedParallism level of expected qty of threads adding tasks in parallel
+   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  
    *                  Ideally has as many possible threads as keys that 
    *                  will be used in parallel.

@@ -51,7 +51,7 @@ public class TestableScheduler extends NoThreadScheduler {
    * way the user does not have to track the current time.
    * 
    * @param timeInMillis amount in milliseconds to advance the scheduler forward
-   * @return qty of tasks run during this tick call
+   * @return quantity of tasks run during this tick call
    */
   public int advance(long timeInMillis) {
     return tick(nowInMillis + timeInMillis);
@@ -65,7 +65,7 @@ public class TestableScheduler extends NoThreadScheduler {
    * tasks past that task will not run till the next call to tick.  So it is important that the 
    * implementor handle those exceptions.  
    * 
-   * @return qty of tasks run during this tick call
+   * @return quantity of tasks run during this tick call
    */
   public int tick() {
     return tick(Clock.accurateTimeMillis());
@@ -84,7 +84,7 @@ public class TestableScheduler extends NoThreadScheduler {
    * a specific amount of time forward, look at the "advance" call.
    * 
    * @param currentTime Absolute time to provide for looking at task run time
-   * @return qty of tasks run in this tick call
+   * @return quantity of tasks run in this tick call
    */
   public int tick(long currentTime) {
     if (nowInMillis > currentTime) {

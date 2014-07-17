@@ -148,7 +148,7 @@ public class FutureUtils {
   
   /**
    * This call is similar to makeCompleteFuture in that it will immediately provide a 
-   * future that can not be canceled, and will not be satifised till all provided 
+   * future that can not be canceled, and will not be satisfied till all provided 
    * futures complete.  
    * 
    * This future provides a list of the completed futures as the result.  The order 
@@ -167,7 +167,7 @@ public class FutureUtils {
   
   /**
    * This call is similar to makeCompleteFuture in that it will immediately provide a 
-   * future that can not be canceled, and will not be satifised till all provided 
+   * future that can not be canceled, and will not be satisfied till all provided 
    * futures complete.  
    * 
    * This future provides a list of the futures that completed without throwing 
@@ -187,7 +187,7 @@ public class FutureUtils {
   
   /**
    * This call is similar to makeCompleteFuture in that it will immediately provide a 
-   * future that can not be canceled, and will not be satifised till all provided 
+   * future that can not be canceled, and will not be satisfied till all provided 
    * futures complete.  
    * 
    * This future provides a list of the futures that failed by either throwing an 

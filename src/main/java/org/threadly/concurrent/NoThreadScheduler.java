@@ -107,7 +107,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * This call is NOT thread safe, calling tick in parallel could cause the 
    * same task to be run multiple times in parallel.
    * 
-   * @return qty of tasks run during this tick call
+   * @return quantity of tasks run during this tick invocation
    * @throws InterruptedException thrown if thread is interrupted waiting for task to run
    *           (this can only throw if constructed with a true to allow blocking)
    */

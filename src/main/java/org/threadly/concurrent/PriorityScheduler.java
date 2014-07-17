@@ -308,7 +308,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Getter for the current qty of workers constructed (ether running or idle).
+   * Getter for the current quantity of workers constructed (either running or idle).
    * 
    * @return current worker count
    */
@@ -456,7 +456,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * Returns how many tasks are either waiting to be executed, 
    * or are scheduled to be executed at a future point.
    * 
-   * @return qty of tasks waiting execution or scheduled to be executed later
+   * @return quantity of tasks waiting execution or scheduled to be executed later
    */
   public int getScheduledTaskCount() {
     return highPriorityQueue.size() + lowPriorityQueue.size();
@@ -467,7 +467,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * or are scheduled to be executed at a future point for a specific priority.
    * 
    * @param priority priority for tasks to be counted
-   * @return qty of tasks waiting execution or scheduled to be executed later
+   * @return quantity of tasks waiting execution or scheduled to be executed later
    */
   public int getScheduledTaskCount(TaskPriority priority) {
     if (priority == null) {
@@ -485,7 +485,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Prestarts all core threads.  This will make new idle workers to accept future tasks.
+   * Ensures all core threads have been started.  This will make new idle workers 
+   * to accept tasks.
    */
   public void prestartAllCoreThreads() {
     synchronized (workersLock) {
@@ -580,7 +581,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * recurring tasks are present they will also be unable to reschedule.  If shutdown or 
    * shutdownNow has already been called, this will have no effect.
    * 
-   * If you wish to not want to run any queued tasks you should use {#link shutdownNow()).
+   * If you wish to not want to run any queued tasks you should use shutdownNow().
    */
   public void shutdown() {
     if (! shutdownStarted.getAndSet(true)) {
@@ -1130,8 +1131,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * <p>Runnable which will run on pool threads.  It 
-   * accepts runnables to run, and tracks usage.</p>
+   * <p>Runnable which will run on pool threads.  It accepts runnables to run, 
+   * and tracks usage.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0

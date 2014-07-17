@@ -22,7 +22,7 @@ import org.threadly.concurrent.SchedulerServiceInterface;
  * <p>This extends the {@link SimpleSchedulerLimiter} to add {@link SchedulerServiceInterface} 
  * features.  This does not cause any performance hits, but does require a source 
  * {@link SchedulerServiceInterface} to rely on.  If you have a {@link SchedulerServiceInterface} 
- * available this implementation should be prefered over the {@link SimpleSchedulerLimiter}.</p>
+ * available this implementation should be preferred over the {@link SimpleSchedulerLimiter}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
@@ -35,7 +35,7 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
    * Constructs a new limiter that implements the {@link SchedulerServiceInterface}.
    * 
    * @param scheduler {@link SchedulerServiceInterface} implementation to submit task executions to.
-   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public SchedulerServiceLimiter(SchedulerServiceInterface scheduler, 
                                  int maxConcurrency) {
@@ -46,7 +46,7 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
    * Constructs a new limiter that implements the {@link SchedulerServiceInterface}.
    * 
    * @param scheduler {@link SchedulerServiceInterface} implementation to submit task executions to.
-   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
   public SchedulerServiceLimiter(SchedulerServiceInterface scheduler, 

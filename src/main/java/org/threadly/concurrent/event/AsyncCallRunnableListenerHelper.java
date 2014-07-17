@@ -8,7 +8,7 @@ import java.util.concurrent.Executor;
  * with the .callListeners() function, the invocation of all the listeners will occur on the 
  * {@link Executor} that was provided at construction.  If the listener was added without 
  * a provided executor it will then run on the provided executor (in the thread doing the 
- * .callListeners() invocation, aka it will run that listener before executing other 
+ * .callListeners() invocation, AKA it will run that listener before executing other 
  * listeners).  If the listener was added with a provided executor, that listener will still 
  * execute on the provided executor (so not necessarily the executor provided at 
  * construction time).<p>

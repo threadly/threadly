@@ -33,7 +33,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
    * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
    * 
    * @param scheduler {@link PrioritySchedulerInterface} implementation to submit task executions to.
-   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
                                   int maxConcurrency) {
@@ -44,7 +44,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
    * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
    * 
    * @param scheduler {@link PrioritySchedulerInterface} implementation to submit task executions to.
-   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
   public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 

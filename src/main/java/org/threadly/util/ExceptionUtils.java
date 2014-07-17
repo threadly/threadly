@@ -21,7 +21,7 @@ public class ExceptionUtils {
   /**
    * This call handles an uncaught throwable.  If a default uncaught exception 
    * handler is set, then that will be called to handle the uncaught exception.  
-   * If none is set, then the exception will be printed out to std err.
+   * If none is set, then the exception will be printed out to standard error.
    * 
    * @param t throwable to handle
    */

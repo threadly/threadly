@@ -604,9 +604,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to get the total qty of tasks this executor has handled.
+   * Call to get the total quantity of tasks this executor has handled.
    * 
-   * @return total qty of tasks run
+   * @return total quantity of tasks run
    */
   public int getTotalExecutionCount() {
     return getHighPriorityTotalExecutionCount() + 
@@ -614,18 +614,18 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to get the total qty of high priority tasks this executor has handled.
+   * Call to get the total quantity of high priority tasks this executor has handled.
    * 
-   * @return total qty of high priority tasks run
+   * @return total quantity of high priority tasks run
    */
   public int getHighPriorityTotalExecutionCount() {
     return totalHighPriorityExecutions.get();
   }
   
   /**
-   * Call to get the total qty of low priority tasks this executor has handled.
+   * Call to get the total quantity of low priority tasks this executor has handled.
    * 
-   * @return total qty of low priority tasks run
+   * @return total quantity of low priority tasks run
    */
   public int getLowPriorityTotalExecutionCount() {
     return totalLowPriorityExecutions.get();
@@ -688,7 +688,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
    * than the provided amount of time in milliseconds.
    * 
    * @param timeInMs threshold of time to search for execution
-   * @return total qty of runnables and callables which have or are running longer than the provided time length
+   * @return total quantity of runnables and callables which have or are running longer than the provided time length
    */
   public int getQtyRunningOverTime(long timeInMs) {
     int result = 0;

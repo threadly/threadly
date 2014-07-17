@@ -177,7 +177,7 @@ public class ListUtils {
       // The pivot we use here tries to be smarter and to choose a pivot 
       // close to the expected location of the key. This reduces dramatically 
       // the number of steps needed to get to the key.  However, it does not 
-      // work well with a logaritmic distribution of values. When the key is 
+      // work well with a logarithmic distribution of values. When the key is 
       // not found quickly the smart way, we switch to the standard pivot.
       if (nPreviousSteps > MAX_STEPS_TILL_B_SEARCH_SWITCH) {
         pivot = (min + max) >> 1;

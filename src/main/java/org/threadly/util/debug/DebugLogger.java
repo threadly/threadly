@@ -18,8 +18,8 @@ import org.threadly.util.StringUtils;
  * captured by this utility.</p>
  * 
  * <p>This utility has several deficiencies, the largest of which is using 
- * System.nanoTime() for log ordering.  Since nano time can roll over from 
- * positive to negative, in those rare situations log ordering may be 
+ * System.nanoTime() for log ordering.  Since nanosecond time can roll over 
+ * from positive to negative, in those rare situations log ordering may be 
  * incorrect.  It is design only as a debugging aid and should NEVER be 
  * included after debugging is completed.</p>
  * 
@@ -109,13 +109,13 @@ public class DebugLogger {
   
   /**
    * This call retrieves and removes the oldest stored log messages.  
-   * It will only return at most the maximum qty provided, but may return less 
+   * It will only return at most the maximum quantity provided, but may return less 
    * if not that many messages are currently available.  This call is slightly less 
    * efficient than getAllStoredMessages.
    * 
    * This calls getOldestLogMessages with a default of NOT including the time in nanoseconds.
    * 
-   * @param qty maximum qty of messages to retrieve
+   * @param qty maximum quantity of messages to retrieve
    * @return string with requested log messages, separated by a new line
    */
   public static String getOldestLogMessages(int qty) {
@@ -124,11 +124,11 @@ public class DebugLogger {
   
   /**
    * This call retrieves and removes the oldest stored log messages.  
-   * It will only return at most the maximum qty provided, but may return less 
+   * It will only return at most the maximum quantity provided, but may return less 
    * if not that many messages are currently available.  This call is slightly less 
    * efficient than getAllStoredMessages.
    * 
-   * @param qty maximum qty of messages to retrieve
+   * @param qty maximum quantity of messages to retrieve
    * @param includeLogTimes boolean to include time in nanoseconds that log message was recorded
    * @return string with requested log messages, separated by a new line
    */

@@ -6,7 +6,7 @@ import java.util.concurrent.ScheduledFuture;
  * <p>Interface which includes the {@link ScheduledFuture} interface as well 
  * as the {@link ListenableFuture} interface.</p>
  * 
- * <p>This is almost identically to java.util.concurrent.ScheduledFuture excepto it 
+ * <p>This is almost identically to java.util.concurrent.ScheduledFuture except it 
  * provides the additional functionality of the {@link ListenableFuture}.</p>
  * 
  * @author jent - Mike Jensen

@@ -34,7 +34,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * Constructs a new limiter that implements the {@link SubmitterSchedulerInterface}.
    * 
    * @param scheduler {@link SimpleSchedulerInterface} implementation to submit task executions to.
-   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
                                 int maxConcurrency) {
@@ -45,7 +45,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * Constructs a new limiter that implements the {@link SubmitterSchedulerInterface}.
    * 
    * @param scheduler {@link SimpleSchedulerInterface} implementation to submit task executions to.
-   * @param maxConcurrency maximum qty of runnables to run in parallel
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
    */
   public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 

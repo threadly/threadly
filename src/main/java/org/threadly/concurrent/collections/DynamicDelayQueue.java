@@ -60,7 +60,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   
   @Override
   public String toString() {
-    return "Queue:" + queue.toString();
+    return queue.toString();
   }
   
   /**
@@ -175,7 +175,6 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   @Override
   public boolean offer(T e, long timeout, TimeUnit unit) {
     // there is no blocking for offer, so just add
-    
     return add(e);
   }
 

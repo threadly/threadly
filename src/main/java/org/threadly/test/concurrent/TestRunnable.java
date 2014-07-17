@@ -178,7 +178,7 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Blocks until run completed been called the provided qty of times.
+   * Blocks until run completed been called the provided quantity of times.
    * 
    * @param timeout time to wait for run to be called before throwing exception
    * @param expectedRunCount run count to wait for

@@ -49,7 +49,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
              Thread thread = defaultFactory.newThread(runnable);
              
              thread.setDaemon(daemonThread);
-             thread.setName("SingleThreadScheduler-" + NEXT_THREAD_ID.getAndIncrement());
+             thread.setName(SingleThreadScheduler.class.getSimpleName() + "-" + NEXT_THREAD_ID.getAndIncrement());
              
              return thread;
            }
