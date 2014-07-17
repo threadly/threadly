@@ -1423,7 +1423,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           lowPriorityQueue.addLast(this);
           break;
         default:
-          throw new UnsupportedOperationException("Not implemented for priority: " + priority);
+          throw new UnsupportedOperationException();
       }
     }
     
@@ -1460,7 +1460,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           }
           break;
         default:
-          throw new UnsupportedOperationException("Not implemented for priority: " + priority);
+          throw new UnsupportedOperationException();
       }
     }
 

@@ -112,6 +112,6 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
                                                           long initialDelay, long period,
                                                           TimeUnit unit) {
-    throw new UnsupportedOperationException("Not implemented yet");
+    throw new UnsupportedOperationException();
   }
 }
