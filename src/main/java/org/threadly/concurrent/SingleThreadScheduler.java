@@ -3,9 +3,7 @@ package org.threadly.concurrent;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.util.ExceptionUtils;
@@ -20,8 +18,6 @@ import org.threadly.util.ExceptionUtils;
  */
 public class SingleThreadScheduler extends AbstractSubmitterScheduler
                                    implements SchedulerServiceInterface {
-  private static final AtomicInteger NEXT_THREAD_ID = new AtomicInteger(1);
-  
   protected final ThreadFactory threadFactory;
   protected final AtomicReference<SchedulerManager> sManager;
   
@@ -40,20 +36,9 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * 
    * @param daemonThread true if scheduler thread should be a daemon thread
    */
-  public SingleThreadScheduler(final boolean daemonThread) {
-    this(new ThreadFactory() {
-           private final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
-          
-           @Override
-           public Thread newThread(Runnable runnable) {
-             Thread thread = defaultFactory.newThread(runnable);
-             
-             thread.setDaemon(daemonThread);
-             thread.setName(SingleThreadScheduler.class.getSimpleName() + "-" + NEXT_THREAD_ID.getAndIncrement());
-             
-             return thread;
-           }
-         });
+  public SingleThreadScheduler(boolean daemonThread) {
+    this(new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
+                                       true, daemonThread, Thread.NORM_PRIORITY, null));
   }
   
   /**

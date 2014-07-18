@@ -6,7 +6,6 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -172,21 +171,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   public PriorityScheduler(int corePoolSize, int maxPoolSize,
                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, 
-                           final boolean useDaemonThreads) {
+                           boolean useDaemonThreads) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
          defaultPriority, maxWaitForLowPriorityInMs, 
-         new ThreadFactory() {
-           private final ThreadFactory defaultFactory = Executors.defaultThreadFactory();
-          
-           @Override
-           public Thread newThread(Runnable runnable) {
-             Thread thread = defaultFactory.newThread(runnable);
-             
-             thread.setDaemon(useDaemonThreads);
-             
-             return thread;
-           }
-         });
+         new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null));
   }
 
   /**
@@ -222,7 +211,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       defaultPriority = DEFAULT_PRIORITY;
     }
     if (threadFactory == null) {
-      threadFactory = Executors.defaultThreadFactory();
+      threadFactory = new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", true);
     }
     
     this.clockWrapper = new ClockWrapper();

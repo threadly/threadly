@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
@@ -34,7 +33,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     new PrioritySchedulerStatisticTracker(1, 1, 1000, 
                                           TaskPriority.High, 100, false);
     new PrioritySchedulerStatisticTracker(1, 1, 1000, TaskPriority.High, 100, 
-                                          Executors.defaultThreadFactory());
+                                          new ConfigurableThreadFactory());
   }
   
   @Test

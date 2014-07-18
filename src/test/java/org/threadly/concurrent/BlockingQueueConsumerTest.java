@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.SynchronousQueue;
 
 import org.junit.After;
@@ -55,19 +54,19 @@ public class BlockingQueueConsumerTest {
   @Test
   public void doubleStartTest() {
     // start queue
-    queueConsumer.maybeStart(Executors.defaultThreadFactory());
+    queueConsumer.maybeStart(new ConfigurableThreadFactory());
     
     assertTrue(queueConsumer.isRunning());
     
     // attempt to start again
-    queueConsumer.maybeStart(Executors.defaultThreadFactory());
+    queueConsumer.maybeStart(new ConfigurableThreadFactory());
     // should still be running without exception
     assertTrue(queueConsumer.isRunning());
   }
   
   @Test
   public void doubleStopTest() {
-    queueConsumer.maybeStart(Executors.defaultThreadFactory());
+    queueConsumer.maybeStart(new ConfigurableThreadFactory());
     assertTrue(queueConsumer.isRunning());
     
     queueConsumer.stop();
@@ -82,7 +81,7 @@ public class BlockingQueueConsumerTest {
     assertFalse(queueConsumer.isRunning());
     
     // start queue
-    queueConsumer.maybeStart(Executors.defaultThreadFactory());
+    queueConsumer.maybeStart(new ConfigurableThreadFactory());
     
     assertTrue(queueConsumer.isRunning());
     
@@ -108,7 +107,7 @@ public class BlockingQueueConsumerTest {
         }
       });
       try {
-        queueConsumer.maybeStart(Executors.defaultThreadFactory());
+        queueConsumer.maybeStart(new ConfigurableThreadFactory());
         
         Object item = new Object();
         queue.put(item);
