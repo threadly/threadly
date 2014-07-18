@@ -89,7 +89,7 @@ public class DynamicDelayQueueTest {
   public void toStringTest() {
     String testStr = testQueue.toString();
     assertNotNull(testStr);
-    assertTrue(testStr.length() > 5);
+    assertTrue(testStr.length() > 1);
   }
   
   @Test
