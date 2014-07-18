@@ -30,12 +30,9 @@ public class ExceptionUtils {
       return;
     }
     
-    UncaughtExceptionHandler ueHandler = Thread.getDefaultUncaughtExceptionHandler();
-    if (ueHandler != null) {
-       ueHandler.uncaughtException(Thread.currentThread(), t);
-    } else {
-      t.printStackTrace(System.err);
-    }
+    Thread currentThread = Thread.currentThread();
+    UncaughtExceptionHandler ueHandler = currentThread.getUncaughtExceptionHandler();
+    ueHandler.uncaughtException(currentThread, t);
   }
   
   /**

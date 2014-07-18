@@ -19,6 +19,7 @@ public class ExceptionUtilsTest {
   public void handleExceptionWithoutUncaughtExceptionHandler() {
     // make sure no uncaughtExceptionHandler is set
     Thread.setDefaultUncaughtExceptionHandler(null);
+    Thread.currentThread().setUncaughtExceptionHandler(null);
     
     PrintStream originalSystemErr = System.err;
     try {
@@ -36,8 +37,7 @@ public class ExceptionUtilsTest {
       ExceptionUtils.handleException(e);
       
       assertTrue(sb.length() > 0);
-      
-      assertTrue(sb.toString().equals(ExceptionUtils.stackToString(e)));
+      assertTrue(sb.toString().contains(ExceptionUtils.stackToString(e)));
     } finally {
       System.setErr(originalSystemErr);
     }
@@ -45,7 +45,7 @@ public class ExceptionUtilsTest {
   
   @SuppressWarnings("resource")
   @Test
-  public void handleExceptionWithUncaughtExceptionHandler() {
+  public void handleExceptionWithDefaultUncaughtExceptionHandler() {
     PrintStream originalSystemErr = System.err;
     try {
       // set it up so System.err goes to a StringBuffer
@@ -73,6 +73,44 @@ public class ExceptionUtilsTest {
         assertTrue(ueh.getCalledWithThrowable() == e);
       } finally {
         Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler);
+      }
+    } finally {
+      System.setErr(originalSystemErr);
+    }
+  }
+  
+  @SuppressWarnings("resource")
+  @Test
+  public void handleExceptionWithUncaughtExceptionHandler() {
+    PrintStream originalSystemErr = System.err;
+    try {
+      // set it up so System.err goes to a StringBuffer
+      final StringBuilder sb = new StringBuilder();
+      System.setErr(new PrintStream(new OutputStream() {
+        @Override
+        public void write(int b) throws IOException {
+          sb.append((char)b);
+        }
+      }));
+      
+      UncaughtExceptionHandler originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+      TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
+      Thread.setDefaultUncaughtExceptionHandler(null);
+      Thread.currentThread().setUncaughtExceptionHandler(ueh);
+      
+      try {
+        // make call
+        Exception e = new Exception();
+        ExceptionUtils.handleException(e);
+        
+        assertEquals(0, sb.length()); // should not have gone to std err
+        
+        assertEquals(1, ueh.getCallCount());
+        assertTrue(ueh.getCalledWithThread() == Thread.currentThread());
+        assertTrue(ueh.getCalledWithThrowable() == e);
+      } finally {
+        Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler);
+        Thread.currentThread().setUncaughtExceptionHandler(null);
       }
     } finally {
       System.setErr(originalSystemErr);
