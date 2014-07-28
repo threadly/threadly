@@ -16,44 +16,31 @@ import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
-import org.threadly.concurrent.future.RunnableFutureTest.FutureFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class ListenableFutureTaskTest {
+public class ListenableFutureTaskTest extends RunnableFutureTest {
   @BeforeClass
   public static void setupClass() {
     ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
   }
   
-  @Test
-  public void getCallableResultTest() throws InterruptedException, ExecutionException {
-    RunnableFutureTest.getCallableResultTest(new Factory());
+  @Override
+  protected FutureFactory makeFutureFactory() {
+    return new Factory();
   }
   
-  @Test
-  public void getRunnableResultTest() throws InterruptedException, ExecutionException {
-    RunnableFutureTest.getRunnableResultTest(new Factory());
+  protected <T> ListenableFutureTask<T> makeFutureTask(Runnable runnable, T result) {
+    return new ListenableFutureTask<T>(false, runnable, result);
   }
   
-  @Test
-  public void getTimeoutFail() throws InterruptedException, ExecutionException {
-    RunnableFutureTest.getTimeoutFail(new Factory());
-  }
-  
-  @Test
-  public void isDoneTest() {
-    RunnableFutureTest.isDoneTest(new Factory());
-  }
-  
-  @Test
-  public void isDoneFail() {
-    RunnableFutureTest.isDoneFail(new Factory());
+  protected <T> ListenableFutureTask<T> makeFutureTask(Callable<T> task) {
+    return new ListenableFutureTask<T>(false, task);
   }
   
   @Test (expected = IllegalArgumentException.class)
   public void addListenerFail() {
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRunnable(), null);
+    ListenableFutureTask<Object> future = makeFutureTask(new TestRunnable(), null);
     
     future.addListener(null);
     fail("Exception should have thrown");
@@ -63,7 +50,7 @@ public class ListenableFutureTaskTest {
   public void listenerTest() {
     TestRunnable tr = new TestRunnable();
     
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
+    ListenableFutureTask<Object> future = makeFutureTask(tr, null);
     
     assertEquals(0, future.listenerHelper.registeredListenerCount()); // empty to start
     
@@ -100,7 +87,7 @@ public class ListenableFutureTaskTest {
   public void listenerExceptionAddBeforeRunTest() {
     TestRunnable listener = new TestRuntimeFailureRunnable();
     
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRunnable(), null);
+    ListenableFutureTask<Object> future = makeFutureTask(new TestRunnable(), null);
     
     future.addListener(listener);
     future.run();
@@ -112,7 +99,7 @@ public class ListenableFutureTaskTest {
   public void listenerExceptionAddAfterRunTest() {
     TestRunnable listener = new TestRuntimeFailureRunnable();
     
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRunnable(), null);
+    ListenableFutureTask<Object> future = makeFutureTask(new TestRunnable(), null);
     
     future.run();
     try {
@@ -128,7 +115,7 @@ public class ListenableFutureTaskTest {
   @Test
   public void addCallbackTest() {
     TestCallable tc = new TestCallable();
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tc);
+    ListenableFutureTask<Object> future = makeFutureTask(tc);
     TestFutureCallback tfc = new TestFutureCallback();
     future.addCallback(tfc);
     
@@ -143,7 +130,7 @@ public class ListenableFutureTaskTest {
   @Test
   public void addCallbackAlreadyDoneFutureTest() {
     TestCallable tc = new TestCallable();
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tc);
+    ListenableFutureTask<Object> future = makeFutureTask(tc);
     future.run();
     TestFutureCallback tfc = new TestFutureCallback();
     future.addCallback(tfc);
@@ -155,7 +142,7 @@ public class ListenableFutureTaskTest {
   @Test
   public void addCallbackExecutionExceptionAlreadyDoneTest() {
     RuntimeException failure = new RuntimeException();
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRuntimeFailureRunnable(failure));
+    ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
     future.run();
     TestFutureCallback tfc = new TestFutureCallback();
     future.addCallback(tfc);
@@ -167,7 +154,7 @@ public class ListenableFutureTaskTest {
   @Test
   public void addCallbackExecutionExceptionTest() {
     RuntimeException failure = new RuntimeException();
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, new TestRuntimeFailureRunnable(failure));
+    ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
     TestFutureCallback tfc = new TestFutureCallback();
     future.addCallback(tfc);
     
@@ -183,7 +170,7 @@ public class ListenableFutureTaskTest {
   public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRuntimeFailureRunnable();
     
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
+    ListenableFutureTask<Object> future = makeFutureTask(tr, null);
     
     future.run();
     future.get();
@@ -193,7 +180,7 @@ public class ListenableFutureTaskTest {
   public void getWithTimeoutExecutionExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
     TestRunnable tr = new TestRuntimeFailureRunnable();
     
-    ListenableFutureTask<Object> future = new ListenableFutureTask<Object>(false, tr, null);
+    ListenableFutureTask<Object> future = makeFutureTask(tr, null);
     
     future.run();
     future.get(100, TimeUnit.MILLISECONDS);

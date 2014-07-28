@@ -9,12 +9,17 @@ import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.Test;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class RunnableFutureTest {
-  public static void getCallableResultTest(FutureFactory ff) throws InterruptedException, ExecutionException {
+public abstract class RunnableFutureTest {
+  protected abstract FutureFactory makeFutureFactory();
+  
+  @Test
+  public void getCallableResultTest() throws InterruptedException, ExecutionException {
+    FutureFactory ff = makeFutureFactory();
     final Object result = new Object();
     RunnableFuture<Object> future = ff.make(new Callable<Object>() {
       @Override
@@ -27,8 +32,10 @@ public class RunnableFutureTest {
     
     assertTrue(future.get() == result);
   }
-  
-  public static void getRunnableResultTest(FutureFactory ff) throws InterruptedException, ExecutionException {
+
+  @Test
+  public void getRunnableResultTest() throws InterruptedException, ExecutionException {
+    FutureFactory ff = makeFutureFactory();
     final Object result = new Object();
     RunnableFuture<Object> future = ff.make(new TestRunnable(), result);
     
@@ -36,16 +43,20 @@ public class RunnableFutureTest {
     
     assertTrue(future.get() == result);
   }
-  
-  public static void isDoneTest(FutureFactory ff) {
+
+  @Test
+  public void isDoneTest() {
+    FutureFactory ff = makeFutureFactory();
     TestRunnable r = new TestRunnable();
     RunnableFuture<?> future = ff.make(r);
     future.run();
     
     assertTrue(future.isDone());
   }
-  
-  public static void isDoneFail(FutureFactory ff) {
+
+  @Test
+  public void isDoneFail() {
+    FutureFactory ff = makeFutureFactory();
     TestRunnable r = new TestRuntimeFailureRunnable();
     RunnableFuture<?> future = ff.make(r);
     
@@ -53,9 +64,10 @@ public class RunnableFutureTest {
     
     assertTrue(future.isDone());
   }
-  
-  public static void getTimeoutFail(FutureFactory ff) throws InterruptedException, 
-                                                             ExecutionException {
+
+  @Test
+  public void getTimeoutFail() throws InterruptedException, ExecutionException {
+    FutureFactory ff = makeFutureFactory();
     TestRunnable tr = new TestRunnable();
     RunnableFuture<?> future = ff.make(tr);
     
@@ -71,7 +83,7 @@ public class RunnableFutureTest {
     }
   }
   
-  public interface FutureFactory {
+  protected interface FutureFactory {
     public RunnableFuture<?> make(Runnable run);
     public <T> RunnableFuture<T> make(Runnable run, T result);
     public <T> RunnableFuture<T> make(Callable<T> callable);
