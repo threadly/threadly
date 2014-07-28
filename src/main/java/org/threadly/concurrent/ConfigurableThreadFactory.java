@@ -3,6 +3,9 @@ package org.threadly.concurrent;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionUtils;
 /**
  * <p>Implementation of {@link ThreadFactory} which is configurable for the most common 
  * use cases.  Specifically, it allows you several options for how to prefix the name 
@@ -23,6 +26,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
   protected final boolean useDaemonThreads;
   protected final int threadPriority;
   protected final UncaughtExceptionHandler defaultUncaughtExceptionHandler;
+  protected final ExceptionHandlerInterface defaultThreadlyExceptionHandler;
   private final AtomicInteger nextThreadNumber;
   
   /**
@@ -32,7 +36,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * other {@link ConfigurableThreadFactory} instances.
    */
   public ConfigurableThreadFactory() {
-    this(null, true, DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null);
+    this(null, true, DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null, null);
   }
   
   /**
@@ -50,7 +54,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    */
   public ConfigurableThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix) {
     this(threadNamePrefix, appendPoolIdToPrefix, 
-         DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null);
+         DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null, null);
   }
   
   /**
@@ -60,7 +64,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * @param useDaemonThreads true if produced threads should be daemon threads
    */
   public ConfigurableThreadFactory(boolean useDaemonThreads) {
-    this(null, true, useDaemonThreads, Thread.NORM_PRIORITY, null);
+    this(null, true, useDaemonThreads, Thread.NORM_PRIORITY, null, null);
   }
   
   /**
@@ -73,7 +77,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * @param threadPriority Priority for newly created threads
    */
   public ConfigurableThreadFactory(int threadPriority) {
-    this(null, true, DEFAULT_NEW_THREADS_DAEMON, threadPriority, null);
+    this(null, true, DEFAULT_NEW_THREADS_DAEMON, threadPriority, null, null);
   }
   
   /**
@@ -84,7 +88,18 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    */
   public ConfigurableThreadFactory(UncaughtExceptionHandler defaultUncaughtExceptionHandler) {
     this(null, true, DEFAULT_NEW_THREADS_DAEMON, 
-         Thread.NORM_PRIORITY, defaultUncaughtExceptionHandler);
+         Thread.NORM_PRIORITY, defaultUncaughtExceptionHandler, null);
+  }
+  
+  /**
+   * Constructs a new {@link ConfigurableThreadFactory} specifying an 
+   * {@link ExceptionHandlerInterface} that will be provided to all newly created threads.
+   * 
+   * @param defaultThreadlyExceptionHandler {@link ExceptionHandlerInterface} to provide to newly created threads
+   */
+  public ConfigurableThreadFactory(ExceptionHandlerInterface defaultThreadlyExceptionHandler) {
+    this(null, true, DEFAULT_NEW_THREADS_DAEMON, 
+         Thread.NORM_PRIORITY, null, defaultThreadlyExceptionHandler);
   }
   
   /**
@@ -106,10 +121,12 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * @param useDaemonThreads true if produced threads should be daemon threads, false to match default
    * @param threadPriority Priority for newly created threads, Thread.NORM_PRIORITY to match default
    * @param uncaughtExceptionHandler UncaughtExceptionHandler to provide to newly created threads, null to match default
+   * @param defaultThreadlyExceptionHandler {@link ExceptionHandlerInterface} to provide to newly created threads
    */
   public ConfigurableThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix, 
                                    boolean useDaemonThreads, int threadPriority, 
-                                   UncaughtExceptionHandler uncaughtExceptionHandler) {
+                                   UncaughtExceptionHandler uncaughtExceptionHandler, 
+                                   ExceptionHandlerInterface defaultThreadlyExceptionHandler) {
     if (threadPriority > Thread.MAX_PRIORITY) {
       threadPriority = Thread.MAX_PRIORITY;
     } else if (threadPriority < Thread.MIN_PRIORITY) {
@@ -132,11 +149,15 @@ public class ConfigurableThreadFactory implements ThreadFactory {
     this.useDaemonThreads = useDaemonThreads;
     this.threadPriority = threadPriority;
     this.defaultUncaughtExceptionHandler = uncaughtExceptionHandler;
+    this.defaultThreadlyExceptionHandler = defaultThreadlyExceptionHandler;
     this.nextThreadNumber = new AtomicInteger(1);
   }
 
   @Override
   public Thread newThread(Runnable r) {
+    if (defaultThreadlyExceptionHandler != null) {
+      r = new ExceptionHandlerSettingRunnable(r);
+    }
     Thread t = new Thread(group, r, 
                           threadNamePrefix + nextThreadNumber.getAndIncrement());
     
@@ -151,5 +172,27 @@ public class ConfigurableThreadFactory implements ThreadFactory {
     }
     
     return t;
+  }
+  
+  /**
+   * Because the {@link ExceptionHandlerInterface} can not be set before the thread 
+   * is started.  We must wrap it in this implementation to set the handler before 
+   * the runnable actually starts.
+   * 
+   * @author jent - Mike Jensen
+   * @since 2.4.0
+   */
+  protected class ExceptionHandlerSettingRunnable implements Runnable {
+    private final Runnable toRun;
+    
+    protected ExceptionHandlerSettingRunnable(Runnable r) {
+      toRun = r;
+    }
+
+    @Override
+    public void run() {
+      ExceptionUtils.setThreadExceptionHandler(defaultThreadlyExceptionHandler);
+      toRun.run();
+    }
   }
 }

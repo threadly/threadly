@@ -38,7 +38,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    */
   public SingleThreadScheduler(boolean daemonThread) {
     this(new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
-                                       true, daemonThread, Thread.NORM_PRIORITY, null));
+                                       true, daemonThread, Thread.NORM_PRIORITY, null, null));
   }
   
   /**

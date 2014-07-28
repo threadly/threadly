@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.OutputStream;
 import java.util.StringTokenizer;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -119,7 +118,7 @@ public class ExceptionUtilsTest {
       assertEquals(0, uncalledHandler.getCallCount());
         
       assertEquals(1, teh.getCallCount());
-      assertTrue(teh.lastProvidedThrowable == e);
+      assertTrue(teh.getLastThrowable() == e);
     } finally {
       System.setErr(originalSystemErr);
     }
@@ -152,7 +151,7 @@ public class ExceptionUtilsTest {
       assertEquals(0, uncalledHandler.getCallCount());
         
       assertEquals(1, teh.getCallCount());
-      assertTrue(teh.lastProvidedThrowable == e);
+      assertTrue(teh.getLastThrowable() == e);
     } finally {
       System.setErr(originalSystemErr);
     }
@@ -182,7 +181,7 @@ public class ExceptionUtilsTest {
       assertEquals(0, sb.length()); // should not have gone to std err
         
       assertEquals(1, teh.getCallCount());
-      assertTrue(teh.lastProvidedThrowable == e);
+      assertTrue(teh.getLastThrowable() == e);
     } finally {
       System.setErr(originalSystemErr);
     }
@@ -436,20 +435,5 @@ public class ExceptionUtilsTest {
   @Test (expected = IllegalArgumentException.class)
   public void writeArrayStackFail() {
     ExceptionUtils.writeStackTo(new Exception().getStackTrace(), null);
-  }
-  
-  private static class TestExceptionHandler implements ExceptionHandlerInterface {
-    private final AtomicInteger callCount = new AtomicInteger(0);
-    private Throwable lastProvidedThrowable = null;
-    
-    @Override
-    public void handleException(Throwable thrown) {
-      callCount.incrementAndGet();
-      lastProvidedThrowable = thrown;
-    }
-    
-    public int getCallCount() {
-      return callCount.get();
-    }
   }
 }

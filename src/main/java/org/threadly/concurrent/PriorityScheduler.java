@@ -175,7 +175,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
          defaultPriority, maxWaitForLowPriorityInMs, 
          new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null));
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
   }
 
   /**

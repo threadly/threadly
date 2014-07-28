@@ -3,9 +3,13 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionUtils;
+import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ConfigurableThreadFactoryTest {
@@ -107,5 +111,26 @@ public class ConfigurableThreadFactoryTest {
     assertEquals(ueh, ctf.defaultUncaughtExceptionHandler);
     Thread t = ctf.newThread(new TestRunnable());
     assertEquals(ueh, t.getUncaughtExceptionHandler());
+  }
+  
+  @Test
+  public void setExceptionHandlerTest() {
+    TestExceptionHandler teh = new TestExceptionHandler();
+    ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(teh);
+    
+    assertEquals(teh, ctf.defaultThreadlyExceptionHandler);
+    
+    final AtomicReference<ExceptionHandlerInterface> ehi = new AtomicReference<ExceptionHandlerInterface>(null);
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunStart() {
+        ehi.set(ExceptionUtils.getExceptionHandler());
+      }
+    };
+    Thread t = ctf.newThread(tr);
+    t.start();
+    tr.blockTillFinished();
+    
+    assertTrue(ehi.get() == teh);
   }
 }
