@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class GetExecutingFutureTaskTest extends ListenableFutureTaskTest {
+public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Override
   protected FutureFactory makeFutureFactory() {
     return new Factory();
@@ -18,18 +18,18 @@ public class GetExecutingFutureTaskTest extends ListenableFutureTaskTest {
 
   @Override
   protected <T> ListenableFutureTask<T> makeFutureTask(Runnable runnable, T result) {
-    return new GetExecutingFutureTask<T>(runnable, result);
+    return new ExecuteOnGetFutureTask<T>(runnable, result);
   }
 
   @Override
   protected <T> ListenableFutureTask<T> makeFutureTask(Callable<T> task) {
-    return new GetExecutingFutureTask<T>(task);
+    return new ExecuteOnGetFutureTask<T>(task);
   }
   
   @Test
   public void executeViaGetTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
-    GetExecutingFutureTask<?> geft = new GetExecutingFutureTask<Object>(tr);
+    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Object>(tr);
     
     geft.get();
     
@@ -39,7 +39,7 @@ public class GetExecutingFutureTaskTest extends ListenableFutureTaskTest {
   @Test
   public void executeOnceTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
-    GetExecutingFutureTask<?> geft = new GetExecutingFutureTask<Object>(tr);
+    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Object>(tr);
     
     geft.get();
     geft.run();
@@ -52,17 +52,17 @@ public class GetExecutingFutureTaskTest extends ListenableFutureTaskTest {
   private class Factory implements FutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
-      return new GetExecutingFutureTask<Object>(run);
+      return new ExecuteOnGetFutureTask<Object>(run);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Runnable run, T result) {
-      return new GetExecutingFutureTask<T>(run, result);
+      return new ExecuteOnGetFutureTask<T>(run, result);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Callable<T> callable) {
-      return new GetExecutingFutureTask<T>(callable);
+      return new ExecuteOnGetFutureTask<T>(callable);
     }
   }
 }

@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @since 2.4.0
  * @param <T> type of future implementation
  */
-public class GetExecutingFutureTask<T> extends ListenableFutureTask<T> {
+public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
   private final AtomicBoolean executionStarted = new AtomicBoolean(false);
   
   /**
@@ -37,7 +37,7 @@ public class GetExecutingFutureTask<T> extends ListenableFutureTask<T> {
    * 
    * @param task runnable to be run
    */
-  public GetExecutingFutureTask(Runnable task) {
+  public ExecuteOnGetFutureTask(Runnable task) {
     super(false, task, null);
   }
   
@@ -47,7 +47,7 @@ public class GetExecutingFutureTask<T> extends ListenableFutureTask<T> {
    * @param task runnable to be run
    * @param result result to be provide after run has completed
    */
-  public GetExecutingFutureTask(Runnable task, T result) {
+  public ExecuteOnGetFutureTask(Runnable task, T result) {
     super(false, task, result);
   }
 
@@ -56,7 +56,7 @@ public class GetExecutingFutureTask<T> extends ListenableFutureTask<T> {
    * 
    * @param task callable to be run
    */
-  public GetExecutingFutureTask(Callable<T> task) {
+  public ExecuteOnGetFutureTask(Callable<T> task) {
     super(false, task);
   }
   
