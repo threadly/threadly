@@ -14,14 +14,12 @@ public class StringBuilderWriter extends Writer implements CharSequence {
   /**
    * Constructs a new writer with the provided {@link StringBuilder} to write to.
    * 
-   * @param sb string builder to write to, can not be null
+   * @param stringBuilder string builder to write to, can not be null
    */
-  public StringBuilderWriter(StringBuilder sb) {
-    if (sb == null) {
-      throw new IllegalArgumentException("Must provide string builder to write to");
-    }
+  public StringBuilderWriter(StringBuilder stringBuilder) {
+    ArgumentVerifier.assertNotNull(stringBuilder, "stringBuilder");
     
-    this.sb = sb;
+    this.sb = stringBuilder;
   }
   
   @Override

@@ -91,18 +91,6 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
-    try {
-      new PriorityScheduler(1, 1, -1, TaskPriority.High, 1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new PriorityScheduler(1, 1, 1, TaskPriority.High, -1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
   }
   
   @Test
@@ -123,7 +111,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     TaskPriority originalPriority = TaskPriority.Low;
     TaskPriority newPriority = TaskPriority.High;
     PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000, 
-                                                                        originalPriority, 1000);
+                                                                originalPriority, 1000);
     assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
     PrioritySchedulerInterface newScheduler = scheduler.makeWithDefaultPriority(newPriority);
     try {
@@ -138,7 +126,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     int corePoolSize = 1;
     PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, 
-                                                                        corePoolSize + 10, 1000);
+                                                                corePoolSize + 10, 1000);
     try {
       assertEquals(corePoolSize, scheduler.getCorePoolSize());
       
@@ -312,7 +300,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     long lowPriorityWait = 1000;
     PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, lowPriorityWait / 10, 
-                                                                        TaskPriority.High, lowPriorityWait);
+                                                                TaskPriority.High, lowPriorityWait);
     try {
       assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
       
@@ -326,20 +314,14 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   @Test
-  public void setLowPriorityWaitFail() {
+  public void setLowPriorityNegativeTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     long lowPriorityWait = 1000;
     PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, lowPriorityWait / 10, 
-                                                                        TaskPriority.High, lowPriorityWait);
+                                                                TaskPriority.High, lowPriorityWait);
     try {
-      try {
-        scheduler.setMaxWaitForLowPriority(-1);
-        fail("Exception should have thrown");
-      } catch (IllegalArgumentException e) {
-        // expected
-      }
-      
-      assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
+      scheduler.setMaxWaitForLowPriority(-1);
+      assertEquals(0, scheduler.getMaxWaitForLowPriority());
     } finally {
       factory.shutdown();
     }
@@ -381,14 +363,15 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
-  public void setKeepAliveTimeFail() {
+  @Test
+  public void setKeepAliveNegativeTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
     
     try {
       scheduler.setKeepAliveTime(-1L); // should throw exception for negative value
-      fail("Exception should have been thrown");
+      
+      assertEquals(0, scheduler.getKeepAliveTime());
     } finally {
       factory.shutdown();
     }
@@ -403,7 +386,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       result.highPriorityQueue.add(result.new OneTimeTaskWrapper(new TestRunnable(), 
                                                                  TaskPriority.High, 0));
       result.highPriorityQueue.add(result.new OneTimeTaskWrapper(new TestRunnable(), 
-                                                                TaskPriority.High, 0));
+                                                                 TaskPriority.High, 0));
       
       assertEquals(2, result.getScheduledTaskCount());
       

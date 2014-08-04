@@ -3,6 +3,8 @@ package org.threadly.concurrent;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.util.ArgumentVerifier;
+
 /**
  * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor}
  * to use that implementation with the {@link SubmitterSchedulerInterface}.</p>
@@ -19,9 +21,7 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
    * @param scheduler ScheduledExecutorService implementor
    */
   public ScheduledExecutorServiceWrapper(ScheduledExecutorService scheduler) {
-    if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler");
-    }
+    ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     
     this.scheduler = scheduler;
   }
@@ -34,13 +34,9 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (initialDelay < 0) {
-      throw new IllegalArgumentException("initialDelay must be >= 0");
-    } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException("recurringDelay must be >= 0");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
     scheduler.scheduleWithFixedDelay(new ThrowableSuppressingRunnable(task), 
                                      initialDelay, recurringDelay, 

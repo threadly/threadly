@@ -3,6 +3,7 @@ package org.threadly.concurrent;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>Class to wrap any implementation of {@link PrioritySchedulerInterface}.  The purpose of 
@@ -26,11 +27,8 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
    */
   public PrioritySchedulerWrapper(PrioritySchedulerInterface scheduler, 
                                   TaskPriority defaultPriority) {
-    if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler");
-    } else if (defaultPriority == null) {
-      throw new IllegalArgumentException("Must provide default priority");
-    }
+    ArgumentVerifier.assertNotNull(scheduler, "scheduler");
+    ArgumentVerifier.assertNotNull(defaultPriority, "defaultPriority");
     
     this.scheduler = scheduler;
     this.defaultPriority = defaultPriority;

@@ -4,6 +4,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.Executor;
 
+import org.threadly.util.ArgumentVerifier;
+
 /**
  * <p>This class changes the behavior of how listeners are called from the parent class 
  * {@link ListenerHelper}.  In this implementation when listeners are invoked with the 
@@ -71,10 +73,8 @@ public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
    */
   public AsyncCallListenerHelper(Class<? super T> listenerInterface, Executor executor) {
     super(listenerInterface);
-    
-    if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor");
-    }
+
+    ArgumentVerifier.assertNotNull(executor, "executor");
     
     this.executor = executor;
   }

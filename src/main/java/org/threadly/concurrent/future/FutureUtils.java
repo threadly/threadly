@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>A collection of small utilities for handling futures.</p>
@@ -54,11 +55,9 @@ public class FutureUtils {
   public static <T> void addCallback(final ListenableFuture<T> future, 
                                      final FutureCallback<? super T> callback, 
                                      Executor executor) {
-    if (future == null) {
-      throw new IllegalArgumentException("Must provide future for callback to listen on");
-    } else if (callback == null) {
-      throw new IllegalArgumentException("Must provide callback to call into");
-    }
+    ArgumentVerifier.assertNotNull(future, "future");
+    ArgumentVerifier.assertNotNull(callback, "callback");
+    
     future.addListener(new Runnable() {
       @Override
       public void run() {

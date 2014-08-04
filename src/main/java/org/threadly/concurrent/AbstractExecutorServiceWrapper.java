@@ -17,6 +17,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -39,9 +40,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @param scheduler scheduler implementation to rely on
    */
   public AbstractExecutorServiceWrapper(SchedulerServiceInterface scheduler) {
-    if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler");
-    }
+    ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     
     this.scheduler = scheduler;
     this.fixedRateDistributor = new TaskExecutorDistributor(scheduler);
@@ -283,9 +282,8 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                                           TimeUnit unit) {
     if (task == null) {
       throw new NullPointerException("Must provide task");
-    } else if (period <= 0) {
-      throw new IllegalArgumentException("period must be > 0");
     }
+    ArgumentVerifier.assertGreaterThanZero(period, "period");
     
     if (initialDelay < 0) {
       initialDelay = 0;

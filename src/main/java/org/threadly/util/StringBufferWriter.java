@@ -14,14 +14,12 @@ public class StringBufferWriter extends Writer implements CharSequence {
   /**
    * Constructs a new writer with the provided {@link StringBuffer} to write to.
    * 
-   * @param sb string buffer to write to, can not be null
+   * @param stringBuffer string buffer to write to, can not be null
    */
-  public StringBufferWriter(StringBuffer sb) {
-    if (sb == null) {
-      throw new IllegalArgumentException("Must provide string buffer to write to");
-    }
+  public StringBufferWriter(StringBuffer stringBuffer) {
+    ArgumentVerifier.assertNotNull(stringBuffer, "stringBuffer");
     
-    this.sb = sb;
+    this.sb = stringBuffer;
   }
   
   @Override

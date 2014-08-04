@@ -4,6 +4,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -48,11 +49,8 @@ public class BlockingQueueConsumer<T> {
    */
   public BlockingQueueConsumer(BlockingQueue<? extends T> queue,
                                ConsumerAcceptor<? super T> acceptor) {
-    if (queue == null) {
-      throw new IllegalArgumentException("Must provide a queue to consume from");
-    } else if (acceptor == null) {
-      throw new IllegalArgumentException("Must provide an acceptor to provide consumed items to");
-    }
+    ArgumentVerifier.assertNotNull(queue, "queue");
+    ArgumentVerifier.assertNotNull(acceptor, "acceptor");
     
     this.queue = queue;
     this.acceptor = acceptor;

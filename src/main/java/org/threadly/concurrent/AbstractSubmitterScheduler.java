@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>Similar to the {@link AbstractSubmitterExecutor} this abstract class is designed to 
@@ -32,11 +33,8 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
   
   @Override
   public void schedule(Runnable task, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs can not be negative");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
     doSchedule(task, delayInMs);
   }
@@ -48,11 +46,8 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs can not be negative");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
 
@@ -63,11 +58,8 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs can not be negative");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
 

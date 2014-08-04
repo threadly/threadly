@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 
 import org.threadly.concurrent.SubmitterExecutorInterface;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens 
@@ -50,10 +51,8 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency, String subPoolName) {
     super(maxConcurrency, subPoolName);
-    
-    if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor");
-    }
+
+    ArgumentVerifier.assertNotNull(executor, "executor");
     
     this.executor = executor;
     waitingTasks = new ConcurrentLinkedQueue<LimiterRunnableWrapper>();

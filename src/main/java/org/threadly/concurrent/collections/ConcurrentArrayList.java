@@ -9,6 +9,8 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
 
+import org.threadly.util.ArgumentVerifier;
+
 /**
  * <p>A thread safe list implementation with an array back end.  Make sure
  * to read the javadocs carefully, as several functions behave subtly different
@@ -49,11 +51,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   private static final int HASH_CODE_PRIME_NUMBER = 31;
   
   protected static <E> DataSet<E> makeEmptyDataSet(int frontPadding, int rearPadding) {
-    if (frontPadding < 0) {
-      throw new IllegalArgumentException("frontPadding must be >= 0");
-    } else if (rearPadding < 0) {
-      throw new IllegalArgumentException("rearPadding must be >= 0");
-    }
+    ArgumentVerifier.assertNotNegative(frontPadding, "frontPadding");
+    ArgumentVerifier.assertNotNegative(rearPadding, "rearPadding");
     
     return new DataSet<E>(new Object[0], 0, 0, frontPadding, rearPadding);
   }
@@ -115,9 +114,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   
   protected ConcurrentArrayList(DataSet<T> startSet, 
                                 Object modificationLock) {
-    if (startSet == null) {
-      throw new IllegalArgumentException("Must provide starting dataSet");
-    } else if (modificationLock == null) {
+    ArgumentVerifier.assertNotNull(startSet, "startSet");
+    if (modificationLock == null) {
       modificationLock = new Object();
     }
     
@@ -146,9 +144,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @param frontPadding New value to over allocate the front of new buffers
    */
   public void setFrontPadding(int frontPadding) {
-    if (frontPadding < 0) {
-      throw new IllegalArgumentException("frontPadding must be >= 0");
-    }
+    ArgumentVerifier.assertNotNegative(frontPadding, "frontPadding");
     
     synchronized (modificationLock) {
       currentData.frontPadding = frontPadding;
@@ -162,9 +158,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
    * @param rearPadding New value to over allocate the rear of new buffers
    */
   public void setRearPadding(int rearPadding) {
-    if (rearPadding < 0) {
-      throw new IllegalArgumentException("rearPadding must be >= 0");
-    }
+    ArgumentVerifier.assertNotNegative(rearPadding, "rearPadding");
 
     synchronized (modificationLock) {
       currentData.rearPadding = rearPadding;

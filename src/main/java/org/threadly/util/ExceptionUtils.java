@@ -140,15 +140,13 @@ public class ExceptionUtils {
    * cause for the {@link Throwable} provided into this function, the original 
    * {@link Throwable} is returned.
    * 
-   * @param t starting {@link Throwable}
+   * @param throwable starting {@link Throwable}
    * @return root cause {@link Throwable}
    */
-  public static Throwable getRootCause(Throwable t) {
-    if (t == null) {
-      throw new IllegalArgumentException("Must provide input throwable");
-    }
+  public static Throwable getRootCause(Throwable throwable) {
+    ArgumentVerifier.assertNotNull(throwable, "throwable");
     
-    Throwable result = t;
+    Throwable result = throwable;
     while (result.getCause() != null) {
       result = result.getCause();
     }
@@ -237,17 +235,16 @@ public class ExceptionUtils {
    * a very similar way as the writeStackTo from a throwable would.
    * 
    * @param stack Array of stack elements to build the string off of
-   * @param sb StringBuilder to write the stack out to
+   * @param stringBuilder StringBuilder to write the stack out to
    */
-  public static void writeStackTo(StackTraceElement[] stack, StringBuilder sb) {
+  public static void writeStackTo(StackTraceElement[] stack, StringBuilder stringBuilder) {
     if (stack == null) {
       return;
-    } else if (sb == null) {
-      throw new IllegalArgumentException("Must provide string builder to write to");
     }
+    ArgumentVerifier.assertNotNull(stringBuilder, "stringBuilder");
     
     for (StackTraceElement ste : stack) {
-      sb.append("\t at ").append(ste.toString()).append(StringUtils.NEW_LINE);
+      stringBuilder.append("\t at ").append(ste.toString()).append(StringUtils.NEW_LINE);
     }
   }
   

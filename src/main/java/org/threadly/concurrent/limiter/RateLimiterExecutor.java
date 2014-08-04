@@ -7,6 +7,7 @@ import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
@@ -44,11 +45,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   public RateLimiterExecutor(SimpleSchedulerInterface scheduler, 
                              int permitsPerSecond) {
-    if (scheduler == null) {
-      throw new IllegalArgumentException("Must provide scheduler");
-    } else if (permitsPerSecond < 1) {
-      throw new IllegalArgumentException("Must allow at least one permit per second");
-    }
+    ArgumentVerifier.assertNotNull(scheduler, "scheduler");
+    ArgumentVerifier.assertGreaterThanZero(permitsPerSecond, "permitsPerSecond");
     
     this.scheduler = scheduler;
     this.permitsPerSecond = permitsPerSecond;
@@ -110,11 +108,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param task Runnable to execute when ready
    */
   public void execute(int permits, Runnable task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (permits < 0) {
-      throw new IllegalArgumentException("permits can not be negative for a task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(permits, "permits");
     
     doExecute(permits, task);
   }
@@ -144,11 +139,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @return Future that will return provided result when the execution has completed
    */
   public <T> ListenableFuture<T> submit(int permits, Runnable task, T result) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (permits < 0) {
-      throw new IllegalArgumentException("permits can not be negative for a task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(permits, "permits");
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
     
@@ -168,11 +160,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @return Future that will return the callables provided result when the execution has completed
    */
   public <T> ListenableFuture<T> submit(int permits, Callable<T> task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (permits < 0) {
-      throw new IllegalArgumentException("permits can not be negative for a task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(permits, "permits");
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
     

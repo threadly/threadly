@@ -2,6 +2,8 @@ package org.threadly.concurrent;
 
 import java.util.concurrent.Executor;
 
+import org.threadly.util.ArgumentVerifier;
+
 /**
  * <p>A simple wrapper class for {@link Executor} implementations to 
  * provide {@link SubmitterExecutorInterface} capabilities.</p>
@@ -24,9 +26,7 @@ public class ExecutorWrapper extends AbstractSubmitterExecutor {
    * @param executor {@link Executor} instance.
    */
   public ExecutorWrapper(Executor executor) {
-    if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor");
-    }
+    ArgumentVerifier.assertNotNull(executor, "executor");
     
     this.executor = executor;
   }

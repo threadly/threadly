@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -36,13 +37,11 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
   }
   
   @Override
-  public void execute(Runnable command) {
-    if (command == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+  public void execute(Runnable task) {
+    ArgumentVerifier.assertNotNull(task, "task");
     
     try {
-      command.run();
+      task.run();
     } catch (Throwable t) {
       ExceptionUtils.handleException(t);
     }
@@ -55,9 +54,7 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
     
     try {
       task.run();
@@ -70,9 +67,7 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
     
     try {
       T result = task.call();

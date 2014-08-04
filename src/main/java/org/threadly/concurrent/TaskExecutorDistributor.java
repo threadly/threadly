@@ -12,6 +12,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.lock.StripedLock;
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -231,12 +232,10 @@ public class TaskExecutorDistributor {
    */
   protected TaskExecutorDistributor(Executor executor, StripedLock sLock, 
                                     int maxTasksPerCycle, boolean accurateQueueSize) {
-    if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor");
-    } else if (sLock == null) {
-      throw new IllegalArgumentException("striped lock must be provided");
-    } else if (maxTasksPerCycle < 1) {
-      throw new IllegalArgumentException("maxTasksPerCycle must be > 0");
+    ArgumentVerifier.assertNotNull(executor, "executor");
+    ArgumentVerifier.assertNotNull(sLock, "sLock");
+    if (maxTasksPerCycle < 1) { // disable if provided an invalid value
+      maxTasksPerCycle = Integer.MAX_VALUE;
     }
     
     this.executor = executor;
@@ -287,9 +286,7 @@ public class TaskExecutorDistributor {
    * @return executor which will only execute based on the provided key
    */
   public SubmitterExecutorInterface getSubmitterForKey(Object threadKey) {
-    if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
-    }
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     
     return new KeyBasedSubmitter(threadKey);
   }
@@ -331,11 +328,8 @@ public class TaskExecutorDistributor {
    * @param task Task to be executed
    */
   public void addTask(Object threadKey, Runnable task) {
-    if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
-    } else if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
+    ArgumentVerifier.assertNotNull(task, "task");
     
     addTask(threadKey, task, executor);
   }
@@ -392,11 +386,8 @@ public class TaskExecutorDistributor {
    */
   public <T> ListenableFuture<T> submitTask(Object threadKey, Runnable task, 
                                             T result) {
-    if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
-    } else if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
+    ArgumentVerifier.assertNotNull(task, "task");
     
     ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
     
@@ -414,11 +405,8 @@ public class TaskExecutorDistributor {
    * @return Future to represent when the execution has occurred and provide the result from the callable
    */
   public <T> ListenableFuture<T> submitTask(Object threadKey, Callable<T> task) {
-    if (threadKey == null) {
-      throw new IllegalArgumentException("Must provide thread key");
-    } else if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
+    ArgumentVerifier.assertNotNull(task, "task");
     
     ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
     

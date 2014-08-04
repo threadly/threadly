@@ -2,6 +2,8 @@ package org.threadly.concurrent.event;
 
 import java.util.concurrent.Executor;
 
+import org.threadly.util.ArgumentVerifier;
+
 /**
  * <p>This class changes the behavior of how listeners are called from the parent class 
  * {@link RunnableListenerHelper}.  In this implementation when listeners are invoked 
@@ -46,10 +48,8 @@ public class AsyncCallRunnableListenerHelper extends RunnableListenerHelper {
    */
   public AsyncCallRunnableListenerHelper(boolean callListenersOnce, Executor executor) {
     super(callListenersOnce);
-    
-    if (executor == null) {
-      throw new IllegalArgumentException("Must provide executor");
-    }
+
+    ArgumentVerifier.assertNotNull(executor, "executor");
     
     this.executor = executor;
   }

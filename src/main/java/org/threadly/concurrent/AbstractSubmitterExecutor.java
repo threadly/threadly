@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>Since the conversion to a {@link SubmitterExecutorInterface} from an executor is 
@@ -27,9 +28,7 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutorInte
   
   @Override
   public void execute(Runnable task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
     
     doExecute(task);
   }
@@ -41,9 +40,7 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutorInte
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
     
@@ -54,9 +51,7 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutorInte
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
     

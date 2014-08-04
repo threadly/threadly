@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ListUtils;
 
 /**
@@ -165,13 +166,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 
                                      long recurringDelay) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (initialDelay < 0) {
-      throw new IllegalArgumentException("initialDelay can not be negative");
-    } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException("recurringDelay can not be negative");
-    }
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
     add(new RecurringTask(task, initialDelay, recurringDelay));
   }

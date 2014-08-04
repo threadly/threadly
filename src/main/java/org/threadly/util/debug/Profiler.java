@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.concurrent.future.SettableListenableFuture;
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -126,9 +127,8 @@ public class Profiler {
    * @param pollIntervalInMs time in milliseconds to wait between thread data dumps
    */
   public void setPollInterval(int pollIntervalInMs) {
-    if (pollIntervalInMs < 0) {
-      throw new IllegalArgumentException("PollInterval can not be negative");
-    }
+    ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
+    
     this.pollIntervalInMs = pollIntervalInMs;
   }
   

@@ -6,6 +6,7 @@ import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens 
@@ -56,9 +57,8 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
 
   @Override
   public void execute(Runnable task, TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (priority == null) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
     
@@ -92,9 +92,8 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs, 
                                                  TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (priority == null) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
     
@@ -108,9 +107,8 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs, 
                                                  TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide task");
-    } else if (priority == null) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
     
@@ -124,11 +122,9 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   @Override
   public void schedule(Runnable task, long delayInMs, 
                        TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
-    } else if (delayInMs < 0) {
-      throw new IllegalArgumentException("delayInMs must be >= 0");
-    } else if (priority == null) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
+    if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
     
@@ -143,13 +139,10 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority) {
-    if (task == null) {
-      throw new IllegalArgumentException("Must provide a task");
-    } else if (initialDelay < 0) {
-      throw new IllegalArgumentException("initialDelay must be >= 0");
-    } else if (recurringDelay < 0) {
-      throw new IllegalArgumentException("recurringDelay must be >= 0");
-    } else if (priority == null) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
+    if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
     

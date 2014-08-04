@@ -2,6 +2,8 @@ package org.threadly.concurrent.lock;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.threadly.util.ArgumentVerifier;
+
 /**
  * <p>This structure allows for more controlled levels of parallelism.  It helps 
  * in allowing threads to only lock when their interest are the same.  It 
@@ -29,9 +31,7 @@ public class StripedLock {
    * @param expectedConcurrencyLevel expected level of parallelism
    */
   public StripedLock(int expectedConcurrencyLevel) {
-    if (expectedConcurrencyLevel <= 0) {
-      throw new IllegalArgumentException("expectedConcurrencyLevel must be > 0: " + expectedConcurrencyLevel);
-    }
+    ArgumentVerifier.assertGreaterThanZero(expectedConcurrencyLevel, "expectedConcurrencyLevel");
     
     this.expectedConcurrencyLevel = expectedConcurrencyLevel;
     this.locks = new ConcurrentHashMap<Integer, Object>();

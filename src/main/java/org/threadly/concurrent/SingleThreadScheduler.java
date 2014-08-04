@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -48,9 +49,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * @param threadFactory factory to make thread for scheduler
    */
   public SingleThreadScheduler(ThreadFactory threadFactory) {
-    if (threadFactory == null) {
-      throw new IllegalArgumentException("Must provide thread factory");
-    }
+    ArgumentVerifier.assertNotNull(threadFactory, "threadFactory");
     
     sManager = new AtomicReference<SchedulerManager>(null);
     this.threadFactory = threadFactory;

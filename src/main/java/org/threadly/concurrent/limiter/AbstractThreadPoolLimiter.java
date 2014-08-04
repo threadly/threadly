@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableContainerInterface;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>Abstract implementation for classes which limit concurrency 
@@ -25,9 +26,7 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
    * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
    */
   public AbstractThreadPoolLimiter(int maxConcurrency, String subPoolName) {
-    if (maxConcurrency < 1) {
-      throw new IllegalArgumentException("max concurrency must be at least 1");
-    }
+    ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
     
     this.maxConcurrency = maxConcurrency;
     

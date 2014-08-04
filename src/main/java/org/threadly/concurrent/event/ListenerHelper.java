@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executor;
 
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -52,9 +53,8 @@ public class ListenerHelper<T> {
    * @param listenerInterface Interface that listeners need to implement
    */
   public ListenerHelper(Class<? super T> listenerInterface) {
-    if (listenerInterface == null) {
-      throw new IllegalArgumentException("Must provide interface for listeners");
-    } else if (! listenerInterface.isInterface()) {
+    ArgumentVerifier.assertNotNull(listenerInterface, "listenerInterface");
+    if (! listenerInterface.isInterface()) {
       throw new IllegalArgumentException("listenerInterface must be an interface");
     }
     
@@ -122,9 +122,7 @@ public class ListenerHelper<T> {
    * @param executor Executor to call listener on, or null
    */
   public void addListener(T listener, Executor executor) {
-    if (listener == null) {
-      throw new IllegalArgumentException("Can not provide a null listener");
-    }
+    ArgumentVerifier.assertNotNull(listener, "listener");
     
     boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
