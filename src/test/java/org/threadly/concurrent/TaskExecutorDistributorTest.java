@@ -118,6 +118,12 @@ public class TaskExecutorDistributorTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+    try {
+      new TaskExecutorDistributor(scheduler, new StripedLock(1), -1, false);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test

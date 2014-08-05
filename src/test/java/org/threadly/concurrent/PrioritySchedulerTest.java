@@ -91,6 +91,18 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+    try {
+      new PriorityScheduler(1, 1, -1, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PriorityScheduler(1, 1, 1, TaskPriority.High, -1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test
@@ -314,14 +326,20 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   @Test
-  public void setLowPriorityNegativeTest() {
+  public void setLowPriorityWaitFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     long lowPriorityWait = 1000;
     PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, lowPriorityWait / 10, 
                                                                 TaskPriority.High, lowPriorityWait);
     try {
-      scheduler.setMaxWaitForLowPriority(-1);
-      assertEquals(0, scheduler.getMaxWaitForLowPriority());
+      try {
+        scheduler.setMaxWaitForLowPriority(-1);
+        fail("Exception should have thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
+      
+      assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
     } finally {
       factory.shutdown();
     }
@@ -363,15 +381,14 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
-  @Test
-  public void setKeepAliveNegativeTest() {
+  @Test (expected = IllegalArgumentException.class)
+  public void setKeepAliveTimeFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
     
     try {
       scheduler.setKeepAliveTime(-1L); // should throw exception for negative value
-      
-      assertEquals(0, scheduler.getKeepAliveTime());
+      fail("Exception should have been thrown");
     } finally {
       factory.shutdown();
     }

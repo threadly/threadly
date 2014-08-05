@@ -234,9 +234,7 @@ public class TaskExecutorDistributor {
                                     int maxTasksPerCycle, boolean accurateQueueSize) {
     ArgumentVerifier.assertNotNull(executor, "executor");
     ArgumentVerifier.assertNotNull(sLock, "sLock");
-    if (maxTasksPerCycle < 1) { // disable if provided an invalid value
-      maxTasksPerCycle = Integer.MAX_VALUE;
-    }
+    ArgumentVerifier.assertGreaterThanZero(maxTasksPerCycle, "maxTasksPerCycle");
     
     this.executor = executor;
     this.sLock = sLock;

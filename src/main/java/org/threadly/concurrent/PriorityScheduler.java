@@ -398,9 +398,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @param keepAliveTimeInMs New keep alive time in milliseconds
    */
   public void setKeepAliveTime(long keepAliveTimeInMs) {
-    if (keepAliveTimeInMs < 0) {
-      keepAliveTimeInMs = 0;
-    }
+    ArgumentVerifier.assertNotNegative(keepAliveTimeInMs, "keepAliveTimeInMs");
     
     boolean checkForExpiredWorkers = this.keepAliveTimeInMs > keepAliveTimeInMs;
     
@@ -420,9 +418,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds
    */
   public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-    if (maxWaitForLowPriorityInMs < 0) {
-      maxWaitForLowPriorityInMs = 0;
-    }
+    ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
     
     this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
   }
