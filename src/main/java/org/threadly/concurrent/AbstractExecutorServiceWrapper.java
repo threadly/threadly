@@ -14,8 +14,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureTask;
-import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
@@ -102,9 +100,8 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
           throw new NullPointerException();
         }
         
-        ListenableRunnableFuture<T> fr = new ListenableFutureTask<T>(false, c);
-        resultList.add(fr);
-        scheduler.execute(fr);
+        ListenableFuture<T> lf = scheduler.submit(c);
+        resultList.add(lf);
       }
     }
     // block till all tasks finish, or we reach our timeout
@@ -123,7 +120,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
         }
         remainingTime = timeoutInMs - (Clock.accurateTimeMillis() - startTime); 
       }
-      // cancel any which have not completed yet
+      // cancel any which have not completed yet (assuming they are not done)
       while (it.hasNext()) {
         it.next().cancel(true);
       }
