@@ -550,12 +550,54 @@ public abstract class ScheduledExecutorServiceTest {
       int runTime = 1000 * 10;
       int timeoutTime = 5;
       
-      List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+      List<TestCallable> toInvoke = new ArrayList<TestCallable>(1);
   
       toInvoke.add(new TestCallable(runTime));
       
       scheduler.invokeAny(toInvoke, timeoutTime, TimeUnit.MILLISECONDS);
       fail("Exception should have thrown");
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void invokeAnyFirstTaskExceptionTest() throws InterruptedException, ExecutionException {
+    ScheduledExecutorService scheduler = makeScheduler(1);
+    try {
+      TestCallable tc = new TestCallable();
+      List<Callable<Object>> toInvoke = new ArrayList<Callable<Object>>(2);
+      toInvoke.add(new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          throw new Exception();
+        }
+      });
+      toInvoke.add(tc);
+      
+      Object result = scheduler.invokeAny(toInvoke);
+      assertTrue(result == tc.getReturnedResult());
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test (expected = ExecutionException.class)
+  public void invokeAnyAllTasksExceptionTest() throws InterruptedException, ExecutionException {
+    ScheduledExecutorService scheduler = makeScheduler(1);
+    try {
+      Callable<Object> failureCallable = new Callable<Object>() {
+        @Override
+        public Object call() throws Exception {
+          throw new Exception();
+        }
+      };
+      List<Callable<Object>> toInvoke = new ArrayList<Callable<Object>>(2);
+      toInvoke.add(failureCallable);
+      toInvoke.add(failureCallable);
+      
+      scheduler.invokeAny(toInvoke);
+      fail("Execution exception should have thrown");
     } finally {
       scheduler.shutdownNow();
     }
@@ -578,6 +620,12 @@ public abstract class ScheduledExecutorServiceTest {
         scheduler.invokeAny(null);
         fail("Exception should have thrown");
       } catch (NullPointerException e) {
+        // expected
+      }
+      try {
+        scheduler.invokeAny(new ArrayList<TestCallable>(0));
+        fail("Exception should have thrown");
+      } catch (IllegalArgumentException e) {
         // expected
       }
     } finally {

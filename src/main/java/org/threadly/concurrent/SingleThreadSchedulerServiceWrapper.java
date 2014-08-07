@@ -94,7 +94,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
                                                                 long initialDelayInMillis,
                                                                 long delayInMillis) {
     // wrap the task to ensure the correct behavior on exceptions
-    task = new ThrowableHandlingRecurringRunnable(task);
+    task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
     NoThreadScheduler nts = scheduler.getScheduler();

@@ -93,7 +93,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
                                                                 long initialDelayInMs,
                                                                 long delayInMs) {
     // wrap the task to ensure the correct behavior on exceptions
-    command = new ThrowableHandlingRecurringRunnable(command);
+    command = new ThrowableHandlingRecurringRunnable(scheduler, command);
     
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, command);
     RecurringTaskWrapper rtw = scheduler.new RecurringTaskWrapper(taskFuture, 

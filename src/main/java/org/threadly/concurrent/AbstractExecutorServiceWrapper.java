@@ -145,43 +145,66 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                          long timeout, TimeUnit unit) throws InterruptedException,
                                                              ExecutionException, 
                                                              TimeoutException {
-    final long timeoutInMs = unit.toMillis(timeout);
     final long startTime = Clock.accurateTimeMillis();
-    List<Future<T>> futures = new ArrayList<Future<T>>(tasks.size());
-    ExecutorCompletionService<T> ecs = new ExecutorCompletionService<T>(this);
+    if (tasks.size() < 1) {
+      throw new IllegalArgumentException("Empty task list provided");
+    }
+    final long timeoutInMs = unit.toMillis(timeout);
+    int failureCount = 0;
+    // going to be optimistic and allocate the initialize size so that at most we have to do one expansion
+    List<Future<T>> submittedFutures = new ArrayList<Future<T>>((tasks.size() / 2) + 1);
     
     try {
+      ExecutorCompletionService<T> ecs = new ExecutorCompletionService<T>(this);
+      ExecutionException lastEE = null;
       Iterator<? extends Callable<T>> it = tasks.iterator();
-      if (it.hasNext()) {
-        // submit first one
-        Future<T> submittedFuture = ecs.submit(it.next());
-        futures.add(submittedFuture);
-      }
-      Future<T> completedFuture = null;
-      while (completedFuture == null && it.hasNext() && 
+      // submit first one
+      submittedFutures.add(ecs.submit(it.next()));
+      
+      while (it.hasNext() && 
              Clock.accurateTimeMillis() - startTime < timeoutInMs) {
-        completedFuture = ecs.poll();
+        Future<T> completedFuture = ecs.poll();
         if (completedFuture == null) {
           // submit another
-          futures.add(ecs.submit(it.next()));
+          submittedFutures.add(ecs.submit(it.next()));
         } else {
-          return completedFuture.get();
+          try {
+            return completedFuture.get();
+          } catch (ExecutionException e) {
+            failureCount++;
+            lastEE = e;
+          }
         }
       }
       
-      if (Clock.lastKnownTimeMillis() - startTime >= timeoutInMs) {
-        throw new TimeoutException();
-      } else {
-        long remainingTime = timeoutInMs - (Clock.lastKnownTimeMillis() - startTime);
-        completedFuture = ecs.poll(remainingTime, TimeUnit.MILLISECONDS);
+      long remainingTime = timeoutInMs - (Clock.lastKnownTimeMillis() - startTime);
+      // we must compare against failure count otherwise we may throw a TimeoutException when all tasks have failed
+      while (remainingTime > 0 && failureCount < submittedFutures.size()) {
+        Future<T> completedFuture = ecs.poll(remainingTime, TimeUnit.MILLISECONDS);
         if (completedFuture == null) {
           throw new TimeoutException();
         } else {
-          return completedFuture.get();
+          try {
+            return completedFuture.get();
+          } catch (ExecutionException e) {
+            failureCount++;
+            lastEE = e;
+          }
         }
+        
+        remainingTime = timeoutInMs - (Clock.accurateTimeMillis() - startTime);
+      }
+      
+      if (remainingTime <= 0) {
+        throw new TimeoutException();
+      } else {
+        /* since we know we have at least one task provided, and since nothing returned by this point
+         * we know that we only got ExecutionExceptions, and thus this should NOT be null
+         */
+        throw lastEE;
       }
     } finally {
-      Iterator<Future<T>> it = futures.iterator();
+      Iterator<Future<T>> it = submittedFutures.iterator();
       while (it.hasNext()) {
         it.next().cancel(true);
       }
@@ -390,14 +413,12 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @author jent - Mike Jensen
    * @since 2.1.0
    */
-  protected class ThrowableHandlingRecurringRunnable implements RunnableContainerInterface, Runnable {
+  protected static class ThrowableHandlingRecurringRunnable implements RunnableContainerInterface, Runnable {
+    private final SchedulerServiceInterface scheduler;
     private final Runnable task;
     
-    protected ThrowableHandlingRecurringRunnable(Runnable task) {
-      if (task == null) {
-        throw new NullPointerException("Must provide task");
-      }
-      
+    protected ThrowableHandlingRecurringRunnable(SchedulerServiceInterface scheduler, Runnable task) {
+      this.scheduler = scheduler;
       this.task = task;
     }
     
