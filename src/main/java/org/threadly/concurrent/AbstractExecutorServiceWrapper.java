@@ -93,6 +93,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     long startTime = Clock.accurateTimeMillis();
     long timeoutInMs = unit.toMillis(timeout);
     List<Future<T>> resultList = new ArrayList<Future<T>>(tasks.size());
+    // execute all the tasks provided
     {
       Iterator<? extends Callable<T>> it = tasks.iterator();
       while (it.hasNext()) {
@@ -106,18 +107,21 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
         scheduler.execute(fr);
       }
     }
+    // block till all tasks finish, or we reach our timeout
     {
       Iterator<Future<T>> it = resultList.iterator();
-      long remainingTime = Math.max(0, timeoutInMs - (Clock.accurateTimeMillis() - startTime)); 
+      long remainingTime = timeoutInMs - (Clock.accurateTimeMillis() - startTime); 
       while (it.hasNext() && remainingTime > 0) {
+        Future<T> f = it.next();
         try {
-          it.next().get(remainingTime, TimeUnit.MILLISECONDS);
+          f.get(remainingTime, TimeUnit.MILLISECONDS);
         } catch (ExecutionException e) {
           // ignored here
         } catch (TimeoutException e) {
+          f.cancel(true);
           break;
         }
-        remainingTime = Math.max(0, timeoutInMs - (Clock.accurateTimeMillis() - startTime)); 
+        remainingTime = timeoutInMs - (Clock.accurateTimeMillis() - startTime); 
       }
       // cancel any which have not completed yet
       while (it.hasNext()) {
