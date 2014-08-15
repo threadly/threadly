@@ -3,7 +3,6 @@ package org.threadly.concurrent.event;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -11,8 +10,9 @@ import java.util.concurrent.Executor;
 
 import org.junit.Test;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
-import org.threadly.concurrent.TestUncaughtExceptionHandler;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.StringUtils;
+import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ListenerHelperTest {
@@ -249,35 +249,31 @@ public class ListenerHelperTest {
   
   @Test
   public void listenerExceptionTest() {
-    UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
-    try {
-      int testInt = 10;
-      String testStr = StringUtils.randomString(10);
-      TestUncaughtExceptionHandler testHandler = new TestUncaughtExceptionHandler();
-      Thread.setDefaultUncaughtExceptionHandler(testHandler);
-      final RuntimeException e = new RuntimeException();
-      ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
-      ch.addListener(new TestInterface() {
-        @Override
-        public void call(int i, String s) {
-          throw e;
-        }
-      });
-      TestImp ti = new TestImp();
-      ch.addListener(ti);
-
-      ch.call().call(testInt, testStr);
-      
-      // verify exception was handled
-      assertTrue(Thread.currentThread() == testHandler.getCalledWithThread());
-      assertTrue(e == testHandler.getCalledWithThrowable());
-
-      // verify other listeners were called
-      assertEquals(testInt, ti.lastInt);
-      assertEquals(testStr, ti.lastString);
-    } finally {
-      Thread.setDefaultUncaughtExceptionHandler(ueh);
-    }
+    int testInt = 10;
+    String testStr = StringUtils.randomString(10);
+    TestExceptionHandler teh = new TestExceptionHandler();
+    ExceptionUtils.setThreadExceptionHandler(teh);
+    final RuntimeException e = new RuntimeException();
+    ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
+    ch.addListener(new TestInterface() {
+      @Override
+      public void call(int i, String s) {
+        throw e;
+      }
+    });
+    TestImp ti = new TestImp();
+    ch.addListener(ti);
+    
+    ch.call().call(testInt, testStr);
+    
+    // verify exception was handled
+    assertEquals(1, teh.getCallCount());
+    assertEquals(Thread.currentThread(), teh.getCalledWithThread());
+    assertEquals(e, teh.getLastThrowable());
+    
+    // verify other listeners were called
+    assertEquals(testInt, ti.lastInt);
+    assertEquals(testStr, ti.lastString);
   }
   
   @Test (expected = RuntimeException.class)

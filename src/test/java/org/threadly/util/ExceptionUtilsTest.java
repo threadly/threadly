@@ -10,7 +10,6 @@ import java.util.StringTokenizer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.TestUncaughtExceptionHandler;
 import org.threadly.util.ExceptionUtils.TransformedException;
 
 @SuppressWarnings("javadoc")

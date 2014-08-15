@@ -28,8 +28,8 @@ import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.TestExceptionHandler;
 
-@SuppressWarnings({"deprecation", "javadoc"})
-public class TaskExecutorDistributorTest {
+@SuppressWarnings("javadoc")
+public class KeyDistributedExecutorTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
@@ -51,13 +51,13 @@ public class TaskExecutorDistributorTest {
   }
   
   private Object agentLock;
-  private TaskExecutorDistributor distributor;
+  private KeyDistributedExecutor distributor;
   
   @Before
   public void setup() {
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
-    distributor = new TaskExecutorDistributor(scheduler, sLock, Integer.MAX_VALUE, false);
+    distributor = new KeyDistributedExecutor(scheduler, sLock, Integer.MAX_VALUE, false);
   }
   
   @After
@@ -91,36 +91,36 @@ public class TaskExecutorDistributorTest {
   @Test
   public void constructorTest() {
     // none should throw exception
-    new TaskExecutorDistributor(scheduler);
-    new TaskExecutorDistributor(scheduler, true);
-    new TaskExecutorDistributor(scheduler, 1);
-    new TaskExecutorDistributor(scheduler, 1, true);
-    new TaskExecutorDistributor(1, scheduler);
-    new TaskExecutorDistributor(1, scheduler, true);
-    new TaskExecutorDistributor(1, scheduler, 1);
-    new TaskExecutorDistributor(1, scheduler, 1, true);
+    new KeyDistributedExecutor(scheduler);
+    new KeyDistributedExecutor(scheduler, true);
+    new KeyDistributedExecutor(scheduler, 1);
+    new KeyDistributedExecutor(scheduler, 1, true);
+    new KeyDistributedExecutor(1, scheduler);
+    new KeyDistributedExecutor(1, scheduler, true);
+    new KeyDistributedExecutor(1, scheduler, 1);
+    new KeyDistributedExecutor(1, scheduler, 1, true);
     StripedLock sLock = new StripedLock(1);
-    new TaskExecutorDistributor(scheduler, sLock, 1, false);
+    new KeyDistributedExecutor(scheduler, sLock, 1, false);
   }
   
   @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {
-      new TaskExecutorDistributor(1, null);
+      new KeyDistributedExecutor(1, null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new TaskExecutorDistributor(scheduler, null, 
-                                  Integer.MAX_VALUE, false);
+      new KeyDistributedExecutor(scheduler, null, 
+                                 Integer.MAX_VALUE, false);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new TaskExecutorDistributor(scheduler, new StripedLock(1), -1, false);
+      new KeyDistributedExecutor(scheduler, new StripedLock(1), -1, false);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -349,7 +349,7 @@ public class TaskExecutorDistributorTest {
     distributor.addTask(key, followRunnable);
     exceptionRunnable.blockTillStarted();
     followRunnable.blockTillStarted();  // verify that it ran despite the exception
-      
+    
     assertEquals(1, teh.getCallCount());
     assertEquals(testException, teh.getLastThrowable());
   }
@@ -357,7 +357,7 @@ public class TaskExecutorDistributorTest {
   @Test
   public void limitExecutionPerCycleTest() {
     final AtomicInteger execCount = new AtomicInteger(0);
-    TaskExecutorDistributor distributor = new TaskExecutorDistributor(1, new Executor() {
+    KeyDistributedExecutor distributor = new KeyDistributedExecutor(1, new Executor() {
       @Override
       public void execute(Runnable command) {
         execCount.incrementAndGet();
@@ -394,7 +394,7 @@ public class TaskExecutorDistributorTest {
       final Integer key1 = 1;
       final Integer key2 = 2;
       Executor singleThreadedExecutor = scheduler.makeSubPool(1);
-      final TaskExecutorDistributor distributor = new TaskExecutorDistributor(2, singleThreadedExecutor, 2);
+      final KeyDistributedExecutor distributor = new KeyDistributedExecutor(2, singleThreadedExecutor, 2);
       final AtomicInteger waitingTasks = new AtomicInteger();
       final AtomicReference<TestRunnable> lastTestRunnable = new AtomicReference<TestRunnable>();
       scheduler.execute(new Runnable() {  // execute thread to add for key 1
@@ -438,42 +438,42 @@ public class TaskExecutorDistributorTest {
   
   private static void getTaskQueueSizeSimpleTest(boolean accurateDistributor) {
     final Object taskKey = new Object();
-    TaskExecutorDistributor ted = new TaskExecutorDistributor(new Executor() {
+    KeyDistributedExecutor kde = new KeyDistributedExecutor(new Executor() {
       @Override
       public void execute(Runnable command) {
         // kidding, don't actually execute, haha
       }
     }, accurateDistributor);
     
-    assertEquals(0, ted.getTaskQueueSize(taskKey));
+    assertEquals(0, kde.getTaskQueueSize(taskKey));
     
-    ted.addTask(taskKey, new TestRunnable());
+    kde.addTask(taskKey, new TestRunnable());
     
     // should add as first task
-    assertEquals(1, ted.getTaskQueueSize(taskKey));
+    assertEquals(1, kde.getTaskQueueSize(taskKey));
     
-    ted.addTask(taskKey, new TestRunnable());
+    kde.addTask(taskKey, new TestRunnable());
     
     // will now add into the queue
-    assertEquals(2, ted.getTaskQueueSize(taskKey));
+    assertEquals(2, kde.getTaskQueueSize(taskKey));
   }
   
   private static void getTaskQueueSizeThreadedTest(boolean accurateDistributor) {
     final Object taskKey = new Object();
-    TaskExecutorDistributor ted = new TaskExecutorDistributor(scheduler, accurateDistributor);
+    KeyDistributedExecutor kde = new KeyDistributedExecutor(scheduler, accurateDistributor);
     
-    assertEquals(0, ted.getTaskQueueSize(taskKey));
+    assertEquals(0, kde.getTaskQueueSize(taskKey));
     
     BlockingTestRunnable btr = new BlockingTestRunnable();
-    ted.addTask(taskKey, btr);
+    kde.addTask(taskKey, btr);
     
     // add more tasks while remaining blocked
-    ted.addTask(taskKey, new TestRunnable());
-    ted.addTask(taskKey, new TestRunnable());
+    kde.addTask(taskKey, new TestRunnable());
+    kde.addTask(taskKey, new TestRunnable());
     
     btr.blockTillStarted();
     
-    assertEquals(2, ted.getTaskQueueSize(taskKey));
+    assertEquals(2, kde.getTaskQueueSize(taskKey));
     
     btr.unblock();
   }

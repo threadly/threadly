@@ -13,7 +13,7 @@ import org.threadly.test.concurrent.TestRunnable;
 public class ListenerHelperTest {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   @SuppressWarnings("deprecation")

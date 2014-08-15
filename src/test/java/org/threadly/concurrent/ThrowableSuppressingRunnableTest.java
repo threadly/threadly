@@ -2,10 +2,10 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
-
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.ExceptionUtils;
+import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ThrowableSuppressingRunnableTest {
@@ -37,20 +37,16 @@ public class ThrowableSuppressingRunnableTest {
   
   @Test
   public void runExceptionTest() {
-    UncaughtExceptionHandler originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
-    TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
+    TestExceptionHandler teh = new TestExceptionHandler();
     final RuntimeException testException = new RuntimeException();
-    Thread.setDefaultUncaughtExceptionHandler(ueh);
-    try {
-      TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
-      Runnable tsr = new ThrowableSuppressingRunnable(exceptionRunnable);
-      
-      tsr.run();
-      
-      assertEquals(Thread.currentThread(), ueh.getCalledWithThread());
-      assertEquals(testException, ueh.getCalledWithThrowable());
-    } finally {
-      Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler);
-    }
+    ExceptionUtils.setThreadExceptionHandler(teh);
+    TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
+    Runnable tsr = new ThrowableSuppressingRunnable(exceptionRunnable);
+    
+    tsr.run();
+
+    assertEquals(1, teh.getCallCount());
+    assertEquals(Thread.currentThread(), teh.getCalledWithThread());
+    assertEquals(testException, teh.getLastThrowable());
   }
 }

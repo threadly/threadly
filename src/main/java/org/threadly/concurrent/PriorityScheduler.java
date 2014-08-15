@@ -250,8 +250,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   
   /**
    * If a section of code wants a different default priority, or wanting to provide 
-   * a specific default priority in for {@link TaskExecutorDistributor}, 
-   * or {@link TaskSchedulerDistributor}.
+   * a specific default priority in for {@link KeyDistributedExecutor}, 
+   * or {@link KeyDistributedScheduler}.
    * 
    * @param priority default priority for PrioritySchedulerInterface implementation
    * @return a PrioritySchedulerInterface with the default priority specified

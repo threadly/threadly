@@ -15,7 +15,7 @@ import org.threadly.concurrent.TestRuntimeFailureRunnable;
 public class RunnableListenerHelperTest {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   protected RunnableListenerHelper onceHelper;

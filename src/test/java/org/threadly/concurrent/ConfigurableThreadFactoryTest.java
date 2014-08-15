@@ -10,6 +10,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionHandlerInterface;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.TestExceptionHandler;
+import org.threadly.util.TestUncaughtExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ConfigurableThreadFactoryTest {

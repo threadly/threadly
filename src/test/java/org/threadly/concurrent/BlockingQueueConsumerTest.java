@@ -2,7 +2,6 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
@@ -12,6 +11,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.test.concurrent.TestCondition;
+import org.threadly.util.ExceptionUtils;
+import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class BlockingQueueConsumerTest {
@@ -95,38 +96,33 @@ public class BlockingQueueConsumerTest {
   
   @Test
   public void consumeExceptionTest() throws InterruptedException {
-    UncaughtExceptionHandler ueh = Thread.getDefaultUncaughtExceptionHandler();
-    try {
-      final TestUncaughtExceptionHandler testUeh = new TestUncaughtExceptionHandler();
-      Thread.setDefaultUncaughtExceptionHandler(testUeh);
-      final Exception e = new Exception();
-      BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<Object>(queue, new ConsumerAcceptor<Object>() {
-        @Override
-        public void acceptConsumedItem(Object item) throws Exception {
-          throw e;
-        }
-      });
-      try {
-        queueConsumer.maybeStart(new ConfigurableThreadFactory());
-        
-        Object item = new Object();
-        queue.put(item);
-        
-        // will throw exception if test fails
-        new TestCondition() {
-          @Override
-          public boolean get() {
-            return testUeh.getCalledWithThrowable() == e;
-          }
-        }.blockTillTrue();
-        
-        // verify thread did not die
-        assertTrue(queueConsumer.runningThread.isAlive());
-      } finally {
-        queueConsumer.stop();
+    final TestExceptionHandler teh = new TestExceptionHandler();
+    ExceptionUtils.setInheritableExceptionHandler(teh);
+    final Exception e = new Exception();
+    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<Object>(queue, new ConsumerAcceptor<Object>() {
+      @Override
+      public void acceptConsumedItem(Object item) throws Exception {
+        throw e;
       }
+    });
+    try {
+      queueConsumer.maybeStart(new ConfigurableThreadFactory());
+      
+      Object item = new Object();
+      queue.put(item);
+      
+      // will throw exception if test fails
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return teh.getLastThrowable() == e;
+        }
+      }.blockTillTrue();
+      
+      // verify thread did not die
+      assertTrue(queueConsumer.runningThread.isAlive());
     } finally {
-      Thread.setDefaultUncaughtExceptionHandler(ueh);
+      queueConsumer.stop();
     }
   }
   

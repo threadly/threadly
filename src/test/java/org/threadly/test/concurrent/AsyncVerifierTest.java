@@ -16,7 +16,7 @@ import org.threadly.util.ExceptionUtils;
 public class AsyncVerifierTest {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   @AfterClass

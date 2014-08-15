@@ -113,7 +113,7 @@ public class ListenerHelper<T> {
    * 
    * If an Executor is provided, and that Executor is NOT single threaded, the 
    * listener may be called concurrently.  You can ensure this wont happen by 
-   * using the {@link org.threadly.concurrent.TaskExecutorDistributor} to get an 
+   * using the {@link org.threadly.concurrent.KeyDistributedExecutor} to get an 
    * executor from a single key, or by using the 
    * {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit of one, 
    * or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}.

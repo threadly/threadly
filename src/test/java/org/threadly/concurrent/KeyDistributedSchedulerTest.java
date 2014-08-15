@@ -13,15 +13,15 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
-import org.threadly.concurrent.TaskExecutorDistributorTest.TDCallable;
-import org.threadly.concurrent.TaskExecutorDistributorTest.TDRunnable;
-import org.threadly.concurrent.TaskExecutorDistributorTest.ThreadContainer;
+import org.threadly.concurrent.KeyDistributedExecutorTest.TDCallable;
+import org.threadly.concurrent.KeyDistributedExecutorTest.TDRunnable;
+import org.threadly.concurrent.KeyDistributedExecutorTest.ThreadContainer;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings({"deprecation", "javadoc"})
-public class TaskSchedulerDistributorTest {
+@SuppressWarnings("javadoc")
+public class KeyDistributedSchedulerTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
@@ -32,7 +32,7 @@ public class TaskSchedulerDistributorTest {
   
   private PriorityScheduler scheduler;
   private Object agentLock;
-  private TaskSchedulerDistributor distributor;
+  private KeyDistributedScheduler distributor;
   
   @Before
   public void setup() {
@@ -41,8 +41,8 @@ public class TaskSchedulerDistributorTest {
                                             1000 * 10);
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
-    distributor = new TaskSchedulerDistributor(scheduler, sLock, 
-                                               Integer.MAX_VALUE, false);
+    distributor = new KeyDistributedScheduler(scheduler, sLock, 
+                                              Integer.MAX_VALUE, false);
   }
   
   @After
@@ -78,14 +78,14 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void constructorFail() {
     try {
-      new TaskSchedulerDistributor(1, null);
+      new KeyDistributedScheduler(1, null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new TaskSchedulerDistributor(scheduler, null, 
-                                   Integer.MAX_VALUE, false);
+      new KeyDistributedScheduler(scheduler, null, 
+                                  Integer.MAX_VALUE, false);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -96,16 +96,16 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void constructorTest() {
     // none should throw exception
-    new TaskSchedulerDistributor(scheduler);
-    new TaskSchedulerDistributor(scheduler, true);
-    new TaskSchedulerDistributor(scheduler, 1);
-    new TaskSchedulerDistributor(scheduler, 1, true);
-    new TaskSchedulerDistributor(1, scheduler);
-    new TaskSchedulerDistributor(1, scheduler, true);
-    new TaskSchedulerDistributor(1, scheduler, 1);
-    new TaskSchedulerDistributor(1, scheduler, 1, true);
+    new KeyDistributedScheduler(scheduler);
+    new KeyDistributedScheduler(scheduler, true);
+    new KeyDistributedScheduler(scheduler, 1);
+    new KeyDistributedScheduler(scheduler, 1, true);
+    new KeyDistributedScheduler(1, scheduler);
+    new KeyDistributedScheduler(1, scheduler, true);
+    new KeyDistributedScheduler(1, scheduler, 1);
+    new KeyDistributedScheduler(1, scheduler, 1, true);
     StripedLock sLock = new StripedLock(1);
-    new TaskSchedulerDistributor(scheduler, sLock, 1, false);
+    new KeyDistributedScheduler(scheduler, sLock, 1, false);
   }
   
   @Test (expected = IllegalArgumentException.class)
@@ -349,7 +349,7 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void removeRunnableTest() {
     TestableScheduler scheduler = new TestableScheduler();
-    TaskSchedulerDistributor distributor = new TaskSchedulerDistributor(scheduler);
+    KeyDistributedScheduler distributor = new KeyDistributedScheduler(scheduler);
     TestRunnable scheduleRunnable = new TestRunnable();
     TestRunnable submitScheduledRunnable = new TestRunnable();
     TestRunnable scheduleWithFixedDelayRunnable = new TestRunnable();
@@ -366,7 +366,7 @@ public class TaskSchedulerDistributorTest {
   @Test
   public void removeCallableTest() {
     TestableScheduler scheduler = new TestableScheduler();
-    TaskSchedulerDistributor distributor = new TaskSchedulerDistributor(scheduler);
+    KeyDistributedScheduler distributor = new KeyDistributedScheduler(scheduler);
     TestCallable submitScheduledCallable = new TestCallable();
     
     distributor.submitScheduledTask(submitScheduledCallable, submitScheduledCallable, 10);

@@ -30,7 +30,7 @@ public class FutureUtilsTest {
   public static void setupClass() {
     scheduler = new StrictPriorityScheduler(1, 1, 1000);
     
-    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   @AfterClass

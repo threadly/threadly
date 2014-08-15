@@ -24,7 +24,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   @Test

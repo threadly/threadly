@@ -2,7 +2,7 @@ package org.threadly.concurrent.event;
 
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.TaskExecutorDistributor;
+import org.threadly.concurrent.KeyDistributedExecutor;
 
 /**
  * <p>This class ensures that listener execution will never happen on the thread that 
@@ -14,7 +14,7 @@ import org.threadly.concurrent.TaskExecutorDistributor;
  * provided with an executor, that provided Executor will NOT be overridden, and instead 
  * it will be used for the listeners execution.</p>
  * 
- * <p>Internally this class uses the {@link TaskExecutorDistributor}, using the listener as 
+ * <p>Internally this class uses the {@link KeyDistributedExecutor}, using the listener as 
  * the execution key, to ensure that any single listener will NEVER execute concurrently with 
  * itself.</p>
  * 
@@ -32,7 +32,7 @@ import org.threadly.concurrent.TaskExecutorDistributor;
  * @since 2.2.0
  */
 public class DefaultExecutorRunnableListenerHelper extends RunnableListenerHelper {
-  protected final TaskExecutorDistributor taskDistributor;
+  protected final KeyDistributedExecutor taskDistributor;
   
   /**
    * Constructs a new {@link DefaultExecutorRunnableListenerHelper}.  If any listeners 
@@ -44,7 +44,7 @@ public class DefaultExecutorRunnableListenerHelper extends RunnableListenerHelpe
   public DefaultExecutorRunnableListenerHelper(boolean callListenersOnce, Executor executor) {
     super(callListenersOnce);
     
-    taskDistributor = new TaskExecutorDistributor(executor);
+    taskDistributor = new KeyDistributedExecutor(executor);
   }
   
   @Override

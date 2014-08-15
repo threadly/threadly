@@ -28,7 +28,7 @@ public abstract class ScheduledExecutorServiceTest {
   
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   protected abstract ScheduledExecutorService makeScheduler(int poolSize);

@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings("javadoc")
-public class TaskSchedulerDistributorKeyBasedSchedulerTest extends SubmitterSchedulerInterfaceTest {
+public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerInterfaceTest {
   @Override
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
     return new KeyBasedSubmitterSchedulerFactory();
@@ -34,8 +34,7 @@ public class TaskSchedulerDistributorKeyBasedSchedulerTest extends SubmitterSche
         scheduler.prestartAllCoreThreads();
       }
       
-      @SuppressWarnings("deprecation")
-      TaskSchedulerDistributor distributor = new TaskSchedulerDistributor(poolSize, scheduler);
+      KeyDistributedScheduler distributor = new KeyDistributedScheduler(poolSize, scheduler);
       
       return distributor.getSubmitterSchedulerForKey(this);
     }

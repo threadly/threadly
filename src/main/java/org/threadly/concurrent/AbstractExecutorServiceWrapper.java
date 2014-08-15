@@ -30,7 +30,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS = 1000000 * 100;  // 100ms
   
   private final SchedulerServiceInterface scheduler;
-  private final TaskExecutorDistributor fixedRateDistributor;
+  private final KeyDistributedExecutor fixedRateDistributor;
   
   /**
    * Constructs a new wrapper to adhere to the {@link ScheduledExecutorService} interface.
@@ -41,7 +41,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     
     this.scheduler = scheduler;
-    this.fixedRateDistributor = new TaskExecutorDistributor(scheduler);
+    this.fixedRateDistributor = new KeyDistributedExecutor(scheduler);
   }
 
   @Override
@@ -378,11 +378,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    */
   protected static class FixedRateSubmitter implements Runnable, RunnableContainerInterface {
     private final SchedulerServiceInterface scheduler;
-    private final TaskExecutorDistributor fixedRateDistributor;
+    private final KeyDistributedExecutor fixedRateDistributor;
     private final FixedRateTaskWrapper wrappedTask;
     
     protected FixedRateSubmitter(SchedulerServiceInterface scheduler, 
-                                 TaskExecutorDistributor fixedRateDistributor, 
+                                 KeyDistributedExecutor fixedRateDistributor, 
                                  FixedRateTaskWrapper wrappedTask) {
       this.scheduler = scheduler;
       this.fixedRateDistributor = fixedRateDistributor;

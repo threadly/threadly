@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @SuppressWarnings("javadoc")
-public class TaskExecutorDistributorKeyBasedSubmitterTest extends SubmitterExecutorInterfaceTest {
+public class KeyDistributedExecutorKeySubmitterTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
     return new KeyBasedSubmitterFactory();
@@ -18,7 +18,6 @@ public class TaskExecutorDistributorKeyBasedSubmitterTest extends SubmitterExecu
       executors = new LinkedList<PriorityScheduler>();
     }
     
-    @SuppressWarnings("deprecation")
     @Override
     public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, 
                                                             boolean prestartIfAvailable) {
@@ -29,7 +28,7 @@ public class TaskExecutorDistributorKeyBasedSubmitterTest extends SubmitterExecu
       }
       executors.add(executor);
       
-      return new TaskExecutorDistributor(executor).getSubmitterForKey("foo");
+      return new KeyDistributedExecutor(executor).getSubmitterForKey("foo");
     }
     
     @Override

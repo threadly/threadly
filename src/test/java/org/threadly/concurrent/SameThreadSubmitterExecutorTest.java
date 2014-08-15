@@ -17,7 +17,7 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
   
   @BeforeClass
   public static void classSetup() {
-    ThreadlyTestUtil.setDefaultUncaughtExceptionHandler();
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   @Before

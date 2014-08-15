@@ -37,7 +37,7 @@ import org.threadly.util.ArgumentVerifier;
  * called.  For example if you provided a multi-threaded executor, and are calling the 
  * listeners twice, those listeners call order is non-deterministic.  If this is important to 
  * you, you must ensure that the Executor provided is single threaded (ie by using the 
- * {@link org.threadly.concurrent.TaskExecutorDistributor} to get an executor from a single 
+ * {@link org.threadly.concurrent.KeyDistributedExecutor} to get an executor from a single 
  * key, or by using the {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit 
  * of one, or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}).</p>
  * 
