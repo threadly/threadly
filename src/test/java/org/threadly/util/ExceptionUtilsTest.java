@@ -248,6 +248,17 @@ public class ExceptionUtilsTest {
     }
   }
   
+  @Test
+  public void handleExceptionWithNullException() {
+    TestExceptionHandler teh = new TestExceptionHandler();
+    
+    ExceptionUtils.setDefaultExceptionHandler(teh);
+    ExceptionUtils.handleException(null);
+    
+    // no exception should be thrown or called
+    assertEquals(0, teh.getCallCount());
+  }
+  
   @Test (expected = IllegalArgumentException.class)
   public void getRootCauseFail() {
     ExceptionUtils.getRootCause(null);
