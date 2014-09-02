@@ -40,6 +40,7 @@ public class DefaultExecutorListenerHelper<T> extends ListenerHelper<T> {
    * 
    * @param listenerInterface Interface that listeners need to implement
    * @param executor Executor that listeners will be executed on if none is provided
+   * @param <T> Type representing interface of listeners
    * @return New instance of the {@link AsyncCallListenerHelper}
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })

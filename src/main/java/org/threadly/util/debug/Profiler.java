@@ -122,7 +122,7 @@ public class Profiler {
   
   /**
    * Change how long the profiler waits before getting additional thread 
-   * stacks.  This value must be >= 0.
+   * stacks.  This value must be greater than or equal to 0.
    * 
    * @param pollIntervalInMs time in milliseconds to wait between thread data dumps
    */
@@ -176,12 +176,10 @@ public class Profiler {
   /**
    * Starts the profiler running in a new thread.
    * 
-   * If this profiler had the life cycle of: 
-   * start -> stop -> start
-   * 
-   * The stats from the previous run will still be included 
-   * in this run.  If you wish to clear out previous runs 
-   * you must call {#link reset()} first.
+   * If this profiler had previously ran, and is now sitting in a 
+   * stopped state again.  The stats from the previous run will 
+   * still be included in this run.  If you wish to clear out 
+   * previous runs you must call {#link reset()} first.
    */
   public void start() {
     start(null);
@@ -190,12 +188,10 @@ public class Profiler {
   /**
    * Starts the profiler running in a new thread.
    * 
-   * If this profiler had the life cycle of: 
-   * start -> stop -> start
-   * 
-   * The stats from the previous run will still be included 
-   * in this run.  If you wish to clear out previous runs 
-   * you must call {#link reset()} first.
+   * If this profiler had previously ran, and is now sitting in a 
+   * stopped state again.  The stats from the previous run will 
+   * still be included in this run.  If you wish to clear out 
+   * previous runs you must call {#link reset()} first.
    * 
    * If an executor is provided, this call will block until the the 
    * profiler has been started on the provided executor.

@@ -28,7 +28,7 @@ public interface ConsumerIterator<E> {
   /**
    * Removes and returns the next available item in the queue.
    * 
-   * @return next item with delay <= 0
+   * @return next item with delay that is at least 0
    */
   public E remove();
 }

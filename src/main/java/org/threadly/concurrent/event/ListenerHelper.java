@@ -35,6 +35,7 @@ public class ListenerHelper<T> {
    * requires less code to do that construction.
    * 
    * @param listenerInterface Interface that listeners need to implement
+   * @param <T> Type representing interface of listeners
    * @return New instance of the {@link ListenerHelper}
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })

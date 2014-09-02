@@ -14,7 +14,7 @@ import org.threadly.util.ArgumentVerifier;
  * a provided executor it will then run on the provided executor (in the thread doing the 
  * .call() invocation, AKA it will run that listener before executing other listeners).  
  * If the listener was added with a provided executor, that listener will still execute on 
- * the provided executor (so not necessarily the executor provided at construction time).<p>
+ * the provided executor (so not necessarily the executor provided at construction time).</p>
  * 
  * <p>If it is desired that all listeners are executed asynchronously from each other, you 
  * should actually use the normal {@link ListenerHelper}, and instead just ensure that an 
@@ -53,6 +53,7 @@ public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
    * 
    * @param listenerInterface Interface that listeners need to implement
    * @param executor Executor that .call() invocations will occur on
+   * @param <T> Type representing interface of listeners
    * @return New instance of the {@link AsyncCallListenerHelper}
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })

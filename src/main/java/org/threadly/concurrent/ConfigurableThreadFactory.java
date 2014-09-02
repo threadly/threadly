@@ -44,7 +44,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * of newly created threads.  
    * 
    * If specified with true for appendPoolIdToPrefix it will append a unique "pool" id to 
-   * the prefix, giving it the format of threadNamePrefix + <UNIQUE_POOL_ID> + "-thread-".  
+   * the prefix, giving it the format of threadNamePrefix + UNIQUE_POOL_ID + "-thread-".  
    * If appendPoolIdToPrefix is specified as false, only a unique thread id will be 
    * appended to the prefix.  In either case, the produced threads name will be appended 
    * with a unique thread id for the factory instance.
@@ -108,7 +108,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * constructor if you need to adjust two or more values.  
    * 
    * If specified with true for appendPoolIdToPrefix it will append a unique "pool" id to 
-   * the prefix, giving it the format of threadNamePrefix + <UNIQUE_POOL_ID> + "-thread-".  
+   * the prefix, giving it the format of threadNamePrefix + UNIQUE_POOL_ID + "-thread-".  
    * If appendPoolIdToPrefix is specified as false, only a unique thread id will be 
    * appended to the prefix.  In either case, the produced threads name will be appended 
    * with a unique thread id for the factory instance.
