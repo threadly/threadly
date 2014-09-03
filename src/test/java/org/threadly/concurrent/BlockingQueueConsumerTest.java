@@ -65,6 +65,11 @@ public class BlockingQueueConsumerTest {
     assertTrue(queueConsumer.isRunning());
   }
   
+  @Test (expected = IllegalThreadStateException.class)
+  public void stopFail() {
+    queueConsumer.maybeStart(new StartingThreadFactory());
+  }
+  
   @Test
   public void doubleStopTest() {
     queueConsumer.maybeStart(new ConfigurableThreadFactory());

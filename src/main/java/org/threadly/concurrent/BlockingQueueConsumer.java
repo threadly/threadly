@@ -105,6 +105,9 @@ public class BlockingQueueConsumer<T> {
 
       started = true;
       runningThread = threadFactory.newThread(new ConsumerRunnable());
+      if (runningThread.isAlive()) {
+        throw new IllegalThreadStateException();
+      }
       runningThread.setDaemon(true);
       if (threadName != null && threadName.length() > 0) {
         runningThread.setName(threadName);

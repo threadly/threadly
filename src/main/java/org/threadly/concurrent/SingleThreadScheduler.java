@@ -177,6 +177,9 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     protected SchedulerManager(ThreadFactory threadFactory) {
       scheduler = new NoThreadScheduler(true);  // true so we wont tight loop in the run
       execThread = threadFactory.newThread(this);
+      if (execThread.isAlive()) {
+        throw new IllegalThreadStateException();
+      }
       startStopLock = new Object();
       started = false;
       shutdownStarted = false;

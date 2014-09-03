@@ -1113,6 +1113,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     
     protected Worker() {
       thread = threadFactory.newThread(this);
+      if (thread.isAlive()) {
+        throw new IllegalThreadStateException();
+      }
       running = false;
       lastRunTime = Clock.lastKnownTimeMillis();
       nextTask = null;
