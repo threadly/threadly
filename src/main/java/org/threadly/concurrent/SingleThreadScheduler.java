@@ -10,9 +10,9 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A simple and light weight implementation of the {@link SubmitterSchedulerInterface}.  
- * This is designed to be a lighter weight option to the {@link PriorityScheduler}, for 
- * when multiple threads are either not needed, or not desired.<p>
+ * <p>A simple and light weight implementation of the {@link SubmitterSchedulerInterface}.  This 
+ * is designed to be a lighter weight option to the {@link PriorityScheduler}, for when multiple 
+ * threads are either not needed, or not desired.<p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
@@ -23,19 +23,18 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   protected final AtomicReference<SchedulerManager> sManager;
   
   /**
-   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
-   * the first task is provided.  This defaults to using a daemon thread for the 
-   * scheduler.
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
+   * is provided.  This defaults to using a daemon thread for the scheduler.
    */
   public SingleThreadScheduler() {
     this(true);
   }
   
   /**
-   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
-   * the first task is provided.
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
+   * is provided.
    * 
-   * @param daemonThread true if scheduler thread should be a daemon thread
+   * @param daemonThread {@code true} if scheduler thread should be a daemon thread
    */
   public SingleThreadScheduler(boolean daemonThread) {
     this(new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
@@ -43,8 +42,8 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until 
-   * the first task is provided.
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
+   * is provided.
    * 
    * @param threadFactory factory to make thread for scheduler
    */
@@ -56,11 +55,10 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Gets the instance of the scheduler for this instance.  The scheduler 
-   * must be accessed from this function because it is lazily constructed 
-   * and started.
+   * Gets the instance of the scheduler for this instance.  The scheduler must be accessed from 
+   * this function because it is lazily constructed and started.
    * 
-   * @return instance of the single threaded scheduler
+   * @return instance of the internal scheduler
    */
   protected NoThreadScheduler getScheduler() {
     // we lazily construct and start the manager
@@ -85,7 +83,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   /**
    * Stops the scheduler, constructing if necessary.
    * 
-   * @param stopImmediately if true after call no additional executions will occur
+   * @param stopImmediately if {@code true} after invocation no additional executions will occur
    * @return if stopped immediately a list of Runnables that were in queue at stop will be returned
    */
   private List<Runnable> shutdown(boolean stopImmediately) {
@@ -102,21 +100,21 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
 
   /**
    * Stops any new tasks from being submitted to the pool.  But allows all tasks which are 
-   * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If 
-   * recurring tasks are present they will also be unable to reschedule.  This call will 
-   * not block to wait for the shutdown of the scheduler to finish.  If shutdown or 
-   * shutdownNow has already been called, this will have no effect.
+   * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If recurring 
+   * tasks are present they will also be unable to reschedule.  This call will not block to wait 
+   * for the shutdown of the scheduler to finish.  If {@code shutdown()} or 
+   * {@link #shutdownNow()} has already been called, this will have no effect.  
    * 
-   * If you wish to not want to run any queued tasks you should use {#link shutdownNow()).
+   * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
    */
   public void shutdown() {
     shutdown(false);
   }
 
   /**
-   * Stops any new tasks from being submitted to the pool.  If any tasks are waiting for 
-   * execution they will be prevented from being run.  If a task is currently running it 
-   * will be allowed to finish (though this call will not block waiting for it to finish).
+   * Stops any new tasks from being submitted to the pool.  If any tasks are waiting for execution 
+   * they will be prevented from being run.  If a task is currently running it will be allowed to 
+   * finish (though this call will not block waiting for it to finish).
    * 
    * @return returns a list of runnables which were waiting in the queue to be run at time of shutdown
    */
@@ -158,10 +156,9 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * <p>This class contains the thread and instance of {@link NoThreadScheduler} 
-   * that is used to provide single threaded scheduler implementation.  The only 
-   * implementation here is to contain those objects, and know how to start and 
-   * stop the scheduler.</p>
+   * <p>This class contains the thread and instance of {@link NoThreadScheduler} that is used to 
+   * provide single threaded scheduler implementation.  The only implementation here is to contain 
+   * those objects, and know how to start and stop the scheduler.</p>
    * 
    * @author jent - Mike Jensen
    * @since 2.0.0
@@ -189,15 +186,14 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     /**
      * Call to check if stop has been called.
      * 
-     * @return true if stop has been called (weather shutdown has finished or not)
+     * @return {@code true} if stop has been called (weather shutdown has finished or not)
      */
     public boolean isStopped() {
       return shutdownStarted;
     }
     
     /**
-     * Call to start the thread to run tasks.  If already started this call will have 
-     * no effect.
+     * Call to start the thread to run tasks.  If already started this call will have no effect.
      */
     protected void start() {
       synchronized (startStopLock) {
@@ -214,8 +210,10 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
      * Interrupted or stopped.  True will only prevent ANY extra tasks from running, while a false 
      * will let tasks ready to run complete before shutting down.
      * 
-     * @param stopImmediately false if the scheduler should let ready tasks run, true stops scheduler immediately
-     * @return if stopImmediately, this will include tasks which were queued to run, otherwise will be an empty list
+     * @param stopImmediately {@code false} if the scheduler should let ready tasks run, 
+     *                        {@code true} stops scheduler immediately
+     * @return if {@code stopImmediately} is {@code true}, this will include tasks which were queued to run, 
+     *         otherwise will be an empty list
      */
     protected List<Runnable> stop(boolean stopImmediately) {
       synchronized (startStopLock) {

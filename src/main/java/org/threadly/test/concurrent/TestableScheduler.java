@@ -5,15 +5,16 @@ import org.threadly.util.Clock;
 
 /**
  * <p>This differs from {@link org.threadly.concurrent.NoThreadScheduler} in that time is ONLY 
- * advanced via the tick calls.  That means that if you schedule a task, it will be scheduled 
- * off of either the creation time, or the last tick time, what ever the most recent point is.  
- * This allows you to progress time forward faster than it could in real time, having tasks 
- * execute faster, etc, etc.</p>
+ * advanced via the tick calls.  That means that if you schedule a task, it will be scheduled off 
+ * of either the creation time, or the last tick time, what ever the most recent point is.  This 
+ * allows you to progress time forward faster than it could in real time, having tasks execute 
+ * faster, etc, etc.</p>
  * 
- * <p>The tasks in this scheduler are only progressed forward with calls to .tick().  
- * Since it is running on the calling thread, calls to .wait() and .sleep() from sub 
- * tasks will block (possibly forever).  The call to .tick() will not unblock till there 
- * is no more work for the scheduler to currently handle.</p>
+ * <p>The tasks in this scheduler are only progressed forward with calls to {@link #tick()}.  
+ * Since it is running on the calling thread, calls to {@code Object.wait()} and 
+ * {@code Thread.sleep()} from sub tasks will block (possibly forever).  The call to 
+ * {@link #tick()} will not unblock till there is no more work for the scheduler to currently 
+ * handle.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
@@ -36,8 +37,8 @@ public class TestableScheduler extends NoThreadScheduler {
   }
   
   /**
-   * Returns the last provided time to the tick call.  If tick has not been called yet, then 
-   * this will represent the time at construction.
+   * Returns the last provided time to the tick call.  If tick has not been called yet, then this 
+   * will represent the time at construction.
    * 
    * @return last time the scheduler used for reference on execution
    */
@@ -61,9 +62,9 @@ public class TestableScheduler extends NoThreadScheduler {
    * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
    * waiting tasks as possible.  This call will NOT block if no task are currently ready to run.
    * 
-   * If any tasks throw a RuntimeException, they will be bubbled up to this tick call.  Any 
-   * tasks past that task will not run till the next call to tick.  So it is important that the 
-   * implementor handle those exceptions.  
+   * If any tasks throw a {@link RuntimeException}, they will be bubbled up to this tick call.  
+   * Any tasks past that task will not run till the next call to tick.  So it is important that 
+   * the implementor handle those exceptions.  
    * 
    * @return quantity of tasks run during this tick call
    */
@@ -73,15 +74,15 @@ public class TestableScheduler extends NoThreadScheduler {
   
   /**
    * This progresses tasks based off the time provided.  This is primarily used in testing by 
-   * providing a possible time in the future (to execute future tasks).  This call will NOT 
-   * block if no task are currently ready to run.  
+   * providing a possible time in the future (to execute future tasks).  This call will NOT block 
+   * if no task are currently ready to run.  
    * 
-   * If any tasks throw a RuntimeException, they will be bubbled up to this tick call.  Any 
-   * tasks past that task will not run till the next call to tick.  So it is important that 
+   * If any tasks throw a {@link RuntimeException}, they will be bubbled up to this tick call.  
+   * Any tasks past that task will not run till the next call to tick.  So it is important that 
    * the implementor handle those exceptions.
    * 
-   * This call accepts the absolute time in milliseconds.  If you want to advance the scheduler 
-   * a specific amount of time forward, look at the "advance" call.
+   * This call accepts the absolute time in milliseconds.  If you want to advance the scheduler a 
+   * specific amount of time forward, look at the "advance" call.
    * 
    * @param currentTime Absolute time to provide for looking at task run time
    * @return quantity of tasks run in this tick call

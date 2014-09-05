@@ -14,7 +14,7 @@ public class StringBufferWriter extends Writer implements CharSequence {
   /**
    * Constructs a new writer with the provided {@link StringBuffer} to write to.
    * 
-   * @param stringBuffer string buffer to write to, can not be null
+   * @param stringBuffer string buffer to write to, can not be {@code null}
    */
   public StringBufferWriter(StringBuffer stringBuffer) {
     ArgumentVerifier.assertNotNull(stringBuffer, "stringBuffer");

@@ -1,9 +1,8 @@
 package org.threadly.concurrent;
 
 /**
- * <p>Class that is designed to wrap a runnable, and prevent any 
- * throwables from propagating out of the run function.  If a throwable 
- * is thrown, it will be provided to 
+ * <p>Class that is designed to wrap a runnable, and prevent any throwables from propagating out 
+ * of the run function.  If a throwable is thrown, it will be provided to 
  * {@link org.threadly.util.ExceptionUtils}.handleException(Throwable).</p>
  * 
  * @deprecated Use ThrowableSuppressingRunnable
@@ -14,8 +13,8 @@ package org.threadly.concurrent;
 @Deprecated
 public class ThrowableSurpressingRunnable extends ThrowableSuppressingRunnable {
   /**
-   * Constructs a new ThrowableSurpressingRunnable with the provided task.  
-   * If the task is null, when this is run no operation will occur.
+   * Constructs a new ThrowableSurpressingRunnable with the provided task.  If the task is 
+   * {@code null}, when this is run no operation will occur.
    * 
    * @param task task to be executed and have exceptions prevented from being thrown
    */

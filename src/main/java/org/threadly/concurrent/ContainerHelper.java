@@ -4,22 +4,23 @@ import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 /**
- * Class which is designed to help with determining if a Runnable or Callable is contained 
- * at some point within a chain of {@link CallableContainerInterface} or {@link RunnableContainerInterface}.
+ * Class which is designed to help with determining if a Runnable or Callable is contained at some 
+ * point within a chain of {@link CallableContainerInterface} or 
+ * {@link RunnableContainerInterface}.
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class ContainerHelper {
   /**
-   * Attempts to remove the provided runnable from the source collection.  This 
-   * uses the iterator .remove() function to remove the container if it is found.
+   * Attempts to remove the provided runnable from the source collection.  This uses the 
+   * {@link Iterator#remove()} function to remove the container if it is found.
    * 
    * @since 2.0.0
    * 
    * @param source source collection to search over
    * @param compareTo Runnable to compare against in search
-   * @return true if collection was modified
+   * @return {@code true} if collection was modified
    */
   public static boolean remove(Iterable<? extends RunnableContainerInterface> source, 
                                Runnable compareTo) {
@@ -36,14 +37,14 @@ public class ContainerHelper {
   }
 
   /**
-   * Attempts to remove the provided callable from the source collection.  This 
-   * uses the iterator .remove() function to remove the container if it is found.
+   * Attempts to remove the provided callable from the source collection.  This uses the 
+   * {@link Iterator#remove()} function to remove the container if it is found.
    * 
    * @since 2.0.0
    * 
    * @param source source collection to search over
    * @param compareTo Callable to compare against in search
-   * @return true if collection was modified
+   * @return {@code true} if collection was modified
    */
   public static boolean remove(Iterable<? extends RunnableContainerInterface> source, 
                                Callable<?> compareTo) {
@@ -60,12 +61,12 @@ public class ContainerHelper {
   }
   
   /**
-   * Checks if the start runnable equals the compareTo runnable, or if 
-   * the compareTo runnable is contained within a wrapper of the startRunnable.
+   * Checks if the start runnable equals the compareTo runnable, or if the compareTo runnable is 
+   * contained within a wrapper of the startRunnable.
    * 
    * @param startRunnable runnable to start search at
    * @param compareTo runnable to be comparing against
-   * @return true if they are equivalent, or the compareTo runnable is contained within the start
+   * @return {@code true} if they are equivalent, or the compareTo runnable is contained within the start
    */
   public static boolean isContained(Runnable startRunnable, Runnable compareTo) {
     if (startRunnable.equals(compareTo)) {
@@ -88,13 +89,14 @@ public class ContainerHelper {
   }
 
   /**
-   * Checks if the compareTo runnable is contained by the provided {@link RunnableContainerInterface}.  
-   * If it's not we check to see if we can continue our search by looking for another 
-   * {@link RunnableContainerInterface}, or a {@link CallableContainerInterface}.
+   * Checks if the compareTo runnable is contained by the provided 
+   * {@link RunnableContainerInterface}.  If it's not we check to see if we can continue our 
+   * search by looking for another {@link RunnableContainerInterface}, or a 
+   * {@link CallableContainerInterface}.
    * 
    * @param rci Container to check contents of
    * @param compareTo Runnable to compare against
-   * @return true if the runnable is contained at some point within the container
+   * @return {@code true} if the runnable is contained at some point within the container
    */
   private static boolean isContained(RunnableContainerInterface rci, Runnable compareTo) {
     while (true) {
@@ -118,13 +120,14 @@ public class ContainerHelper {
   }
 
   /**
-   * Checks if the compareTo runnable is contained by the provided {@link CallableContainerInterface}.  
-   * If it's not we check to see if we can continue our search by looking for another 
-   * {@link RunnableContainerInterface}, or a {@link CallableContainerInterface}.
+   * Checks if the compareTo runnable is contained by the provided 
+   * {@link CallableContainerInterface}.  If it's not we check to see if we can continue our 
+   * search by looking for another {@link RunnableContainerInterface}, or a 
+   * {@link CallableContainerInterface}.
    * 
    * @param cci Container to check contents of
    * @param compareTo Runnable to compare against
-   * @return true if the runnable is contained at some point within the container
+   * @return {@code true} if the runnable is contained at some point within the container
    */
   private static boolean isContained(CallableContainerInterface<?> cci, Runnable compareTo) {
     while (true) {
@@ -150,7 +153,7 @@ public class ContainerHelper {
    * 
    * @param startRunnable runnable to start search at
    * @param compareTo callable to be comparing against
-   * @return true if the compareTo runnable is contained within the runnable
+   * @return {@code true} if the compareTo runnable is contained within the runnable
    */
   public static boolean isContained(Runnable startRunnable, Callable<?> compareTo) {
     /* we have some awkward if/else logic in case we have a runnable the is both a 
@@ -191,13 +194,14 @@ public class ContainerHelper {
   }
 
   /**
-   * Checks if the compareTo runnable is contained by the provided {@link CallableContainerInterface}.  
-   * If it's not we check to see if we can continue our search by looking for another 
-   * {@link RunnableContainerInterface}, or a {@link CallableContainerInterface}.
+   * Checks if the compareTo runnable is contained by the provided 
+   * {@link CallableContainerInterface}.  If it's not we check to see if we can continue our 
+   * search by looking for another {@link RunnableContainerInterface}, or a 
+   * {@link CallableContainerInterface}.
    * 
    * @param cci Container to check contents of
    * @param compareTo Callable to compare against
-   * @return true if the callable is contained at some point within the container
+   * @return {@code true} if the callable is contained at some point within the container
    */
   private static boolean isContained(CallableContainerInterface<?> cci, Callable<?> compareTo) {
     while (true) {

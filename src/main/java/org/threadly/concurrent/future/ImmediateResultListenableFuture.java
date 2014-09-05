@@ -4,10 +4,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <p>Completed implementation of {@link ListenableFuture} that will 
- * immediately return a result.  Meaning listeners added will immediately 
- * be ran/executed, {@link FutureCallback}'s will immediately get called 
- * with the result provided, and .get() calls will never block.</p>
+ * <p>Completed implementation of {@link ListenableFuture} that will immediately return a result.  
+ * Meaning listeners added will immediately be ran/executed, {@link FutureCallback}'s will 
+ * immediately get called with the result provided, and {@link #get()} calls will never block.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.3.0

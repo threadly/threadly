@@ -15,9 +15,9 @@ import org.threadly.util.ListUtils;
 
 /**
  * <p>This queue is very similar to {@link java.util.concurrent.DelayQueue} but has one major
- * difference.  This queue is designed around the idea that items can change their delay.
- * Items enter the queue with Long.MAX_VALUE delay, and then will just call reposition 
- * once they know when their next execution time is.</p>
+ * difference.  This queue is designed around the idea that items can change their delay.  
+ * Items enter the queue with {@code Long.MAX_VALUE} delay, and then will just call 
+ * reposition once they know when their next execution time is.</p>
  * 
  * <p>In order to allow an item to be repositioned like this, the item must implement the 
  * {@link DynamicDelayedUpdater} interface.</p>
@@ -44,9 +44,9 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
 
   /**
-   * Constructs a queue, providing the lock that will be called 
-   * on with .wait().  Thus it allows you to synchronize around
-   * the .take() and have the lock released while the thread blocks.
+   * Constructs a queue, providing the lock that will be called on with {@code Object.wait()}.  
+   * Thus it allows you to synchronize around the {@link #take()} and have the lock released while 
+   * the thread blocks.
    * 
    * @param queueLock lock that is used internally
    */
@@ -64,8 +64,8 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
   
   /**
-   * Returns the lock} that will be called with .wait during take.  
-   * And must be synchronized on while using the iterator.
+   * Returns the lock that will be called with {@code Object.wait()} during take.  And must be 
+   * synchronized on while using the iterator.
    * 
    * @return lock synchronized on internally
    */
@@ -74,9 +74,9 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
   
   /**
-   * Does a full sort on the queue, this is usually not optimal.
-   * It is better to call reposition(T e), but this could be used if 
-   * many items moved at the same time.
+   * Does a full sort on the queue, this is usually not optimal.  It is better to call 
+   * {@link #reposition(Delayed, long, DynamicDelayedUpdater)}, but this could be used if many 
+   * items moved at the same time.
    */
   public void sortQueue() {
     synchronized (queueLock) {
@@ -111,13 +111,14 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
 
   /**
-   * Called to reposition an item in the queue which's delay wants to be updated
-   * since original insertion (or was originally inserted as addLast()).
+   * Called to reposition an item in the queue which's delay wants to be updated since original 
+   * insertion (or was originally inserted as {@link #addLast(Delayed)}).
    * 
-   * It is expected that this function will be called to reposition before the items 
-   * delay time is updated in the .getDelay(TimeUnit) call.  Once the queue is ready 
-   * for the item to update, it will call allowDelayUpdate on the provided updater.  This 
-   * call to allowDelayUpdate will happen before the reposition call returns.
+   * It is expected that this function will be called to reposition before the items delay time is 
+   * updated in the {@link Delayed#getDelay(TimeUnit)} call.  Once the queue is ready for the item 
+   * to update, it will call {@link DynamicDelayedUpdater#allowDelayUpdate()} on the provided 
+   * updater.  This call to {@link DynamicDelayedUpdater#allowDelayUpdate()}} will happen before 
+   * the reposition call returns.
    * 
    * @param e item currently in the queue
    * @param newDelayInMillis delay time that e will be updated to after reposition
@@ -144,8 +145,8 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
 
   /**
-   * Adds an item to the end of the queue, used as an optimization from add(T e)
-   * when it is known the item will be at the end of the queue.
+   * Adds an item to the end of the queue, used as an optimization from {@link #add(Delayed)} when it 
+   * is known the item will be at the end of the queue.
    * 
    * @param e item to add to queue
    */
@@ -236,7 +237,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   }
   
   /**
-   * Must have queueLock synchronized before calling this function!
+   * Must have {@code queueLock} synchronized before calling this function!
    * 
    * @return a queue item which has a delay of <= 0
    * @throws InterruptedException thrown if thread interrupted waiting for queue item

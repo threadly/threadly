@@ -14,15 +14,13 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Class which assist with holding and calling to listeners of any interface.  In 
- * parallel designs it is common to have things subscribe for actions to occur (to 
- * later be alerted once an action occurs).  This class makes it easy to allow things 
- * to register as a listener.</p>
+ * <p>Class which assist with holding and calling to listeners of any interface.  In parallel 
+ * designs it is common to have things subscribe for actions to occur (to later be alerted once an 
+ * action occurs).  This class makes it easy to allow things to register as a listener.</p>
  * 
- * <p>For listener designs which do NOT need to provide arguments for their listeners, 
- * look at using {@link RunnableListenerHelper}.  {@link RunnableListenerHelper} is 
- * more efficient and flexible for listeners of that type.  It also has a cleaner and 
- * easier to use interface.</p>
+ * <p>For listener designs which do NOT need to provide arguments for their listeners, look at 
+ * using {@link RunnableListenerHelper}.  {@link RunnableListenerHelper} is more efficient and 
+ * flexible for listeners of that type.  It also has a cleaner and easier to use interface.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.2.0
@@ -30,12 +28,11 @@ import org.threadly.util.ExceptionUtils;
  */
 public class ListenerHelper<T> {
   /**
-   * This static function allows for quick and easy construction of the 
-   * {@link ListenerHelper}.  It is equivalent to the normal constructor, but 
-   * requires less code to do that construction.
+   * This static function allows for quick and easy construction of the {@link ListenerHelper}.  
+   * It is equivalent to the normal constructor, but requires less code to do that construction.
    * 
-   * @param listenerInterface Interface that listeners need to implement
    * @param <T> Type representing interface of listeners
+   * @param listenerInterface Interface that listeners need to implement
    * @return New instance of the {@link ListenerHelper}
    */
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -48,8 +45,8 @@ public class ListenerHelper<T> {
   protected Map<T, Executor> listeners;
   
   /**
-   * Constructs a new {@link ListenerHelper} that will handle listeners with 
-   * the provided interface.  The provided class MUST be an interface.
+   * Constructs a new {@link ListenerHelper} that will handle listeners with the provided 
+   * interface.  The provided class MUST be an interface.
    * 
    * @param listenerInterface Interface that listeners need to implement
    */
@@ -64,10 +61,10 @@ public class ListenerHelper<T> {
   }
   
   /**
-   * Constructs an instance of the provided interface to be used as the proxy 
-   * which will end up calling the stored listeners.  This will only be invoked 
-   * once during construction time.  This is designed to allow extending classes 
-   * to provide their own implementations for how listeners are called.
+   * Constructs an instance of the provided interface to be used as the proxy which will end up 
+   * calling the stored listeners.  This will only be invoked once during construction time.  This 
+   * is designed to allow extending classes to provide their own implementations for how listeners 
+   * are called.
    * 
    * @param listenerInterface Interface that listeners need to implement
    * @return Instance of the interface which will call listeners
@@ -80,15 +77,14 @@ public class ListenerHelper<T> {
   }
   
   /**
-   * Calls to notify the subscribed listeners with the given call.  This returns an 
-   * implementation of the listener interface, you can then call to the function you 
-   * wish to have called on the listeners (of course providing the arguments you want 
-   * the listeners to be called with).
+   * Calls to notify the subscribed listeners with the given call.  This returns an implementation 
+   * of the listener interface, you can then call to the function you wish to have called on the 
+   * listeners (of course providing the arguments you want the listeners to be called with).
    * 
-   * Any calls off the returned instance will execute on all subscribed listeners.  If 
-   * those listeners were provided with an executor the execution for calling that 
-   * listener will happen on the provided executor.  If no executor was provided, the 
-   * execution of the listener will happen on the thread invoking this call.
+   * Any calls off the returned instance will execute on all subscribed listeners.  If those 
+   * listeners were provided with an executor the execution for calling that listener will happen 
+   * on the provided executor.  If no executor was provided, the execution of the listener will 
+   * happen on the thread invoking this call.
    * 
    * @return Implementation of listener interface to have call subscribed listeners
    */
@@ -97,30 +93,29 @@ public class ListenerHelper<T> {
   }
   
   /**
-   * Adds a listener to be executed on the next .call() to this instance.  This is the 
-   * same as adding a listener and providing null for the {@link Executor}.
+   * Adds a listener to be executed on the next {@link #call()} to this instance.  This is the same 
+   * as adding a listener and providing null for the {@link Executor}.
    *  
-   * @param listener Listener to be called when .call() occurs
+   * @param listener Listener to be called when {@link #call()} is invoked
    */
   public void addListener(T listener) {
     addListener(listener, null);
   }
   
   /**
-   * Adds a listener to be executed on the next .call() to this instance.  If an 
-   * executor is provided, on the next .call() a task will be put on the executor 
-   * to call this listener.  If none is provided, the listener will be executed 
-   * on the thread that is invoking the .call().
+   * Adds a listener to be executed on the next {@link #call()} to this instance.  If an executor 
+   * is provided, on the next {@link #call()} a task will be put on the executor to call this 
+   * listener.  If none is provided, the listener will be executed on the thread that is invoking 
+   * the {@link #call()}.
    * 
-   * If an Executor is provided, and that Executor is NOT single threaded, the 
-   * listener may be called concurrently.  You can ensure this wont happen by 
-   * using the {@link org.threadly.concurrent.KeyDistributedExecutor} to get an 
-   * executor from a single key, or by using the 
-   * {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit of one, 
+   * If an {@link Executor} is provided, and that {@link Executor} is NOT single threaded, the 
+   * listener may be called concurrently.  You can ensure this wont happen by using the 
+   * {@link org.threadly.concurrent.KeyDistributedExecutor} to get an executor from a single key, 
+   * or by using the {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit of one, 
    * or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}.
    * 
-   * @param listener Listener to be called when .call() occurs
-   * @param executor Executor to call listener on, or null
+   * @param listener Listener to be called when {@link #call()} is invoked
+   * @param executor {@link Executor} to call listener on, or {@code null}
    */
   public void addListener(T listener, Executor executor) {
     ArgumentVerifier.assertNotNull(listener, "listener");
@@ -148,7 +143,7 @@ public class ListenerHelper<T> {
    * Attempts to remove a listener waiting to be called.
    * 
    * @param listener listener instance to be removed
-   * @return true if the listener was removed
+   * @return {@code true} if the listener was removed
    */
   public boolean removeListener(T listener) {
     boolean removingFromCallingThread = Thread.holdsLock(listenersLock);
@@ -177,8 +172,7 @@ public class ListenerHelper<T> {
   }
   
   /**
-   * Returns how many listeners were added, and will be ran on the next 
-   * call.
+   * Returns how many listeners were added, and will be ran on the next {@link #call()} invocation.
    * 
    * @return number of listeners registered to be called
    */
@@ -189,8 +183,8 @@ public class ListenerHelper<T> {
   }
   
   /**
-   * <p>Implementation of {@link InvocationHandler} that calls the provided 
-   * listeners when the invocation occurs.</p>
+   * <p>Implementation of {@link InvocationHandler} that calls the provided listeners when the 
+   * invocation occurs.</p>
    * 
    * @author jent - Mike Jensen
    * @since 2.2.0
@@ -206,12 +200,23 @@ public class ListenerHelper<T> {
       return null;
     }
     
+    /**
+     * Verifies that the method can be a valid invocation on the interface.
+     * 
+     * @param method Method to check against for invocation
+     */
     protected void verifyValidMethod(Method method) {
       if (! method.getReturnType().equals(Void.TYPE)) {
         throw new RuntimeException("Can only call listeners with a void return type");
       }
     }
     
+    /**
+     * Calls all registered listeners for a given method with the given arguments.
+     * 
+     * @param method Method to invoke
+     * @param args Arguments to provide to each listener's invocation
+     */
     protected void callListeners(final Method method, final Object[] args) {
       synchronized (listenersLock) {
         if (listeners != null) {
@@ -233,6 +238,13 @@ public class ListenerHelper<T> {
       }
     }
     
+    /**
+     * Calls an individual listener, and handles any exceptions which may have resulted.
+     * 
+     * @param listener Listener instance to invoke
+     * @param method Method to invoke
+     * @param args Arguments to provide to listeners invocation
+     */
     protected void callListener(T listener, Method method, Object[] args) {
       try {
         method.invoke(listener, args);

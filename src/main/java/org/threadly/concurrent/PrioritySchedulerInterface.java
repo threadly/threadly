@@ -5,8 +5,8 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.future.ListenableFuture;
 
 /**
- * <p>This interface represents schedulers which can not only execute
- * and schedule tasks, but run based off a given priority as well.</p>
+ * <p>This interface represents schedulers which can not only execute and schedule tasks, but run 
+ * based off a given priority as well.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -21,11 +21,12 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
   public void execute(Runnable task, TaskPriority priority);
   
   /**
-   * Submit a task to run as soon as possible for the given priority.  
-   * There is a slight increase in load when using submit over execute.  
-   * So this should only be used when the future is necessary.
+   * Submit a task to run as soon as possible for the given priority.  There is a slight increase 
+   * in load when using submit over execute.  So this should only be used when the future is 
+   * necessary.
    * 
-   * The future .get() method will return null once the runnable has completed.
+   * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has 
+   * completed.
    * 
    * @param task runnable to be executed
    * @param priority priority for task
@@ -34,12 +35,12 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority);
   
   /**
-   * Submit a task to run as soon as possible for the given priority.  
-   * There is a slight increase in load when using submit over execute.  
-   * So this should only be used when the future is necessary.
+   * Submit a task to run as soon as possible for the given priority.  There is a slight increase 
+   * in load when using submit over execute.  So this should only be used when the future is 
+   * necessary.
    * 
-   * The future .get() method will return the provided result once the 
-   * runnable has completed.
+   * The {@link ListenableFuture#get()} method will return the provided result once the runnable has 
+   * completed.
    * 
    * @param <T> type of result returned from the future
    * @param task runnable to be executed
@@ -51,8 +52,8 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
                                         TaskPriority priority);
 
   /**
-   * Submit a {@link Callable} to run as soon as possible for the given priority.  
-   * This is needed when a result needs to be consumed from the callable.
+   * Submit a {@link Callable} to run as soon as possible for the given priority.  This is needed 
+   * when a result needs to be consumed from the callable.
    * 
    * @param <T> type of result returned from the future
    * @param task callable to be executed
@@ -71,11 +72,12 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
   public void schedule(Runnable task, long delayInMs, TaskPriority priority);
   
   /**
-   * Schedule a task with a given delay and a specified priority.  There is 
-   * a slight increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
+   * Schedule a task with a given delay and a specified priority.  There is a slight increase in 
+   * load when using {@link #submitScheduled(Runnable, long, TaskPriority)} over 
+   * {@link #schedule(Runnable, long, TaskPriority)}.  So this should only be used when the 
+   * future is necessary.
    * 
-   * The future .get() method will return null once the runnable has completed.
+   * The {@link ListenableFuture#get()} method will return null once the runnable has completed.
    * 
    * @param task runnable to execute
    * @param delayInMs time in milliseconds to wait to execute task
@@ -86,12 +88,10 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
                                              TaskPriority priority);
   
   /**
-   * Schedule a task with a given delay and a specified priority.  There is 
-   * a slight increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
+   * Schedule a task with a given delay and a specified priority.  
    * 
-   * The future .get() method will return the provided result 
-   * once the runnable has completed.
+   * The {@link ListenableFuture#get()} method will return the provided result once the runnable 
+   * has completed.
    * 
    * @param <T> type of result returned from the future
    * @param task runnable to execute
@@ -105,9 +105,8 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
                                                  TaskPriority priority);
   
   /**
-   * Schedule a {@link Callable} with a given delay.  This is 
-   * needed when a result needs to be consumed from the 
-   * callable.
+   * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 
+   * consumed from the callable.
    * 
    * @param <T> type of result returned from the future
    * @param task callable to be executed
@@ -119,8 +118,8 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
                                                  TaskPriority priority);
 
   /**
-   * Schedule a recurring task to run and a provided priority.  The recurring 
-   * delay time will be from the point where execution finished.
+   * Schedule a recurring task to run and a provided priority.  The recurring delay time will be 
+   * from the point where execution finished.
    * 
    * @param task runnable to be executed.
    * @param initialDelay delay in milliseconds until first run.

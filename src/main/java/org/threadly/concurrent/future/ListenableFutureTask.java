@@ -10,8 +10,8 @@ import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.event.RunnableListenerHelper;
 
 /**
- * <p>This is a future which can be executed.  Allowing you to construct the future with 
- * the interior work, submit it to an executor, and then return this future.</p>
+ * <p>This is a future which can be executed.  Allowing you to construct the future with the 
+ * interior work, submit it to an {@link Executor}, and then return this future.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -97,7 +97,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   }
   
   /**
-   * Can not be overridden, please use addListener as an alternative.
+   * Can not be overridden, please use {@link #addListener(Runnable)} as an alternative.
    */
   @Override
   protected final void done() {

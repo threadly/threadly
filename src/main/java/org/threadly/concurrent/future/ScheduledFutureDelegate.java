@@ -7,10 +7,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * <p>Implementation which handles the ScheduledFuture interface as well 
- * as the {@link ListenableFuture} interface.  It does so by delegating to 
- * two implementations.  A delayed object for the ScheduledFuture interface 
- * and an implementation of the {@link ListenableFuture}.</p>
+ * <p>Implementation of the {@link ListenableScheduledFuture} interface.  This design delegates 
+ * between a {@link Delayed} instance and {@link ListenableFuture} instance..</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -21,8 +19,8 @@ public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> 
   protected final Delayed delayed;
   
   /**
-   * Constructs a new {@link ScheduledFutureDelegate} with the provided 
-   * Implementations to call to for each interface.
+   * Constructs a new {@link ScheduledFutureDelegate} with the provided instances to call to for 
+   * each interface.
    * 
    * @param futureImp implementation to call to for all Future calls
    * @param delayed implementation to call to for getDelay and compareTo

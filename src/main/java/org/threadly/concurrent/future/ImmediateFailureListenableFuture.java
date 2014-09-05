@@ -5,11 +5,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <p>Completed implementation of {@link ListenableFuture} that will 
- * immediately provide a failure condition.  Meaning listeners added will 
- * immediately be ran/executed, {@link FutureCallback}'s will immediately 
- * get called with the throwable provided, and .get() will immediately throw 
- * an {@link ExecutionException}.</p>
+ * <p>Completed implementation of {@link ListenableFuture} that will immediately provide a failure 
+ * condition.  Meaning listeners added will immediately be ran/executed, {@link FutureCallback}'s 
+ * will immediately get called with the throwable provided, and {@link #get()} will immediately 
+ * throw an {@link ExecutionException}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.3.0
@@ -19,10 +18,10 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   private final Throwable failure;
   
   /**
-   * Constructs a completed future with the provided failure.  If the failure 
-   * is null, a new Exception will be created to represent it.
+   * Constructs a completed future with the provided failure.  If the failure is {@code null}, a 
+   * new {@link Exception} will be created to represent it.
    * 
-   * @param failure to be the cause of the ExecutionException from .get calls
+   * @param failure to be the cause of the ExecutionException from {@link #get()} calls
    */
   public ImmediateFailureListenableFuture(Throwable failure) {
     if (failure != null) {

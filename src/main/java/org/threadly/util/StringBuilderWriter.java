@@ -14,7 +14,7 @@ public class StringBuilderWriter extends Writer implements CharSequence {
   /**
    * Constructs a new writer with the provided {@link StringBuilder} to write to.
    * 
-   * @param stringBuilder string builder to write to, can not be null
+   * @param stringBuilder string builder to write to, can not be {@code null}
    */
   public StringBuilderWriter(StringBuilder stringBuilder) {
     ArgumentVerifier.assertNotNull(stringBuilder, "stringBuilder");

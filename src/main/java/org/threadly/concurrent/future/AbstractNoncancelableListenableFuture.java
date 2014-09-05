@@ -11,8 +11,8 @@ abstract class AbstractNoncancelableListenableFuture<T> implements ListenableFut
   /**
    * This has no effect in this implementation, as this future can not be canceled.
    * 
-   * @param  mayInterruptIfRunning will be ignored
-   * @return will always return false, as this future can't be canceled
+   * @param mayInterruptIfRunning will be ignored
+   * @return will always return {@code false}, as this future can't be canceled
    */
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {

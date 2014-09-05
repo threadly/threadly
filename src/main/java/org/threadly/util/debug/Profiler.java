@@ -26,14 +26,12 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * Tool for profiling a running java application to get an idea 
- * of where the slow points (either because of lock contention, or 
- * because of high computational demand).
+ * <p>Tool for profiling a running java application to get an idea of where the slow points 
+ * (either because of lock contention, or because of high computational demand).</p>
  * 
- * This tool definitely incurs some load within the system, so it 
- * should only be used while debugging, and not as general use.  In 
- * addition if it is left running without being reset, it will 
- * continue to consume more and more memory.
+ * <p>This tool definitely incurs some load within the system, so it should only be used while 
+ * debugging, and not as general use.  In addition if it is left running without being reset, it 
+ * will continue to consume more and more memory.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -63,9 +61,8 @@ public class Profiler {
   protected volatile Thread dumpingThread;
   
   /**
-   * Constructs a new profiler instance.  The only way 
-   * to get results from this instance is to call "dump" 
-   * with a provided output stream to get the results to.  
+   * Constructs a new profiler instance.  The only way to get results from this instance is to 
+   * call {@link #dump()} with a provided output stream to get the results to.  
    * 
    * This uses a default poll interval of 100 milliseconds.
    */
@@ -74,11 +71,10 @@ public class Profiler {
   }
   
   /**
-   * Constructs a new profiler instance which will dump the 
-   * results to the provided output file when "stop" is called.
+   * Constructs a new profiler instance which will dump the results to the provided output file 
+   * when {@link #stop()} is called.  
    * 
-   * If the output file is null, this will behave the same as the 
-   * empty constructor.  
+   * If the output file is {@code null}, this will behave the same as the empty constructor.  
    * 
    * This uses a default poll interval of 100 milliseconds.
    * 
@@ -89,9 +85,8 @@ public class Profiler {
   }
   
   /**
-   * Constructs a new profiler instance.  The only way 
-   * to get results from this instance is to call "dump" 
-   * with a provided output stream to get the results to.
+   * Constructs a new profiler instance.  The only way to get results from this instance is to 
+   * call {@link #dump()} with a provided output stream to get the results to.
    * 
    * @param pollIntervalInMs frequency to check running threads
    */
@@ -100,11 +95,10 @@ public class Profiler {
   }
   
   /**
-   * Constructs a new profiler instance which will dump the 
-   * results to the provided output file when "stop" is called.
+   * Constructs a new profiler instance which will dump the results to the provided output file 
+   * when {@link #stop()} is called.
    * 
-   * If the output file is null, this will behave the same as the 
-   * empty constructor.
+   * If the output file is {@code null}, this will behave the same as the empty constructor.
    * 
    * @param outputFile file to dump results to on stop
    * @param pollIntervalInMs frequency to check running threads
@@ -121,8 +115,8 @@ public class Profiler {
   }
   
   /**
-   * Change how long the profiler waits before getting additional thread 
-   * stacks.  This value must be greater than or equal to 0.
+   * Change how long the profiler waits before getting additional thread stacks.  This value must 
+   * be greater than or equal to 0.
    * 
    * @param pollIntervalInMs time in milliseconds to wait between thread data dumps
    */
@@ -133,8 +127,8 @@ public class Profiler {
   }
   
   /**
-   * Call to get the currently set profile interval.  This is the amount 
-   * of time the profiler waits between collecting thread data.
+   * Call to get the currently set profile interval.  This is the amount of time the profiler 
+   * waits between collecting thread data.
    * 
    * @return returns the profile interval in milliseconds
    */
@@ -143,10 +137,9 @@ public class Profiler {
   }
   
   /**
-   * Call to get an estimate on how many times the profiler has collected a 
-   * sample of the thread stacks.  This number may be lower than the actual 
-   * sample quantity, but should never be higher.  It can be used to ensure a minimum 
-   * level of accuracy from within the profiler.
+   * Call to get an estimate on how many times the profiler has collected a sample of the thread 
+   * stacks.  This number may be lower than the actual sample quantity, but should never be 
+   * higher.  It can be used to ensure a minimum level of accuracy from within the profiler.
    * 
    * @return the number of times since the start or last reset we have sampled the threads
    */
@@ -155,9 +148,8 @@ public class Profiler {
   }
   
   /**
-   * Reset the current stored statistics.  The statistics will 
-   * continue to grow in memory until the profiler is either stopped, 
-   * or until this is called.
+   * Reset the current stored statistics.  The statistics will continue to grow in memory until 
+   * the profiler is either stopped, or until this is called.
    */
   public void reset() {
     threadTraces.clear();
@@ -167,36 +159,34 @@ public class Profiler {
   /**
    * Call to check weather the profile is currently running/started.
    * 
-   * @return true if there is a thread currently collecting statistics.
+   * @return {@code true} if there is a thread currently collecting statistics.
    */
   public boolean isRunning() {
     return collectorThread.get() != null;
   }
   
   /**
-   * Starts the profiler running in a new thread.
+   * Starts the profiler running in a new thread.  
    * 
-   * If this profiler had previously ran, and is now sitting in a 
-   * stopped state again.  The stats from the previous run will 
-   * still be included in this run.  If you wish to clear out 
-   * previous runs you must call {#link reset()} first.
+   * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
+   * statistics from the previous run will still be included in this run.  If you wish to clear 
+   * out previous runs you must call {@link #reset()} first.
    */
   public void start() {
     start(null);
   }
   
   /**
-   * Starts the profiler running in a new thread.
+   * Starts the profiler running in a new thread.  
    * 
-   * If this profiler had previously ran, and is now sitting in a 
-   * stopped state again.  The stats from the previous run will 
-   * still be included in this run.  If you wish to clear out 
-   * previous runs you must call {#link reset()} first.
+   * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
+   * statistics from the previous run will still be included in this run.  If you wish to clear 
+   * out previous runs you must call {@link #reset()} first.
    * 
-   * If an executor is provided, this call will block until the the 
-   * profiler has been started on the provided executor.
+   * If an executor is provided, this call will block until the the profiler has been started on 
+   * the provided executor.
    * 
-   * @param executor executor to execute on, or null if new thread should be created
+   * @param executor executor to execute on, or {@code null} if new thread should be created
    */
   public void start(Executor executor) {
     synchronized (startStopLock) {
@@ -247,10 +237,9 @@ public class Profiler {
   }
   
   /**
-   * Stops the profiler from collecting more statistics.  If 
-   * a file was provided at construction, the results will be 
-   * written to that file.  It is possible to request the 
-   * results using the {#link dump()} call after it has stopped.
+   * Stops the profiler from collecting more statistics.  If a file was provided at construction, 
+   * the results will be written to that file.  It is possible to request the results using the 
+   * {@link #dump()} call after it has stopped.
    */
   public void stop() {
     synchronized (startStopLock) {
@@ -359,7 +348,7 @@ public class Profiler {
    * Dumps the traces in the provided set to the provided output stream.
    * 
    * @param traces Set to examine traces to dump statistics about
-   * @param globalCount true if we should examine the global counts of the traces
+   * @param globalCount {@code true} to examine the global counts of the traces
    * @param out Output to dump results to
    */
   private static void dumpTraces(Set<Trace> traces, 
@@ -480,6 +469,7 @@ public class Profiler {
   
   /**
    * Dumps the output for a given function to the provided PrintStream.
+   * 
    * @param f Function to format for
    * @param out PrintStream to print out to
    */
@@ -512,11 +502,10 @@ public class Profiler {
   }
   
   /**
-   * A small call to get an iterator of threads that should be examined for 
-   * this profiler cycle.
+   * A small call to get an iterator of threads that should be examined for this profiler cycle.  
    * 
-   * This is a protected call, so it can be overridden to implement other profilers 
-   * that want to control which threads are being profiled.
+   * This is a protected call, so it can be overridden to implement other profilers that want to 
+   * control which threads are being profiled.
    * 
    * @return an {@link Iterator} of threads to examine and add data for our profile.
    */
@@ -551,8 +540,7 @@ public class Profiler {
   }
   
   /**
-   * <p>Class which runs, collecting statistics for the profiler 
-   * to later analyze.</p>
+   * <p>Class which runs, collecting statistics for the profiler to later analyze.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
@@ -609,10 +597,10 @@ public class Profiler {
   }
   
   /**
-   * Class which represents a stack trace.  The is used so 
-   * we can track how many times a given stack is seen.
+   * <p>Class which represents a stack trace.  The is used so we can track how many times a given 
+   * stack is seen.</p>
    * 
-   * This stack trace reference will be specific to a single thread.
+   * <p>This stack trace reference will be specific to a single thread.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
@@ -669,9 +657,8 @@ public class Profiler {
   }
   
   /**
-   * Class to represent a specific function call.  
-   * This is used so we can track how many times we 
-   * see a given function.
+   * <p>Class to represent a specific function call.  This is used so we can track how many times 
+   * we see a given function.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0

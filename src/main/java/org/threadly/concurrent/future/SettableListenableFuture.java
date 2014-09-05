@@ -9,10 +9,9 @@ import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.Clock;
 
 /**
- * <p>This class is designed to be a helper when returning a single 
- * result asynchronously.  This is particularly useful if this result 
- * is produced over multiple threads (and thus the scheduler returned 
- * future is not useful).</p>
+ * <p>This class is designed to be a helper when returning a single result asynchronously.  This 
+ * is particularly useful if this result is produced over multiple threads (and thus the scheduler 
+ * returned future is not useful).</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.2.0
@@ -27,8 +26,8 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
   private Throwable failure;
   
   /**
-   * Constructs a new {@link SettableListenableFuture}.  You can return this 
-   * immediately and provide a result to the object later when it is ready.
+   * Constructs a new {@link SettableListenableFuture}.  You can return this immediately and 
+   * provide a result to the object later when it is ready.
    */
   public SettableListenableFuture() {
     this.listenerHelper = new RunnableListenerHelper(true);
@@ -59,17 +58,18 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
   }
   
   /**
-   * This call defers to setResult.  It is implemented so that you can construct this, 
-   * return it immediately, but only later provide this as a callback to another 
-   * ListenableFuture implementation.  
+   * This call defers to {@link #setResult(Object)}.  It is implemented so that you can construct 
+   * this, return it immediately, but only later provide this as a callback to another 
+   * {@link ListenableFuture} implementation.  
    * 
    * This should never be invoked by the implementor, this should only be invoked by other 
-   * ListenableFuture's.
+   * {@link ListenableFuture}'s.  
    * 
-   * If this is being used to chain together ListenableFuture's, setResult/setFailure should 
-   * never be called manually (or an exception will occur).
+   * If this is being used to chain together {@link ListenableFuture}'s, 
+   * {@link #setResult(Object)}/{@link #setFailure(Throwable)} should never be called manually (or 
+   * an exception will occur).
    * 
-   * @param result Result object to provide to the future to be returned from .get() call
+   * @param result Result object to provide to the future to be returned from {@link #get()} call
    */
   @Override
   public void handleResult(T result) {
@@ -77,17 +77,18 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
   }
   
   /**
-   * This call defers to setResult.  It is implemented so that you can construct this, 
-   * return it immediately, but only later provide this as a callback to another 
-   * ListenableFuture implementation.  
+   * This call defers to {@link #setFailure(Throwable)}.  It is implemented so that you can 
+   * construct this, return it immediately, but only later provide this as a callback to another 
+   * {@link ListenableFuture} implementation.  
    * 
    * This should never be invoked by the implementor, this should only be invoked by other 
-   * ListenableFuture's.
+   * {@link ListenableFuture}'s.  
    * 
-   * If this is being used to chain together ListenableFuture's, setResult/setFailure should 
-   * never be called manually (or an exception will occur).
+   * If this is being used to chain together {@link ListenableFuture}'s, 
+   * {@link #setResult(Object)}/{@link #setFailure(Throwable)} should never be called manually (or 
+   * an exception will occur).
    * 
-   * @param t exception to be provided as the cause from the ExecutionException thrown from .get() call
+   * @param t Throwable to be provided as the cause from the ExecutionException thrown from {@link #get()} call
    */
   @Override
   public void handleFailure(Throwable t) {
@@ -95,11 +96,10 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
   }
   
   /**
-   * Call to indicate this future is done, and provide the given result.  It 
-   * is expected that only this or setFailure are called, and only called 
-   * once.
+   * Call to indicate this future is done, and provide the given result.  It is expected that only 
+   * this or {@link #setFailure(Throwable)} are called, and only called once.
    * 
-   * @param result result to provide for future.get() calls, can be null
+   * @param result result to provide for {@link #get()} call, can be {@code null}
    */
   public void setResult(T result) {
     synchronized (resultLock) {
@@ -115,10 +115,10 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
   }
   
   /**
-   * Call to indicate this future is done, and provide the occurred failure.  It 
-   * is expected that only this or setResult are called, and only called once.  
-   * If the provided failure is null, a new exception will be created so that 
-   * something is always provided in the ExecutionException on calls to 'get'.
+   * Call to indicate this future is done, and provide the occurred failure.  It is expected that 
+   * only this or {@link #setResult(Object)} are called, and only called once.  If the provided 
+   * failure is {@code null}, a new {@link Exception} will be created so that something is always 
+   * provided in the {@link ExecutionException} on calls to {@link #get()}.
    * 
    * @param failure Throwable that caused failure during computation.
    */

@@ -9,12 +9,12 @@ import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This is a class which is more full featured than {@link KeyDistributedExecutor}, 
- * but it does require a scheduler implementation in order to be able to perform scheduling.</p>
+ * <p>This is a class which is more full featured than {@link KeyDistributedExecutor}, but it does 
+ * require a scheduler implementation in order to be able to perform scheduling.</p>
  * 
- * <p>The same guarantees and restrictions for the {@link KeyDistributedExecutor} also exist 
- * for this class.  Please read the javadoc for {@link KeyDistributedExecutor} to understand 
- * more about how this operates.</p>
+ * <p>The same guarantees and restrictions for the {@link KeyDistributedExecutor} also exist for 
+ * this class.  Please read the javadoc for {@link KeyDistributedExecutor} to understand more 
+ * about how this operates.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.5.0 (existed since 1.0.0 as TaskSchedulerDistributor)
@@ -26,12 +26,11 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * Constructor to use a provided scheduler implementation for running tasks.  
    * 
    * This constructs with a default expected level of concurrency of 16.  This also does not 
-   * attempt to have an accurate queue size for the "getTaskQueueSize" call (thus preferring 
-   * high performance).
+   * attempt to have an accurate queue size for the {@link #getTaskQueueSize(Object)} call (thus 
+   * preferring high performance).
    * 
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel.
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
    */
   public KeyDistributedScheduler(SimpleSchedulerInterface scheduler) {
     this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, false);
@@ -40,16 +39,15 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   /**
    * Constructor to use a provided executor implementation for running tasks.  
    * 
-   * This constructor allows you to specify if you want accurate queue sizes to be 
-   * tracked for given thread keys.  There is a performance hit associated with this, 
-   * so this should only be enabled if "getTaskQueueSize" calls will be used.  
+   * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
+   * given thread keys.  There is a performance hit associated with this, so this should only be 
+   * enabled if {@link #getTaskQueueSize(Object)} calls will be used.  
    * 
    * This constructs with a default expected level of concurrency of 16.
    * 
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel.
-   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
+   * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
   public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, boolean accurateQueueSize) {
     this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, accurateQueueSize);
@@ -58,23 +56,18 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   /**
    * Constructor to use a provided executor implementation for running tasks.
    * 
-   * This constructor allows you to provide a maximum number of tasks for a key before it 
-   * yields to another key.  This can make it more fair, and make it so no single key can 
-   * starve other keys from running.  The lower this is set however, the less efficient it 
-   * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.  
-   * 
-   * This also allows you to specify if you want accurate queue sizes to be tracked for 
-   * given thread keys.  There is a performance hit associated with this, so this should 
-   * only be enabled if "getTaskQueueSize" calls will be used.  
+   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
+   * to another key.  This can make it more fair, and make it so no single key can starve other 
+   * keys from running.  The lower this is set however, the less efficient it becomes in part 
+   * because it has to give up the thread and get it again, but also because it must copy the 
+   * subset of the task queue which it can run.  
    * 
    * This constructs with a default expected level of concurrency of 16.  This also does not 
-   * attempt to have an accurate queue size for the "getTaskQueueSize" call (thus preferring 
-   * high performance).
+   * attempt to have an accurate queue size for the {@link #getTaskQueueSize(Object)} call (thus 
+   * preferring high performance).
    * 
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel.
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
   public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, int maxTasksPerCycle) {
@@ -84,107 +77,102 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   /**
    * Constructor to use a provided executor implementation for running tasks.
    * 
-   * This constructor allows you to provide a maximum number of tasks for a key before it 
-   * yields to another key.  This can make it more fair, and make it so no single key can 
-   * starve other keys from running.  The lower this is set however, the less efficient it 
-   * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.  
+   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
+   * to another key.  This can make it more fair, and make it so no single key can starve other 
+   * keys from running.  The lower this is set however, the less efficient it becomes in part 
+   * because it has to give up the thread and get it again, but also because it must copy the 
+   * subset of the task queue which it can run.  
    * 
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
-   * thread keys.  There is a performance hit associated with this, so this should only be 
-   * enabled if "getTaskQueueSize" calls will be used.
+   * thread keys.  There is a performance hit associated with this, so this should only be enabled 
+   * if {@link #getTaskQueueSize(Object)} calls will be used.
    * 
    * This constructs with a default expected level of concurrency of 16. 
    * 
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel.
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
   public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, int maxTasksPerCycle, 
-                                  boolean accurateQueueSize) {
+                                 boolean accurateQueueSize) {
     this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, accurateQueueSize);
   }
-    
+  
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
    * 
    * This constructor does not attempt to have an accurate queue size for the 
-   * "getTaskQueueSize" call (thus preferring high performance).
+   * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
    * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel. 
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
    */
   public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler) {
     this(expectedParallism, scheduler, Integer.MAX_VALUE, false);
   }
-    
+  
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
    * 
-   * This constructor allows you to specify if you want accurate queue sizes to be 
-   * tracked for given thread keys.  There is a performance hit associated with this, 
-   * so this should only be enabled if "getTaskQueueSize" calls will be used.
+   * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
+   * given thread keys.  There is a performance hit associated with this, so this should only be 
+   * enabled if {@link #getTaskQueueSize(Object)} calls will be used.
    * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel. 
-   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
+   * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
   public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
-                                  boolean accurateQueueSize) {
+                                 boolean accurateQueueSize) {
     this(expectedParallism, scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
-    
+  
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
    * 
-   * This constructor allows you to provide a maximum number of tasks for a key before it 
-   * yields to another key.  This can make it more fair, and make it so no single key can 
-   * starve other keys from running.  The lower this is set however, the less efficient it 
-   * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.
+   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
+   * to another key.  This can make it more fair, and make it so no single key can starve other 
+   * keys from running.  The lower this is set however, the less efficient it becomes in part 
+   * because it has to give up the thread and get it again, but also because it must copy the 
+   * subset of the task queue which it can run.
    * 
    * This constructor does not attempt to have an accurate queue size for the 
-   * "getTaskQueueSize" call (thus preferring high performance).
+   * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
    * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel.
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
   public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
-                                  int maxTasksPerCycle) {
+                                 int maxTasksPerCycle) {
     this(expectedParallism, scheduler, maxTasksPerCycle, false);
   }
-    
+  
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
    * 
-   * This constructor allows you to provide a maximum number of tasks for a key before it 
-   * yields to another key.  This can make it more fair, and make it so no single key can 
-   * starve other keys from running.  The lower this is set however, the less efficient it 
-   * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.
+   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
+   * to another key.  This can make it more fair, and make it so no single key can starve other 
+   * keys from running.  The lower this is set however, the less efficient it becomes in part 
+   * because it has to give up the thread and get it again, but also because it must copy the 
+   * subset of the task queue which it can run.
    * 
-   * This also allows you to specify if you want accurate queue sizes to be 
-   * tracked for given thread keys.  There is a performance hit associated with this, 
-   * so this should only be enabled if "getTaskQueueSize" calls will be used.
+   * This also allows you to specify if you want accurate queue sizes to be tracked for given 
+   * thread keys.  There is a performance hit associated with this, so this should only be enabled 
+   * if {@link #getTaskQueueSize(Object)} calls will be used.
    * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  
-   *                  Ideally has as many possible threads as keys that 
-   *                  will be used in parallel.
+   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
+   *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   * @param accurateQueueSize true to make "getTaskQueueSize" more accurate
+   * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
   public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
-                                  int maxTasksPerCycle, boolean accurateQueueSize) {
+                                 int maxTasksPerCycle, boolean accurateQueueSize) {
     this(scheduler, new StripedLock(expectedParallism), 
          maxTasksPerCycle, accurateQueueSize);
   }
@@ -192,28 +180,28 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   /**
    * Constructor to be used in unit tests.
    * 
-   * This constructor allows you to provide a maximum number of tasks for a key before it 
-   * yields to another key.  This can make it more fair, and make it so no single key can 
-   * starve other keys from running.  The lower this is set however, the less efficient it 
-   * becomes in part because it has to give up the thread and get it again, but also because 
-   * it must copy the subset of the task queue which it can run.
+   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
+   * to another key.  This can make it more fair, and make it so no single key can starve other 
+   * keys from running.  The lower this is set however, the less efficient it becomes in part 
+   * because it has to give up the thread and get it again, but also because it must copy the 
+   * subset of the task queue which it can run.
    * 
    * @param scheduler scheduler to be used for task worker execution 
    * @param sLock lock to be used for controlling access to workers
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
   protected KeyDistributedScheduler(SimpleSchedulerInterface scheduler, StripedLock sLock, 
-                                     int maxTasksPerCycle, boolean accurateQueueSize) {
+                                    int maxTasksPerCycle, boolean accurateQueueSize) {
     super(scheduler, sLock, maxTasksPerCycle, accurateQueueSize);
     
     this.scheduler = scheduler;
   }
   
   /**
-   * Returns a scheduler implementation where all tasks submitted 
-   * on this scheduler will run on the provided key.
+   * Returns a scheduler implementation where all tasks submitted on this scheduler will run on 
+   * the provided key.
    * 
-   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @return scheduler which will only execute based on the provided key
    */
   public SubmitterSchedulerInterface getSubmitterSchedulerForKey(Object threadKey) {
@@ -223,10 +211,10 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
 
   /**
-   * Schedule a one time task with a given delay that will not run concurrently 
-   * based off the thread key.
+   * Schedule a one time task with a given delay that will not run concurrently based off the 
+   * thread key.
    * 
-   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to execute
    * @param delayInMs Time to wait to execute task
    */
@@ -246,11 +234,10 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * Schedule a recurring task to run.  The recurring delay time will be
-   * from the point where execution finished.  This task will not run concurrently 
-   * based off the thread key.
+   * Schedule a recurring task to run.  The recurring delay time will be from the point where 
+   * execution finished.  This task will not run concurrently based off the thread key.
    * 
-   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be executed.
    * @param initialDelay Delay in milliseconds until first run.
    * @param recurringDelay Delay in milliseconds for running task after last finish.
@@ -271,13 +258,14 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
 
   /**
-   * Schedule a task with a given delay.  There is a slight 
-   * increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
+   * Schedule a task with a given delay.  There is a slight increase in load when using 
+   * {@link #submitScheduledTask(Object, Runnable, long)} over 
+   * {@link #scheduleTask(Object, Runnable, long)}.  So this should only be used when the future 
+   * is necessary.
    * 
-   * The future .get() method will return null once the runnable has completed.
+   * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has completed.
    * 
-   * @param threadKey key which hash will be used to determine which thread to run
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task runnable to execute
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
@@ -289,16 +277,13 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
 
   /**
-   * Schedule a task with a given delay.  There is a slight 
-   * increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return null once the runnable has completed.
+   * Schedule a task with a given delay.  The future {@link ListenableFuture#get()} method will 
+   * return null once the runnable has completed.
    * 
    * @param <T> type of result returned from the future
-   * @param threadKey key which hash will be used to determine which thread to run
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task runnable to execute
-   * @param result result to be returned from resulting future .get() when runnable completes
+   * @param result result to be returned from resulting {@link ListenableFuture#get()} when runnable completes
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
@@ -323,12 +308,11 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
 
   /**
-   * Schedule a {@link Callable} with a given delay.  This is 
-   * needed when a result needs to be consumed from the 
-   * callable.
+   * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 
+   * consumed from the callable.
    * 
    * @param <T> type of result returned from the future
-   * @param threadKey key which hash will be used to determine which thread to run
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task callable to be executed
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed and get the result of the callable
@@ -413,8 +397,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * <p>Simple simple scheduler implementation that submits 
-   * executions and scheduling on a given key.</p>
+   * <p>Simple simple scheduler implementation that submits `xecutions and scheduling on a given 
+   * key.</p>
    * 
    * @author jent - Mike Jensen
    * @since 2.5.0

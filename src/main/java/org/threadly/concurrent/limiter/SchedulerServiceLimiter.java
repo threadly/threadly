@@ -7,17 +7,16 @@ import org.threadly.concurrent.SchedulerServiceInterface;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens on a provided 
- * {@link SchedulerServiceInterface}.  This allows the implementor to have one thread pool 
- * for all their code, and if they want certain sections to have less levels of 
- * parallelism (possibly because those those sections would completely consume the global 
- * pool), they can wrap the executor in this class.</p>
+ * {@link SchedulerServiceInterface}.  This allows the implementor to have one thread pool for all 
+ * their code, and if they want certain sections to have less levels of parallelism (possibly 
+ * because those those sections would completely consume the global pool), they can wrap the 
+ * executor in this class.</p>
  * 
- * <p>Thus providing you better control on the absolute thread count and how much 
- * parallelism can occur in different sections of the program.</p>
+ * <p>Thus providing you better control on the absolute thread count and how much parallelism can 
+ * occur in different sections of the program.</p>
  * 
- * <p>This is an alternative from having to create multiple thread pools.  By using this you 
- * also are able to accomplish more efficiently thread use than multiple thread pools would.</p>
- * 
+ * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
+ * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
  * <p>This extends the {@link SimpleSchedulerLimiter} to add {@link SchedulerServiceInterface} 
  * features.  This does not cause any performance hits, but does require a source 
@@ -47,7 +46,7 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
    * 
    * @param scheduler {@link SchedulerServiceInterface} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
-   * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
+   * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
    */
   public SchedulerServiceLimiter(SchedulerServiceInterface scheduler, 
                                  int maxConcurrency, String subPoolName) {

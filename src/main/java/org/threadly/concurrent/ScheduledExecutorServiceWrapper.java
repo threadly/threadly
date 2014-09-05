@@ -6,8 +6,8 @@ import java.util.concurrent.TimeUnit;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor}
- * to use that implementation with the {@link SubmitterSchedulerInterface}.</p>
+ * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor} to use 
+ * that implementation with the {@link SubmitterSchedulerInterface}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -18,7 +18,7 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
   /**
    * Constructs a new wrapper with the provided scheduler implementation.
    * 
-   * @param scheduler ScheduledExecutorService implementor
+   * @param scheduler {@link ScheduledExecutorService} implementation
    */
   public ScheduledExecutorServiceWrapper(ScheduledExecutorService scheduler) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");

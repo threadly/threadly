@@ -3,10 +3,10 @@ package org.threadly.concurrent;
 /**
  * <p>This is a wrapper for {@link PriorityScheduledExecutor} to be a drop in replacement for any 
  * {@link java.util.concurrent.ScheduledExecutorService} (aka the 
- * {@link java.util.concurrent.ScheduledThreadPoolExecutor} 
- * interface). It does make some performance sacrifices to adhere to this interface, but those
- * are pretty minimal.  The largest compromise in here is easily scheduleAtFixedRate (which you should 
- * read the javadocs for if you need).</p>
+ * {@link java.util.concurrent.ScheduledThreadPoolExecutor} interface). It does make some 
+ * performance sacrifices to adhere to this interface, but those are pretty minimal.  The largest 
+ * compromise in here is easily scheduleAtFixedRate (which you should read the javadocs for if you 
+ * need).</p>
  * 
  * @deprecated use PrioritySchedulerServiceWrapper (this class has been renamed)
  * 

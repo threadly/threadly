@@ -7,11 +7,11 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Similar to the {@link AbstractSubmitterExecutor} this abstract class is designed to 
- * reduce code duplication for the multiple schedule functions.  This includes error 
- * checking, as well as wrapping things up in {@link ListenableFutureTask}'s if necessary.  
- * In general this wont be useful outside of Threadly developers, but must be a public 
- * interface since it is used in sub-packages.</p>
+ * <p>Similar to the {@link AbstractSubmitterExecutor} this abstract class is designed to reduce 
+ * code duplication for the multiple schedule functions.  This includes error checking, as well as 
+ * wrapping things up in {@link ListenableFutureTask}'s if necessary.  In general this wont be 
+ * useful outside of Threadly developers, but must be a public interface since it is used in 
+ * sub-packages.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0

@@ -3,8 +3,7 @@ package org.threadly.concurrent;
 import java.util.concurrent.Executor;
 
 /**
- * <p>An interface for a simple thread pool that 
- * accepts scheduled and recurring tasks.</p>
+ * <p>An interface for a simple thread pool that accepts scheduled and recurring tasks.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -19,14 +18,14 @@ public interface SimpleSchedulerInterface extends Executor {
   public void schedule(Runnable task, long delayInMs);
   
   /**
-   * Schedule a recurring task to run.  The recurring delay time will be from the point 
-   * where execution finished.  So the execution frequency is the recurringDelay + runtime 
-   * for the provided task.
+   * Schedule a recurring task to run.  The recurring delay time will be from the point where 
+   * execution finished.  So the execution frequency is the {@code recurringDelay + runtime} for 
+   * the provided task.
    * 
-   * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an 
-   * exception, subsequent executions are NOT suppressed or prevented.  So if the task 
-   * throws an exception on every run, the task will continue to be executed at the 
-   * provided recurring delay (possibly throwing an exception on each execution).
+   * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
+   * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
+   * every run, the task will continue to be executed at the provided recurring delay (possibly 
+   * throwing an exception on each execution).
    * 
    * @param task runnable to be executed.
    * @param initialDelay delay in milliseconds until first run.

@@ -19,10 +19,9 @@ public class ListUtils {
   }
   
   /**
-   * This function uses the binary search and adds a small amount of logic
-   * such that it determines the placement index for a given item.  It is 
-   * designed to always place the item after any existing items that match the 
-   * key's delay.
+   * This function uses the binary search and adds a small amount of logic such that it determines 
+   * the placement index for a given item.  It is designed to always place the item after any 
+   * existing items that match the key's delay.
    * 
    * @param list List to search entries for placement
    * @param key key for searching placement of
@@ -34,10 +33,9 @@ public class ListUtils {
   }
   
   /**
-   * This function uses the binary search and adds a small amount of logic
-   * such that it determines the placement index for a given item.  It is 
-   * designed to always place the item after any existing items that match the 
-   * key's delay.
+   * This function uses the binary search and adds a small amount of logic such that it determines 
+   * the placement index for a given item.  It is designed to always place the item after any 
+   * existing items that match the key's delay.
    * 
    * @param list List to search entries for placement
    * @param key key for searching placement of
@@ -50,13 +48,12 @@ public class ListUtils {
   }
   
   /**
-   * This function uses the binary search and adds a small amount of logic
-   * such that it determines the placement index for a given item.  It is 
-   * designed to always place the item after any existing items that match the 
-   * key's delay.
+   * This function uses the binary search and adds a small amount of logic such that it determines 
+   * the placement index for a given item.  It is designed to always place the item after any 
+   * existing items that match the key's delay.
    * 
-   * This may place the item too far back in the queue if the queue's items 
-   * delay time continues to progress while searching for the insertion index.
+   * This may place the item too far back in the queue if the queue's items delay time continues 
+   * to progress while searching for the insertion index.
    * 
    * @param list List to search entries for placement
    * @param insertionValueInMillis delay time in milliseconds to search for insertion point
@@ -68,13 +65,12 @@ public class ListUtils {
   }
   
   /**
-   * This function uses the binary search and adds a small amount of logic
-   * such that it determines the placement index for a given item.  It is 
-   * designed to always place the item after any existing items that match the 
-   * key's delay.
+   * This function uses the binary search and adds a small amount of logic such that it determines 
+   * the placement index for a given item.  It is designed to always place the item after any 
+   * existing items that match the key's delay.
    * 
-   * This may place the item too far back in the queue if the queue's items 
-   * delay time continues to progress while searching for the insertion index.
+   * This may place the item too far back in the queue if the queue's items delay time continues 
+   * to progress while searching for the insertion index.
    * 
    * @param list List to search entries for placement
    * @param insertionValueInMillis delay time in milliseconds to search for insertion point
@@ -98,13 +94,10 @@ public class ListUtils {
   }
   
   /**
-   * A faster binary search algorithm for sorting a list.
-   * This algorithm works by actually knowing the values 
-   * and making smart decisions about how far to jump in 
-   * the list based on those values.  Which is why this
-   * can not take in a comparable interface like Collections
-   * does.  This was adapted from code posted from this 
-   * blog post: http://ochafik.com/blog/?p=106
+   * A faster binary search algorithm for sorting a list.  This algorithm works by actually 
+   * knowing the values and making smart decisions about how far to jump in the list based on 
+   * those values.  Which is why this can not take in a comparable interface like Collections 
+   * does.  This was adapted from code posted from this blog post: http://ochafik.com/blog/?p=106
    * 
    * @param list to be searched through
    * @param key delay value to search for
@@ -112,22 +105,18 @@ public class ListUtils {
    */
   public static int binarySearch(List<? extends Delayed> list, 
                                  Delayed key) {
-    return binarySearch(list, key, 
-                        list instanceof RandomAccess);
+    return binarySearch(list, key, list instanceof RandomAccess);
   }
   
   /**
-   * A faster binary search algorithm for sorting a list.
-   * This algorithm works by actually knowing the values 
-   * and making smart decisions about how far to jump in 
-   * the list based on those values.  Which is why this
-   * can not take in a comparable interface like Collections
-   * does.  This was adapted from code posted from this 
-   * blog post: http://ochafik.com/blog/?p=106
+   * A faster binary search algorithm for sorting a list.  This algorithm works by actually 
+   * knowing the values and making smart decisions about how far to jump in the list based on 
+   * those values.  Which is why this can not take in a comparable interface like Collections 
+   * does.  This was adapted from code posted from this blog post: http://ochafik.com/blog/?p=106
    * 
    * @param list to be searched through
    * @param key delay value to search for
-   * @param randomAccessList true to optimize for list that have cheap random access
+   * @param randomAccessList {@code true} to optimize for list that have cheap random access
    * @return index where found, or -(insertion point) - 1 if not found
    */
   public static int binarySearch(List<? extends Delayed> list, 
@@ -136,17 +125,14 @@ public class ListUtils {
   }
   
   /**
-   * A faster binary search algorithm for sorting a list.
-   * This algorithm works by actually knowing the values 
-   * and making smart decisions about how far to jump in 
-   * the list based on those values.  Which is why this
-   * can not take in a comparable interface like Collections
-   * does.  This was adapted from code posted from this 
-   * blog post: http://ochafik.com/blog/?p=106
+   * A faster binary search algorithm for sorting a list.  This algorithm works by actually 
+   * knowing the values and making smart decisions about how far to jump in the list based on 
+   * those values.  Which is why this can not take in a comparable interface like Collections 
+   * does.  This was adapted from code posted from this blog post: http://ochafik.com/blog/?p=106
    * 
    * @param list to be searched through
    * @param insertionValueInMillis delay time in milliseconds to search for insertion point
-   * @param randomAccessList true to optimize for list that have cheap random access
+   * @param randomAccessList {@code true} to optimize for list that have cheap random access
    * @return index where found, or -(insertion point) - 1 if not found
    */
   public static int binarySearch(List<? extends Delayed> list, 

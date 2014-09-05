@@ -14,8 +14,7 @@ public class TestUtils {
   }
   
   /**
-   * Since sleeps are sometimes necessary, this makes
-   * an easy way to ignore InterruptedException's.
+   * Since sleeps are sometimes necessary, this makes an easy way to ignore InterruptedException's.
    * 
    * @param time time in milliseconds to make the thread to sleep
    */
@@ -29,9 +28,8 @@ public class TestUtils {
   }
   
   /**
-   * Blocks until the System clock advances at least 1 millisecond.  This will 
-   * also ensure that the {@link Clock} class's representation of time has 
-   * advanced.
+   * Blocks until the System clock advances at least 1 millisecond.  This will also ensure that 
+   * the {@link Clock} class's representation of time has advanced.
    */
   public static void blockTillClockAdvances() {
     new TestCondition() {

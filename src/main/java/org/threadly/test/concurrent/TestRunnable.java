@@ -6,11 +6,11 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.Clock;
 
 /**
- * <p>Generic runnable implementation that can be used in 
- * unit tests for verifying execution occurred.</p>
+ * <p>Generic runnable implementation that can be used in unit tests for verifying execution 
+ * occurred.</p>
  * 
- * <p>This structure is used extensively within threadly's own 
- * unit tests.  Please use those as examples using this class.</p>
+ * <p>This structure is used extensively within threadly's own unit tests.  Please use those as 
+ * examples using this class.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -34,10 +34,10 @@ public class TestRunnable implements Runnable {
   }
 
   /**
-   * Constructs a new runnable for unit testing.
+   * Constructs a new runnable for unit testing.  
    * 
-   * This constructor allows the parameter for the runnable to sleep 
-   * after handleRunStart was called and before handleRunFinish is called.
+   * This constructor allows the parameter for the runnable to sleep after {@link #handleRunStart()} 
+   * was called and before {@link #handleRunFinish()} is called.
    * 
    * @param runTimeInMillis time for runnable to sleep in milliseconds
    */
@@ -52,9 +52,8 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Changes the amount of time the runnable will sleep/block 
-   * when called.  This change will only be for future run calls 
-   * that are not already blocking.
+   * Changes the amount of time the runnable will sleep/block when called.  This change will only 
+   * be for future run calls that are not already blocking.
    * 
    * @param runDelayInMillis new amount to wait when run is called
    */
@@ -63,8 +62,8 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Getter for the currently set amount of time the {@link TestRunnable} 
-   * will block after handlRunStart and before handleRunFinish is called.
+   * Getter for the currently set amount of time the {@link TestRunnable} will block after 
+   * {@link #handleRunStart()} and before {@link #handleRunFinish()} is called.
    * 
    * @return current set sleep time in milliseconds
    */
@@ -82,14 +81,14 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Check if this instance has ever been detected to run concurrently.  Keep 
-   * in mind that just because this call returns false does not guarantee the 
-   * runnable is incapable of running parallel.  It does it's best to detect 
-   * a situation where it is started while another instance has not returned 
-   * from the run function.  Adding a delay in handleRunStart, handleRunFinish, 
-   * or in the constructor increases the chances of detecting concurrency.
+   * Check if this instance has ever been detected to run concurrently.  Keep in mind that just 
+   * because this call returns false does not guarantee the runnable is incapable of running 
+   * parallel.  It does it's best to detect a situation where it is started while another instance 
+   * has not returned from the run function.  Adding a delay in {@link #handleRunStart()}, 
+   * {@link #handleRunFinish()}, or in the constructor increases the chances of detecting 
+   * concurrency.
    * 
-   * @return True f this instance ran in parallel at least once
+   * @return True if this instance ran in parallel at least once
    */
   public boolean ranConcurrently() {
     return ranConcurrent;
@@ -98,15 +97,14 @@ public class TestRunnable implements Runnable {
   /**
    * Getter to check if the runnable has run exactly once.
    * 
-   * @return true if the runnable has been called once
+   * @return {@code true} if the runnable has been called once
    */
   public boolean ranOnce() {
     return runCount.get() == 1;
   }
   
   /**
-   * Check to see if the run function has started but has not 
-   * completed returned yet.
+   * Check to see if the run function has started but has not completed returned yet.
    * 
    * @return True if the runnable's run function is being called currently.
    */
@@ -124,8 +122,8 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * This function blocks till the first run completes then
-   * will return the time until the first run started it's call.
+   * This function blocks till the first run completes then will return the time until the first 
+   * run started it's call.
    * 
    * @return The amount of time between construction and run being called
    */
@@ -134,11 +132,10 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * This function blocks till the run provided, and 
-   * then gets the time between creation and a given run.
+   * This function blocks till the run provided, and then gets the time between creation and a 
+   * given run.
    * 
    * @param runNumber the run count to get delay to
-   * 
    * @return The amount of time between construction and run being called
    */
   public long getDelayTillRun(int runNumber) {
@@ -151,7 +148,6 @@ public class TestRunnable implements Runnable {
    * 
    * @param runNumber the run count to get delay to
    * @param timeout timeout to wait for given run count to finish
-   * 
    * @return The amount of time between construction and run being called
    */
   public long getDelayTillRun(int runNumber, int timeout) {
@@ -161,8 +157,8 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Blocks until run has completed at least once.  Will throw an 
-   * exception if runnable does not run within 10 seconds.
+   * Blocks until run has completed at least once.  Will throw an exception if runnable does not 
+   * run within 10 seconds.
    */
   public void blockTillFinished() {
     blockTillFinished(DEFAULT_TIMEOUT_PER_RUN, 1);
@@ -204,8 +200,8 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Blocks until run has been called at least once.  Will throw an 
-   * exception if run is not called within 10 seconds.
+   * Blocks until run has been called at least once.  Will throw an exception if run is not called 
+   * within 10 seconds.
    */
   public void blockTillStarted() {
     blockTillStarted(DEFAULT_TIMEOUT_PER_RUN);
@@ -252,13 +248,12 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Function to be overloaded by extending classes
-   * if more data or operations need to happen at the 
-   * run point.  
+   * Function to be overloaded by extending classes if more data or operations need to happen at 
+   * the run point.  
    * 
-   * This is also the first call to be made in the runnable,
-   * but all necessary TestRunnable actions are in a finally block
-   * so it is safe to throw any exceptions necessary here.
+   * This is also the first call to be made in the runnable, but all necessary 
+   * {@link TestRunnable} actions are in a finally block so it is safe to throw any exceptions 
+   * necessary here.
    * 
    * @throws InterruptedException only InterruptedExceptions will be swallowed
    */
@@ -268,11 +263,11 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Function to be overloaded by extending classes
-   * if more data or operations need to happen at the run point.  
+   * Function to be overloaded by extending classes if more data or operations need to happen at 
+   * the run point.  
    * 
-   * This is the last call to be made in the runnable.  If you want a runtime 
-   * exception to get thrown to the caller, it must be thrown from here.
+   * This is the last call to be made in the runnable.  If you want a {@link RuntimeException} to 
+   * get thrown to the caller, it must be thrown from here.
    */
   public void handleRunFinish() {
     // only public to include in javadocs, otherwise could be protected

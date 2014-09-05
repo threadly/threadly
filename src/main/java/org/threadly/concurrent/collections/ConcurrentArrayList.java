@@ -12,36 +12,34 @@ import java.util.RandomAccess;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A thread safe list implementation with an array back end.  Make sure
- * to read the javadocs carefully, as several functions behave subtly different
- * from the java.util.List definition.</p>
+ * <p>A thread safe list implementation with an array back end.  Make sure to read the javadocs 
+ * carefully, as several functions behave subtly different from the java.util.List definition.</p>
  * 
- * <p>The design of this implementation is NOT to completely avoid synchronization.  
- * We have a hybrid implementation of volatile and synchronized to allow for cheaper
- * reading, but keeping high consistency.  It works with the idea that the internal
- * data is immutable.  Each read has an immutable version of the data.  Thus making 
- * writes more expensive (almost like a CopyOnWriteArrayList).</p>
+ * <p>The design of this implementation is NOT to completely avoid synchronization.  We have a 
+ * hybrid implementation of volatile and synchronized to allow for cheaper reading, but keeping 
+ * high consistency.  It works with the idea that the internal data is immutable.  Each read has 
+ * an immutable version of the data.  Thus making writes more expensive (almost like a 
+ * CopyOnWriteArrayList).</p>
  * 
- * <p>There are several differences between this and a CopyOnWriteArrayList.  The first 
- * being that we don't have to copy the structure on every write operation.  By setting 
- * the front and/or rear padding, we can add items to the front or end of the list while 
- * avoiding a copy operation.  In addition removals also do not require a copy operation.  
- * Furthermore, this implementation differs from  a CopyOnWriteArrayList is that it does 
- * allow some synchronization.  Which can give higher consistency guarantees for some 
- * operations by allowing you to synchronize on the modification lock to perform multiple 
- * atomic operations.</p>
+ * <p>There are several differences between this and a CopyOnWriteArrayList.  The first being that 
+ * we don't have to copy the structure on every write operation.  By setting the front and/or rear 
+ * padding, we can add items to the front or end of the list while avoiding a copy operation.  In 
+ * addition removals also do not require a copy operation.  Furthermore, this implementation 
+ * differs from  a CopyOnWriteArrayList is that it does allow some synchronization.  Which can 
+ * give higher consistency guarantees for some operations by allowing you to synchronize on the 
+ * modification lock to perform multiple atomic operations.</p>
  * 
  * <p>The main motivation in implementing this was to avoid array copies as much as possible 
- * (which for large lists can be costly).  But also the implementation to cheaply reposition 
- * an item in the list was necessary for other performance benefits.</p>
+ * (which for large lists can be costly).  But also the implementation to cheaply reposition an 
+ * item in the list was necessary for other performance benefits.</p>
  * 
- * <p>A couple notable points is that subList calls are very cheap, but modifications
- * to sublist are completely independent from their source list.</p>
+ * <p>A couple notable points is that subList calls are very cheap, but modifications to sublist 
+ * are completely independent from their source list.</p>
  * 
- * <p>Unlike CopyOnWriteArrayList, Iterators can attempt to modify the state of the backing
+ * <p>Unlike CopyOnWriteArrayList, Iterators can attempt to modify the state of the backing 
  * structure (assuming it still makes sense to do so).  Although unlike CopyOnWriteArrayList 
- * iterators, once an Iterator is created it will never see updates to the structure.  
- * For that reason it is impossible to have a ConcurrentModificationExcception.</p>
+ * iterators, once an Iterator is created it will never see updates to the structure.  For that 
+ * reason it is impossible to have a ConcurrentModificationExcception.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -49,32 +47,29 @@ import org.threadly.util.ArgumentVerifier;
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   private static final int HASH_CODE_PRIME_NUMBER = 31;
+  private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
   
   protected static <E> DataSet<E> makeEmptyDataSet(int frontPadding, int rearPadding) {
     ArgumentVerifier.assertNotNegative(frontPadding, "frontPadding");
     ArgumentVerifier.assertNotNegative(rearPadding, "rearPadding");
     
-    return new DataSet<E>(new Object[0], 0, 0, frontPadding, rearPadding);
+    return new DataSet<E>(EMPTY_OBJECT_ARRAY, 0, 0, frontPadding, rearPadding);
   }
   
   protected final Object modificationLock;
   protected volatile DataSet<T> currentData;
   
   /**
-   * Constructs a new {@link ConcurrentArrayList} with a new
-   * internal NativeLock implementation.
+   * Constructs a new {@link ConcurrentArrayList} with a new internal NativeLock implementation.
    */
   public ConcurrentArrayList() {
     this(0, 0);
   }
   
   /**
-   * Constructs a new {@link ConcurrentArrayList} with a new
-   * internal NativeLock implementation.  Specifying
-   * the padding amounts can optimize this implementation 
-   * more for the specific use case.  If there is space in the 
-   * array for adds to the front or end, then we are 
-   * able to avoid an array copy.
+   * Constructs a new {@link ConcurrentArrayList} with specific padding.  Specifying the padding 
+   * amounts can optimize this implementation more for the specific use case.  If there is space 
+   * in the array for adds to the front or end, then we are able to avoid an array copy.
    * 
    * @param frontPadding padding to add to front of array to possible avoid array copies
    * @param rearPadding padding to add to end of array to possible avoid array copies
@@ -84,8 +79,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
-   * Constructs a new {@link ConcurrentArrayList} with a provided
-   * lock implementation.
+   * Constructs a new {@link ConcurrentArrayList} with a provided lock object.  This is the lock 
+   * used to guard modifications, and is returned from {@link #getModificationLock()}.
    * 
    * @param modificationLock lock to synchronize on internally
    */
@@ -94,12 +89,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
-   * Constructs a new {@link ConcurrentArrayList} with a provided
-   * lock implementation.  Specifying the padding amounts 
-   * can optimize this implementation more for the 
-   * specific use case.  If there is space in the array 
-   * for adds to the front or end, then we are able to 
-   * avoid an array copy.
+   * Constructs a new {@link ConcurrentArrayList} with a provided lock object.  This is the lock 
+   * used to guard modifications, and is returned from {@link #getModificationLock()}.  Specifying 
+   * the padding amounts can optimize this implementation more for the specific use case.  If 
+   * there is space in the array for adds to the front or end, then we are able to avoid an array 
+   * copy.
    * 
    * @param modificationLock lock to synchronize on internally
    * @param frontPadding padding to add to front of array to possible avoid array copies
@@ -112,6 +106,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
          modificationLock);
   }
   
+  /**
+   * Internal constructor which provides the modification lock and the initial {@link DataSet}.  
+   * This is used for constructing sub-lists, but may also be useful to extending classes.
+   * 
+   * @param startSet {@link DataSet} to use internally
+   * @param modificationLock lock to synchronize on internally
+   */
   protected ConcurrentArrayList(DataSet<T> startSet, 
                                 Object modificationLock) {
     ArgumentVerifier.assertNotNull(startSet, "startSet");
@@ -124,10 +125,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * If you want to chain multiple calls together and
-   * ensure that no threads modify the structure during 
-   * that time you can get the lock to prevent additional 
-   * modifications.  
+   * If you want to chain multiple calls together and ensure that no threads modify the structure 
+   * during that time you can get the lock to prevent additional modifications.  
    * 
    * This lock should be synchronized on to prevent modifications.
    * 
@@ -138,8 +137,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * This changes the configuration for the front padding amount for 
-   * future modification operations.
+   * This changes the configuration for the front padding amount for future modification 
+   * operations.
    * 
    * @param frontPadding New value to over allocate the front of new buffers
    */
@@ -152,8 +151,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
-   * This changes the configuration for the rear padding amount for 
-   * future modification operations.
+   * This changes the configuration for the rear padding amount for future modification operations.
    * 
    * @param rearPadding New value to over allocate the rear of new buffers
    */
@@ -667,10 +665,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * Move a stored item located at an index to a new index.  
-   * Provide the size for newIndex to move the item to the end of 
-   * the list.  Otherwise all items after the new index will 
-   * be shifted right.
+   * Move a stored item located at an index to a new index.  Provide 
+   * the size for newIndex to move the item to the end of the list.  
+   * Otherwise all items after the new index will be shifted right.
    * 
    * @param originalIndex index for item to be moved to.
    * @param newIndex new index location for item.
@@ -1427,7 +1424,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
      * equals operations for lists expect.
      * 
      * @param ds Other DataSet to compare against (can't be null)
-     * @return true if they are equal
+     * @return {@code true} if they are equal
      */
     @SuppressWarnings("rawtypes")
     public boolean equalsEquivelent(DataSet ds) {
@@ -1453,7 +1450,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
      * basically are equal.
      * 
      * @param ds Other DataSet to compare against (can't be null)
-     * @return true if they are equal
+     * @return {@code true} if they are equal
      */
     @SuppressWarnings("rawtypes")
     public boolean equalsExactly(DataSet ds) {

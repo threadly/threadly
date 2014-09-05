@@ -7,12 +7,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.util.ExceptionHandlerInterface;
 import org.threadly.util.ExceptionUtils;
 /**
- * <p>Implementation of {@link ThreadFactory} which is configurable for the most common 
- * use cases.  Specifically, it allows you several options for how to prefix the name 
- * of threads, if returned threads should be daemon or not, what their priority should be, 
- * and if an UncaughtExceptionHandler should be provided to new threads.  You can construct 
- * this with no arguments, and it's behavior will match that of 
- * Executors.defaultThreadFactory().</p>
+ * <p>Implementation of {@link ThreadFactory} which is configurable for the most common use cases.  
+ * Specifically, it allows you several options for how to prefix the name of threads, if returned 
+ * threads should be daemon or not, what their priority should be, and if an 
+ * {@link UncaughtExceptionHandler} should be provided to new threads.  You can construct this 
+ * with no arguments, and it's behavior will match that of 
+ * {@code Executors.defaultThreadFactory()}.</p>
  *  
  * @author jent - Mike Jensen
  * @since 2.3.0
@@ -32,25 +32,26 @@ public class ConfigurableThreadFactory implements ThreadFactory {
   /**
    * Constructs a new {@link ConfigurableThreadFactory} with the default parameters.  Threads 
    * produced from this should behave exactly like Executors.defaultThreadFactory(), except the 
-   * pool number provided in the thread name will be respective to the ones created from 
-   * other {@link ConfigurableThreadFactory} instances.
+   * pool number provided in the thread name will be respective to the ones created from other 
+   * {@link ConfigurableThreadFactory} instances.
    */
   public ConfigurableThreadFactory() {
     this(null, true, DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null, null);
   }
   
   /**
-   * Constructs a new {@link ConfigurableThreadFactory} specifying the prefix for the name 
-   * of newly created threads.  
+   * Constructs a new {@link ConfigurableThreadFactory} specifying the prefix for the name of 
+   * newly created threads.  
    * 
-   * If specified with true for appendPoolIdToPrefix it will append a unique "pool" id to 
-   * the prefix, giving it the format of threadNamePrefix + UNIQUE_POOL_ID + "-thread-".  
-   * If appendPoolIdToPrefix is specified as false, only a unique thread id will be 
-   * appended to the prefix.  In either case, the produced threads name will be appended 
-   * with a unique thread id for the factory instance.
+   * If specified with {@code true} for {@code appendPoolIdToPrefix} it will append a unique 
+   * "pool" id to the prefix, giving it the format of 
+   * {@code threadNamePrefix + UNIQUE_POOL_ID + "-thread-"}.  If {@code appendPoolIdToPrefix} is 
+   * specified as {@code false}, only a unique thread id will be appended to the prefix.  In 
+   * either case, the produced threads name will be appended with a unique thread id for the 
+   * factory instance.
    * 
    * @param threadNamePrefix prefix for all threads created
-   * @param appendPoolIdToPrefix true to append a unique pool id to the thread prefix
+   * @param appendPoolIdToPrefix {@code true} to append a unique pool id to the thread prefix
    */
   public ConfigurableThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix) {
     this(threadNamePrefix, appendPoolIdToPrefix, 
@@ -61,18 +62,18 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * Constructs a new {@link ConfigurableThreadFactory} specifying the behavior for if threads 
    * should be daemon or not.
    * 
-   * @param useDaemonThreads true if produced threads should be daemon threads
+   * @param useDaemonThreads {@code true} if produced threads should be daemon threads
    */
   public ConfigurableThreadFactory(boolean useDaemonThreads) {
     this(null, true, useDaemonThreads, Thread.NORM_PRIORITY, null, null);
   }
   
   /**
-   * Constructs a new {@link ConfigurableThreadFactory} specifying the priority for 
-   * produced threads.  
+   * Constructs a new {@link ConfigurableThreadFactory} specifying the priority for produced 
+   * threads.  
    * 
-   * If the priority is below or above the max available thread priority, this will be 
-   * adjusted to the limit of the system.
+   * If the priority is below or above the max available thread priority, this will be adjusted to 
+   * the limit of the system.
    * 
    * @param threadPriority Priority for newly created threads
    */
@@ -103,24 +104,27 @@ public class ConfigurableThreadFactory implements ThreadFactory {
   }
   
   /**
-   * Constructs a new {@link ConfigurableThreadFactory} allowing you to provide specific 
-   * values for everything which this class allows to be configured.  You must use this 
-   * constructor if you need to adjust two or more values.  
+   * Constructs a new {@link ConfigurableThreadFactory} allowing you to provide specific values 
+   * for everything which this class allows to be configured.  You must use this constructor if 
+   * you need to adjust two or more values.  
    * 
-   * If specified with true for appendPoolIdToPrefix it will append a unique "pool" id to 
-   * the prefix, giving it the format of threadNamePrefix + UNIQUE_POOL_ID + "-thread-".  
-   * If appendPoolIdToPrefix is specified as false, only a unique thread id will be 
-   * appended to the prefix.  In either case, the produced threads name will be appended 
-   * with a unique thread id for the factory instance.
+   * If specified with {@code true} for {@code appendPoolIdToPrefix} it will append a unique 
+   * "pool" id to the prefix, giving it the format of 
+   * {@code threadNamePrefix + UNIQUE_POOL_ID + "-thread-"}.  If {@code appendPoolIdToPrefix} is 
+   * specified as {@code false}, only a unique thread id will be appended to the prefix.  In 
+   * either case, the produced threads name will be appended with a unique thread id for the 
+   * factory instance.
    * 
-   * If the priority is below or above the max available thread priority, this will be 
-   * adjusted to the limit of the system.
+   * If the priority is below or above the max available thread priority, this will be adjusted to 
+   * the limit of the system.
    * 
-   * @param threadNamePrefix prefix for all threads created, null to match default
-   * @param appendPoolIdToPrefix true to append a unique pool id to the thread prefix, true to match default
+   * @param threadNamePrefix prefix for all threads created, {@code null} to match default
+   * @param appendPoolIdToPrefix {@code true} to append a unique pool id to the thread prefix, 
+   *                             {@code true} to match default
    * @param useDaemonThreads true if produced threads should be daemon threads, false to match default
-   * @param threadPriority Priority for newly created threads, Thread.NORM_PRIORITY to match default
-   * @param uncaughtExceptionHandler UncaughtExceptionHandler to provide to newly created threads, null to match default
+   * @param threadPriority Priority for newly created threads, {@code Thread.NORM_PRIORITY} to match default
+   * @param uncaughtExceptionHandler UncaughtExceptionHandler to provide to newly created threads, 
+   *                                 {@code null} to match default
    * @param defaultThreadlyExceptionHandler {@link ExceptionHandlerInterface} to provide to newly created threads
    */
   public ConfigurableThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix, 
@@ -175,9 +179,8 @@ public class ConfigurableThreadFactory implements ThreadFactory {
   }
   
   /**
-   * Because the {@link ExceptionHandlerInterface} can not be set before the thread 
-   * is started.  We must wrap it in this implementation to set the handler before 
-   * the runnable actually starts.
+   * Because the {@link ExceptionHandlerInterface} can not be set before the thread is started.  
+   * We must wrap it in this implementation to set the handler before the runnable actually starts.
    * 
    * @author jent - Mike Jensen
    * @since 2.4.0

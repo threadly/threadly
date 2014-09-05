@@ -5,9 +5,8 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.future.ListenableFuture;
 
 /**
- * <p>A thread pool for scheduling tasks with provided futures.  
- * This scheduler submits runnables/callables and returns futures 
- * for when they will be completed.</p>
+ * <p>A thread pool for scheduling tasks with provided futures.  This scheduler submits 
+ * runnables/callables and returns futures for when they will be completed.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -15,11 +14,12 @@ import org.threadly.concurrent.future.ListenableFuture;
 public interface SubmitterSchedulerInterface extends SimpleSchedulerInterface, 
                                                      SubmitterExecutorInterface {
   /**
-   * Schedule a task with a given delay.  There is a slight 
-   * increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
+   * Schedule a task with a given delay.  There is a slight increase in load when using 
+   * {@link #submitScheduled(Runnable, long)} over {@link #schedule(Runnable, long)}.  So this 
+   * should only be used when the future is necessary.
    * 
-   * The future .get() method will return null once the runnable has completed.
+   * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has 
+   * completed.
    * 
    * @param task runnable to execute
    * @param delayInMs time in milliseconds to wait to execute task
@@ -28,12 +28,8 @@ public interface SubmitterSchedulerInterface extends SimpleSchedulerInterface,
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs);
   
   /**
-   * Schedule a task with a given delay.  There is a slight 
-   * increase in load when using submitScheduled over schedule.  So 
-   * this should only be used when the future is necessary.
-   * 
-   * The future .get() method will return the provided result 
-   * once the runnable has completed.
+   * Schedule a task with a given delay.  The {@link ListenableFuture#get()} method will return 
+   * the provided result once the runnable has completed.
    * 
    * @param <T> type of result returned from the future
    * @param task runnable to execute
@@ -44,9 +40,8 @@ public interface SubmitterSchedulerInterface extends SimpleSchedulerInterface,
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs);
   
   /**
-   * Schedule a {@link Callable} with a given delay.  This is 
-   * needed when a result needs to be consumed from the 
-   * callable.
+   * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 
+   * consumed from the callable.
    * 
    * @param <T> type of result returned from the future
    * @param task callable to be executed

@@ -3,18 +3,16 @@ package org.threadly.util;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * <p>This is a utility class for low-resolution timing which avoids
- * frequent System.currentTimeMillis() calls (which perform poorly 
- * because they require system calls).</p>
+ * <p>This is a utility class for low-resolution timing which avoids frequent 
+ * System.currentTimeMillis() calls (which perform poorly because they require system calls).</p>
  *
- * <p>Each call to Clock.lastKnownTimeMillis() will return the value of
- * System.currentTimeMillis() as of the last call to Clock.accurateTime().
- * This means lastKnownTimeMillis() will only be as accurate as the
- * frequency with which accurateTime() is called.</p>
+ * <p>Each call to Clock.lastKnownTimeMillis() will return the value of System.currentTimeMillis() 
+ * as of the last call to Clock.accurateTime().  This means {@link #lastKnownTimeMillis()} will 
+ * only be as accurate as the frequency with which {@link #accurateTimeMillis()} is called.</p>
  * 
- * <p>In order to ensure a minimum level of accuracy, by default a thread 
- * is started to call accurateTime() every 100 milliseconds.  This can be 
- * disabled by calling stopClockUpdateThread().</p>
+ * <p>In order to ensure a minimum level of accuracy, by default a thread is started to call 
+ * {@link #accurateTimeMillis()} every 100 milliseconds.  This can be disabled by calling 
+ * {@link #stopClockUpdateThread()}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -58,10 +56,9 @@ public class Clock {
   }
 
   /**
-   * Stops the clock from updating automatically.
+   * Stops the clock from updating automatically.  
    * 
-   * This call blocks until the automatic update thread stops, or 
-   * until this thread is interrupted.
+   * This call blocks until the automatic update thread stops, or until this thread is interrupted.
    */
   public static void stopClockUpdateThread() {
     ClockUpdater oldUpdater;
@@ -83,9 +80,9 @@ public class Clock {
   }
 
   /**
-   * Getter for the last known time in milliseconds.  This time is considered semi-accurate, 
-   * based off the last time accurate time has been requested, or this class has automatically 
-   * updated the time (unless requested to stop automatically updating).
+   * Getter for the last known time in milliseconds.  This time is considered semi-accurate, based 
+   * off the last time accurate time has been requested, or this class has automatically updated 
+   * the time (unless requested to stop automatically updating).
    * 
    * @return last known time in milliseconds
    */
@@ -116,8 +113,8 @@ public class Clock {
   }
   
   /**
-   * <p>Runnable which will regularly update the stored clock time.  
-   * This runnable is designed to run in its own dedicated thread.</p>
+   * <p>Runnable which will regularly update the stored clock time.  This runnable is designed to 
+   * run in its own dedicated thread.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0

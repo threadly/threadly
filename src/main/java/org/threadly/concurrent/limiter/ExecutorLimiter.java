@@ -8,19 +8,16 @@ import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This class is designed to limit how much parallel execution happens 
- * on a provided {@link Executor}.  This allows the user to have one 
- * thread pool for all their code, and if they want certain sections 
- * to have less levels of parallelism (possibly because those those 
- * sections would completely consume the global pool), they can wrap 
- * the executor in this class.</p>
+ * <p>This class is designed to limit how much parallel execution happens on a provided 
+ * {@link Executor}.  This allows the user to have one thread pool for all their code, and if they 
+ * want certain sections to have less levels of parallelism (possibly because those those sections 
+ * would completely consume the global pool), they can wrap the executor in this class.</p>
  * 
- * <p>Thus providing you better control on the absolute thread count and 
- * how much parallelism can occur in different sections of the program.</p>
+ * <p>Thus providing you better control on the absolute thread count and how much parallelism can 
+ * occur in different sections of the program.</p>
  * 
- * <p>This is an alternative from having to create multiple thread pools.  
- * By using this you also are able to accomplish more efficiently thread use 
- * than multiple thread pools would.</p>
+ * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
+ * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -31,8 +28,7 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   protected final Queue<LimiterRunnableWrapper> waitingTasks;
   
   /**
-   * Construct a new execution limiter that implements the 
-   * {@link Executor} interface.
+   * Construct a new execution limiter that implements the {@link Executor} interface.
    * 
    * @param executor {@link Executor} to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
@@ -42,12 +38,11 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   }
   
   /**
-   * Construct a new execution limiter that implements the 
-   * {@link Executor} interface.
+   * Construct a new execution limiter that implements the {@link Executor} interface.
    * 
    * @param executor {@link Executor} to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
-   * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
+   * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency, String subPoolName) {
     super(maxConcurrency, subPoolName);
@@ -81,8 +76,8 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   }
   
   /**
-   * Executes the wrapper if there is room in the limiter, otherwise it will queue the wrapper 
-   * to be executed once the limiter has room.
+   * Executes the wrapper if there is room in the limiter, otherwise it will queue the wrapper to 
+   * be executed once the limiter has room.
    * 
    * @param lrw Wrapper that is ready to execute once there is available slots in the limiter
    */
@@ -95,11 +90,11 @@ public class ExecutorLimiter extends AbstractThreadPoolLimiter
   }
   
   /**
-   * Adds the wrapper to the queue.  After adding to the queue it will be verified that there 
-   * is not available slots in the limiter to consume (it or others) from the queue.
+   * Adds the wrapper to the queue.  After adding to the queue it will be verified that there is 
+   * not available slots in the limiter to consume (it or others) from the queue.
    * 
-   * It is expected that you already attempted to run the task (by calling "canRunTask" before 
-   * deferring to this.
+   * It is expected that you already attempted to run the task (by calling {@link #canRunTask()} 
+   * before deferring to this.
    * 
    * @param lrw {@link LimiterRunnableWrapper} to add to the queue
    */

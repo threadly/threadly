@@ -24,33 +24,27 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Executor to run tasks, schedule tasks.  
- * Unlike {@link java.util.concurrent.ScheduledThreadPoolExecutor}
- * this scheduled executor's pool size can grow and shrink based off 
- * usage.  It also has the benefit that you can provide "low priority" 
- * tasks which will attempt to use existing workers and not instantly 
- * create new threads on demand.  Thus allowing you to better take 
- * the benefits of a thread pool for tasks which specific execution 
- * time is less important.</p>
+ * <p>Executor to run tasks, schedule tasks.  Unlike 
+ * {@link java.util.concurrent.ScheduledThreadPoolExecutor} this scheduled executor's pool size 
+ * can grow and shrink based off usage.  It also has the benefit that you can provide "low 
+ * priority" tasks which will attempt to use existing workers and not instantly create new threads 
+ * on demand.  Thus allowing you to better take the benefits of a thread pool for tasks which 
+ * specific execution time is less important.</p>
  * 
- * <p>Most tasks provided into this pool will likely want to be 
- * "high priority", to more closely match the behavior of other 
- * thread pools.  That is why unless specified by the constructor, 
- * the default {@link TaskPriority} is High.</p>
+ * <p>Most tasks provided into this pool will likely want to be "high priority", to more closely 
+ * match the behavior of other thread pools.  That is why unless specified by the constructor, the 
+ * default {@link TaskPriority} is High.</p>
  * 
- * <p>When providing a "low priority" task, the task wont execute till 
- * one of the following is true.  The pool is has low load, and there 
- * are available threads already to run on.  The pool has no available 
- * threads, but is under it's max size and has waited the maximum wait 
- * time for a thread to be become available.</p>
+ * <p>When providing a "low priority" task, the task wont execute till one of the following is 
+ * true.  The pool is has low load, and there are available threads already to run on.  The pool 
+ * has no available threads, but is under it's max size and has waited the maximum wait time for a 
+ * thread to be become available.</p>
  * 
- * <p>In all conditions, "low priority" tasks will never be starved.  
- * They only attempt to allow "high priority" tasks the priority.  
- * This makes "low priority" tasks ideal which do regular cleanup, or 
- * in general anything that must run, but cares little if there is a 
- * 1, or 10 second gap in the execution time.  That amount of tolerance 
- * for "low priority" tasks is adjustable by setting the 
- * maxWaitForLowPriorityInMs either in the constructor, or at runtime.</p>
+ * <p>In all conditions, "low priority" tasks will never be starved.  They only attempt to allow 
+ * "high priority" tasks the priority.  This makes "low priority" tasks ideal which do regular 
+ * cleanup, or in general anything that must run, but cares little if there is a 1, or 10 second 
+ * gap in the execution time.  That amount of tolerance for "low priority" tasks is adjustable by 
+ * setting the {@code maxWaitForLowPriorityInMs} either in the constructor, or at runtime.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
@@ -95,11 +89,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   private int currentPoolSize;  // is locked around workersLock
 
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This constructs a default 
-   * priority of high (which makes sense for most use cases).  
-   * It also defaults low priority worker wait as 500ms.  It also  
-   * defaults to all newly created threads being daemon threads.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This constructs a default priority of high (which makes sense for most use cases).  
+   * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
+   * threads being daemon threads.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -113,15 +106,14 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This constructs a default 
-   * priority of high (which makes sense for most use cases).  
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
-   * @param useDaemonThreads boolean for if newly created threads should be daemon
+   * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
   public PriorityScheduler(int corePoolSize, int maxPoolSize,
                            long keepAliveTimeInMs, boolean useDaemonThreads) {
@@ -131,13 +123,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This provides the extra
-   * parameters to tune what tasks submitted without a priority will be 
-   * scheduled as.  As well as the maximum wait for low priority tasks.
-   * The longer low priority tasks wait for a worker, the less chance they will
-   * have to make a thread.  But it also makes low priority tasks execution time
-   * less predictable.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -154,20 +144,18 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This provides the extra
-   * parameters to tune what tasks submitted without a priority will be 
-   * scheduled as.  As well as the maximum wait for low priority tasks.
-   * The longer low priority tasks wait for a worker, the less chance they will
-   * have to make a thread.  But it also makes low priority tasks execution time
-   * less predictable.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
-   * @param useDaemonThreads boolean for if newly created threads should be daemon
+   * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
   public PriorityScheduler(int corePoolSize, int maxPoolSize,
                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
@@ -180,13 +168,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This provides the extra
-   * parameters to tune what tasks submitted without a priority will be 
-   * scheduled as.  As well as the maximum wait for low priority tasks.
-   * The longer low priority tasks wait for a worker, the less chance they will
-   * have to make a thread.  But it also makes low priority tasks execution time
-   * less predictable.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -249,9 +235,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * If a section of code wants a different default priority, or wanting to provide 
-   * a specific default priority in for {@link KeyDistributedExecutor}, 
-   * or {@link KeyDistributedScheduler}.
+   * If a section of code wants a different default priority, or wanting to provide a specific 
+   * default priority in for {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.
    * 
    * @param priority default priority for PrioritySchedulerInterface implementation
    * @return a PrioritySchedulerInterface with the default priority specified
@@ -308,8 +293,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Call to check how many tasks are currently being executed 
-   * in this thread pool.
+   * Call to check how many tasks are currently being executed in this thread pool.
    * 
    * @return current number of running tasks
    */
@@ -320,16 +304,15 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Change the set core pool size.  If the value is less than the current max 
-   * pool size, the max pool size will also be updated to this value.
+   * Change the set core pool size.  If the value is less than the current max pool size, the max 
+   * pool size will also be updated to this value.
    * 
-   * If this was a reduction from the previous value, this call will examine idle workers 
-   * to see if they should be expired.  If this call reduced the max pool size, and the 
-   * current running thread count is higher than the new max size, this call will NOT 
-   * block till the pool is reduced.  Instead as those workers complete, they will clean 
-   * up on their own.
+   * If this was a reduction from the previous value, this call will examine idle workers to see 
+   * if they should be expired.  If this call reduced the max pool size, and the current running 
+   * thread count is higher than the new max size, this call will NOT block till the pool is 
+   * reduced.  Instead as those workers complete, they will clean up on their own.
    * 
-   * @param corePoolSize New pool size.  Must be at least one.
+   * @param corePoolSize New core pool size, must be at least one
    */
   public void setCorePoolSize(int corePoolSize) {
     ArgumentVerifier.assertGreaterThanZero(corePoolSize, "corePoolSize");
@@ -350,15 +333,15 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Change the set max pool size.  If the value is less than the current core 
-   * pool size, the core pool size will be reduced to match the new max pool size.  
+   * Change the set max pool size.  If the value is less than the current core pool size, the core 
+   * pool size will be reduced to match the new max pool size.  
    * 
-   * If this was a reduction from the previous value, this call will examine idle workers 
-   * to see if they should be expired.  If the current running thread count is higher 
-   * than the new max size, this call will NOT block till the pool is reduced.  
-   * Instead as those workers complete, they will clean up on their own.
+   * If this was a reduction from the previous value, this call will examine idle workers to see 
+   * if they should be expired.  If the current running thread count is higher than the new max 
+   * size, this call will NOT block till the pool is reduced.  Instead as those workers complete, 
+   * they will clean up on their own.
    * 
-   * @param maxPoolSize New max pool size.  Must be at least one.
+   * @param maxPoolSize New max pool size, must be at least one
    */
   public void setMaxPoolSize(int maxPoolSize) {
     ArgumentVerifier.assertGreaterThanZero(maxPoolSize, "maxPoolSize");
@@ -391,9 +374,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Change the set idle thread keep alive time.  If this is a reduction in the 
-   * previously set keep alive time, this call will then check for expired worker 
-   * threads.
+   * Change the set idle thread keep alive time.  If this is a reduction in the previously set 
+   * keep alive time, this call will then check for expired worker threads.
    * 
    * @param keepAliveTimeInMs New keep alive time in milliseconds
    */
@@ -410,10 +392,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Changes the max wait time for an idle worker for low priority tasks.
-   * Changing this will only take effect for future low priority tasks, it 
-   * will have no impact for the current low priority task attempting to get 
-   * a worker.
+   * Changes the max wait time for an idle worker for low priority tasks.  Changing this will only 
+   * take effect for future low priority tasks, it will have no impact for the current low priority 
+   * task attempting to get a worker.
    * 
    * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds
    */
@@ -424,8 +405,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Getter for the maximum amount of time a low priority task will 
-   * wait for an available worker.
+   * Getter for the maximum amount of time a low priority task will wait for an available worker.
    * 
    * @return currently set max wait for low priority task
    */
@@ -434,8 +414,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Returns how many tasks are either waiting to be executed, 
-   * or are scheduled to be executed at a future point.
+   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
+   * a future point.
    * 
    * @return quantity of tasks waiting execution or scheduled to be executed later
    */
@@ -444,8 +424,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Returns a count of how many tasks are either waiting to be executed, 
-   * or are scheduled to be executed at a future point for a specific priority.
+   * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
+   * executed at a future point for a specific priority.
    * 
    * @param priority priority for tasks to be counted
    * @return quantity of tasks waiting execution or scheduled to be executed later
@@ -466,8 +446,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Ensures all core threads have been started.  This will make new idle workers 
-   * to accept tasks.
+   * Ensures all core threads have been started.  This will make new idle workers to accept tasks.
    */
   public void prestartAllCoreThreads() {
     synchronized (workersLock) {
@@ -484,11 +463,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Changes the setting weather core threads are allowed to be killed 
-   * if they remain idle.  If changing to allow core thread timeout, 
-   * this call will then perform a check to look for expired workers.
+   * Changes the setting weather core threads are allowed to be killed if they remain idle.  If 
+   * changing to allow core thread timeout, this call will then perform a check to look for 
+   * expired workers.
    * 
-   * @param value true if core threads should be expired when idle.
+   * @param value {@code true} if core threads should be expired when idle.
    */
   public void allowCoreThreadTimeOut(boolean value) {
     boolean checkForExpiredWorkers = ! allowCorePoolTimeout && value;
@@ -505,6 +484,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     return shutdownStarted.get();
   }
   
+  /**
+   * Clears all waiting tasks (low and high priority).
+   * 
+   * @return A list of Runnables that had been removed from the queues
+   */
   protected List<Runnable> clearTaskQueue() {
     synchronized (highPriorityLock) {
       synchronized (lowPriorityLock) {
@@ -558,11 +542,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
 
   /**
    * Stops any new tasks from being submitted to the pool.  But allows all tasks which are 
-   * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If 
-   * recurring tasks are present they will also be unable to reschedule.  If shutdown or 
-   * shutdownNow has already been called, this will have no effect.
+   * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If recurring 
+   * tasks are present they will also be unable to reschedule.  If {@code shutdown()} or 
+   * {@link #shutdownNow()} has already been called, this will have no effect.  
    * 
-   * If you wish to not want to run any queued tasks you should use shutdownNow().
+   * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
    */
   public void shutdown() {
     if (! shutdownStarted.getAndSet(true)) {
@@ -575,9 +559,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * Stops any new tasks from being able to be executed and removes workers from the pool.
    * 
    * This implementation refuses new submissions after this call.  And will NOT interrupt any 
-   * tasks which are currently running.  But any tasks which are waiting in queue to be run 
-   * (but have not started yet), will not be run.  Those waiting tasks will be removed, and 
-   * as workers finish with their current tasks the threads will be joined.
+   * tasks which are currently running.  However any tasks which are waiting in queue to be run 
+   * (but have not started yet), will not be run.  Those waiting tasks will be removed, and as 
+   * workers finish with their current tasks the threads will be joined.
    * 
    * @return List of runnables which were waiting to execute
    */
@@ -593,7 +577,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   /**
    * Check weather the shutdown process is finished.
    * 
-   * @return true if the scheduler is finishing its shutdown
+   * @return {@code true} if the scheduler is finishing its shutdown
    */
   protected boolean getShutdownFinishing() {
     return shutdownFinishing;
@@ -629,7 +613,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * 
    * @param queue Queue to search through to look for the provided task
    * @param task Runnable to search for
-   * @return true if the task was found and removed
+   * @return {@code true} if the task was found and removed
    */
   protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
                                                Runnable task) {
@@ -654,7 +638,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * 
    * @param queue Queue to search through to look for the provided task
    * @param task Callable to search for
-   * @return true if the task was found and removed
+   * @return {@code true} if the task was found and removed
    */
   protected static boolean removeFromTaskQueue(DynamicDelayQueue<TaskWrapper> queue, 
                                                Callable<?> task) {
@@ -675,16 +659,15 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Removes the runnable task from the execution queue.  It is possible for the 
-   * runnable to still run until this call has returned.
+   * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
+   * run until this call has returned.
    * 
-   * Note that this call has high guarantees on the ability to remove the task 
-   * (as in a complete guarantee).  But while this task is called, it will 
-   * reduce the throughput of execution, so should not be used extremely 
-   * frequently.
+   * Note that this call has high guarantees on the ability to remove the task (as in a complete 
+   * guarantee).  But while this task is called, it will reduce the throughput of execution, so 
+   * should not be used extremely frequently.
    * 
    * @param task The original task provided to the executor
-   * @return true if the task was found and removed
+   * @return {@code true} if the task was found and removed
    */
   @Override
   public boolean remove(Runnable task) {
@@ -693,16 +676,15 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Removes the callable task from the execution queue.  It is possible for the 
-   * callable to still run until this call has returned.
+   * Removes the callable task from the execution queue.  It is possible for the callable to still 
+   * run until this call has returned.
    * 
-   * Note that this call has high guarantees on the ability to remove the task 
-   * (as in a complete guarantee).  But while this task is called, it will 
-   * reduce the throughput of execution, so should not be used extremely 
-   * frequently.
+   * Note that this call has high guarantees on the ability to remove the task (as in a complete 
+   * guarantee).  But while this task is called, it will reduce the throughput of execution, so 
+   * should not be used extremely frequently.
    * 
    * @param task The original callable provided to the executor
-   * @return true if the callable was found and removed
+   * @return {@code true} if the callable was found and removed
    */
   @Override
   public boolean remove(Callable<?> task) {
@@ -805,10 +787,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Adds the ready TaskWrapper to the correct queue.  Using the priority specified in the 
-   * task, we pick the correct queue and add it.
+   * Adds the ready TaskWrapper to the correct queue.  Using the priority specified in the task, 
+   * we pick the correct queue and add it.
    * 
-   * @param task TaskWrapper to queue for the scheduler
+   * @param task {@link TaskWrapper} to queue for the scheduler
    */
   protected void addToQueue(TaskWrapper task) {
     if (shutdownStarted.get()) {
@@ -830,7 +812,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   /**
    * Adds the task specifically to the high priority queue.
    * 
-   * @param task TaskWrapper to queue for the scheduler
+   * @param task {@link TaskWrapper} to queue for the scheduler
    */
   private void addToHighPriorityQueue(TaskWrapper task) {
     clockWrapper.stopForcingUpdate();
@@ -846,7 +828,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   /**
    * Adds the task specifically to the low priority queue.
    * 
-   * @param task TaskWrapper to queue for the scheduler
+   * @param task {@link TaskWrapper} to queue for the scheduler
    */
   private void addToLowPriorityQueue(TaskWrapper task) {
     clockWrapper.stopForcingUpdate();
@@ -860,10 +842,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * This function REQUIRES that workersLock is synchronized before calling.
+   * This function REQUIRES that workersLock is synchronized before calling.  It returns an 
+   * available worker if it can get one before the wait time expires.  It will never create 
+   * a new worker.
    * 
    * @param maxWaitTimeInMs time to wait for a worker to become available
-   * @return an available worker, or null if no worker became available within the maxWaitTimeInMs
+   * @return an available worker, or {@code null} if no worker became available within the maxWaitTimeInMs
    * @throws InterruptedException Thrown if thread is interrupted while waiting for worker
    */
   protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
@@ -904,7 +888,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * This function REQUIRES that workersLock is synchronized before calling.
+   * This function REQUIRES that workersLock is synchronized before calling.  This call creates 
+   * a new worker, starts it, but does NOT add it as an available worker (so you can immediately 
+   * use it).  If you want this worker to be available for other tasks, it must be added to the 
+   * {@code availableWorkers} queue.
    * 
    * @return Newly created worker, started and ready to accept work
    */
@@ -953,10 +940,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
 
   /**
    * After a task has been pulled from the queue and is ready to execute it is provided here.  
-   * This function will get an available worker, waiting a bit of time for one to become available 
-   * if none are immediately available.  If after that there is still none available it will 
-   * create one (assuming we have not reached our max pool size).  Then the acquired worker will be 
-   * provided the task to execute.
+   * This function will get an available worker, waiting a bit of time for one to become 
+   * available if none are immediately available.  If after that there is still none available it 
+   * will create one (assuming we have not reached our max pool size).  Then the acquired worker 
+   * will be provided the task to execute.
    * 
    * @param task Task to execute once we have an available worker
    * @throws InterruptedException Thrown if thread is interrupted waiting for a worker
@@ -1043,9 +1030,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Called by the worker after it completes a task.  This is so that we can run 
-   * any after task cleanup, and make sure that the worker is now available for 
-   * future tasks.
+   * Called by the worker after it completes a task.  This is so that we can run any after task 
+   * cleanup, and make sure that the worker is now available for future tasks.
    * 
    * @param worker worker that is now idle and ready for more tasks
    */
@@ -1065,9 +1051,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * <p>Runnable which will consume tasks from the appropriate 
-   * and given the provided implementation to get a worker 
-   * and execute consumed tasks.</p>
+   * <p>Runnable which will consume tasks from the appropriate and given the provided 
+   * implementation to get a worker and execute consumed tasks.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
@@ -1099,8 +1084,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * <p>Runnable which will run on pool threads.  It accepts runnables to run, 
-   * and tracks usage.</p>
+   * <p>Runnable which will run on pool threads.  It accepts runnables to run, and tracks 
+   * usage.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
@@ -1134,11 +1119,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     /**
-     * Shuts down the worker, if the worker is currently running a task 
-     * that task will complete before shutdown finishes.
+     * Shuts down the worker, if the worker is currently running a task that task will complete 
+     * before shutdown finishes.
      * 
-     * Currently this is expected that this is only called from "killWorker", 
-     * to ensure we don't leak resources.
+     * Currently this is expected that this is only called from 
+     * {@link PriorityScheduler#killWorker(Worker)}, to ensure we don't leak resources.
      */
     public void stop() {
       if (! running) {
@@ -1151,10 +1136,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     /**
-     * Supply the worker with the next task to run.  It is expected that the worker 
-     * has been started before it is provided any tasks.  It must also be complete 
-     * with it's previous task before it can be provided another one to run 
-     * (there is no queuing within the workers).
+     * Supply the worker with the next task to run.  It is expected that the worker has been 
+     * started before it is provided any tasks.  It must also be complete with it's previous 
+     * task before it can be provided another one to run (there is no queuing within the workers).
      * 
      * @param task Task to run on this workers thread
      */
@@ -1171,8 +1155,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     /**
-     * Used internally by the worker to block it's internal thread until 
-     * another task is provided to it.
+     * Used internally by the worker to block it's internal thread until another task is provided 
+     * to it.
      */
     private void blockTillNextTask() {
       boolean checkedInterrupted = false;
@@ -1190,9 +1174,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     /**
-     * Checks the interrupted status of the workers thread.  If it is interrupted 
-     * the status will be cleared (unless the pool is shutting down, in which case 
-     * we will gracefully shutdown the worker).
+     * Checks the interrupted status of the workers thread.  If it is interrupted the status will 
+     * be cleared (unless the pool is shutting down, in which case we will gracefully shutdown the 
+     * worker).
      */
     private void checkInterrupted() {
       if (Thread.interrupted()) { // check and clear interrupt
@@ -1273,8 +1257,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     public abstract void executing();
     
     /**
-     * Similar to getDelay, except this implementation is an estimate.  It is only 
-     * in milliseconds, and having some slight inaccuracy is not an issue.
+     * Similar to getDelay, except this implementation is an estimate.  It is only in 
+     * milliseconds, and having some slight inaccuracy is not an issue.
      * 
      * @return time in milliseconds till task is ready to run
      */
@@ -1474,10 +1458,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * <p>Runnable to be run after tasks already ready to execute.  That way this can be 
-   * submitted with a .execute(Runnable) to ensure that the shutdown is fair for tasks 
-   * that were already ready to be run/executed.  Once this runs the shutdown sequence 
-   * will be finished, and no remaining asks in the queue can be executed.</p>
+   * <p>Runnable to be run after tasks already ready to execute.  That way this can be submitted 
+   * with a {@link #execute(Runnable)} to ensure that the shutdown is fair for tasks that were 
+   * already ready to be run/executed.  Once this runs the shutdown sequence will be finished, and 
+   * no remaining asks in the queue can be executed.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0

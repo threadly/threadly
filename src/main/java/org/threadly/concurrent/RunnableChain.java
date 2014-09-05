@@ -6,8 +6,7 @@ import java.util.Iterator;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A class to chain multiple runnables to later be run together, 
- * within the same thread.</p>
+ * <p>A class to chain multiple runnables to later be run together, within the same thread.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -19,7 +18,7 @@ public class RunnableChain implements Runnable {
   /**
    * Constructs a runnable chain with a provided list of runnables to iterate over.
    * 
-   * @param exceptionStopsChain true for uncaught exception stops the execution of the chain
+   * @param exceptionStopsChain {@code true} for uncaught exception stops the execution of the chain
    * @param toRun Iterable collection of runnables to run
    */
   public RunnableChain(boolean exceptionStopsChain, 
@@ -42,8 +41,8 @@ public class RunnableChain implements Runnable {
   }
   
   /**
-   * Iterates through the toRun list, executing along the way.  If any exceptions are thrown, 
-   * they will be propagated out of this call.
+   * Iterates through the toRun list, executing along the way.  If any exceptions are thrown, they 
+   * will be propagated out of this call.
    */
   protected void runExceptionsCascade() {
     Iterator<? extends Runnable> it = toRun.iterator();
@@ -53,8 +52,8 @@ public class RunnableChain implements Runnable {
   }
   
   /**
-   * Iterates through the toRun list, executing along the way.  If any exceptions are thrown, 
-   * they will be handled to {@link ExceptionUtils} and will not stop future executions.
+   * Iterates through the toRun list, executing along the way.  If any exceptions are thrown, they 
+   * will be handled to {@link ExceptionUtils} and will not stop future executions.
    */
   protected void runIsolated() {
     Iterator<? extends Runnable> it = toRun.iterator();

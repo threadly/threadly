@@ -5,15 +5,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This structure allows for more controlled levels of parallelism.  It helps 
- * in allowing threads to only lock when their interest are the same.  It 
- * is guaranteed that every key provided will return the same lock.  But it 
- * is not guaranteed that two different keys will not have the same lock.</p>
+ * <p>This structure allows for more controlled levels of parallelism.  It helps in allowing 
+ * threads to only lock when their interest are the same.  It is guaranteed that every key 
+ * provided will return the same lock.  But it is not guaranteed that two different keys will not 
+ * have the same lock.</p>
  * 
- * <p>Currently this class only provides objects that should be synchronized on.  
- * Compared to java.util.concurrent.locks.Lock objects which have .lock() and 
- * .unlock() functionality.  This choice was primarily because of the way the 
- * internals of threadly work.</p>
+ * <p>Currently this class only provides objects that should be synchronized on.  Compared to 
+ * {@link java.util.concurrent.locks.Lock} objects which have {@code lock()}, {@code tryLock()}, 
+ * and {@code unlock()} functionality.  This choice was primarily because of the way the internals 
+ * of threadly work.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -23,10 +23,9 @@ public class StripedLock {
   private final ConcurrentHashMap<Integer, Object> locks;
   
   /**
-   * Constructs a new {@link StripedLock} with a given expected concurrency level.  
-   * The higher the concurrency level, the less lock contention will exist, 
-   * but more locks will have to be synchronized on and more memory will be 
-   * used to store the locks.
+   * Constructs a new {@link StripedLock} with a given expected concurrency level.  The higher the 
+   * concurrency level, the less lock contention will exist, but more locks will have to be 
+   * synchronized on and more memory will be used to store the locks.
    * 
    * @param expectedConcurrencyLevel expected level of parallelism
    */
@@ -38,8 +37,7 @@ public class StripedLock {
   }
   
   /**
-   * Getter for the expected concurrency level this class was 
-   * constructed with.
+   * Getter for the expected concurrency level this class was constructed with.
    * 
    * @return the constructed level of concurrency
    */
@@ -50,7 +48,7 @@ public class StripedLock {
   /**
    * Call to get a lock object for a given key.
    * 
-   * @param key to use hashCode() from to determine lock
+   * @param key to use {@code hashCode()} from to determine lock
    * @return consistent Object for a given key
    */
   public Object getLock(Object key) {

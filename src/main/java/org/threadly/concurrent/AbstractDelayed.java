@@ -3,9 +3,9 @@ package org.threadly.concurrent;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 /**
- * <p>Since {@link Delayed} requires a compareTo implementation which 
- * should be the same for all implementations.  This abstract class 
- * provides a way to reduce code duplication.</p>
+ * <p>Since {@link Delayed} requires a {@code compareTo(Delayed)} implementation which should be 
+ * the same for all implementations.  This abstract class provides a way to reduce code 
+ * duplication.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0

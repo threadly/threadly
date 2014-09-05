@@ -16,10 +16,9 @@ public interface FutureCallback<T> {
   public void handleResult(T result);
   
   /**
-   * Called once a future has completed, but completed with either a failure 
-   * or a cancellation.  If the original task threw an exception (and thus 
-   * the future threw an ExecutionException), that original cause is 
-   * provided here.
+   * Called once a future has completed, but completed with either a failure or a cancellation.  
+   * If the original task threw an exception (and thus the future threw an ExecutionException), 
+   * that original cause is provided here.
    * 
    * If the future was canceled then a CancellationException will be provided.
    * 

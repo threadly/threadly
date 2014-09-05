@@ -18,12 +18,12 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.Clock;
 
 /**
- * <p>An implementation of {@link PriorityScheduler} which tracks run and usage 
- * statistics.  This is designed for testing and troubleshooting.  It has a little 
- * more overhead from the normal {@link PriorityScheduler}.</p>
+ * <p>An implementation of {@link PriorityScheduler} which tracks run and usage statistics.  This 
+ * is designed for testing and troubleshooting.  It has a little more overhead from the normal 
+ * {@link PriorityScheduler}.</p>
  * 
- * <p>It helps give insight in how long tasks are running, how well the thread pool is 
- * being utilized, as well as execution frequency.</p>
+ * <p>It helps give insight in how long tasks are running, how well the thread pool is being 
+ * utilized, as well as execution frequency.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -42,11 +42,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   protected final ConcurrentArrayList<Long> highPriorityExecutionDelay;
   
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This constructs a default 
-   * priority of high (which makes sense for most use cases).  
-   * It also defaults low priority worker wait as 500ms.  It also  
-   * defaults to all newly created threads being daemon threads.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This constructs a default priority of high (which makes sense for most use cases).  
+   * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
+   * threads being daemon threads.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -68,15 +67,14 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This constructs a default 
-   * priority of high (which makes sense for most use cases).  
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
-   * @param useDaemonThreads boolean for if newly created threads should be daemon
+   * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, boolean useDaemonThreads) {
@@ -94,13 +92,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This provides the extra
-   * parameters to tune what tasks submitted without a priority will be 
-   * scheduled as.  As well as the maximum wait for low priority tasks.
-   * The longer low priority tasks wait for a worker, the less chance they will
-   * have to make a thread.  But it also makes low priority tasks execution time
-   * less predictable.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -126,20 +122,18 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This provides the extra
-   * parameters to tune what tasks submitted without a priority will be 
-   * scheduled as.  As well as the maximum wait for low priority tasks.
-   * The longer low priority tasks wait for a worker, the less chance they will
-   * have to make a thread.  But it also makes low priority tasks execution time
-   * less predictable.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
-   * @param useDaemonThreads boolean for if newly created threads should be daemon
+   * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
@@ -160,13 +154,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Constructs a new thread pool, though no threads will be started 
-   * till it accepts it's first request.  This provides the extra
-   * parameters to tune what tasks submitted without a priority will be 
-   * scheduled as.  As well as the maximum wait for low priority tasks.
-   * The longer low priority tasks wait for a worker, the less chance they will
-   * have to make a thread.  But it also makes low priority tasks execution time
-   * less predictable.
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -215,8 +207,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Clears all collected rolling statistics.  These are the statistics 
-   * used for averages and are limited by window sizes.
+   * Clears all collected rolling statistics.  These are the statistics used for averages and are 
+   * limited by window sizes.  
    * 
    * This does NOT reset the total execution counts.
    */
@@ -331,12 +323,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Wraps the provided task in our statistic wrapper.  If the task is null, this 
-   * will return null so that the parent class can do error checking.
+   * Wraps the provided task in our statistic wrapper.  If the task is {@code null}, this will 
+   * return {@code null} so that the parent class can do error checking.
    * 
    * @param task Runnable to wrap
    * @param priority Priority for runnable to execute
-   * @param recurring true if the task is a recurring task
+   * @param recurring {@code true} if the task is a recurring task
    * @return Runnable which is our wrapped implementation
    */
   private Runnable wrap(Runnable task, 
@@ -350,12 +342,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Wraps the provided task in our statistic wrapper.  If the task is null, this 
-   * will return null so that the parent class can do error checking.
+   * Wraps the provided task in our statistic wrapper.  If the task is {@code null}, this will 
+   * return {@code null} so that the parent class can do error checking.
    * 
    * @param task Callable to wrap
    * @param priority Priority for runnable to execute
-   * @param recurring true if the task is a recurring task
+   * @param recurring {{@code true} if the task is a recurring task
    * @return Runnable which is our wrapped implementation
    */
   private <T> Callable<T> wrap(Callable<T> task, 
@@ -448,8 +440,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * This reports the rolling average of time that tasks for this 
-   * scheduler run.  It only reports for tasks which have completed.
+   * This reports the rolling average of time that tasks for this scheduler run.  It only reports 
+   * for tasks which have completed.
    * 
    * @return average time in milliseconds tasks run
    */
@@ -458,9 +450,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * This reports the median run time for tasks run by this executor.  
-   * It only reports for tasks which have completed.  Returns -1 if 
-   * no stats have been collected yet.
+   * This reports the median run time for tasks run by this executor.  It only reports for tasks 
+   * which have completed.  Returns -1 if no statistics have been collected yet.
    * 
    * @return median time in milliseconds tasks run
    */
@@ -475,8 +466,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Gets the average delay from when the task is ready, to when 
-   * it is actually executed.
+   * Gets the average delay from when the task is ready, to when it is actually executed.
    * 
    * @return average delay for tasks to be executed
    */
@@ -488,8 +478,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Gets the average delay from when the task is ready, to when 
-   * it is actually executed.
+   * Gets the average delay from when the task is ready, to when it is actually executed.
    * 
    * @return average delay for high priority tasks to be executed
    */
@@ -498,8 +487,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Gets the average delay from when the task is ready, to when 
-   * it is actually executed.
+   * Gets the average delay from when the task is ready, to when it is actually executed.
    * 
    * @return average delay for low priority tasks to be executed
    */
@@ -508,9 +496,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Gets the median delay from when the task is ready, to when 
-   * it is actually executed.  Returns -1 if no stats have been 
-   * collected yet.
+   * Gets the median delay from when the task is ready, to when it is actually executed.  Returns 
+   * -1 if no statistics have been collected yet.
    * 
    * @return median delay for high priority tasks to be executed
    */
@@ -525,9 +512,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Gets the median delay from when the task is ready, to when 
-   * it is actually executed.  Returns -1 if no stats have been 
-   * collected yet.
+   * Gets the median delay from when the task is ready, to when it is actually executed.  Returns 
+   * -1 if no statistics have been collected yet.
    * 
    * @return median delay for low priority tasks to be executed
    */
@@ -542,10 +528,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to get a list of all currently recorded times for execution delays.  
-   * This is the window used for the rolling average for 
-   * getHighPriorityAvgExecutionDelay().  This call allows for more complex 
-   * statistics (ie looking for outliers, etc).
+   * Call to get a list of all currently recorded times for execution delays.  This is the window 
+   * used for the rolling average for {@link #getHighPriorityAvgExecutionDelay()}.  This call 
+   * allows for more complex statistics (ie looking for outliers, etc).
    * 
    * @return list which represents execution delay samples
    */
@@ -556,10 +541,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to get a list of all currently recorded times for execution delays.  
-   * This is the window used for the rolling average for 
-   * getLowPriorityAvgExecutionDelay().  This call allows for more complex 
-   * statistics (ie looking for outliers, etc).
+   * Call to get a list of all currently recorded times for execution delays.  This is the window 
+   * used for the rolling average for {@link #getLowPriorityAvgExecutionDelay()}.  This call 
+   * allows for more complex statistics (ie looking for outliers, etc).
    * 
    * @return list which represents execution delay samples
    */
@@ -590,10 +574,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to get a list of all currently recorded times for execution.  
-   * This is the window used for the rolling average for 
-   * getAverageTaskRunTime().  This call allows for more complex statistics 
-   * (ie looking for outliers, etc).
+   * Call to get a list of all currently recorded times for execution.  This is the window used 
+   * for the rolling average for {@link #getAverageTaskRunTime()}.  This call allows for more 
+   * complex statistics (ie looking for outliers, etc).
    * 
    * @return the list of currently recorded run times for tasks
    */
@@ -633,9 +616,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   
   /**
    * Call to get any {@link Runnable} that have been running longer than a given period of time.  
-   * This is particularly useful when looking for runnables that may be executing longer 
-   * than expected.  Cases where that happens these runnables could block the thread pool 
-   * from executing additional tasks.
+   * This is particularly useful when looking for runnables that may be executing longer than 
+   * expected.  Cases where that happens these runnables could block the thread pool from 
+   * executing additional tasks.
    * 
    * @param timeInMs threshold of time to search for
    * @return list of runnables which are, or had been running over the provided time length
@@ -659,9 +642,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   
   /**
    * Call to get any {@link Callable} that have been running longer than a given period of time.  
-   * This is particularly useful when looking for callables that may be executing longer 
-   * than expected.  Cases where that happens these callables could block the thread pool 
-   * from executing additional tasks.
+   * This is particularly useful when looking for callables that may be executing longer than 
+   * expected.  Cases where that happens these callables could block the thread pool from 
+   * executing additional tasks.
    * 
    * @param timeInMs threshold of time to search for
    * @return list of callables which are, or had been running over the provided time length
@@ -684,8 +667,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to return the number of callables and/or runnables which have been running longer 
-   * than the provided amount of time in milliseconds.
+   * Call to return the number of callables and/or runnables which have been running longer than 
+   * the provided amount of time in milliseconds.
    * 
    * @param timeInMs threshold of time to search for execution
    * @return total quantity of runnables and callables which have or are running longer than the provided time length
@@ -716,8 +699,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to see how frequently tasks are able to immediately get a thread
-   * to execute on (and NOT having to create one).
+   * Call to see how frequently tasks are able to immediately get a thread to execute on (and NOT 
+   * having to create one).  
    * 
    * Returns -1 if no statistics have been recorded yet.
    * 
@@ -731,8 +714,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to see how frequently high priority tasks are able to immediately get a 
-   * thread to execute on (and NOT having to create one).
+   * Call to see how frequently high priority tasks are able to immediately get a thread to 
+   * execute on (and NOT having to create one).  
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
@@ -745,8 +728,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Call to see how frequently low priority tasks are able to get a thread 
-   * within the max wait time for low priority tasks (and NOT having to create one).
+   * Call to see how frequently low priority tasks are able to get a thread within the max wait 
+   * time for low priority tasks (and NOT having to create one).  
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
@@ -759,8 +742,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
   }
   
   /**
-   * Returns the percent as a double (between 0 and 100) of how many items in the list
-   * are true, compared to the total quantity of items in the list.
+   * Returns the percent as a double (between 0 and 100) of how many items in the list are true, 
+   * compared to the total quantity of items in the list.
    * 
    * @param list List of booleans to inspect
    * @return -1 if the list is empty, otherwise the percent of true items in the list

@@ -14,8 +14,8 @@ import org.threadly.concurrent.future.ScheduledFutureDelegate;
  * <p>This is a wrapper for {@link SingleThreadScheduler} to be a drop in replacement for any 
  * {@link java.util.concurrent.ScheduledExecutorService} (AKA the 
  * {@link java.util.concurrent.ScheduledThreadPoolExecutor} 
- * interface). It does make some performance sacrifices to adhere to this interface, but those
- * are pretty minimal.  The largest compromise in here is easily scheduleAtFixedRate (which you should 
+ * interface). It does make some performance sacrifices to adhere to this interface, but those are 
+ * pretty minimal.  The largest compromise in here is easily scheduleAtFixedRate (which you should 
  * read the javadocs for if you need).</p>
  * 
  * @author jent - Mike Jensen
@@ -42,10 +42,9 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   }
 
   /**
-   * This call is no different from the shutdown() call.  Currently 
-   * the {@link SingleThreadScheduler} implementation has no way 
-   * to stop executing tasks it has already taken on it's current "tick" 
-   * cycle.
+   * This call is no different from the shutdown() call.  Currently the 
+   * {@link SingleThreadScheduler} implementation has no way to stop executing tasks it has 
+   * already taken on it's current "tick" cycle.
    *
    * @return Empty list
    */
@@ -105,8 +104,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   }
 
   /**
-   * Not implemented for the {@link SingleThreadSchedulerServiceWrapper}.  
-   * Will always throw an UnsupportedOperationException.
+   * Not implemented for the {@link SingleThreadSchedulerServiceWrapper}.  Will always throw an 
+   * {@link UnsupportedOperationException}.
    */
   @Override
   public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,

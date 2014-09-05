@@ -8,12 +8,13 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A {@link SubmitterExecutorInterface} that will run all provided tasks 
- * immediately in the same thread that is calling into it.  This is different 
- * from calling the runnable directly only in that no exceptions will propagate 
- * out.  In the case of just "execute" the default UncaughtExceptionHandler 
- * will be provided the failure.  Otherwise thrown exceptions will be 
- * represented by their returned {@link ListenableFuture}.</p>
+ * <p>A {@link SubmitterExecutorInterface} that will run all provided tasks immediately in the 
+ * same thread that is calling into it.  This is different from calling the runnable directly only 
+ * in that no exceptions will propagate out.  If an exception is thrown it will be provided to 
+ * {@link ExceptionUtils#handleException(Throwable)} to In the case of just 
+ * {@link #execute(Runnable)} thrown exceptions will be provided to 
+ * {@link ExceptionUtils#handleException(Throwable)} to be handled.  Otherwise thrown exceptions 
+ * will be represented by their returned {@link ListenableFuture}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.2.0
@@ -26,11 +27,10 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
   }
   
   /**
-   * Call to get a default instance of the SameThreadSubmitterExecutor.  Because 
-   * there is no saved or shared state, the same instance can be reused as much 
-   * as desired.
+   * Call to get a default instance of the SameThreadSubmitterExecutor.  Because there is no saved 
+   * or shared state, the same instance can be reused as much as desired.
    * 
-   * @return an instance of SameThreadSubmitterExecutor
+   * @return a static instance of SameThreadSubmitterExecutor
    */
   public static SameThreadSubmitterExecutor instance() {
     return DEFAULT_INSTANCE;

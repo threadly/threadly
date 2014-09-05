@@ -1,20 +1,21 @@
 package org.threadly.util;
 
 /**
- * <p>Simple class to do some argument verifying which is common within threadly.  This 
- * is designed to primarily reduce bulk/repeated code throughout the base, as well as to 
- * ensure that thrown exceptions have a common format for the exception message.</p>
+ * <p>Simple class to do some argument verifying which is common within threadly.  This is 
+ * designed to primarily reduce bulk/repeated code throughout the base, as well as to ensure that 
+ * thrown exceptions have a common format for the exception message.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.4.0
  */
 public class ArgumentVerifier {
   /**
-   * Verifies the provided argument is not null, if it is an IllegalArgumentException is thrown.
+   * Verifies the provided argument is not null, if it is an {@link IllegalArgumentException} is 
+   * thrown.
    * 
-   * @param arg Object to check against to not be null
+   * @param arg Object to check against to not be {@code null}
    * @param name Name to provide the argument in the message of the thrown exception
-   * @throws IllegalArgumentException Thrown if the arg is null
+   * @throws IllegalArgumentException Thrown if the arg is {@code null}
    */
   public static void assertNotNull(Object arg, String name) {
     if (arg == null) {
@@ -24,8 +25,8 @@ public class ArgumentVerifier {
   }
   
   /**
-   * Verifies the provided argument is not negative (zero is okay).  If it is less than zero 
-   * an IllegalArgumentException is thrown.
+   * Verifies the provided argument is not negative (zero is okay).  If it is less than zero an 
+   * {@link IllegalArgumentException} is thrown.
    * 
    * @param val Value to check against
    * @param name Name to provide the argument in the message of the thrown exception
@@ -39,8 +40,8 @@ public class ArgumentVerifier {
   }
   
   /**
-   * Verifies the provided argument is greater than zero.  If it is less than one 
-   * an IllegalArgumentException is thrown.
+   * Verifies the provided argument is greater than zero.  If it is less than one an 
+   * {@link IllegalArgumentException} is thrown.
    * 
    * @param val Value to check against
    * @param name Name to provide the argument in the message of the thrown exception

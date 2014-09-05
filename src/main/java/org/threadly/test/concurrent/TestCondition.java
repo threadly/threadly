@@ -5,12 +5,12 @@ import java.util.concurrent.locks.LockSupport;
 import org.threadly.util.Clock;
 
 /**
- * <p>{@link TestCondition} in unit test, designed to check a condition
- * for something that is happening in a different thread.  Allowing a 
- * test to efficiently block till the testable action has finished.</p>
+ * <p>{@link TestCondition} in unit test, designed to check a condition for something that is 
+ * happening in a different thread.  Allowing a test to efficiently block till the testable 
+ * action has finished.</p>
  * 
- * <p>This tool is used often within threadly's own unit tests.  Please 
- * use those as examples using this class.</p>
+ * <p>This tool is used often within threadly's own unit tests.  Please use those as examples 
+ * using this class.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -24,13 +24,13 @@ public abstract class TestCondition {
   /**
    * Getter for the conditions current state.
    * 
-   * @return condition state, true if ready
+   * @return condition state, {@code true} if ready
    */
   public abstract boolean get();
 
   /**
-   * Blocks till condition is true, useful for asynchronism operations, 
-   * waiting for them to complete in other threads during unit tests.
+   * Blocks till condition is true, useful for asynchronism operations, waiting for them to 
+   * complete in other threads during unit tests.  
    * 
    * This uses a default timeout of 10 seconds, and a poll interval of 10ms
    */
@@ -39,8 +39,8 @@ public abstract class TestCondition {
   }
 
   /**
-   * Blocks till condition is true, useful for asynchronism operations, 
-   * waiting for them to complete in other threads during unit tests.
+   * Blocks till condition is true, useful for asynchronism operations, waiting for them to 
+   * complete in other threads during unit tests.
    * 
    * This uses the default poll interval of 10ms
    * 
@@ -51,8 +51,8 @@ public abstract class TestCondition {
   }
   
   /**
-   * Blocks till condition is true, useful for asynchronism operations, 
-   * waiting for them to complete in other threads during unit tests.
+   * Blocks till condition is true, useful for asynchronism operations, waiting for them to 
+   * complete in other threads during unit tests.
    * 
    * @param timeoutInMillis time to wait for value to become true
    * @param pollIntervalInMillis time to sleep between checks
@@ -77,8 +77,8 @@ public abstract class TestCondition {
   /**
    * <p>Thrown if condition is still false after a given timeout.</p>
    * 
-   * <p>The reason this exception is public is to allow test implementors to 
-   * catch this exception specifically and handle it if necessary.</p>
+   * <p>The reason this exception is public is to allow test implementors to catch this exception 
+   * specifically and handle it if necessary.</p>
    * 
    * @author jent - Mike Jensen
    */

@@ -27,22 +27,22 @@ public class ExceptionUtils {
   }
   
   /**
-   * Sets the {@link ExceptionHandlerInterface} for this thread.  This exception handler will 
-   * be called if this thread calls to ExceptionUtils.handleException(Throwable).
+   * Sets the {@link ExceptionHandlerInterface} for this thread.  This exception handler will be 
+   * called if this thread calls to {@link ExceptionUtils#handleException(Throwable)}.
    * 
-   * @param exceptionHandler Exception handler instance, or null to remove any handler
+   * @param exceptionHandler Exception handler instance, or {@code null} to remove any handler
    */
   public static void setThreadExceptionHandler(ExceptionHandlerInterface exceptionHandler) {
     THREAD_LOCAL_EXCEPTION_HANDLER.set(exceptionHandler);
   }
   
   /**
-   * Sets the {@link ExceptionHandlerInterface} for this thread, and any threads that spawn 
-   * off of this thread.  If this thread, or any children threads (that do not override 
-   * their {@link ExceptionHandlerInterface}), calls ExceptionUtils.handleException(Throwable), 
+   * Sets the {@link ExceptionHandlerInterface} for this thread, and any threads that spawn off of 
+   * this thread.  If this thread, or any children threads (that do not override their 
+   * {@link ExceptionHandlerInterface}), calls {@link ExceptionUtils#handleException(Throwable)}, 
    * the provided interface will be called.
    * 
-   * @param exceptionHandler Exception handler instance, or null to remove any handler
+   * @param exceptionHandler Exception handler instance, or {@code null} to remove any handler
    */
   public static void setInheritableExceptionHandler(ExceptionHandlerInterface exceptionHandler) {
     INHERITED_EXCEPTION_HANDLER.set(exceptionHandler);
@@ -53,7 +53,7 @@ public class ExceptionUtils {
    * a threads local, or inheritable {@link ExceptionHandlerInterface} has not been set, this 
    * default instance will be relied on.
    * 
-   * @param exceptionHandler Exception handler instance, or null to remove any handler
+   * @param exceptionHandler Exception handler instance, or {@code null} to remove any handler
    */
   public static void setDefaultExceptionHandler(ExceptionHandlerInterface exceptionHandler) {
     defaultExceptionHandler = exceptionHandler;
@@ -62,10 +62,10 @@ public class ExceptionUtils {
   /**
    * Gets the set {@link ExceptionHandlerInterface} if one is set, or null if none are set.  This 
    * prioritizes to the threads locally set handler, with the second priority being an inherited 
-   * handler, with the final option being the default handler.  If none of those are set, a null 
-   * is returned.
+   * handler, with the final option being the default handler.  If none of those are set, a 
+   * {@code null} is returned.
    * 
-   * @return Handling instance for this thread, or null if none are available
+   * @return Handling instance for this thread, or {@code null} if none are available
    */
   public static ExceptionHandlerInterface getExceptionHandler() {
     ExceptionHandlerInterface ehi = THREAD_LOCAL_EXCEPTION_HANDLER.get();
@@ -80,9 +80,9 @@ public class ExceptionUtils {
   }
   
   /**
-   * This call handles an uncaught throwable.  If a default uncaught exception 
-   * handler is set, then that will be called to handle the uncaught exception.  
-   * If none is set, then the exception will be printed out to standard error.
+   * This call handles an uncaught throwable.  If a default uncaught exception handler is set, 
+   * then that will be called to handle the uncaught exception.  If none is set, then the 
+   * exception will be printed out to standard error.
    * 
    * @param t throwable to handle
    */
@@ -109,12 +109,11 @@ public class ExceptionUtils {
   }
   
   /**
-   * Makes a runtime exception if necessary.  If provided exception
-   * is already runtime then that is just removed.  If it has to produce
-   * a new exception the stack is updated to omit this call.
+   * Makes a runtime exception if necessary.  If provided exception is already runtime then that 
+   * is just removed.  If it has to produce a new exception the stack is updated to omit this call.
    * 
    * @param t {@link Throwable} which may or may not be a runtimeException
-   * @return a runtime exception based on provided exception
+   * @return a {@link RuntimeException} based on provided exception
    */
   public static RuntimeException makeRuntime(Throwable t) {
     if (t instanceof RuntimeException) {
@@ -136,9 +135,8 @@ public class ExceptionUtils {
   }
   
   /**
-   * Gets the root cause of a provided {@link Throwable}.  If there is no 
-   * cause for the {@link Throwable} provided into this function, the original 
-   * {@link Throwable} is returned.
+   * Gets the root cause of a provided {@link Throwable}.  If there is no cause for the 
+   * {@link Throwable} provided into this function, the original {@link Throwable} is returned.
    * 
    * @param throwable starting {@link Throwable}
    * @return root cause {@link Throwable}
@@ -217,8 +215,8 @@ public class ExceptionUtils {
   }
   
   /**
-   * Writes the stack trace array out to a string.  This produces a stack trace string in 
-   * a very similar way as the stackToString from a throwable would.
+   * Writes the stack trace array out to a string.  This produces a stack trace string in a very 
+   * similar way as the {@link #stackToString(Throwable)} from a throwable would.
    * 
    * @param stack Array of stack elements to build the string off of
    * @return String which is the stack in a human readable format
@@ -232,7 +230,7 @@ public class ExceptionUtils {
   
   /**
    * Writes the stack to the provided StringBuilder.  This produces a stack trace string in 
-   * a very similar way as the writeStackTo from a throwable would.
+   * a very similar way as the {@link #writeStackTo(Throwable, StringBuilder)} would.
    * 
    * @param stack Array of stack elements to build the string off of
    * @param stringBuilder StringBuilder to write the stack out to
@@ -249,8 +247,8 @@ public class ExceptionUtils {
   }
   
   /**
-   * Exception which is constructed from makeRuntime when the exception 
-   * was not a runtime exception.
+   * <p>Exception which is constructed from {@link #makeRuntime(Throwable)} when the exception was 
+   * not a runtime exception.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0

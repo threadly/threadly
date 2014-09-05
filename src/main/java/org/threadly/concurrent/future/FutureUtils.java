@@ -21,13 +21,13 @@ import org.threadly.util.ArgumentVerifier;
  */
 public class FutureUtils {
   /**
-   * Adds a callback to a given future to be called once the future completes.
-   * Please see addListener in {@link ListenableFuture} to understand more about 
-   * how these callbacks are called.
+   * Adds a callback to a given future to be called once the future completes.  Please see 
+   * {@link ListenableFuture#addListener(Runnable)} to understand more about how these callbacks 
+   * are called.
    * 
-   * The callback of this call will be called either on this thread (if the future 
-   * has already completed), or on the resulting thread.  If the callback has 
-   * high complexity, consider passing an executor in for it to be called on.
+   * The callback of this call will be called either on this thread (if the future has already 
+   * completed), or on the resulting thread.  If the callback has high complexity, consider 
+   * passing an {@link Executor} in for it to be called on.
    * 
    * @since 1.2.0
    * 
@@ -35,15 +35,15 @@ public class FutureUtils {
    * @param future future to attach callback to
    * @param callback callback to call once future completes
    */
-  public static <T> void addCallback(final ListenableFuture<T> future, 
+  public static <T> void addCallback(ListenableFuture<T> future, 
                                      FutureCallback<? super T> callback) {
     addCallback(future, callback, null);
   }
   
   /**
-   * Adds a callback to a given future to be called once the future completes.
-   * Please see addListener in {@link ListenableFuture} to understand more about 
-   * how these callbacks are called.
+   * Adds a callback to a given future to be called once the future completes.  Please see 
+   * {@link ListenableFuture#addListener(Runnable, Executor)} to understand more about how these 
+   * callbacks are called.
    * 
    * @since 1.2.0
    * 
@@ -77,11 +77,10 @@ public class FutureUtils {
   }
   
   /**
-   * This call blocks till all futures in the list have completed.  If the 
-   * future completed with an error, the {@link ExecutionException} is swallowed.  
-   * Meaning that this does not attempt to verify that all futures completed 
-   * successfully.  If you need to know if any failed, please use 
-   * <tt>'blockTillAllCompleteOrFirstError'</tt>.
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error, the {@link ExecutionException} is swallowed.  Meaning that this does not attempt to 
+   * verify that all futures completed successfully.  If you need to know if any failed, please 
+   * use {@link #blockTillAllCompleteOrFirstError(Iterable)}.
    * 
    * @param futures Structure of futures to iterate over
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
@@ -102,11 +101,10 @@ public class FutureUtils {
   }
 
   /**
-   * This call blocks till all futures in the list have completed.  If the 
-   * future completed with an error an {@link ExecutionException} is thrown.  
-   * If this exception is thrown, all futures may or may not be completed, the 
-   * exception is thrown as soon as it is hit.  There also may be additional 
-   * futures that errored (but were not hit yet).
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error an {@link ExecutionException} is thrown.  If this exception is thrown, all futures 
+   * may or may not be completed, the exception is thrown as soon as it is hit.  There also may be 
+   * additional futures that errored (but were not hit yet).
    * 
    * @param futures Structure of futures to iterate over
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
@@ -126,15 +124,15 @@ public class FutureUtils {
   }
   
   /**
-   * An alternative to blockTillAllComplete, this provides the ability to know when 
-   * all futures are complete without blocking.  Unlike blockTillAllComplete, this 
-   * requires that your provide a collection of {@link ListenableFuture}'s.  But will 
-   * return immediately, providing a new ListenableFuture that will be called once 
-   * all the provided futures have finished.  
+   * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
+   * when all futures are complete without blocking.  Unlike 
+   * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
+   * {@link ListenableFuture}'s.  But will return immediately, providing a new 
+   * {@link ListenableFuture} that will be called once all the provided futures have finished.  
    * 
-   * The future returned will return a null result, it is the responsibility of the 
-   * caller to get the actual results from the provided futures.  This is designed to 
-   * just be an indicator as to when they have finished.
+   * The future returned will provide a {@code null} result, it is the responsibility of the 
+   * caller to get the actual results from the provided futures.  This is designed to just be an 
+   * indicator as to when they have finished.
    * 
    * @since 1.2.0
    * 
@@ -146,12 +144,12 @@ public class FutureUtils {
   }
   
   /**
-   * This call is similar to makeCompleteFuture in that it will immediately provide a 
-   * future that can not be canceled, and will not be satisfied till all provided 
+   * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
+   * provide a future that can not be canceled, and will not be satisfied till all provided 
    * futures complete.  
    * 
-   * This future provides a list of the completed futures as the result.  The order 
-   * of this list is NOT deterministic.
+   * This future provides a list of the completed futures as the result.  The order of this list 
+   * is NOT deterministic.
    * 
    * @since 1.2.0
    * 
@@ -165,13 +163,12 @@ public class FutureUtils {
   }
   
   /**
-   * This call is similar to makeCompleteFuture in that it will immediately provide a 
-   * future that can not be canceled, and will not be satisfied till all provided 
+   * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
+   * provide a future that can not be canceled, and will not be satisfied till all provided 
    * futures complete.  
    * 
-   * This future provides a list of the futures that completed without throwing 
-   * an exception nor were canceled.  The order of the resulting list is NOT 
-   * deterministic.
+   * This future provides a list of the futures that completed without throwing an exception nor 
+   * were canceled.  The order of the resulting list is NOT deterministic.
    * 
    * @since 1.2.0
    * 
@@ -185,13 +182,12 @@ public class FutureUtils {
   }
   
   /**
-   * This call is similar to makeCompleteFuture in that it will immediately provide a 
-   * future that can not be canceled, and will not be satisfied till all provided 
+   * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
+   * provide a future that can not be canceled, and will not be satisfied till all provided 
    * futures complete.  
    * 
-   * This future provides a list of the futures that failed by either throwing an 
-   * exception or were canceled.  The order of the resulting list is NOT 
-   * deterministic.
+   * This future provides a list of the futures that failed by either throwing an exception or 
+   * were canceled.  The order of the resulting list is NOT deterministic.
    * 
    * @since 1.2.0
    * 
@@ -205,9 +201,8 @@ public class FutureUtils {
   }
   
   /**
-   * Constructs a {@link ListenableFuture} that has already had the 
-   * provided result given to it.  Thus the resulting future can not 
-   * error, block, or be canceled.
+   * Constructs a {@link ListenableFuture} that has already had the provided result given to it.  
+   * Thus the resulting future can not error, block, or be canceled.
    * 
    * @since 1.2.0
    * 
@@ -220,10 +215,9 @@ public class FutureUtils {
   }
   
   /**
-   * Constructs a {@link ListenableFuture} that has failed with the 
-   * given failure.  Thus the resulting future can not block, or be 
-   * canceled.  Calls to .get() will immediately throw an 
-   * ExecutionException.
+   * Constructs a {@link ListenableFuture} that has failed with the given failure.  Thus the 
+   * resulting future can not block, or be canceled.  Calls to {@link ListenableFuture#get()} will 
+   * immediately throw an {@link ExecutionException}.
    * 
    * @since 1.2.0
    * 
@@ -236,8 +230,8 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The 
-   * future will not be satisfied till all provided futures have completed.</p>
+   * <p>A future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.</p>
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0
@@ -280,9 +274,9 @@ public class FutureUtils {
     }
     
     /**
-     * Provides the lazily constructed buildingResult in case any futures 
-     * need to be saved.  This is complex because it may be called very 
-     * early, and we try to keep this as efficient as possible.
+     * Provides the lazily constructed buildingResult in case any futures need to be saved.  This 
+     * is complex because it may be called very early, and we try to keep this as efficient as 
+     * possible.
      * 
      * @return A stored list of futures that can be modified
      */
@@ -313,16 +307,14 @@ public class FutureUtils {
     }
     
     /**
-     * Gives the implementing class the option to save or check the completed 
-     * future.
+     * Gives the implementing class the option to save or check the completed future.
      * 
      * @param f {@link ListenableFuture} that has completed
      */
     protected abstract void handleFutureDone(ListenableFuture<? extends T> f);
 
     /**
-     * Will only be called once, and all allocated resources can be freed after this
-     * point.
+     * Will only be called once, and all allocated resources can be freed after this point.
      * 
      * @return List to satisfy ListenableFuture result with
      */
@@ -340,8 +332,8 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will be satisfied till all provided futures 
-   * have completed.</p>
+   * <p>A future implementation that will be satisfied till all provided futures have 
+   * completed.</p>
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0
@@ -358,8 +350,8 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The 
-   * future will not be satisfied till all provided futures have completed.</p>
+   * <p>A future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.</p>
    * 
    * <p>This implementation will return a result of all the futures that completed.</p>
    * 
@@ -381,12 +373,11 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The 
-   * future will not be satisfied till all provided futures have completed.</p>
+   * <p>A future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.</p>
    * 
-   * <p>This implementation will return a result of all the futures that completed 
-   * successfully.  If the future was canceled or threw an exception it will not be 
-   * included.</p>
+   * <p>This implementation will return a result of all the futures that completed successfully.  
+   * If the future was canceled or threw an exception it will not be included.</p>
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0
@@ -418,11 +409,11 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The 
-   * future will not be satisfied till all provided futures have completed.</p>
+   * <p>A future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.</p>
    * 
-   * <p>This implementation will return a result of all the futures that either threw 
-   * an exception during computation, or was canceled.</p>
+   * <p>This implementation will return a result of all the futures that either threw an exception 
+   * during computation, or was canceled.</p>
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0

@@ -14,7 +14,8 @@ public class StringUtils {
    */
   public static final String EMPTY = "";
   /**
-   * Constant to represent the line separator for the system (captured from System.getProperty("line.separator")).
+   * Constant to represent the line separator for the system (captured from 
+   * System.getProperty("line.separator")).
    */
   public static final String NEW_LINE = System.getProperty("line.separator");
   
@@ -22,11 +23,11 @@ public class StringUtils {
   private static final Random RANDOM = new Random(Clock.lastKnownTimeMillis());
   
   /**
-   * Makes sure a given string is not null.  If it is not null, the provided string is immediately 
-   * returned.  If it IS null, then an empty string is returned.
+   * Makes sure a given string is not null.  If it is not {@code null}, the provided string is 
+   * immediately returned.  If it IS {@code null}, then an empty string is returned.
    * 
-   * @param input String which should be returned if not null
-   * @return The original string if not null, otherwise an empty string
+   * @param input String which should be returned if not {@code null}
+   * @return The original string if not {@code null}, otherwise an empty string
    */
   public static String makeNonNull(String input) {
     if (input != null) {
@@ -38,8 +39,8 @@ public class StringUtils {
   
   /**
    * Produces a random string of the provided length.  This can be useful for unit testing, or any 
-   * other time the string content is not important.  The returned string will be comprised of only 
-   * alphanumeric characters.
+   * other time the string content is not important.  The returned string will be comprised of 
+   * only alphanumeric characters.
    * 
    * @param length Number of characters the resulting string should be.
    * @return A string comprised of random characters of the specified length

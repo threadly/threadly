@@ -10,19 +10,17 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This class is designed to limit how much parallel execution happens on a 
- * provided {@link SimpleSchedulerInterface}.  This allows the implementor to 
- * have one thread pool for all their code, and if they want certain sections to 
- * have less levels of parallelism (possibly because those those sections would 
- * completely consume the global pool), they can wrap the executor in this 
- * class.</p>
+ * <p>This class is designed to limit how much parallel execution happens on a provided 
+ * {@link SimpleSchedulerInterface}.  This allows the implementor to have one thread pool for all 
+ * their code, and if they want certain sections to have less levels of parallelism (possibly 
+ * because those those sections would completely consume the global pool), they can wrap the 
+ * executor in this class.</p>
  * 
- * <p>Thus providing you better control on the absolute thread count and how much 
- * parallelism can occur in different sections of the program.</p>
+ * <p>Thus providing you better control on the absolute thread count and how much parallelism can 
+ * occur in different sections of the program.</p>
  * 
- * <p>This is an alternative from having to create multiple thread pools.  By 
- * using this you also are able to accomplish more efficiently thread use than 
- * multiple thread pools would.</p>
+ * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
+ * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
@@ -47,7 +45,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * 
    * @param scheduler {@link SimpleSchedulerInterface} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
-   * @param subPoolName name to describe threads while tasks running in pool (null to not change thread names)
+   * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
    */
   public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
                                 int maxConcurrency, String subPoolName) {
@@ -114,8 +112,8 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   }
   
   /**
-   * <p>Small runnable that allows scheduled tasks to pass through 
-   * the same execution queue that immediate execution has to.</p>
+   * <p>Small runnable that allows scheduled tasks to pass through the same execution queue that 
+   * immediate execution has to.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.1.0
@@ -148,9 +146,8 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   }
 
   /**
-   * <p>Wrapper for tasks which are executed in this sub pool, 
-   * this ensures that handleTaskFinished() will be called 
-   * after the task completes.</p>
+   * <p>Wrapper for tasks which are executed in this sub pool, this ensures that 
+   * {@link #handleTaskFinished()} will be called after the task completes.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.1.0

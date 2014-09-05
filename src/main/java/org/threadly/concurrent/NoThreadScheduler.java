@@ -11,16 +11,17 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ListUtils;
 
 /**
- * <p>Executor which has no threads itself.  This allows you to have the same 
- * scheduler abilities (schedule tasks, recurring tasks, etc, etc), without having 
- * to deal with multiple threads, memory barriers, or other similar concerns.  
- * This class can be very useful in GUI development (if you want it to run on the GUI 
- * thread).  It also can be useful in android development in a very similar way.</p>
+ * <p>Executor which has no threads itself.  This allows you to have the same scheduler abilities 
+ * (schedule tasks, recurring tasks, etc, etc), without having to deal with multiple threads, 
+ * memory barriers, or other similar concerns.  This class can be very useful in GUI development 
+ * (if you want it to run on the GUI thread).  It also can be useful in android development in a 
+ * very similar way.</p>
  * 
- * <p>The tasks in this scheduler are only progressed forward with calls to .tick().  
- * Since it is running on the calling thread, calls to .wait() and .sleep() from sub 
- * tasks will block (possibly forever).  The call to .tick() will not unblock till there 
- * is no more work for the scheduler to currently handle.</p>
+ * <p>The tasks in this scheduler are only progressed forward with calls to {@link #tick()}.  
+ * Since it is running on the calling thread, calls to {@code Object.wait()} and 
+ * {@code Thread.sleep()} from sub tasks will block (possibly forever).  The call to 
+ * {@link #tick()} will not unblock till there is no more work for the scheduler to currently 
+ * handle.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
@@ -38,7 +39,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   /**
    * Constructs a new {@link NoThreadScheduler} scheduler.
    * 
-   * @param tickBlocksTillAvailable true if calls to .tick() should block till there is something to run
+   * @param tickBlocksTillAvailable {@code true} if calls to {@link #tick()} should block till there is something to run
    */
   public NoThreadScheduler(boolean tickBlocksTillAvailable) {
     this.tickBlocksTillAvailable = tickBlocksTillAvailable;
@@ -49,10 +50,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Abstract call to get the value the scheduler should use to represent the current time.  
-   * This can be overridden if someone wanted to artificially change the time.
+   * Abstract call to get the value the scheduler should use to represent the current time.  This 
+   * can be overridden if someone wanted to artificially change the time.
    * 
-   * @param estimateOkay true if it is okay to just estimate the time
    * @return current time in milliseconds
    */
   protected long nowInMillis() {
@@ -60,9 +60,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Called to indicate that we are about to insert or reposition a value in 
-   * the queue.  It is critical that until "endInsertion" nowInMillis calls will 
-   * return the exact same value.
+   * Called to indicate that we are about to insert or reposition a value in the queue.  It is 
+   * critical that until {@link #endInsertion()} calls to {@link #nowInMillis()} will return the 
+   * exact same value.
    */
   protected void startInsertion() {
     clockWrapper.stopForcingUpdate();
@@ -76,11 +76,11 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Call to cancel current or the next tick call.  If currently in a .tick() call 
-   * (weather blocking waiting for tasks, or currently running tasks), this will 
-   * call the .tick() to return.  If a task is currently running it will finish the 
-   * current task before returning.  If not currently in a .tick() call, the next 
-   * tick call will return immediately without running anything.
+   * Call to cancel current or the next tick call.  If currently in a {@link #tick()} call 
+   * (weather blocking waiting for tasks, or currently running tasks), this will call the 
+   * {@link #tick()} to return.  If a task is currently running it will finish the current task 
+   * before returning.  If not currently in a {@link #tick()} call, the next tick call will return 
+   * immediately without running anything.
    */
   protected void cancelTick() {
     synchronized (taskQueue.getModificationLock()) {
@@ -91,26 +91,25 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Progresses tasks for the current time.  This will block as it runs
-   * as many scheduled or waiting tasks as possible.  It is CRITICAL that 
-   * only one thread at a time calls the .tick() function.  While this class 
-   * is in general thread safe, if multiple threads call .tick() at the same 
-   * time, it is possible a given task may run more than once.  In order to 
-   * maintain high performance, threadly does not guard against this condition.
+   * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
+   * waiting tasks as possible.  It is CRITICAL that only one thread at a time calls the 
+   * {@link #tick()} function.  While this class is in general thread safe, if multiple threads 
+   * call {@link #tick()} at the same time, it is possible a given task may run more than once.  
+   * In order to maintain high performance, threadly does not guard against this condition.
    * 
-   * Depending on how this class was constructed, this may or may not block 
-   * if there are no tasks to run yet.
+   * Depending on how this class was constructed, this may or may not block if there are no tasks 
+   * to run yet.
    * 
-   * If any tasks throw a RuntimeException, they will be bubbled up to this 
-   * tick call.  Any tasks past that task will not run till the next call to 
-   * tick.  So it is important that the implementor handle those exceptions.  
+   * If any tasks throw a {@link RuntimeException}, they will be bubbled up to this tick call.  
+   * Any tasks past that task will not run till the next call to tick.  So it is important that 
+   * the implementor handle those exceptions.  
    * 
-   * This call is NOT thread safe, calling tick in parallel could cause the 
-   * same task to be run multiple times in parallel.
+   * This call is NOT thread safe, calling tick in parallel could cause the same task to be run 
+   * multiple times in parallel.
    * 
    * @return quantity of tasks run during this tick invocation
    * @throws InterruptedException thrown if thread is interrupted waiting for task to run
-   *           (this can only throw if constructed with a true to allow blocking)
+   *           (this can only throw if constructed with a {@code true} to allow blocking)
    */
   public int tick() throws InterruptedException {
     int tasks = 0;
@@ -211,15 +210,14 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Call to get the next task that is ready to be run.  If there are no 
-   * tasks, or the next task still has a remaining delay, this will return 
-   * null.
+   * Call to get the next task that is ready to be run.  If there are no tasks, or the next task 
+   * still has a remaining delay, this will return {@code null}.
    * 
-   * If this is being called in parallel with a .tick() call, the returned 
-   * task may already be running.  You must check the TaskContainer.running 
-   * boolean if this condition is important to you.
+   * If this is being called in parallel with a {@link #tick()} call, the returned task may 
+   * already be running.  You must check the {@code TaskContainer.running} boolean if this 
+   * condition is important to you.
    * 
-   * @return next ready task, or null if there are none
+   * @return next ready task, or {@code null} if there are none
    */
   protected TaskContainer getNextReadyTask() {
     TaskContainer nextTask = taskQueue.peekFirst();
@@ -232,12 +230,12 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Checks if there are tasks ready to be run on the scheduler.  Generally this is called from 
-   * the same thread that would call .tick() (but does not have to be).  If .tick() is not 
-   * currently being called, this call indicates if the next .tick() will have at least one task 
-   * to run.  If .tick() is currently running, this call will indicate if there is at least one 
-   * more task to run (not including the task which may currently be running).
+   * the same thread that would call .tick() (but does not have to be).  If {@link #tick()} is not 
+   * currently being called, this call indicates if the next {@link #tick()} will have at least 
+   * one task to run.  If {@link #tick()} is currently running, this call will indicate if there 
+   * is at least one more task to run (not including the task which may currently be running).
    * 
-   * @return true if there are task waiting to run.
+   * @return {@code true} if there are task waiting to run.
    */
   public boolean hasTaskReadyToRun() {
     synchronized (taskQueue.getModificationLock()) {
@@ -255,8 +253,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
-   * .tick() is being called.  But will avoid additional tasks from being run on the current 
-   * .tick() call.
+   * {@link #tick()} is being called.  But will avoid additional tasks from being run on the 
+   * current {@link #tick()} call.
    * 
    * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
    */
@@ -330,8 +328,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * <p>Runnable container for runnables that only run once
-   * with an optional delay.</p>
+   * <p>Runnable container for runnables that only run once with an optional delay.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0

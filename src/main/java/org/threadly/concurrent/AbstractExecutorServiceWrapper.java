@@ -273,9 +273,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * hack.  For the longest time this just threw an UnsupportedOperationException, I did not want 
    * to implement it because the {@link PriorityScheduler} is just not designed to handle this.
    * 
-   * The largest problem with the Threadly implementation of this is that the rate may not be 
-   * as precise as it was in the java implementation.  In addition it is less efficient and wont 
-   * get the same throughput as with the java.util.concurrent implementation.
+   * The largest problem with the Threadly implementation of this is that the rate may not be as 
+   * precise as it was in the java implementation.  In addition it is less efficient and wont get 
+   * the same throughput as with the java.util.concurrent implementation.
    *
    * From the open jdk javadoc....
    * Creates and executes a periodic action that becomes enabled first
@@ -328,8 +328,8 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   }
   
   /**
-   * <p>This classes job is to run a task, if an exception was thrown running the task 
-   * previously, it wont attempt to run the task again.</p>
+   * <p>This classes job is to run a task, if an exception was thrown running the task previously, 
+   * it wont attempt to run the task again.</p>
    * 
    * <p>It is expected that this does NOT run concurrently, but may run on different threads.</p>
    * 
@@ -368,10 +368,10 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   }
   
   /**
-   * <p>This class is what is responsible for submitting the task back into the taskDistributor.  
-   * It is very short lived, and thus is what is ensuring the regular rate.  It also has the 
-   * responsibility of removing itself from the constant execution if the wrapped task did throw 
-   * an exception</p>
+   * <p>This class is what is responsible for submitting the task back into the 
+   * {@link KeyDistributedExecutor}.  It is very short lived, and thus is what is ensuring the 
+   * regular rate.  It also has the responsibility of removing itself from the constant execution 
+   * if the wrapped task did throw an exception</p>
    * 
    * @author jent - Mike Jensen
    * @since 2.0.0
@@ -406,9 +406,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   
   /**
    * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
-   * recurring task causes the task to stop executing, we have to wrap the task.  That way 
-   * we can remove the recurring task if the error occurs (since {@link SimpleSchedulerInterface} 
-   * will continue to execute the task despite the error.</p>
+   * recurring task causes the task to stop executing, we have to wrap the task.  That way we can 
+   * remove the recurring task if the error occurs (since {@link SimpleSchedulerInterface} will 
+   * continue to execute the task despite the error.</p>
    * 
    * @author jent - Mike Jensen
    * @since 2.1.0

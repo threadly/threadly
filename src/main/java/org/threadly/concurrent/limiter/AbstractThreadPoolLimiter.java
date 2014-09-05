@@ -8,8 +8,7 @@ import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Abstract implementation for classes which limit concurrency 
- * for a parent thread pool.</p>
+ * <p>Abstract implementation for classes which limit concurrency for a parent thread pool.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -23,7 +22,7 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
    * Constructor for abstract class to call into for anyone extending this class.
    * 
    * @param maxConcurrency maximum concurrency to allow
-   * @param subPoolName name to give threads while tasks running in pool (null to not change thread names)
+   * @param subPoolName name to give threads while tasks running in pool ({@code null} to not change thread names)
    */
   public AbstractThreadPoolLimiter(int maxConcurrency, String subPoolName) {
     ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
@@ -52,8 +51,8 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
   }
   
   /**
-   * Constructs a formated name for a given thread for this sub pool.  
-   * This only makes sense to call when subPoolName is not null.
+   * Constructs a formated name for a given thread for this sub pool.  This only makes sense to 
+   * call when subPoolName is not {@code null}.
    * 
    * @param originalThreadName name of thread before change
    * @return a formated name to change the thread to.
@@ -63,12 +62,11 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
   }
   
   /**
-   * Is block to verify a task can run in a thread safe way.  
-   * If this returns true currentlyRunning has been incremented and 
-   * it expects the task to run and call handleTaskFinished 
-   * when completed.
+   * Is block to verify a task can run in a thread safe way.  If this returns {@code true} 
+   * {@code currentlyRunning} has been incremented and it expects the task to run and call 
+   * {@link #handleTaskFinished()} when completed.
    * 
-   * @return returns true if the task can run
+   * @return {@code true} if the task can run
    */
   protected boolean canRunTask() {
     while (true) {  // loop till we have a result
@@ -90,9 +88,8 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
   protected abstract void consumeAvailable();
   
   /**
-   * Should be called after every task completes.  This decrements 
-   * currentlyRunning in a thread safe way, then will run any waiting 
-   * tasks which exists.
+   * Should be called after every task completes.  This decrements {@code currentlyRunning} in a 
+   * thread safe way, then will run any waiting tasks which exists.
    */
   protected void handleTaskFinished() {
     currentlyRunning.decrementAndGet();
@@ -101,9 +98,8 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
   }
   
   /**
-   * <p>Generic wrapper for runnables which are used within the limiters.
-   * This wrapper ensures that handleTaskFinished() will be called 
-   * after the task completes.</p>
+   * <p>Generic wrapper for runnables which are used within the limiters.  This wrapper ensures 
+   * that {@link #handleTaskFinished()} will be called after the task completes.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
@@ -119,16 +115,16 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
     }
     
     /**
-     * Called immediately after contained task finishes.  That way any additional 
-     * cleanup needed can be run.
+     * Called immediately after contained task finishes.  That way any additional cleanup needed 
+     * can be run.
      */
     protected void doAfterRunTasks() {
       // nothing in the default implementation
     }
     
     /**
-     * Submits this task to the executor.  This can be overridden if it needs to be 
-     * submitted in a different way.
+     * Submits this task to the executor.  This can be overridden if it needs to be submitted in a 
+     * different way.
      */
     protected void submitToExecutor() {
       this.executor.execute(this);
