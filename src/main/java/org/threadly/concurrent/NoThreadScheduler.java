@@ -43,8 +43,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    */
   public NoThreadScheduler(boolean tickBlocksTillAvailable) {
     this.tickBlocksTillAvailable = tickBlocksTillAvailable;
-    taskQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, 
-                                                       QUEUE_REAR_PADDING);
+    taskQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
     clockWrapper = new ClockWrapper();
     cancelTick = false;
   }
@@ -82,7 +81,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * before returning.  If not currently in a {@link #tick()} call, the next tick call will return 
    * immediately without running anything.
    */
-  protected void cancelTick() {
+  public void cancelTick() {
     synchronized (taskQueue.getModificationLock()) {
       cancelTick = true;
       
@@ -116,10 +115,10 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     while (true) {  // will break from loop at bottom
       TaskContainer nextTask;
       while ((nextTask = getNextReadyTask()) != null && ! cancelTick) {
-        tasks++;
-        
         // call will remove task from queue, or reposition as necessary
         nextTask.runTask();
+
+        tasks++;
       }
       
       if (tickBlocksTillAvailable && tasks == 0) {
@@ -153,6 +152,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       // reset for future tick calls
       cancelTick = false;
     }
+    
     return tasks;
   }
 

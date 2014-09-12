@@ -20,6 +20,10 @@ import org.threadly.util.ArgumentVerifier;
  * @since 1.0.0
  */
 public class FutureUtils {
+  private FutureUtils() {
+    // don't construct
+  }
+  
   /**
    * Adds a callback to a given future to be called once the future completes.  Please see 
    * {@link ListenableFuture#addListener(Runnable)} to understand more about how these callbacks 

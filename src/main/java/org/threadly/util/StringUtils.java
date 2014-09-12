@@ -22,6 +22,10 @@ public class StringUtils {
   private static final String RAND_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   private static final Random RANDOM = new Random(Clock.lastKnownTimeMillis());
   
+  private StringUtils() {
+    // don't construct
+  }
+  
   /**
    * Makes sure a given string is not null.  If it is not {@code null}, the provided string is 
    * immediately returned.  If it IS {@code null}, then an empty string is returned.

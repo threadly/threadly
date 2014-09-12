@@ -27,8 +27,7 @@ public class ListUtils {
    * @param key key for searching placement of
    * @return the index to insert the key into the list
    */
-  public static int getInsertionEndIndex(List<? extends Delayed> list, 
-                                         Delayed key) {
+  public static int getInsertionEndIndex(List<? extends Delayed> list, Delayed key) {
     return getInsertionEndIndex(list, key, list instanceof RandomAccess);
   }
   
@@ -103,8 +102,7 @@ public class ListUtils {
    * @param key delay value to search for
    * @return index where found, or -(insertion point) - 1 if not found
    */
-  public static int binarySearch(List<? extends Delayed> list, 
-                                 Delayed key) {
+  public static int binarySearch(List<? extends Delayed> list, Delayed key) {
     return binarySearch(list, key, list instanceof RandomAccess);
   }
   

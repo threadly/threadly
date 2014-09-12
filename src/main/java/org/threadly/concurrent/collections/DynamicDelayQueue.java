@@ -32,7 +32,6 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
-  protected final boolean randomAccessQueue;
   protected final Object queueLock;
   protected final ConcurrentArrayList<T> queue;
 
@@ -51,10 +50,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
    * @param queueLock lock that is used internally
    */
   public DynamicDelayQueue(Object queueLock) {
-    queue = new ConcurrentArrayList<T>(queueLock, 
-                                       QUEUE_FRONT_PADDING, 
-                                       QUEUE_REAR_PADDING);
-    randomAccessQueue = true; // must change if switch from ConcurrentArrayList
+    queue = new ConcurrentArrayList<T>(queueLock, QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
     this.queueLock = queueLock;
   }
   
@@ -99,8 +95,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     }
     
     synchronized (queueLock) {
-      int insertionIndex = ListUtils.getInsertionEndIndex(queue, e.getDelay(TimeUnit.MILLISECONDS), 
-                                                          randomAccessQueue);
+      int insertionIndex = ListUtils.getInsertionEndIndex(queue, e.getDelay(TimeUnit.MILLISECONDS), true);
       
       queue.add(insertionIndex, e);
       
@@ -131,8 +126,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
     }
 
     synchronized (queueLock) {
-      int insertionIndex = ListUtils.getInsertionEndIndex(queue, newDelayInMillis, 
-                                                          randomAccessQueue);
+      int insertionIndex = ListUtils.getInsertionEndIndex(queue, newDelayInMillis, true);
       
       /* provide the option to search backwards since the item 
        * will most likely be towards the back of the queue */

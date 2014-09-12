@@ -28,6 +28,10 @@ public class DebugLogger {
   private static final String TIME_DELIM = " - ";
   private static volatile ConcurrentSkipListMap<Long, String> logMap = new ConcurrentSkipListMap<Long, String>();
   
+  private DebugLogger() {
+    // don't construct
+  }
+  
   /**
    * This adds a log message to the stored log.  Keep in mind this will continue to consume more 
    * and more memory until {@link #getAllStoredMessages()} is called.

@@ -9,6 +9,10 @@ package org.threadly.util;
  * @since 2.4.0
  */
 public class ArgumentVerifier {
+  private ArgumentVerifier() {
+    // don't construct
+  }
+  
   /**
    * Verifies the provided argument is not null, if it is an {@link IllegalArgumentException} is 
    * thrown.

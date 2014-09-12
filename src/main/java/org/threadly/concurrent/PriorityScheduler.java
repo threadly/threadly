@@ -1111,7 +1111,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     public void start() {
       if (running) {
-        return;
+        throw new IllegalStateException();
       } else {
         running = true;
         thread.start();
@@ -1127,7 +1127,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     public void stop() {
       if (! running) {
-        return;
+        throw new IllegalStateException();
       } else {
         running = false;
         
