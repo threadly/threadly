@@ -13,7 +13,6 @@ public class SingleThreadSchedulerSchedulerManagerTest {
     
     assertNotNull(sm.scheduler);
     assertNotNull(sm.execThread);
-    assertFalse(sm.isStopped());
   }
   
   @SuppressWarnings("unused")

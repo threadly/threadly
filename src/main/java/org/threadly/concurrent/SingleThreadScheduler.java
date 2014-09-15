@@ -73,7 +73,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
       }
     }
     
-    if (result.isStopped()) {
+    if (! result.isRunning()) {
       throw new IllegalStateException("Scheduler has been shutdown");
     }
     
@@ -126,7 +126,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   public boolean isShutdown() {
     SchedulerManager sm = sManager.get();
     if (sm != null) {
-      return sm.isStopped();
+      return ! sm.isRunning();
     } else {
       // if not created yet, the not shutdown
       return false;
@@ -163,12 +163,10 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 2.0.0
    */
-  protected static class SchedulerManager implements Runnable {
+  protected static class SchedulerManager extends AbstractService 
+                                          implements Runnable {
     protected final NoThreadScheduler scheduler;
     protected final Thread execThread;
-    private final Object startStopLock;
-    private boolean started;  // locked around startStopLock
-    private volatile boolean shutdownStarted;
     private volatile boolean shutdownFinished;
     
     protected SchedulerManager(ThreadFactory threadFactory) {
@@ -177,31 +175,17 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
       if (execThread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      startStopLock = new Object();
-      started = false;
-      shutdownStarted = false;
       shutdownFinished = false;
     }
-    
-    /**
-     * Call to check if stop has been called.
-     * 
-     * @return {@code true} if stop has been called (weather shutdown has finished or not)
-     */
-    public boolean isStopped() {
-      return shutdownStarted;
+
+    @Override
+    protected void startupService() {
+      execThread.start();
     }
-    
-    /**
-     * Call to start the thread to run tasks.  If already started this call will have no effect.
-     */
-    protected void start() {
-      synchronized (startStopLock) {
-        if (! started && ! shutdownStarted) {
-          started = true;
-          execThread.start();
-        }
-      }
+
+    @Override
+    protected void shutdownService() {
+      // nothing to do here
     }
     
     /**
@@ -216,28 +200,22 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
      *         otherwise will be an empty list
      */
     protected List<Runnable> stop(boolean stopImmediately) {
-      synchronized (startStopLock) {
-        if (! shutdownStarted) {
-          shutdownStarted = true;
-          
-          if (started) {
-            if (stopImmediately) {
-              return finishShutdown();
-            } else {
-              /* add to the end of the ready to execute queue a task which 
-               * will finish the shutdown of the scheduler. 
-               */
-              scheduler.execute(new Runnable() {
-                @Override
-                public void run() {
-                  finishShutdown();
-                }
-              });
+      if (stopIfRunning()) {
+        if (stopImmediately) {
+          return finishShutdown();
+        } else {
+          /* add to the end of the ready to execute queue a task which 
+           * will finish the shutdown of the scheduler. 
+           */
+          scheduler.execute(new Runnable() {
+            @Override
+            public void run() {
+              finishShutdown();
             }
-          }
+          });
         }
       }
-
+      
       return Collections.emptyList();
     }
     

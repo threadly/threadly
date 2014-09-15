@@ -26,46 +26,103 @@ import org.threadly.util.ExceptionUtils;
  * @since 1.0.0
  * @param <T> Type of items contained in the queue to be consumed
  */
-public class BlockingQueueConsumer<T> {
+public class BlockingQueueConsumer<T> extends AbstractService {
   private static final AtomicInteger DEFAULT_CONSUMER_VALUE = new AtomicInteger(0);
-  private static final String DEFAULT_THREAD_PREFIX = "QueueConsumer-";
   
   private static String getDefaultThreadName() {
-    return DEFAULT_THREAD_PREFIX + DEFAULT_CONSUMER_VALUE.getAndIncrement();
+    return "QueueConsumer-" + DEFAULT_CONSUMER_VALUE.getAndIncrement();
   }
   
+  protected final ThreadFactory threadFactory;
+  protected final String threadName;
   protected final BlockingQueue<? extends T> queue;
   protected final ConsumerAcceptor<? super T> acceptor;
-  protected volatile boolean started;
-  protected volatile boolean stopped;
   protected volatile Thread runningThread;
   
   /**
    * Constructs a new consumer, with a provided queue to consume from, and an acceptor to accept 
    * items.
    * 
+   * @param threadFactory ThreadFactory to construct new thread for consumer to run on 
    * @param queue queue to consume from
    * @param acceptor acceptor to provide consumed items to
    */
+  public BlockingQueueConsumer(ThreadFactory threadFactory, 
+                               BlockingQueue<? extends T> queue, 
+                               ConsumerAcceptor<? super T> acceptor) {
+    this(threadFactory, null, queue, acceptor);
+  }
+  
+  /**
+   * Constructs a new consumer, with a provided queue to consume from, and an acceptor to accept 
+   * items.
+   * 
+   * @param threadFactory ThreadFactory to construct new thread for consumer to run on 
+   * @param threadName Name of thread consumer runs on, or {@code null} to generate a default one
+   * @param queue queue to consume from
+   * @param acceptor acceptor to provide consumed items to
+   */
+  public BlockingQueueConsumer(ThreadFactory threadFactory, 
+                               String threadName, 
+                               BlockingQueue<? extends T> queue, 
+                               ConsumerAcceptor<? super T> acceptor) {
+    ArgumentVerifier.assertNotNull(threadFactory, "threadFactory");
+    ArgumentVerifier.assertNotNull(queue, "queue");
+    ArgumentVerifier.assertNotNull(acceptor, "acceptor");
+    
+    this.threadFactory = threadFactory;
+    this.threadName = threadName;
+    this.queue = queue;
+    this.acceptor = acceptor;
+    runningThread = null;
+  }
+  
+  /**
+   * Constructs a new consumer, with a provided queue to consume from, and an acceptor to accept 
+   * items.
+   * 
+   * @deprecated Please use constructor which accepts thread factory
+   * 
+   * @param queue queue to consume from
+   * @param acceptor acceptor to provide consumed items to
+   */
+  @Deprecated
   public BlockingQueueConsumer(BlockingQueue<? extends T> queue,
                                ConsumerAcceptor<? super T> acceptor) {
     ArgumentVerifier.assertNotNull(queue, "queue");
     ArgumentVerifier.assertNotNull(acceptor, "acceptor");
     
+    this.threadFactory = null;
+    this.threadName = null;
     this.queue = queue;
     this.acceptor = acceptor;
-    started = false;
-    stopped = false;
     runningThread = null;
   }
 
-  /**
-   * Getter to check if the consumer is currently running.
-   * 
-   * @return {@code true} if started and has not stopped yet.
-   */
-  public boolean isRunning() {
-    return started && ! stopped;
+  @Override
+  protected void startupService() {
+    if (threadFactory == null) {
+      // TODO - remove this condition in 3.0.0
+      return;
+    }
+    runningThread = threadFactory.newThread(new ConsumerRunnable());
+    if (runningThread.isAlive()) {
+      throw new IllegalThreadStateException();
+    }
+    runningThread.setDaemon(true);
+    if (threadName == null || threadName.isEmpty()) {
+      runningThread.setName(getDefaultThreadName());
+    } else {
+      runningThread.setName(threadName);
+    }
+    runningThread.start();
+  }
+
+  @Override
+  protected void shutdownService() {
+    Thread runningThread = this.runningThread;
+    this.runningThread = null;
+    runningThread.interrupt();
   }
   
   /**
@@ -73,8 +130,11 @@ public class BlockingQueueConsumer<T> {
    * efficiently call into this multiple times, and it will safely guarantee that this will only 
    * be started once.
    * 
+   * @deprecated use the version which provides a ThreadFactory on construction, then call startIfNotStarted()
+   * 
    * @param threadFactory {@link ThreadFactory} to create new thread from
    */
+  @Deprecated
   public void maybeStart(ThreadFactory threadFactory) {
     maybeStart(threadFactory, getDefaultThreadName());
   }
@@ -84,25 +144,14 @@ public class BlockingQueueConsumer<T> {
    * efficiently call into this multiple times, and it will safely guarantee that this will only 
    * be started once.
    * 
+   * @deprecated use the version which provides a ThreadFactory on construction, then call startIfNotStarted()
+   * 
    * @param threadFactory {@link ThreadFactory} to create new thread from
    * @param threadName Name to set the new thread to
    */
+  @Deprecated
   public void maybeStart(ThreadFactory threadFactory, String threadName) {
-    /* this looks like a double check but 
-     * due to being volatile and only changing 
-     * one direction should be safe, as well as the fact 
-     * that started is a primitive (can't be half constructed)
-     */
-    if (started) {
-      return;
-    }
-    
-    synchronized (this) {
-      if (started) {
-        return;
-      }
-
-      started = true;
+    if (startIfNotStarted()) {
       runningThread = threadFactory.newThread(new ConsumerRunnable());
       if (runningThread.isAlive()) {
         throw new IllegalThreadStateException();
@@ -118,26 +167,16 @@ public class BlockingQueueConsumer<T> {
   /**
    * Stops the thread which is consuming from the queue.  Once stopped this instance can no longer 
    * be started.  You must create a new instance.
+   * 
+   * In 3.0.0 this will throw an exception if not started, to maintain the current behavior switch 
+   * to calling {@link #stopIfRunning()}.
    */
   public void stop() {
-    /* this looks like a double check but 
-     * due to being volatile and only changing 
-     * one direction should be safe, as well as the fact 
-     * that started and stopped are primitives
-     */
-    if (stopped || ! started) {
-      return;
-    }
-    
-    synchronized (this) {
-      if (stopped || ! started) {
-        return;
-      }
-
-      stopped = true;
-      Thread runningThread = this.runningThread;
-      this.runningThread = null;
-      runningThread.interrupt();
+    // TODO - remove in 3.0.0
+    if (threadFactory == null) {
+      stopIfRunning();
+    } else {
+      super.stop();
     }
   }
   
@@ -161,13 +200,13 @@ public class BlockingQueueConsumer<T> {
   private class ConsumerRunnable implements Runnable {
     @Override
     public void run() {
-      while (! stopped) {
+      while (runningThread != null) {
         try {
           T next = getNext();
           
           acceptor.acceptConsumedItem(next);
         } catch (InterruptedException e) {
-          stop();
+          stopIfRunning();
           // reset interrupted status
           Thread.currentThread().interrupt();
         } catch (Throwable t) {

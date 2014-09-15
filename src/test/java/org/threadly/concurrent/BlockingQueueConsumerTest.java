@@ -24,12 +24,13 @@ public class BlockingQueueConsumerTest {
   public void setup() {
     queue = new SynchronousQueue<Object>();
     acceptor = new TestAcceptor();
-    queueConsumer = new BlockingQueueConsumer<Object>(queue, acceptor);
+    queueConsumer = new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
+                                                      queue, acceptor);
   }
   
   @After
   public void tearDown() {
-    queueConsumer.stop();
+    queueConsumer.stopIfRunning();
     queue = null;
     acceptor = null;
     queueConsumer = null;
@@ -50,10 +51,30 @@ public class BlockingQueueConsumerTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+    try {
+      new BlockingQueueConsumer<Object>(null, new SynchronousQueue<Object>(), new TestAcceptor());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
+                                        new SynchronousQueue<Object>(), null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
+                                        null, new TestAcceptor());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test
-  public void doubleStartTest() {
+  public void legacyDoubleStartTest() {
     // start queue
     queueConsumer.maybeStart(new ConfigurableThreadFactory());
     
@@ -65,20 +86,33 @@ public class BlockingQueueConsumerTest {
     assertTrue(queueConsumer.isRunning());
   }
   
+  @Test
+  public void doubleStartTest() {
+    // start queue
+    queueConsumer.startIfNotStarted();
+    
+    assertTrue(queueConsumer.isRunning());
+    
+    // attempt to start again
+    queueConsumer.startIfNotStarted();
+    // should still be running without exception
+    assertTrue(queueConsumer.isRunning());
+  }
+  
   @Test (expected = IllegalThreadStateException.class)
-  public void stopFail() {
+  public void startFail() {
     queueConsumer.maybeStart(new StartingThreadFactory());
   }
   
   @Test
   public void doubleStopTest() {
-    queueConsumer.maybeStart(new ConfigurableThreadFactory());
+    queueConsumer.start();
     assertTrue(queueConsumer.isRunning());
     
-    queueConsumer.stop();
+    queueConsumer.stopIfRunning();
     assertFalse(queueConsumer.isRunning());
     
-    queueConsumer.stop();
+    queueConsumer.stopIfRunning();
     assertFalse(queueConsumer.isRunning());
   }
   
@@ -87,7 +121,7 @@ public class BlockingQueueConsumerTest {
     assertFalse(queueConsumer.isRunning());
     
     // start queue
-    queueConsumer.maybeStart(new ConfigurableThreadFactory());
+    queueConsumer.start();
     
     assertTrue(queueConsumer.isRunning());
     
@@ -104,7 +138,8 @@ public class BlockingQueueConsumerTest {
     final TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setInheritableExceptionHandler(teh);
     final Exception e = new Exception();
-    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<Object>(queue, new ConsumerAcceptor<Object>() {
+    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
+                                                                                    queue, new ConsumerAcceptor<Object>() {
       @Override
       public void acceptConsumedItem(Object item) throws Exception {
         throw e;

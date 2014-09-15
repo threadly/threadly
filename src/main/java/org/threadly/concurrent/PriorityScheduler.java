@@ -210,14 +210,18 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     lowPriorityQueue = new DynamicDelayQueue<TaskWrapper>(lowPriorityLock);
     availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
     this.threadFactory = threadFactory;
-    highPriorityConsumer = new TaskConsumer(highPriorityQueue, highPriorityLock, 
+    highPriorityConsumer = new TaskConsumer(threadFactory, 
+                                            QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY, 
+                                            highPriorityQueue, highPriorityLock, 
                                             new ConsumerAcceptor<TaskWrapper>() {
       @Override
       public void acceptConsumedItem(TaskWrapper task) throws InterruptedException {
         runHighPriorityTask(task);
       }
     });
-    lowPriorityConsumer = new TaskConsumer(lowPriorityQueue, lowPriorityLock, 
+    lowPriorityConsumer = new TaskConsumer(threadFactory, 
+                                           QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY, 
+                                           lowPriorityQueue, lowPriorityLock, 
                                            new ConsumerAcceptor<TaskWrapper>() {
       @Override
       public void acceptConsumedItem(TaskWrapper task) throws InterruptedException {
@@ -492,8 +496,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected List<Runnable> clearTaskQueue() {
     synchronized (highPriorityLock) {
       synchronized (lowPriorityLock) {
-        highPriorityConsumer.stop();
-        lowPriorityConsumer.stop();
+        highPriorityConsumer.stopIfRunning();
+        highPriorityConsumer.stopIfRunning();
         List<Runnable> removedTasks = new ArrayList<Runnable>(highPriorityQueue.size() + 
                                                                 lowPriorityQueue.size());
         
@@ -821,8 +825,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     } finally {
       clockWrapper.resumeForcingUpdate();
     }
-    highPriorityConsumer.maybeStart(threadFactory, 
-                                    QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY);
+    highPriorityConsumer.startIfNotStarted();
   }
   
   /**
@@ -837,8 +840,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     } finally {
       clockWrapper.resumeForcingUpdate();
     }
-    lowPriorityConsumer.maybeStart(threadFactory, 
-                                   QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY);
+    lowPriorityConsumer.startIfNotStarted();
   }
   
   /**
@@ -1020,11 +1022,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       /* we check running around workersLock since we want to make sure 
        * we don't decrement the pool size more than once for a single worker
        */
-      if (w.running) {
+      if (w.isRunning()) {
         currentPoolSize--;
         // it may not always be here, but it sometimes can (for example when a worker is interrupted)
         availableWorkers.remove(w);
         w.stop(); // will set running to false for worker
+      } else {
+        throw new IllegalStateException();
       }
     }
   }
@@ -1060,10 +1064,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected class TaskConsumer extends BlockingQueueConsumer<TaskWrapper> {
     private final Object queueLock;
     
-    public TaskConsumer(DynamicDelayQueue<TaskWrapper> queue,
+    public TaskConsumer(ThreadFactory threadFactory, String threadName, 
+                        DynamicDelayQueue<TaskWrapper> queue,
                         Object queueLock, 
                         ConsumerAcceptor<TaskWrapper> taskAcceptor) {
-      super(queue, taskAcceptor);
+      super(threadFactory, threadName, queue, taskAcceptor);
       
       this.queueLock = queueLock;
     }
@@ -1090,10 +1095,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected class Worker implements Runnable {
+  protected class Worker extends AbstractService implements Runnable {
     protected final Thread thread;
     private volatile long lastRunTime;
-    private volatile boolean running;
     private volatile Runnable nextTask;
     
     protected Worker() {
@@ -1101,38 +1105,18 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       if (thread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      running = false;
       lastRunTime = Clock.lastKnownTimeMillis();
       nextTask = null;
     }
 
-    /**
-     * Starts the thread for the worker to execute tasks on.
-     */
-    public void start() {
-      if (running) {
-        throw new IllegalStateException();
-      } else {
-        running = true;
-        thread.start();
-      }
+    @Override
+    protected void startupService() {
+      thread.start();
     }
-    
-    /**
-     * Shuts down the worker, if the worker is currently running a task that task will complete 
-     * before shutdown finishes.
-     * 
-     * Currently this is expected that this is only called from 
-     * {@link PriorityScheduler#killWorker(Worker)}, to ensure we don't leak resources.
-     */
-    public void stop() {
-      if (! running) {
-        throw new IllegalStateException();
-      } else {
-        running = false;
-        
-        LockSupport.unpark(thread);
-      }
+
+    @Override
+    protected void shutdownService() {
+      LockSupport.unpark(thread);
     }
     
     /**
@@ -1143,7 +1127,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * @param task Task to run on this workers thread
      */
     public void nextTask(Runnable task) {
-      if (! running) {
+      if (! isRunning()) {
         throw new IllegalStateException();
       } else if (nextTask != null) {
         throw new IllegalStateException();
@@ -1160,7 +1144,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     private void blockTillNextTask() {
       boolean checkedInterrupted = false;
-      while (nextTask == null && running) {
+      while (nextTask == null && isRunning()) {
         LockSupport.park(this);
 
         checkInterrupted();
@@ -1191,7 +1175,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     
     @Override
     public void run() {
-      while (running) {
+      // will break in finally block if shutdown
+      while (true) {
         try {
           blockTillNextTask();
           
@@ -1202,10 +1187,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           ExceptionUtils.handleException(t);
         } finally {
           nextTask = null;
-          if (running) {
+          if (isRunning()) {
             // only check if still running, otherwise worker has already been killed
             lastRunTime = Clock.lastKnownTimeMillis();
             workerDone(this);
+          } else {
+            break;
           }
         }
       }
