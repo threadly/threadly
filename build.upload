@@ -121,8 +121,8 @@ uploadArchives {
  
         licenses {
           license {
-            name 'GNU LESSER GENERAL PUBLIC LICENSE (LGPLv3)'
-            url 'http://www.gnu.org/licenses/lgpl-3.0.txt'
+            name 'Mozilla Public License Version 2.0'
+            url 'https://www.mozilla.org/MPL/2.0/'
             distribution 'repo'
           }
         }
