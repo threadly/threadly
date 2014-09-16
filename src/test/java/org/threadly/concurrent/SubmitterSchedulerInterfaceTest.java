@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -94,6 +95,39 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       TestRunnable tr = new TestRunnable();
       scheduler.schedule(tr, 0);
       tr.blockTillStarted();
+      assertEquals(1, tr.getRunCount());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void submitScheduledRunnableNoDelayTest() throws InterruptedException, ExecutionException {
+    SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
+    try {
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      
+      TestRunnable tr = new TestRunnable();
+      ListenableFuture<?> f = scheduler.submitScheduled(tr, 0);
+      assertNotNull(f);
+      tr.blockTillFinished();
+      assertEquals(1, tr.getRunCount());
+      assertNull(f.get());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void submitScheduledCallableNoDelayTest() throws InterruptedException, ExecutionException {
+    SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
+    try {
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      
+      TestCallable tc = new TestCallable(0);
+      ListenableFuture<?> f = scheduler.submitScheduled(tc, 0);
+      assertNotNull(f);
+      assertTrue(tc.getReturnedResult() == f.get());
     } finally {
       factory.shutdown();
     }

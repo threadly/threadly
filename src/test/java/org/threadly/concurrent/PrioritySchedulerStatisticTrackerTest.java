@@ -37,6 +37,42 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   }
   
   @Test
+  public void constructorNullFactoryTest() {
+    PriorityScheduler ps = new PrioritySchedulerStatisticTracker(1, 1, 1, TaskPriority.High, 1, null);
+    // should be set with default
+    assertNotNull(ps.threadFactory);
+  }
+  
+  @SuppressWarnings("unused")
+  @Test
+  public void constructorFail() {
+    try {
+      new PrioritySchedulerStatisticTracker(0, 1, 1, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PrioritySchedulerStatisticTracker(2, 1, 1, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PrioritySchedulerStatisticTracker(1, 1, -1, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PrioritySchedulerStatisticTracker(1, 1, 1, TaskPriority.High, -1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
   public void removeHighPriorityCallableTest() {
     removeCallableTest(TaskPriority.High);
   }

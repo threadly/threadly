@@ -44,9 +44,8 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
       Iterator<PriorityScheduler> it = executors.iterator();
       while (it.hasNext()) {
         it.next().shutdownNow();
-        it.remove();
       }
+      executors.clear();
     }
   }
-  
 }

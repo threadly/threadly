@@ -48,19 +48,19 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
       assertTrue(scheduler.remove(tr));
       assertFalse(scheduler.remove(tr));
       
-      scheduler.schedule(tr, SCHEDULE_DELAY);
+      scheduler.schedule(tr, 1000 * 10);
       assertTrue(scheduler.remove(tr));
       assertFalse(scheduler.remove(tr));
       
-      scheduler.submitScheduled(tr, SCHEDULE_DELAY);
+      scheduler.submitScheduled(tr, 1000 * 10);
       assertTrue(scheduler.remove(tr));
       assertFalse(scheduler.remove(tr));
       
-      scheduler.submitScheduled(tr, new Object(), SCHEDULE_DELAY);
+      scheduler.submitScheduled(tr, new Object(), 1000 * 10);
       assertTrue(scheduler.remove(tr));
       assertFalse(scheduler.remove(tr));
       
-      scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY);
+      scheduler.scheduleWithFixedDelay(tr, 0, 1000 * 10);
       assertTrue(scheduler.remove(tr));
       assertFalse(scheduler.remove(tr));
     } finally {

@@ -118,6 +118,13 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   @Test
+  public void constructorNullFactoryTest() {
+    PriorityScheduler ps = new PriorityScheduler(1, 1, 1, TaskPriority.High, 1, null);
+    // should be set with default
+    assertNotNull(ps.threadFactory);
+  }
+  
+  @Test
   public void makeWithDefaultPriorityTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     TaskPriority originalPriority = TaskPriority.Low;
@@ -704,16 +711,16 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   @Test
-  public void removeHighPriorityRunnableTest() {
-    removeRunnableTest(TaskPriority.High);
+  public void removeHighPriorityRecurringRunnableTest() {
+    removeRecurringRunnableTest(TaskPriority.High);
   }
   
   @Test
-  public void removeLowPriorityRunnableTest() {
-    removeRunnableTest(TaskPriority.Low);
+  public void removeLowPriorityRecurringRunnableTest() {
+    removeRecurringRunnableTest(TaskPriority.Low);
   }
   
-  private void removeRunnableTest(TaskPriority priority) {
+  private void removeRecurringRunnableTest(TaskPriority priority) {
     int runFrequency = 1;
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
@@ -738,6 +745,31 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
                  removedTask.getRunCount() == runCount + 1);
       
       assertTrue(keptTask.getRunCount() >= keptRunCount);
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void removeHighPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.High);
+  }
+  
+  @Test
+  public void removeLowPriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.Low);
+  }
+  
+  private void removeRunnableTest(TaskPriority priority) {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      TestRunnable removedTask = new TestRunnable();
+      scheduler.submitScheduled(removedTask, 10 * 1000, priority);
+      
+      assertFalse(scheduler.remove(new TestRunnable()));
+      
+      assertTrue(scheduler.remove(removedTask));
     } finally {
       factory.shutdown();
     }
@@ -878,7 +910,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
         // expected
       }
       try {
-        scheduler.schedule(new TestRunnable(), 1000);
+        scheduler.schedule(new TestRunnable(), 1000, null);
         fail("Execption should have been thrown");
       } catch (IllegalStateException e) {
         // expected
@@ -951,7 +983,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
         // expected
       }
       try {
-        scheduler.schedule(new TestRunnable(), 1000);
+        scheduler.schedule(new TestRunnable(), 1000, null);
         fail("Execption should have been thrown");
       } catch (IllegalStateException e) {
         // expected

@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class SettableListenableFutureTest {
@@ -130,6 +131,33 @@ public class SettableListenableFutureTest {
     
     assertEquals(1, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void addAsCallbackResultTest() throws InterruptedException, ExecutionException {
+    String testResult = StringUtils.randomString(5);
+    ListenableFuture<String> resultFuture = new ImmediateResultListenableFuture<String>(testResult);
+    
+    resultFuture.addCallback(slf);
+    
+    assertTrue(slf.isDone());
+    assertEquals(testResult, slf.get());
+  }
+  
+  @Test
+  public void addAsCallbackFailureTest() throws InterruptedException {
+    Exception e = new Exception();
+    ListenableFuture<String> failureFuture = new ImmediateFailureListenableFuture<String>(e);
+    
+    failureFuture.addCallback(slf);
+    
+    assertTrue(slf.isDone());
+    try {
+      slf.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException ee) {
+      assertTrue(ee.getCause() == e);
+    }
   }
   
   @Test

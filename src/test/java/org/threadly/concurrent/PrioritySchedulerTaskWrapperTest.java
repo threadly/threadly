@@ -32,6 +32,15 @@ public class PrioritySchedulerTaskWrapperTest {
     assertEquals(0, tw10.compareTo(new TestWrapper(10)));
   }
   
+  @Test
+  public void toStringTest() {
+    TestWrapper tw = new TestWrapper();
+    String result = tw.toString();
+    assertNotNull(result);
+    assertFalse(result.isEmpty());
+    assertEquals(tw.task.toString(), result);
+  }
+  
   private class TestWrapper extends TaskWrapper {
     private final int delayInMs;
     @SuppressWarnings("unused")
@@ -77,6 +86,5 @@ public class PrioritySchedulerTaskWrapperTest {
     public void executing() {
       executingCalled = true;
     }
-    
   }
 }

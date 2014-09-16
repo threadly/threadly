@@ -489,7 +489,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Clears all waiting tasks (low and high priority).
+   * Stops task consumers, and clears all waiting tasks (low and high priority).
    * 
    * @return A list of Runnables that had been removed from the queues
    */
@@ -1095,10 +1095,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
+  // if functions are added here, we need to add them to the overriding wrapper in StrictPriorityScheduler
   protected class Worker extends AbstractService implements Runnable {
     protected final Thread thread;
-    private volatile long lastRunTime;
-    private volatile Runnable nextTask;
+    protected volatile long lastRunTime;
+    protected volatile Runnable nextTask;
     
     protected Worker() {
       thread = threadFactory.newThread(this);
@@ -1127,12 +1128,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * @param task Task to run on this workers thread
      */
     public void nextTask(Runnable task) {
-      if (! isRunning()) {
-        throw new IllegalStateException();
-      } else if (nextTask != null) {
-        throw new IllegalStateException();
-      }
-      
       nextTask = task;
 
       LockSupport.unpark(thread);
