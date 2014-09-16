@@ -1017,19 +1017,20 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * 
    * @param w worker to shutdown
    */
-  private void killWorker(Worker w) {
+  protected void killWorker(Worker w) {
+    // IMPORTANT** if this lock is removed, it is important to read the comment bellow
     synchronized (workersLock) {
-      /* we check running around workersLock since we want to make sure 
-       * we don't decrement the pool size more than once for a single worker
+      /* this will throw an exception if the worker has already stopped, 
+       * we want to ensure the pool size is not decremented more than once for a given worker.
+       * 
+       * We are able to stop first, because we are holding the workers lock.  In the future if we 
+       * try to reduce locking around here, we need to ensure that the worker is removed from the 
+       * available workers BEFORE stopping.
        */
-      if (w.isRunning()) {
-        currentPoolSize--;
-        // it may not always be here, but it sometimes can (for example when a worker is interrupted)
-        availableWorkers.remove(w);
-        w.stop(); // will set running to false for worker
-      } else {
-        throw new IllegalStateException();
-      }
+      w.stop();
+      currentPoolSize--;
+      // it may not always be here, but it sometimes can (for example when a worker is interrupted)
+      availableWorkers.remove(w);
     }
   }
   
