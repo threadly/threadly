@@ -3,7 +3,6 @@ package org.threadly.test.concurrent;
 import java.util.concurrent.TimeoutException;
 
 import org.threadly.util.Clock;
-import org.threadly.util.StringUtils;
 
 /**
  * <p>A simple class for verifying multi-threaded unit tests.  If any thread has a failed a failed 
@@ -201,7 +200,7 @@ public class AsyncVerifier {
    * as well was any blocking thread waiting at {@link #waitForTest()}.
    */
   public void fail() {
-    fail(StringUtils.EMPTY);
+    fail("");
   }
   
   /**

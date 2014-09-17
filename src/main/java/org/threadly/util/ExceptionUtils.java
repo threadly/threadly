@@ -160,7 +160,7 @@ public class ExceptionUtils {
    */
   public static String stackToString(Throwable t) {
     if (t == null) {
-      return StringUtils.EMPTY;
+      return "";
     }
     
     String msg = t.getMessage();

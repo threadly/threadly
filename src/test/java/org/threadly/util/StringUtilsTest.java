@@ -8,7 +8,8 @@ import org.junit.Test;
 public class StringUtilsTest {
   @Test
   public void makeNonNullTest() {
-    assertTrue(StringUtils.makeNonNull(null) == StringUtils.EMPTY);
+    assertNotNull(StringUtils.makeNonNull(null));
+    assertTrue(StringUtils.makeNonNull(null).isEmpty());
     
     String testStr = "foo";
     assertTrue(StringUtils.makeNonNull(testStr) == testStr);
