@@ -18,7 +18,7 @@ dependencies {
 }
 
 compileJava {
-  options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
+  options.compilerArgs << "-Xlint:all" << "-Werror"
 }
 
 compileTestJava {

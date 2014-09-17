@@ -76,35 +76,9 @@ public class BlockingQueueConsumer<T> extends AbstractService {
     this.acceptor = acceptor;
     runningThread = null;
   }
-  
-  /**
-   * Constructs a new consumer, with a provided queue to consume from, and an acceptor to accept 
-   * items.
-   * 
-   * @deprecated Please use constructor which accepts thread factory
-   * 
-   * @param queue queue to consume from
-   * @param acceptor acceptor to provide consumed items to
-   */
-  @Deprecated
-  public BlockingQueueConsumer(BlockingQueue<? extends T> queue,
-                               ConsumerAcceptor<? super T> acceptor) {
-    ArgumentVerifier.assertNotNull(queue, "queue");
-    ArgumentVerifier.assertNotNull(acceptor, "acceptor");
-    
-    this.threadFactory = null;
-    this.threadName = null;
-    this.queue = queue;
-    this.acceptor = acceptor;
-    runningThread = null;
-  }
 
   @Override
   protected void startupService() {
-    if (threadFactory == null) {
-      // TODO - remove this condition in 3.0.0
-      return;
-    }
     runningThread = threadFactory.newThread(new ConsumerRunnable());
     if (runningThread.isAlive()) {
       throw new IllegalThreadStateException();
@@ -123,61 +97,6 @@ public class BlockingQueueConsumer<T> extends AbstractService {
     Thread runningThread = this.runningThread;
     this.runningThread = null;
     runningThread.interrupt();
-  }
-  
-  /**
-   * Will start the consumer if it is not already started.  This is designed so you can 
-   * efficiently call into this multiple times, and it will safely guarantee that this will only 
-   * be started once.
-   * 
-   * @deprecated use the version which provides a ThreadFactory on construction, then call startIfNotStarted()
-   * 
-   * @param threadFactory {@link ThreadFactory} to create new thread from
-   */
-  @Deprecated
-  public void maybeStart(ThreadFactory threadFactory) {
-    maybeStart(threadFactory, getDefaultThreadName());
-  }
-  
-  /**
-   * Will start the consumer if it is not already started.  This is designed so you can 
-   * efficiently call into this multiple times, and it will safely guarantee that this will only 
-   * be started once.
-   * 
-   * @deprecated use the version which provides a ThreadFactory on construction, then call startIfNotStarted()
-   * 
-   * @param threadFactory {@link ThreadFactory} to create new thread from
-   * @param threadName Name to set the new thread to
-   */
-  @Deprecated
-  public void maybeStart(ThreadFactory threadFactory, String threadName) {
-    if (startIfNotStarted()) {
-      runningThread = threadFactory.newThread(new ConsumerRunnable());
-      if (runningThread.isAlive()) {
-        throw new IllegalThreadStateException();
-      }
-      runningThread.setDaemon(true);
-      if (threadName != null && threadName.length() > 0) {
-        runningThread.setName(threadName);
-      }
-      runningThread.start();
-    }
-  }
-  
-  /**
-   * Stops the thread which is consuming from the queue.  Once stopped this instance can no longer 
-   * be started.  You must create a new instance.
-   * 
-   * In 3.0.0 this will throw an exception if not started, to maintain the current behavior switch 
-   * to calling {@link #stopIfRunning()}.
-   */
-  public void stop() {
-    // TODO - remove in 3.0.0
-    if (threadFactory == null) {
-      stopIfRunning();
-    } else {
-      super.stop();
-    }
   }
   
   /**
