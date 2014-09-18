@@ -1,7 +1,7 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.TEST_QTY;
+import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -1052,6 +1052,32 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
         }
       }
     } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void makeNewWorkerAfterLowPriorityWaitTest() {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 2, 1000, 
+                                                                TaskPriority.High, 
+                                                                DELAY_TIME);
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      scheduler.execute(btr);
+      btr.blockTillStarted();
+      
+      assertEquals(1, scheduler.getCurrentPoolSize());
+      
+      TestRunnable lowPriorityRunnable = new TestRunnable();
+      scheduler.execute(lowPriorityRunnable, TaskPriority.Low);
+      
+      lowPriorityRunnable.blockTillFinished();
+      btr.unblock();
+      assertTrue(lowPriorityRunnable.getDelayTillFirstRun() >= DELAY_TIME);
+      assertEquals(2, scheduler.getCurrentPoolSize());
+    } finally {
+      btr.unblock();
       factory.shutdown();
     }
   }

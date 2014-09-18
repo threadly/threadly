@@ -178,7 +178,7 @@ public abstract class ScheduledExecutorServiceTest {
       new Thread(new Runnable() {
         @Override
         public void run() {
-          TestUtils.sleep(SCHEDULE_DELAY);
+          TestUtils.sleep(DELAY_TIME);
           f.cancel(true);
         }
       }).start();
@@ -287,10 +287,10 @@ public abstract class ScheduledExecutorServiceTest {
     for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = new TestRunnable();
       if (fixedDelay) {
-        scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY, 
+        scheduler.scheduleWithFixedDelay(tr, 0, DELAY_TIME, 
                                          TimeUnit.MILLISECONDS);
       } else {
-        scheduler.scheduleAtFixedRate(tr, 0, SCHEDULE_DELAY, 
+        scheduler.scheduleAtFixedRate(tr, 0, DELAY_TIME, 
                                       TimeUnit.MILLISECONDS);
       }
       runnables.add(tr);
@@ -302,13 +302,13 @@ public abstract class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillFinished((TEST_QTY * (SCHEDULE_DELAY * CYCLE_COUNT)) + 2000 + 10000000, CYCLE_COUNT);
+      tr.blockTillFinished((TEST_QTY * (DELAY_TIME * CYCLE_COUNT)) + 2000 + 10000000, CYCLE_COUNT);
       long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
-      assertTrue(executionDelay >= SCHEDULE_DELAY * (CYCLE_COUNT - 1));
+      assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
       
       if (fixedDelay) {
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (SCHEDULE_DELAY * (CYCLE_COUNT - 1)) + 2000);
+        assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
       }
     }
   }
@@ -347,7 +347,7 @@ public abstract class ScheduledExecutorServiceTest {
       tr.blockTillFinished(1000 * 10, runCountTillException);
       
       // wait a little extra to give time for additional runs if possible
-      TestUtils.sleep(SCHEDULE_DELAY);
+      TestUtils.sleep(DELAY_TIME);
       
       assertEquals(runCountTillException, tr.getRunCount());
     } finally {
@@ -371,8 +371,8 @@ public abstract class ScheduledExecutorServiceTest {
   public void scheduleAtFixedRateConcurrentTest() {
     ScheduledExecutorService scheduler = makeScheduler(2);
     try {
-      final int periodInMillis = SCHEDULE_DELAY;
-      final int runnableSleepTime = SCHEDULE_DELAY * 2;
+      final int periodInMillis = DELAY_TIME;
+      final int runnableSleepTime = DELAY_TIME * 2;
       
       TestRunnable tr = new TestRunnable(runnableSleepTime);
       

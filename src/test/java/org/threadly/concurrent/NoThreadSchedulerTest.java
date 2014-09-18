@@ -178,7 +178,7 @@ public class NoThreadSchedulerTest {
   private static void scheduleRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
     TestRunnable tr = new TestRunnable();
     long scheduleTime = System.currentTimeMillis();
-    scheduler.schedule(tr, SCHEDULE_DELAY);
+    scheduler.schedule(tr, DELAY_TIME);
     
     int runCount = 0;
     while (runCount == 0) {
@@ -189,7 +189,7 @@ public class NoThreadSchedulerTest {
     assertEquals(1, runCount);
     
     assertTrue(tr.ranOnce());
-    assertTrue((runTime - scheduleTime) >= SCHEDULE_DELAY);
+    assertTrue((runTime - scheduleTime) >= DELAY_TIME);
   }
   
   @Test
@@ -200,7 +200,7 @@ public class NoThreadSchedulerTest {
   
   private static void submitScheduledRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
     TestRunnable tr = new TestRunnable();
-    ListenableFuture<?> future = scheduler.submitScheduled(tr, SCHEDULE_DELAY);
+    ListenableFuture<?> future = scheduler.submitScheduled(tr, DELAY_TIME);
     
     int runCount = 0;
     while (runCount == 0) {
@@ -209,7 +209,7 @@ public class NoThreadSchedulerTest {
     
     assertEquals(1, runCount);
     
-    assertTrue(tr.getDelayTillFirstRun() >= SCHEDULE_DELAY);
+    assertTrue(tr.getDelayTillFirstRun() >= DELAY_TIME);
     assertTrue(future.isDone());
   }
   
@@ -242,7 +242,7 @@ public class NoThreadSchedulerTest {
   
   private static void submitScheduledCallableTest(NoThreadScheduler scheduler) throws InterruptedException, ExecutionException {
     TestCallable tc = new TestCallable();
-    ListenableFuture<?> future = scheduler.submitScheduled(tc, SCHEDULE_DELAY);
+    ListenableFuture<?> future = scheduler.submitScheduled(tc, DELAY_TIME);
     
     int runCount = 0;
     while (runCount == 0) {
@@ -251,7 +251,7 @@ public class NoThreadSchedulerTest {
     
     assertEquals(1, runCount);
     
-    assertTrue(tc.getDelayTillFirstRun() >= SCHEDULE_DELAY);
+    assertTrue(tc.getDelayTillFirstRun() >= DELAY_TIME);
     assertTrue(future.isDone());
     assertTrue(future.get() == tc.getReturnedResult());
   }
@@ -360,19 +360,19 @@ public class NoThreadSchedulerTest {
     assertTrue(scheduler.remove(tr));
     assertFalse(scheduler.remove(tr));
     
-    scheduler.schedule(tr, SCHEDULE_DELAY);
+    scheduler.schedule(tr, DELAY_TIME);
     assertTrue(scheduler.remove(tr));
     assertFalse(scheduler.remove(tr));
     
-    scheduler.submitScheduled(tr, SCHEDULE_DELAY);
+    scheduler.submitScheduled(tr, DELAY_TIME);
     assertTrue(scheduler.remove(tr));
     assertFalse(scheduler.remove(tr));
     
-    scheduler.submitScheduled(tr, new Object(), SCHEDULE_DELAY);
+    scheduler.submitScheduled(tr, new Object(), DELAY_TIME);
     assertTrue(scheduler.remove(tr));
     assertFalse(scheduler.remove(tr));
     
-    scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY);
+    scheduler.scheduleWithFixedDelay(tr, 0, DELAY_TIME);
     assertTrue(scheduler.remove(tr));
     assertFalse(scheduler.remove(tr));
   }
@@ -384,11 +384,11 @@ public class NoThreadSchedulerTest {
     
     assertFalse(blockingScheduler.remove(immediateRun));
     
-    blockingScheduler.scheduleWithFixedDelay(immediateRun, 0, SCHEDULE_DELAY);
+    blockingScheduler.scheduleWithFixedDelay(immediateRun, 0, DELAY_TIME);
     assertTrue(blockingScheduler.remove(immediateRun));
     
-    blockingScheduler.scheduleWithFixedDelay(immediateRun, 0, SCHEDULE_DELAY);
-    blockingScheduler.scheduleWithFixedDelay(initialDelay, SCHEDULE_DELAY, SCHEDULE_DELAY);
+    blockingScheduler.scheduleWithFixedDelay(immediateRun, 0, DELAY_TIME);
+    blockingScheduler.scheduleWithFixedDelay(initialDelay, DELAY_TIME, DELAY_TIME);
     
     assertEquals(1, blockingScheduler.tick());
     
@@ -414,7 +414,7 @@ public class NoThreadSchedulerTest {
     assertTrue(blockingScheduler.remove(immediateRun));
     assertFalse(blockingScheduler.remove(immediateRun));
     
-    blockingScheduler.submitScheduled(delayRun, SCHEDULE_DELAY);
+    blockingScheduler.submitScheduled(delayRun, DELAY_TIME);
     
     assertEquals(1, blockingScheduler.tick());
     
@@ -485,12 +485,12 @@ public class NoThreadSchedulerTest {
       public void handleRunStart() {
         try {
           long startTime = System.currentTimeMillis();
-          blockingScheduler.schedule(testTask, SCHEDULE_DELAY);
+          blockingScheduler.schedule(testTask, DELAY_TIME);
           int runCount = blockingScheduler.tick();  // should block
           long finishTime = System.currentTimeMillis();
           
           av.assertEquals(1, runCount);
-          av.assertTrue(finishTime - startTime >= SCHEDULE_DELAY);
+          av.assertTrue(finishTime - startTime >= DELAY_TIME);
           av.assertTrue(testTask.ranOnce());
           av.signalComplete();
         } catch (InterruptedException e) {

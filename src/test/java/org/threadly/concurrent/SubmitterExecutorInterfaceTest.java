@@ -75,9 +75,8 @@ public abstract class SubmitterExecutorInterfaceTest {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       final AsyncVerifier av = new AsyncVerifier();
       TestRunnable lastRun = null;
-      long startTime = System.currentTimeMillis();
       int testQty = 0;
-      while (testQty < TEST_QTY || System.currentTimeMillis() - startTime < 10) {
+      while (testQty < TEST_QTY) {
         testQty++;
         final TestRunnable fLastRun = lastRun;
         lastRun = new TestRunnable() {

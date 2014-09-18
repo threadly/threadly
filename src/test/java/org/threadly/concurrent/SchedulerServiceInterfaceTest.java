@@ -92,7 +92,7 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
       assertTrue(scheduler.remove(tc));
       assertFalse(scheduler.remove(tc));
       
-      scheduler.submitScheduled(tc, SCHEDULE_DELAY);
+      scheduler.submitScheduled(tc, DELAY_TIME);
       assertTrue(scheduler.remove(tc));
       assertFalse(scheduler.remove(tc));
     } finally {

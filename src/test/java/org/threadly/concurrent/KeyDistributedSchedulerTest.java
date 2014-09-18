@@ -219,7 +219,7 @@ public class KeyDistributedSchedulerTest {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
-        distributor.scheduleTask(key, tdr, SCHEDULE_DELAY);
+        distributor.scheduleTask(key, tdr, DELAY_TIME);
       }
     });
     
@@ -228,7 +228,7 @@ public class KeyDistributedSchedulerTest {
       TDRunnable tr = it.next();
       tr.blockTillFinished(1000);
       assertEquals(1, tr.getRunCount()); // verify each only ran once
-      assertTrue(tr.getDelayTillFirstRun() >= SCHEDULE_DELAY);
+      assertTrue(tr.getDelayTillFirstRun() >= DELAY_TIME);
     }
   }
   
@@ -304,15 +304,14 @@ public class KeyDistributedSchedulerTest {
       int initialDelay = 0;
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
-        distributor.scheduleTaskWithFixedDelay(key, tdr, initialDelay++, 
-                                               SCHEDULE_DELAY);
+        distributor.scheduleTaskWithFixedDelay(key, tdr, initialDelay++, DELAY_TIME);
       }
     });
     
     Iterator<TDRunnable> it = runs.iterator();
     while (it.hasNext()) {
       TDRunnable tr = it.next();
-      assertTrue(tr.getDelayTillRun(2) >= SCHEDULE_DELAY);
+      assertTrue(tr.getDelayTillRun(2) >= DELAY_TIME);
       tr.blockTillFinished(10 * 1000, 3);
       assertFalse(tr.ranConcurrently());  // verify that it never run in parallel
     }

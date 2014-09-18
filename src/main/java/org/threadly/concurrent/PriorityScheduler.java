@@ -970,20 +970,21 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         }
         
         if (! shutdownFinishing) {  // check again that we are still running
-          long waitTime;
           if (currentPoolSize >= maxPoolSize) {
-            waitTime = Long.MAX_VALUE;
+            w = getExistingWorker(Long.MAX_VALUE);
+          } else if (currentPoolSize == 0) {
+            // first task is low priority, we obviously wont get any workers if we wait, so just make one
+            w = makeNewWorker();
           } else {
-            waitTime = maxWaitForLowPriorityInMs;
-          }
-          w = getExistingWorker(waitTime);
-          if (w == null) {
-            // this means we expired past our wait time, so create a worker if we can
-            if (currentPoolSize >= maxPoolSize) {
-              // more workers were created while waiting, now have reached our max
-              w = getExistingWorker(Long.MAX_VALUE);
-            } else {
-              w = makeNewWorker();
+            w = getExistingWorker(maxWaitForLowPriorityInMs);
+            if (w == null) {
+              // this means we expired past our wait time, so create a worker if we can
+              if (currentPoolSize >= maxPoolSize) {
+                // more workers were created while waiting, now have reached our max
+                w = getExistingWorker(Long.MAX_VALUE);
+              } else {
+                w = makeNewWorker();
+              }
             }
           }
         }

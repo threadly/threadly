@@ -188,7 +188,7 @@ public class SettableListenableFutureTest {
         public void run() {
           slf.setResult(testResult);
         }
-      }, SCHEDULE_DELAY);
+      }, DELAY_TIME);
       
       assertTrue(slf.get() == testResult);
     } finally {
@@ -210,9 +210,9 @@ public class SettableListenableFutureTest {
         public void run() {
           slf.setResult(testResult);
         }
-      }, SCHEDULE_DELAY);
+      }, DELAY_TIME);
       
-      assertTrue(slf.get(SCHEDULE_DELAY * 10, TimeUnit.MILLISECONDS) == testResult);
+      assertTrue(slf.get(DELAY_TIME * 10, TimeUnit.MILLISECONDS) == testResult);
     } finally {
       scheduler.shutdownNow();
     }

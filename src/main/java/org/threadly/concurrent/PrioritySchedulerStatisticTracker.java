@@ -288,20 +288,26 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor
               trimList(lowPriorityWorkerAvailable);
             }
             w = getExistingWorker(Long.MAX_VALUE);
+          } else if (getCurrentPoolSize() == 0) {
+            synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
+              lowPriorityWorkerAvailable.add(false);
+              trimList(lowPriorityWorkerAvailable);
+            }
+            w = makeNewWorker();
           } else {
             w = getExistingWorker(getMaxWaitForLowPriority());
             synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
               lowPriorityWorkerAvailable.add(w != null);
               trimList(lowPriorityWorkerAvailable);
             }
-          }
-          if (w == null) {
-            // this means we expired past our wait time, so create a worker if we can
-            if (getCurrentPoolSize() >= getMaxPoolSize()) {
-              // more workers were created while waiting, now have reached our max
-              w = getExistingWorker(Long.MAX_VALUE);
-            } else {
-              w = makeNewWorker();
+            if (w == null) {
+              // this means we expired past our wait time, so create a worker if we can
+              if (getCurrentPoolSize() >= getMaxPoolSize()) {
+                // more workers were created while waiting, now have reached our max
+                w = getExistingWorker(Long.MAX_VALUE);
+              } else {
+                w = makeNewWorker();
+              }
             }
           }
         }

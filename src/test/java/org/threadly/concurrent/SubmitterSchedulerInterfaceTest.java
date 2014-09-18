@@ -67,7 +67,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        scheduler.schedule(tr, SCHEDULE_DELAY);
+        scheduler.schedule(tr, DELAY_TIME);
         runnables.add(tr);
       }
       
@@ -76,9 +76,9 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       while (it.hasNext()) {
         TestRunnable tr = it.next();
         long executionDelay = tr.getDelayTillFirstRun();
-        assertTrue(executionDelay >= SCHEDULE_DELAY);
+        assertTrue(executionDelay >= DELAY_TIME);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));
+        assertTrue(executionDelay <= (DELAY_TIME + 2000));
         assertEquals(1, tr.getRunCount());
       }
     } finally {
@@ -174,9 +174,9 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         if (initialDelay) {
-          scheduler.scheduleWithFixedDelay(tr, SCHEDULE_DELAY, SCHEDULE_DELAY);
+          scheduler.scheduleWithFixedDelay(tr, DELAY_TIME, DELAY_TIME);
         } else {
-          scheduler.scheduleWithFixedDelay(tr, 0, SCHEDULE_DELAY);
+          scheduler.scheduleWithFixedDelay(tr, 0, DELAY_TIME);
         }
         runnables.add(tr);
       }
@@ -185,19 +185,19 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       Iterator<TestRunnable> it = runnables.iterator();
       while (it.hasNext()) {
         TestRunnable tr = it.next();
-        tr.blockTillFinished((TEST_QTY * (SCHEDULE_DELAY * (CYCLE_COUNT + 1))) + 2000, CYCLE_COUNT);
+        tr.blockTillFinished((TEST_QTY * (DELAY_TIME * (CYCLE_COUNT + 1))) + 2000, CYCLE_COUNT);
         if (initialDelay) {
           long executionDelay = tr.getDelayTillFirstRun();
-          assertTrue(executionDelay >= SCHEDULE_DELAY);
+          assertTrue(executionDelay >= DELAY_TIME);
           // should be very timely with a core pool size that matches runnable count
-          assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));
+          assertTrue(executionDelay <= (DELAY_TIME + 2000));
         }
         
         // now verify recurring delay
         long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
-        assertTrue(executionDelay >= SCHEDULE_DELAY * (CYCLE_COUNT - 1));
+        assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (SCHEDULE_DELAY * (CYCLE_COUNT - 1)) + 2000);
+        assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
       }
     } finally {
       factory.shutdown();
@@ -242,7 +242,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        Future<?> future = scheduler.submitScheduled(tr, SCHEDULE_DELAY);
+        Future<?> future = scheduler.submitScheduled(tr, DELAY_TIME);
         assertNotNull(future);
         runnables.add(tr);
         futures.add(future);
@@ -253,9 +253,9 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       while (it.hasNext()) {
         TestRunnable tr = it.next();
         long executionDelay = tr.getDelayTillFirstRun();
-        assertTrue(executionDelay >= SCHEDULE_DELAY);
+        assertTrue(executionDelay >= DELAY_TIME);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));  
+        assertTrue(executionDelay <= (DELAY_TIME + 2000));  
         assertEquals(1, tr.getRunCount());
       }
       
@@ -281,7 +281,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        Future<TestRunnable> future = scheduler.submitScheduled(tr, tr, SCHEDULE_DELAY);
+        Future<TestRunnable> future = scheduler.submitScheduled(tr, tr, DELAY_TIME);
         assertNotNull(future);
         runnables.add(tr);
         futures.add(future);
@@ -292,9 +292,9 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       while (it.hasNext()) {
         TestRunnable tr = it.next();
         long executionDelay = tr.getDelayTillFirstRun();
-        assertTrue(executionDelay >= SCHEDULE_DELAY);
+        assertTrue(executionDelay >= DELAY_TIME);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));  
+        assertTrue(executionDelay <= (DELAY_TIME + 2000));  
         assertEquals(1, tr.getRunCount());
       }
       
@@ -320,7 +320,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       List<Future<Object>> futures = new ArrayList<Future<Object>>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestCallable tc = new TestCallable(0);
-        Future<Object> future = scheduler.submitScheduled(tc, SCHEDULE_DELAY);
+        Future<Object> future = scheduler.submitScheduled(tc, DELAY_TIME);
         assertNotNull(future);
         callables.add(tc);
         futures.add(future);
@@ -337,9 +337,9 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
         assertTrue(future.isDone());
         
         long executionDelay = tc.getDelayTillFirstRun();
-        assertTrue(executionDelay >= SCHEDULE_DELAY);
+        assertTrue(executionDelay >= DELAY_TIME);
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (SCHEDULE_DELAY + 2000));
+        assertTrue(executionDelay <= (DELAY_TIME + 2000));
       }
     } finally {
       factory.shutdown();
