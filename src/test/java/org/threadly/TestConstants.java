@@ -29,7 +29,7 @@ public class TestConstants {
    * Can easily adjust all constants in this file by changing the load 
    * profile.
    */
-  public static final TestLoad TEST_PROFILE = TestLoad.Stress;
+  public static final TestLoad TEST_PROFILE = TestLoad.Normal;
   
   /**
    * Represents the number of iterations, or possibly runnables 
