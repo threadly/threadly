@@ -28,8 +28,7 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-@SuppressWarnings("deprecation")  // TODO - change extends to PriorityScheduler
-public class PrioritySchedulerStatisticTracker extends PriorityScheduledExecutor {
+public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   private static final int MAX_WINDOW_SIZE = 1000;
   
   protected final AtomicInteger totalHighPriorityExecutions;

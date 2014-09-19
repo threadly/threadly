@@ -10,13 +10,6 @@ import java.util.Random;
  */
 public class StringUtils {
   /**
-   * Constant for a single reference to an empty string.
-   * 
-   * @deprecated Just use "", which is intern'ed at compile time
-   */
-  @Deprecated
-  public static final String EMPTY = "";
-  /**
    * Constant to represent the line separator for the system (captured from 
    * System.getProperty("line.separator")).
    */

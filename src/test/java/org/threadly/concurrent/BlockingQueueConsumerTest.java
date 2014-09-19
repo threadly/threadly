@@ -40,18 +40,6 @@ public class BlockingQueueConsumerTest {
   @Test
   public void constructorFail() {
     try {
-      new BlockingQueueConsumer<Object>(new SynchronousQueue<Object>(), null);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new BlockingQueueConsumer<Object>(null, new TestAcceptor());
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
       new BlockingQueueConsumer<Object>(null, new SynchronousQueue<Object>(), new TestAcceptor());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
@@ -74,19 +62,6 @@ public class BlockingQueueConsumerTest {
   }
   
   @Test
-  public void legacyDoubleStartTest() {
-    // start queue
-    queueConsumer.maybeStart(new ConfigurableThreadFactory());
-    
-    assertTrue(queueConsumer.isRunning());
-    
-    // attempt to start again
-    queueConsumer.maybeStart(new ConfigurableThreadFactory());
-    // should still be running without exception
-    assertTrue(queueConsumer.isRunning());
-  }
-  
-  @Test
   public void doubleStartTest() {
     // start queue
     queueConsumer.startIfNotStarted();
@@ -101,7 +76,9 @@ public class BlockingQueueConsumerTest {
   
   @Test (expected = IllegalThreadStateException.class)
   public void startFail() {
-    queueConsumer.maybeStart(new StartingThreadFactory());
+    queueConsumer = new BlockingQueueConsumer<Object>(new StartingThreadFactory(), 
+                                                      queue, acceptor);
+    queueConsumer.start();
   }
   
   @Test
@@ -146,7 +123,7 @@ public class BlockingQueueConsumerTest {
       }
     });
     try {
-      queueConsumer.maybeStart(new ConfigurableThreadFactory());
+      queueConsumer.start();
       
       Object item = new Object();
       queue.put(item);

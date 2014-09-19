@@ -91,18 +91,6 @@ public class Clock {
   }
 
   /**
-   * Updates the clock and returns the accurate time.
-   * 
-   * @deprecated Use accurateTimeMillis()
-   * 
-   * @return accurate time in milliseconds
-   */
-  @Deprecated
-  public static long accurateTime() {
-    return accurateTimeMillis();
-  }
-
-  /**
    * Updates the clock and returns the accurate time in milliseconds.
    * 
    * @since 2.0.0 (existed since 1.0.0 as accurateTime)
