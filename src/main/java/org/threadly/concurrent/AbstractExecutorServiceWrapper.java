@@ -345,6 +345,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       this.exceptionThrown = false;
     }
     
+    /**
+     * Returns {@code true} if an exception was thrown and this task will no longer be executed.
+     * 
+     * @return {@code true} if the wrapped task threw an exception
+     */
     public boolean exceptionThrown() {
       return exceptionThrown;
     }

@@ -273,21 +273,6 @@ public abstract class ScheduledExecutorServiceTest {
     recurringScheduleTest(makeScheduler(THREAD_COUNT), false);
   }
   
-  /*@Test
-  public void scheduleAtFixedRateExtendedRunTest() {
-    ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
-    try {
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-      for (int i = 0; i < TEST_QTY; i++) {
-        TestRunnable tr = new TestRunnable(DELAY_TIME - 1);
-        scheduler.scheduleAtFixedRate(tr, 0, DELAY_TIME, TimeUnit.MILLISECONDS);
-        runnables.add(tr);
-      }
-    } finally {
-      scheduler.shutdownNow();
-    }
-  }*/
-  
   private static void recurringScheduleTest(ScheduledExecutorService scheduler, boolean fixedDelay) {
     // schedule a task first in case there are any initial startup actions which may be slow
     if (fixedDelay) {

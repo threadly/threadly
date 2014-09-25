@@ -89,8 +89,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
     if (delayInMs == 0) {
       execute(task);
     } else {
-      scheduler.schedule(new DelayedExecutionRunnable(task), 
-                         delayInMs);
+      scheduler.schedule(new DelayedExecutionRunnable(task), delayInMs);
     }
   }
 
@@ -106,8 +105,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
     if (initialDelay == 0) {
       executeWrapper(rrw);
     } else {
-      scheduler.schedule(new DelayedExecutionRunnable(rrw), 
-                         initialDelay);
+      scheduler.schedule(new DelayedExecutionRunnable(rrw), initialDelay);
     }
   }
   
@@ -156,8 +154,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
     private final long recurringDelay;
     private final DelayedExecutionRunnable delayRunnable;
     
-    public RecurringRunnableWrapper(Runnable runnable, 
-                                    long recurringDelay) {
+    public RecurringRunnableWrapper(Runnable runnable, long recurringDelay) {
       super(scheduler, runnable);
       
       this.recurringDelay = recurringDelay;
