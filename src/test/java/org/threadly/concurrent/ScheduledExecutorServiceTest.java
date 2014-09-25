@@ -273,19 +273,34 @@ public abstract class ScheduledExecutorServiceTest {
     recurringScheduleTest(makeScheduler(THREAD_COUNT), false);
   }
   
+  /*@Test
+  public void scheduleAtFixedRateExtendedRunTest() {
+    ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
+    try {
+      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
+        TestRunnable tr = new TestRunnable(DELAY_TIME - 1);
+        scheduler.scheduleAtFixedRate(tr, 0, DELAY_TIME, TimeUnit.MILLISECONDS);
+        runnables.add(tr);
+      }
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }*/
+  
   private static void recurringScheduleTest(ScheduledExecutorService scheduler, boolean fixedDelay) {
     // schedule a task first in case there are any initial startup actions which may be slow
     if (fixedDelay) {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, 1000 * 10, 
+      scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, (int)(DELAY_TIME * 2.5), 
                                        TimeUnit.MILLISECONDS);
     } else {
-      scheduler.scheduleAtFixedRate(new TestRunnable(), 0, 1000 * 10, 
+      scheduler.scheduleAtFixedRate(new TestRunnable(), 0, (int)(DELAY_TIME * 2.5), 
                                     TimeUnit.MILLISECONDS);
     }
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
-      TestRunnable tr = new TestRunnable();
+      TestRunnable tr = new TestRunnable(fixedDelay ? 0 : DELAY_TIME - 1);
       if (fixedDelay) {
         scheduler.scheduleWithFixedDelay(tr, 0, DELAY_TIME, 
                                          TimeUnit.MILLISECONDS);
@@ -302,14 +317,11 @@ public abstract class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillFinished((TEST_QTY * (DELAY_TIME * CYCLE_COUNT)) + 2000 + 10000000, CYCLE_COUNT);
+      tr.blockTillFinished((DELAY_TIME * (CYCLE_COUNT - 1)) + 2000, CYCLE_COUNT);
       long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
       assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
-      
-      if (fixedDelay) {
-        // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
-      }
+      // should be very timely with a core pool size that matches runnable count
+      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
     }
   }
   

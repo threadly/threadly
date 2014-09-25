@@ -61,12 +61,12 @@ public class TestConstants {
         break;
       case Normal:
         TEST_QTY = 5;
-        CYCLE_COUNT = 2;
-        DELAY_TIME = 10;
+        CYCLE_COUNT = 10;
+        DELAY_TIME = 15;
         break;
       case Stress:
         TEST_QTY = 100;
-        CYCLE_COUNT = 10;
+        CYCLE_COUNT = 20;
         DELAY_TIME = 50;
         break;
       default:
