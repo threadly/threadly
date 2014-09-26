@@ -242,19 +242,20 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param initialDelay Delay in milliseconds until first run.
    * @param recurringDelay Delay in milliseconds for running task after last finish.
    */
-  public void scheduleTaskWithFixedDelay(Object threadKey, 
-                                         Runnable task, 
-                                         long initialDelay, 
-                                         long recurringDelay) {
+  public void scheduleTaskWithFixedDelay(Object threadKey, Runnable task, 
+                                         long initialDelay, long recurringDelay) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
-    scheduler.schedule(new AddTask(threadKey, 
-                                   new RecrringTask(threadKey, task, 
-                                                    recurringDelay)), 
-                       initialDelay);
+    RecrringTask rt = new RecrringTask(threadKey, task, recurringDelay);
+    if (initialDelay == 0) {
+      addTask(threadKey, rt, executor);
+    } else {
+      scheduler.schedule(new AddTask(threadKey, rt), 
+                         initialDelay);
+    }
   }
 
   /**
@@ -287,10 +288,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, 
-                                                     Runnable task, 
-                                                     T result, 
-                                                     long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, Runnable task, 
+                                                     T result, long delayInMs) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
@@ -300,8 +299,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (delayInMs == 0) {
       addTask(threadKey, rf, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rf), 
-                         delayInMs);
+      scheduler.schedule(new AddTask(threadKey, rf), delayInMs);
     }
     
     return rf;
