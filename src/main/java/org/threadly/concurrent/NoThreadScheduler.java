@@ -282,8 +282,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract class TaskContainer extends AbstractDelayed 
-                                         implements RunnableContainerInterface {
+  protected abstract static class TaskContainer extends AbstractDelayed 
+                                                implements RunnableContainerInterface {
     protected final Runnable runnable;
     protected volatile boolean running;
     

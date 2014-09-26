@@ -1,10 +1,13 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class SingleThreadSchedulerServiceWrapperTest extends ScheduledExecutorServiceTest {
@@ -21,27 +24,26 @@ public class SingleThreadSchedulerServiceWrapperTest extends ScheduledExecutorSe
     fail("Exception should have thrown");
   }
 
-  @Override
-  @Test (expected = UnsupportedOperationException.class)
+  @Override // must be overridden because we can only do this test with one task for the single threaded version
+  @Test
   public void scheduleAtFixedRateTest() {
-    super.scheduleAtFixedRateTest();
-  }
-  
-  @Override
-  @Test (expected = UnsupportedOperationException.class)
-  public void scheduleAtFixedRateConcurrentTest() {
-    super.scheduleAtFixedRateConcurrentTest();
-  }
-  
-  @Override
-  @Test (expected = UnsupportedOperationException.class)
-  public void scheduleAtFixedRateExceptionTest() {
-    super.scheduleAtFixedRateExceptionTest();
-  }
-  
-  @Override
-  @Test (expected = UnsupportedOperationException.class)
-  public void scheduleAtFixedRateFail() {
-    super.scheduleAtFixedRateFail();
+    ScheduledExecutorService scheduler = makeScheduler(1);
+    try {
+      // schedule a task first in case there are any initial startup actions which may be slow
+      scheduler.scheduleAtFixedRate(new TestRunnable(), 0, (int)(DELAY_TIME * 2.5), 
+                                    TimeUnit.MILLISECONDS);
+
+      TestRunnable tr = new TestRunnable(DELAY_TIME - 1);
+      scheduler.scheduleAtFixedRate(tr, 0, DELAY_TIME, 
+                                    TimeUnit.MILLISECONDS);
+
+      tr.blockTillFinished((DELAY_TIME * (CYCLE_COUNT - 1)) + 2000, CYCLE_COUNT);
+      long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
+      assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
+      // should be very timely with a core pool size that matches runnable count
+      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
+    } finally {
+      scheduler.shutdownNow();
+    }
   }
 }

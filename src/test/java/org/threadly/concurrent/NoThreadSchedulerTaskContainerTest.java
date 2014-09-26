@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.concurrent.NoThreadScheduler.TaskContainer;
 import org.threadly.test.concurrent.TestRunnable;
@@ -19,18 +17,6 @@ import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTaskContainerTest {
-  private static NoThreadScheduler scheduler;
-  
-  @BeforeClass
-  public static void setup() {
-    scheduler = new NoThreadScheduler(false);
-  }
-  
-  @AfterClass
-  public static void tearDown() {
-    scheduler = null;
-  }
-  
   @Test
   public void compareToTest() {
     TestContainer tc0 = new TestContainer(0, false);
@@ -95,7 +81,7 @@ public class NoThreadSchedulerTaskContainerTest {
     private boolean runCompleteCalled = false;
     
     protected TestContainer(int delay, boolean throwException) {
-      scheduler.super(throwException ? new TestRuntimeFailureRunnable() : new TestRunnable());
+      super(throwException ? new TestRuntimeFailureRunnable() : new TestRunnable());
       
       this.delay = delay;
     }

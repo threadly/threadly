@@ -5,10 +5,13 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.NoThreadScheduler.TaskContainer;
 import org.threadly.concurrent.SingleThreadScheduler.SchedulerManager;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.concurrent.future.ScheduledFutureDelegate;
+import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.ListUtils;
 
 /**
  * <p>This is a wrapper for {@link SingleThreadScheduler} to be a drop in replacement for any 
@@ -103,14 +106,90 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     return new ScheduledFutureDelegate<Object>(lft, ott);
   }
 
-  /**
-   * Not implemented for the {@link SingleThreadSchedulerServiceWrapper}.  Will always throw an 
-   * {@link UnsupportedOperationException}.
-   */
   @Override
   public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
                                                           long initialDelay, long period,
                                                           TimeUnit unit) {
-    throw new UnsupportedOperationException();
+    if (task == null) {
+      throw new NullPointerException("Must provide task");
+    }
+    ArgumentVerifier.assertGreaterThanZero(period, "period");
+    if (initialDelay < 0) {
+      initialDelay = 0;
+    }
+    
+    ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
+    NoThreadScheduler nts = scheduler.getScheduler();
+    FixedRateRecurringTask frrt = new FixedRateRecurringTask(nts, lft, 
+                                                             unit.toMillis(initialDelay), 
+                                                             unit.toMillis(period));
+    nts.add(frrt);
+    
+    return new ScheduledFutureDelegate<Object>(lft, frrt);
+  }
+
+  /**
+   * <p>Container for runnables which are to run at a fixed rate.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class FixedRateRecurringTask extends TaskContainer {
+    private final NoThreadScheduler scheduler;
+    private final long initialDelay;
+    private final long period;
+    private long nextRunTime;
+    
+    public FixedRateRecurringTask(NoThreadScheduler scheduler, 
+                                  Runnable runnable, long initialDelay, long period) {
+      super(runnable);
+      
+      this.scheduler = scheduler;
+      this.initialDelay = initialDelay;
+      this.period = period;
+      nextRunTime = -1;
+    }
+    
+    @Override
+    protected void setInitialDelay() {
+      nextRunTime = scheduler.nowInMillis() + initialDelay;
+    }
+    
+    @Override
+    public void prepareForRun() {
+      // task will only be rescheduled once complete
+    }
+    
+    @Override
+    public void runComplete() {
+      synchronized (scheduler.taskQueue.getModificationLock()) {
+        scheduler.startInsertion();
+        try {
+          // almost certainly will be the first item in the queue
+          int currentIndex = scheduler.taskQueue.indexOf(this);
+          if (currentIndex < 0) {
+            // task was removed from queue, do not re-insert
+            return;
+          }
+          nextRunTime += period;
+          long nextDelay = nextRunTime - scheduler.nowInMillis();
+          if (nextDelay < 0) {
+            nextDelay = 0;
+          }
+          int insertionIndex = ListUtils.getInsertionEndIndex(scheduler.taskQueue, nextDelay, true);
+          
+          scheduler.taskQueue.reposition(currentIndex, insertionIndex);
+          
+        } finally {
+          scheduler.endInsertion();
+        }
+      }
+    }
+
+    @Override
+    public long getDelay(TimeUnit timeUnit) {
+      return timeUnit.convert(nextRunTime - scheduler.nowInMillis(), 
+                              TimeUnit.MILLISECONDS);
+    }
   }
 }
