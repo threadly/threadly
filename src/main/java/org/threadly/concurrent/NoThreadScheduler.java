@@ -133,7 +133,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
           if (nextTask == null) {
             taskQueue.getModificationLock().wait();
           } else {
-            long nextTaskDelay = nextTask.getDelay(TimeUnit.MILLISECONDS);
+            long nextTaskDelay = nextTask.getDelayInMillis();
             if (nextTaskDelay > 0) {
               taskQueue.getModificationLock().wait(nextTaskDelay);
             }
@@ -221,7 +221,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    */
   protected TaskContainer getNextReadyTask() {
     TaskContainer nextTask = taskQueue.peekFirst();
-    if (nextTask != null && nextTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
+    if (nextTask != null && nextTask.getDelayInMillis() <= 0) {
       return nextTask;
     } else {
       return null;
@@ -325,6 +325,14 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
      * at this point to ensure the clock is stable with respects to the rest of the job queue.
      */
     protected abstract void setInitialDelay();
+    
+    protected abstract long getDelayInMillis();
+
+    @Override
+    public long getDelay(TimeUnit timeUnit) {
+      return timeUnit.convert(getDelayInMillis(), 
+                              TimeUnit.MILLISECONDS);
+    }
   }
   
   /**
@@ -361,9 +369,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     }
 
     @Override
-    public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(runTime - nowInMillis(), 
-                              TimeUnit.MILLISECONDS);
+    public long getDelayInMillis() {
+      return runTime - nowInMillis();
     }
   }
   
@@ -419,9 +426,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     }
 
     @Override
-    public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(nextRunTime - nowInMillis(), 
-                              TimeUnit.MILLISECONDS);
+    public long getDelayInMillis() {
+      return nextRunTime - nowInMillis();
     }
   }
 }

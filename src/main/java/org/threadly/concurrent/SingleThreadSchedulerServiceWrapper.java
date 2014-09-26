@@ -187,9 +187,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     }
 
     @Override
-    public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(nextRunTime - scheduler.nowInMillis(), 
-                              TimeUnit.MILLISECONDS);
+    public long getDelayInMillis() {
+      return nextRunTime - scheduler.nowInMillis();
     }
   }
 }

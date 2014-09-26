@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 import org.threadly.concurrent.NoThreadScheduler.TaskContainer;
@@ -87,7 +86,7 @@ public class NoThreadSchedulerTaskContainerTest {
     }
 
     @Override
-    public long getDelay(TimeUnit unit) {
+    public long getDelayInMillis() {
       return delay;
     }
 
