@@ -130,7 +130,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
     if (delayInMs == 0) {
       execute(task, priority);
     } else {
-      scheduler.schedule(new PriorityDelayedRunnable(task, priority), 
+      scheduler.schedule(new DelayedExecutionRunnable(new PriorityWrapper(task, priority)), 
                          delayInMs, TaskPriority.High);
     }
   }
@@ -150,7 +150,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
     if (initialDelay == 0) {
       executeWrapper(rdw);
     } else {
-      scheduler.schedule(new PriorityDelayedRunnable(rdw, priority), 
+      scheduler.schedule(new DelayedExecutionRunnable(rdw), 
                          initialDelay, TaskPriority.High);
     }
   }
@@ -170,7 +170,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
     if (initialDelay == 0) {
       executeWrapper(rrw);
     } else {
-      scheduler.schedule(new PriorityDelayedRunnable(rrw, priority), 
+      scheduler.schedule(new DelayedExecutionRunnable(rrw), 
                          initialDelay, TaskPriority.High);
     }
   }
@@ -178,19 +178,6 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   @Override
   public TaskPriority getDefaultPriority() {
     return scheduler.getDefaultPriority();
-  }
-  
-  /**
-   * <p>Small runnable that allows scheduled tasks to pass through the same execution queue that 
-   * immediate execution has to.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 1.1.0
-   */
-  protected class PriorityDelayedRunnable extends DelayedExecutionRunnable {
-    protected PriorityDelayedRunnable(Runnable runnable, TaskPriority priority) {
-      super(new PriorityWrapper(runnable, priority));
-    }
   }
 
   /**
@@ -202,7 +189,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
    */
   protected class RecurringDelayWrapper extends PriorityWrapper {
     private final long recurringDelay;
-    private final PriorityDelayedRunnable delayRunnable;
+    private final DelayedExecutionRunnable delayRunnable;
     
     protected RecurringDelayWrapper(Runnable runnable, 
                                     long recurringDelay, 
@@ -210,7 +197,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
       super(runnable, priority);
       
       this.recurringDelay = recurringDelay;
-      delayRunnable = new PriorityDelayedRunnable(this, priority);
+      delayRunnable = new DelayedExecutionRunnable(this);
     }
     
     @Override
@@ -227,7 +214,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
    */
   protected class RecurringRateWrapper extends PriorityWrapper {
     private final long period;
-    private final PriorityDelayedRunnable delayRunnable;
+    private final DelayedExecutionRunnable delayRunnable;
     private long nextRunTime;
     
     protected RecurringRateWrapper(Runnable runnable, 
@@ -236,7 +223,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
       super(runnable, priority);
       
       this.period = period;
-      delayRunnable = new PriorityDelayedRunnable(this, priority);
+      delayRunnable = new DelayedExecutionRunnable(this);
       nextRunTime = Clock.accurateTimeMillis() + initialDelay + period;
     }
     

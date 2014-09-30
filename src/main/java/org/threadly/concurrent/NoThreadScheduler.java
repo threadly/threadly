@@ -321,12 +321,16 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
      * Called before the task starts.  Allowing the container to do any pre-execution tasks 
      * necessary.
      */
-    protected abstract void prepareForRun();
+    protected void prepareForRun() {
+      // nothing by default, override to handle
+    }
     
     /**
      * Called after the task completes, weather an exception was thrown or it exited normally.
      */
-    protected abstract void runComplete();
+    protected void runComplete() {
+      // nothing by default, override to handle
+    }
     
     /**
      * Call to indicate we should set the initial runtime for the task.  This will only be 
@@ -376,11 +380,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       // can be removed since this is a one time task
       taskQueue.remove(this);
     }
-    
-    @Override
-    protected void runComplete() {
-      // nothing done for single execution tasks
-    }
 
     @Override
     public long getDelayInMillis() {
@@ -409,11 +408,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     protected void setInitialDelay() {
       nextRunTime = nowInMillis() + initialDelay;
     }
-    
-    @Override
-    public void prepareForRun() {
-      // task will only be rescheduled once complete
-    }
 
     /**
      * Called when the implementing class should update the variable {@code nextRunTime} to be the 
@@ -423,7 +417,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     
     @Override
     public void runComplete() {
-      
       synchronized (taskQueue.getModificationLock()) {
         startInsertion();
         try {
