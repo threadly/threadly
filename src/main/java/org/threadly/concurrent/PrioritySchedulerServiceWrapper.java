@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.PriorityScheduler.OneTimeTaskWrapper;
-import org.threadly.concurrent.PriorityScheduler.RecurringTaskWrapper;
+import org.threadly.concurrent.PriorityScheduler.RecurringDelayTaskWrapper;
+import org.threadly.concurrent.PriorityScheduler.RecurringRateTaskWrapper;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
@@ -87,18 +88,34 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   }
 
   @Override
-  protected ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
+  protected ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable task,
                                                                 long initialDelayInMs,
                                                                 long delayInMs) {
     // wrap the task to ensure the correct behavior on exceptions
-    command = new ThrowableHandlingRecurringRunnable(scheduler, command);
+    task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, command);
-    RecurringTaskWrapper rtw = scheduler.new RecurringTaskWrapper(taskFuture, 
-                                                                  scheduler.getDefaultPriority(), 
-                                                                  initialDelayInMs, delayInMs);
-    scheduler.addToQueue(rtw);
+    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
+    RecurringDelayTaskWrapper rdtw = scheduler.new RecurringDelayTaskWrapper(taskFuture, 
+                                                                             scheduler.getDefaultPriority(), 
+                                                                             initialDelayInMs, delayInMs);
+    scheduler.addToQueue(rdtw);
     
-    return new ScheduledFutureDelegate<Object>(taskFuture, rtw);
+    return new ScheduledFutureDelegate<Object>(taskFuture, rdtw);
+  }
+
+  @Override
+  protected ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
+                                                             long initialDelayInMillis,
+                                                             long periodInMillis) {
+    // wrap the task to ensure the correct behavior on exceptions
+    task = new ThrowableHandlingRecurringRunnable(scheduler, task);
+    
+    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
+    RecurringRateTaskWrapper rrtw = scheduler.new RecurringRateTaskWrapper(taskFuture, 
+                                                                           scheduler.getDefaultPriority(), 
+                                                                           initialDelayInMillis, periodInMillis);
+    scheduler.addToQueue(rrtw);
+    
+    return new ScheduledFutureDelegate<Object>(taskFuture, rrtw);
   }
 }

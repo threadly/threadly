@@ -8,6 +8,7 @@ import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.Clock;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens on a provided 
@@ -100,7 +101,22 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
-    RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay);
+    RecurringDelayWrapper rdw = new RecurringDelayWrapper(task, recurringDelay);
+    
+    if (initialDelay == 0) {
+      executeWrapper(rdw);
+    } else {
+      scheduler.schedule(new DelayedExecutionRunnable(rdw), initialDelay);
+    }
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(period, "period");
+    
+    RecurringRateWrapper rrw = new RecurringRateWrapper(task, initialDelay, period);
     
     if (initialDelay == 0) {
       executeWrapper(rrw);
@@ -144,17 +160,17 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   }
 
   /**
-   * <p>Wrapper for tasks which are executed in this sub pool, this ensures that 
-   * {@link #handleTaskFinished()} will be called after the task completes.</p>
+   * <p>Wrapper for recurring tasks that reschedule with a given delay after completing 
+   * execution.</p>
    * 
    * @author jent - Mike Jensen
-   * @since 1.1.0
+   * @since 3.1.0
    */
-  protected class RecurringRunnableWrapper extends LimiterRunnableWrapper {
+  protected class RecurringDelayWrapper extends LimiterRunnableWrapper {
     private final long recurringDelay;
     private final DelayedExecutionRunnable delayRunnable;
     
-    public RecurringRunnableWrapper(Runnable runnable, long recurringDelay) {
+    public RecurringDelayWrapper(Runnable runnable, long recurringDelay) {
       super(scheduler, runnable);
       
       this.recurringDelay = recurringDelay;
@@ -164,6 +180,37 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
     @Override
     protected void doAfterRunTasks() {
       scheduler.schedule(delayRunnable, recurringDelay);
+    }
+  }
+
+  /**
+   * <p>Wrapper for recurring tasks that reschedule at a fixed rate after completing execution.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class RecurringRateWrapper extends LimiterRunnableWrapper {
+    private final long period;
+    private final DelayedExecutionRunnable delayRunnable;
+    private long nextRunTime;
+    
+    public RecurringRateWrapper(Runnable runnable, long initialDelay, long period) {
+      super(scheduler, runnable);
+      
+      this.period = period;
+      delayRunnable = new DelayedExecutionRunnable(this);
+      nextRunTime = Clock.accurateTimeMillis() + initialDelay + period;
+    }
+    
+    @Override
+    protected void doAfterRunTasks() {
+      nextRunTime += period;
+      long nextDelay = nextRunTime - Clock.accurateTimeMillis();
+      if (nextDelay < 1) {
+        executeWrapper(this);
+      } else {
+        scheduler.schedule(delayRunnable, nextDelay);
+      }
     }
   }
 }

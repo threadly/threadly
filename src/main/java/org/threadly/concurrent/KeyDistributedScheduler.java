@@ -232,31 +232,6 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
                          delayInMs);
     }
   }
-  
-  /**
-   * Schedule a recurring task to run.  The recurring delay time will be from the point where 
-   * execution finished.  This task will not run concurrently based off the thread key.
-   * 
-   * @param threadKey object key where {@code equals()} will be used to determine execution thread
-   * @param task Task to be executed.
-   * @param initialDelay Delay in milliseconds until first run.
-   * @param recurringDelay Delay in milliseconds for running task after last finish.
-   */
-  public void scheduleTaskWithFixedDelay(Object threadKey, Runnable task, 
-                                         long initialDelay, long recurringDelay) {
-    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
-    ArgumentVerifier.assertNotNull(task, "task");
-    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
-    ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
-    
-    RecrringTask rt = new RecrringTask(threadKey, task, recurringDelay);
-    if (initialDelay == 0) {
-      addTask(threadKey, rt, executor);
-    } else {
-      scheduler.schedule(new AddTask(threadKey, rt), 
-                         initialDelay);
-    }
-  }
 
   /**
    * Schedule a task with a given delay.  There is a slight increase in load when using 
@@ -335,6 +310,59 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
+   * Schedule a fixed delay recurring task to run.  The recurring delay time will be from the 
+   * point where execution has finished.  So the execution frequency is the 
+   * {@code recurringDelay + runtime} for the provided task.
+   * 
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task Task to be executed.
+   * @param initialDelay Delay in milliseconds until first run.
+   * @param recurringDelay Delay in milliseconds for running task after last finish.
+   */
+  public void scheduleTaskWithFixedDelay(Object threadKey, Runnable task, 
+                                         long initialDelay, long recurringDelay) {
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
+    
+    RecrringDelayTask rdt = new RecrringDelayTask(threadKey, task, recurringDelay);
+    if (initialDelay == 0) {
+      addTask(threadKey, rdt, executor);
+    } else {
+      scheduler.schedule(new AddTask(threadKey, rdt), 
+                         initialDelay);
+    }
+  }
+  
+  /**
+   * Schedule a fixed rate recurring task to run.  The recurring delay will be the same, 
+   * regardless of how long task execution takes.  A given runnable will not run concurrently 
+   * (unless it is submitted to the scheduler multiple times).  Instead of execution takes longer 
+   * than the period, the next run will occur immediately (given thread availability in the pool).  
+   * 
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task runnable to be executed
+   * @param initialDelay delay in milliseconds until first run
+   * @param period amount of time in milliseconds between the start of recurring executions
+   */
+  public void scheduleTaskAtFixedRate(Object threadKey, Runnable task, 
+                                      long initialDelay, long period) {
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(period, "period");
+    
+    RecrringRateTask rrt = new RecrringRateTask(threadKey, task, period);
+    if (initialDelay == 0) {
+      addTask(threadKey, rrt, executor);
+    } else {
+      scheduler.schedule(new AddTask(threadKey, rrt), 
+                         initialDelay);
+    }
+  }
+  
+  /**
    * <p>Task which will run delayed to add a task into the queue when ready.</p>
    * 
    * @author jent - Mike Jensen
@@ -362,18 +390,18 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * <p>Repeating task container.</p>
+   * <p>Container for runnables which run with a fixed delay after the previous run.</p>
    * 
    * @author jent - Mike Jensen
-   * @since 1.0.0
+   * @since 3.1.0
    */
-  protected class RecrringTask implements Runnable, 
-                                          RunnableContainerInterface {
+  protected class RecrringDelayTask implements Runnable, 
+                                               RunnableContainerInterface {
     private final Object key;
     private final Runnable task;
     private final long recurringDelay;
     
-    protected RecrringTask(Object key, Runnable task, long recurringDelay) {
+    protected RecrringDelayTask(Object key, Runnable task, long recurringDelay) {
       this.key = key;
       this.task = task;
       this.recurringDelay = recurringDelay;
@@ -386,6 +414,36 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
       } finally {
         scheduler.schedule(new AddTask(key, this), recurringDelay);
       }
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
+    }
+  }
+  
+  /**
+   * <p>Container for runnables which run with a fixed rate, regardless of execution time.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class RecrringRateTask implements Runnable, 
+                                              RunnableContainerInterface {
+    private final Object key;
+    private final Runnable task;
+    private final long recurringPeriod;
+    
+    protected RecrringRateTask(Object key, Runnable task, long recurringPeriod) {
+      this.key = key;
+      this.task = task;
+      this.recurringPeriod = recurringPeriod;
+    }
+    
+    @Override
+    public void run() {
+      scheduler.schedule(new AddTask(key, this), recurringPeriod);
+      task.run();
     }
 
     @Override
@@ -414,13 +472,6 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     }
 
     @Override
-    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-      KeyDistributedScheduler.this.scheduleTaskWithFixedDelay(threadKey, task, 
-                                                              initialDelay, 
-                                                              recurringDelay);
-    }
-
-    @Override
     public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
       return submitScheduled(task, null, delayInMs);
     }
@@ -433,6 +484,19 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     @Override
     public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
       return KeyDistributedScheduler.this.submitScheduledTask(threadKey, task, delayInMs);
+    }
+
+    @Override
+    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+      KeyDistributedScheduler.this.scheduleTaskWithFixedDelay(threadKey, task, 
+                                                              initialDelay, 
+                                                              recurringDelay);
+    }
+
+    @Override
+    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+      KeyDistributedScheduler.this.scheduleTaskAtFixedRate(threadKey, task, 
+                                                           initialDelay, period);
     }
   }
 }

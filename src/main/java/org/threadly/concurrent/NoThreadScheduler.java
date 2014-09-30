@@ -169,7 +169,16 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
-    add(new RecurringTask(task, initialDelay, recurringDelay));
+    add(new RecurringDelayTask(task, initialDelay, recurringDelay));
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(period, "period");
+    
+    add(new RecurringRateTask(task, initialDelay, period));
   }
   
   protected void add(TaskContainer runnable) {
@@ -326,8 +335,13 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
      */
     protected abstract void setInitialDelay();
     
+    /**
+     * Call to get the delay till execution in milliseconds.
+     * 
+     * @return number of milliseconds to wait before executing task
+     */
     protected abstract long getDelayInMillis();
-
+    
     @Override
     public long getDelay(TimeUnit timeUnit) {
       return timeUnit.convert(getDelayInMillis(), 
@@ -378,18 +392,16 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * <p>Container for runnables which run multiple times.</p>
    * 
    * @author jent - Mike Jensen
-   * @since 1.0.0
+   * @since 3.1.0
    */
-  protected class RecurringTask extends TaskContainer {
-    private final long initialDelay;
-    private final long recurringDelay;
-    private long nextRunTime;
+  protected abstract class RecurringTask extends TaskContainer {
+    protected final long initialDelay;
+    protected long nextRunTime;
     
-    public RecurringTask(Runnable runnable, long initialDelay, long recurringDelay) {
+    public RecurringTask(Runnable runnable, long initialDelay) {
       super(runnable);
       
       this.initialDelay = initialDelay;
-      this.recurringDelay = recurringDelay;
       nextRunTime = -1;
     }
     
@@ -402,23 +414,34 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     public void prepareForRun() {
       // task will only be rescheduled once complete
     }
+
+    /**
+     * Called when the implementing class should update the variable {@code nextRunTime} to be the 
+     * next absolute time in milliseconds the task should run.
+     */
+    protected abstract void updateNextRunTime();
     
     @Override
     public void runComplete() {
+      
       synchronized (taskQueue.getModificationLock()) {
         startInsertion();
         try {
+          updateNextRunTime();
+          
           // almost certainly will be the first item in the queue
           int currentIndex = taskQueue.indexOf(this);
           if (currentIndex < 0) {
             // task was removed from queue, do not re-insert
             return;
           }
-          int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, recurringDelay, true);
+          long nextDelay = getDelayInMillis();
+          if (nextDelay < 0) {
+            nextDelay = 0;
+          }
+          int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, nextDelay, true);
           
           taskQueue.reposition(currentIndex, insertionIndex);
-          
-          nextRunTime = nowInMillis() + recurringDelay;
         } finally {
           endInsertion();
         }
@@ -428,6 +451,48 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     @Override
     public long getDelayInMillis() {
       return nextRunTime - nowInMillis();
+    }
+  }
+  
+  /**
+   * <p>Container for runnables which run with a fixed delay after the previous run.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class RecurringDelayTask extends RecurringTask {
+    private final long recurringDelay;
+    
+    public RecurringDelayTask(Runnable runnable, long initialDelay, long recurringDelay) {
+      super(runnable, initialDelay);
+      
+      this.recurringDelay = recurringDelay;
+    }
+
+    @Override
+    protected void updateNextRunTime() {
+      nextRunTime = nowInMillis() + recurringDelay;
+    }
+  }
+  
+  /**
+   * <p>Container for runnables which run with a fixed rate, regardless of execution time.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class RecurringRateTask extends RecurringTask {
+    private final long period;
+    
+    public RecurringRateTask(Runnable runnable, long initialDelay, long period) {
+      super(runnable, initialDelay);
+      
+      this.period = period;
+    }
+
+    @Override
+    protected void updateNextRunTime() {
+      nextRunTime += period;
     }
   }
 }
