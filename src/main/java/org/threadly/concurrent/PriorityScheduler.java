@@ -1256,7 +1256,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     /**
      * Called as the task is being removed from the queue to prepare for execution.
      */
-    public abstract void executing();
+    public void executing() {
+      // nothing by default, override to handle
+    }
     
     /**
      * Similar to getDelay, except this implementation is an estimate.  It is only in 
@@ -1296,11 +1298,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     @Override
     protected long getDelayEstimateInMillis() {
       return runTime - Clock.lastKnownTimeMillis();
-    }
-    
-    @Override
-    public void executing() {
-      // ignored
     }
 
     @Override
