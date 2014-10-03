@@ -182,6 +182,19 @@ public class PrioritySchedulerWrapperTest {
   }
   
   @Test
+  public void scheduleAtFixedRateTest() {
+    TestPriorityScheduler testScheduler = new TestPriorityScheduler();
+    PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
+    psw.scheduleAtFixedRate(new TestRunnable(), 10, 10);
+    assertTrue(testScheduler.scheduleAtFixedRateCalled);
+    
+    // reset and try with priority
+    testScheduler.scheduleAtFixedRateCalled = false;
+    psw.scheduleAtFixedRate(new TestRunnable(), 10, 10, TaskPriority.High);
+    assertTrue(testScheduler.scheduleAtFixedRateCalled);
+  }
+  
+  @Test
   public void removeRunnableTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
@@ -213,6 +226,7 @@ public class PrioritySchedulerWrapperTest {
     private boolean submitScheduledRunnableResultCalled = false;
     private boolean submitScheduledCallableCalled = false;
     private boolean scheduleWithFixedDelayCalled = false;
+    private boolean scheduleAtFixedRateCalled = false;
     private boolean removeRunnableCalled = false;
     private boolean removeCallableCalled = false;
 
@@ -277,6 +291,12 @@ public class PrioritySchedulerWrapperTest {
     }
 
     @Override
+    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
+                                    TaskPriority priority) {
+      scheduleAtFixedRateCalled = true;
+    }
+
+    @Override
     public boolean remove(Runnable task) {
       removeRunnableCalled = true;
       return false;
@@ -316,6 +336,11 @@ public class PrioritySchedulerWrapperTest {
 
     @Override
     public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
       throw new UnsupportedOperationException();
     }
 

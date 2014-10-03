@@ -42,4 +42,15 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
                                      initialDelay, recurringDelay, 
                                      TimeUnit.MILLISECONDS);
   }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(period, "period");
+    
+    scheduler.scheduleAtFixedRate(new ThrowableSuppressingRunnable(task), 
+                                  initialDelay, period, 
+                                  TimeUnit.MILLISECONDS);
+  }
 }

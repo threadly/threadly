@@ -787,7 +787,25 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       priority = defaultPriority;
     }
 
-    addToQueue(new RecurringTaskWrapper(task, priority, initialDelay, recurringDelay));
+    addToQueue(new RecurringDelayTaskWrapper(task, priority, initialDelay, recurringDelay));
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+    scheduleAtFixedRate(task, initialDelay, period, defaultPriority);
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
+                                  TaskPriority priority) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(period, "period");
+    if (priority == null) {
+      priority = defaultPriority;
+    }
+
+    addToQueue(new RecurringRateTaskWrapper(task, priority, initialDelay, period));
   }
   
   /**
@@ -1292,26 +1310,22 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       }
     }
   }
-  
+
   /**
-   * <p>Wrapper for tasks which reschedule after completion.</p>
+   * <p>Abstract wrapper for any tasks which run repeatedly.</p>
    * 
    * @author jent - Mike Jensen
-   * @since 1.0.0
+   * @since 3.1.0
    */
-  protected class RecurringTaskWrapper extends TaskWrapper 
-                                       implements DynamicDelayedUpdater {
-    private final long recurringDelay;
-    //private volatile long maxExpectedRuntime;
-    private volatile boolean executing;
-    private long nextRunTime;
+  protected abstract class RecurringTaskWrapper extends TaskWrapper 
+                                                implements DynamicDelayedUpdater {
+    protected volatile boolean executing;
+    protected long nextRunTime;
     
     protected RecurringTaskWrapper(Runnable task, TaskPriority priority, 
-                                   long initialDelay, long recurringDelay) {
+                                   long initialDelay) {
       super(task, priority);
       
-      this.recurringDelay = recurringDelay;
-      //maxExpectedRuntime = -1;
       executing = false;
       this.nextRunTime = Clock.accurateTimeMillis() + initialDelay;
     }
@@ -1331,7 +1345,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      *  
      * @return time in milliseconds till next execution
      */
-    private long getNextDelayInMillis() {
+    protected long getNextDelayInMillis() {
       return nextRunTime - clockWrapper.getSemiAccurateTime();
     }
     
@@ -1368,10 +1382,16 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     /**
+     * Called when the implementing class should update the variable {@code nextRunTime} to be the 
+     * next absolute time in milliseconds the task should run.
+     */
+    protected abstract void updateNextRunTime();
+    
+    /**
      * After the task has completed, this will reschedule the task to run again.
      */
     private void reschedule() {
-      nextRunTime = Clock.accurateTimeMillis() + recurringDelay;
+      updateNextRunTime();
       
       // now that nextRunTime has been set, resort the queue
       switch (priority) {
@@ -1379,8 +1399,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           synchronized (highPriorityLock) {
             if (! shutdownStarted.get()) {
               clockWrapper.stopForcingUpdate();
+              long nextDelay = getNextDelayInMillis();
+              if (nextDelay < 0) {
+                nextDelay = 0;
+              }
               try {
-                highPriorityQueue.reposition(this, getNextDelayInMillis(), this);
+                highPriorityQueue.reposition(this, nextDelay, this);
               } finally {
                 clockWrapper.resumeForcingUpdate();
               }
@@ -1391,8 +1415,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           synchronized (lowPriorityLock) {
             if (! shutdownStarted.get()) {
               clockWrapper.stopForcingUpdate();
+              long nextDelay = getNextDelayInMillis();
+              if (nextDelay < 0) {
+                nextDelay = 0;
+              }
               try {
-                lowPriorityQueue.reposition(this, getNextDelayInMillis(), this);
+                lowPriorityQueue.reposition(this, nextDelay, this);
               } finally {
                 clockWrapper.resumeForcingUpdate();
               }
@@ -1410,14 +1438,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         return;
       }
       try {
-        //long startTime = ClockWrapper.getLastKnownTime();
-        
         task.run();
-        
-        /*long runTime = ClockWrapper.getLastKnownTime() - startTime;
-        if (runTime > maxExpectedRuntime) {
-          maxExpectedRuntime = runTime;
-        }*/
       } finally {
         if (! canceled) {
           try {
@@ -1438,6 +1459,50 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           }
         }
       }
+    }
+  }
+  
+  /**
+   * <p>Wrapper for tasks which reschedule after completion.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class RecurringDelayTaskWrapper extends RecurringTaskWrapper {
+    private final long recurringDelay;
+    
+    protected RecurringDelayTaskWrapper(Runnable task, TaskPriority priority, 
+                                        long initialDelay, long recurringDelay) {
+      super(task, priority, initialDelay);
+      
+      this.recurringDelay = recurringDelay;
+    }
+    
+    @Override
+    protected void updateNextRunTime() {
+      nextRunTime = Clock.accurateTimeMillis() + recurringDelay;
+    }
+  }
+  
+  /**
+   * <p>Wrapper for tasks which run at a fixed period (regardless of execution time).</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class RecurringRateTaskWrapper extends RecurringTaskWrapper {
+    private final long period;
+    
+    protected RecurringRateTaskWrapper(Runnable task, TaskPriority priority, 
+                                       long initialDelay, long period) {
+      super(task, priority, initialDelay);
+      
+      this.period = period;
+    }
+    
+    @Override
+    protected void updateNextRunTime() {
+      nextRunTime += period;
     }
   }
   

@@ -154,6 +154,12 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
                                      long recurringDelay) {
     getScheduler().scheduleWithFixedDelay(task, initialDelay, recurringDelay);
   }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+    getScheduler().scheduleAtFixedRate(task, initialDelay, period);
+    
+  }
   
   /**
    * <p>This class contains the thread and instance of {@link NoThreadScheduler} that is used to 

@@ -285,7 +285,7 @@ public abstract class ScheduledExecutorServiceTest {
     
     List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
-      TestRunnable tr = new TestRunnable(fixedDelay ? 0 : DELAY_TIME - 1);
+      TestRunnable tr = new TestRunnable(fixedDelay ? 0 : DELAY_TIME);
       if (fixedDelay) {
         scheduler.scheduleWithFixedDelay(tr, 0, DELAY_TIME, 
                                          TimeUnit.MILLISECONDS);
@@ -352,13 +352,24 @@ public abstract class ScheduledExecutorServiceTest {
     }
   }
 
-  @Test (expected = NullPointerException.class)
+  @Test
   public void scheduleWithFixedDelayFail() {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
-      scheduler.scheduleWithFixedDelay(null, 0, 10, 
-                                       TimeUnit.MILLISECONDS);
-      fail("Exception should have been thrown");
+      try {
+        scheduler.scheduleWithFixedDelay(null, 0, 10, 
+                                         TimeUnit.MILLISECONDS);
+        fail("Exception should have been thrown");
+      } catch (NullPointerException e) {
+        // expected
+      }
+      try {
+        scheduler.scheduleWithFixedDelay(new TestRunnable(), 10, 0, 
+                                         TimeUnit.MILLISECONDS);
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException e) {
+        // expected
+      }
     } finally {
       scheduler.shutdownNow();
     }

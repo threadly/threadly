@@ -16,7 +16,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * Executes the task as soon as possible for the given priority.  
    * 
    * @param task runnable to execute
-   * @param priority priority for task
+   * @param priority priority for task to get available thread to run on
    */
   public void execute(Runnable task, TaskPriority priority);
   
@@ -29,7 +29,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * completed.
    * 
    * @param task runnable to be executed
-   * @param priority priority for task
+   * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed
    */
   public ListenableFuture<?> submit(Runnable task, TaskPriority priority);
@@ -45,7 +45,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * @param <T> type of result returned from the future
    * @param task runnable to be executed
    * @param result result to be returned from resulting future .get() when runnable completes
-   * @param priority priority for task
+   * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed
    */
   public <T> ListenableFuture<T> submit(Runnable task, T result, 
@@ -57,7 +57,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * 
    * @param <T> type of result returned from the future
    * @param task callable to be executed
-   * @param priority priority for callable
+   * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed and get the result of the callable
    */
   public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority);
@@ -67,7 +67,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * 
    * @param task runnable to execute
    * @param delayInMs time in milliseconds to wait to execute task
-   * @param priority priority to give task for execution
+   * @param priority priority for task to get available thread to run on
    */
   public void schedule(Runnable task, long delayInMs, TaskPriority priority);
   
@@ -81,7 +81,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * 
    * @param task runnable to execute
    * @param delayInMs time in milliseconds to wait to execute task
-   * @param priority priority to give task for execution
+   * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed
    */
   public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
@@ -97,7 +97,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * @param task runnable to execute
    * @param result result to be returned from resulting future .get() when runnable completes
    * @param delayInMs time in milliseconds to wait to execute task
-   * @param priority priority to give task for execution
+   * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed
    */
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
@@ -111,23 +111,49 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * @param <T> type of result returned from the future
    * @param task callable to be executed
    * @param delayInMs time in milliseconds to wait to execute task
-   * @param priority priority to give task for execution
+   * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed and get the result of the callable
    */
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs, 
                                                  TaskPriority priority);
 
   /**
-   * Schedule a recurring task to run and a provided priority.  The recurring delay time will be 
-   * from the point where execution finished.
+   * Schedule a fixed delay recurring task to run.  The recurring delay time will be from the 
+   * point where execution has finished.  So the execution frequency is the 
+   * {@code recurringDelay + runtime} for the provided task.  
    * 
-   * @param task runnable to be executed.
-   * @param initialDelay delay in milliseconds until first run.
-   * @param recurringDelay delay in milliseconds for running task after last finish.
-   * @param priority priority for task to run at
+   * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
+   * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
+   * every run, the task will continue to be executed at the provided recurring delay (possibly 
+   * throwing an exception on each execution).
+   * 
+   * @param task runnable to be executed
+   * @param initialDelay delay in milliseconds until first run
+   * @param recurringDelay delay in milliseconds for running task after last finish
+   * @param priority priority for task to get available thread to run on
    */
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay, TaskPriority priority);
+
+
+  /**
+   * Schedule a fixed rate recurring task to run.  The recurring delay will be the same, 
+   * regardless of how long task execution takes.  A given runnable will not run concurrently 
+   * (unless it is submitted to the scheduler multiple times).  Instead of execution takes longer 
+   * than the period, the next run will occur immediately (given thread availability in the pool).  
+   * 
+   * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
+   * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
+   * every run, the task will continue to be executed at the provided recurring delay (possibly 
+   * throwing an exception on each execution).
+   * 
+   * @param task runnable to be executed
+   * @param initialDelay delay in milliseconds until first run
+   * @param period amount of time in milliseconds between the start of recurring executions
+   * @param priority priority for task to get available thread to run on
+   */
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, 
+                                  long period, TaskPriority priority);
   
   /**
    * Get the default priority for the scheduler.

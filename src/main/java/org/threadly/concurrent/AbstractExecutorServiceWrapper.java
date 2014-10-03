@@ -30,7 +30,6 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS = 1000000 * 100;  // 100ms
   
   private final SchedulerServiceInterface scheduler;
-  private final KeyDistributedExecutor fixedRateDistributor;
   
   /**
    * Constructs a new wrapper to adhere to the {@link ScheduledExecutorService} interface.
@@ -41,7 +40,6 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     
     this.scheduler = scheduler;
-    this.fixedRateDistributor = new KeyDistributedExecutor(scheduler);
   }
 
   @Override
@@ -250,8 +248,8 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                                              long delay, TimeUnit unit) {
     if (task == null) {
       throw new NullPointerException("Must provide task");
-    } else if (delay < 0) {
-      delay = 0;
+    } else if (delay <= 0) {
+      throw new IllegalArgumentException();
     } else if (initialDelay < 0) {
       initialDelay = 0;
     }
@@ -266,148 +264,27 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                                                          long initialDelayInMillis,
                                                                          long delayInMillis);
 
-  /**
-   * USE WITH CAUTION
-   * 
-   * Although I have implemented this as close to the javaspec as possible, this is a bit of a 
-   * hack.  For the longest time this just threw an UnsupportedOperationException, I did not want 
-   * to implement it because the {@link PriorityScheduler} is just not designed to handle this.
-   * 
-   * The largest problem with the Threadly implementation of this is that the rate may not be as 
-   * precise as it was in the java implementation.  In addition it is less efficient and wont get 
-   * the same throughput as with the java.util.concurrent implementation.
-   *
-   * From the open jdk javadoc....
-   * Creates and executes a periodic action that becomes enabled first
-   * after the given initial delay, and subsequently with the given
-   * period; that is executions will commence after
-   * <tt>initialDelay</tt> then <tt>initialDelay+period</tt>, then
-   * <tt>initialDelay + 2 * period</tt>, and so on.
-   * If any execution of the task
-   * encounters an exception, subsequent executions are suppressed.
-   * Otherwise, the task will only terminate via cancellation or
-   * termination of the executor.  If any execution of this task
-   * takes longer than its period, then subsequent executions
-   * may start late, but will not concurrently execute.
-   *
-   * @param task the task to execute
-   * @param initialDelay the time to delay first execution
-   * @param period the period between successive executions
-   * @param unit the time unit of the initialDelay and period parameters
-   * @return a ScheduledFuture representing pending completion of
-   *         the task, and whose <tt>get()</tt> method will throw an
-   *         exception upon cancellation
-   * @throws NullPointerException if command is null
-   * @throws IllegalArgumentException if period less than or equal to zero
-   */
   @Override
   public ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
                                                           long initialDelay, long period,
                                                           TimeUnit unit) {
     if (task == null) {
       throw new NullPointerException("Must provide task");
-    }
-    ArgumentVerifier.assertGreaterThanZero(period, "period");
-    
-    if (initialDelay < 0) {
+    } else if (period <= 0) {
+      throw new IllegalArgumentException();
+    } else if (initialDelay < 0) {
       initialDelay = 0;
     }
     
     long initialDelayInMs = unit.toMillis(initialDelay);
     long periodInMs = unit.toMillis(period);
-
-    // first wrap the task to prevent execution if exception has thrown
-    FixedRateTaskWrapper wrappedTask = new FixedRateTaskWrapper(task);
-    /* then create a task to submit the task to the distributor.  The distributor ensures
-     * that this wont run concurrently.  This will also have the job of removing itself 
-     * from the scheduler if an exception was thrown.
-     */
-    FixedRateSubmitter frs = new FixedRateSubmitter(scheduler, fixedRateDistributor, wrappedTask);
     
-    return scheduleWithFixedDelay(frs, initialDelayInMs, periodInMs);
+    return scheduleAtFixedRate(task, initialDelayInMs, periodInMs);
   }
   
-  /**
-   * <p>This classes job is to run a task, if an exception was thrown running the task previously, 
-   * it wont attempt to run the task again.</p>
-   * 
-   * <p>It is expected that this does NOT run concurrently, but may run on different threads.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 2.0.0
-   */
-  protected static class FixedRateTaskWrapper implements Runnable, RunnableContainerInterface {
-    private final Runnable originalTask;
-    private volatile boolean exceptionThrown;
-    
-    protected FixedRateTaskWrapper(Runnable originalTask) {
-      this.originalTask = originalTask;
-      this.exceptionThrown = false;
-    }
-    
-    /**
-     * Returns {@code true} if an exception was thrown and this task will no longer be executed.
-     * 
-     * @return {@code true} if the wrapped task threw an exception
-     */
-    public boolean exceptionThrown() {
-      return exceptionThrown;
-    }
-    
-    @Override
-    public Runnable getContainedRunnable() {
-      return originalTask;
-    }
-
-    @Override
-    public void run() {
-      if (! exceptionThrown) {
-        try {
-          originalTask.run();
-        } catch (Throwable t) {
-          exceptionThrown = true;
-          throw ExceptionUtils.makeRuntime(t);
-        }
-      }
-    }
-  }
-  
-  /**
-   * <p>This class is what is responsible for submitting the task back into the 
-   * {@link KeyDistributedExecutor}.  It is very short lived, and thus is what is ensuring the 
-   * regular rate.  It also has the responsibility of removing itself from the constant execution 
-   * if the wrapped task did throw an exception</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 2.0.0
-   */
-  protected static class FixedRateSubmitter implements Runnable, RunnableContainerInterface {
-    private final SchedulerServiceInterface scheduler;
-    private final KeyDistributedExecutor fixedRateDistributor;
-    private final FixedRateTaskWrapper wrappedTask;
-    
-    protected FixedRateSubmitter(SchedulerServiceInterface scheduler, 
-                                 KeyDistributedExecutor fixedRateDistributor, 
-                                 FixedRateTaskWrapper wrappedTask) {
-      this.scheduler = scheduler;
-      this.fixedRateDistributor = fixedRateDistributor;
-      this.wrappedTask = wrappedTask;
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return wrappedTask.getContainedRunnable();
-    }
-
-    @Override
-    public void run() {
-      if (wrappedTask.exceptionThrown()) {
-        scheduler.remove(this); // no need to keep attempting to execute
-      } else {
-        fixedRateDistributor.addTask(wrappedTask.getContainedRunnable(), wrappedTask);
-      }
-    }
-  }
+  protected abstract ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
+                                                                      long initialDelayInMillis,
+                                                                      long periodInMillis);
   
   /**
    * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 

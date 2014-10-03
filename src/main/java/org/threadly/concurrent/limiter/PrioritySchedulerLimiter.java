@@ -7,6 +7,7 @@ import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.Clock;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens on a provided 
@@ -129,7 +130,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
     if (delayInMs == 0) {
       execute(task, priority);
     } else {
-      scheduler.schedule(new PriorityDelayedRunnable(task, priority), 
+      scheduler.schedule(new DelayedExecutionRunnable(new PriorityWrapper(task, priority)), 
                          delayInMs, TaskPriority.High);
     }
   }
@@ -144,12 +145,32 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
       priority = scheduler.getDefaultPriority();
     }
     
-    RecurringRunnableWrapper rrw = new RecurringRunnableWrapper(task, recurringDelay, priority);
+    RecurringDelayWrapper rdw = new RecurringDelayWrapper(task, recurringDelay, priority);
+    
+    if (initialDelay == 0) {
+      executeWrapper(rdw);
+    } else {
+      scheduler.schedule(new DelayedExecutionRunnable(rdw), 
+                         initialDelay, TaskPriority.High);
+    }
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
+                                  TaskPriority priority) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    ArgumentVerifier.assertNotNegative(period, "period");
+    if (priority == null) {
+      priority = scheduler.getDefaultPriority();
+    }
+    
+    RecurringRateWrapper rrw = new RecurringRateWrapper(task, initialDelay, period, priority);
     
     if (initialDelay == 0) {
       executeWrapper(rrw);
     } else {
-      scheduler.schedule(new PriorityDelayedRunnable(rrw, priority), 
+      scheduler.schedule(new DelayedExecutionRunnable(rrw), 
                          initialDelay, TaskPriority.High);
     }
   }
@@ -158,43 +179,63 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   public TaskPriority getDefaultPriority() {
     return scheduler.getDefaultPriority();
   }
-  
-  /**
-   * <p>Small runnable that allows scheduled tasks to pass through the same execution queue that 
-   * immediate execution has to.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 1.1.0
-   */
-  protected class PriorityDelayedRunnable extends DelayedExecutionRunnable {
-    protected PriorityDelayedRunnable(Runnable runnable, TaskPriority priority) {
-      super(new PriorityWrapper(runnable, priority));
-    }
-  }
 
   /**
-   * <p>Wrapper for tasks which are executed in this sub pool, this ensures that 
-   * {@link #handleTaskFinished()} will be called after the task completes.</p>
+   * <p>Wrapper for recurring tasks that reschedule with a given delay after completing 
+   * execution.</p>
    * 
    * @author jent - Mike Jensen
-   * @since 1.1.0
+   * @since 3.1.0
    */
-  protected class RecurringRunnableWrapper extends PriorityWrapper {
+  protected class RecurringDelayWrapper extends PriorityWrapper {
     private final long recurringDelay;
-    private final PriorityDelayedRunnable delayRunnable;
+    private final DelayedExecutionRunnable delayRunnable;
     
-    protected RecurringRunnableWrapper(Runnable runnable, 
-                                       long recurringDelay, 
-                                       TaskPriority priority) {
+    protected RecurringDelayWrapper(Runnable runnable, 
+                                    long recurringDelay, 
+                                    TaskPriority priority) {
       super(runnable, priority);
       
       this.recurringDelay = recurringDelay;
-      delayRunnable = new PriorityDelayedRunnable(this, priority);
+      delayRunnable = new DelayedExecutionRunnable(this);
     }
     
     @Override
     protected void doAfterRunTasks() {
       scheduler.schedule(delayRunnable, recurringDelay, TaskPriority.High);
+    }
+  }
+
+  /**
+   * <p>Wrapper for recurring tasks that reschedule at a fixed rate after completing execution.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.1.0
+   */
+  protected class RecurringRateWrapper extends PriorityWrapper {
+    private final long period;
+    private final DelayedExecutionRunnable delayRunnable;
+    private long nextRunTime;
+    
+    protected RecurringRateWrapper(Runnable runnable, 
+                                   long initialDelay, long period, 
+                                   TaskPriority priority) {
+      super(runnable, priority);
+      
+      this.period = period;
+      delayRunnable = new DelayedExecutionRunnable(this);
+      nextRunTime = Clock.accurateTimeMillis() + initialDelay + period;
+    }
+    
+    @Override
+    protected void doAfterRunTasks() {
+      nextRunTime += period;
+      long nextDelay = nextRunTime - Clock.accurateTimeMillis();
+      if (nextDelay < 1) {
+        executeWrapper(this);
+      } else {
+        scheduler.schedule(delayRunnable, nextDelay, TaskPriority.High);
+      }
     }
   }
 

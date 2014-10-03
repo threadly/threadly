@@ -86,11 +86,6 @@ public class NoThreadSchedulerTaskContainerTest {
     }
 
     @Override
-    public long getDelayInMillis() {
-      return delay;
-    }
-
-    @Override
     protected void prepareForRun() {
       assertFalse(prepareCalled);
       
@@ -100,13 +95,18 @@ public class NoThreadSchedulerTaskContainerTest {
     @Override
     protected void runComplete() {
       assertFalse(runCompleteCalled);
-        
+      
       runCompleteCalled = true;
     }
 
     @Override
     protected void setInitialDelay() {
       // ignored
+    }
+
+    @Override
+    protected long getDelayInMillis() {
+      return delay;
     }
   }
 }

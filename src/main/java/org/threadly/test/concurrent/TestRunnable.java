@@ -1,5 +1,6 @@
 package org.threadly.test.concurrent;
 
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
@@ -43,7 +44,7 @@ public class TestRunnable implements Runnable {
    */
   public TestRunnable(int runTimeInMillis) {
     setRunDelayInMillis(runTimeInMillis);
-    this.runTime = new ConcurrentArrayList<Long>();
+    this.runTime = new ConcurrentArrayList<Long>(0, 1);
     this.runCount = new AtomicInteger(0);
     this.currentRunningCount = new AtomicInteger(0);
     this.ranConcurrent = false;
@@ -153,6 +154,7 @@ public class TestRunnable implements Runnable {
   public long getDelayTillRun(int runNumber, int timeout) {
     blockTillFinished(timeout, runNumber);
     
+    Collections.sort(runTime);
     return runTime.get(runNumber - 1) - getCreationTime();
   }
   
