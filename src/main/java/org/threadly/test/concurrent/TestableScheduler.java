@@ -69,7 +69,12 @@ public class TestableScheduler extends NoThreadScheduler {
    * @return quantity of tasks run during this tick call
    */
   public int tick() {
-    return tick(Clock.accurateTimeMillis());
+    long currentRealTime = Clock.accurateTimeMillis();
+    if (nowInMillis > currentRealTime) {
+      return tick(nowInMillis);
+    } else {
+      return tick(currentRealTime);
+    }
   }
   
   /**
