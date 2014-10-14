@@ -72,6 +72,18 @@ public class TestableSchedulerTest {
   }
   
   @Test
+  public void advanceThenTickTest() {
+    scheduler.advance(1000 * 10);
+    
+    TestRunnable tr = new TestRunnable();
+    scheduler.execute(tr);
+    
+    scheduler.tick();
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
   public void executeTest() {
     List<TestRunnable> runnables = getRunnableList();
     Iterator<TestRunnable> it = runnables.iterator();
@@ -272,13 +284,22 @@ public class TestableSchedulerTest {
   
   @Test
   public void scheduleWithFixedDelayTest() {
+    scheduleRecurringTest(true);
+  }
+  
+  private void scheduleRecurringTest(boolean fixedDelay) {
     long delay = 1000 * 10;
     
     TestRunnable immediateRun = new TestRunnable();
     TestRunnable initialDelay = new TestRunnable();
     
-    scheduler.scheduleWithFixedDelay(immediateRun, 0, delay);
-    scheduler.scheduleWithFixedDelay(initialDelay, delay, delay);
+    if (fixedDelay) {
+      scheduler.scheduleWithFixedDelay(immediateRun, 0, delay);
+      scheduler.scheduleWithFixedDelay(initialDelay, delay, delay);
+    } else {
+      scheduler.scheduleAtFixedRate(immediateRun, 0, delay);
+      scheduler.scheduleAtFixedRate(initialDelay, delay, delay);
+    }
 
     assertEquals(1, scheduler.tick());
     
@@ -317,6 +338,33 @@ public class TestableSchedulerTest {
     }
     try {
       scheduler.scheduleWithFixedDelay(new TestRunnable(), 10, -10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void scheduleAtFixedRateTest() {
+    scheduleRecurringTest(false);
+  }
+  
+  @Test
+  public void scheduleAtFixedRateFail() {
+    try {
+      scheduler.scheduleAtFixedRate(null, 10, 10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      scheduler.scheduleAtFixedRate(new TestRunnable(), -10, 10);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      scheduler.scheduleAtFixedRate(new TestRunnable(), 10, -10);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
