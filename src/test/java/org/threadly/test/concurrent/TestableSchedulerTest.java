@@ -56,7 +56,7 @@ public class TestableSchedulerTest {
   
   @Test
   public void lastTickTimeTest() {
-    long now = Clock.accurateTimeMillis();
+    long now = Clock.lastKnownTimeMillis();
     
     scheduler.tick(now + 1000);
     
@@ -73,13 +73,13 @@ public class TestableSchedulerTest {
   
   @Test
   public void advanceThenTickTest() {
+    scheduler.execute(new TestRunnable());
     scheduler.advance(1000 * 10);
     
     TestRunnable tr = new TestRunnable();
     scheduler.execute(tr);
     
-    scheduler.tick();
-    
+    assertEquals(1, scheduler.tick());
     assertTrue(tr.ranOnce());
   }
   

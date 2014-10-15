@@ -61,7 +61,6 @@ test {
   jvmArgs "-XX:-UseSplitVerifier", "-Demma.coverage.out.file=$buildDir/tmp/emma/metadata.emma", "-Demma.coverage.out.merge=true"
 
   doFirst {
-    println "Instrumenting the classes at " + sourceSets.main.output.classesDir.absolutePath
     // define the custom EMMA ant tasks
     ant.taskdef( resource:"emma_ant.properties", classpath: configurations.emma.asPath)
 
@@ -71,7 +70,6 @@ test {
 
     def emmaInstDir = new File(sourceSets.main.output.classesDir.parentFile.parentFile, "tmp/emma/instr")
     emmaInstDir.mkdirs()
-    println "Creating $emmaInstDir to instrument from " +       sourceSets.main.output.classesDir.absolutePath
     // instruct our compiled classes and store them at $buildDir/tmp/emma/instr
     ant.emma(enabled: 'true', verbosity:'info') {
       instr(merge:"true", destdir: emmaInstDir.absolutePath, instrpathref:"run.classpath",
@@ -89,7 +87,6 @@ test {
   // result in output like that:
   doLast {
     def srcDir = sourceSets.main.java.srcDirs.toArray()[0]
-    println "Creating test coverage reports for classes " + srcDir
     def emmaInstDir = new File(sourceSets.main.output.classesDir.parentFile.parentFile, "tmp/emma")
     ant.emma(enabled:"true") {
       new File("$buildDir/reports/emma").mkdirs()
@@ -103,10 +100,12 @@ test {
       }
     }
 
-    println "Test coverage reports available at $buildDir/reports/emma."
-    println "txt: $buildDir/reports/emma/coverage.txt"
-    println "Test $buildDir/reports/emma/coverage.html"
-    println "Test $buildDir/reports/emma/coverage.xml"
+    println "Test results available at:"
+    println "html - $buildDir/reports/tests/index.html"
+    println "Test coverage reports available at:"
+    println "txt  - $buildDir/reports/emma/coverage.txt"
+    println "html - $buildDir/reports/emma/coverage.html"
+    println "xml  - $buildDir/reports/emma/coverage.xml"
   }
 }
 

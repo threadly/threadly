@@ -93,7 +93,7 @@ public class ProfilerTest {
   }
   
   @Test (expected = NoSuchElementException.class)
-  public void getProfileThreadsIteratorFail() {
+  public void profileThreadsIteratorNextFail() {
     Iterator<Thread> it = profiler.getProfileThreadsIterator();
     
     while (it.hasNext()) {
@@ -102,6 +102,15 @@ public class ProfilerTest {
     
     it.next();
     fail("Exception should have thrown");
+  }
+  
+  @Test (expected = UnsupportedOperationException.class)
+  public void profileThreadsIteratorRemoveFail() {
+    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    it.next();
+    
+    // not currently supported
+    it.remove();
   }
   
   @SuppressWarnings("unused")
