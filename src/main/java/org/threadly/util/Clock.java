@@ -123,7 +123,9 @@ public class Clock {
    * @return Amount of time in milliseconds since Clock class was loaded
    */
   public static long timeSinceClockStartMillis() {
-    if (nowMillis - lastNanosUpdateTime > AUTOMATIC_UPDATE_FREQUENCY_IN_MS) {
+    long elapsedTimeSinceNanoUpdate = nowMillis - lastNanosUpdateTime;
+    if (elapsedTimeSinceNanoUpdate > AUTOMATIC_UPDATE_FREQUENCY_IN_MS || 
+        elapsedTimeSinceNanoUpdate < 0) { // we check less than zero to handle moving backwards
       updateNanoTime();
     }
     
