@@ -21,6 +21,80 @@ public class ClockTest {
   }
   
   @Test
+  public void startClockUpdateThreadTwiceTest() {
+    Clock.startClockUpdateThread();
+    
+    assertNotNull(Clock.clockUpdater);
+    
+    Runnable updater = Clock.clockUpdater;
+    
+    Clock.startClockUpdateThread();
+    
+    // should point to the same reference
+    assertTrue(updater == Clock.clockUpdater);
+  }
+  
+  @Test
+  public void timeSinceClockStartMillisTest() {
+    long timeSinceClockStartMillis = Clock.timeSinceClockStartMillis();
+    assertTrue(timeSinceClockStartMillis >= 0);
+    assertTrue(timeSinceClockStartMillis < 1000 * 60 * 15); // less than 15 min
+  }
+  
+  @Test
+  public void accurateTimeSinceClockStartMillisTest() {
+    final long timeSinceClockStartMillis = Clock.accurateTimeSinceClockStartMillis();
+    assertTrue(timeSinceClockStartMillis >= 0);
+    assertTrue(timeSinceClockStartMillis < 1000 * 60 * 15); // less than 15 min
+    
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return Clock.accurateTimeSinceClockStartMillis() > timeSinceClockStartMillis;
+      }
+    }.blockTillTrue(200);
+  }
+  
+  @Test
+  public void forwardOnlyLastKnownTimeMillisTest() {
+    // verify clock is not updating
+    long before = Clock.forwardOnlyLastKnownTimeMillis();
+    
+    TestUtils.blockTillClockAdvances();
+    
+    // update clock
+    long newTime = -1;
+    assertTrue((newTime = Clock.forwardOnlyAccurateTimeMillis()) > before);
+    // verify we get the new time again
+    assertTrue(newTime <= Clock.forwardOnlyLastKnownTimeMillis());
+  }
+  
+  @Test
+  public void automaticForwardOnlyUpdateTest() {
+    Clock.startClockUpdateThread();
+    final long before = Clock.forwardOnlyLastKnownTimeMillis();
+
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return Clock.forwardOnlyLastKnownTimeMillis() > before;
+      }
+    }.blockTillTrue(500);
+  }
+  
+  @Test
+  public void accurateTimeMillisTest() {
+    final long startTime = Clock.accurateTimeMillis();
+    
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        return Clock.accurateTimeMillis() > startTime;
+      }
+    }.blockTillTrue(200);
+  }
+  
+  @Test
   public void lastKnownTimeMillisTest() {
     // verify clock is not updating
     long before = Clock.lastKnownTimeMillis();
@@ -45,6 +119,6 @@ public class ClockTest {
       public boolean get() {
         return Clock.lastKnownTimeMillis() > before;
       }
-    }.blockTillTrue();
+    }.blockTillTrue(500);
   }
 }

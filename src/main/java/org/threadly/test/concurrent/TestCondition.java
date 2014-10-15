@@ -16,7 +16,6 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public abstract class TestCondition {
-  private static final int NANOS_IN_MILLISECOND = 1000000;
   private static final int DEFAULT_POLL_INTERVAL = 10;
   private static final int DEFAULT_TIMEOUT = 1000 * 10;
   private static final int SPIN_THRESHOLD = 10;
@@ -64,7 +63,7 @@ public abstract class TestCondition {
     while (! (lastResult = get()) && 
            (now = Clock.accurateTimeMillis()) - startTime < timeoutInMillis) {
       if (pollIntervalInMillis > SPIN_THRESHOLD) {
-        LockSupport.parkNanos(NANOS_IN_MILLISECOND * pollIntervalInMillis);
+        LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * pollIntervalInMillis);
       }
     }
     
