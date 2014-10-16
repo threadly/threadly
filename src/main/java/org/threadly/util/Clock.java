@@ -30,9 +30,8 @@ public class Clock {
   
   protected static final Object UPDATE_LOCK = new Object();
   protected static ClockUpdater clockUpdater = null;
-  private static final long CLOCK_STARTUP_TIME_NANOS = System.nanoTime();
-  private static final long CLOCK_STARTUP_TIME_MILLIS = System.currentTimeMillis();
-  private static volatile long lastNanosUpdateTime = CLOCK_STARTUP_TIME_MILLIS;
+  protected static final long CLOCK_STARTUP_TIME_NANOS = System.nanoTime();
+  protected static final long CLOCK_STARTUP_TIME_MILLIS = System.currentTimeMillis();
   private static volatile long nowNanos = CLOCK_STARTUP_TIME_NANOS;
   private static volatile long nowMillis = CLOCK_STARTUP_TIME_MILLIS;
   
@@ -102,16 +101,6 @@ public class Clock {
   }
   
   /**
-   * Updates the stored nano time reference to be accurate.
-   * 
-   * @since 3.1.0
-   */
-  protected static void updateNanoTime() {
-    nowNanos = System.nanoTime();
-    lastNanosUpdateTime = nowMillis;
-  }
-  
-  /**
    * Returns a fuzzy time for how much time in milliseconds since this class has loaded.  If 
    * {@link Clock} was loaded at the start of the application, this can provide the amount of time 
    * the application has been running.
@@ -123,12 +112,6 @@ public class Clock {
    * @return Amount of time in milliseconds since Clock class was loaded
    */
   public static long timeSinceClockStartMillis() {
-    long elapsedTimeSinceNanoUpdate = nowMillis - lastNanosUpdateTime;
-    if (elapsedTimeSinceNanoUpdate > AUTOMATIC_UPDATE_FREQUENCY_IN_MS || 
-        elapsedTimeSinceNanoUpdate < 0) { // we check less than zero to handle moving backwards
-      updateNanoTime();
-    }
-    
     return calculateTimeSinceClockStartMillis();
   }
   
@@ -141,7 +124,7 @@ public class Clock {
    * @return Amount of time in milliseconds since Clock class was loaded
    */
   public static long accurateTimeSinceClockStartMillis() {
-    updateNanoTime();
+    nowNanos = System.nanoTime();
     
     return calculateTimeSinceClockStartMillis();
   }
@@ -215,8 +198,8 @@ public class Clock {
         synchronized (UPDATE_LOCK) {
           while (clockUpdater == this) {
             try {
-              // this only updates the milliseconds, the nano time is lazily updated
-              accurateTimeMillis();
+              nowMillis = System.currentTimeMillis();
+              nowNanos = System.nanoTime();
               
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
             } catch (InterruptedException e) {
