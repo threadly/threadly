@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
 
 /**
@@ -39,7 +40,7 @@ public class DebugLogger {
    * @param msg message to be stored into log map
    */
   public static void log(String msg) {
-    long startTime = System.nanoTime();
+    long startTime = Clock.systemNanoTime();
     long time = startTime;
     String replacement = logMap.putIfAbsent(time, msg);
     while (replacement != null) {

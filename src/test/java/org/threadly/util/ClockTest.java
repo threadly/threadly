@@ -21,6 +21,12 @@ public class ClockTest {
   }
   
   @Test
+  public void systemNanoTimeTest() {
+    long baseTime = System.nanoTime();
+    assertTrue(Clock.systemNanoTime() >= baseTime);
+  }
+  
+  @Test
   public void startClockUpdateThreadTwiceTest() {
     Clock.startClockUpdateThread();
     
@@ -56,28 +62,28 @@ public class ClockTest {
   }
   
   @Test
-  public void forwardOnlyLastKnownTimeMillisTest() {
+  public void alwaysProgressingLastKnownTimeMillisTest() {
     // verify clock is not updating
-    long before = Clock.forwardOnlyLastKnownTimeMillis();
+    long before = Clock.alwaysProgressingLastKnownTimeMillis();
     
     TestUtils.blockTillClockAdvances();
     
     // update clock
     long newTime = -1;
-    assertTrue((newTime = Clock.forwardOnlyAccurateTimeMillis()) > before);
+    assertTrue((newTime = Clock.alwaysProgressingAccurateTimeMillis()) > before);
     // verify we get the new time again
-    assertTrue(newTime <= Clock.forwardOnlyLastKnownTimeMillis());
+    assertTrue(newTime <= Clock.alwaysProgressingLastKnownTimeMillis());
   }
   
   @Test
-  public void automaticForwardOnlyUpdateTest() {
+  public void automaticAlwaysProgressingUpdateTest() {
     Clock.startClockUpdateThread();
-    final long before = Clock.forwardOnlyLastKnownTimeMillis();
+    final long before = Clock.alwaysProgressingLastKnownTimeMillis();
 
     new TestCondition() {
       @Override
       public boolean get() {
-        return Clock.forwardOnlyLastKnownTimeMillis() > before;
+        return Clock.alwaysProgressingLastKnownTimeMillis() > before;
       }
     }.blockTillTrue(500);
   }

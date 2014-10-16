@@ -87,6 +87,22 @@ public class Clock {
   }
   
   /**
+   * This directly returns the result of {@link System#nanoTime()}.  The only reason to use this 
+   * call over calling {@link System#nanoTime()} directly is that it updates the nano time 
+   * representation, allowing for more accurate time references when calling to 
+   * {@link Clock#alwaysProgressingLastKnownTimeMillis()}.
+   * 
+   * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
+   * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
+   * start point).
+   * 
+   * @return a long which is a constantly forward moving representation of nano seconds
+   */
+  public static long systemNanoTime() {
+    return nowNanos = System.nanoTime();
+  }
+  
+  /**
    * Cacluates the time in milliseconds, since the class was loaded (and thus static function was 
    * run), using the currently stored time in nanoseconds.
    * 
@@ -124,7 +140,7 @@ public class Clock {
    * @return Amount of time in milliseconds since Clock class was loaded
    */
   public static long accurateTimeSinceClockStartMillis() {
-    nowNanos = System.nanoTime();
+    systemNanoTime();
     
     return calculateTimeSinceClockStartMillis();
   }
@@ -136,7 +152,7 @@ public class Clock {
    * @since 3.1.0
    * @return last known time in milliseconds
    */
-  public static long forwardOnlyLastKnownTimeMillis() {
+  public static long alwaysProgressingLastKnownTimeMillis() {
     return CLOCK_STARTUP_TIME_MILLIS + timeSinceClockStartMillis();
   }
   
@@ -145,12 +161,12 @@ public class Clock {
    * only move forward (regardless of system clock changes).  One major difference from 
    * {@link #accurateTimeMillis()} is that this will NOT update the time for calls to 
    * {@link #lastKnownTimeMillis()}, but will update the time for calls to 
-   * {@link #forwardOnlyLastKnownTimeMillis()}.
+   * {@link #alwaysProgressingLastKnownTimeMillis()}.
    * 
    * @since 3.1.0
    * @return accurate time in milliseconds
    */
-  public static long forwardOnlyAccurateTimeMillis() {
+  public static long alwaysProgressingAccurateTimeMillis() {
     return CLOCK_STARTUP_TIME_MILLIS + accurateTimeSinceClockStartMillis();
   }
 
@@ -160,7 +176,7 @@ public class Clock {
    * the time (unless requested to stop automatically updating).  
    * 
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
-   * consider using {@link #forwardOnlyLastKnownTimeMillis()}.
+   * consider using {@link #alwaysProgressingLastKnownTimeMillis()}.
    * 
    * @return last known time in milliseconds
    */
@@ -173,7 +189,7 @@ public class Clock {
    * returns the accurate time in milliseconds.  
    * 
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
-   * consider using {@link #forwardOnlyAccurateTimeMillis()}.
+   * consider using {@link #alwaysProgressingAccurateTimeMillis()}.
    * 
    * @since 2.0.0 (existed since 1.0.0 as accurateTime)
    * @return accurate time in milliseconds
@@ -198,8 +214,8 @@ public class Clock {
         synchronized (UPDATE_LOCK) {
           while (clockUpdater == this) {
             try {
-              nowMillis = System.currentTimeMillis();
-              nowNanos = System.nanoTime();
+              accurateTimeMillis();
+              systemNanoTime();
               
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
             } catch (InterruptedException e) {
