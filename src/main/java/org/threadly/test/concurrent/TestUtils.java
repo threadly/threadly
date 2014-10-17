@@ -37,10 +37,12 @@ public class TestUtils {
       private static final int POLL_INTERVAL_IN_MS = 1;
       
       private final long startTime = Clock.accurateTimeMillis();
+      private final long alwaysProgressingStartTime = Clock.alwaysProgressingAccurateTimeMillis();
       
       @Override
       public boolean get() {
-        return Clock.accurateTimeMillis() != startTime;
+        return Clock.accurateTimeMillis() > startTime && 
+                 Clock.alwaysProgressingAccurateTimeMillis() > alwaysProgressingStartTime;
       }
       
       @Override
