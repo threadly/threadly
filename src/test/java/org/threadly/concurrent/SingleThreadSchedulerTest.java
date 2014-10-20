@@ -27,6 +27,30 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   @Test
+  @Override
+  public void scheduleWithFixedDelayTest() {
+    recurringExecutionTest(false, true, true);
+  }
+  
+  @Test
+  @Override
+  public void scheduleWithFixedDelayInitialDelayTest() {
+    recurringExecutionTest(true, true, true);
+  }
+  
+  @Test
+  @Override
+  public void scheduleAtFixedRateTest() {
+    recurringExecutionTest(false, false, true);
+  }
+  
+  @Test
+  @Override
+  public void scheduleAtFixedRateInitialDelayTest() {
+    recurringExecutionTest(true, false, true);
+  }
+  
+  @Test
   public void isShutdownTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     assertFalse(sts.isShutdown());

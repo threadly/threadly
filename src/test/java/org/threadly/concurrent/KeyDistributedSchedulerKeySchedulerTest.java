@@ -4,11 +4,37 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.junit.Test;
+
 @SuppressWarnings("javadoc")
 public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerInterfaceTest {
   @Override
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
     return new KeyBasedSubmitterSchedulerFactory();
+  }
+  
+  @Test
+  @Override
+  public void scheduleWithFixedDelayTest() {
+    recurringExecutionTest(false, true, true);
+  }
+  
+  @Test
+  @Override
+  public void scheduleWithFixedDelayInitialDelayTest() {
+    recurringExecutionTest(true, true, true);
+  }
+  
+  @Test
+  @Override
+  public void scheduleAtFixedRateTest() {
+    recurringExecutionTest(false, false, true);
+  }
+  
+  @Test
+  @Override
+  public void scheduleAtFixedRateInitialDelayTest() {
+    recurringExecutionTest(true, false, true);
   }
 
   private class KeyBasedSubmitterSchedulerFactory implements SubmitterSchedulerFactory {

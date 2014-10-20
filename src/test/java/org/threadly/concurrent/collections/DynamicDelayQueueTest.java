@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.TestDelayed;
 import org.threadly.concurrent.collections.DynamicDelayQueue;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class DynamicDelayQueueTest {
@@ -96,12 +97,12 @@ public class DynamicDelayQueueTest {
   public void blockTillAvailableTest() throws InterruptedException {
     final int delayTime = 20;
     
-    long startTime = System.currentTimeMillis();
+    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
     testQueue.put(new RealTimeDelayed(delayTime));
     synchronized (testQueue.queueLock) {
       testQueue.blockTillAvailable();
     }
-    long endTime = System.currentTimeMillis();
+    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
     
     assertTrue(endTime - startTime >= delayTime);
   }
@@ -608,12 +609,12 @@ public class DynamicDelayQueueTest {
     protected RealTimeDelayed(long delayInMs) {
       super(delayInMs);
       
-      creationTime = System.currentTimeMillis();
+      creationTime = Clock.alwaysProgressingAccurateTimeMillis();
     }
     
     @Override
     public long getDelay(TimeUnit unit) {
-      long elapsedTime = System.currentTimeMillis() - creationTime;
+      long elapsedTime = Clock.alwaysProgressingAccurateTimeMillis() - creationTime;
       return unit.convert(delayInMs - elapsedTime, 
                           TimeUnit.MILLISECONDS);
     }

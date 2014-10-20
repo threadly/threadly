@@ -549,9 +549,8 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
       BlockingTestRunnable br = new BlockingTestRunnable();
       scheduler.execute(br);
       
-      long before = System.currentTimeMillis();
       br.blockTillStarted();
-      TestUtils.sleep(System.currentTimeMillis() - before + checkTime + 1);
+      TestUtils.sleep(checkTime + 1);
       
       assertEquals(1, scheduler.getQtyRunningOverTime(checkTime));
       List<Runnable> longRunning = scheduler.getRunnablesRunningOverTime(checkTime);
@@ -581,9 +580,8 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
       BlockCallable bc = new BlockCallable();
       scheduler.submit(bc);
       
-      long before = System.currentTimeMillis();
       bc.blockTillStarted();
-      TestUtils.sleep(System.currentTimeMillis() - before + checkTime + 1);
+      TestUtils.sleep(checkTime + 1);
 
       assertEquals(1, scheduler.getQtyRunningOverTime(checkTime));
       List<Callable<?>> longRunning = scheduler.getCallablesRunningOverTime(checkTime);

@@ -879,10 +879,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         long now;
         if (startTime < 0) {
           // only set the start time at the first run
-          startTime = Clock.accurateTimeMillis();
+          startTime = Clock.alwaysProgressingAccurateTimeMillis();
           now = startTime;
         } else {
-          now = Clock.accurateTimeMillis();
+          now = Clock.alwaysProgressingAccurateTimeMillis();
         }
         
         if (waitTime == Long.MAX_VALUE) {  // prevent overflow
@@ -980,7 +980,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
                ! highPriorityQueue.isEmpty() && // if there are no waiting high priority tasks, we don't care 
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
           workersLock.wait(waitAmount);
-          Clock.accurateTimeMillis(); // update for getDelayEstimateInMillis
+          Clock.alwaysProgressingAccurateTimeMillis(); // update for getDelayEstimateInMillis
         }
         // check if we should reset the high delay for future low priority tasks
         if (highPriorityQueue.isEmpty()) {
@@ -1019,7 +1019,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    */
   protected void expireOldWorkers() {
     synchronized (workersLock) {
-      long now = Clock.lastKnownTimeMillis();
+      long now = Clock.alwaysProgressingLastKnownTimeMillis();
       // we search backwards because the oldest workers will be at the back of the stack
       while ((currentPoolSize > corePoolSize || allowCorePoolTimeout) && 
              ! availableWorkers.isEmpty() && 
@@ -1126,7 +1126,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       if (thread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      lastRunTime = Clock.lastKnownTimeMillis();
+      lastRunTime = Clock.alwaysProgressingLastKnownTimeMillis();
       nextTask = null;
     }
 
@@ -1204,7 +1204,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           nextTask = null;
           if (isRunning()) {
             // only check if still running, otherwise worker has already been killed
-            lastRunTime = Clock.lastKnownTimeMillis();
+            lastRunTime = Clock.alwaysProgressingLastKnownTimeMillis();
             workerDone(this);
           } else {
             break;
@@ -1286,7 +1286,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     protected OneTimeTaskWrapper(Runnable task, TaskPriority priority, long delay) {
       super(task, priority);
       
-      runTime = Clock.accurateTimeMillis() + delay;
+      runTime = Clock.alwaysProgressingAccurateTimeMillis() + delay;
     }
 
     @Override
@@ -1297,7 +1297,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     
     @Override
     protected long getDelayEstimateInMillis() {
-      return runTime - Clock.lastKnownTimeMillis();
+      return runTime - Clock.alwaysProgressingLastKnownTimeMillis();
     }
 
     @Override
@@ -1324,7 +1324,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       super(task, priority);
       
       executing = false;
-      this.nextRunTime = Clock.accurateTimeMillis() + initialDelay;
+      this.nextRunTime = Clock.alwaysProgressingAccurateTimeMillis() + initialDelay;
     }
 
     @Override
@@ -1348,7 +1348,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     
     @Override
     protected long getDelayEstimateInMillis() {
-      return nextRunTime - Clock.lastKnownTimeMillis();
+      return nextRunTime - Clock.alwaysProgressingLastKnownTimeMillis();
     }
 
     @Override
@@ -1477,7 +1477,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     
     @Override
     protected void updateNextRunTime() {
-      nextRunTime = Clock.accurateTimeMillis() + recurringDelay;
+      nextRunTime = Clock.alwaysProgressingAccurateTimeMillis() + recurringDelay;
     }
   }
   

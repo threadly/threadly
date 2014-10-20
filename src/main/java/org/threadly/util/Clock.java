@@ -186,7 +186,8 @@ public class Clock {
 
   /**
    * Updates the clock so that future calls to {@link #lastKnownTimeMillis()} can benefit, and 
-   * returns the accurate time in milliseconds.  
+   * returns the accurate time in milliseconds.  This will NOT update the time for calls to 
+   * {@link #alwaysProgressingLastKnownTimeMillis()}.
    * 
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
    * consider using {@link #alwaysProgressingAccurateTimeMillis()}.

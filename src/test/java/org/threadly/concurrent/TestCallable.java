@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class TestCallable extends TestCondition 
@@ -22,7 +23,7 @@ public class TestCallable extends TestCondition
   
   public TestCallable(long runDurration) {
     this.runDurration = runDurration;
-    this.creationTime = System.currentTimeMillis();
+    this.creationTime = Clock.alwaysProgressingAccurateTimeMillis();
     callTime = -1;
     result = new Object();
     done = false;
@@ -60,7 +61,7 @@ public class TestCallable extends TestCondition
 
   @Override
   public Object call() {
-    callTime = System.currentTimeMillis();
+    callTime = Clock.alwaysProgressingAccurateTimeMillis();
     
     handleCallStart();
     

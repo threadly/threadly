@@ -50,7 +50,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     this.scheduler = scheduler;
     this.permitsPerSecond = permitsPerSecond;
     this.permitLock = new Object();
-    this.lastScheduleTime = Clock.lastKnownTimeMillis();
+    this.lastScheduleTime = Clock.alwaysProgressingLastKnownTimeMillis();
   }
   
   /**
@@ -62,7 +62,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   public int getMinimumDelay() {
     synchronized (permitLock) {
-      return (int)Math.max(0, lastScheduleTime - Clock.lastKnownTimeMillis());
+      return (int)Math.max(0, lastScheduleTime - Clock.alwaysProgressingLastKnownTimeMillis());
     }
   }
   
@@ -181,14 +181,14 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected void doExecute(int permits, Runnable task) {
     synchronized (permitLock) {
       int effectiveDelay = (int)(((double)permits / permitsPerSecond) * 1000);
-      long scheduleDelay = lastScheduleTime - Clock.accurateTimeMillis();
+      long scheduleDelay = lastScheduleTime - Clock.alwaysProgressingAccurateTimeMillis();
       if (scheduleDelay < 0) {
         scheduleDelay = 0;
       }
       
       scheduler.schedule(task, scheduleDelay);
       
-      lastScheduleTime = Clock.lastKnownTimeMillis() + effectiveDelay + scheduleDelay;
+      lastScheduleTime = Clock.alwaysProgressingLastKnownTimeMillis() + effectiveDelay + scheduleDelay;
     }
   }
 }

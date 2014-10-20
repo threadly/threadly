@@ -1095,7 +1095,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
         assertEquals(1, scheduler.availableWorkers.size());
         
         TestUtils.blockTillClockAdvances();
-        Clock.accurateTimeMillis(); // update clock so scheduler will see it
+        Clock.alwaysProgressingAccurateTimeMillis(); // update clock so scheduler will see it
         
         scheduler.expireOldWorkers();
         
@@ -1105,7 +1105,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
         scheduler.allowCoreThreadTimeOut(true);
         
         TestUtils.blockTillClockAdvances();
-        Clock.accurateTimeMillis(); // update clock so scheduler will see it
+        Clock.alwaysProgressingAccurateTimeMillis(); // update clock so scheduler will see it
         
         scheduler.expireOldWorkers();
         

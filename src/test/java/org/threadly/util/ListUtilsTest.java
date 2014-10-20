@@ -161,7 +161,7 @@ public class ListUtilsTest {
       assertEquals(insertionIndex, ListUtils.binarySearch(list, testItem, true));
     }
     
-    Random random = new Random(System.currentTimeMillis());
+    Random random = new Random(Clock.lastKnownTimeMillis());
     for (int i = 0; i < BINARY_SEARCH_RANDOM_SIZE; i++) {
       TestDelayed testItem = new TestDelayed(random.nextInt(BINARY_SEARCH_RANDOM_SIZE));
       int bsResult = ListUtils.binarySearch(list, testItem, true);

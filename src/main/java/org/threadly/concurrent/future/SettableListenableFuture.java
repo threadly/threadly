@@ -171,12 +171,12 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
   public T get(long timeout, TimeUnit unit) throws InterruptedException, 
                                                    ExecutionException,
                                                    TimeoutException {
-    long startTime = Clock.accurateTimeMillis();
+    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
     long timeoutInMs = unit.toMillis(timeout);
     synchronized (resultLock) {
       long remainingInMs;
       while (! done && 
-             (remainingInMs = timeoutInMs - (Clock.accurateTimeMillis() - startTime)) > 0) {
+             (remainingInMs = timeoutInMs - (Clock.alwaysProgressingAccurateTimeMillis() - startTime)) > 0) {
         resultLock.wait(remainingInMs);
       }
       

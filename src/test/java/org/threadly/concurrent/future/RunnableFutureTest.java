@@ -12,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public abstract class RunnableFutureTest {
@@ -73,12 +74,12 @@ public abstract class RunnableFutureTest {
     
     // we never run the future, so we have to timeout
     
-    long startTime = System.currentTimeMillis();
+    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
     try {
       future.get(DELAY_TIME, TimeUnit.MILLISECONDS);
       fail("Exception should have been thrown");
     } catch (TimeoutException e) {
-      long catchTime = System.currentTimeMillis();
+      long catchTime = Clock.alwaysProgressingAccurateTimeMillis();
       assertTrue(catchTime - startTime >= DELAY_TIME);
     }
   }

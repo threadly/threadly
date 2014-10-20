@@ -27,7 +27,7 @@ public class ClockWrapperTest {
   public void getAccurateTimeTest() {
     final long startTime = clockWrapper.getSemiAccurateTime();
     
-    new TimeChangeCondition(startTime, true).blockTillTrue();
+    new TimeChangeCondition(startTime).blockTillTrue();
     
     // verify getting updates
     assertTrue(startTime != clockWrapper.getSemiAccurateTime());
@@ -36,7 +36,7 @@ public class ClockWrapperTest {
     clockWrapper.stopForcingUpdate();
     long updateTime = clockWrapper.getSemiAccurateTime();
 
-    new TimeChangeCondition(updateTime, false).blockTillTrue();
+    new TimeChangeCondition(updateTime).blockTillTrue();
     
     // verify no longer getting updates
     assertEquals(updateTime, clockWrapper.getSemiAccurateTime());
@@ -55,26 +55,20 @@ public class ClockWrapperTest {
   }
   
   private class TimeChangeCondition extends TestCondition {
-    private final boolean system;
     private final long time;
     
-    private TimeChangeCondition(long time, boolean system) {
-      this.system = system;
+    private TimeChangeCondition(long time) {
       this.time = time;
     }
     
     @Override
     public boolean get() {
-      if (system) {
-        return System.currentTimeMillis() != time;
-      } else {
-        return Clock.accurateTimeMillis() != time;
-      }
+      return Clock.alwaysProgressingAccurateTimeMillis() != time;
     }
     
     @Override
     public void blockTillTrue() {
-      blockTillTrue(100, 1);
+      blockTillTrue(200, 1);
     }
   }
 }

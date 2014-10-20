@@ -157,25 +157,26 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   
   @Test
   public void scheduleWithFixedDelayTest() {
-    recurringExecutionTest(false, true);
+    recurringExecutionTest(false, true, false);
   }
   
   @Test
   public void scheduleWithFixedDelayInitialDelayTest() {
-    recurringExecutionTest(true, true);
+    recurringExecutionTest(true, true, false);
   }
   
   @Test
   public void scheduleAtFixedRateTest() {
-    recurringExecutionTest(false, false);
+    recurringExecutionTest(false, false, false);
   }
   
   @Test
   public void scheduleAtFixedRateInitialDelayTest() {
-    recurringExecutionTest(true, false);
+    recurringExecutionTest(true, false, false);
   }
   
-  private void recurringExecutionTest(boolean initialDelay, boolean fixedDelay) {
+  protected void recurringExecutionTest(boolean initialDelay, boolean fixedDelay, 
+                                        boolean singleThreaded) {
     final long initialDelayInMillis = initialDelay ? DELAY_TIME : 0;
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
@@ -200,15 +201,19 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
         if (initialDelay) {
           long executionDelay = tr.getDelayTillFirstRun();
           assertTrue(executionDelay >= DELAY_TIME);
-          // should be very timely with a core pool size that matches runnable count
-          assertTrue(executionDelay <= (DELAY_TIME + 2000));
+          if (! singleThreaded) {
+            // should be very timely with a core pool size that matches runnable count
+            assertTrue(executionDelay <= (DELAY_TIME + 2000));
+          }
         }
         
         tr.blockTillFinished((DELAY_TIME * (CYCLE_COUNT - 1)) + 2000, CYCLE_COUNT);
         long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
         assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
         // should be very timely with a core pool size that matches runnable count
-        assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
+        if (! singleThreaded) {
+          assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
+        }
       }
     } finally {
       factory.shutdown();

@@ -21,6 +21,7 @@ import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public abstract class ScheduledExecutorServiceTest {
@@ -101,14 +102,14 @@ public abstract class ScheduledExecutorServiceTest {
       assertFalse(scheduler.isTerminated());
       
       TestRunnable tr = new TestRunnable(DELAY_TIME * 2);
-      long start = System.currentTimeMillis();
+      long start = Clock.alwaysProgressingAccurateTimeMillis();
       scheduler.execute(tr);
       
       tr.blockTillStarted();
       scheduler.shutdown();
   
       scheduler.awaitTermination(1000, TimeUnit.MILLISECONDS);
-      long stop = System.currentTimeMillis();
+      long stop = Clock.alwaysProgressingAccurateTimeMillis();
       
       assertTrue(stop - start >= (DELAY_TIME * 2) - 10);
     } finally {
@@ -499,9 +500,9 @@ public abstract class ScheduledExecutorServiceTest {
         toInvoke.add(new TestCallable(runTime));
       }
       
-      long startTime = System.currentTimeMillis();
+      long startTime = Clock.alwaysProgressingAccurateTimeMillis();
       List<Future<Object>> result = scheduler.invokeAll(toInvoke, timeoutTime, TimeUnit.MILLISECONDS);
-      long endTime = System.currentTimeMillis();
+      long endTime = Clock.alwaysProgressingAccurateTimeMillis();
       
       assertEquals(toInvoke.size(), result.size());
       

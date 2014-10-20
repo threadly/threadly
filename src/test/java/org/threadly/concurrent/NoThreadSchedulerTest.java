@@ -18,6 +18,7 @@ import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
@@ -177,14 +178,14 @@ public class NoThreadSchedulerTest {
   
   private static void scheduleRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
     TestRunnable tr = new TestRunnable();
-    long scheduleTime = System.currentTimeMillis();
+    long scheduleTime = Clock.alwaysProgressingAccurateTimeMillis();
     scheduler.schedule(tr, DELAY_TIME);
     
     int runCount = 0;
     while (runCount == 0) {
       runCount = scheduler.tick();
     }
-    long runTime = System.currentTimeMillis();
+    long runTime = Clock.alwaysProgressingAccurateTimeMillis();
     
     assertEquals(1, runCount);
     
@@ -526,10 +527,10 @@ public class NoThreadSchedulerTest {
       @Override
       public void handleRunStart() {
         try {
-          long startTime = System.currentTimeMillis();
+          long startTime = Clock.alwaysProgressingAccurateTimeMillis();
           blockingScheduler.schedule(testTask, DELAY_TIME);
           int runCount = blockingScheduler.tick();  // should block
-          long finishTime = System.currentTimeMillis();
+          long finishTime = Clock.alwaysProgressingAccurateTimeMillis();
           
           av.assertEquals(1, runCount);
           av.assertTrue(finishTime - startTime >= DELAY_TIME);

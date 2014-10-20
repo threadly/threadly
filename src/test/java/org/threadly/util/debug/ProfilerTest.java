@@ -37,7 +37,7 @@ public class ProfilerTest {
       public boolean get() {
         return profiler.getCollectedSampleQty() > 0;
       }
-    }.blockTillTrue();
+    }.blockTillTrue(1000 * 20);
   }
   
   @Test
@@ -176,7 +176,7 @@ public class ProfilerTest {
       public boolean get() {
         return ! runningThread.isAlive();
       }
-    }.blockTillTrue();
+    }.blockTillTrue(1000 * 20);
     
     profiler.reset();
     

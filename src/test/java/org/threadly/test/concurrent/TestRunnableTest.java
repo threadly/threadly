@@ -10,6 +10,7 @@ import org.threadly.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestCondition.ConditionTimeoutException;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class TestRunnableTest {
@@ -46,7 +47,7 @@ public class TestRunnableTest {
   @Test
   public void runTest() {
     TestTestRunnable ttr = new TestTestRunnable();
-    long start = System.currentTimeMillis();
+    long start = Clock.alwaysProgressingAccurateTimeMillis();
     
     TestUtils.blockTillClockAdvances();
     
@@ -65,7 +66,7 @@ public class TestRunnableTest {
     
     TestUtils.blockTillClockAdvances();
     
-    long now = System.currentTimeMillis();
+    long now = Clock.alwaysProgressingAccurateTimeMillis();
     assertTrue(ttr.getDelayTillRun(2) <= now - start);
     assertTrue(ttr.getDelayTillRun(2) > ttr.getDelayTillFirstRun());
   }
@@ -75,11 +76,11 @@ public class TestRunnableTest {
     int runCount = TEST_QTY / 2;
     instance.setRunDelayInMillis(DELAY_TIME);
     
-    long startTime = System.currentTimeMillis();
+    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
     for (int i = 0; i < runCount; i++) {
       instance.run();
     }
-    long endTime = System.currentTimeMillis();
+    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
     
     assertTrue(endTime - startTime >= (DELAY_TIME * runCount));
   }
@@ -100,9 +101,9 @@ public class TestRunnableTest {
     };
     new Thread(tr).start();
     
-    long startTime = System.currentTimeMillis();
+    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
     tr.blockTillFinished(1000, 2);
-    long endTime = System.currentTimeMillis();
+    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
   }

@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
@@ -221,14 +222,14 @@ public class SettableListenableFutureTest {
   @Test
   public void getTimeoutTest() throws InterruptedException, 
                                       ExecutionException {
-    long startTime = System.currentTimeMillis();
+    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
     try {
       slf.get(DELAY_TIME, TimeUnit.MILLISECONDS);
       fail("Exception should have thrown");
     } catch (TimeoutException e) {
       // expected
     }
-    long endTime = System.currentTimeMillis();
+    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
   }

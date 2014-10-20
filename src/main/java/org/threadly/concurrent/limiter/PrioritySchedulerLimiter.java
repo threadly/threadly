@@ -224,13 +224,13 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
       
       this.period = period;
       delayRunnable = new DelayedExecutionRunnable(this);
-      nextRunTime = Clock.accurateTimeMillis() + initialDelay + period;
+      nextRunTime = Clock.alwaysProgressingAccurateTimeMillis() + initialDelay + period;
     }
     
     @Override
     protected void doAfterRunTasks() {
       nextRunTime += period;
-      long nextDelay = nextRunTime - Clock.accurateTimeMillis();
+      long nextDelay = nextRunTime - Clock.alwaysProgressingAccurateTimeMillis();
       if (nextDelay < 1) {
         executeWrapper(this);
       } else {
