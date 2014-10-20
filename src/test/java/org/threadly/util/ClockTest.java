@@ -85,7 +85,7 @@ public class ClockTest {
       public boolean get() {
         return Clock.alwaysProgressingLastKnownTimeMillis() > before;
       }
-    }.blockTillTrue(500);
+    }.blockTillTrue(1000);
   }
   
   @Test
@@ -125,6 +125,6 @@ public class ClockTest {
       public boolean get() {
         return Clock.lastKnownTimeMillis() > before;
       }
-    }.blockTillTrue(500);
+    }.blockTillTrue(1000);
   }
 }
