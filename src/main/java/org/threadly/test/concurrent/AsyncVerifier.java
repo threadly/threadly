@@ -68,7 +68,7 @@ public class AsyncVerifier {
    * @throws TimeoutException Thrown if timeout occurs without signalComplete being called
    */
   public void waitForTest(long timeoutInMs, int signalCount) throws InterruptedException, TimeoutException {
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     long remainingWaitTime = timeoutInMs;
     synchronized (notifyLock) {
       while (this.signalCount < signalCount && 
@@ -76,7 +76,7 @@ public class AsyncVerifier {
              failure == null) {
         notifyLock.wait(remainingWaitTime);
         
-        remainingWaitTime = timeoutInMs - (Clock.alwaysProgressingAccurateTimeMillis() - startTime);
+        remainingWaitTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
       }
     }
     

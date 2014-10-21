@@ -23,7 +23,7 @@ public class TestCallable extends TestCondition
   
   public TestCallable(long runDurration) {
     this.runDurration = runDurration;
-    this.creationTime = Clock.alwaysProgressingAccurateTimeMillis();
+    this.creationTime = Clock.accurateForwardProgressingMillis();
     callTime = -1;
     result = new Object();
     done = false;
@@ -61,7 +61,7 @@ public class TestCallable extends TestCondition
 
   @Override
   public Object call() {
-    callTime = Clock.alwaysProgressingAccurateTimeMillis();
+    callTime = Clock.accurateForwardProgressingMillis();
     
     handleCallStart();
     

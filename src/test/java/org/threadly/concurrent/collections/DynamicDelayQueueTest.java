@@ -97,12 +97,12 @@ public class DynamicDelayQueueTest {
   public void blockTillAvailableTest() throws InterruptedException {
     final int delayTime = 20;
     
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     testQueue.put(new RealTimeDelayed(delayTime));
     synchronized (testQueue.queueLock) {
       testQueue.blockTillAvailable();
     }
-    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long endTime = Clock.accurateForwardProgressingMillis();
     
     assertTrue(endTime - startTime >= delayTime);
   }
@@ -609,12 +609,12 @@ public class DynamicDelayQueueTest {
     protected RealTimeDelayed(long delayInMs) {
       super(delayInMs);
       
-      creationTime = Clock.alwaysProgressingAccurateTimeMillis();
+      creationTime = Clock.accurateForwardProgressingMillis();
     }
     
     @Override
     public long getDelay(TimeUnit unit) {
-      long elapsedTime = Clock.alwaysProgressingAccurateTimeMillis() - creationTime;
+      long elapsedTime = Clock.accurateForwardProgressingMillis() - creationTime;
       return unit.convert(delayInMs - elapsedTime, 
                           TimeUnit.MILLISECONDS);
     }

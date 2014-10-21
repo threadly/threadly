@@ -246,7 +246,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     }
     
     if (w != null) {  // may be null if shutdown
-      Clock.alwaysProgressingAccurateTimeMillis(); // update clock for task to ensure it is accurate
+      Clock.systemNanoTime(); // update clock for task to ensure it is accurate
       long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
         synchronized (highPriorityExecutionDelay.getModificationLock()) {
@@ -273,7 +273,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
                ! highPriorityQueue.isEmpty() && // if there are no waiting high priority tasks, we don't care 
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
           workersLock.wait(waitAmount);
-          Clock.alwaysProgressingAccurateTimeMillis(); // update for getDelayEstimateInMillis
+          Clock.systemNanoTime(); // update for getDelayEstimateInMillis
         }
         // check if we should reset the high delay for future low priority tasks
         if (highPriorityQueue.isEmpty()) {
@@ -314,7 +314,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     }
     
     if (w != null) {  // may be null if shutdown
-      Clock.alwaysProgressingAccurateTimeMillis(); // update clock for task to ensure it is accurate
+      Clock.systemNanoTime(); // update clock for task to ensure it is accurate
       long executionDelay = task.getDelayEstimateInMillis();
       if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
         synchronized (lowPriorityExecutionDelay.getModificationLock()) {
@@ -631,7 +631,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   public List<Runnable> getRunnablesRunningOverTime(long timeInMs) {
     List<Runnable> result = new LinkedList<Runnable>();
     
-    long now = Clock.alwaysProgressingAccurateTimeMillis();
+    long now = Clock.accurateForwardProgressingMillis();
     Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
     while (it.hasNext()) {
       Entry<Wrapper, Long> entry = it.next();
@@ -657,7 +657,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   public List<Callable<?>> getCallablesRunningOverTime(long timeInMs) {
     List<Callable<?>> result = new LinkedList<Callable<?>>();
     
-    long now = Clock.alwaysProgressingAccurateTimeMillis();
+    long now = Clock.accurateForwardProgressingMillis();
     Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
     while (it.hasNext()) {
       Entry<Wrapper, Long> entry = it.next();
@@ -681,7 +681,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   public int getQtyRunningOverTime(long timeInMs) {
     int result = 0;
     
-    long now = Clock.alwaysProgressingAccurateTimeMillis();
+    long now = Clock.accurateForwardProgressingMillis();
     Iterator<Long> it = runningTasks.values().iterator();
     while (it.hasNext()) {
       Long startTime = it.next();
@@ -775,7 +775,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @param taskWrapper Wrapper that is about to be executed
    */
   protected void trackTaskStart(Wrapper taskWrapper) {
-    runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.alwaysProgressingAccurateTimeMillis());
+    runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.accurateForwardProgressingMillis());
     
     switch (taskWrapper.priority) {
       case High:
@@ -795,7 +795,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @param taskWrapper wrapper for task that completed
    */
   protected void trackTaskFinish(Wrapper taskWrapper) {
-    long finishTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long finishTime = Clock.accurateForwardProgressingMillis();
     synchronized (runTimes.getModificationLock()) {
       runTimes.add(finishTime - taskWrapper.startTime);
       trimList(runTimes);

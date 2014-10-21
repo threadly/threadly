@@ -47,7 +47,7 @@ public class TestRunnableTest {
   @Test
   public void runTest() {
     TestTestRunnable ttr = new TestTestRunnable();
-    long start = Clock.alwaysProgressingAccurateTimeMillis();
+    long start = Clock.accurateForwardProgressingMillis();
     
     TestUtils.blockTillClockAdvances();
     
@@ -66,7 +66,7 @@ public class TestRunnableTest {
     
     TestUtils.blockTillClockAdvances();
     
-    long now = Clock.alwaysProgressingAccurateTimeMillis();
+    long now = Clock.accurateForwardProgressingMillis();
     assertTrue(ttr.getDelayTillRun(2) <= now - start);
     assertTrue(ttr.getDelayTillRun(2) > ttr.getDelayTillFirstRun());
   }
@@ -76,11 +76,11 @@ public class TestRunnableTest {
     int runCount = TEST_QTY / 2;
     instance.setRunDelayInMillis(DELAY_TIME);
     
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     for (int i = 0; i < runCount; i++) {
       instance.run();
     }
-    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long endTime = Clock.accurateForwardProgressingMillis();
     
     assertTrue(endTime - startTime >= (DELAY_TIME * runCount));
   }
@@ -101,9 +101,9 @@ public class TestRunnableTest {
     };
     new Thread(tr).start();
     
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     tr.blockTillFinished(1000, 2);
-    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long endTime = Clock.accurateForwardProgressingMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
   }

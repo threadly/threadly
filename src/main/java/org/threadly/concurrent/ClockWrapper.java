@@ -32,17 +32,17 @@ class ClockWrapper {
   }
   
   /**
-   * A call here causes {@link #getSemiAccurateTime()} to use the last known time.  If this is the 
+   * A call here causes {@link #getSemiAccurateMillis()} to use the last known time.  If this is the 
    * first call to stop updating the time, it will ensure the clock is updated first.
    */
   protected void stopForcingUpdate() {
     if (requestsToStopUpdatingTime.getAndIncrement() == 0) {
-      lastKnownTime = Clock.alwaysProgressingAccurateTimeMillis();
+      lastKnownTime = Clock.accurateForwardProgressingMillis();
     }
   }
   
   /**
-   * This resumes updating the clock for calls to {@link #getSemiAccurateTime()}.
+   * This resumes updating the clock for calls to {@link #getSemiAccurateMillis()}.
    */
   protected void resumeForcingUpdate() {
     int newVal = requestsToStopUpdatingTime.decrementAndGet();
@@ -56,11 +56,11 @@ class ClockWrapper {
    * Returns an accurate time based on if it has been requested to stop updating from system clock 
    * temporarily or not.
    */
-  protected long getSemiAccurateTime() {
+  protected long getSemiAccurateMillis() {
     if (requestsToStopUpdatingTime.get() > 0) {
       return lastKnownTime;
     } else {
-      return Clock.alwaysProgressingAccurateTimeMillis();
+      return Clock.accurateForwardProgressingMillis();
     }
   }
 }

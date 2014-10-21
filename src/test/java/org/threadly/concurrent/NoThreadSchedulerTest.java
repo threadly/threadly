@@ -178,14 +178,14 @@ public class NoThreadSchedulerTest {
   
   private static void scheduleRunnableTest(NoThreadScheduler scheduler) throws InterruptedException {
     TestRunnable tr = new TestRunnable();
-    long scheduleTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long scheduleTime = Clock.accurateForwardProgressingMillis();
     scheduler.schedule(tr, DELAY_TIME);
     
     int runCount = 0;
     while (runCount == 0) {
       runCount = scheduler.tick();
     }
-    long runTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long runTime = Clock.accurateForwardProgressingMillis();
     
     assertEquals(1, runCount);
     
@@ -527,10 +527,10 @@ public class NoThreadSchedulerTest {
       @Override
       public void handleRunStart() {
         try {
-          long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+          long startTime = Clock.accurateForwardProgressingMillis();
           blockingScheduler.schedule(testTask, DELAY_TIME);
           int runCount = blockingScheduler.tick();  // should block
-          long finishTime = Clock.alwaysProgressingAccurateTimeMillis();
+          long finishTime = Clock.accurateForwardProgressingMillis();
           
           av.assertEquals(1, runCount);
           av.assertTrue(finishTime - startTime >= DELAY_TIME);

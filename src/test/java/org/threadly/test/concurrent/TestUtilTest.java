@@ -15,9 +15,9 @@ import org.threadly.util.Clock;
 public class TestUtilTest {
   @Test
   public void sleepTest() {
-    long start = Clock.alwaysProgressingAccurateTimeMillis();
+    long start = Clock.accurateForwardProgressingMillis();
     TestUtils.sleep(DELAY_TIME);
-    long end = Clock.alwaysProgressingAccurateTimeMillis();
+    long end = Clock.accurateForwardProgressingMillis();
     
     assertTrue(end - start >= DELAY_TIME);
   }

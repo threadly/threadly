@@ -55,7 +55,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return current time in milliseconds
    */
   protected long nowInMillis() {
-    return clockWrapper.getSemiAccurateTime();
+    return clockWrapper.getSemiAccurateMillis();
   }
   
   /**

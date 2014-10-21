@@ -204,7 +204,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
 
   @Override
   public T poll(long timeout, TimeUnit unit) throws InterruptedException {
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     long timeoutTimeInMs = unit.toMillis(timeout);
     long remainingTimeInMs = timeoutTimeInMs;
     synchronized (queueLock) {
@@ -224,7 +224,7 @@ public class DynamicDelayQueue<T extends Delayed> implements Queue<T>,
           queueLock.wait(waitTime);
           next = null;
         }
-        remainingTimeInMs = timeoutTimeInMs - (Clock.alwaysProgressingAccurateTimeMillis() - startTime);
+        remainingTimeInMs = timeoutTimeInMs - (Clock.accurateForwardProgressingMillis() - startTime);
       }
     }
     return null;

@@ -222,14 +222,14 @@ public class SettableListenableFutureTest {
   @Test
   public void getTimeoutTest() throws InterruptedException, 
                                       ExecutionException {
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     try {
       slf.get(DELAY_TIME, TimeUnit.MILLISECONDS);
       fail("Exception should have thrown");
     } catch (TimeoutException e) {
       // expected
     }
-    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long endTime = Clock.accurateForwardProgressingMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
   }

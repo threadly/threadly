@@ -12,27 +12,27 @@ public class TestConditionTest {
   @Test
   public void blockTest() {
     DelayCondition dc = new DelayCondition(DELAY_TIME);
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     dc.blockTillTrue((DELAY_TIME * 10) + 1000);
-    long endTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long endTime = Clock.accurateForwardProgressingMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
     assertTrue(endTime - startTime <= DELAY_TIME + 2000);
     
-    startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    startTime = Clock.accurateForwardProgressingMillis();
     dc.blockTillTrue(); // should return immediately
-    assertTrue(Clock.alwaysProgressingAccurateTimeMillis() - startTime <= 10);
+    assertTrue(Clock.accurateForwardProgressingMillis() - startTime <= 10);
   }
   
   @Test
   public void blockFail() {
     DelayCondition dc = new DelayCondition(DELAY_TIME * 100);
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     try {
       dc.blockTillTrue(DELAY_TIME, 1);
       fail("Exception should have been thrown");
     } catch (TestCondition.ConditionTimeoutException e) {
-      assertTrue(Clock.alwaysProgressingAccurateTimeMillis() - startTime >= DELAY_TIME);
+      assertTrue(Clock.accurateForwardProgressingMillis() - startTime >= DELAY_TIME);
     }
   }
   
@@ -48,11 +48,11 @@ public class TestConditionTest {
     @Override
     public boolean get() {
       if (firstGetTime < 0) {
-        firstGetTime = Clock.alwaysProgressingAccurateTimeMillis();
+        firstGetTime = Clock.accurateForwardProgressingMillis();
         return false;
       }
       
-      return Clock.alwaysProgressingAccurateTimeMillis() - firstGetTime >= delayTime;
+      return Clock.accurateForwardProgressingMillis() - firstGetTime >= delayTime;
     }
   }
 }

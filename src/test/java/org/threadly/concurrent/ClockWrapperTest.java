@@ -25,28 +25,28 @@ public class ClockWrapperTest {
   
   @Test
   public void getAccurateTimeTest() {
-    final long startTime = clockWrapper.getSemiAccurateTime();
+    final long startTime = clockWrapper.getSemiAccurateMillis();
     
     new TimeChangeCondition(startTime).blockTillTrue();
     
     // verify getting updates
-    assertTrue(startTime != clockWrapper.getSemiAccurateTime());
+    assertTrue(startTime != clockWrapper.getSemiAccurateMillis());
     
     // request stop to updates
     clockWrapper.stopForcingUpdate();
-    long updateTime = clockWrapper.getSemiAccurateTime();
+    long updateTime = clockWrapper.getSemiAccurateMillis();
 
     new TimeChangeCondition(updateTime).blockTillTrue();
     
     // verify no longer getting updates
-    assertEquals(updateTime, clockWrapper.getSemiAccurateTime());
+    assertEquals(updateTime, clockWrapper.getSemiAccurateMillis());
     
     // allow updates again
     clockWrapper.resumeForcingUpdate();
     
     TestUtils.blockTillClockAdvances();
     
-    assertTrue(updateTime != clockWrapper.getSemiAccurateTime());
+    assertTrue(updateTime != clockWrapper.getSemiAccurateMillis());
   }
   
   @Test (expected = IllegalStateException.class)
@@ -63,7 +63,7 @@ public class ClockWrapperTest {
     
     @Override
     public boolean get() {
-      return Clock.alwaysProgressingAccurateTimeMillis() != time;
+      return Clock.accurateForwardProgressingMillis() != time;
     }
     
     @Override

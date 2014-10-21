@@ -41,49 +41,49 @@ public class ClockTest {
   }
   
   @Test
-  public void timeSinceClockStartMillisTest() {
-    long timeSinceClockStartMillis = Clock.timeSinceClockStartMillis();
+  public void lastKnownForwardProgressingMillisTest() {
+    long timeSinceClockStartMillis = Clock.lastKnownForwardProgressingMillis();
     assertTrue(timeSinceClockStartMillis >= 0);
     assertTrue(timeSinceClockStartMillis < 1000 * 60 * 15); // less than 15 min
   }
   
   @Test
-  public void accurateTimeSinceClockStartMillisTest() {
-    final long timeSinceClockStartMillis = Clock.accurateTimeSinceClockStartMillis();
+  public void accurateForwardProgressingMillisTest() {
+    final long timeSinceClockStartMillis = Clock.accurateForwardProgressingMillis();
     assertTrue(timeSinceClockStartMillis >= 0);
     assertTrue(timeSinceClockStartMillis < 1000 * 60 * 15); // less than 15 min
     
     new TestCondition() {
       @Override
       public boolean get() {
-        return Clock.accurateTimeSinceClockStartMillis() > timeSinceClockStartMillis;
+        return Clock.accurateForwardProgressingMillis() > timeSinceClockStartMillis;
       }
     }.blockTillTrue(200);
   }
   
   @Test
-  public void alwaysProgressingLastKnownTimeMillisTest() {
+  public void lastKnownForwardProgressingMillisAccurateTimeUpdateTest() {
     // verify clock is not updating
-    long before = Clock.alwaysProgressingLastKnownTimeMillis();
+    long before = Clock.lastKnownForwardProgressingMillis();
     
     TestUtils.blockTillClockAdvances();
     
     // update clock
     long newTime = -1;
-    assertTrue((newTime = Clock.alwaysProgressingAccurateTimeMillis()) > before);
+    assertTrue((newTime = Clock.accurateForwardProgressingMillis()) > before);
     // verify we get the new time again
-    assertTrue(newTime <= Clock.alwaysProgressingLastKnownTimeMillis());
+    assertTrue(newTime == Clock.lastKnownForwardProgressingMillis());
   }
   
   @Test
   public void automaticAlwaysProgressingUpdateTest() {
     Clock.startClockUpdateThread();
-    final long before = Clock.alwaysProgressingLastKnownTimeMillis();
+    final long before = Clock.lastKnownForwardProgressingMillis();
 
     new TestCondition() {
       @Override
       public boolean get() {
-        return Clock.alwaysProgressingLastKnownTimeMillis() > before;
+        return Clock.lastKnownForwardProgressingMillis() > before;
       }
     }.blockTillTrue(1000);
   }

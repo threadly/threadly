@@ -102,14 +102,14 @@ public abstract class ScheduledExecutorServiceTest {
       assertFalse(scheduler.isTerminated());
       
       TestRunnable tr = new TestRunnable(DELAY_TIME * 2);
-      long start = Clock.alwaysProgressingAccurateTimeMillis();
+      long start = Clock.accurateForwardProgressingMillis();
       scheduler.execute(tr);
       
       tr.blockTillStarted();
       scheduler.shutdown();
   
       scheduler.awaitTermination(1000, TimeUnit.MILLISECONDS);
-      long stop = Clock.alwaysProgressingAccurateTimeMillis();
+      long stop = Clock.accurateForwardProgressingMillis();
       
       assertTrue(stop - start >= (DELAY_TIME * 2) - 10);
     } finally {
@@ -500,9 +500,9 @@ public abstract class ScheduledExecutorServiceTest {
         toInvoke.add(new TestCallable(runTime));
       }
       
-      long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+      long startTime = Clock.accurateForwardProgressingMillis();
       List<Future<Object>> result = scheduler.invokeAll(toInvoke, timeoutTime, TimeUnit.MILLISECONDS);
-      long endTime = Clock.alwaysProgressingAccurateTimeMillis();
+      long endTime = Clock.accurateForwardProgressingMillis();
       
       assertEquals(toInvoke.size(), result.size());
       

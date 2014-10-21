@@ -74,12 +74,12 @@ public abstract class RunnableFutureTest {
     
     // we never run the future, so we have to timeout
     
-    long startTime = Clock.alwaysProgressingAccurateTimeMillis();
+    long startTime = Clock.accurateForwardProgressingMillis();
     try {
       future.get(DELAY_TIME, TimeUnit.MILLISECONDS);
       fail("Exception should have been thrown");
     } catch (TimeoutException e) {
-      long catchTime = Clock.alwaysProgressingAccurateTimeMillis();
+      long catchTime = Clock.accurateForwardProgressingMillis();
       assertTrue(catchTime - startTime >= DELAY_TIME);
     }
   }

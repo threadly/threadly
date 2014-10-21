@@ -31,9 +31,8 @@ public class Clock {
   protected static final Object UPDATE_LOCK = new Object();
   protected static ClockUpdater clockUpdater = null;
   protected static final long CLOCK_STARTUP_TIME_NANOS = System.nanoTime();
-  protected static final long CLOCK_STARTUP_TIME_MILLIS = System.currentTimeMillis();
   private static volatile long nowNanos = CLOCK_STARTUP_TIME_NANOS;
-  private static volatile long nowMillis = CLOCK_STARTUP_TIME_MILLIS;
+  private static volatile long nowMillis = System.currentTimeMillis();
   
   static {
     startClockUpdateThread();
@@ -90,7 +89,7 @@ public class Clock {
    * This directly returns the result of {@link System#nanoTime()}.  The only reason to use this 
    * call over calling {@link System#nanoTime()} directly is that it updates the nano time 
    * representation, allowing for more accurate time references when calling to 
-   * {@link Clock#alwaysProgressingLastKnownTimeMillis()}.
+   * {@link Clock#lastKnownForwardProgressingMillis()}.
    * 
    * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
    * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
@@ -103,23 +102,12 @@ public class Clock {
   }
   
   /**
-   * Cacluates the time in milliseconds, since the class was loaded (and thus static function was 
-   * run), using the currently stored time in nanoseconds.
+   * Returns a fuzzy time for how much time in milliseconds since this class has loaded (starting 
+   * at {@code 0}).  If {@link Clock} was loaded at the start of the application, this can provide 
+   * the amount of time the application has been running.  
    * 
-   * @since 3.1.0
-   * @return Time in milliseconds since the class was loaded
-   */
-  protected static long calculateTimeSinceClockStartMillis() {
-    /* We can not guarantee that nowNanos is > CLOCK_STARTUP_TIME_NANOS, since the nano time may 
-     * overflow.  But subtracting after an overflow, will still produce a positive result.
-     */
-    return (nowNanos - CLOCK_STARTUP_TIME_NANOS) / NANOS_IN_MILLISECOND;
-  }
-  
-  /**
-   * Returns a fuzzy time for how much time in milliseconds since this class has loaded.  If 
-   * {@link Clock} was loaded at the start of the application, this can provide the amount of time 
-   * the application has been running.
+   * This call is guaranteed to only progress forward, regardless of system clock changes it will 
+   * move forward at a consistent rate.  
    * 
    * If the clock updater is running (which is {@code true} by default), this is guaranteed to be 
    * accurate within 100 milliseconds.
@@ -127,47 +115,29 @@ public class Clock {
    * @since 3.1.0
    * @return Amount of time in milliseconds since Clock class was loaded
    */
-  public static long timeSinceClockStartMillis() {
-    return calculateTimeSinceClockStartMillis();
+  public static long lastKnownForwardProgressingMillis() {
+    /* We can not guarantee that nowNanos is > CLOCK_STARTUP_TIME_NANOS, since the nano time may 
+     * overflow.  But subtracting after an overflow, will still produce a positive result.
+     */
+    return (nowNanos - CLOCK_STARTUP_TIME_NANOS) / NANOS_IN_MILLISECOND;
   }
   
   /**
-   * Returns an accurate amount of time in milliseconds since this class has loaded.  If 
-   * {@link Clock} was loaded at the start of the application, this can provide the amount of time 
-   * the application has been running.
+   * Returns an accurate amount of time in milliseconds since this class has loaded (starting at 
+   * {@code 0}).  If {@link Clock} was loaded at the start of the application, this can provide 
+   * the amount of time the application has been running.  Calls to this will NOT update the time 
+   * in {@link #accurateTimeMillis()}.  
+   * 
+   * This call is guaranteed to only progress forward, regardless of system clock changes it will 
+   * move forward at a consistent rate.
    * 
    * @since 3.1.0
    * @return Amount of time in milliseconds since Clock class was loaded
    */
-  public static long accurateTimeSinceClockStartMillis() {
+  public static long accurateForwardProgressingMillis() {
     systemNanoTime();
     
-    return calculateTimeSinceClockStartMillis();
-  }
-  
-  /**
-   * This call is almost identical to {@link #lastKnownTimeMillis()}, except it is guaranteed to 
-   * only move forward (regardless of system clock changes).
-   * 
-   * @since 3.1.0
-   * @return last known time in milliseconds
-   */
-  public static long alwaysProgressingLastKnownTimeMillis() {
-    return CLOCK_STARTUP_TIME_MILLIS + timeSinceClockStartMillis();
-  }
-  
-  /**
-   * This call is almost identical to {@link #accurateTimeMillis()}, except it is guaranteed to 
-   * only move forward (regardless of system clock changes).  One major difference from 
-   * {@link #accurateTimeMillis()} is that this will NOT update the time for calls to 
-   * {@link #lastKnownTimeMillis()}, but will update the time for calls to 
-   * {@link #alwaysProgressingLastKnownTimeMillis()}.
-   * 
-   * @since 3.1.0
-   * @return accurate time in milliseconds
-   */
-  public static long alwaysProgressingAccurateTimeMillis() {
-    return CLOCK_STARTUP_TIME_MILLIS + accurateTimeSinceClockStartMillis();
+    return lastKnownForwardProgressingMillis();
   }
 
   /**
@@ -176,7 +146,10 @@ public class Clock {
    * the time (unless requested to stop automatically updating).  
    * 
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
-   * consider using {@link #alwaysProgressingLastKnownTimeMillis()}.
+   * consider using {@link #lastKnownForwardProgressingMillis()}.  
+   * 
+   * If the clock updater is running (which is {@code true} by default), this is guaranteed to be 
+   * accurate within 100 milliseconds.
    * 
    * @return last known time in milliseconds
    */
@@ -187,10 +160,10 @@ public class Clock {
   /**
    * Updates the clock so that future calls to {@link #lastKnownTimeMillis()} can benefit, and 
    * returns the accurate time in milliseconds.  This will NOT update the time for calls to 
-   * {@link #alwaysProgressingLastKnownTimeMillis()}.
+   * {@link #lastKnownForwardProgressingMillis()}.
    * 
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
-   * consider using {@link #alwaysProgressingAccurateTimeMillis()}.
+   * consider using {@link #accurateForwardProgressingMillis()}.
    * 
    * @since 2.0.0 (existed since 1.0.0 as accurateTime)
    * @return accurate time in milliseconds

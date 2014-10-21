@@ -98,7 +98,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     try {
       RateLimiterExecutor rls = new RateLimiterExecutor(pse, rateLimit);
       ListenableFuture<?> lastFuture = null;
-      double startTime = Clock.alwaysProgressingAccurateTimeMillis();
+      double startTime = Clock.accurateForwardProgressingMillis();
       boolean flip = true;
       for (int i = 0; i < TEST_QTY * 2; i++) {
         final int permit = 5;
@@ -122,7 +122,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
         }
       }
       lastFuture.get();
-      long endTime = Clock.alwaysProgressingLastKnownTimeMillis();
+      long endTime = Clock.accurateForwardProgressingMillis();
       double actualLimit = ranPermits.get() / ((endTime - startTime) / 1000);
       
       assertEquals(rateLimit, actualLimit, 50);

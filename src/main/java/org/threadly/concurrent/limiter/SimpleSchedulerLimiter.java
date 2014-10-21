@@ -199,13 +199,13 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
       
       this.period = period;
       delayRunnable = new DelayedExecutionRunnable(this);
-      nextRunTime = Clock.alwaysProgressingAccurateTimeMillis() + initialDelay + period;
+      nextRunTime = Clock.accurateForwardProgressingMillis() + initialDelay + period;
     }
     
     @Override
     protected void doAfterRunTasks() {
       nextRunTime += period;
-      long nextDelay = nextRunTime - Clock.alwaysProgressingAccurateTimeMillis();
+      long nextDelay = nextRunTime - Clock.accurateForwardProgressingMillis();
       if (nextDelay < 1) {
         executeWrapper(this);
       } else {
