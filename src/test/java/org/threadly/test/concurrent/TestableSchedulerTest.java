@@ -9,13 +9,16 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.TestCallable;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
+import org.threadly.util.ExceptionHandlerInterface;
 
 @SuppressWarnings("javadoc")
 public class TestableSchedulerTest {
@@ -61,6 +64,66 @@ public class TestableSchedulerTest {
     scheduler.tick(now + 1000);
     
     assertEquals(now + 1000, scheduler.getLastTickTime());
+  }
+  
+  @Test
+  public void advanceWithoutHandlerThrowsRuntimeExceptionTest() {
+    RuntimeException failure = new RuntimeException();
+    scheduler.execute(new TestRuntimeFailureRunnable(failure));
+    
+    try {
+      scheduler.advance(10);
+      fail("Exception should have thrown");
+    } catch (Exception e) {
+      assertTrue(e == failure);
+    }
+  }
+  
+  @Test
+  public void advanceHandlesRuntimeExceptionTest() {
+    RuntimeException failure = new RuntimeException();
+    final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
+    scheduler.execute(new TestRuntimeFailureRunnable(failure));
+    
+    int runCount = scheduler.advance(10, new ExceptionHandlerInterface() {
+      @Override
+      public void handleException(Throwable thrown) {
+        handledException.set(thrown);
+      }
+    });
+    
+    assertEquals(1, runCount);
+    assertTrue(handledException.get() == failure);
+  }
+  
+  @Test
+  public void tickWithoutHandlerThrowsRuntimeExceptionTest() {
+    RuntimeException failure = new RuntimeException();
+    scheduler.execute(new TestRuntimeFailureRunnable(failure));
+    
+    try {
+      scheduler.tick();
+      fail("Exception should have thrown");
+    } catch (Exception e) {
+      assertTrue(e == failure);
+    }
+  }
+  
+  @Test
+  public void tickHandlesRuntimeExceptionTest() {
+    RuntimeException failure = new RuntimeException();
+    final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
+    scheduler.execute(new TestRuntimeFailureRunnable(failure));
+    
+    int runCount = scheduler.tick(new ExceptionHandlerInterface() {
+      @Override
+      public void handleException(Throwable thrown) {
+        handledException.set(thrown);
+      }
+    });
+    
+    assertEquals(1, runCount);
+    assertTrue(handledException.get() == failure);
   }
   
   @Test

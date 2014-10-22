@@ -15,7 +15,7 @@ dependencies {
 }
 
 compileJava {
-  options.compilerArgs << "-Xlint:all" << "-Werror"
+  options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
   
   String[] java6Paths = new String[5]
   java6Paths[0] = "/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/rt.jar"

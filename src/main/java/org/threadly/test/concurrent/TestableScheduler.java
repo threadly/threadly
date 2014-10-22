@@ -2,6 +2,7 @@ package org.threadly.test.concurrent;
 
 import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.util.Clock;
+import org.threadly.util.ExceptionHandlerInterface;
 
 /**
  * <p>This differs from {@link org.threadly.concurrent.NoThreadScheduler} in that time is ONLY 
@@ -55,7 +56,30 @@ public class TestableScheduler extends NoThreadScheduler {
    * @return quantity of tasks run during this tick call
    */
   public int advance(long timeInMillis) {
-    return tick(nowInMillis + timeInMillis);
+    return advance(timeInMillis, null);
+  }
+  
+  /**
+   * This is to provide a convince when advancing the scheduler forward an explicit amount of time.  
+   * Where tick accepts an absolute time, this accepts an amount of time to advance forward.  That 
+   * way the user does not have to track the current time.  
+   * 
+   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
+   * tasks throw an exception, this will be called to inform them of the exception.  This allows 
+   * you to ensure that you get a returned task count (meaning if provided, no exceptions except 
+   * a possible {@link InterruptedException} can be thrown).  If null is provided for the 
+   * exception handler, than any tasks which throw a {@link RuntimeException}, will throw out of 
+   * this invocation.
+   * 
+   * @since 3.2.0
+   * 
+   * @param timeInMillis amount in milliseconds to advance the scheduler forward
+   * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
+   *                           exception, or null to have exceptions thrown out of this call
+   * @return quantity of tasks run during this tick call
+   */
+  public int advance(long timeInMillis, ExceptionHandlerInterface exceptionHandler) {
+    return tick(nowInMillis + timeInMillis, exceptionHandler);
   }
   
   /**
@@ -69,11 +93,33 @@ public class TestableScheduler extends NoThreadScheduler {
    * @return quantity of tasks run during this tick call
    */
   public int tick() {
+    return tick(null);
+  }
+  
+  /**
+   * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
+   * waiting tasks as possible.  This call will NOT block if no task are currently ready to run.  
+   * 
+   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
+   * tasks throw an exception, this will be called to inform them of the exception.  This allows 
+   * you to ensure that you get a returned task count (meaning if provided, no exceptions except 
+   * a possible {@link InterruptedException} can be thrown).  If null is provided for the 
+   * exception handler, than any tasks which throw a {@link RuntimeException}, will throw out of 
+   * this invocation.
+   * 
+   * @since 3.2.0
+   * 
+   * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
+   *                           exception, or null to have exceptions thrown out of this call
+   * @return quantity of tasks run during this tick call
+   */
+  @Override
+  public int tick(ExceptionHandlerInterface exceptionHandler) {
     long currentRealTime = Clock.accurateTimeMillis();
     if (nowInMillis > currentRealTime) {
-      return tick(nowInMillis);
+      return tick(nowInMillis, exceptionHandler);
     } else {
-      return tick(currentRealTime);
+      return tick(currentRealTime, exceptionHandler);
     }
   }
   
@@ -93,13 +139,39 @@ public class TestableScheduler extends NoThreadScheduler {
    * @return quantity of tasks run in this tick call
    */
   public int tick(long currentTime) {
+    return tick(currentTime, null);
+  }
+  
+  /**
+   * This progresses tasks based off the time provided.  This is primarily used in testing by 
+   * providing a possible time in the future (to execute future tasks).  This call will NOT block 
+   * if no task are currently ready to run.  
+   * 
+   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
+   * tasks throw an exception, this will be called to inform them of the exception.  This allows 
+   * you to ensure that you get a returned task count (meaning if provided, no exceptions except 
+   * a possible {@link InterruptedException} can be thrown).  If null is provided for the 
+   * exception handler, than any tasks which throw a {@link RuntimeException}, will throw out of 
+   * this invocation.
+   * 
+   * This call accepts the absolute time in milliseconds.  If you want to advance the scheduler a 
+   * specific amount of time forward, look at the "advance" call.
+   * 
+   * @since 3.2.0
+   * 
+   * @param currentTime Absolute time to provide for looking at task run time
+   * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
+   *                           exception, or null to have exceptions thrown out of this call
+   * @return quantity of tasks run in this tick call
+   */
+  public int tick(long currentTime, ExceptionHandlerInterface exceptionHandler) {
     if (nowInMillis > currentTime) {
       throw new IllegalArgumentException("Time can not go backwards");
     }
     nowInMillis = currentTime;
     
     try {
-      return super.tick();
+      return super.tick(exceptionHandler);
     } catch (InterruptedException e) {
       // should not be possible with a false for blocking
       Thread.currentThread().interrupt();

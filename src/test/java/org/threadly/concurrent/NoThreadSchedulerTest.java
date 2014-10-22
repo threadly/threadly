@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.Before;
@@ -19,6 +20,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
+import org.threadly.util.ExceptionHandlerInterface;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
@@ -62,6 +64,65 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void tickThrowsRuntimeExceptionTest() {
+    tickThrowsRuntimeExceptionTest(blockingScheduler);
+    tickThrowsRuntimeExceptionTest(nonblockingScheduler);
+  }
+  
+  @SuppressWarnings("deprecation")
+  private static void tickThrowsRuntimeExceptionTest(NoThreadScheduler scheduler) {
+    RuntimeException failure = new RuntimeException();
+    scheduler.execute(new TestRuntimeFailureRunnable(failure));
+    
+    try {
+      scheduler.tick();
+      fail("Exception should have thrown");
+    } catch (Exception e) {
+      assertTrue(e == failure);
+    }
+  }
+  
+  @Test
+  public void tickWithoutHandlerThrowsRuntimeExceptionTest() {
+    tickWithoutHandlerThrowsRuntimeExceptionTest(blockingScheduler);
+    tickWithoutHandlerThrowsRuntimeExceptionTest(nonblockingScheduler);
+  }
+  
+  private static void tickWithoutHandlerThrowsRuntimeExceptionTest(NoThreadScheduler scheduler) {
+    RuntimeException failure = new RuntimeException();
+    scheduler.execute(new TestRuntimeFailureRunnable(failure));
+    
+    try {
+      scheduler.tick(null);
+      fail("Exception should have thrown");
+    } catch (Exception e) {
+      assertTrue(e == failure);
+    }
+  }
+  
+  @Test
+  public void tickHandlesRuntimeExceptionTest() throws InterruptedException {
+    tickHandlesRuntimeExceptionTest(blockingScheduler);
+    tickHandlesRuntimeExceptionTest(nonblockingScheduler);
+  }
+  
+  private static void tickHandlesRuntimeExceptionTest(NoThreadScheduler scheduler) throws InterruptedException {
+    RuntimeException failure = new RuntimeException();
+    final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
+    scheduler.execute(new TestRuntimeFailureRunnable(failure));
+    
+    int runCount = scheduler.tick(new ExceptionHandlerInterface() {
+      @Override
+      public void handleException(Throwable thrown) {
+        handledException.set(thrown);
+      }
+    });
+    
+    assertEquals(1, runCount);
+    assertTrue(handledException.get() == failure);
+  }
+  
+  @Test
   public void executeTest() throws InterruptedException {
     executeTest(blockingScheduler);
     executeTest(nonblockingScheduler);
@@ -75,7 +136,7 @@ public class NoThreadSchedulerTest {
     }
     
     // all should run now
-    assertEquals(TEST_QTY, scheduler.tick());
+    assertEquals(TEST_QTY, scheduler.tick(null));
     
     it = runnables.iterator();
     while (it.hasNext()) {
@@ -84,7 +145,7 @@ public class NoThreadSchedulerTest {
     
     if (scheduler == nonblockingScheduler) {
       // verify no more run after a second tick
-      assertEquals(scheduler.tick(), 0);
+      assertEquals(scheduler.tick(null), 0);
       
       it = runnables.iterator();
       while (it.hasNext()) {
@@ -110,7 +171,7 @@ public class NoThreadSchedulerTest {
     }
     
     // all should run now
-    assertEquals(TEST_QTY, scheduler.tick());
+    assertEquals(TEST_QTY, scheduler.tick(null));
     
     it = runnables.iterator();
     while (it.hasNext()) {
@@ -119,7 +180,7 @@ public class NoThreadSchedulerTest {
     
     if (scheduler == nonblockingScheduler) {
       // verify no more run after a second tick
-      assertEquals(0, scheduler.tick());
+      assertEquals(0, scheduler.tick(null));
       
       it = runnables.iterator();
       while (it.hasNext()) {
@@ -152,7 +213,7 @@ public class NoThreadSchedulerTest {
     }
     
     // all should run now
-    assertEquals(TEST_QTY, scheduler.tick());
+    assertEquals(TEST_QTY, scheduler.tick(null));
     
     it = callables.iterator();
     while (it.hasNext()) {
@@ -183,7 +244,7 @@ public class NoThreadSchedulerTest {
     
     int runCount = 0;
     while (runCount == 0) {
-      runCount = scheduler.tick();
+      runCount = scheduler.tick(null);
     }
     long runTime = Clock.accurateForwardProgressingMillis();
     
@@ -205,7 +266,7 @@ public class NoThreadSchedulerTest {
     
     int runCount = 0;
     while (runCount == 0) {
-      runCount = scheduler.tick();
+      runCount = scheduler.tick(null);
     }
     
     assertEquals(1, runCount);
@@ -247,7 +308,7 @@ public class NoThreadSchedulerTest {
     
     int runCount = 0;
     while (runCount == 0) {
-      runCount = scheduler.tick();
+      runCount = scheduler.tick(null);
     }
     
     assertEquals(1, runCount);
@@ -316,7 +377,7 @@ public class NoThreadSchedulerTest {
       nonblockingScheduler.scheduleAtFixedRate(workRunnable, 0, 0);
     }
     
-    nonblockingScheduler.tick();
+    nonblockingScheduler.tick(null);
     
     av.waitForTest();
   }
@@ -433,14 +494,14 @@ public class NoThreadSchedulerTest {
     blockingScheduler.scheduleWithFixedDelay(immediateRun, 0, DELAY_TIME);
     blockingScheduler.scheduleWithFixedDelay(initialDelay, DELAY_TIME, DELAY_TIME);
     
-    assertEquals(1, blockingScheduler.tick());
+    assertEquals(1, blockingScheduler.tick(null));
     
     assertEquals(1, immediateRun.getRunCount());   // should have run
     assertEquals(0, initialDelay.getRunCount());  // should NOT have run yet
     
     assertTrue(blockingScheduler.remove(immediateRun));
     
-    assertEquals(1, blockingScheduler.tick());
+    assertEquals(1, blockingScheduler.tick(null));
     
     assertEquals(1, immediateRun.getRunCount());   // should NOT have run again
     assertEquals(1, initialDelay.getRunCount());  // should have run
@@ -459,7 +520,7 @@ public class NoThreadSchedulerTest {
     
     blockingScheduler.submitScheduled(delayRun, DELAY_TIME);
     
-    assertEquals(1, blockingScheduler.tick());
+    assertEquals(1, blockingScheduler.tick(null));
     
     assertFalse(immediateRun.isDone());
     assertTrue(delayRun.isDone());
@@ -481,11 +542,11 @@ public class NoThreadSchedulerTest {
     
     scheduler.scheduleWithFixedDelay(tr, 0, 0);
     
-    assertEquals(1, scheduler.tick());
+    assertEquals(1, scheduler.tick(null));
     
     if (scheduler == nonblockingScheduler) {
       // should be removed for subsequent ticks
-      assertEquals(0, scheduler.tick());
+      assertEquals(0, scheduler.tick(null));
       
       assertEquals(1, tr.getRunCount());
     }
@@ -498,7 +559,7 @@ public class NoThreadSchedulerTest {
       @Override
       public void handleRunStart() {
         try {
-          int runCount = blockingScheduler.tick();  // should block
+          int runCount = blockingScheduler.tick(null);  // should block
           av.assertEquals(1, runCount);
           av.signalComplete();
         } catch (InterruptedException e) {
@@ -529,7 +590,7 @@ public class NoThreadSchedulerTest {
         try {
           long startTime = Clock.accurateForwardProgressingMillis();
           blockingScheduler.schedule(testTask, DELAY_TIME);
-          int runCount = blockingScheduler.tick();  // should block
+          int runCount = blockingScheduler.tick(null);  // should block
           long finishTime = Clock.accurateForwardProgressingMillis();
           
           av.assertEquals(1, runCount);
@@ -566,8 +627,8 @@ public class NoThreadSchedulerTest {
     assertTrue(blockingScheduler.hasTaskReadyToRun());
     assertTrue(nonblockingScheduler.hasTaskReadyToRun());
     
-    blockingScheduler.tick();
-    nonblockingScheduler.tick();
+    blockingScheduler.tick(null);
+    nonblockingScheduler.tick(null);
     
     // should no longer have anything to run
     assertFalse(blockingScheduler.hasTaskReadyToRun());
@@ -588,7 +649,7 @@ public class NoThreadSchedulerTest {
       }
     }, 0, 1000);
     
-    nonblockingScheduler.tick();
+    nonblockingScheduler.tick(null);
   }
   
   @Test

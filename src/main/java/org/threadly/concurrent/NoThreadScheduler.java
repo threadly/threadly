@@ -8,6 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.ListUtils;
 
 /**
@@ -106,17 +108,61 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * This call is NOT thread safe, calling tick in parallel could cause the same task to be run 
    * multiple times in parallel.
    * 
+   * @deprecated please use {@link #tick(ExceptionHandlerInterface)}, providing null for the 
+   *               {@link ExceptionHandlerInterface}.  This will be removed in 4.0.0
+   * 
    * @return quantity of tasks run during this tick invocation
    * @throws InterruptedException thrown if thread is interrupted waiting for task to run
    *           (this can only throw if constructed with a {@code true} to allow blocking)
    */
+  @Deprecated
   public int tick() throws InterruptedException {
+    return tick(null);
+  }
+  
+  /**
+   * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
+   * waiting tasks as possible.  It is CRITICAL that only one thread at a time calls the 
+   * {@link #tick()} function.  While this class is in general thread safe, if multiple threads 
+   * call {@link #tick()} at the same time, it is possible a given task may run more than once.  
+   * In order to maintain high performance, threadly does not guard against this condition.
+   * 
+   * Depending on how this class was constructed, this may or may not block if there are no tasks 
+   * to run yet.
+   * 
+   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
+   * tasks throw an exception, this will be called to inform them of the exception.  This allows 
+   * you to ensure that you get a returned task count (meaning if provided, no exceptions except 
+   * a possible {@link InterruptedException} can be thrown).  If null is provided for the 
+   * exception handler, than any tasks which throw a {@link RuntimeException}, will throw out of 
+   * this invocation.
+   * 
+   * This call is NOT thread safe, calling tick in parallel could cause the same task to be run 
+   * multiple times in parallel.
+   * 
+   * @since 3.2.0
+   * 
+   * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
+   *                           exception, or null to have exceptions thrown out of this call
+   * @return quantity of tasks run during this tick invocation
+   * @throws InterruptedException thrown if thread is interrupted waiting for task to run
+   *           (this can only throw if constructed with a {@code true} to allow blocking)
+   */
+  public int tick(ExceptionHandlerInterface exceptionHandler) throws InterruptedException {
     int tasks = 0;
     while (true) {  // will break from loop at bottom
       TaskContainer nextTask;
       while ((nextTask = getNextReadyTask()) != null && ! cancelTick) {
         // call will remove task from queue, or reposition as necessary
-        nextTask.runTask();
+        try {
+          nextTask.runTask();
+        } catch (Throwable t) {
+          if (exceptionHandler != null) {
+            exceptionHandler.handleException(t);
+          } else {
+            throw ExceptionUtils.makeRuntime(t);
+          }
+        }
 
         tasks++;
       }
