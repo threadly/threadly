@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
@@ -906,19 +907,19 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       try {
         scheduler.execute(new TestRunnable());
         fail("Execption should have been thrown");
-      } catch (IllegalStateException e) {
+      } catch (RejectedExecutionException e) {
         // expected
       }
       try {
         scheduler.schedule(new TestRunnable(), 1000, null);
         fail("Execption should have been thrown");
-      } catch (IllegalStateException e) {
+      } catch (RejectedExecutionException e) {
         // expected
       }
       try {
         scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
         fail("Execption should have been thrown");
-      } catch (IllegalStateException e) {
+      } catch (RejectedExecutionException e) {
         // expected
       }
     } finally {
@@ -979,19 +980,19 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       try {
         scheduler.execute(new TestRunnable());
         fail("Execption should have been thrown");
-      } catch (IllegalStateException e) {
+      } catch (RejectedExecutionException e) {
         // expected
       }
       try {
         scheduler.schedule(new TestRunnable(), 1000, null);
         fail("Execption should have been thrown");
-      } catch (IllegalStateException e) {
+      } catch (RejectedExecutionException e) {
         // expected
       }
       try {
         scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
         fail("Execption should have been thrown");
-      } catch (IllegalStateException e) {
+      } catch (RejectedExecutionException e) {
         // expected
       }
     } finally {

@@ -3,6 +3,7 @@ package org.threadly.concurrent;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,12 +56,13 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Gets the instance of the scheduler for this instance.  The scheduler must be accessed from 
-   * this function because it is lazily constructed and started.
+   * Returns the {@link SchedulerManager} instance that contains the scheduler.  This does no 
+   * safety checks on if the scheduler is running or not, it just ensures that the single instance 
+   * of the manager is returned.
    * 
-   * @return instance of the internal scheduler
+   * @return Single instance of the SchedulerManager container
    */
-  protected NoThreadScheduler getScheduler() {
+  private SchedulerManager getSchedulerManager() {
     // we lazily construct and start the manager
     SchedulerManager result = sManager.get();
     if (result == null) {
@@ -73,8 +75,22 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
       }
     }
     
+    return result;
+  }
+  
+  /**
+   * Gets the instance of the scheduler for this instance.  The scheduler must be accessed from 
+   * this function because it is lazily constructed and started.  This call will verify the 
+   * scheduler is running before it is returned
+   * 
+   * @return instance of the internal scheduler
+   * @throws RejectedExecutionException thrown if the scheduler has been shutdown
+   */
+  protected NoThreadScheduler getRunningScheduler() throws RejectedExecutionException {
+    SchedulerManager result = getSchedulerManager();
+    
     if (! result.isRunning()) {
-      throw new IllegalStateException("Scheduler has been shutdown");
+      throw new RejectedExecutionException("Thread pool shutdown");
     }
     
     return result.scheduler;
@@ -135,30 +151,29 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
 
   @Override
   public boolean remove(Runnable task) {
-    return getScheduler().remove(task);
+    return getSchedulerManager().scheduler.remove(task);
   }
 
   @Override
   public boolean remove(Callable<?> task) {
-    return getScheduler().remove(task);
+    return getSchedulerManager().scheduler.remove(task);
   }
 
   @Override
   protected void doSchedule(Runnable task, long delayInMillis) {
-    getScheduler().doSchedule(task, delayInMillis);
+    getRunningScheduler().doSchedule(task, delayInMillis);
   }
 
   @Override
   public void scheduleWithFixedDelay(Runnable task, 
                                      long initialDelay, 
                                      long recurringDelay) {
-    getScheduler().scheduleWithFixedDelay(task, initialDelay, recurringDelay);
+    getRunningScheduler().scheduleWithFixedDelay(task, initialDelay, recurringDelay);
   }
 
   @Override
   public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-    getScheduler().scheduleAtFixedRate(task, initialDelay, period);
-    
+    getRunningScheduler().scheduleAtFixedRate(task, initialDelay, period);
   }
   
   /**

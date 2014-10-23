@@ -10,6 +10,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +46,7 @@ public abstract class ScheduledExecutorServiceTest {
       try {
         scheduler.execute(new TestRunnable());
         fail("Execption should have been thrown");
-      } catch (IllegalStateException e) {
+      } catch (RejectedExecutionException e) {
         // expected
       }
     } finally {

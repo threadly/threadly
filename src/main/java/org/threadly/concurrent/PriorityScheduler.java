@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -816,7 +817,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    */
   protected void addToQueue(TaskWrapper task) {
     if (shutdownStarted.get()) {
-      throw new IllegalStateException("Thread pool shutdown");
+      throw new RejectedExecutionException("Thread pool shutdown");
     }
     
     switch (task.priority) {

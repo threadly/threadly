@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
@@ -136,7 +137,7 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test (expected = RejectedExecutionException.class)
   public void shutdownExecutionFail() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     sts.shutdown();
@@ -144,7 +145,7 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     sts.execute(new TestRunnable());
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test (expected = RejectedExecutionException.class)
   public void shutdownNowExecutionFail() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     sts.shutdownNow();

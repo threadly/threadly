@@ -1,6 +1,5 @@
 package org.threadly.concurrent;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -40,21 +39,9 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     scheduler.shutdown();
   }
 
-  /**
-   * This call is no different from the shutdown() call.  Currently the 
-   * {@link SingleThreadScheduler} implementation has no way to stop executing tasks it has 
-   * already taken on it's current "tick" cycle.
-   *
-   * @return Empty list
-   */
   @Override
   public List<Runnable> shutdownNow() {
-    /* we currently don't have an easy wait to stop a 
-     * .tick() call in progress on the scheduler thread.
-     */
-    scheduler.shutdown();
-    
-    return Collections.emptyList();
+    return scheduler.shutdownNow();
   }
 
   @Override
@@ -70,7 +57,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(false, task);
-    NoThreadScheduler nts = scheduler.getScheduler();
+    NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
     nts.add(ott);
     
@@ -80,7 +67,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableFutureTask<V> lft = new ListenableFutureTask<V>(false, callable);
-    NoThreadScheduler nts = scheduler.getScheduler();
+    NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
     nts.add(ott);
     
@@ -95,7 +82,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
-    NoThreadScheduler nts = scheduler.getScheduler();
+    NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringDelayTask(lft, initialDelayInMillis, delayInMillis);
     nts.add(rt);
     
@@ -110,7 +97,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
-    NoThreadScheduler nts = scheduler.getScheduler();
+    NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringRateTask(lft, initialDelayInMillis, periodInMillis);
     nts.add(rt);
     
