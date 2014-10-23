@@ -1193,23 +1193,19 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     public void run() {
       // will break in finally block if shutdown
       while (true) {
-        try {
-          blockTillNextTask();
-          
-          if (nextTask != null) {
-            nextTask.run();
-          }
-        } catch (Throwable t) {
-          ExceptionUtils.handleException(t);
-        } finally {
+        blockTillNextTask();
+        
+        if (nextTask != null) {
+          ExceptionUtils.runRunnable(nextTask);
           nextTask = null;
-          if (isRunning()) {
-            // only check if still running, otherwise worker has already been killed
-            lastRunTime = Clock.lastKnownForwardProgressingMillis();
-            workerDone(this);
-          } else {
-            break;
-          }
+        }
+        // once done handling task
+        if (isRunning()) {
+          // only check if still running, otherwise worker has already been killed
+          lastRunTime = Clock.lastKnownForwardProgressingMillis();
+          workerDone(this);
+        } else {
+          break;
         }
       }
     }

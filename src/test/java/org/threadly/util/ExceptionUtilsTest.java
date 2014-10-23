@@ -10,6 +10,8 @@ import java.util.StringTokenizer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
+import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionUtils.TransformedException;
 
 @SuppressWarnings("javadoc")
@@ -22,6 +24,26 @@ public class ExceptionUtilsTest {
     ExceptionUtils.setThreadExceptionHandler(null);
     Thread.setDefaultUncaughtExceptionHandler(null);
     Thread.currentThread().setUncaughtExceptionHandler(null);
+  }
+  
+  @Test
+  public void runRunnableTest() {
+    TestRunnable tr = new TestRunnable();
+    ExceptionUtils.runRunnable(tr);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void runRunnableThrownTest() {
+    TestExceptionHandler exceptionHandler = new TestExceptionHandler();
+    ExceptionUtils.setThreadExceptionHandler(exceptionHandler);
+    RuntimeException failure = new RuntimeException();
+    TestRuntimeFailureRunnable runnable = new TestRuntimeFailureRunnable(failure);
+    
+    ExceptionUtils.runRunnable(runnable);
+    
+    assertTrue(exceptionHandler.getLastThrowable() == failure);
   }
   
   @SuppressWarnings("resource")

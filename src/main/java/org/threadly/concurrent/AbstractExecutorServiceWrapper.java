@@ -309,8 +309,8 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       try {
         task.run();
       } catch (Throwable t) {
-        ExceptionUtils.handleException(t);
         scheduler.remove(this);
+        ExceptionUtils.handleException(t);
       }
     }
 

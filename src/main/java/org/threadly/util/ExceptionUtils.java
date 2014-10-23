@@ -80,6 +80,21 @@ public class ExceptionUtils {
   }
   
   /**
+   * Invokes {@link Runnable#run()} on the provided runnable on this thread, ensuring that no 
+   * throwables are thrown out of this invocation.  If any throwable's are thrown, they will be 
+   * provided to {@link #handleException(Throwable)}.
+   * 
+   * @param r Runnable to invoke, can not be null
+   */
+  public static void runRunnable(Runnable r) {
+    try {
+      r.run();
+    } catch (Throwable t) {
+      handleException(t);
+    }
+  }
+  
+  /**
    * This call handles an uncaught throwable.  If a default uncaught exception handler is set, 
    * then that will be called to handle the uncaught exception.  If none is set, then the 
    * exception will be printed out to standard error.

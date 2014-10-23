@@ -40,11 +40,7 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
   public void execute(Runnable task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    try {
-      task.run();
-    } catch (Throwable t) {
-      ExceptionUtils.handleException(t);
-    }
+    ExceptionUtils.runRunnable(task);
   }
 
   @Override

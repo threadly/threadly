@@ -437,6 +437,11 @@ public class KeyDistributedExecutor {
       this.firstTask = firstTask;
     }
     
+    /**
+     * Call to get this workers current queue size.
+     * 
+     * @return How many tasks are waiting to be executed.
+     */
     public int getQueueSize() {
       // the default implementation is very inaccurate
       synchronized (workerLock) {
@@ -445,7 +450,12 @@ public class KeyDistributedExecutor {
       }
     }
     
-    // Should hold workerLock before calling into
+    /**
+     * You MUST hold the workerLock before calling into this.  This is designed to be overridden 
+     * if you need to track how tasks are being added.
+     * 
+     * @param task Runnable to add to the worker's queue
+     */
     protected void add(Runnable task) {
       if (queue == null) {
         queue = new ArrayDeque<Runnable>(ARRAY_DEQUE_INITIAL_SIZE);
@@ -453,12 +463,14 @@ public class KeyDistributedExecutor {
       queue.add(task);
     }
     
+    /**
+     * Runs the provided task in the invoking thread.  This is designed to be overridden if 
+     * needed.  No exceptions will ever be thrown from this call.
+     * 
+     * @param task Runnable to run
+     */
     protected void runTask(Runnable task) {
-      try {
-        task.run();
-      } catch (Throwable t) {
-        ExceptionUtils.handleException(t);
-      }
+      ExceptionUtils.runRunnable(task);
     }
     
     @Override
