@@ -117,7 +117,8 @@ public class FutureUtils {
    * 
    * The future returned will provide a {@code null} result, it is the responsibility of the 
    * caller to get the actual results from the provided futures.  This is designed to just be an 
-   * indicator as to when they have finished.
+   * indicator as to when they have finished.  If you need the results from the provided futures, 
+   * consider using {@link #makeCompleteListFuture(Iterable)}.
    * 
    * @since 1.2.0
    * 
@@ -126,6 +127,40 @@ public class FutureUtils {
    */
   public static ListenableFuture<?> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures) {
     return new EmptyFutureCollection(futures);
+  }
+  
+  /**
+   * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
+   * when all futures are complete without blocking.  Unlike 
+   * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
+   * {@link ListenableFuture}'s.  But will return immediately, providing a new 
+   * {@link ListenableFuture} that will be called once all the provided futures have finished.  
+   * 
+   * The future returned will provide the result object once all provided futures have completed.  
+   * This call does nothing to provide the actual results from {@link ListenableFuture}'s which 
+   * were passed in.  If that is needed consider using {@link #makeCompleteListFuture(Iterable)}.
+   * 
+   * @since 3.3.0
+   * 
+   * @param futures Collection of futures that must finish before returned future is satisfied
+   * @param result Result to provide returned future once all futures complete
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
+                                                           final T result) {
+    final SettableListenableFuture<T> resultFuture = new SettableListenableFuture<T>();
+    new EmptyFutureCollection(futures).addCallback(new FutureCallback<Object>() {
+      @Override
+      public void handleResult(Object ignored) {
+        resultFuture.setResult(result);
+      }
+
+      @Override
+      public void handleFailure(Throwable t) {
+        resultFuture.setFailure(t);
+      }
+    });
+    return resultFuture;
   }
   
   /**
@@ -303,7 +338,7 @@ public class FutureUtils {
      * 
      * @return List to satisfy ListenableFuture result with
      */
-    private List<ListenableFuture<? extends T>> getFinalResultList() {
+    protected List<ListenableFuture<? extends T>> getFinalResultList() {
       List<ListenableFuture<? extends T>> result;
       if (buildingResult.get() == null) {
         result = Collections.emptyList();
@@ -331,6 +366,11 @@ public class FutureUtils {
     @Override
     protected void handleFutureDone(ListenableFuture<?> f) {
       // ignored
+    }
+    
+    @Override
+    protected List<ListenableFuture<?>> getFinalResultList() {
+      return null;
     }
   }
   

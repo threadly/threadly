@@ -21,6 +21,7 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest {
@@ -239,21 +240,22 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void makeCompleteFutureTest() throws InterruptedException, TimeoutException {
+  public void makeCompleteFutureTest() throws InterruptedException, TimeoutException, ExecutionException {
     makeCompleteFutureTest(-1);
   }
   
   @Test
-  public void makeCompleteFutureWithErrorTest() throws InterruptedException, TimeoutException {
+  public void makeCompleteFutureWithErrorTest() throws InterruptedException, TimeoutException, ExecutionException {
     makeCompleteFutureTest(TEST_QTY / 2);
   }
   
-  private static void makeCompleteFutureTest(int errorIndex) throws InterruptedException, TimeoutException {
+  private static void makeCompleteFutureTest(int errorIndex) throws InterruptedException, TimeoutException, ExecutionException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
 
     ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
     
     verifyCompleteFuture(f, futures);
+    assertNull(f.get());
   }
   
   private static void verifyCompleteFuture(final ListenableFuture<?> f, 
@@ -275,6 +277,46 @@ public class FutureUtilsTest {
     });
     
     av.waitForTest();
+  }
+  
+  @Test
+  public void makeCompleteFutureWithResultNullTest() throws InterruptedException, ExecutionException {
+    String result = StringUtils.randomString(5);
+    ListenableFuture<String> f = FutureUtils.makeCompleteFuture(null, result);
+    
+    assertTrue(f.isDone());
+    assertEquals(result, f.get());
+  }
+  
+  @Test
+  public void makeCompleteFutureWithResultEmptyListTest() throws InterruptedException, ExecutionException {
+    String result = StringUtils.randomString(5);
+    List<ListenableFuture<?>> futures = Collections.emptyList();
+    ListenableFuture<String> f = FutureUtils.makeCompleteFuture(futures, result);
+    
+    assertTrue(f.isDone());
+    assertEquals(result, f.get());
+  }
+  
+  @Test
+  public void makeCompleteFutureWithResultTest() throws InterruptedException, TimeoutException, ExecutionException {
+    String result = StringUtils.randomString(5);
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    
+    ListenableFuture<String> f = FutureUtils.makeCompleteFuture(futures, result);
+    
+    verifyCompleteFuture(f, futures);
+    assertEquals(result, f.get());
+  }
+  
+  @Test
+  public void makeCompleteFutureWithNullResultTest() throws InterruptedException, TimeoutException, ExecutionException {
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures, null);
+    
+    verifyCompleteFuture(f, futures);
+    assertNull(f.get());
   }
   
   @Test
