@@ -511,7 +511,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
               removedTasks.add(tw.task);
             }
           }
-          lowPriorityQueue.clear();
+          highPriorityQueue.clear();
         }
         synchronized (lowPriorityQueue.getLock()) {
           Iterator<TaskWrapper> it = lowPriorityQueue.iterator();

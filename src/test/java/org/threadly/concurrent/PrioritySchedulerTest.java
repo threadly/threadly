@@ -932,24 +932,32 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      final PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
 
       // execute one runnable which will not complete
       scheduler.execute(btr);
+      btr.blockTillStarted();
       
-      List<TestRunnable> expectedRunnables = new ArrayList<TestRunnable>(TEST_QTY);
+      final List<TestRunnable> expectedRunnables = new ArrayList<TestRunnable>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
-        if (i != 0) {
+        if (i > 1) {
           /* currently the PriorityScheduler can not remove or cancel tasks which 
            * are waiting for a worker...see issue #75
            */
           expectedRunnables.add(tr);
         }
-        scheduler.execute(tr);
+        scheduler.execute(tr, i % 2 == 0 ? TaskPriority.High : TaskPriority.Low);
       }
       
-      btr.blockTillStarted();
+      // we have this test condition to make the test deterministic due to issue #75
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          int queuedTaskQty = scheduler.lowPriorityQueue.size() + scheduler.highPriorityQueue.size();
+          return queuedTaskQty == expectedRunnables.size();
+        }
+      }.blockTillTrue();
       
       List<Runnable> canceledRunnables = scheduler.shutdownNow();
       // unblock now so that others can run (if the unit test fails)
