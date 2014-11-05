@@ -63,14 +63,12 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     TaskPriority priority = TaskPriority.High;
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000, 
-                                                                          priority, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000, priority, 1000);
       
       assertEquals(priority, scheduler.getDefaultPriority());
       
       priority = TaskPriority.Low;
-      scheduler = factory.makePriorityScheduler(1, 1, 1000, 
-                                                priority, 1000);
+      scheduler = factory.makePriorityScheduler(1, 1, 1000, priority, 1000);
       assertEquals(priority, scheduler.getDefaultPriority());
     } finally {
       factory.shutdown();
@@ -265,6 +263,29 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       // verify worker was cleaned up
       assertEquals(0, scheduler.getCurrentPoolSize());
     } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void increaseMaxPoolSizeWithWaitingTaskTest() {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 0);
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      scheduler.execute(btr);
+      btr.blockTillStarted();
+      // all these runnables should be blocked
+      List<TestRunnable> executedRunnables = executeTestRunnables(scheduler, 0);
+      
+      scheduler.setMaxPoolSize((TEST_QTY / 2) + 1); // this should allow the waiting test runnables to quickly execute
+      
+      Iterator<TestRunnable> it = executedRunnables.iterator();
+      while (it.hasNext()) {
+        it.next().blockTillStarted(); // will throw exception if not ran
+      }
+    } finally {
+      btr.unblock();
       factory.shutdown();
     }
   }
@@ -855,14 +876,10 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
       PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
-      TestRunnable lastRunnable = null;
-      for (int i = 0; i < TEST_QTY; i++) {
-        /* adding a run time to have chances that there will be 
-         * runnables waiting to execute after shutdown call.
-         */
-        lastRunnable = new TestRunnable(5);
-        scheduler.execute(lastRunnable);
-      }
+      /* adding a run time to have greater chances that runnable 
+       * will be waiting to execute after shutdown call.
+       */
+      TestRunnable lastRunnable = executeTestRunnables(scheduler, 5).get(TEST_QTY - 1);
       
       scheduler.shutdown();
       

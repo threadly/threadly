@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
@@ -27,18 +28,25 @@ public abstract class SubmitterExecutorInterfaceTest {
     ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
+  protected List<TestRunnable> executeTestRunnables(Executor executor, int runnableSleepTime) {
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      for (int i = 0; i < TEST_QTY; i++) {
+        TestRunnable tr = new TestRunnable(runnableSleepTime);
+        executor.execute(tr);
+        runnables.add(tr);
+      }
+      
+      return runnables;
+  }
+  
   @Test
   public void executeTest() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-      for (int i = 0; i < TEST_QTY; i++) {
-        TestRunnable tr = new TestRunnable();
-        executor.execute(tr);
-        runnables.add(tr);
-      }
+      
+      List<TestRunnable> runnables = executeTestRunnables(executor, 0);
       
       // verify execution
       Iterator<TestRunnable> it = runnables.iterator();

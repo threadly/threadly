@@ -3,7 +3,6 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,14 +68,10 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
   @Test
   public void shutdownTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
-    TestRunnable lastRunnable = null;
-    for (int i = 0; i < TEST_QTY; i++) {
-      /* adding a run time to have chances that there will be 
-       * runnables waiting to execute after shutdown call.
-       */
-      lastRunnable = new TestRunnable(5);
-      sts.execute(lastRunnable);
-    }
+    /* adding a run time to have greater chances that runnable 
+     * will be waiting to execute after shutdown call.
+     */
+    TestRunnable lastRunnable = executeTestRunnables(sts, 5).get(TEST_QTY - 1);
     
     sts.shutdown();
     
@@ -111,12 +106,7 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     sts.execute(btr);
 
     try {
-      List<TestRunnable> expectedRunnables = new ArrayList<TestRunnable>(TEST_QTY);
-      for (int i = 0; i < TEST_QTY; i++) {
-        TestRunnable tr = new TestRunnable();
-        expectedRunnables.add(tr);
-        sts.execute(tr);
-      }
+      List<TestRunnable> expectedRunnables = executeTestRunnables(sts, 0);
       
       btr.blockTillStarted();
       
