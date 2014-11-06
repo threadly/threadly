@@ -162,8 +162,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void getAndSetCorePoolSizeAboveMaxTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     int corePoolSize = 1;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, 
-                                                                        corePoolSize, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, corePoolSize, 1000);
     try {
       corePoolSize = scheduler.getMaxPoolSize() * 2;
       scheduler.setCorePoolSize(corePoolSize);
@@ -200,8 +199,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     int corePoolSize = 1;
     int maxPoolSize = 10;
     // first construct a valid scheduler
-    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, 
-                                                                        maxPoolSize, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, maxPoolSize, 1000);
     try {
       // verify no negative values
       try {
