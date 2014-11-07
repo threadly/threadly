@@ -230,6 +230,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
           trimList(highPriorityWorkerAvailable);
         }
         if (getCurrentPoolSize() >= getMaxPoolSize()) {
+          lastHighDelay = task.getDelayEstimateInMillis();
           // we can't make the pool any bigger
           w = getExistingWorker(Long.MAX_VALUE);
         } else {
