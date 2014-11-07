@@ -142,6 +142,7 @@ public class FutureUtils {
    * 
    * @since 3.3.0
    * 
+   * @param <T> type of result returned from the future
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @param result Result to provide returned future once all futures complete
    * @return ListenableFuture which will be done once all futures provided are done
