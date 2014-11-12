@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
+import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class ConcurrentArrayListTest {
@@ -453,11 +454,11 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void elementTest() {
-    String foo = "foo";
+    String foo = StringUtils.randomString(5);
     testList.add(foo);
     assertEquals(foo, testList.element());
     
-    testList.add("bar");
+    testList.add(StringUtils.randomString(5));
     assertEquals(foo, testList.element());
   }
   
@@ -573,7 +574,7 @@ public class ConcurrentArrayListTest {
       testList.add(str);
     }
     
-    testList.reposition("foobar", 0);
+    testList.reposition("foo", 0);
     fail("Exception should have been thrown");
   }
   

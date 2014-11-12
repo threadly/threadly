@@ -15,13 +15,14 @@ import org.threadly.util.Clock;
  * 
  * @author jent - Mike Jensen
  * @since 1.2.0
- * @param <T> type of returned object
+ * @param <T> The result object type returned by this future
  */
 public class SettableListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
                                          implements ListenableFuture<T>, FutureCallback<T> {
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
   private volatile boolean done;
+  private boolean resultCleared;
   private T result;
   private Throwable failure;
   
@@ -33,6 +34,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
     this.listenerHelper = new RunnableListenerHelper(true);
     resultLock = new Object();
     done = false;
+    resultCleared = false;
     result = null;
     failure = null;
   }
@@ -138,6 +140,27 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
     listenerHelper.callListeners();
   }
   
+  /**
+   * Clears the stored result from this set future.  This allows the result to be available for 
+   * garbage collection.  After this call, future calls to {@link #get()} will throw an 
+   * {@link IllegalStateException}.  So it is critical that this is only called after you are sure 
+   * no future calls to get the result on this future will be attempted.
+   * 
+   * The design of this is so that if you want to chain {@link ListenableFuture}'s together, you 
+   * can clear the results of old ones after their result has been consumed.  This is really only 
+   * useful in very specific instances.
+   */
+  public void clearResult() {
+    synchronized (resultLock) {
+      if (! done) {
+        throw new IllegalStateException("Result not set yet");
+      }
+      resultCleared = true;
+      result = null;
+      failure = null;
+    }
+  }
+  
   // should be synchronized on resultLock before calling
   private void setDone() {
     if (done) {
@@ -157,6 +180,9 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
     synchronized (resultLock) {
       while (! done) {
         resultLock.wait();
+      }
+      if (resultCleared) {
+        throw new IllegalStateException("Result cleared, future get's not possible");
       }
       
       if (failure != null) {
@@ -178,6 +204,9 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
       while (! done && 
              (remainingInMs = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime)) > 0) {
         resultLock.wait(remainingInMs);
+      }
+      if (resultCleared) {
+        throw new IllegalStateException("Result cleared, future get's not possible");
       }
       
       if (failure != null) {

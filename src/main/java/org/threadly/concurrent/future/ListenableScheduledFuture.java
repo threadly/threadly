@@ -11,7 +11,7 @@ import java.util.concurrent.ScheduledFuture;
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
- * @param <T> type of result for future
+ * @param <T> The result object type returned by this future
  */
 public interface ListenableScheduledFuture<T> extends ScheduledFuture<T>, ListenableFuture<T> {
   // nothing added here

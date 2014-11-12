@@ -7,7 +7,7 @@ import java.util.concurrent.Executor;
  * 
  * @author jent - Mike Jensen
  * @since 1.3.0
- * @param <T> type of object returned by the future
+ * @param <T> The result object type returned by this future
  */
 abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
                                                     implements ListenableFuture<T> {

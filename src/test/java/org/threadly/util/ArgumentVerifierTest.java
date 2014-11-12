@@ -14,9 +14,9 @@ public class ArgumentVerifierTest {
   
   @Test
   public void assertNotNullFail() {
-    String name = "foo";
+    String name = StringUtils.randomString(5);
     try {
-      ArgumentVerifier.assertNotNull(null, "foo");
+      ArgumentVerifier.assertNotNull(null, name);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       assertTrue(e.getMessage().contains(name));
@@ -31,9 +31,9 @@ public class ArgumentVerifierTest {
   
   @Test
   public void assertNotNegativeFail() {
-    String name = "foo";
+    String name = StringUtils.randomString(5);
     try {
-      ArgumentVerifier.assertNotNegative(-1, "foo");
+      ArgumentVerifier.assertNotNegative(-1, name);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       assertTrue(e.getMessage().contains(name));
@@ -48,9 +48,9 @@ public class ArgumentVerifierTest {
   
   @Test
   public void assertGreaterThanZeroFail() {
-    String name = "foo";
+    String name = StringUtils.randomString(5);
     try {
-      ArgumentVerifier.assertGreaterThanZero(0, "foo");
+      ArgumentVerifier.assertGreaterThanZero(0, name);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       assertTrue(e.getMessage().contains(name));

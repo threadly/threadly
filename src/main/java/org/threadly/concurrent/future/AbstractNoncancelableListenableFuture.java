@@ -5,7 +5,7 @@ package org.threadly.concurrent.future;
  * 
  * @author jent - Mike Jensen
  * @since 2.1.0
- * @param <T> type of object returned by the future
+ * @param <T> The result object type returned by this future
  */
 abstract class AbstractNoncancelableListenableFuture<T> implements ListenableFuture<T> {
   /**

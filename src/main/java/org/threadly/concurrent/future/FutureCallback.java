@@ -5,7 +5,7 @@ package org.threadly.concurrent.future;
  * 
  * @author jent - Mike Jensen
  * @since 1.2.0
- * @param <T> Type of result to be returned from future
+ * @param <T> The result object type returned by this future
  */
 public interface FutureCallback<T> {
   /**

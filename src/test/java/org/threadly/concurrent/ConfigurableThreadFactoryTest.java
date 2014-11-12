@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionHandlerInterface;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.StringUtils;
 import org.threadly.util.TestExceptionHandler;
 import org.threadly.util.TestUncaughtExceptionHandler;
 
@@ -41,7 +42,7 @@ public class ConfigurableThreadFactoryTest {
   
   @Test
   public void setPrefixWithPoolIdTest() {
-    String poolPrefix = "foo";
+    String poolPrefix = StringUtils.randomString(5);
     ConfigurableThreadFactory ctf1 = new ConfigurableThreadFactory(poolPrefix, true);
     ConfigurableThreadFactory ctf2 = new ConfigurableThreadFactory(poolPrefix, true);
 
@@ -54,7 +55,7 @@ public class ConfigurableThreadFactoryTest {
   
   @Test
   public void setPrefixWithoutPoolIdTest() {
-    String poolPrefix = "foo";
+    String poolPrefix = StringUtils.randomString(5);
     ConfigurableThreadFactory ctf1 = new ConfigurableThreadFactory(poolPrefix, false);
     ConfigurableThreadFactory ctf2 = new ConfigurableThreadFactory(poolPrefix, false);
 

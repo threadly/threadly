@@ -12,7 +12,7 @@ import java.util.concurrent.RunnableFuture;
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
- * @param <T> type of future implementation
+ * @param <T> The result object type returned by this future
  */
 public interface ListenableRunnableFuture<T> extends ListenableFuture<T>, RunnableFuture<T> {
   // nothing added here

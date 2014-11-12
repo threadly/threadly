@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 
  * @author jent - Mike Jensen
  * @since 2.4.0
- * @param <T> type of future implementation
+ * @param <T> The result object type returned by this future
  */
 public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
   private final AtomicBoolean executionStarted = new AtomicBoolean(false);

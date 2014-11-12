@@ -15,7 +15,7 @@ import org.threadly.concurrent.event.RunnableListenerHelper;
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
- * @param <T> type of future implementation
+ * @param <T> The result object type returned by this future
  */
 public class ListenableFutureTask<T> extends FutureTask<T> 
                                      implements ListenableRunnableFuture<T>, 

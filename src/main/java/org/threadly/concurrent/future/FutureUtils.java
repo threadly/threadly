@@ -34,7 +34,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
-   * @param <T> type of result returned from the future
+   * @param <T> The result object type returned from the future
    * @param future future to attach callback to
    * @param callback callback to call once future completes
    */
@@ -50,7 +50,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
-   * @param <T> type of result returned from the future
+   * @param <T> The result object type returned from the future
    * @param future future to attach callback to
    * @param callback callback to call once future completes
    * @param executor executor to call callback on
@@ -174,7 +174,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
-   * @param <T> type of result returned from the futures
+   * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -193,7 +193,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
-   * @param <T> type of result returned from the futures
+   * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -212,7 +212,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
-   * @param <T> type of result returned from the futures
+   * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -227,7 +227,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
-   * @param <T> type of result returned from the future
+   * @param <T> The result object type returned by the returned future
    * @param result result to be provided in .get() call
    * @return Already satisfied future
    */
@@ -242,7 +242,7 @@ public class FutureUtils {
    * 
    * @since 1.2.0
    * 
-   * @param <T> type of result returned from the future
+   * @param <T> The result object type returned by the returned future
    * @param failure to provide as cause for ExecutionException thrown from .get() call
    * @return Already satisfied future
    */
@@ -256,7 +256,7 @@ public class FutureUtils {
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0
-   * @param <T> type of result returned from the futures
+   * @param <T> The result object type returned from the futures
    */
   protected abstract static class FutureCollection<T> 
       extends SettableListenableFuture<List<ListenableFuture<? extends T>>> {
@@ -383,7 +383,7 @@ public class FutureUtils {
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0
-   * @param <T> type of result returned from the futures
+   * @param <T> The result object type returned from the futures
    */
   protected static class AllFutureCollection<T> extends FutureCollection<T> {
     protected AllFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
@@ -407,7 +407,7 @@ public class FutureUtils {
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0
-   * @param <T> type of result returned from the futures
+   * @param <T> The result object type returned from the futures
    */
   protected static class SuccessFutureCollection<T> extends AllFutureCollection<T> {
     protected SuccessFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
@@ -443,7 +443,7 @@ public class FutureUtils {
    * 
    * @author jent - Mike Jensn
    * @since 1.2.0
-   * @param <T> type of result returned from the futures
+   * @param <T> The result object type returned from the futures
    */
   protected static class FailureFutureCollection<T> extends AllFutureCollection<T> {
     protected FailureFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {

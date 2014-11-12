@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * 
  * @author jent - Mike Jensen
  * @since 1.3.0
- * @param <T> type of object returned by the future
+ * @param <T> The result object type returned by this future
  */
 public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
   private final Throwable failure;

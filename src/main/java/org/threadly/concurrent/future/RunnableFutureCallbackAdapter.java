@@ -16,7 +16,7 @@ import org.threadly.util.ArgumentVerifier;
  * 
  * @author jent - Mike Jensen
  * @since 3.2.0
- * @param <T> Type of result returned from the future
+ * @param <T> The result object type returned by this future
  */
 public class RunnableFutureCallbackAdapter<T> implements Runnable {
   protected final Future<T> future;

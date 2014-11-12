@@ -10,7 +10,7 @@ import java.util.concurrent.Future;
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
- * @param <T> type of result for future
+ * @param <T> The result object type returned by this future
  */
 public interface ListenableFuture<T> extends Future<T> {
   /**

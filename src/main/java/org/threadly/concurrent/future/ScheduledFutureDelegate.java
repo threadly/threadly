@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
- * @param <T> type of result for future
+ * @param <T> The result object type returned by this future
  */
 public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
   protected final ListenableFuture<T> futureImp;

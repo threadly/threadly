@@ -11,6 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class AsyncVerifierTest {
@@ -137,7 +138,7 @@ public class AsyncVerifierTest {
   
   @Test
   public void failMsgTest() {
-    String msg = "foobar";
+    String msg = StringUtils.randomString(5);
     try {
       verifier.fail(msg);
       fail("Exception should have thrown");

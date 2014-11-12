@@ -18,7 +18,7 @@ import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class SettableListenableFutureTest {
-  private SettableListenableFuture<String> slf;
+  protected SettableListenableFuture<String> slf;
   
   @Before
   public void setup() {
@@ -34,24 +34,50 @@ public class SettableListenableFutureTest {
   public void setResultResultFail() {
     slf.setResult(null);
     slf.setResult(null);
+    fail("Should have thrown exception");
   }
   
   @Test (expected = IllegalStateException.class)
   public void setFailureResultFail() {
     slf.setFailure(null);
     slf.setResult(null);
+    fail("Should have thrown exception");
   }
   
   @Test (expected = IllegalStateException.class)
   public void setResultFailureFail() {
     slf.setResult(null);
     slf.setFailure(null);
+    fail("Should have thrown exception");
   }
   
   @Test (expected = IllegalStateException.class)
   public void setFailureFailureFail() {
     slf.setFailure(null);
     slf.setFailure(null);
+    fail("Should have thrown exception");
+  }
+  
+  @Test (expected = IllegalStateException.class)
+  public void clearResultFail() {
+    slf.clearResult();
+    fail("Should have thrown exception");
+  }
+  
+  @Test (expected = IllegalStateException.class)
+  public void getAfterClearResultFail() throws InterruptedException, ExecutionException {
+    slf.setResult(null);
+    slf.clearResult();
+    slf.get();
+    fail("Should have thrown exception");
+  }
+  
+  @Test (expected = IllegalStateException.class)
+  public void getAfterClearFailureResultFail() throws InterruptedException, ExecutionException {
+    slf.setFailure(null);
+    slf.clearResult();
+    slf.get();
+    fail("Should have thrown exception");
   }
   
   @Test
@@ -267,5 +293,4 @@ public class SettableListenableFutureTest {
       assertTrue(failure == e.getCause());
     }
   }
-  
 }
