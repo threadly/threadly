@@ -49,7 +49,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * 
    * @since 1.2.0
    * 
-   * @param callback the callback to run when the computation is complete
+   * @param callback to be invoked when the computation is complete
    */
   public void addCallback(FutureCallback<? super T> callback);
   
@@ -63,7 +63,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * 
    * @since 1.2.0
    * 
-   * @param callback the callback to run when the computation is complete
+   * @param callback to be invoked when the computation is complete
    * @param executor {@link Executor} the callback should be ran on, or {@code null}
    */
   public void addCallback(FutureCallback<? super T> callback, Executor executor);

@@ -19,6 +19,12 @@ public class ClearOnGetSettableListenableFutureTest extends SettableListenableFu
   }
   
   @Test (expected = IllegalStateException.class)
+  public void addCallbackTwiceFail() {
+    slf.addCallback(new TestFutureCallback());
+    slf.addCallback(new TestFutureCallback());
+  }
+  
+  @Test (expected = IllegalStateException.class)
   public void getTwiceFail() throws InterruptedException, ExecutionException {
     slf.setResult(null);
     slf.get();
