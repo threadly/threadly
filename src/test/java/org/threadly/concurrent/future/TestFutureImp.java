@@ -68,11 +68,11 @@ public class TestFutureImp implements ListenableFuture<Object> {
 
   @Override
   public void addCallback(FutureCallback<? super Object> callback) {
-    FutureUtils.addCallback(this, callback);
+    addCallback(callback, null);
   }
 
   @Override
   public void addCallback(FutureCallback<? super Object> callback, Executor executor) {
-    FutureUtils.addCallback(this, callback, executor);
+    addListener(new RunnableFutureCallbackAdapter<Object>(this, callback), executor);
   }
 }

@@ -22,7 +22,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
   private volatile boolean done;
-  private boolean resultCleared;
+  private Exception resultCleared;
   private T result;
   private Throwable failure;
   
@@ -34,7 +34,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
     this.listenerHelper = new RunnableListenerHelper(true);
     resultLock = new Object();
     done = false;
-    resultCleared = false;
+    resultCleared = null;
     result = null;
     failure = null;
   }
@@ -56,7 +56,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
 
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor) {
-    FutureUtils.addCallback(this, callback, executor);
+    addListener(new RunnableFutureCallbackAdapter<T>(this, callback), executor);
   }
   
   /**
@@ -155,7 +155,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
       if (! done) {
         throw new IllegalStateException("Result not set yet");
       }
-      resultCleared = true;
+      resultCleared = new Exception();
       result = null;
       failure = null;
     }
@@ -181,8 +181,8 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
       while (! done) {
         resultLock.wait();
       }
-      if (resultCleared) {
-        throw new IllegalStateException("Result cleared, future get's not possible");
+      if (resultCleared != null) {
+        throw new IllegalStateException("Result cleared, future get's not possible", resultCleared);
       }
       
       if (failure != null) {
@@ -205,8 +205,8 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
              (remainingInMs = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime)) > 0) {
         resultLock.wait(remainingInMs);
       }
-      if (resultCleared) {
-        throw new IllegalStateException("Result cleared, future get's not possible");
+      if (resultCleared != null) {
+        throw new IllegalStateException("Result cleared, future get's not possible", resultCleared);
       }
       
       if (failure != null) {

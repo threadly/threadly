@@ -57,6 +57,7 @@ public class FutureUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackFail() {
     try {
       FutureUtils.addCallback(null, new TestFutureCallback());
@@ -73,6 +74,7 @@ public class FutureUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackTest() {
     Object result = new Object();
     SettableListenableFuture<Object> future = new SettableListenableFuture<Object>();
@@ -88,6 +90,7 @@ public class FutureUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackAlreadyDoneFutureTest() {
     Object result = new Object();
     ListenableFuture<Object> future = FutureUtils.immediateResultFuture(result);
@@ -99,6 +102,7 @@ public class FutureUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackExecutionExceptionAlreadyDoneTest() {
     Throwable failure = new Exception();
     ListenableFuture<Object> future = FutureUtils.immediateFailureFuture(failure);
@@ -110,6 +114,7 @@ public class FutureUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackExecutionExceptionTest() {
     Throwable failure = new Exception();
     SettableListenableFuture<Object> future = new SettableListenableFuture<Object>();
@@ -125,6 +130,7 @@ public class FutureUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackCanceledTest() {
     ListenableFuture<Object> future = new TestFutureImp(true);
     future.cancel(true);

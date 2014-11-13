@@ -12,7 +12,7 @@ import org.threadly.util.ArgumentVerifier;
  * and have it convert the future's result into calls into a {@link FutureCallback}.</p>
  * 
  * <p>Instead of constructing this class, it is usually much easier to call into 
- * {@link FutureUtils#addCallback(ListenableFuture, FutureCallback)}.</p>
+ * {@link ListenableFuture#addCallback(FutureCallback)}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 3.2.0

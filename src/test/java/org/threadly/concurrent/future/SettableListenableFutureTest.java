@@ -112,7 +112,7 @@ public class SettableListenableFutureTest {
   
   @Test
   public void addCallbackTest() {
-    String result = "addCallbackTest";
+    String result = StringUtils.randomString(5);
     TestFutureCallback tfc = new TestFutureCallback();
     slf.addCallback(tfc);
     
@@ -126,7 +126,7 @@ public class SettableListenableFutureTest {
   
   @Test
   public void addCallbackAlreadyDoneFutureTest() {
-    String result = "addCallbackAlreadyDoneFutureTest";
+    String result = StringUtils.randomString(5);
     slf.setResult(result);
     TestFutureCallback tfc = new TestFutureCallback();
     slf.addCallback(tfc);
@@ -206,7 +206,7 @@ public class SettableListenableFutureTest {
   
   @Test
   public void getResultTest() throws InterruptedException, ExecutionException {
-    final String testResult = "getResultTest";
+    final String testResult = StringUtils.randomString(5);
     
     PriorityScheduler scheduler = new StrictPriorityScheduler(1, 1, 100);
     try {
@@ -227,7 +227,7 @@ public class SettableListenableFutureTest {
   public void getWithTimeoutResultTest() throws InterruptedException, 
                                                 ExecutionException, 
                                                 TimeoutException {
-    final String testResult = "getWithTimeoutResultTest";
+    final String testResult = StringUtils.randomString(5);
     
     PriorityScheduler scheduler = new StrictPriorityScheduler(1, 1, 100);
     try {
