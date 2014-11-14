@@ -736,9 +736,10 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1, 1, 1000);
       scheduler.prestartAllCoreThreads();
+      int behindWaitTime = -1 * (DELAY_TIME + PriorityScheduler.LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS);
       scheduler.highPriorityQueue.add(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
                                                                        TaskPriority.High, 
-                                                                       -1 * DELAY_TIME));
+                                                                       behindWaitTime));
       // this will start the consumer, allowing the previous task to get a worker
       scheduler.addToQueue(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
                                                             TaskPriority.High, 1000));

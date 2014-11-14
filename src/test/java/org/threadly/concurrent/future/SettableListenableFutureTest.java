@@ -82,25 +82,23 @@ public class SettableListenableFutureTest {
   
   @Test
   public void listenersCalledOnResultTest() {
-    TestRunnable tr = new TestRunnable();
-    slf.addListener(tr);
-    
-    slf.setResult(null);
-    
-    assertTrue(tr.ranOnce());
-    
-    // verify new additions also get called
-    tr = new TestRunnable();
-    slf.addListener(tr);
-    assertTrue(tr.ranOnce());
+    listenersCalledTest(false);
   }
   
   @Test
   public void listenersCalledOnFailureTest() {
+    listenersCalledTest(true);
+  }
+  
+  public void listenersCalledTest(boolean failure) {
     TestRunnable tr = new TestRunnable();
     slf.addListener(tr);
     
-    slf.setFailure(null);
+    if (failure) {
+      slf.setFailure(null);
+    } else {
+      slf.setResult(null);
+    }
     
     assertTrue(tr.ranOnce());
     
@@ -136,17 +134,6 @@ public class SettableListenableFutureTest {
   }
   
   @Test
-  public void addCallbackExecutionExceptionAlreadyDoneTest() {
-    Throwable failure = new Exception();
-    slf.setFailure(failure);
-    TestFutureCallback tfc = new TestFutureCallback();
-    slf.addCallback(tfc);
-    
-    assertEquals(1, tfc.getCallCount());
-    assertTrue(failure == tfc.getLastFailure());
-  }
-  
-  @Test
   public void addCallbackExecutionExceptionTest() {
     Throwable failure = new Exception();
     TestFutureCallback tfc = new TestFutureCallback();
@@ -155,6 +142,17 @@ public class SettableListenableFutureTest {
     assertEquals(0, tfc.getCallCount());
     
     slf.setFailure(failure);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void addCallbackExecutionExceptionAlreadyDoneTest() {
+    Throwable failure = new Exception();
+    slf.setFailure(failure);
+    TestFutureCallback tfc = new TestFutureCallback();
+    slf.addCallback(tfc);
     
     assertEquals(1, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
