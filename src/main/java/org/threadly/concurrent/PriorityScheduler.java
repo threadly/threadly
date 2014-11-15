@@ -1065,10 +1065,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       if (shutdownFinishing) {
         killWorker(worker);
       } else {
+        expireOldWorkers();
+        
         // always add to the front so older workers are at the back
         availableWorkers.addFirst(worker);
-      
-        expireOldWorkers();
             
         workersLock.notify();
       }
