@@ -1047,7 +1047,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
        * try to reduce locking around here, we need to ensure that the worker is removed from the 
        * available workers BEFORE stopping.
        */
-      w.stop();
+      w.stopIfRunning();
       currentPoolSize--;
       // it may not always be here, but it sometimes can (for example when a worker is interrupted)
       availableWorkers.remove(w);
