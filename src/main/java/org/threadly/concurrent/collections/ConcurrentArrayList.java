@@ -1095,9 +1095,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
      */
     @SuppressWarnings("unchecked")
     public T get(int index) {
-      index += dataStartIndex;
-      
-      return (T)dataArray[index];
+      return (T)dataArray[index + dataStartIndex];
     }
 
     /**

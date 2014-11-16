@@ -209,7 +209,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     poolSizeChangeLock = new Object();
     highPriorityQueue = new DynamicDelayQueue<TaskWrapper>(highPriorityLock);
     lowPriorityQueue = new DynamicDelayQueue<TaskWrapper>(lowPriorityLock);
-    availableWorkers = new ArrayDeque<Worker>(maxPoolSize);
+    availableWorkers = new ArrayDeque<Worker>(corePoolSize);
     this.threadFactory = threadFactory;
     highPriorityConsumer = new TaskConsumer(threadFactory, 
                                             QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY, 
