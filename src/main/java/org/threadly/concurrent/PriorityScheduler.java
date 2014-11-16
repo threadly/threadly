@@ -332,7 +332,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       this.corePoolSize = corePoolSize;
       
       if (lookForExpiredWorkers) {
-        expireOldWorkers();
+        synchronized (workersLock) {
+          expireOldWorkers();
+        }
       }
     }
   }
@@ -359,10 +361,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       }
       
       this.maxPoolSize = maxPoolSize;
-      
-      if (poolSizeIncrease) {
+
+      synchronized (workersLock) {
+        if (poolSizeIncrease) {
         // now that pool size increased, start any workers we can for the waiting tasks
-        synchronized (workersLock) {
           if (waitingForWorkerCount > 0) {
             while (availableWorkers.size() < waitingForWorkerCount && 
                    currentPoolSize <= this.maxPoolSize) {
@@ -371,9 +373,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
             
             workersLock.notifyAll();
           }
+        } else {
+          expireOldWorkers();
         }
-      } else {
-        expireOldWorkers();
       }
     }
   }
@@ -392,7 +394,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     this.keepAliveTimeInMs = keepAliveTimeInMs;
     
     if (checkForExpiredWorkers) {
-      expireOldWorkers();
+      synchronized (workersLock) {
+        expireOldWorkers();
+      }
     }
   }
   
@@ -480,7 +484,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     allowCorePoolTimeout = value;
     
     if (checkForExpiredWorkers) {
-      expireOldWorkers();
+      synchronized (workersLock) {
+        expireOldWorkers();
+      }
     }
   }
 
@@ -1016,19 +1022,19 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
+   * YOU MUST HOLD THE {@code workersLock} BEFORE CALLING THIS!!
+   * 
    * Checks idle workers to see if any old/unused workers should be killed.
    */
   protected void expireOldWorkers() {
-    synchronized (workersLock) {
-      long now = Clock.lastKnownForwardProgressingMillis();
-      // we search backwards because the oldest workers will be at the back of the stack
-      while ((currentPoolSize > corePoolSize || allowCorePoolTimeout) && 
-             ! availableWorkers.isEmpty() && 
-             (now - availableWorkers.getLast().getLastRunTime() > keepAliveTimeInMs || 
-                currentPoolSize > maxPoolSize)) {  // it does not matter how old it is, the max pool size has changed
-        Worker w = availableWorkers.removeLast();
-        killWorker(w);
-      }
+    long now = Clock.lastKnownForwardProgressingMillis();
+    // we search backwards because the oldest workers will be at the back of the stack
+    while ((currentPoolSize > corePoolSize || allowCorePoolTimeout) && 
+           ! availableWorkers.isEmpty() && 
+           (now - availableWorkers.getLast().getLastRunTime() > keepAliveTimeInMs || 
+              currentPoolSize > maxPoolSize)) {  // it does not matter how old it is, the max pool size has changed
+      Worker w = availableWorkers.removeLast();
+      killWorker(w);
     }
   }
   

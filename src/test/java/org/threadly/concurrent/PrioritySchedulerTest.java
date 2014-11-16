@@ -1144,7 +1144,9 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
         TestUtils.blockTillClockAdvances();
         Clock.systemNanoTime(); // update clock so scheduler will see it
         
-        scheduler.expireOldWorkers();
+        synchronized (scheduler.workersLock) {
+          scheduler.expireOldWorkers();
+        }
         
         // should not have collected yet due to core size == 1
         assertEquals(1, scheduler.availableWorkers.size());

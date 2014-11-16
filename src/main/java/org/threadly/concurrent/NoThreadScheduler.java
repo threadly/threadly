@@ -241,7 +241,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
         endInsertion();
       }
       
-      taskQueue.getModificationLock().notifyAll();
+      taskQueue.getModificationLock().notify();
     }
   }
   
@@ -297,7 +297,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       TaskContainer nextTask = getNextReadyTask();
       if (nextTask == null) {
         return false;
-      } else if (nextTask.running && taskQueue.size() == 1) {
+      } else if (nextTask.running && taskQueue.size() <= 1) {
         // only one task should be running at a time, so if the size is > 1 then we know we have task to run
         return false;
       } else {
@@ -424,7 +424,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     @Override
     protected void prepareForRun() {
       // can be removed since this is a one time task
-      taskQueue.remove(this);
+      taskQueue.removeFirstOccurrence(this);
     }
 
     @Override
