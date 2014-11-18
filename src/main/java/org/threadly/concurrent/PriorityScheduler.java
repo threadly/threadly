@@ -504,7 +504,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     synchronized (highPriorityLock) {
       synchronized (lowPriorityLock) {
         highPriorityConsumer.stopIfRunning();
-        highPriorityConsumer.stopIfRunning();
+        lowPriorityConsumer.stopIfRunning();
         List<Runnable> removedTasks = new ArrayList<Runnable>(highPriorityQueue.size() + 
                                                                 lowPriorityQueue.size());
         
@@ -780,8 +780,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay,
                                      long recurringDelay) {
-    scheduleWithFixedDelay(task, initialDelay, recurringDelay, 
-                           defaultPriority);
+    scheduleWithFixedDelay(task, initialDelay, recurringDelay, null);
   }
 
   @Override
@@ -799,7 +798,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
 
   @Override
   public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-    scheduleAtFixedRate(task, initialDelay, period, defaultPriority);
+    scheduleAtFixedRate(task, initialDelay, period, null);
   }
 
   @Override
