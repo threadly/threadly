@@ -59,7 +59,11 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(false, task);
     NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
-    nts.add(ott);
+    if (delayInMillis == 0) {
+      nts.addImmediateExecute(ott);
+    } else {
+      nts.addScheduled(ott);
+    }
     
     return new ScheduledFutureDelegate<Object>(lft, ott);
   }
@@ -69,7 +73,11 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     ListenableFutureTask<V> lft = new ListenableFutureTask<V>(false, callable);
     NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
-    nts.add(ott);
+    if (delayInMillis == 0) {
+      nts.addImmediateExecute(ott);
+    } else {
+      nts.addScheduled(ott);
+    }
     
     return new ScheduledFutureDelegate<V>(lft, ott);
   }
@@ -84,7 +92,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
     NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringDelayTask(lft, initialDelayInMillis, delayInMillis);
-    nts.add(rt);
+    nts.addScheduled(rt);
     
     return new ScheduledFutureDelegate<Object>(lft, rt);
   }
@@ -99,7 +107,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
     NoThreadScheduler nts = scheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringRateTask(lft, initialDelayInMillis, periodInMillis);
-    nts.add(rt);
+    nts.addScheduled(rt);
     
     return new ScheduledFutureDelegate<Object>(lft, rt);
   }

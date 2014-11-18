@@ -114,7 +114,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
   public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
-    ArgumentVerifier.assertNotNegative(period, "period");
+    ArgumentVerifier.assertGreaterThanZero(period, "period");
     
     RecurringRateWrapper rrw = new RecurringRateWrapper(task, initialDelay, period);
     

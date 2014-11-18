@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
@@ -22,8 +23,8 @@ import org.threadly.util.ListUtils;
  * <p>The tasks in this scheduler are only progressed forward with calls to {@link #tick()}.  
  * Since it is running on the calling thread, calls to {@code Object.wait()} and 
  * {@code Thread.sleep()} from sub tasks will block (possibly forever).  The call to 
- * {@link #tick()} will not unblock till there is no more work for the scheduler to currently 
- * handle.</p>
+ * {@link #tick(ExceptionHandlerInterface)} will not unblock till there is no more work for the 
+ * scheduler to currently handle.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
@@ -34,7 +35,10 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   protected static final int QUEUE_REAR_PADDING = 2;
   
   protected final boolean tickBlocksTillAvailable;
-  protected final ConcurrentArrayList<TaskContainer> taskQueue;
+  protected final Object taskNotifyLock;
+  protected final Object executeQueueRemoveLock;
+  protected final ConcurrentLinkedQueue<OneTimeTask> executeQueue;
+  protected final ConcurrentArrayList<TaskContainer> scheduledQueue;
   protected final ClockWrapper clockWrapper;
   private volatile boolean cancelTick;  
   
@@ -45,7 +49,10 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    */
   public NoThreadScheduler(boolean tickBlocksTillAvailable) {
     this.tickBlocksTillAvailable = tickBlocksTillAvailable;
-    taskQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
+    taskNotifyLock = new Object();
+    executeQueueRemoveLock = new Object();
+    executeQueue = new ConcurrentLinkedQueue<OneTimeTask>();
+    scheduledQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
     clockWrapper = new ClockWrapper();
     cancelTick = false;
   }
@@ -61,22 +68,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Called to indicate that we are about to insert or reposition a value in the queue.  It is 
-   * critical that until {@link #endInsertion()} calls to {@link #nowInMillis()} will return the 
-   * exact same value.
-   */
-  protected void startInsertion() {
-    clockWrapper.stopForcingUpdate();
-  }
-  
-  /**
-   * Called after insertion or reposition of a task has completed.
-   */
-  protected void endInsertion() {
-    clockWrapper.resumeForcingUpdate();
-  }
-  
-  /**
    * Call to cancel current or the next tick call.  If currently in a {@link #tick()} call 
    * (weather blocking waiting for tasks, or currently running tasks), this will call the 
    * {@link #tick()} to return.  If a task is currently running it will finish the current task 
@@ -84,11 +75,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * immediately without running anything.
    */
   public void cancelTick() {
-    synchronized (taskQueue.getModificationLock()) {
-      cancelTick = true;
-      
-      taskQueue.getModificationLock().notifyAll();
-    }
+    cancelTick = true;
+    
+    notifyQueueUpdate();
   }
   
   /**
@@ -152,7 +141,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     int tasks = 0;
     while (true) {  // will break from loop at bottom
       TaskContainer nextTask;
-      while ((nextTask = getNextReadyTask()) != null && ! cancelTick) {
+      while ((nextTask = getNextTask(true)) != null && ! cancelTick) {
         // call will remove task from queue, or reposition as necessary
         try {
           nextTask.runTask();
@@ -168,20 +157,20 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       }
       
       if (tickBlocksTillAvailable && tasks == 0) {
-        synchronized (taskQueue.getModificationLock()) {
+        synchronized (taskNotifyLock) {
           /* we must check the cancelTick once we have the lock 
            * since that is when the .notify() would happen.
            */
           if (cancelTick) {
             break;
           }
-          nextTask = taskQueue.peekFirst();
+          nextTask = getNextTask(false);
           if (nextTask == null) {
-            taskQueue.getModificationLock().wait();
+            taskNotifyLock.wait();
           } else {
             long nextTaskDelay = nextTask.getDelayInMillis();
             if (nextTaskDelay > 0) {
-              taskQueue.getModificationLock().wait(nextTaskDelay);
+              taskNotifyLock.wait(nextTaskDelay);
             }
           }
         }
@@ -204,7 +193,12 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
 
   @Override
   protected void doSchedule(Runnable task, long delayInMillis) {
-    add(new OneTimeTask(task, delayInMillis));
+    OneTimeTask taskWrapper = new OneTimeTask(task, delayInMillis);
+    if (delayInMillis == 0) {
+      addImmediateExecute(taskWrapper);
+    } else {
+      addScheduled(taskWrapper);
+    }
   }
 
   @Override
@@ -215,47 +209,87 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
-    add(new RecurringDelayTask(task, initialDelay, recurringDelay));
+    RecurringDelayTask taskWrapper = new RecurringDelayTask(task, initialDelay, recurringDelay);
+    addScheduled(taskWrapper);
   }
 
   @Override
   public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
-    ArgumentVerifier.assertNotNegative(period, "period");
+    ArgumentVerifier.assertGreaterThanZero(period, "period");
     
-    add(new RecurringRateTask(task, initialDelay, period));
+    RecurringRateTask taskWrapper = new RecurringRateTask(task, initialDelay, period);
+    addScheduled(taskWrapper);
   }
   
-  protected void add(TaskContainer runnable) {
-    synchronized (taskQueue.getModificationLock()) {
-      startInsertion();
-      try {
-        // we can only change delay between start/end insertion calls
-        runnable.setInitialDelay();
-        
-        int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, runnable, true);
-          
-        taskQueue.add(insertionIndex, runnable);
-      } finally {
-        endInsertion();
+  /**
+   * Notifies that the queue has been updated.  Thus allowing any threads blocked on the 
+   * {@code taskNotifyLock} to wake up and check for new work to run. 
+   */
+  protected void notifyQueueUpdate() {
+    // only need to notify if we may possibly be waiting on lock
+    if (tickBlocksTillAvailable) {
+      synchronized (taskNotifyLock) {
+        taskNotifyLock.notify();
       }
-      
-      taskQueue.getModificationLock().notify();
     }
+  }
+  
+  /**
+   * Adds a task to the simple execute queue.  This avoids locking for adding into the queue.
+   * 
+   * @param runnable Task to execute on next {@link #tick(ExceptionHandlerInterface)} call
+   */
+  protected void addImmediateExecute(OneTimeTask runnable) {
+    executeQueue.add(runnable);
+    
+    notifyQueueUpdate();
+  }
+
+  /**
+   * Adds a task to scheduled/recurring queue.  This call is more expensive than 
+   * {@link #addImmediateExecute(OneTimeTask)}, but is necessary for any tasks which are either 
+   * delayed or recurring.
+   * 
+   * @param runnable Task to execute on next {@link #tick(ExceptionHandlerInterface)} call
+   */
+  protected void addScheduled(TaskContainer runnable) {
+    synchronized (scheduledQueue.getModificationLock()) {
+      clockWrapper.stopForcingUpdate();
+      try {
+        int insertionIndex = ListUtils.getInsertionEndIndex(scheduledQueue, runnable, true);
+          
+        scheduledQueue.add(insertionIndex, runnable);
+      } finally {
+        clockWrapper.resumeForcingUpdate();
+      }
+    }
+
+    notifyQueueUpdate();
   }
   
   @Override
   public boolean remove(Runnable task) {
-    synchronized (taskQueue.getModificationLock()) {
-      return ContainerHelper.remove(taskQueue, task);
+    synchronized (executeQueueRemoveLock) {
+      if (ContainerHelper.remove(executeQueue, task)) {
+        return true;
+      }
+    }
+    synchronized (scheduledQueue.getModificationLock()) {
+      return ContainerHelper.remove(scheduledQueue, task);
     }
   }
   
   @Override
   public boolean remove(Callable<?> task) {
-    synchronized (taskQueue.getModificationLock()) {
-      return ContainerHelper.remove(taskQueue, task);
+    synchronized (executeQueueRemoveLock) {
+      if (ContainerHelper.remove(executeQueue, task)) {
+        return true;
+      }
+    }
+    synchronized (scheduledQueue.getModificationLock()) {
+      return ContainerHelper.remove(scheduledQueue, task);
     }
   }
 
@@ -268,16 +302,38 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * Call to get the next task that is ready to be run.  If there are no tasks, or the next task 
    * still has a remaining delay, this will return {@code null}.
    * 
-   * If this is being called in parallel with a {@link #tick()} call, the returned task may 
-   * already be running.  You must check the {@code TaskContainer.running} boolean if this 
-   * condition is important to you.
+   * If this is being called in parallel with a {@link #tick(ExecutionHandlerInterface)} call, the 
+   * returned task may already be running.  You must check the {@code TaskContainer.running} 
+   * boolean if this condition is important to you.
    * 
+   * @param onlyReturnReadyTask {@code false} to return scheduled tasks which may not be ready for execution
    * @return next ready task, or {@code null} if there are none
    */
-  protected TaskContainer getNextReadyTask() {
-    TaskContainer nextTask = taskQueue.peekFirst();
-    if (nextTask != null && nextTask.getDelayInMillis() <= 0) {
-      return nextTask;
+  protected TaskContainer getNextTask(boolean onlyReturnReadyTask) {
+    TaskContainer nextScheduledTask = scheduledQueue.peekFirst();
+    TaskContainer nextExecuteTask = executeQueue.peek();
+    if (nextExecuteTask != null) {
+      if (nextScheduledTask != null) {
+        long scheduleDelay;
+        long executeDelay;
+        clockWrapper.stopForcingUpdate();
+        try {
+          scheduleDelay = nextScheduledTask.getDelayInMillis();
+          executeDelay = nextExecuteTask.getDelayInMillis();
+        } finally {
+          clockWrapper.resumeForcingUpdate();
+        }
+        if (scheduleDelay < executeDelay) {
+          return nextScheduledTask;
+        } else {
+          return nextExecuteTask;
+        }
+      } else {
+        return nextExecuteTask;
+      }
+    } else if (! onlyReturnReadyTask || 
+                 (nextScheduledTask != null && nextScheduledTask.getDelayInMillis() <= 0)) {
+      return nextScheduledTask;
     } else {
       return null;
     }
@@ -293,17 +349,24 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return {@code true} if there are task waiting to run.
    */
   public boolean hasTaskReadyToRun() {
-    synchronized (taskQueue.getModificationLock()) {
-      TaskContainer nextTask = getNextReadyTask();
-      if (nextTask == null) {
-        return false;
-      } else if (nextTask.running && taskQueue.size() <= 1) {
-        // only one task should be running at a time, so if the size is > 1 then we know we have task to run
-        return false;
-      } else {
+    TaskContainer nextExecuteTask = executeQueue.peek();
+    if (nextExecuteTask != null) {
+      if (! nextExecuteTask.running) {
+        return true;
+      } else if (executeQueue.size() > 1) {
         return true;
       }
     }
+    
+    Iterator<TaskContainer> it = scheduledQueue.iterator();
+    while (it.hasNext()) {
+      TaskContainer scheduledTask = it.next();
+      if (scheduledTask.getDelayInMillis() <= 0 && ! scheduledTask.running) {
+        return true;
+      }
+    }
+    
+    return false;
   }
   
   /**
@@ -314,20 +377,31 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
    */
   public List<Runnable> clearTasks() {
-    synchronized (taskQueue.getModificationLock()) {
-      List<Runnable> result = new ArrayList<Runnable>(taskQueue.size());
-      
-      Iterator<TaskContainer> it = taskQueue.iterator();
-      while (it.hasNext()) {
-        TaskContainer tc = it.next();
-        if (! tc.running) {
-          result.add(tc.runnable);
+    synchronized (scheduledQueue.getModificationLock()) {
+      synchronized (executeQueueRemoveLock) {
+        List<Runnable> result = new ArrayList<Runnable>(executeQueue.size() + 
+                                                          scheduledQueue.size());
+        
+        Iterator<? extends TaskContainer> it = executeQueue.iterator();
+        while (it.hasNext()) {
+          TaskContainer tc = it.next();
+          if (! tc.running) {
+            result.add(tc.runnable);
+          }
         }
+        executeQueue.clear();
+        
+        it = scheduledQueue.iterator();
+        while (it.hasNext()) {
+          TaskContainer tc = it.next();
+          if (! tc.running) {
+            result.add(tc.runnable);
+          }
+        }
+        scheduledQueue.clear();
+        
+        return result;
       }
-      
-      taskQueue.clear();
-      
-      return result;
     }
   }
   
@@ -354,7 +428,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     
     protected void runTask() {
       running = true;
-      prepareForRun();
+      if (! prepareForRun()) {
+        return;
+      }
       try {
         runnable.run();
       } finally {
@@ -365,25 +441,22 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     
     /**
      * Called before the task starts.  Allowing the container to do any pre-execution tasks 
-     * necessary.
+     * necessary, and give a last chance to avoid execution (for example if the task has been 
+     * canceled or removed).
+     * 
+     * @return {@code true} if execution should continue
      */
-    protected void prepareForRun() {
+    protected boolean prepareForRun() {
       // nothing by default, override to handle
+      return true;
     }
-    
+
     /**
      * Called after the task completes, weather an exception was thrown or it exited normally.
      */
     protected void runComplete() {
       // nothing by default, override to handle
     }
-    
-    /**
-     * Call to indicate we should set the initial runtime for the task.  This will only be 
-     * called once (before the initial insert into the job queue).  This time must be set 
-     * at this point to ensure the clock is stable with respects to the rest of the job queue.
-     */
-    protected abstract void setInitialDelay();
     
     /**
      * Call to get the delay till execution in milliseconds.
@@ -407,24 +480,28 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    */
   protected class OneTimeTask extends TaskContainer {
     private final long delay;
-    private long runTime;
+    private final long runTime;
     
     public OneTimeTask(Runnable runnable, long delay) {
       super(runnable);
       
       this.delay = delay;
-      this.runTime = -1;
+      this.runTime = nowInMillis() + delay;
     }
     
     @Override
-    protected void setInitialDelay() {
-      runTime = nowInMillis() + delay;
-    }
-    
-    @Override
-    protected void prepareForRun() {
+    protected boolean prepareForRun() {
+      boolean allowRun;
       // can be removed since this is a one time task
-      taskQueue.removeFirstOccurrence(this);
+      if (delay == 0) {
+        synchronized (executeQueueRemoveLock) {
+          allowRun = executeQueue.remove(this);
+        }
+      } else {
+        allowRun = scheduledQueue.removeFirstOccurrence(this);
+      }
+      
+      return allowRun;
     }
 
     @Override
@@ -447,11 +524,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       super(runnable);
       
       this.initialDelay = initialDelay;
-      nextRunTime = -1;
-    }
-    
-    @Override
-    protected void setInitialDelay() {
       nextRunTime = nowInMillis() + initialDelay;
     }
 
@@ -463,13 +535,13 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     
     @Override
     public void runComplete() {
-      synchronized (taskQueue.getModificationLock()) {
-        startInsertion();
+      synchronized (scheduledQueue.getModificationLock()) {
+        clockWrapper.stopForcingUpdate();
         try {
           updateNextRunTime();
           
           // almost certainly will be the first item in the queue
-          int currentIndex = taskQueue.indexOf(this);
+          int currentIndex = scheduledQueue.indexOf(this);
           if (currentIndex < 0) {
             // task was removed from queue, do not re-insert
             return;
@@ -478,11 +550,11 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
           if (nextDelay < 0) {
             nextDelay = 0;
           }
-          int insertionIndex = ListUtils.getInsertionEndIndex(taskQueue, nextDelay, true);
+          int insertionIndex = ListUtils.getInsertionEndIndex(scheduledQueue, nextDelay, true);
           
-          taskQueue.reposition(currentIndex, insertionIndex);
+          scheduledQueue.reposition(currentIndex, insertionIndex);
         } finally {
-          endInsertion();
+          clockWrapper.resumeForcingUpdate();
         }
       }
     }

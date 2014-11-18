@@ -86,10 +86,12 @@ public class NoThreadSchedulerTaskContainerTest {
     }
 
     @Override
-    protected void prepareForRun() {
+    protected boolean prepareForRun() {
       assertFalse(prepareCalled);
       
       prepareCalled = true;
+      
+      return true;
     }
 
     @Override
@@ -97,11 +99,6 @@ public class NoThreadSchedulerTaskContainerTest {
       assertFalse(runCompleteCalled);
       
       runCompleteCalled = true;
-    }
-
-    @Override
-    protected void setInitialDelay() {
-      // ignored
     }
 
     @Override
