@@ -351,7 +351,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
-    ArgumentVerifier.assertNotNegative(period, "period");
+    ArgumentVerifier.assertGreaterThanZero(period, "period");
     
     RecrringRateTask rrt = new RecrringRateTask(threadKey, task, period);
     if (initialDelay == 0) {

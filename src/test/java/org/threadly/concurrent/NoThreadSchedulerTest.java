@@ -341,10 +341,6 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void scheduleWithFixedZeroDelayTest() throws InterruptedException, TimeoutException {
-    scheduleWithZeroDelayTest(true);
-  }
-  
-  private void scheduleWithZeroDelayTest(boolean fixedDelay) throws InterruptedException, TimeoutException {
     final AsyncVerifier av = new AsyncVerifier();
     final TestRunnable[] testRunnables = new TestRunnable[TEST_QTY];
     for (int i = 0; i < TEST_QTY; i++) {
@@ -371,11 +367,7 @@ public class NoThreadSchedulerTest {
       }
     };
     
-    if (fixedDelay) {
-      nonblockingScheduler.scheduleWithFixedDelay(workRunnable, 0, 0);
-    } else {
-      nonblockingScheduler.scheduleAtFixedRate(workRunnable, 0, 0);
-    }
+    nonblockingScheduler.scheduleWithFixedDelay(workRunnable, 0, 0);
     
     nonblockingScheduler.tick(null);
     
@@ -407,11 +399,6 @@ public class NoThreadSchedulerTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
-  }
-  
-  @Test
-  public void scheduleAtFixedRateZeroPeriodTest() throws InterruptedException, TimeoutException {
-    scheduleWithZeroDelayTest(false);
   }
   
   @Test
@@ -662,7 +649,9 @@ public class NoThreadSchedulerTest {
     blockingScheduler.clearTasks();
     nonblockingScheduler.clearTasks();
     
-    assertEquals(0, blockingScheduler.taskQueue.size());
-    assertEquals(0, nonblockingScheduler.taskQueue.size());
+    assertEquals(0, blockingScheduler.executeQueue.size());
+    assertEquals(0, blockingScheduler.scheduledQueue.size());
+    assertEquals(0, nonblockingScheduler.executeQueue.size());
+    assertEquals(0, nonblockingScheduler.scheduledQueue.size());
   }
 }

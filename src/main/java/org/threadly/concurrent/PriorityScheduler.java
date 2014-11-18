@@ -806,7 +806,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
                                   TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
-    ArgumentVerifier.assertNotNegative(period, "period");
+    ArgumentVerifier.assertGreaterThanZero(period, "period");
     if (priority == null) {
       priority = defaultPriority;
     }

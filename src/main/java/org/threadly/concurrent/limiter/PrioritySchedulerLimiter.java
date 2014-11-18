@@ -160,7 +160,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
                                   TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
-    ArgumentVerifier.assertNotNegative(period, "period");
+    ArgumentVerifier.assertGreaterThanZero(period, "period");
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
     }
