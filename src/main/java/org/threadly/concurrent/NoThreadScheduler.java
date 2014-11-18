@@ -341,28 +341,37 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Checks if there are tasks ready to be run on the scheduler.  Generally this is called from 
-   * the same thread that would call .tick() (but does not have to be).  If {@link #tick()} is not 
-   * currently being called, this call indicates if the next {@link #tick()} will have at least 
-   * one task to run.  If {@link #tick()} is currently running, this call will indicate if there 
-   * is at least one more task to run (not including the task which may currently be running).
+   * the same thread that would call .tick() (but does not have to be).  If 
+   * {@link #tick(ExceptionHandlerInterface)} is not currently being called, this call indicates 
+   * if the next {@link #tick(ExceptionHandlerInterface)} will have at least one task to run.  If 
+   * {@link #tick(ExceptionHandlerInterface)} is currently running, this call will indicate if 
+   * there is at least one more task to run (not including the task which may currently be 
+   * running).  
    * 
+   * Calling this does require us to lock the queues to ensure things are not removed while we 
+   * check if there is a task to run.
+   *  
    * @return {@code true} if there are task waiting to run.
    */
   public boolean hasTaskReadyToRun() {
-    TaskContainer nextExecuteTask = executeQueue.peek();
-    if (nextExecuteTask != null) {
-      if (! nextExecuteTask.running) {
-        return true;
-      } else if (executeQueue.size() > 1) {
-        return true;
+    synchronized (executeQueueRemoveLock) {
+      TaskContainer nextExecuteTask = executeQueue.peek();
+      if (nextExecuteTask != null) {
+        if (! nextExecuteTask.running) {
+          return true;
+        } else if (executeQueue.size() > 1) {
+          return true;
+        }
       }
     }
     
-    Iterator<TaskContainer> it = scheduledQueue.iterator();
-    while (it.hasNext()) {
-      TaskContainer scheduledTask = it.next();
-      if (scheduledTask.getDelayInMillis() <= 0 && ! scheduledTask.running) {
-        return true;
+    synchronized (scheduledQueue.getModificationLock()) {
+      Iterator<TaskContainer> it = scheduledQueue.iterator();
+      while (it.hasNext()) {
+        TaskContainer scheduledTask = it.next();
+        if (scheduledTask.getDelayInMillis() <= 0 && ! scheduledTask.running) {
+          return true;
+        }
       }
     }
     
@@ -379,14 +388,15 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   public List<Runnable> clearTasks() {
     synchronized (scheduledQueue.getModificationLock()) {
       synchronized (executeQueueRemoveLock) {
-        List<Runnable> result = new ArrayList<Runnable>(executeQueue.size() + 
-                                                          scheduledQueue.size());
+        List<TaskContainer> containers = new ArrayList<TaskContainer>(executeQueue.size() + 
+                                                                        scheduledQueue.size());
         
         Iterator<? extends TaskContainer> it = executeQueue.iterator();
         while (it.hasNext()) {
           TaskContainer tc = it.next();
           if (! tc.running) {
-            result.add(tc.runnable);
+            int index = ListUtils.getInsertionEndIndex(containers, tc, true);
+            containers.add(index, tc);
           }
         }
         executeQueue.clear();
@@ -395,10 +405,17 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
         while (it.hasNext()) {
           TaskContainer tc = it.next();
           if (! tc.running) {
-            result.add(tc.runnable);
+            int index = ListUtils.getInsertionEndIndex(containers, tc, true);
+            containers.add(index, tc);
           }
         }
         scheduledQueue.clear();
+        
+        List<Runnable> result = new ArrayList<Runnable>(containers.size());
+        it = containers.iterator();
+        while (it.hasNext()) {
+          result.add(it.next().runnable);
+        }
         
         return result;
       }
