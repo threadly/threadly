@@ -620,6 +620,13 @@ public class NoThreadSchedulerTest {
     // should no longer have anything to run
     assertFalse(blockingScheduler.hasTaskReadyToRun());
     assertFalse(nonblockingScheduler.hasTaskReadyToRun());
+    
+    blockingScheduler.addScheduled(blockingScheduler.new OneTimeTask(new TestRunnable(), 0));
+    nonblockingScheduler.addScheduled(nonblockingScheduler.new OneTimeTask(new TestRunnable(), 0));
+    
+    // now should be true with scheduled task which is ready to run
+    assertTrue(blockingScheduler.hasTaskReadyToRun());
+    assertTrue(nonblockingScheduler.hasTaskReadyToRun());
   }
   
   @Test

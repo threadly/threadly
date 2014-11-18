@@ -79,8 +79,7 @@ public class ListUtils {
   public static int getInsertionEndIndex(List<? extends Delayed> list, 
                                          long insertionValueInMillis, 
                                          boolean randomAccessList) {
-    int searchResult = binarySearch(list, insertionValueInMillis, 
-                                    randomAccessList);
+    int searchResult = binarySearch(list, insertionValueInMillis, randomAccessList);
     if (searchResult >= 0) {
       Iterator<? extends Delayed> it = list.listIterator(searchResult);
       while (it.hasNext() && it.next().getDelay(TimeUnit.MILLISECONDS) <= insertionValueInMillis) {

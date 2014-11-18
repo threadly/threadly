@@ -1398,12 +1398,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           synchronized (highPriorityLock) {
             if (! shutdownStarted.get()) {
               clockWrapper.stopForcingUpdate();
-              long nextDelay = getNextDelayInMillis();
-              if (nextDelay < 0) {
-                nextDelay = 0;
-              }
               try {
-                highPriorityQueue.reposition(this, nextDelay, this);
+                highPriorityQueue.reposition(this, getNextDelayInMillis(), this);
               } finally {
                 clockWrapper.resumeForcingUpdate();
               }
