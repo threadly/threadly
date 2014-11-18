@@ -736,7 +736,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1, 1, 1000);
       scheduler.prestartAllCoreThreads();
-      int behindWaitTime = -1 * (DELAY_TIME + PriorityScheduler.LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS);
+      int behindWaitTime = -1 * (DELAY_TIME + PriorityScheduler.LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS + 1);
       scheduler.highPriorityQueue.add(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
                                                                        TaskPriority.High, 
                                                                        behindWaitTime));
