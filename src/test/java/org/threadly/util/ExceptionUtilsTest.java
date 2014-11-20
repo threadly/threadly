@@ -328,7 +328,7 @@ public class ExceptionUtilsTest {
     // verify stack trace does not contain Util.makeRuntime inside it for when it created a new exception
     StackTraceElement[] stack = resultException.getStackTrace();
     for (StackTraceElement ste : stack) {
-      assertFalse(ste.getClass().getName().equals(ExceptionUtils.class.getName()));
+      assertFalse(ste.getClassName().equals(ExceptionUtils.class.getName()));
     }
 
     // verify the cause was our original exception

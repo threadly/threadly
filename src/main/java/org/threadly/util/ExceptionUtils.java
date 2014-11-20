@@ -140,7 +140,7 @@ public class ExceptionUtils {
       StackTraceElement[] originalstack = result.getStackTrace();
       StackTraceElement[] newStack = new StackTraceElement[originalstack.length - 1];
       
-      System.arraycopy(originalstack, 0, 
+      System.arraycopy(originalstack, 1, 
                        newStack, 0, newStack.length);
       
       result.setStackTrace(newStack);
