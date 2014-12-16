@@ -40,7 +40,6 @@ public class Profiler {
   protected static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
   protected static final short THREAD_PADDING_AMMOUNT = 10;
   protected static final short NUMBER_TARGET_LINE_LENGTH = 6;
-  protected static final String COLLECTOR_THREAD_NAME = "Profiler data collector";
   protected static final String THREAD_DELIMITER = "--------------------------------------------------";
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
@@ -59,6 +58,7 @@ public class Profiler {
   protected final AtomicReference<Thread> collectorThread;
   protected volatile int pollIntervalInMs;
   protected volatile Thread dumpingThread;
+  private volatile ThreadIterator ti;
   
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
@@ -198,7 +198,7 @@ public class Profiler {
           
           collectorThread.set(thread);
           
-          thread.setName(COLLECTOR_THREAD_NAME);
+          thread.setName("Profiler data collector");
           thread.setPriority(Thread.MAX_PRIORITY);
           thread.start();
         } else {
@@ -247,6 +247,9 @@ public class Profiler {
       if (runningThread != null) {
         runningThread.interrupt();
         collectorThread.set(null);
+        if (ti != null) {
+          ti = null;
+        }
         
         if (outputFile != null) {
           try {
@@ -507,36 +510,74 @@ public class Profiler {
    * This is a protected call, so it can be overridden to implement other profilers that want to 
    * control which threads are being profiled.
    * 
+   * It is garunteed that this will be called in a single threaded manner.  In addition any 
+   * previously returned Iterators will no longer be used by the time this one is called.
+   * 
    * @return an {@link Iterator} of threads to examine and add data for our profile.
    */
   protected Iterator<Thread> getProfileThreadsIterator() {
-    int activeCount = Thread.activeCount();
-    // we add a little to make sure we get every thread
-    final Thread[] threads = new Thread[activeCount + THREAD_PADDING_AMMOUNT];
-    final int enumerateCount = Thread.enumerate(threads);
+    if (ti == null) {
+      ti = new ThreadIterator();
+    }
+    ti.refreshThreads();
+    return ti;
+  }
+  
+  /**
+   * <p>An iterator which will enumerate all the running threads within the VM.  You must call 
+   * {@link #refreshThreads()} before it can be used.  It is expected that this iterator is NOT 
+   * called in parallel.  When {@link #refreshThreads()} is called the iterator will reset to the 
+   * starting position with current threads.</p>
+   * 
+   * <p>This class exists for two reasons...The first just to avoid another inner class.  The 
+   * second is for a performance improvement for frequent profile polling.  If there is a large 
+   * thread count we can avoid allocating a new Thread[] for each poll.  Instead we can just fill 
+   * for the current threads, then null out any former threads that existed.  This can provide 
+   * much more accurate polling</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.4.0
+   */
+  protected static class ThreadIterator implements Iterator<Thread> {
+    protected Thread[] threads = new Thread[0];
+    protected int enumerateCount = 0;
+    protected int currentIndex = 0;
     
-    return new Iterator<Thread>() {
-      int currentIndex = 0;
-      
-      @Override
-      public boolean hasNext() {
-        return currentIndex < enumerateCount;
+    public void refreshThreads() {
+      int minThreadArraySize = Thread.activeCount() + THREAD_PADDING_AMMOUNT;
+      int previousEnumerateCount;
+      if (threads.length < minThreadArraySize) {
+        threads = new Thread[minThreadArraySize];
+        previousEnumerateCount = 0;
+      } else {
+        previousEnumerateCount = enumerateCount;
       }
+      enumerateCount = Thread.enumerate(threads);
+      // null out any threads no longer tracked (to avoid memory leak)
+      if (enumerateCount < previousEnumerateCount) {
+        Arrays.fill(threads, enumerateCount, previousEnumerateCount, null);
+      }
+      currentIndex = 0;
+    }
+    
+    @Override
+    public boolean hasNext() {
+      return currentIndex < enumerateCount;
+    }
 
-      @Override
-      public Thread next() {
-        if (hasNext()) {
-          return threads[currentIndex++];
-        } else {
-          throw new NoSuchElementException();
-        }
+    @Override
+    public Thread next() {
+      if (hasNext()) {
+        return threads[currentIndex++];
+      } else {
+        throw new NoSuchElementException();
       }
+    }
 
-      @Override
-      public void remove() {
-        throw new UnsupportedOperationException();
-      }
-    };
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
   }
   
   /**
@@ -606,8 +647,8 @@ public class Profiler {
    * @since 1.0.0
    */
   protected static class Trace implements Comparable<Trace> {
-    private final StackTraceElement[] elements;
-    private final int hash;
+    protected final StackTraceElement[] elements;
+    protected final int hash;
     private int threadCount = 1;  // is increased as seen for a specific thread
     private int globalCount = 1;  // is only set when dumping the statistics
     
@@ -664,9 +705,9 @@ public class Profiler {
    * @since 1.0.0
    */
   protected static class Function {
-    private final String className;
-    private final String function;
-    private final int hashCode;
+    protected final String className;
+    protected final String function;
+    protected final int hashCode;
     private int count;
     private int childCount;
     
