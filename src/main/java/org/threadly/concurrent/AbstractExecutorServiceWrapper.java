@@ -29,7 +29,7 @@ import org.threadly.util.ExceptionUtils;
 abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorService {
   private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS = 1000000 * 100;  // 100ms
   
-  private final SchedulerServiceInterface scheduler;
+  protected final SchedulerServiceInterface scheduler;
   
   /**
    * Constructs a new wrapper to adhere to the {@link ScheduledExecutorService} interface.

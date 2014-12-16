@@ -188,8 +188,8 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
    * @since 3.1.0
    */
   protected class RecurringDelayWrapper extends PriorityWrapper {
-    private final long recurringDelay;
-    private final DelayedExecutionRunnable delayRunnable;
+    protected final long recurringDelay;
+    protected final DelayedExecutionRunnable delayRunnable;
     
     protected RecurringDelayWrapper(Runnable runnable, 
                                     long recurringDelay, 
@@ -213,8 +213,8 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
    * @since 3.1.0
    */
   protected class RecurringRateWrapper extends PriorityWrapper {
-    private final long period;
-    private final DelayedExecutionRunnable delayRunnable;
+    protected final long period;
+    protected final DelayedExecutionRunnable delayRunnable;
     private long nextRunTime;
     
     protected RecurringRateWrapper(Runnable runnable, 
@@ -247,7 +247,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
    * @since 1.1.0
    */
   protected class PriorityWrapper extends LimiterRunnableWrapper {
-    private final TaskPriority priority;
+    protected final TaskPriority priority;
     
     protected PriorityWrapper(Runnable runnable, TaskPriority priority) {
       super(scheduler, runnable);

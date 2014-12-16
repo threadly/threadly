@@ -11,7 +11,7 @@ import org.threadly.util.ExceptionUtils;
  * @since 2.3.0
  */
 public class ThrowableSuppressingRunnable implements RunnableContainerInterface, Runnable {
-  private final Runnable task;
+  protected final Runnable task;
   
   /**
    * Constructs a new ThrowableSurpressingRunnable with the provided task.  If the task is 

@@ -29,7 +29,7 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
-  private static final int MAX_WINDOW_SIZE = 1000;
+  protected static final int MAX_WINDOW_SIZE = 1000;
   
   protected final AtomicInteger totalHighPriorityExecutions;
   protected final AtomicInteger totalLowPriorityExecutions;

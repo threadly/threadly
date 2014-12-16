@@ -23,7 +23,7 @@ import org.threadly.concurrent.future.ScheduledFutureDelegate;
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutorServiceWrapper)
  */
 public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrapper {
-  private final PriorityScheduler scheduler;
+  protected final PriorityScheduler pScheduler;
   
   /**
    * Constructs a new wrapper to adhere to the 
@@ -34,12 +34,12 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   public PrioritySchedulerServiceWrapper(PriorityScheduler scheduler) {
     super(scheduler);
     
-    this.scheduler = scheduler;
+    this.pScheduler = scheduler;
   }
 
   @Override
   public void shutdown() {
-    scheduler.shutdown();
+    pScheduler.shutdown();
   }
 
   /**
@@ -56,22 +56,22 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
    */
   @Override
   public List<Runnable> shutdownNow() {
-    return scheduler.shutdownNow();
+    return pScheduler.shutdownNow();
   }
 
   @Override
   public boolean isTerminated() {
     return scheduler.isShutdown() && 
-           scheduler.getCurrentPoolSize() == 0;
+           pScheduler.getCurrentPoolSize() == 0;
   }
 
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable command, long delayInMillis) {
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(false, command);
-    OneTimeTaskWrapper ottw = scheduler.new OneTimeTaskWrapper(taskFuture, 
-                                                               scheduler.getDefaultPriority(), 
-                                                               delayInMillis);
-    scheduler.addToQueue(ottw);
+    OneTimeTaskWrapper ottw = pScheduler.new OneTimeTaskWrapper(taskFuture, 
+                                                                pScheduler.getDefaultPriority(), 
+                                                                delayInMillis);
+    pScheduler.addToQueue(ottw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, ottw);
   }
@@ -79,10 +79,10 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(false, callable);
-    OneTimeTaskWrapper ottw = scheduler.new OneTimeTaskWrapper(taskFuture, 
-                                                               scheduler.getDefaultPriority(), 
-                                                               delayInMillis);
-    scheduler.addToQueue(ottw);
+    OneTimeTaskWrapper ottw = pScheduler.new OneTimeTaskWrapper(taskFuture, 
+                                                                pScheduler.getDefaultPriority(), 
+                                                                delayInMillis);
+    pScheduler.addToQueue(ottw);
     
     return new ScheduledFutureDelegate<V>(taskFuture, ottw);
   }
@@ -95,10 +95,10 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
-    RecurringDelayTaskWrapper rdtw = scheduler.new RecurringDelayTaskWrapper(taskFuture, 
-                                                                             scheduler.getDefaultPriority(), 
-                                                                             initialDelayInMs, delayInMs);
-    scheduler.addToQueue(rdtw);
+    RecurringDelayTaskWrapper rdtw = pScheduler.new RecurringDelayTaskWrapper(taskFuture, 
+                                                                              pScheduler.getDefaultPriority(), 
+                                                                              initialDelayInMs, delayInMs);
+    pScheduler.addToQueue(rdtw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, rdtw);
   }
@@ -108,13 +108,13 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
                                                              long initialDelayInMillis,
                                                              long periodInMillis) {
     // wrap the task to ensure the correct behavior on exceptions
-    task = new ThrowableHandlingRecurringRunnable(scheduler, task);
+    task = new ThrowableHandlingRecurringRunnable(pScheduler, task);
     
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
-    RecurringRateTaskWrapper rrtw = scheduler.new RecurringRateTaskWrapper(taskFuture, 
-                                                                           scheduler.getDefaultPriority(), 
-                                                                           initialDelayInMillis, periodInMillis);
-    scheduler.addToQueue(rrtw);
+    RecurringRateTaskWrapper rrtw = pScheduler.new RecurringRateTaskWrapper(taskFuture, 
+                                                                            pScheduler.getDefaultPriority(), 
+                                                                            initialDelayInMillis, periodInMillis);
+    pScheduler.addToQueue(rrtw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, rrtw);
   }

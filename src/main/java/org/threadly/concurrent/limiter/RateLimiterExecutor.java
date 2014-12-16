@@ -31,7 +31,7 @@ import org.threadly.util.Clock;
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
   protected final int permitsPerSecond;
-  private final Object permitLock;
+  protected final Object permitLock;
   private long lastScheduleTime;
   
   /**

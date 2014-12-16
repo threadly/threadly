@@ -9,7 +9,7 @@ import java.io.Writer;
  * @since 1.0.0
  */
 public class StringBuilderWriter extends Writer implements CharSequence {
-  private final StringBuilder sb;
+  protected final StringBuilder sb;
   
   /**
    * Constructs a new writer with the provided {@link StringBuilder} to write to.

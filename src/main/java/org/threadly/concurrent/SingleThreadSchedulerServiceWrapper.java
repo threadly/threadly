@@ -20,7 +20,7 @@ import org.threadly.concurrent.future.ScheduledFutureDelegate;
  * @since 2.0.0
  */
 public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorServiceWrapper {
-  private final SingleThreadScheduler scheduler;
+  protected final SingleThreadScheduler singleThreadScheduler;
 
   /**
    * Constructs a new wrapper to adhere to the 
@@ -31,22 +31,22 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   public SingleThreadSchedulerServiceWrapper(SingleThreadScheduler scheduler) {
     super(scheduler);
     
-    this.scheduler = scheduler;
+    this.singleThreadScheduler = scheduler;
   }
 
   @Override
   public void shutdown() {
-    scheduler.shutdown();
+    singleThreadScheduler.shutdown();
   }
 
   @Override
   public List<Runnable> shutdownNow() {
-    return scheduler.shutdownNow();
+    return singleThreadScheduler.shutdownNow();
   }
 
   @Override
   public boolean isTerminated() {
-    SchedulerManager sm = scheduler.sManager.get();
+    SchedulerManager sm = singleThreadScheduler.sManager.get();
     if (sm == null || sm.isRunning()) {
       return false;
     } else {
@@ -57,7 +57,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(false, task);
-    NoThreadScheduler nts = scheduler.getRunningScheduler();
+    NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
     if (delayInMillis == 0) {
       nts.addImmediateExecute(ott);
@@ -71,7 +71,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableFutureTask<V> lft = new ListenableFutureTask<V>(false, callable);
-    NoThreadScheduler nts = scheduler.getRunningScheduler();
+    NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
     if (delayInMillis == 0) {
       nts.addImmediateExecute(ott);
@@ -90,7 +90,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
-    NoThreadScheduler nts = scheduler.getRunningScheduler();
+    NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringDelayTask(lft, initialDelayInMillis, delayInMillis);
     nts.addScheduled(rt);
     
@@ -105,7 +105,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
-    NoThreadScheduler nts = scheduler.getRunningScheduler();
+    NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringRateTask(lft, initialDelayInMillis, periodInMillis);
     nts.addScheduled(rt);
     

@@ -20,7 +20,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 2.5.0 (existed since 1.0.0 as TaskSchedulerDistributor)
  */
 public class KeyDistributedScheduler extends KeyDistributedExecutor {
-  private final SimpleSchedulerInterface scheduler;
+  protected final SimpleSchedulerInterface scheduler;
 
   /**
    * Constructor to use a provided scheduler implementation for running tasks.  
@@ -370,8 +370,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    */
   protected class AddTask implements Runnable, 
                                      RunnableContainerInterface {
-    private final Object key;
-    private final Runnable task;
+    protected final Object key;
+    protected final Runnable task;
     
     protected AddTask(Object key, Runnable task) {
       this.key = key;
@@ -397,9 +397,9 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    */
   protected class RecrringDelayTask implements Runnable, 
                                                RunnableContainerInterface {
-    private final Object key;
-    private final Runnable task;
-    private final long recurringDelay;
+    protected final Object key;
+    protected final Runnable task;
+    protected final long recurringDelay;
     
     protected RecrringDelayTask(Object key, Runnable task, long recurringDelay) {
       this.key = key;
@@ -430,9 +430,9 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    */
   protected class RecrringRateTask implements Runnable, 
                                               RunnableContainerInterface {
-    private final Object key;
-    private final Runnable task;
-    private final long recurringPeriod;
+    protected final Object key;
+    protected final Runnable task;
+    protected final long recurringPeriod;
     
     protected RecrringRateTask(Object key, Runnable task, long recurringPeriod) {
       this.key = key;

@@ -167,8 +167,8 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * @since 3.1.0
    */
   protected class RecurringDelayWrapper extends LimiterRunnableWrapper {
-    private final long recurringDelay;
-    private final DelayedExecutionRunnable delayRunnable;
+    protected final long recurringDelay;
+    protected final DelayedExecutionRunnable delayRunnable;
     
     public RecurringDelayWrapper(Runnable runnable, long recurringDelay) {
       super(scheduler, runnable);
@@ -190,8 +190,8 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
    * @since 3.1.0
    */
   protected class RecurringRateWrapper extends LimiterRunnableWrapper {
-    private final long period;
-    private final DelayedExecutionRunnable delayRunnable;
+    protected final long period;
+    protected final DelayedExecutionRunnable delayRunnable;
     private long nextRunTime;
     
     public RecurringRateWrapper(Runnable runnable, long initialDelay, long period) {

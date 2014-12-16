@@ -13,7 +13,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 1.0.0
  */
 public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler {
-  private final ScheduledExecutorService scheduler;
+  protected final ScheduledExecutorService scheduler;
   
   /**
    * Constructs a new wrapper with the provided scheduler implementation.

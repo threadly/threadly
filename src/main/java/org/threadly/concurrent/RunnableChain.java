@@ -12,7 +12,7 @@ import org.threadly.util.ExceptionUtils;
  * @since 1.0.0
  */
 public class RunnableChain implements Runnable {
-  private final boolean exceptionStopsChain;
+  protected final boolean exceptionStopsChain;
   private final Iterable<? extends Runnable> toRun;
   
   /**

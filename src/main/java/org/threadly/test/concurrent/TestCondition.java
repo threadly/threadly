@@ -16,9 +16,9 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public abstract class TestCondition {
-  private static final int DEFAULT_POLL_INTERVAL = 10;
-  private static final int DEFAULT_TIMEOUT = 1000 * 10;
-  private static final int SPIN_THRESHOLD = 10;
+  protected static final int DEFAULT_POLL_INTERVAL = 10;
+  protected static final int DEFAULT_TIMEOUT = 1000 * 10;
+  protected static final int SPIN_THRESHOLD = 10;
   
   /**
    * Getter for the conditions current state.

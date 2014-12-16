@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * @param <T> The result object type returned by this future
  */
 public class ImmediateResultListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
-  private final T result;
+  protected final T result;
   
   /**
    * Constructs a completed future that will return the provided result.

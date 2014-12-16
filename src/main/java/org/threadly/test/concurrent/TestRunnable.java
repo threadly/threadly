@@ -17,13 +17,13 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public class TestRunnable implements Runnable {
-  private static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;
-  private static final int RUN_CONDITION_POLL_INTERVAL = 20;
-  
+  protected static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;
+  protected static final int RUN_CONDITION_POLL_INTERVAL = 20;
+
+  protected final long creationForwardProgressingMillis;
   private final ConcurrentArrayList<Long> runTime;
   private final AtomicInteger runCount;
   private final AtomicInteger currentRunningCount;
-  private final long creationTime;
   private volatile int runDelayInMillis;
   private volatile boolean ranConcurrent;
 
@@ -43,13 +43,13 @@ public class TestRunnable implements Runnable {
    * @param runTimeInMillis time for runnable to sleep in milliseconds
    */
   public TestRunnable(int runTimeInMillis) {
+    this.creationForwardProgressingMillis = Clock.accurateForwardProgressingMillis();
+    
     setRunDelayInMillis(runTimeInMillis);
     this.runTime = new ConcurrentArrayList<Long>(0, 1);
     this.runCount = new AtomicInteger(0);
     this.currentRunningCount = new AtomicInteger(0);
     this.ranConcurrent = false;
-
-    this.creationTime = Clock.accurateForwardProgressingMillis();
   }
   
   /**
@@ -73,12 +73,13 @@ public class TestRunnable implements Runnable {
   }
   
   /**
-   * Call to get the time recorded when the runnable was constructed.
+   * Returns the millis returned from {@link Clock#accurateForwardProgressingMillis()}, that was 
+   * recorded when this runnable was constructed.
    * 
-   * @return time in milliseconds object was constructed
+   * @return Forward progressing time in milliseconds {@link TestRunnable} was constructed
    */
   public long getCreationTime() {
-    return creationTime;
+    return creationForwardProgressingMillis;
   }
   
   /**

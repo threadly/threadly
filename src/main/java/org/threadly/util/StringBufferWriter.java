@@ -9,7 +9,7 @@ import java.io.Writer;
  * @since 1.0.0
  */
 public class StringBufferWriter extends Writer implements CharSequence {
-  private final StringBuffer sb;
+  protected final StringBuffer sb;
   
   /**
    * Constructs a new writer with the provided {@link StringBuffer} to write to.

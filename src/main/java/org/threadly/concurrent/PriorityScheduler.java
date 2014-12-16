@@ -57,13 +57,10 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   protected static final int WORKER_CONTENTION_LEVEL = 2; // level at which no worker contention is considered
   protected static final int LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS = 2;
-  protected static final String QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY;
-  protected static final String QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY;
+  protected static final String QUEUE_CONSUMER_THREAD_NAME_SUFFIX;
   
   static {
-    String threadNameSuffix = " task consumer for " + PriorityScheduler.class.getSimpleName();
-    QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY = "high priority" + threadNameSuffix;
-    QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY = "low priority" + threadNameSuffix;
+    QUEUE_CONSUMER_THREAD_NAME_SUFFIX = " priority task consumer for " + PriorityScheduler.class.getSimpleName();
   }
   
   protected final ClockWrapper clockWrapper;
@@ -212,7 +209,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     availableWorkers = new ArrayDeque<Worker>(corePoolSize);
     this.threadFactory = threadFactory;
     highPriorityConsumer = new TaskConsumer(threadFactory, 
-                                            QUEUE_CONSUMER_THREAD_NAME_HIGH_PRIORITY, 
+                                            TaskPriority.High + QUEUE_CONSUMER_THREAD_NAME_SUFFIX, 
                                             highPriorityQueue, highPriorityLock, 
                                             new ConsumerAcceptor<TaskWrapper>() {
       @Override
@@ -221,7 +218,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       }
     });
     lowPriorityConsumer = new TaskConsumer(threadFactory, 
-                                           QUEUE_CONSUMER_THREAD_NAME_LOW_PRIORITY, 
+                                           TaskPriority.Low + QUEUE_CONSUMER_THREAD_NAME_SUFFIX, 
                                            lowPriorityQueue, lowPriorityLock, 
                                            new ConsumerAcceptor<TaskWrapper>() {
       @Override
@@ -1088,7 +1085,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @since 1.0.0
    */
   protected class TaskConsumer extends BlockingQueueConsumer<TaskWrapper> {
-    private final Object queueLock;
+    protected final Object queueLock;
     
     public TaskConsumer(ThreadFactory threadFactory, String threadName, 
                         DynamicDelayQueue<TaskWrapper> queue,
@@ -1283,7 +1280,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @since 1.0.0
    */
   protected class OneTimeTaskWrapper extends TaskWrapper {
-    private final long runTime;
+    protected final long runTime;
     
     protected OneTimeTaskWrapper(Runnable task, TaskPriority priority, long delay) {
       super(task, priority);
@@ -1464,7 +1461,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @since 3.1.0
    */
   protected class RecurringDelayTaskWrapper extends RecurringTaskWrapper {
-    private final long recurringDelay;
+    protected final long recurringDelay;
     
     protected RecurringDelayTaskWrapper(Runnable task, TaskPriority priority, 
                                         long initialDelay, long recurringDelay) {
@@ -1486,7 +1483,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @since 3.1.0
    */
   protected class RecurringRateTaskWrapper extends RecurringTaskWrapper {
-    private final long period;
+    protected final long period;
     
     protected RecurringRateTaskWrapper(Runnable task, TaskPriority priority, 
                                        long initialDelay, long period) {

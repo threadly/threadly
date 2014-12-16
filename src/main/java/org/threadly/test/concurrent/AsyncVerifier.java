@@ -16,9 +16,9 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public class AsyncVerifier {
-  private static final int DEFAULT_TIMEOUT = 1000 * 10;
+  protected static final int DEFAULT_TIMEOUT = 1000 * 10;
   
-  private final Object notifyLock;
+  protected final Object notifyLock;
   private int signalCount;
   private RuntimeException failure;
   

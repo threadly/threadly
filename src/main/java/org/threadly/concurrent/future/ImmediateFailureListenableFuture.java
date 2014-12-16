@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  * @param <T> The result object type returned by this future
  */
 public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
-  private final Throwable failure;
+  protected final Throwable failure;
   
   /**
    * Constructs a completed future with the provided failure.  If the failure is {@code null}, a 

@@ -106,8 +106,8 @@ abstract class AbstractThreadPoolLimiter extends AbstractSubmitterExecutor {
    */
   protected class LimiterRunnableWrapper implements Runnable, 
                                                     RunnableContainerInterface {
-    private final Executor executor;
-    private final Runnable runnable;
+    protected final Executor executor;
+    protected final Runnable runnable;
     
     protected LimiterRunnableWrapper(Executor executor, Runnable runnable) {
       this.executor = executor;

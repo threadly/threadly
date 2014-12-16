@@ -496,8 +496,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @since 1.0.0
    */
   protected class OneTimeTask extends TaskContainer {
-    private final long delay;
-    private final long runTime;
+    protected final long delay;
+    protected final long runTime;
     
     public OneTimeTask(Runnable runnable, long delay) {
       super(runnable);
@@ -589,7 +589,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @since 3.1.0
    */
   protected class RecurringDelayTask extends RecurringTask {
-    private final long recurringDelay;
+    protected final long recurringDelay;
     
     public RecurringDelayTask(Runnable runnable, long initialDelay, long recurringDelay) {
       super(runnable, initialDelay);
@@ -610,7 +610,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @since 3.1.0
    */
   protected class RecurringRateTask extends RecurringTask {
-    private final long period;
+    protected final long period;
     
     public RecurringRateTask(Runnable runnable, long initialDelay, long period) {
       super(runnable, initialDelay);
