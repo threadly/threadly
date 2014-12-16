@@ -306,7 +306,7 @@ public class Profiler {
   public void dump(PrintStream ps) {
     dumpingThread = Thread.currentThread();
     try {
-      Map<Trace, Trace> globalTraces = new HashMap<Trace, Trace>();
+      Map<Trace, Integer> globalTraces = new HashMap<Trace, Integer>();
       // create a local copy so the stats wont change while we are dumping them
       Map<String, Map<Trace, Trace>> threadTraces = new HashMap<String, Map<Trace, Trace>>(this.threadTraces);
       
@@ -315,19 +315,19 @@ public class Profiler {
       while (it.hasNext()) {
         Entry<String, Map<Trace, Trace>> entry = it.next();
         ps.println("Profile for thread: " + entry.getKey());
-        dumpTraces(entry.getValue().keySet(), false, ps);
+        dumpTraces(entry.getValue().keySet(), null, ps);
         
         // add in this threads trace data to the global trace map
         Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
         while (traceIt.hasNext()) {
           Trace currTrace = traceIt.next();
-          Trace storedTrace = globalTraces.get(currTrace);
-          if (storedTrace == null) {
+          Integer globalTraceCount = globalTraces.get(currTrace);
+          if (globalTraceCount == null) {
             // make sure this is reset in case we dump multiple times
-            currTrace.globalCount = currTrace.threadCount;
-            globalTraces.put(currTrace, currTrace);
+            globalTraces.put(currTrace, currTrace.getThreadCount());
           } else {
-            storedTrace.globalCount += currTrace.threadCount;
+            // update the global count
+            globalTraces.put(currTrace, currTrace.getThreadCount() + globalTraceCount);
           }
         }
         
@@ -338,7 +338,7 @@ public class Profiler {
       // log out global data
       if (globalTraces.size() > 1) {
         ps.println("Combined profile for all threads....");
-        dumpTraces(globalTraces.keySet(), true, ps);
+        dumpTraces(globalTraces.keySet(), globalTraces, ps);
       }
       
       ps.flush();
@@ -355,7 +355,7 @@ public class Profiler {
    * @param out Output to dump results to
    */
   private static void dumpTraces(Set<Trace> traces, 
-                                 boolean globalCount, 
+                                 final Map<Trace, Integer> globalCounts, 
                                  PrintStream out) {
     Map<Function, Function> methods = new HashMap<Function, Function>();
     Trace[] traceArray = traces.toArray(new Trace[traces.size()]);
@@ -363,40 +363,32 @@ public class Profiler {
     int nativeCount = 0;
     
     for (Trace t: traceArray) {
-      if (globalCount) {
-        total += t.globalCount;
+      if (globalCounts != null) {
+        total += globalCounts.get(t);
       } else {
-        total += t.threadCount;
+        total += t.getThreadCount();
       }
       
       if (t.elements.length > 0 && 
           t.elements[0].isNativeMethod()) {
-        if (globalCount) {
-          nativeCount += t.globalCount;
+        if (globalCounts != null) {
+          nativeCount += globalCounts.get(t);
         } else {
-          nativeCount += t.threadCount;
+          nativeCount += t.getThreadCount();
         }
       }
       
       for (int i = 0; i < t.elements.length; ++i) {
-        Function n = new Function(t.elements[i].getClassName(),
-                                  t.elements[i].getMethodName());
+        Function n = new Function(t.elements[i].getClassName(), t.elements[i].getMethodName());
         Function f = methods.get(n);
         if (f == null) {
           methods.put(n, n);
           f = n;
         }
-        if (globalCount) {
-          f.count += t.globalCount;
+        if (globalCounts != null) {
+          f.incrementCount(globalCounts.get(t), i > 0);
         } else {
-          f.count += t.threadCount;
-        }
-        if (i > 0) {
-          if (globalCount) {
-            f.childCount += t.globalCount;
-          } else {
-            f.childCount += t.threadCount;
-          }
+          f.incrementCount(t.getThreadCount(), i > 0);
         }
       }
     }
@@ -413,7 +405,7 @@ public class Profiler {
     Arrays.sort(methodArray, new Comparator<Function>() {
       @Override
       public int compare(Function a, Function b) {
-        return (b.count - b.childCount) - (a.count - a.childCount);
+        return b.getStackTopCount() - a.getStackTopCount();
       }
     });
     
@@ -428,7 +420,7 @@ public class Profiler {
     Arrays.sort(methodArray, new Comparator<Function>() {
       @Override
       public int compare(Function a, Function b) {
-        return b.count - a.count;
+        return b.getCount() - a.getCount();
       }
     });
     
@@ -440,18 +432,18 @@ public class Profiler {
     out.println("traces by count:");
     out.println();
     
-    if (globalCount) {
+    if (globalCounts != null) {
       Arrays.sort(traceArray, new Comparator<Trace>() {
         @Override
         public int compare(Trace a, Trace b) {
-          return b.globalCount - a.globalCount;
+          return globalCounts.get(b) - globalCounts.get(a);
         }
       });
     } else {
       Arrays.sort(traceArray, new Comparator<Trace>() {
         @Override
         public int compare(Trace a, Trace b) {
-          return b.threadCount - a.threadCount;
+          return b.getThreadCount() - a.getThreadCount();
         }
       });
     }
@@ -459,10 +451,10 @@ public class Profiler {
     for (int i = 0; i < traceArray.length; i++) {
       Trace t = traceArray[i];
       int count;
-      if (globalCount) {
-        count = t.globalCount;
+      if (globalCounts != null) {
+        count = globalCounts.get(t);
       } else {
-        count = t.threadCount;
+        count = t.getThreadCount();
       }
       out.println(count + " time(s):");
       
@@ -477,8 +469,8 @@ public class Profiler {
    * @param out PrintStream to print out to
    */
   private static void dumpFunction(Function f, PrintStream out) {
-    out.print(format(f.count));
-    out.print(format(f.count - f.childCount));
+    out.print(format(f.getCount()));
+    out.print(format(f.getStackTopCount()));
     out.print(' ');
     out.print(f.className);
     out.print('.');
@@ -616,7 +608,7 @@ public class Profiler {
                 if (existingTrace == null) {
                   existingTraces.put(t, t);
                 } else {
-                  existingTrace.threadCount++;
+                  existingTrace.incrementThreadCount();
                 }
               }
             }
@@ -649,8 +641,10 @@ public class Profiler {
   protected static class Trace implements Comparable<Trace> {
     protected final StackTraceElement[] elements;
     protected final int hash;
-    private int threadCount = 1;  // is increased as seen for a specific thread
-    private int globalCount = 1;  // is only set when dumping the statistics
+    /* threadSeenCount is how many times this trace has been seen in a specific thread.  It should 
+     * only be incremented by a single thread, but can be read from any thread.
+     */
+    private volatile int threadSeenCount = 1;
     
     public Trace(StackTraceElement[] elements) {
       this.elements = elements;
@@ -660,6 +654,23 @@ public class Profiler {
         h ^= e.hashCode();
       }
       hash = h;
+    }
+    
+    /**
+     * Increments the internally tracked thread seen count by one.
+     */
+    protected void incrementThreadCount() {
+      // this should only be incremented from a single thread
+      threadSeenCount++;
+    }
+    
+    /**
+     * Getter for the current thread seen count.
+     * 
+     * @return a result of how many times {@link #incrementThreadCount()} has been called
+     */
+    protected int getThreadCount() {
+      return threadSeenCount;
     }
     
     @Override
@@ -711,10 +722,43 @@ public class Profiler {
     private int count;
     private int childCount;
     
-    public Function(String className, String function) {
+    public Function(String className, String funtion) {
       this.className = className;
-      this.function = function;
+      this.function = funtion;
       this.hashCode = className.hashCode() ^ function.hashCode();
+    }
+    
+    /**
+     * Increments the internal stored seen count.
+     * 
+     * @param count amount to increment count by
+     * @param child {@code true} if the stack position not the head position
+     */
+    protected void incrementCount(int count, boolean child) {
+      this.count += count;
+      if (child) {
+        childCount += count;
+      }
+    }
+    
+    /**
+     * Get the total count this function has been seen.
+     * 
+     * @return returns the value summed from calls to {@link #incrementCount(int, boolean)}
+     */
+    protected int getCount() {
+      return count;
+    }
+    
+    /**
+     * Returns the number of times this function has been seen as the top of the stack.  This 
+     * value is incremented when {@link #incrementCount(int, boolean)} is called with a 
+     * {@code false}.
+     *  
+     * @return The summed value of this function seen as the top of the stack
+     */
+    protected int getStackTopCount() {
+      return count - childCount;
     }
     
     @Override
