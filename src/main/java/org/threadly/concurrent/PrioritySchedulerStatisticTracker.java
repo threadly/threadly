@@ -271,13 +271,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
         while (getCurrentPoolSize() >= getMaxPoolSize() && 
                availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
                ! getShutdownFinishing() &&
-               ! highPriorityQueue.isEmpty() && // if there are no waiting high priority tasks, we don't care 
+               ! highPriorityConsumer.isQueueEmpty() && 
                (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
           workersLock.wait(waitAmount);
           Clock.systemNanoTime(); // update for getDelayEstimateInMillis
         }
         // check if we should reset the high delay for future low priority tasks
-        if (highPriorityQueue.isEmpty()) {
+        if (highPriorityConsumer.isQueueEmpty()) {
           lastHighDelay = 0;
         }
         

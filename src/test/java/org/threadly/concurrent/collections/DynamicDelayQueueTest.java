@@ -19,7 +19,7 @@ import org.threadly.concurrent.TestDelayed;
 import org.threadly.concurrent.collections.DynamicDelayQueue;
 import org.threadly.util.Clock;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class DynamicDelayQueueTest {
   private DynamicDelayQueue<TestDelayed> testQueue;
   

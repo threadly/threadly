@@ -7,9 +7,12 @@ package org.threadly.concurrent.collections;
  * Threadly uses an idea of delay items which can adjust there delay time, but this must be done 
  * in conjunction with the DynamicDelayQueue.</p>
  * 
+ * @deprecated There is no replacement, please open a github issue if this class is useful to you
+ * 
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
+@Deprecated
 public interface DynamicDelayedUpdater {
   /**
    * Call that will happen from the Queue when it is ready for the item to update or changes it's 
