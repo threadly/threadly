@@ -5,10 +5,13 @@ package org.threadly.concurrent.collections;
  * function has been replaced with {@link #remove()} to consume items as it iterates over the 
  * structure.</p>
  * 
+ * @deprecated There is no replacement, this was only used in the now deprecated {@link DynamicDelayQueue}
+ * 
  * @author jent - Mike Jensen
  * @since 1.0.0
  * @param <E> Parameter for types of item to be returned by {@link #remove()} and {@link #peek()}
  */
+@Deprecated
 public interface ConsumerIterator<E> {
   /**
    * Check if there are additional items to consume.

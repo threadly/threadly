@@ -22,10 +22,13 @@ import org.threadly.util.ListUtils;
  * <p>In order to allow an item to be repositioned like this, the item must implement the 
  * {@link DynamicDelayedUpdater} interface.</p>
  * 
+ * @deprecated There is no replacement, please open a github issue if this class is useful to you
+ * 
  * @author jent - Mike Jensen
  * @since 1.0.0
  * @param <T> Parameter to indicate what type of item is contained in the queue
  */
+@Deprecated
 public class DynamicDelayQueue<T extends Delayed> implements Queue<T>, 
                                                              BlockingQueue<T> {
   // tuned for performance
