@@ -1278,26 +1278,26 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
             }
             if (scheduleDelay < executeDelay) {
               synchronized (scheduleQueue.getModificationLock()) {
+                // scheduled tasks must be removed, and call .executing() while holding the lock
                 if (scheduleQueue.remove(nextScheduledTask)) {
                   nextScheduledTask.executing();
                   return nextScheduledTask;
                 }
               }
-            } else {
-              if (executeQueue.remove(nextExecuteTask)) {
-                nextExecuteTask.executing();
-                return nextExecuteTask;
-              }
-            }
-          } else {
-            if (executeQueue.remove(nextExecuteTask)) {
+            } else if (executeQueue.remove(nextExecuteTask)) {
+              // if we can remove the task (aka it has not been removed already), we can execute it
               nextExecuteTask.executing();
               return nextExecuteTask;
             }
+          } else if (executeQueue.remove(nextExecuteTask)) {
+            // if we can remove the task (aka it has not been removed already), we can execute it
+            nextExecuteTask.executing();
+            return nextExecuteTask;
           }
         } else if (nextScheduledTask != null) {
           if (nextScheduledTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
             synchronized (scheduleQueue.getModificationLock()) {
+              // scheduled tasks must be removed, and call .executing() while holding the lock
               if (scheduleQueue.remove(nextScheduledTask)) {
                 nextScheduledTask.executing();
                 return nextScheduledTask;
