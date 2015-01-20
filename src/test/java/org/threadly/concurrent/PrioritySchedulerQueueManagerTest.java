@@ -43,7 +43,7 @@ public class PrioritySchedulerQueueManagerTest {
   @Before
   public void setup() {
     queueManager = new QueueManager(new ConfigurableThreadFactory(), 
-                                    THREAD_NAME, new ClockWrapper(), null) {
+                                    THREAD_NAME, null) {
       @Override
       protected void startupService() {
         // we override this so we can avoid starting threads in these tests
@@ -67,7 +67,7 @@ public class PrioritySchedulerQueueManagerTest {
   @Test (expected = IllegalThreadStateException.class)
   public void threadFactoryReturnRunningThreadFail() {
     queueManager = new QueueManager(new StartingThreadFactory(), 
-                                    THREAD_NAME, new ClockWrapper(), null);
+                                    THREAD_NAME, null);
     queueManager.start();
   }
   
