@@ -249,11 +249,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     if (w != null) {  // may be null if shutdown
       Clock.systemNanoTime(); // update clock for task to ensure it is accurate
       long executionDelay = task.getDelayEstimateInMillis();
-      if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
-        synchronized (highPriorityExecutionDelay.getModificationLock()) {
-          highPriorityExecutionDelay.add(executionDelay * -1);
-          trimList(highPriorityExecutionDelay);
-        }
+      synchronized (highPriorityExecutionDelay.getModificationLock()) {
+        highPriorityExecutionDelay.add(executionDelay * -1);
+        trimList(highPriorityExecutionDelay);
       }
       
       w.nextTask(task);

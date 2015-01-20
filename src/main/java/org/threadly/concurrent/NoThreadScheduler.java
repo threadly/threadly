@@ -39,7 +39,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   protected final Object executeQueueRemoveLock;
   protected final ConcurrentLinkedQueue<OneTimeTask> executeQueue;
   protected final ConcurrentArrayList<TaskContainer> scheduledQueue;
-  protected final ClockWrapper clockWrapper;
   private volatile boolean cancelTick;  
   
   /**
@@ -53,7 +52,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     executeQueueRemoveLock = new Object();
     executeQueue = new ConcurrentLinkedQueue<OneTimeTask>();
     scheduledQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
-    clockWrapper = new ClockWrapper();
     cancelTick = false;
   }
 
@@ -64,7 +62,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return current time in milliseconds
    */
   protected long nowInMillis() {
-    return clockWrapper.getSemiAccurateMillis();
+    return ClockWrapper.getSemiAccurateMillis();
   }
   
   /**
@@ -256,13 +254,13 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    */
   protected void addScheduled(TaskContainer runnable) {
     synchronized (scheduledQueue.getModificationLock()) {
-      clockWrapper.stopForcingUpdate();
+      ClockWrapper.stopForcingUpdate();
       try {
         int insertionIndex = ListUtils.getInsertionEndIndex(scheduledQueue, runnable, true);
           
         scheduledQueue.add(insertionIndex, runnable);
       } finally {
-        clockWrapper.resumeForcingUpdate();
+        ClockWrapper.resumeForcingUpdate();
       }
     }
 
@@ -316,12 +314,12 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       if (nextScheduledTask != null) {
         long scheduleDelay;
         long executeDelay;
-        clockWrapper.stopForcingUpdate();
+        ClockWrapper.stopForcingUpdate();
         try {
           scheduleDelay = nextScheduledTask.getDelayInMillis();
           executeDelay = nextExecuteTask.getDelayInMillis();
         } finally {
-          clockWrapper.resumeForcingUpdate();
+          ClockWrapper.resumeForcingUpdate();
         }
         if (scheduleDelay < executeDelay) {
           return nextScheduledTask;
@@ -553,7 +551,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     @Override
     public void runComplete() {
       synchronized (scheduledQueue.getModificationLock()) {
-        clockWrapper.stopForcingUpdate();
+        ClockWrapper.stopForcingUpdate();
         try {
           updateNextRunTime();
           
@@ -571,7 +569,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
           
           scheduledQueue.reposition(currentIndex, insertionIndex);
         } finally {
-          clockWrapper.resumeForcingUpdate();
+          ClockWrapper.resumeForcingUpdate();
         }
       }
     }

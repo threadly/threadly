@@ -67,7 +67,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     QUEUE_CONSUMER_THREAD_NAME_SUFFIX = " priority task consumer for " + PriorityScheduler.class.getSimpleName();
   }
   
-  protected final ClockWrapper clockWrapper;
   protected final TaskPriority defaultPriority;
   protected final Object workersLock;
   protected final Object poolSizeChangeLock;
@@ -198,7 +197,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       threadFactory = new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", true);
     }
     
-    this.clockWrapper = new ClockWrapper();
     this.defaultPriority = defaultPriority;
     workersLock = new Object();
     poolSizeChangeLock = new Object();
@@ -1108,13 +1106,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     public void addScheduled(TaskWrapper task) {
       synchronized (scheduleQueue.getModificationLock()) {
-        clockWrapper.stopForcingUpdate();
+        ClockWrapper.stopForcingUpdate();
         try {
           int index = ListUtils.getInsertionEndIndex(scheduleQueue, task, true);
           
           scheduleQueue.add(index, task);
         } finally {
-          clockWrapper.resumeForcingUpdate();
+          ClockWrapper.resumeForcingUpdate();
         }
       }
       
@@ -1145,14 +1143,14 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     public void reschedule(RecurringTaskWrapper task) {
       synchronized (scheduleQueue.getModificationLock()) {
         if (! shutdownStarted.get()) {
-          clockWrapper.stopForcingUpdate();
+          ClockWrapper.stopForcingUpdate();
           try {
             long nextDelay = task.getNextDelayInMillis();
             int insertionIndex = ListUtils.getInsertionEndIndex(scheduleQueue, nextDelay, true);
             
             scheduleQueue.reposition(task, insertionIndex, true);
           } finally {
-            clockWrapper.resumeForcingUpdate();
+            ClockWrapper.resumeForcingUpdate();
           }
         }
       }
@@ -1269,12 +1267,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           if (nextScheduledTask != null) {
             long scheduleDelay;
             long executeDelay;
-            clockWrapper.stopForcingUpdate();
+            ClockWrapper.stopForcingUpdate();
             try {
               scheduleDelay = nextScheduledTask.getDelay(TimeUnit.MILLISECONDS);
               executeDelay = nextExecuteTask.getDelay(TimeUnit.MILLISECONDS);
             } finally {
-              clockWrapper.resumeForcingUpdate();
+              ClockWrapper.resumeForcingUpdate();
             }
             if (scheduleDelay < executeDelay) {
               synchronized (scheduleQueue.getModificationLock()) {
@@ -1497,7 +1495,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return unit.convert(runTime - clockWrapper.getSemiAccurateMillis(), TimeUnit.MILLISECONDS);
+      return unit.convert(runTime - ClockWrapper.getSemiAccurateMillis(), TimeUnit.MILLISECONDS);
     }
     
     @Override
@@ -1545,7 +1543,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * @return time in milliseconds till next execution
      */
     protected long getNextDelayInMillis() {
-      return nextRunTime - clockWrapper.getSemiAccurateMillis();
+      return nextRunTime - ClockWrapper.getSemiAccurateMillis();
     }
     
     @Override

@@ -1,7 +1,5 @@
 package org.threadly.concurrent;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.threadly.util.Clock;
 
 /**
@@ -23,44 +21,59 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 class ClockWrapper {
-  protected final AtomicInteger requestsToStopUpdatingTime;
-  private volatile long lastKnownTime = -1;
-  
-  protected ClockWrapper() {
-    requestsToStopUpdatingTime = new AtomicInteger();
-    lastKnownTime = -1;
+  protected static final ThreadLocal<ClockWrapperState> CLOCK_STATE;
+
+  static {
+    CLOCK_STATE = new ThreadLocal<ClockWrapperState>() {
+      @Override
+      protected ClockWrapperState initialValue() {
+        return new ClockWrapperState();
+      }
+    };
   }
   
   /**
    * A call here causes {@link #getSemiAccurateMillis()} to use the last known time.  If this is the 
    * first call to stop updating the time, it will ensure the clock is updated first.
    */
-  protected void stopForcingUpdate() {
-    if (requestsToStopUpdatingTime.getAndIncrement() == 0) {
-      lastKnownTime = Clock.accurateForwardProgressingMillis();
+  protected static void stopForcingUpdate() {
+    ClockWrapperState state = CLOCK_STATE.get();
+    // if we are the first one to increment, we need to set the lastKnownTime
+    if (state.requestsToStopUpdatingTime++ == 0) {
+      state.lastKnownTime = Clock.accurateForwardProgressingMillis();
     }
   }
   
   /**
    * This resumes updating the clock for calls to {@link #getSemiAccurateMillis()}.
    */
-  protected void resumeForcingUpdate() {
-    int newVal = requestsToStopUpdatingTime.decrementAndGet();
-    
-    if (newVal < 0) {
-      throw new IllegalStateException();
-    }
+  protected static void resumeForcingUpdate() {
+    CLOCK_STATE.get().requestsToStopUpdatingTime--;
   }
   
   /**
    * Returns an accurate time based on if it has been requested to stop updating from system clock 
    * temporarily or not.
    */
-  protected long getSemiAccurateMillis() {
-    if (requestsToStopUpdatingTime.get() > 0) {
-      return lastKnownTime;
+  protected static long getSemiAccurateMillis() {
+    ClockWrapperState state = CLOCK_STATE.get();
+    if (state.requestsToStopUpdatingTime > 0) {
+      return state.lastKnownTime;
     } else {
       return Clock.accurateForwardProgressingMillis();
     }
+  }
+  
+  /**
+   * <p>This class tracks the quantity of requests to stop updating, as well as what the time used 
+   * for reference if there are requests to stop using it.  This is NOT thread safe, which is 
+   * due to this expecting to be used as a ThreadLocal storage</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.4.0
+   */
+  private static class ClockWrapperState {
+    private int requestsToStopUpdatingTime = 0;
+    private long lastKnownTime;
   }
 }
