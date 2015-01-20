@@ -33,7 +33,6 @@ public class TestUtils {
    */
   public static void blockTillClockAdvances() {
     new TestCondition() {
-      private static final int TIMEOUT_IN_MS = 1000;
       private static final int POLL_INTERVAL_IN_MS = 1;
       
       private final long startTime = Clock.accurateTimeMillis();
@@ -47,7 +46,7 @@ public class TestUtils {
       
       @Override
       public void blockTillTrue() {
-        blockTillTrue(TIMEOUT_IN_MS, POLL_INTERVAL_IN_MS);
+        blockTillTrue(DEFAULT_TIMEOUT, POLL_INTERVAL_IN_MS);
       }
     }.blockTillTrue();
   }

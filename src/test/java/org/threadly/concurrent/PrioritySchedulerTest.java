@@ -746,7 +746,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void lowPriorityFlowControlTest() {
     PrioritySchedulerFactory priorityFactory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1, 1, 1000);
+      final PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1, 1, 1000);
       scheduler.prestartAllCoreThreads();
       int behindWaitTime = -1 * (DELAY_TIME + PriorityScheduler.LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS + 1);
       scheduler.highPriorityConsumer
@@ -755,7 +755,15 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
                                                                    behindWaitTime));
       // this will start the consumer, allowing the previous task to get a worker
       scheduler.addToScheduleQueue(scheduler.new OneTimeTaskWrapper(new TestRunnable(), 
-                                                                    TaskPriority.High, 1000));
+                                                                    TaskPriority.High, 1000 * 10));
+      
+      // block till we are sure the queue is in the correct state
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.highPriorityConsumer.scheduleQueue.size() == 1;
+        }
+      }.blockTillTrue();
       
       TestRunnable lowPriorityRunnable = new TestRunnable();
       scheduler.execute(lowPriorityRunnable, TaskPriority.Low);

@@ -68,7 +68,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     QUEUE_CONSUMER_THREAD_NAME_SUFFIX = " priority task consumer for " + PriorityScheduler.class.getSimpleName();
   }
   
-  protected final ClockWrapper clockWrapper;
   protected final TaskPriority defaultPriority;
   protected final Object workersLock;
   protected final Object poolSizeChangeLock;
@@ -199,7 +198,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       threadFactory = new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", true);
     }
     
-    this.clockWrapper = new ClockWrapper();
     this.defaultPriority = defaultPriority;
     workersLock = new Object();
     poolSizeChangeLock = new Object();
@@ -207,7 +205,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     this.threadFactory = threadFactory;
     highPriorityConsumer = new QueueManager(threadFactory, 
                                             TaskPriority.High + QUEUE_CONSUMER_THREAD_NAME_SUFFIX, 
-                                            clockWrapper, new ConsumerAcceptor<TaskWrapper> () {
+                                            new ConsumerAcceptor<TaskWrapper> () {
       @Override
       public void acceptConsumedItem(TaskWrapper task) throws InterruptedException {
         runHighPriorityTask(task);
@@ -215,7 +213,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     });
     lowPriorityConsumer = new QueueManager(threadFactory, 
                                            TaskPriority.Low + QUEUE_CONSUMER_THREAD_NAME_SUFFIX, 
-                                           clockWrapper, new ConsumerAcceptor<TaskWrapper> () {
+                                           new ConsumerAcceptor<TaskWrapper> () {
       @Override
       public void acceptConsumedItem(TaskWrapper task) throws InterruptedException {
         runLowPriorityTask(task);
@@ -1022,7 +1020,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected static class QueueManager extends AbstractService implements Runnable {
     protected final ThreadFactory threadFactory;
     protected final String threadName;
-    protected final ClockWrapper clockWrapper;
     protected final ConsumerAcceptor<TaskWrapper> taskHandler;
     protected final Object executeQueueRemoveLock;
     protected final ConcurrentLinkedQueue<OneTimeTaskWrapper> executeQueue;
@@ -1030,10 +1027,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     protected volatile Thread runningThread;
     
     public QueueManager(ThreadFactory threadFactory, String threadName, 
-                        ClockWrapper clockWrapper, ConsumerAcceptor<TaskWrapper> taskHandler) {
+                       ConsumerAcceptor<TaskWrapper> taskHandler) {
       this.threadFactory = threadFactory;
       this.threadName = threadName;
-      this.clockWrapper = clockWrapper;
       this.taskHandler = taskHandler;
       this.executeQueueRemoveLock = new Object();
       this.executeQueue = new ConcurrentLinkedQueue<OneTimeTaskWrapper>();
@@ -1048,32 +1044,18 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * @return {@code true} if the task was found and removed
      */
     public boolean remove(Callable<?> task) {
-      return removeFromTaskQueue(executeQueue, executeQueueRemoveLock, task) || 
-               removeFromTaskQueue(scheduleQueue, scheduleQueue.getModificationLock(), task);
-    }
-
-    /**
-     * Removes a given Runnable from the internal queues (if it exists).
-     * 
-     * @param task Runnable to search for and remove
-     * @return {@code true} if the task was found and removed
-     */
-    public boolean remove(Runnable task) {
-      return removeFromTaskQueue(executeQueue, executeQueueRemoveLock, task) || 
-               removeFromTaskQueue(scheduleQueue, scheduleQueue.getModificationLock(), task);
-    }
-  
-    /**
-     * Removes a runnable from the provided queue if it exists.
-     * 
-     * @param queue Queue to search through to look for the provided task
-     * @param task Runnable to search for
-     * @return {@code true} if the task was found and removed
-     */
-    private static boolean removeFromTaskQueue(Collection<? extends TaskWrapper> queue, 
-                                               Object queueRemoveLock, Runnable task) {
-      synchronized (queueRemoveLock) {
-        Iterator<? extends TaskWrapper> it = queue.iterator();
+      {
+        Iterator<? extends TaskWrapper> it = executeQueue.iterator();
+        while (it.hasNext()) {
+          TaskWrapper tw = it.next();
+          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
+            tw.cancel();
+            return true;
+          }
+        }
+      }
+      synchronized (scheduleQueue.getModificationLock()) {
+        Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
           if (ContainerHelper.isContained(tw.task, task)) {
@@ -1087,18 +1069,26 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       
       return false;
     }
-  
+
     /**
-     * Removes a callable from the provided queue if it exists.
+     * Removes a given Runnable from the internal queues (if it exists).
      * 
-     * @param queue Queue to search through to look for the provided task
-     * @param task Callable to search for
+     * @param task Runnable to search for and remove
      * @return {@code true} if the task was found and removed
      */
-    private static boolean removeFromTaskQueue(Collection<? extends TaskWrapper> queue, 
-                                               Object queueRemoveLock, Callable<?> task) {
-      synchronized (queueRemoveLock) {
-        Iterator<? extends TaskWrapper> it = queue.iterator();
+    public boolean remove(Runnable task) {
+      {
+        Iterator<? extends TaskWrapper> it = executeQueue.iterator();
+        while (it.hasNext()) {
+          TaskWrapper tw = it.next();
+          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
+            tw.cancel();
+            return true;
+          }
+        }
+      }
+      synchronized (scheduleQueue.getModificationLock()) {
+        Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
           if (ContainerHelper.isContained(tw.task, task)) {
@@ -1134,13 +1124,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     public void addScheduled(TaskWrapper task) {
       synchronized (scheduleQueue.getModificationLock()) {
-        clockWrapper.stopForcingUpdate();
+        ClockWrapper.stopForcingUpdate();
         try {
           int index = ListUtils.getInsertionEndIndex(scheduleQueue, task, true);
           
           scheduleQueue.add(index, task);
         } finally {
-          clockWrapper.resumeForcingUpdate();
+          ClockWrapper.resumeForcingUpdate();
         }
       }
       
@@ -1170,14 +1160,14 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     public void reschedule(RecurringTaskWrapper task) {
       synchronized (scheduleQueue.getModificationLock()) {
-        clockWrapper.stopForcingUpdate();
+        ClockWrapper.stopForcingUpdate();
         try {
           long nextDelay = task.getNextDelayInMillis();
           int insertionIndex = ListUtils.getInsertionEndIndex(scheduleQueue, nextDelay, true);
           
           scheduleQueue.reposition(task, insertionIndex, true);
         } finally {
-          clockWrapper.resumeForcingUpdate();
+          ClockWrapper.resumeForcingUpdate();
         }
       }
       
@@ -1211,9 +1201,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     public void stopAndDrainQueueInto(List<Runnable> removedTasks) {
       stopIfRunning();
       
-      synchronized (executeQueueRemoveLock) {
-        clearQueue(executeQueue, removedTasks);
-      }
+      clearQueue(executeQueue, removedTasks);
       synchronized (scheduleQueue.getModificationLock()) {
         clearQueue(scheduleQueue, removedTasks);
       }
@@ -1286,39 +1274,35 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           if (nextScheduledTask != null) {
             long scheduleDelay;
             long executeDelay;
-            clockWrapper.stopForcingUpdate();
+            ClockWrapper.stopForcingUpdate();
             try {
               scheduleDelay = nextScheduledTask.getDelay(TimeUnit.MILLISECONDS);
               executeDelay = nextExecuteTask.getDelay(TimeUnit.MILLISECONDS);
             } finally {
-              clockWrapper.resumeForcingUpdate();
+              ClockWrapper.resumeForcingUpdate();
             }
             if (scheduleDelay < executeDelay) {
               synchronized (scheduleQueue.getModificationLock()) {
+                // scheduled tasks must be removed, and call .executing() while holding the lock
                 if (scheduleQueue.remove(nextScheduledTask)) {
                   nextScheduledTask.executing();
                   return nextScheduledTask;
                 }
               }
-            } else {
-              synchronized (executeQueueRemoveLock) {
-                if (executeQueue.remove(nextExecuteTask)) {
-                  nextExecuteTask.executing();
-                  return nextExecuteTask;
-                }
-              }
+            } else if (executeQueue.remove(nextExecuteTask)) {
+              // if we can remove the task (aka it has not been removed already), we can execute it
+              nextExecuteTask.executing();
+              return nextExecuteTask;
             }
-          } else {
-            synchronized (executeQueueRemoveLock) {
-              if (executeQueue.remove(nextExecuteTask)) {
-                nextExecuteTask.executing();
-                return nextExecuteTask;
-              }
-            }
+          } else if (executeQueue.remove(nextExecuteTask)) {
+            // if we can remove the task (aka it has not been removed already), we can execute it
+            nextExecuteTask.executing();
+            return nextExecuteTask;
           }
         } else if (nextScheduledTask != null) {
           if (nextScheduledTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
             synchronized (scheduleQueue.getModificationLock()) {
+              // scheduled tasks must be removed, and call .executing() while holding the lock
               if (scheduleQueue.remove(nextScheduledTask)) {
                 nextScheduledTask.executing();
                 return nextScheduledTask;
@@ -1518,7 +1502,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return unit.convert(runTime - clockWrapper.getSemiAccurateMillis(), TimeUnit.MILLISECONDS);
+      return unit.convert(runTime - ClockWrapper.getSemiAccurateMillis(), TimeUnit.MILLISECONDS);
     }
     
     @Override
@@ -1566,7 +1550,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * @return time in milliseconds till next execution
      */
     protected long getNextDelayInMillis() {
-      return nextRunTime - clockWrapper.getSemiAccurateMillis();
+      return nextRunTime - ClockWrapper.getSemiAccurateMillis();
     }
     
     @Override

@@ -508,11 +508,15 @@ public class Profiler {
    * @return an {@link Iterator} of threads to examine and add data for our profile.
    */
   protected Iterator<Thread> getProfileThreadsIterator() {
-    if (ti == null) {
-      ti = new ThreadIterator();
+    ThreadIterator result = ti;
+    if (result == null) {
+      result = new ThreadIterator();
+      if (collectorThread.get() != null) {
+        ti = result;
+      }
     }
-    ti.refreshThreads();
-    return ti;
+    result.refreshThreads();
+    return result;
   }
   
   /**
