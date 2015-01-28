@@ -35,7 +35,7 @@ public class FutureUtilsTest {
   }
   
   @AfterClass
-  public static void tearDownClass() {
+  public static void cleanupClass() {
     scheduler.shutdownNow();
     scheduler = null;
   }

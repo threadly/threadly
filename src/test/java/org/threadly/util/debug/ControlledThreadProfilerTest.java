@@ -23,12 +23,12 @@ public class ControlledThreadProfilerTest {
   private ControlledThreadProfiler profiler;
   
   @Before
-  public void setUp() {
+  public void setup() {
     profiler = new ControlledThreadProfiler(POLL_INTERVAL);
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     profiler.stop();
     profiler = null;
   }

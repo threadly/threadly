@@ -9,7 +9,7 @@ import org.threadly.util.StringUtils;
 @SuppressWarnings("javadoc")
 public class DebugLoggerTest {
   @After
-  public void tearDown() {
+  public void cleanup() {
     DebugLogger.getAllStoredMessages(); // should clear state
   }
   

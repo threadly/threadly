@@ -18,7 +18,7 @@ public class AbstractServiceTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     service = null;
   }
   

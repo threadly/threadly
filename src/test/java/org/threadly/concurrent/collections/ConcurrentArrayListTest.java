@@ -28,7 +28,7 @@ public class ConcurrentArrayListTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     testList = null;
   }
   

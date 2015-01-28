@@ -34,7 +34,7 @@ public class NoThreadSchedulerTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     blockingScheduler = null;
     nonblockingScheduler = null;
   }

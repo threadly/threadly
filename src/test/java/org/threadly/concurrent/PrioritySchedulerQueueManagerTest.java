@@ -33,7 +33,7 @@ public class PrioritySchedulerQueueManagerTest {
   }
   
   @AfterClass
-  public static void tearDownClass() {
+  public static void cleanupClass() {
     pScheduler.shutdownNow();
     pScheduler = null;
   }
@@ -59,7 +59,7 @@ public class PrioritySchedulerQueueManagerTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     queueManager.stopIfRunning();
     queueManager = null;
   }

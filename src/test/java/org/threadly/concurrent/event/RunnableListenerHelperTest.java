@@ -28,7 +28,7 @@ public class RunnableListenerHelperTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     onceHelper = null;
     repeatedHelper = null;
   }

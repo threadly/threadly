@@ -26,7 +26,7 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     executor = null;
   }
   

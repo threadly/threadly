@@ -21,12 +21,12 @@ public class ProfilerTest {
   private Profiler profiler;
   
   @Before
-  public void setUp() {
+  public void setup() {
     profiler = new Profiler(POLL_INTERVAL);
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     profiler.stop();
     profiler = null;
   }

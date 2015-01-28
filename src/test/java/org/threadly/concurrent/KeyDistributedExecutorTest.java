@@ -45,7 +45,7 @@ public class KeyDistributedExecutorTest {
   }
   
   @AfterClass
-  public static void tearDownClass() {
+  public static void cleanupClass() {
     scheduler.shutdownNow();
     scheduler = null;
   }
@@ -61,7 +61,7 @@ public class KeyDistributedExecutorTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     agentLock = null;
     distributor = null;
   }

@@ -29,7 +29,7 @@ public class BlockingQueueConsumerTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     queueConsumer.stopIfRunning();
     queue = null;
     acceptor = null;

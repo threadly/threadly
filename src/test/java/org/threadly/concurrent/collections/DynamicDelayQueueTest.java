@@ -29,7 +29,7 @@ public class DynamicDelayQueueTest {
   }
   
   @After
-  public void teardown() {
+  public void cleanup() {
     testQueue = null;
   }
   

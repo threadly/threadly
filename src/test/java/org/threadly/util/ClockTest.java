@@ -10,14 +10,14 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ClockTest {
+  @AfterClass
+  public static void cleanupClass() {
+    Clock.startClockUpdateThread();
+  }
+  
   @Before
   public void setup() {
     Clock.stopClockUpdateThread();
-  }
-  
-  @AfterClass
-  public static void tearDownClass() {
-    Clock.startClockUpdateThread();
   }
   
   @Test

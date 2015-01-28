@@ -35,7 +35,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanupDown() {
     scheduler = null;
     limiter = null;
   }

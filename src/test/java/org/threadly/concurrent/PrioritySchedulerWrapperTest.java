@@ -21,7 +21,7 @@ public class PrioritySchedulerWrapperTest {
   }
   
   @AfterClass
-  public static void tearDownClass() {
+  public static void cleanupClass() {
     scheduler.shutdown();
     scheduler = null;
   }

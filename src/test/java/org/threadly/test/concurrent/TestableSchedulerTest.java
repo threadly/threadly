@@ -22,7 +22,7 @@ import org.threadly.util.ExceptionHandlerInterface;
 
 @SuppressWarnings("javadoc")
 public class TestableSchedulerTest {
-  private TestableScheduler scheduler;
+  protected TestableScheduler scheduler;
   
   @Before
   public void setup() {
@@ -30,7 +30,7 @@ public class TestableSchedulerTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     scheduler = null;
   }
   

@@ -21,7 +21,7 @@ public class StringBuilderWriterTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     sb = null;
     sbw.close();
     sbw = null;

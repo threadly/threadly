@@ -46,7 +46,7 @@ public class KeyDistributedSchedulerTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     scheduler.shutdownNow();
     scheduler = null;
     agentLock = null;

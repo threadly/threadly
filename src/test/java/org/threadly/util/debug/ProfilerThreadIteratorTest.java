@@ -17,7 +17,7 @@ public class ProfilerThreadIteratorTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     ti = null;
   }
   

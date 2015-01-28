@@ -26,7 +26,7 @@ public class SettableListenableFutureTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     slf = null;
   }
   

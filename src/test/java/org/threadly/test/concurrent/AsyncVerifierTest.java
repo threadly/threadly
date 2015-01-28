@@ -21,7 +21,7 @@ public class AsyncVerifierTest {
   }
   
   @AfterClass
-  public static void tearDownClass() {
+  public static void cleanupClass() {
     Thread.setDefaultUncaughtExceptionHandler(null);
   }
   
@@ -35,7 +35,7 @@ public class AsyncVerifierTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     verifier = null;
   }
   

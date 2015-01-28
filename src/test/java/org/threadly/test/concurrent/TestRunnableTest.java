@@ -22,7 +22,7 @@ public class TestRunnableTest {
   }
   
   @After
-  public void tearDown() {
+  public void cleanup() {
     instance = null;
   }
   
