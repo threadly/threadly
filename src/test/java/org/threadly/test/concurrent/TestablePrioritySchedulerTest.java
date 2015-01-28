@@ -84,6 +84,17 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
   }
   
   @Test
+  public void scheduledRunnableWithPriorityTest() {
+    final int delay = 100;
+    TestRunnable tr = new TestRunnable();
+    priorityScheduler.schedule(tr, delay, TaskPriority.High);
+    
+    assertEquals(1, priorityScheduler.advance(delay));
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
   public void submitScheduledRunnableWithPriorityTest() {
     final int delay = 100;
     TestRunnable tr = new TestRunnable();
@@ -140,7 +151,7 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
   }
   
   private void recurringTest(boolean fixedDelay) {
-    int delay = 100;
+    final int delay = 100;
     TestRunnable tr = new TestRunnable();
     if (fixedDelay) {
       priorityScheduler.scheduleWithFixedDelay(tr, delay, delay, TaskPriority.High);
