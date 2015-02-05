@@ -59,6 +59,37 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   }
   
   @Test
+  public void scheduleInOrderTest() throws InterruptedException, TimeoutException {
+    SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
+    try {
+      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
+      final AsyncVerifier av = new AsyncVerifier();
+      TestRunnable lastRun = null;
+      int testQty = 0;
+      while (testQty < TEST_QTY) {
+        testQty++;
+        final TestRunnable fLastRun = lastRun;
+        lastRun = new TestRunnable() {
+          @Override
+          public void handleRunStart() {
+            if (fLastRun != null) {
+              av.assertTrue(fLastRun.ranOnce());
+            }
+            av.signalComplete();
+          }
+        };
+        
+        // TODO - can we adjust the DELAY_TIME so that we are more likely to have collisions?
+        scheduler.schedule(lastRun, DELAY_TIME);
+      }
+      
+      av.waitForTest(10 * 1000, testQty);
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void scheduleTest() {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
