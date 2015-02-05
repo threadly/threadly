@@ -1184,13 +1184,13 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
      * @return a new {@link DataSet} which represents the change
      */
     public DataSet<T> addToEnd(T e) {
-      if (dataArray.length - 1 > dataEndIndex && dataArray[dataEndIndex + 1] == null) {
+      if (dataArray.length - 1 >= dataEndIndex && dataArray[dataEndIndex] == null) {
         // there is space in the current array
         dataArray[dataEndIndex] = e;
         
         return new DataSet<T>(dataArray, dataStartIndex, dataEndIndex + 1, 
                               frontPadding, rearPadding);
-      } else { 
+      } else {
         Object[] newData = getArrayCopy(size + 1);
         
         newData[size + frontPadding] = e;
