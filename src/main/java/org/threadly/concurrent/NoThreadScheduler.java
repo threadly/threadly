@@ -39,7 +39,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   protected final Object executeQueueRemoveLock;
   protected final ConcurrentLinkedQueue<OneTimeTask> executeQueue;
   protected final ConcurrentArrayList<TaskContainer> scheduledQueue;
-  private volatile boolean cancelTick;  
+  private volatile boolean tickCanceled;  
   
   /**
    * Constructs a new {@link NoThreadScheduler} scheduler.
@@ -52,7 +52,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     executeQueueRemoveLock = new Object();
     executeQueue = new ConcurrentLinkedQueue<OneTimeTask>();
     scheduledQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
-    cancelTick = false;
+    tickCanceled = false;
   }
 
   /**
@@ -73,7 +73,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * immediately without running anything.
    */
   public void cancelTick() {
-    cancelTick = true;
+    tickCanceled = true;
     
     notifyQueueUpdate();
   }
@@ -139,7 +139,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     int tasks = 0;
     while (true) {  // will break from loop at bottom
       TaskContainer nextTask;
-      while ((nextTask = getNextTask(true)) != null && ! cancelTick) {
+      while ((nextTask = getNextTask(true)) != null && ! tickCanceled) {
         // call will remove task from queue, or reposition as necessary
         try {
           nextTask.runTask();
@@ -159,7 +159,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
           /* we must check the cancelTick once we have the lock 
            * since that is when the .notify() would happen.
            */
-          if (cancelTick) {
+          if (tickCanceled) {
             break;
           }
           nextTask = getNextTask(false);
@@ -181,9 +181,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       }
     }
     
-    if (cancelTick) {
+    if (tickCanceled) {
       // reset for future tick calls
-      cancelTick = false;
+      tickCanceled = false;
     }
     
     return tasks;

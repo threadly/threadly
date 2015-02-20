@@ -72,7 +72,7 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
     final String result = StringUtils.randomString(5);
     ListenableFuture<String> f = priorityScheduler.submit(new Callable<String>() {
       @Override
-      public String call() throws Exception {
+      public String call() {
         return result;
       }
     }, TaskPriority.High);
@@ -129,7 +129,7 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
     final String result = StringUtils.randomString(5);
     ListenableFuture<String> f = priorityScheduler.submitScheduled(new Callable<String>() {
       @Override
-      public String call() throws Exception {
+      public String call() {
         return result;
       }
     }, delay, TaskPriority.High);

@@ -206,7 +206,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
 
     @Override
     protected void shutdownService() {
-      // nothing to do here
+      // nothing to shutdown here, shutdown actions should be done in stop(boolean)
     }
     
     /**

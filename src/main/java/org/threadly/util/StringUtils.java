@@ -13,7 +13,18 @@ public class StringUtils {
    * Constant to represent the line separator for the system (captured from 
    * System.getProperty("line.separator")).
    */
-  public static final String NEW_LINE = System.getProperty("line.separator");
+  public static final String NEW_LINE;
+  
+  static {
+    String newLine;
+    try {
+      newLine = System.getProperty("line.separator");
+    } catch (SecurityException e) {
+      ExceptionUtils.handleException(e);
+      newLine = "\n";
+    }
+    NEW_LINE = newLine;
+  }
   
   private static final String RAND_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   private static final Random RANDOM = new Random(Clock.lastKnownTimeMillis());

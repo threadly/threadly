@@ -16,8 +16,7 @@ public class TestDelayed extends AbstractDelayed {
   
   @Override
   public long getDelay(TimeUnit unit) {
-    return unit.convert(delayInMs, 
-                        TimeUnit.MILLISECONDS);
+    return unit.convert(delayInMs, TimeUnit.MILLISECONDS);
   }
   
   @Override
