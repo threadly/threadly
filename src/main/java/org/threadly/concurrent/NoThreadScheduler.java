@@ -36,7 +36,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   protected final boolean tickBlocksTillAvailable;
   protected final Object taskNotifyLock;
-  protected final Object executeQueueRemoveLock;
   protected final ConcurrentLinkedQueue<OneTimeTask> executeQueue;
   protected final ConcurrentArrayList<TaskContainer> scheduledQueue;
   private volatile boolean tickCanceled;  
@@ -49,7 +48,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   public NoThreadScheduler(boolean tickBlocksTillAvailable) {
     this.tickBlocksTillAvailable = tickBlocksTillAvailable;
     taskNotifyLock = new Object();
-    executeQueueRemoveLock = new Object();
     executeQueue = new ConcurrentLinkedQueue<OneTimeTask>();
     scheduledQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
     tickCanceled = false;
@@ -269,10 +267,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   @Override
   public boolean remove(Runnable task) {
-    synchronized (executeQueueRemoveLock) {
-      if (ContainerHelper.remove(executeQueue, task)) {
-        return true;
-      }
+    if (ContainerHelper.remove(executeQueue, task)) {
+      return true;
     }
     synchronized (scheduledQueue.getModificationLock()) {
       return ContainerHelper.remove(scheduledQueue, task);
@@ -281,10 +277,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   @Override
   public boolean remove(Callable<?> task) {
-    synchronized (executeQueueRemoveLock) {
-      if (ContainerHelper.remove(executeQueue, task)) {
-        return true;
-      }
+    if (ContainerHelper.remove(executeQueue, task)) {
+      return true;
     }
     synchronized (scheduledQueue.getModificationLock()) {
       return ContainerHelper.remove(scheduledQueue, task);
@@ -339,27 +333,29 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Checks if there are tasks ready to be run on the scheduler.  Generally this is called from 
-   * the same thread that would call .tick() (but does not have to be).  If 
-   * {@link #tick(ExceptionHandlerInterface)} is not currently being called, this call indicates 
-   * if the next {@link #tick(ExceptionHandlerInterface)} will have at least one task to run.  If 
-   * {@link #tick(ExceptionHandlerInterface)} is currently running, this call will indicate if 
-   * there is at least one more task to run (not including the task which may currently be 
-   * running).  
-   * 
-   * Calling this does require us to lock the queues to ensure things are not removed while we 
-   * check if there is a task to run.
+   * the same thread that would call {@link #tick(ExceptionHandlerInterface)} (but does not have 
+   * to be).  If {@link #tick(ExceptionHandlerInterface)} is not currently being called, this call 
+   * indicates if the next {@link #tick(ExceptionHandlerInterface)} will have at least one task to 
+   * run.  If {@link #tick(ExceptionHandlerInterface)} is currently being invoked, this call will 
+   * do a best attempt to indicate if there is at least one more task to run (not including the 
+   * task which may currently be running).  It's a best attempt as it will try not to block the 
+   * thread invoking {@link #tick(ExceptionHandlerInterface)} to prevent it from accepting 
+   * additional work.
    *  
-   * @return {@code true} if there are task waiting to run.
+   * @return {@code true} if there are task waiting to run
    */
   public boolean hasTaskReadyToRun() {
-    synchronized (executeQueueRemoveLock) {
+    while (true) {
       TaskContainer nextExecuteTask = executeQueue.peek();
       if (nextExecuteTask != null) {
-        if (! nextExecuteTask.running) {
-          return true;
-        } else if (executeQueue.size() > 1) {
+        if (nextExecuteTask.running) {
+          // loop and retry, should be removed from queue shortly
+          Thread.yield();
+        } else {
           return true;
         }
+      } else {
+        break;
       }
     }
     
@@ -367,8 +363,12 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       Iterator<TaskContainer> it = scheduledQueue.iterator();
       while (it.hasNext()) {
         TaskContainer scheduledTask = it.next();
-        if (scheduledTask.getDelayInMillis() <= 0 && ! scheduledTask.running) {
+        if (scheduledTask.running) {
+          continue;
+        } else if (scheduledTask.getDelayInMillis() <= 0) {
           return true;
+        } else {
+          return false;
         }
       }
     }
@@ -379,45 +379,48 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   /**
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
    * {@link #tick()} is being called.  But will avoid additional tasks from being run on the 
-   * current {@link #tick()} call.
+   * current {@link #tick()} call.  
+   * 
+   * If tasks are added concurrently during this invocation they may or may not be removed.
    * 
    * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
    */
   public List<Runnable> clearTasks() {
+    List<TaskContainer> containers;
     synchronized (scheduledQueue.getModificationLock()) {
-      synchronized (executeQueueRemoveLock) {
-        List<TaskContainer> containers = new ArrayList<TaskContainer>(executeQueue.size() + 
-                                                                        scheduledQueue.size());
-        
-        Iterator<? extends TaskContainer> it = executeQueue.iterator();
-        while (it.hasNext()) {
-          TaskContainer tc = it.next();
-          if (! tc.running) {
-            int index = ListUtils.getInsertionEndIndex(containers, tc, true);
-            containers.add(index, tc);
-          }
+      containers = new ArrayList<TaskContainer>(executeQueue.size() + 
+                                                  scheduledQueue.size());
+      
+      Iterator<? extends TaskContainer> it = executeQueue.iterator();
+      while (it.hasNext()) {
+        TaskContainer tc = it.next();
+        /* we must use executeQueue.remove(Object) instead of it.remove() 
+         * This is to assure it is atomically removed (without executing)
+         */
+        if (! tc.running && executeQueue.remove(tc)) {
+          int index = ListUtils.getInsertionEndIndex(containers, tc, true);
+          containers.add(index, tc);
         }
-        executeQueue.clear();
-        
-        it = scheduledQueue.iterator();
-        while (it.hasNext()) {
-          TaskContainer tc = it.next();
-          if (! tc.running) {
-            int index = ListUtils.getInsertionEndIndex(containers, tc, true);
-            containers.add(index, tc);
-          }
-        }
-        scheduledQueue.clear();
-        
-        List<Runnable> result = new ArrayList<Runnable>(containers.size());
-        it = containers.iterator();
-        while (it.hasNext()) {
-          result.add(it.next().runnable);
-        }
-        
-        return result;
       }
+      
+      it = scheduledQueue.iterator();
+      while (it.hasNext()) {
+        TaskContainer tc = it.next();
+        if (! tc.running) {
+          int index = ListUtils.getInsertionEndIndex(containers, tc, true);
+          containers.add(index, tc);
+        }
+      }
+      scheduledQueue.clear();
     }
+      
+    List<Runnable> result = new ArrayList<Runnable>(containers.size());
+    Iterator<TaskContainer> it = containers.iterator();
+    while (it.hasNext()) {
+      result.add(it.next().runnable);
+    }
+    
+    return result;
   }
   
   /**
@@ -509,9 +512,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       boolean allowRun;
       // can be removed since this is a one time task
       if (delay == 0) {
-        synchronized (executeQueueRemoveLock) {
-          allowRun = executeQueue.remove(this);
-        }
+        allowRun = executeQueue.remove(this);
       } else {
         allowRun = scheduledQueue.removeFirstOccurrence(this);
       }

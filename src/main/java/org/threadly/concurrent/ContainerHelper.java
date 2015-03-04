@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.Callable;
 
@@ -14,7 +15,7 @@ import java.util.concurrent.Callable;
 public class ContainerHelper {
   /**
    * Attempts to remove the provided runnable from the source collection.  This uses the 
-   * {@link Iterator#remove()} function to remove the container if it is found.
+   * {@link Collection#remove(Object)} function to remove the container if it is found.
    * 
    * @since 2.0.0
    * 
@@ -22,13 +23,13 @@ public class ContainerHelper {
    * @param compareTo Runnable to compare against in search
    * @return {@code true} if collection was modified
    */
-  public static boolean remove(Iterable<? extends RunnableContainerInterface> source, 
+  public static boolean remove(Collection<? extends RunnableContainerInterface> source, 
                                Runnable compareTo) {
     Iterator<? extends RunnableContainerInterface> it = source.iterator();
     while (it.hasNext()) {
       RunnableContainerInterface rc = it.next();
-      if (ContainerHelper.isContained(rc.getContainedRunnable(), compareTo)) {
-        it.remove();
+      // we use source.remove() instead of it.remove() for usage with concurrent structures
+      if (ContainerHelper.isContained(rc.getContainedRunnable(), compareTo) && source.remove(rc)) {
         return true;
       }
     }
@@ -38,7 +39,7 @@ public class ContainerHelper {
 
   /**
    * Attempts to remove the provided callable from the source collection.  This uses the 
-   * {@link Iterator#remove()} function to remove the container if it is found.
+   * {@link Collection#remove(Object)} function to remove the container if it is found.
    * 
    * @since 2.0.0
    * 
@@ -46,13 +47,13 @@ public class ContainerHelper {
    * @param compareTo Callable to compare against in search
    * @return {@code true} if collection was modified
    */
-  public static boolean remove(Iterable<? extends RunnableContainerInterface> source, 
+  public static boolean remove(Collection<? extends RunnableContainerInterface> source, 
                                Callable<?> compareTo) {
     Iterator<? extends RunnableContainerInterface> it = source.iterator();
     while (it.hasNext()) {
       RunnableContainerInterface rc = it.next();
-      if (ContainerHelper.isContained(rc.getContainedRunnable(), compareTo)) {
-        it.remove();
+      // we use source.remove() instead of it.remove() for usage with concurrent structures
+      if (ContainerHelper.isContained(rc.getContainedRunnable(), compareTo) && source.remove(rc)) {
         return true;
       }
     }
