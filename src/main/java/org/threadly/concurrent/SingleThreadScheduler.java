@@ -137,6 +137,62 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   public List<Runnable> shutdownNow() {
     return shutdown(true);
   }
+  
+  /**
+   * Performs exactly the same as {@link #shutdown()}, except that this call will block until the 
+   * executing tasks (and tasks submitted before this call) have finished.  This is done by doing 
+   * a {@link Thread#join()} of the executing thread into this thread.  This can be used to ensure 
+   * that shared memory operations done in tasks of this {@link SingleThreadScheduler} will be 
+   * finished and represented in the thread which is making this invocation.
+   * 
+   * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
+   */
+  public void shutdownAndAwaitTermination() throws InterruptedException {
+    shutdownAndAwaitTermination(0);
+  }
+  
+  /**
+   * Performs exactly the same as {@link #shutdown()}, except that this call will block until the 
+   * executing tasks (and tasks submitted before this call) have finished.  This is done by doing 
+   * a {@link Thread#join()} of the executing thread into this thread.  This can be used to ensure 
+   * that shared memory operations done in tasks of this {@link SingleThreadScheduler} will be 
+   * finished and represented in the thread which is making this invocation.  
+   * 
+   * If you to be able to have a timeout and also want to have behavior more like 
+   * {@link #shutdownNowAndAwaitTermination()}, you can invoke {@link #shutdownNow()} and then invoke 
+   * this right after.
+   * 
+   * @param timeoutMillis Time in milliseconds to wait for executing thread to finish, 0 to wait forever
+   * @return {@code true} if the executing thread shutdown within the timeout, {@code false} if timeout occurred
+   * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
+   */
+  public boolean shutdownAndAwaitTermination(long timeoutMillis) throws InterruptedException {
+    shutdown(false);
+    
+    SchedulerManager sm = sManager.get();
+    sm.execThread.join(timeoutMillis);
+    
+    return ! sm.execThread.isAlive();
+  }
+  
+  /**
+   * Performs exactly the same as {@link #shutdownNow()}, except that this call will block until 
+   * the currently executing task has finished.  This is done by doing a {@link Thread#join()} of 
+   * the executing thread into this thread.  This can be used to ensure that shared memory 
+   * operations done in tasks of this {@link SingleThreadScheduler} will be finished and 
+   * represented in the thread which is making this invocation.
+   * 
+   * @return returns a list of runnables which were waiting in the queue to be run at time of shutdown
+   * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
+   */
+  public List<Runnable> shutdownNowAndAwaitTermination() throws InterruptedException {
+    List<Runnable> result = shutdown(true);
+    
+    SchedulerManager sm = sManager.get();
+    sm.execThread.join();
+    
+    return result;
+  }
 
   @Override
   public boolean isShutdown() {
