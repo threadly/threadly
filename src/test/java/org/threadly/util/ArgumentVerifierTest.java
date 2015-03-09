@@ -56,4 +56,21 @@ public class ArgumentVerifierTest {
       assertTrue(e.getMessage().contains(name));
     }
   }
+  
+  @Test
+  public void assertLessThanTest() {
+    ArgumentVerifier.assertLessThan(10, 20, "foo");
+    // should not throw
+  }
+  
+  @Test
+  public void assertLessThanFail() {
+    String name = StringUtils.randomString(5);
+    try {
+      ArgumentVerifier.assertLessThan(10, 10, name);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      assertTrue(e.getMessage().contains(name));
+    }
+  }
 }
