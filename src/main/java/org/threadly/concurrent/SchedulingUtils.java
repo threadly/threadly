@@ -105,7 +105,13 @@ public class SchedulingUtils {
     } else if (hour < currentHour) {
       delayInMillis += TimeUnit.HOURS.toMillis(TimeUnit.DAYS.toHours(1) - currentHour + hour);
     } else {
-      return getDelayTillMinute(Clock.lastKnownTimeMillis(), minute);
+      long result = getDelayTillMinute(Clock.lastKnownTimeMillis(), minute);
+      if (TimeUnit.MILLISECONDS.toMinutes(result) <= minute) {
+        return result;
+      } else {
+        // here we have to add the time to forward us to the next day
+        return result + TimeUnit.HOURS.toMillis(TimeUnit.DAYS.toHours(1) - 1);
+      }
     }
 
     // subtract minutes, seconds, and milliseconds that have passed
