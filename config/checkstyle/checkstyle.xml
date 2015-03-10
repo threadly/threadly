@@ -77,7 +77,9 @@
       <property name="ignoreNumbers" value="-2, -1, 0, 1, 2, 10, 100, 1000"/>
     </module>
     <module name="MissingSwitchDefault"/>
-    <module name="NoFinalizer"/>
+    <module name="NoFinalizer">
+      <property name="severity" value="ignore"/>
+    </module>
     <module name="NoClone"/>
     <module name="BooleanExpressionComplexity">
       <property name="max" value="5"/>

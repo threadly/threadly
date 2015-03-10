@@ -232,6 +232,12 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     getRunningScheduler().scheduleAtFixedRate(task, initialDelay, period);
   }
   
+  @Override
+  protected void finalize() {
+    // if being GC'ed, stop thread so that it also can be GC'ed
+    shutdown();
+  }
+  
   /**
    * <p>This class contains the thread and instance of {@link NoThreadScheduler} that is used to 
    * provide single threaded scheduler implementation.  The only implementation here is to contain 
