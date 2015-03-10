@@ -32,7 +32,7 @@ public class ArgumentVerifier {
    * Verifies the provided argument is not negative (zero is okay).  If it is less than zero an 
    * {@link IllegalArgumentException} is thrown.
    * 
-   * @param val Value to check against
+   * @param val Value to verify against
    * @param name Name to provide the argument in the message of the thrown exception
    * @throws IllegalArgumentException Thrown if value is less than zero
    */
@@ -47,7 +47,7 @@ public class ArgumentVerifier {
    * Verifies the provided argument is greater than zero.  If it is less than one an 
    * {@link IllegalArgumentException} is thrown.
    * 
-   * @param val Value to check against
+   * @param val Value to verify against
    * @param name Name to provide the argument in the message of the thrown exception
    * @throws IllegalArgumentException Thrown if value is less than one
    */
@@ -55,6 +55,22 @@ public class ArgumentVerifier {
     if (val < 1) {
       throw new IllegalArgumentException(StringUtils.makeNonNull(name) + 
                                            " must be > 0");
+    }
+  }
+  
+  /**
+   * Verifies the provided argument is less than the compare value.  If it is greater than or 
+   * equal to the compare value an {@link IllegalArgumentException} is thrown.
+   * 
+   * @param val Value to verify
+   * @param compareVal value to compare against
+   * @param name Name to provide the argument in the message of the thrown exception
+   * @throws IllegalArgumentException Thrown if value is greather than or equal to compareVal
+   */
+  public static void assertLessThan(long val, long compareVal, String name) {
+    if (val >= compareVal) {
+      throw new IllegalArgumentException(StringUtils.makeNonNull(name) + 
+                                           " must be < " + compareVal);
     }
   }
 }
