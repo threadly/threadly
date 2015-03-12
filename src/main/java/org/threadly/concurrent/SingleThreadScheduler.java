@@ -89,7 +89,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   protected NoThreadScheduler getRunningScheduler() throws RejectedExecutionException {
     SchedulerManager result = getSchedulerManager();
     
-    if (! result.isRunning()) {
+    if (result.hasBeenStopped()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
     
@@ -198,7 +198,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   public boolean isShutdown() {
     SchedulerManager sm = sManager.get();
     if (sm != null) {
-      return ! sm.isRunning();
+      return sm.hasBeenStopped();
     } else {
       // if not created yet, the not shutdown
       return false;
