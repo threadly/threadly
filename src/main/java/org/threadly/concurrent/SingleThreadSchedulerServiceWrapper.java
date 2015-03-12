@@ -47,7 +47,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   @Override
   public boolean isTerminated() {
     SchedulerManager sm = singleThreadScheduler.sManager.get();
-    if (sm == null || sm.isRunning()) {
+    if (sm == null || ! sm.hasBeenStopped()) {
       return false;
     } else {
       return ! sm.execThread.isAlive();
