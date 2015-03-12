@@ -9,14 +9,14 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.PriorityScheduler.QueueManager;
+import org.threadly.concurrent.PriorityScheduler.RecurringDelayTaskWrapper;
 import org.threadly.concurrent.PriorityScheduler.RecurringTaskWrapper;
 import org.threadly.concurrent.PriorityScheduler.TaskWrapper;
+import org.threadly.concurrent.PriorityScheduler.WorkerPool;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
@@ -25,25 +25,15 @@ import org.threadly.util.Clock;
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerQueueManagerTest {
   private static final String THREAD_NAME = "fooThread";
-  private static PriorityScheduler pScheduler;
   
-  @BeforeClass
-  public static void setupClass() {
-    pScheduler = new PriorityScheduler(1, 1, 1000);
-  }
-  
-  @AfterClass
-  public static void cleanupClass() {
-    pScheduler.shutdownNow();
-    pScheduler = null;
-  }
-  
+  private WorkerPool workerPool;
   private QueueManager queueManager;
   
   @Before
   public void setup() {
-    queueManager = pScheduler.new QueueManager(new ConfigurableThreadFactory(), 
-                                               THREAD_NAME) {
+    ConfigurableThreadFactory threadFactory = new ConfigurableThreadFactory();
+    workerPool = new WorkerPool(threadFactory, 1, 1, 1000, PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    queueManager = new QueueManager(workerPool, TaskPriority.High, THREAD_NAME) {
       @Override
       protected void startupService() {
         // we override this so we can avoid starting threads in these tests
@@ -60,22 +50,24 @@ public class PrioritySchedulerQueueManagerTest {
   
   @After
   public void cleanup() {
+    workerPool.startShutdown();
+    workerPool.finishShutdown();
     queueManager.stopIfRunning();
     queueManager = null;
   }
   
   @Test (expected = IllegalThreadStateException.class)
   public void threadFactoryReturnRunningThreadFail() {
-    queueManager = pScheduler.new QueueManager(new StartingThreadFactory(), 
-                                               THREAD_NAME);
+    WorkerPool workerPool = new WorkerPool(new StartingThreadFactory(), 1, 1, 1000, 
+                                           PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    queueManager = new QueueManager(workerPool, TaskPriority.High, THREAD_NAME);
     queueManager.start();
   }
   
   @Test
   public void removeCallableTest() {
     TestCallable callable = new TestCallable();
-    OneTimeTaskWrapper task = pScheduler.new OneTimeTaskWrapper(new ListenableFutureTask<Object>(false, callable),
-                                                                TaskPriority.High, 0);
+    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new ListenableFutureTask<Object>(false, callable), 0);
     
     assertFalse(queueManager.remove(callable));
     
@@ -93,7 +85,7 @@ public class PrioritySchedulerQueueManagerTest {
   @Test
   public void removeRunnableTest() {
     TestRunnable runnable = new TestRunnable();
-    OneTimeTaskWrapper task = pScheduler.new OneTimeTaskWrapper(runnable, TaskPriority.High, 0);
+    OneTimeTaskWrapper task = new OneTimeTaskWrapper(runnable, 0);
     
     assertFalse(queueManager.remove(runnable));
     
@@ -110,7 +102,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void addExecuteTest() {
-    OneTimeTaskWrapper task = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 0);
+    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new TestRunnable(), 0);
     
     queueManager.addExecute(task);
     
@@ -121,7 +113,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void addScheduledTest() {
-    TaskWrapper task = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 10);
+    TaskWrapper task = new OneTimeTaskWrapper(new TestRunnable(), 10);
     
     queueManager.addScheduled(task);
     
@@ -134,7 +126,7 @@ public class PrioritySchedulerQueueManagerTest {
   public void addScheduledOrderTest() {
     List<TaskWrapper> orderedList = new ArrayList<TaskWrapper>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
-      orderedList.add(pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, i));
+      orderedList.add(new OneTimeTaskWrapper(new TestRunnable(), i));
     }
     List<TaskWrapper> randomList = new ArrayList<TaskWrapper>(orderedList);
     Collections.shuffle(randomList);
@@ -153,8 +145,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void addScheduledLastTest() {
-    RecurringTaskWrapper task = pScheduler.new RecurringDelayTaskWrapper(new TestRunnable(), 
-                                                                         TaskPriority.High, 10, 10);
+    RecurringTaskWrapper task = new RecurringDelayTaskWrapper(new TestRunnable(), queueManager, 10, 10);
     
     queueManager.addScheduledLast(task);
     
@@ -170,7 +161,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void getNextTaskExecuteOnlyTest() throws InterruptedException {
-    OneTimeTaskWrapper task = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 0);
+    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new TestRunnable(), 0);
     
     queueManager.addExecute(task);
     
@@ -179,7 +170,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void getNextTaskScheduleOnlyTest() throws InterruptedException {
-    TaskWrapper task = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 0);
+    TaskWrapper task = new OneTimeTaskWrapper(new TestRunnable(), 0);
     
     queueManager.addScheduled(task);
     
@@ -188,7 +179,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void getNextTaskScheduleDelayTest() throws InterruptedException {
-    TaskWrapper task = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, DELAY_TIME);
+    TaskWrapper task = new OneTimeTaskWrapper(new TestRunnable(), DELAY_TIME);
     queueManager.addScheduled(task);
     
     TaskWrapper resultTask;
@@ -202,10 +193,10 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void getNextTaskExecuteAheadOfScheduledTest() throws InterruptedException {
-    OneTimeTaskWrapper executeTask = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 0);
+    OneTimeTaskWrapper executeTask = new OneTimeTaskWrapper(new TestRunnable(), 0);
     queueManager.addExecute(executeTask);
     TestUtils.blockTillClockAdvances();
-    TaskWrapper scheduleTask = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 0);
+    TaskWrapper scheduleTask = new OneTimeTaskWrapper(new TestRunnable(), 0);
     queueManager.addScheduled(scheduleTask);
 
     assertTrue(executeTask == queueManager.getNextTask());
@@ -214,10 +205,10 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void getNextTaskScheduledAheadOfExecuteTest() throws InterruptedException {
-    TaskWrapper scheduleTask = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 0);
+    TaskWrapper scheduleTask = new OneTimeTaskWrapper(new TestRunnable(), 0);
     queueManager.addScheduled(scheduleTask);
     TestUtils.blockTillClockAdvances();
-    OneTimeTaskWrapper executeTask = pScheduler.new OneTimeTaskWrapper(new TestRunnable(), TaskPriority.High, 0);
+    OneTimeTaskWrapper executeTask = new OneTimeTaskWrapper(new TestRunnable(), 0);
     queueManager.addExecute(executeTask);
 
     assertTrue(scheduleTask == queueManager.getNextTask());

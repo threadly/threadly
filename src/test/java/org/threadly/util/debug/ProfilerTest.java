@@ -18,7 +18,7 @@ public class ProfilerTest {
   private static final int POLL_INTERVAL = 1;
   private static final int MIN_RESPONSE_LENGTH = 10;
   
-  private Profiler profiler;
+  protected Profiler profiler;
   
   @Before
   public void setup() {
@@ -31,7 +31,7 @@ public class ProfilerTest {
     profiler = null;
   }
   
-  private void blockForProfilerSample() {
+  protected void blockForProfilerSample() {
     new TestCondition() {
       @Override
       public boolean get() {
@@ -47,45 +47,45 @@ public class ProfilerTest {
     Profiler p;
     
     p = new Profiler();
-    assertNotNull(p.threadTraces);
-    assertEquals(0, p.threadTraces.size());
-    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.pStore.threadTraces);
+    assertEquals(0, p.pStore.threadTraces.size());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pStore.pollIntervalInMs);
+    assertNull(p.pStore.collectorThread.get());
+    assertNull(p.pStore.dumpingThread);
     assertNull(p.outputFile);
     assertNotNull(p.startStopLock);
     
     p = new Profiler(dumpFile);
-    assertNotNull(p.threadTraces);
-    assertEquals(0, p.threadTraces.size());
-    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.pStore.threadTraces);
+    assertEquals(0, p.pStore.threadTraces.size());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pStore.pollIntervalInMs);
+    assertNull(p.pStore.collectorThread.get());
+    assertNull(p.pStore.dumpingThread);
     assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
     
     p = new Profiler(testPollInterval);
-    assertNotNull(p.threadTraces);
-    assertEquals(0, p.threadTraces.size());
-    assertEquals(testPollInterval, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.pStore.threadTraces);
+    assertEquals(0, p.pStore.threadTraces.size());
+    assertEquals(testPollInterval, p.pStore.pollIntervalInMs);
+    assertNull(p.pStore.collectorThread.get());
+    assertNull(p.pStore.dumpingThread);
     assertNull(p.outputFile);
     assertNotNull(p.startStopLock);
     
     p = new Profiler(dumpFile, testPollInterval);
-    assertNotNull(p.threadTraces);
-    assertEquals(0, p.threadTraces.size());
-    assertEquals(testPollInterval, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.pStore.threadTraces);
+    assertEquals(0, p.pStore.threadTraces.size());
+    assertEquals(testPollInterval, p.pStore.pollIntervalInMs);
+    assertNull(p.pStore.collectorThread.get());
+    assertNull(p.pStore.dumpingThread);
     assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
   }
   
   @Test
   public void getProfileThreadsIteratorTest() {
-    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
     
     assertNotNull(it);
     assertTrue(it.hasNext());
@@ -94,7 +94,7 @@ public class ProfilerTest {
   
   @Test (expected = NoSuchElementException.class)
   public void profileThreadsIteratorNextFail() {
-    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
     
     while (it.hasNext()) {
       assertNotNull(it.next());
@@ -106,7 +106,7 @@ public class ProfilerTest {
   
   @Test (expected = UnsupportedOperationException.class)
   public void profileThreadsIteratorRemoveFail() {
-    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
     it.next();
     
     // not currently supported
@@ -122,6 +122,10 @@ public class ProfilerTest {
   @Test
   public void isRunningTest() {
     assertFalse(profiler.isRunning());
+    
+    /* verification of isRunning after start happens in 
+     * startWithoutExecutorTest and startWitExecutorTest
+     */
   }
   
   @Test
@@ -167,7 +171,7 @@ public class ProfilerTest {
     profiler.start();
     // verify there are some samples
     blockForProfilerSample();
-    final Thread runningThread = profiler.collectorThread.get();
+    final Thread runningThread = profiler.pStore.collectorThread.get();
     profiler.stop();
     
     // verify stopped
@@ -180,7 +184,7 @@ public class ProfilerTest {
     
     profiler.reset();
     
-    assertEquals(0, profiler.threadTraces.size());
+    assertEquals(0, profiler.pStore.threadTraces.size());
     assertEquals(0, profiler.getCollectedSampleQty());
   }
   

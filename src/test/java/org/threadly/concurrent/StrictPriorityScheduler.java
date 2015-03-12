@@ -10,20 +10,17 @@ import java.util.concurrent.ThreadFactory;
  * 
  * @author jent - Mike Jensen
  */
+@SuppressWarnings("javadoc")
 public class StrictPriorityScheduler extends PriorityScheduler {
-  @SuppressWarnings("javadoc")
-  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
-                                 long keepAliveTimeInMs) {
+  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize, long keepAliveTimeInMs) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs);
   }
 
-  @SuppressWarnings("javadoc")
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
                                  long keepAliveTimeInMs, boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, useDaemonThreads);
   }
 
-  @SuppressWarnings("javadoc")
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
                                  long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs) {
@@ -31,43 +28,46 @@ public class StrictPriorityScheduler extends PriorityScheduler {
           defaultPriority, maxWaitForLowPriorityInMs);
   }
 
-  @SuppressWarnings("javadoc")
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
                                  long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                 long maxWaitForLowPriorityInMs, 
-                                 boolean useDaemonThreads) {
+                                 long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs, 
           useDaemonThreads);
   }
 
-  @SuppressWarnings("javadoc")
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
                                  long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-          defaultPriority, maxWaitForLowPriorityInMs, 
-          threadFactory);
+    super(new StrictWorkerPool(threadFactory, corePoolSize, maxPoolSize, keepAliveTimeInMs, maxWaitForLowPriorityInMs), 
+          defaultPriority);
   }
   
-  private void verifyWorkersLock() {
-    if (! Thread.holdsLock(workersLock)) {
-      throw new IllegalStateException("Workers lock must be held before calling");
+  protected static class StrictWorkerPool extends WorkerPool {
+    protected StrictWorkerPool(ThreadFactory threadFactory, int corePoolSize, int maxPoolSize,
+                               long keepAliveTimeInMs, long maxWaitForLorPriorityInMs) {
+      super(threadFactory, corePoolSize, maxPoolSize, keepAliveTimeInMs, maxWaitForLorPriorityInMs);
     }
-  }
 
-  @Override
-  protected Worker makeNewWorker() {
-    verifyWorkersLock();
-    
-    return new StrictWorkerWrapper(super.makeNewWorker());
-  }
+    private void verifyWorkersLock() {
+      if (! Thread.holdsLock(workersLock)) {
+        throw new IllegalStateException("Workers lock must be held before calling");
+      }
+    }
 
-  @Override
-  protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
-    verifyWorkersLock();
-    
-    return super.getExistingWorker(maxWaitTimeInMs);
+    @Override
+    protected Worker makeNewWorker() {
+      verifyWorkersLock();
+      
+      return new StrictWorkerWrapper(this, threadFactory, super.makeNewWorker());
+    }
+  
+    @Override
+    protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
+      verifyWorkersLock();
+      
+      return super.getExistingWorker(maxWaitTimeInMs);
+    }
   }
   
   /**
@@ -82,10 +82,13 @@ public class StrictPriorityScheduler extends PriorityScheduler {
    * 
    * @author jent - Mike Jensen
    */
-  protected class StrictWorkerWrapper extends Worker {
+  protected static class StrictWorkerWrapper extends Worker {
     private final Worker deligateWorker;
     
-    private StrictWorkerWrapper(Worker deligateWorker) {
+    private StrictWorkerWrapper(WorkerPool workerPool, ThreadFactory threadFactory, 
+                                Worker deligateWorker) {
+      super(workerPool, threadFactory);
+      
       this.deligateWorker = deligateWorker;
     }
 

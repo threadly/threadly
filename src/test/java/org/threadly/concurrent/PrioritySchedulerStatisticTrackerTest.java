@@ -40,7 +40,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   public void constructorNullFactoryTest() {
     PriorityScheduler ps = new PrioritySchedulerStatisticTracker(1, 1, 1, TaskPriority.High, 1, null);
     // should be set with default
-    assertNotNull(ps.threadFactory);
+    assertNotNull(ps.workerPool.threadFactory);
   }
   
   @SuppressWarnings("unused")

@@ -51,14 +51,9 @@ public class Profiler {
     FUNCTION_BY_COUNT_HEADER = prefix + "total count: " + columns;
   }
   
-  protected final Map<String, Map<Trace, Trace>> threadTraces;
-  protected final AtomicInteger collectedSamples;
   protected final File outputFile;
   protected final Object startStopLock;
-  protected final AtomicReference<Thread> collectorThread;
-  protected volatile int pollIntervalInMs;
-  protected volatile Thread dumpingThread;
-  private volatile ThreadIterator ti;
+  protected final ProfileStorage pStore;
   
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
@@ -78,7 +73,7 @@ public class Profiler {
    * 
    * This uses a default poll interval of 100 milliseconds.
    * 
-   * @param outputFile file to dump results to on stop
+   * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
    */
   public Profiler(File outputFile) {
     this(outputFile, DEFAULT_POLL_INTERVAL_IN_MILLIS);
@@ -100,18 +95,24 @@ public class Profiler {
    * 
    * If the output file is {@code null}, this will behave the same as the empty constructor.
    * 
-   * @param outputFile file to dump results to on stop
+   * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
    * @param pollIntervalInMs frequency to check running threads
    */
   public Profiler(File outputFile, int pollIntervalInMs) {
-    setPollInterval(pollIntervalInMs);
-    
-    threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>();
-    collectedSamples = new AtomicInteger(0);
+    this(outputFile, new ProfileStorage(pollIntervalInMs));
+  }
+  
+  /**
+   * This constructor allows extending classes to provide their own implementation of the 
+   * {@link ProfileStorage}.  Ultimately all constructors will default to this one.
+   * 
+   * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
+   * @param pStore Storage to be used for holding profile results and getting the Iterator for threads
+   */
+  protected Profiler(File outputFile, ProfileStorage pStore) {
     this.outputFile = outputFile;
-    startStopLock = new Object();
-    collectorThread = new AtomicReference<Thread>(null);
-    dumpingThread = null;
+    this.startStopLock = new Object();
+    this.pStore = pStore;
   }
   
   /**
@@ -123,7 +124,7 @@ public class Profiler {
   public void setPollInterval(int pollIntervalInMs) {
     ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
     
-    this.pollIntervalInMs = pollIntervalInMs;
+    this.pStore.pollIntervalInMs = pollIntervalInMs;
   }
   
   /**
@@ -133,7 +134,7 @@ public class Profiler {
    * @return returns the profile interval in milliseconds
    */
   public int getPollInterval() {
-    return pollIntervalInMs;
+    return pStore.pollIntervalInMs;
   }
   
   /**
@@ -144,7 +145,7 @@ public class Profiler {
    * @return the number of times since the start or last reset we have sampled the threads
    */
   public int getCollectedSampleQty() {
-    return collectedSamples.get();
+    return pStore.collectedSamples.get();
   }
   
   /**
@@ -152,8 +153,8 @@ public class Profiler {
    * the profiler is either stopped, or until this is called.
    */
   public void reset() {
-    threadTraces.clear();
-    collectedSamples.set(0);
+    pStore.threadTraces.clear();
+    pStore.collectedSamples.set(0);
   }
   
   /**
@@ -162,7 +163,7 @@ public class Profiler {
    * @return {@code true} if there is a thread currently collecting statistics.
    */
   public boolean isRunning() {
-    return collectorThread.get() != null;
+    return pStore.collectorThread.get() != null;
   }
   
   /**
@@ -190,13 +191,13 @@ public class Profiler {
    */
   public void start(Executor executor) {
     synchronized (startStopLock) {
-      if (collectorThread.get() == null) {
-        final ProfilerRunner pr = new ProfilerRunner();
+      if (pStore.collectorThread.get() == null) {
+        final ProfilerRunner pr = new ProfilerRunner(pStore);
         if (executor == null) {
           // no executor, so we simply create our own thread
           Thread thread = new Thread(pr);
           
-          collectorThread.set(thread);
+          pStore.collectorThread.set(thread);
           
           thread.setName("Profiler data collector");
           thread.setPriority(Thread.MAX_PRIORITY);
@@ -210,7 +211,7 @@ public class Profiler {
             public void run() {
               try {
                 // if collector thread can't be set, then some other thread has taken over
-                if (! collectorThread.compareAndSet(null, Thread.currentThread())) {
+                if (! pStore.collectorThread.compareAndSet(null, Thread.currentThread())) {
                   return;
                 }
               } finally {
@@ -243,12 +244,12 @@ public class Profiler {
    */
   public void stop() {
     synchronized (startStopLock) {
-      Thread runningThread = collectorThread.get();
+      Thread runningThread = pStore.collectorThread.get();
       if (runningThread != null) {
         runningThread.interrupt();
-        collectorThread.set(null);
-        if (ti != null) {
-          ti = null;
+        pStore.collectorThread.set(null);
+        if (pStore.ti != null) {
+          pStore.ti = null;
         }
         
         if (outputFile != null) {
@@ -304,11 +305,11 @@ public class Profiler {
    * @param ps PrintStream to write results to
    */
   public void dump(PrintStream ps) {
-    dumpingThread = Thread.currentThread();
+    pStore.dumpingThread = Thread.currentThread();
     try {
       Map<Trace, Integer> globalTraces = new HashMap<Trace, Integer>();
       // create a local copy so the stats wont change while we are dumping them
-      Map<String, Map<Trace, Trace>> threadTraces = new HashMap<String, Map<Trace, Trace>>(this.threadTraces);
+      Map<String, Map<Trace, Trace>> threadTraces = new HashMap<String, Map<Trace, Trace>>(pStore.threadTraces);
       
       // log out individual thread traces
       Iterator<Entry<String, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
@@ -343,7 +344,7 @@ public class Profiler {
       
       ps.flush();
     } finally {
-      dumpingThread = null;
+      pStore.dumpingThread = null;
     }
   }
   
@@ -496,27 +497,10 @@ public class Profiler {
     return sb.toString();
   }
   
-  /**
-   * A small call to get an iterator of threads that should be examined for this profiler cycle.  
-   * 
-   * This is a protected call, so it can be overridden to implement other profilers that want to 
-   * control which threads are being profiled.
-   * 
-   * It is garunteed that this will be called in a single threaded manner.  In addition any 
-   * previously returned Iterators will no longer be used by the time this one is called.
-   * 
-   * @return an {@link Iterator} of threads to examine and add data for our profile.
-   */
-  protected Iterator<Thread> getProfileThreadsIterator() {
-    ThreadIterator result = ti;
-    if (result == null) {
-      result = new ThreadIterator();
-      if (collectorThread.get() != null) {
-        ti = result;
-      }
-    }
-    result.refreshThreads();
-    return result;
+  @Override
+  protected void finalize() {
+    // stop collection thread if running so that stored data can be GC'ed
+    stop();
   }
   
   /**
@@ -577,34 +561,90 @@ public class Profiler {
   }
   
   /**
+   * <p>Collection of classes and data structures for data used in profiling threads.  This 
+   * represents the shared memory between the collection thread and the threads which 
+   * start/stop/dump the profiler statistics.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.5.0
+   */
+  protected static class ProfileStorage {
+    protected final AtomicReference<Thread> collectorThread;
+    protected final Map<String, Map<Trace, Trace>> threadTraces;
+    protected final AtomicInteger collectedSamples;
+    protected volatile int pollIntervalInMs;
+    protected volatile Thread dumpingThread;
+    private volatile ThreadIterator ti;
+    
+    public ProfileStorage(int pollIntervalInMs) {
+      ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
+      
+      collectorThread = new AtomicReference<Thread>(null);
+      threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>();
+      collectedSamples = new AtomicInteger(0);
+      this.pollIntervalInMs = pollIntervalInMs;
+      dumpingThread = null;
+    }
+    
+    /**
+     * A small call to get an iterator of threads that should be examined for this profiler cycle.  
+     * 
+     * This is a protected call, so it can be overridden to implement other profilers that want to 
+     * control which threads are being profiled.
+     * 
+     * It is garunteed that this will be called in a single threaded manner.  In addition any 
+     * previously returned Iterators will no longer be used by the time this one is called.
+     * 
+     * @return an {@link Iterator} of threads to examine and add data for our profile.
+     */
+    protected Iterator<Thread> getProfileThreadsIterator() {
+      ThreadIterator result = ti;
+      if (result == null) {
+        result = new ThreadIterator();
+        if (collectorThread.get() != null) {
+          ti = result;
+        }
+      }
+      result.refreshThreads();
+      return result;
+    }
+  }
+  
+  /**
    * <p>Class which runs, collecting statistics for the profiler to later analyze.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  private class ProfilerRunner implements Runnable {
+  private static class ProfilerRunner implements Runnable {
+    private final ProfileStorage pStore;
+    
+    protected ProfilerRunner(ProfileStorage pStore) {
+      this.pStore = pStore;
+    }
+    
     @Override
     public void run() {
       Thread runningThread = Thread.currentThread();
-      while (collectorThread.get() == runningThread) {
+      while (pStore.collectorThread.get() == runningThread) {
         boolean storedSample = false;
-        Iterator<Thread> it = getProfileThreadsIterator();
+        Iterator<Thread> it = pStore.getProfileThreadsIterator();
         while (it.hasNext()) {
           Thread currentThread = it.next();
           
           // we skip the Profiler threads (collector thread, and dumping thread if one exists)
           if (currentThread != runningThread && 
-              currentThread != dumpingThread) {
+              currentThread != pStore.dumpingThread) {
             StackTraceElement[] threadStack = currentThread.getStackTrace();
             if (threadStack.length > 0) {
               storedSample = true;
               String threadIdentifier = getThreadIdentifier(currentThread);
               Trace t = new Trace(threadStack);
               
-              Map<Trace, Trace> existingTraces = threadTraces.get(threadIdentifier);
+              Map<Trace, Trace> existingTraces = pStore.threadTraces.get(threadIdentifier);
               if (existingTraces == null) {
                 existingTraces = new ConcurrentHashMap<Trace, Trace>();
-                threadTraces.put(threadIdentifier, existingTraces);
+                pStore.threadTraces.put(threadIdentifier, existingTraces);
   
                 existingTraces.put(t, t);
               } else {
@@ -620,12 +660,12 @@ public class Profiler {
         }
         
         if (storedSample) {
-          collectedSamples.incrementAndGet();
+          pStore.collectedSamples.incrementAndGet();
         }
         try {
-          Thread.sleep(pollIntervalInMs);
+          Thread.sleep(pStore.pollIntervalInMs);
         } catch (InterruptedException e) {
-          collectorThread.compareAndSet(runningThread, null);
+          pStore.collectorThread.compareAndSet(runningThread, null);
           Thread.currentThread().interrupt(); // reset status
           return;
         }

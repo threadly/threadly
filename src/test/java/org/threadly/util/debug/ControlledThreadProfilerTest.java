@@ -8,90 +8,74 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.PrioritySchedulerStatisticTracker;
-import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
-public class ControlledThreadProfilerTest {
+public class ControlledThreadProfilerTest extends ProfilerTest {
   private static final int POLL_INTERVAL = 1;
   private static final int WAIT_TIME_FOR_COLLECTION = 50;
   
-  private ControlledThreadProfiler profiler;
+  private ControlledThreadProfiler ctProfiler;
   
   @Before
   public void setup() {
-    profiler = new ControlledThreadProfiler(POLL_INTERVAL);
-  }
-  
-  @After
-  public void cleanup() {
-    profiler.stop();
-    profiler = null;
-  }
-  
-  private void blockForProfilerSample() {
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return profiler.getCollectedSampleQty() > 0;
-      }
-    }.blockTillTrue();
+    ctProfiler = new ControlledThreadProfiler(POLL_INTERVAL);
+    profiler = ctProfiler;
   }
   
   @Test
+  @Override
   public void constructorTest() {
     int testPollInterval = Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS * 10;
     File dumpFile = new File("foo");
     ControlledThreadProfiler p;
     
     p = new ControlledThreadProfiler();
-    assertNotNull(p.threadTraces);
-    assertTrue(p.threadTraces.isEmpty());
-    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.controledThreadStore.threadTraces);
+    assertTrue(p.controledThreadStore.threadTraces.isEmpty());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.controledThreadStore.pollIntervalInMs);
+    assertNull(p.controledThreadStore.collectorThread.get());
+    assertNull(p.controledThreadStore.dumpingThread);
     assertNull(p.outputFile);
     assertNotNull(p.startStopLock);
-    assertTrue(p.profiledThreads.isEmpty());
+    assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
     
     p = new ControlledThreadProfiler(dumpFile);
-    assertNotNull(p.threadTraces);
-    assertTrue(p.threadTraces.isEmpty());
-    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.controledThreadStore.threadTraces);
+    assertTrue(p.controledThreadStore.threadTraces.isEmpty());
+    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.controledThreadStore.pollIntervalInMs);
+    assertNull(p.controledThreadStore.collectorThread.get());
+    assertNull(p.controledThreadStore.dumpingThread);
     assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
-    assertTrue(p.profiledThreads.isEmpty());
+    assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
     
     p = new ControlledThreadProfiler(testPollInterval);
-    assertNotNull(p.threadTraces);
-    assertTrue(p.threadTraces.isEmpty());
-    assertEquals(testPollInterval, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.controledThreadStore.threadTraces);
+    assertTrue(p.controledThreadStore.threadTraces.isEmpty());
+    assertEquals(testPollInterval, p.controledThreadStore.pollIntervalInMs);
+    assertNull(p.controledThreadStore.collectorThread.get());
+    assertNull(p.controledThreadStore.dumpingThread);
     assertNull(p.outputFile);
     assertNotNull(p.startStopLock);
-    assertTrue(p.profiledThreads.isEmpty());
+    assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
     
     p = new ControlledThreadProfiler(dumpFile, testPollInterval);
-    assertNotNull(p.threadTraces);
-    assertTrue(p.threadTraces.isEmpty());
-    assertEquals(testPollInterval, p.pollIntervalInMs);
-    assertNull(p.collectorThread.get());
-    assertNull(p.dumpingThread);
+    assertNotNull(p.controledThreadStore.threadTraces);
+    assertTrue(p.controledThreadStore.threadTraces.isEmpty());
+    assertEquals(testPollInterval, p.controledThreadStore.pollIntervalInMs);
+    assertNull(p.controledThreadStore.collectorThread.get());
+    assertNull(p.controledThreadStore.dumpingThread);
     assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
-    assertTrue(p.profiledThreads.isEmpty());
+    assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
   }
   
   @Test
   public void getProfileThreadsIteratorEmptyTest() {
-    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
     
     assertNotNull(it);
     assertFalse(it.hasNext());
@@ -99,14 +83,20 @@ public class ControlledThreadProfilerTest {
   
   @Test
   public void getProfileThreadsIteratorTest() {
-    profiler.addProfiledThread(Thread.currentThread());
-    Iterator<Thread> it = profiler.getProfileThreadsIterator();
+    ctProfiler.addProfiledThread(Thread.currentThread());
+    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
     
     assertNotNull(it);
     assertTrue(it.hasNext());
     assertTrue(it.next() == Thread.currentThread());
     // should only have the one added thread
     assertFalse(it.hasNext());
+  }
+  
+  @Test
+  @Override
+  public void profileThreadsIteratorRemoveFail() {
+    // not relevant for this class
   }
   
   @SuppressWarnings("unused")
@@ -117,121 +107,82 @@ public class ControlledThreadProfilerTest {
   
   @Test
   public void addProfiledThreadTest() {
-    assertTrue(profiler.profiledThreads.isEmpty());
+    assertTrue(ctProfiler.controledThreadStore.profiledThreads.isEmpty());
     
     Thread currentThread = Thread.currentThread();
-    profiler.addProfiledThread(currentThread);
+    ctProfiler.addProfiledThread(currentThread);
     
-    assertEquals(1, profiler.profiledThreads.size());
+    assertEquals(1, ctProfiler.controledThreadStore.profiledThreads.size());
   }
   
   @Test
   public void addProfiledThreadDuplicateThreadTest() {
-    assertEquals(0, profiler.profiledThreads.size());
+    assertEquals(0, ctProfiler.controledThreadStore.profiledThreads.size());
     
     Thread currentThread = Thread.currentThread();
-    profiler.addProfiledThread(currentThread);
+    ctProfiler.addProfiledThread(currentThread);
     
-    assertEquals(1, profiler.profiledThreads.size());
+    assertEquals(1, ctProfiler.controledThreadStore.profiledThreads.size());
     
-    profiler.addProfiledThread(currentThread);
+    ctProfiler.addProfiledThread(currentThread);
     // nothing should have changed
-    assertEquals(1, profiler.profiledThreads.size());
+    assertEquals(1, ctProfiler.controledThreadStore.profiledThreads.size());
   }
   
   @Test
   public void addNullProfiledThreadTest() {
-    assertTrue(profiler.profiledThreads.isEmpty());
+    assertTrue(ctProfiler.controledThreadStore.profiledThreads.isEmpty());
     
-    profiler.addProfiledThread(null);
+    ctProfiler.addProfiledThread(null);
     
-    assertTrue(profiler.profiledThreads.isEmpty());
+    assertTrue(ctProfiler.controledThreadStore.profiledThreads.isEmpty());
   }
   
   @Test
   public void removeProfiledThreadTest() {
-    assertTrue(profiler.profiledThreads.isEmpty());
+    assertTrue(ctProfiler.controledThreadStore.profiledThreads.isEmpty());
     
     Thread thread1 = new Thread();
     Thread thread2 = new Thread();
-    profiler.addProfiledThread(thread1);
-    profiler.addProfiledThread(thread2);
+    ctProfiler.addProfiledThread(thread1);
+    ctProfiler.addProfiledThread(thread2);
     
-    assertEquals(2, profiler.profiledThreads.size());
+    assertEquals(2, ctProfiler.controledThreadStore.profiledThreads.size());
     
-    assertTrue(profiler.removedProfiledThread(thread1));
+    assertTrue(ctProfiler.removedProfiledThread(thread1));
     
-    assertEquals(1, profiler.profiledThreads.size());
+    assertEquals(1, ctProfiler.controledThreadStore.profiledThreads.size());
   }
   
   @Test
   public void getProfiledThreadCountTest() {
     int testThreadCount = 10;
-    assertEquals(0, profiler.getProfiledThreadCount());
+    assertEquals(0, ctProfiler.getProfiledThreadCount());
     
     List<Thread> addedThreads = new ArrayList<Thread>(testThreadCount);
     for (int i = 0; i < testThreadCount; i++) {
       Thread t = new Thread();
       addedThreads.add(t);
-      profiler.addProfiledThread(t);
-      assertEquals(i + 1, profiler.getProfiledThreadCount());
+      ctProfiler.addProfiledThread(t);
+      assertEquals(i + 1, ctProfiler.getProfiledThreadCount());
     }
     
     Iterator<Thread> it = addedThreads.iterator();
     int removedCount = 0;
     while (it.hasNext()) {
       Thread t = it.next();
-      profiler.removedProfiledThread(t);
+      ctProfiler.removedProfiledThread(t);
       removedCount++;
-      assertEquals(testThreadCount - removedCount, profiler.getProfiledThreadCount());
+      assertEquals(testThreadCount - removedCount, ctProfiler.getProfiledThreadCount());
     }
   }
   
   @Test
-  public void isRunningTest() {
-    assertFalse(profiler.isRunning());
+  @Override
+  public void resetTest() {
+    ctProfiler.addProfiledThread(Thread.currentThread());
     
-    /* verification of isRunning after start happens in 
-     * startWithoutExecutorTest and startWitExecutorTest
-     */
-  }
-  
-  @Test
-  public void startWithoutExecutorTest() {
-    profiler.start(null);
-    
-    assertTrue(profiler.isRunning());
-  }
-  
-  @Test
-  public void startWitExecutorTest() {
-    PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    try {
-      assertEquals(0, e.getCurrentPoolSize());
-      assertEquals(0, e.getCurrentRunningCount());
-      
-      profiler.start(e);
-      
-      assertTrue(profiler.isRunning());
-      assertEquals(1, e.getCurrentPoolSize());
-      assertEquals(1, e.getCurrentRunningCount());
-    } finally {
-      profiler.stop();
-      e.shutdownNow();
-    }
-  }
-  
-  @Test
-  public void getAndSetProfileIntervalTest() {
-    int TEST_VAL = 100;
-    profiler.setPollInterval(TEST_VAL);
-    
-    assertEquals(TEST_VAL, profiler.getPollInterval());
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void setProfileIntervalFail() {
-    profiler.setPollInterval(-1);
+    super.resetTest();
   }
   
   @Test
@@ -249,17 +200,11 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
+  @Override
   public void dumpStoppedStringTest() {
-    profiler.addProfiledThread(Thread.currentThread());
-    profiler.start();
+    ctProfiler.addProfiledThread(Thread.currentThread());
     
-    blockForProfilerSample();
-    
-    profiler.stop();
-    
-    String resultStr = profiler.dump();
-    
-    ProfilerTest.verifyDumpStr(resultStr);
+    super.dumpStoppedStringTest();
   }
   
   @Test
@@ -280,20 +225,11 @@ public class ControlledThreadProfilerTest {
   }
   
   @Test
+  @Override
   public void dumpStoppedOutputStreamTest() {
-    profiler.addProfiledThread(Thread.currentThread());
-    profiler.start();
+    ctProfiler.addProfiledThread(Thread.currentThread());
     
-    blockForProfilerSample();
-    
-    profiler.stop();
-    
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    profiler.dump(out);
-    
-    String resultStr = out.toString();
-    
-    ProfilerTest.verifyDumpStr(resultStr);
+    super.dumpStoppedOutputStreamTest();
   }
   
   @Test
@@ -310,14 +246,9 @@ public class ControlledThreadProfilerTest {
   
   @Test
   public void dumpStringTest() {
-    profiler.addProfiledThread(Thread.currentThread());
-    profiler.start();
+    ctProfiler.addProfiledThread(Thread.currentThread());
     
-    blockForProfilerSample();
-    
-    String resultStr = profiler.dump();
-    
-    ProfilerTest.verifyDumpStr(resultStr);
+    super.dumpStringTest();
   }
   
   @Test
@@ -337,16 +268,8 @@ public class ControlledThreadProfilerTest {
   
   @Test
   public void dumpOutputStreamTest() {
-    profiler.addProfiledThread(Thread.currentThread());
-    profiler.start();
+    ctProfiler.addProfiledThread(Thread.currentThread());
     
-    blockForProfilerSample();
-    
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    profiler.dump(out);
-    
-    String resultStr = out.toString();
-    
-    ProfilerTest.verifyDumpStr(resultStr);
+    super.dumpOutputStreamTest();
   }
 }

@@ -16,7 +16,7 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
 public class ControlledThreadProfiler extends Profiler {
   private static final int TRACKED_THREAD_BUFFER = 10;  // used to make adding/removing tracked threads more efficient
   
-  protected final ConcurrentArrayList<Thread> profiledThreads;
+  protected final ControlledThreadProfileStorage controledThreadStore;
   
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
@@ -58,9 +58,9 @@ public class ControlledThreadProfiler extends Profiler {
    * @param pollIntervalInMs frequency to check running threads
    */
   public ControlledThreadProfiler(File outputFile, int pollIntervalInMs) {
-    super(outputFile, pollIntervalInMs);
+    super(outputFile, new ControlledThreadProfileStorage(pollIntervalInMs));
     
-    profiledThreads = new ConcurrentArrayList<Thread>(0, TRACKED_THREAD_BUFFER);
+    controledThreadStore = (ControlledThreadProfileStorage)super.pStore;
   }
   
   /**
@@ -75,9 +75,9 @@ public class ControlledThreadProfiler extends Profiler {
       return; // don't add
     }
     
-    synchronized (profiledThreads.getModificationLock()) {
-      if (! profiledThreads.contains(t)) {
-        profiledThreads.add(t);
+    synchronized (controledThreadStore.profiledThreads.getModificationLock()) {
+      if (! controledThreadStore.profiledThreads.contains(t)) {
+        controledThreadStore.profiledThreads.add(t);
       }
     }
   }
@@ -91,7 +91,7 @@ public class ControlledThreadProfiler extends Profiler {
    * @return {@code true} if the thread was found and removed.
    */
   public boolean removedProfiledThread(Thread t) {
-    return profiledThreads.remove(t);
+    return controledThreadStore.profiledThreads.remove(t);
   }
   
   /**
@@ -102,11 +102,30 @@ public class ControlledThreadProfiler extends Profiler {
    * @return count of tracked threads.
    */
   public int getProfiledThreadCount() {
-    return profiledThreads.size();
+    return controledThreadStore.profiledThreads.size();
   }
   
-  @Override
-  protected Iterator<Thread> getProfileThreadsIterator() {
-    return profiledThreads.iterator();
+  /**
+   * <p>Extending class of {@link ProfileStorage} this overrides 
+   * {@link #getProfileThreadsIterator()}.  It controls it so that not all VM threads are returned 
+   * in the iterator, and instead it only iterates over the threads which are stored 
+   * internally.</p>
+   * 
+   * @author jent
+   * @since 3.5.0
+   */
+  protected static class ControlledThreadProfileStorage extends ProfileStorage {
+    protected final ConcurrentArrayList<Thread> profiledThreads;
+
+    public ControlledThreadProfileStorage(int pollIntervalInMs) {
+      super(pollIntervalInMs);
+      
+      profiledThreads = new ConcurrentArrayList<Thread>(0, TRACKED_THREAD_BUFFER);
+    }
+    
+    @Override
+    protected Iterator<Thread> getProfileThreadsIterator() {
+      return profiledThreads.iterator();
+    }
   }
 }
