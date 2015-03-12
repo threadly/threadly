@@ -88,7 +88,7 @@ public abstract class AbstractService {
   
   /**
    * Call to check if the service has been started, and not shutdown yet.  If you need a check 
-   * that will be consistent while both new and while running please see {@link #hasBeenStopped()}.
+   * that will be consistent while both new and while running please see {@link #hasStopped()}.
    * 
    * @return {@code true} if the service is currently running
    */
@@ -105,7 +105,7 @@ public abstract class AbstractService {
    * @return {@code true} if the server has been stopped
    * @since 3.5.0
    */
-  public boolean hasBeenStopped() {
+  public boolean hasStopped() {
     return state.get() == 2;
   }
 }
