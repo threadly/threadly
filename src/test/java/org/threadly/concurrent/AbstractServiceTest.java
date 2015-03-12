@@ -23,12 +23,22 @@ public class AbstractServiceTest {
   }
   
   @Test
-  public void startTest() {
+  public void startAndIsRunningTest() {
     assertFalse(service.isRunning());
     
     service.start();
     
     assertTrue(service.isRunning());
+  }
+  
+  @Test
+  public void hasBeenStoppedTest() {
+    assertFalse(service.hasBeenStopped());
+    service.start();
+    assertFalse(service.hasBeenStopped());
+    
+    service.stop();
+    assertTrue(service.hasBeenStopped());
   }
   
   @Test (expected = IllegalStateException.class)

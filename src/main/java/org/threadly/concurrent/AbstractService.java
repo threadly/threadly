@@ -87,11 +87,25 @@ public abstract class AbstractService {
   protected abstract void shutdownService();
   
   /**
-   * Call to check if the service has been started, and not shutdown yet.
+   * Call to check if the service has been started, and not shutdown yet.  If you need a check 
+   * that will be consistent while both new and while running please see {@link #hasBeenStopped()}.
    * 
    * @return {@code true} if the service is currently running
    */
   public boolean isRunning() {
     return state.get() == 1;
+  }
+  
+  /**
+   * Call to check if the service has been stopped (and thus can no longer be used).  This is 
+   * different from {@link #isRunning()} in that it will return {@code false} until 
+   * {@link #stop()} or {@link #stopIfRunning()} has been invoked.  Thus allowing you to make a 
+   * check that's state will be consistent when it is new and while it is running.
+   * 
+   * @return {@code true} if the server has been stopped
+   * @since 3.5.0
+   */
+  public boolean hasBeenStopped() {
+    return state.get() == 2;
   }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.util.ArgumentVerifier;
@@ -89,7 +90,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   protected NoThreadScheduler getRunningScheduler() throws RejectedExecutionException {
     SchedulerManager result = getSchedulerManager();
     
-    if (! result.isRunning()) {
+    if (result.hasBeenStopped()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
     
@@ -198,7 +199,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   public boolean isShutdown() {
     SchedulerManager sm = sManager.get();
     if (sm != null) {
-      return ! sm.isRunning();
+      return sm.hasBeenStopped();
     } else {
       // if not created yet, the not shutdown
       return false;
@@ -246,29 +247,40 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 2.0.0
    */
-  protected static class SchedulerManager extends AbstractService 
-                                          implements Runnable {
+  protected static class SchedulerManager implements Runnable {
     protected final NoThreadScheduler scheduler;
+    protected final AtomicInteger state = new AtomicInteger(-1); // -1 = new, 0 = started, 1 = stopping, 2 = stopped
     protected final Thread execThread;
-    private volatile boolean shutdownFinished;
     
-    protected SchedulerManager(ThreadFactory threadFactory) {
+    public SchedulerManager(ThreadFactory threadFactory) {
       scheduler = new NoThreadScheduler(true);  // true so we wont tight loop in the run
       execThread = threadFactory.newThread(this);
       if (execThread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      shutdownFinished = false;
     }
 
-    @Override
-    protected void startupService() {
-      execThread.start();
+    /**
+     * Checks if the scheduler has been requested to at least start the shutdown sequence.  This 
+     * may return {@code true} if the thread is still running, but should not accept more tasks 
+     * unless this is returning {@code false}.
+     * 
+     * @return {@code true} if the scheduler has been stopped
+     */
+    public boolean hasBeenStopped() {
+      return state.get() > 0;
     }
 
-    @Override
-    protected void shutdownService() {
-      // nothing to shutdown here, shutdown actions should be done in stop(boolean)
+    /**
+     * Starts the scheduler thread.  If it has already been started this will throw an 
+     * {@link IllegalStateException}.
+     */
+    public void start() {
+      if (state.compareAndSet(-1, 0)) {
+        execThread.start();
+      } else {
+        throw new IllegalStateException();
+      }
     }
     
     /**
@@ -282,20 +294,28 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
      * @return if {@code stopImmediately} is {@code true}, this will include tasks which were queued to run, 
      *         otherwise will be an empty list
      */
-    protected List<Runnable> stop(boolean stopImmediately) {
-      if (stopIfRunning()) {
-        if (stopImmediately) {
-          return finishShutdown();
+    public List<Runnable> stop(boolean stopImmediately) {
+      int stateVal = state.get();
+      while (stateVal < 1) {
+        if (state.compareAndSet(stateVal, 1)) {
+          // we finish the shutdown immediately if requested, or if it was never started
+          if (stopImmediately || stateVal == -1) {
+            return finishShutdown();
+          } else {
+            /* add to the end of the ready to execute queue a task which 
+             * will finish the shutdown of the scheduler. 
+             */
+            scheduler.execute(new Runnable() {
+              @Override
+              public void run() {
+                finishShutdown();
+              }
+            });
+          }
+          
+          break;
         } else {
-          /* add to the end of the ready to execute queue a task which 
-           * will finish the shutdown of the scheduler. 
-           */
-          scheduler.execute(new Runnable() {
-            @Override
-            public void run() {
-              finishShutdown();
-            }
-          });
+          stateVal = state.get();
         }
       }
       
@@ -308,7 +328,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
      * @return a list of runnables which remained in the queue after shutdown
      */
     private List<Runnable> finishShutdown() {
-      shutdownFinished = true;
+      state.set(2);
       scheduler.cancelTick();
       
       return scheduler.clearTasks();
@@ -316,7 +336,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     
     @Override
     public void run() {
-      while (! shutdownFinished) {
+      while (state.get() != 2) {
         try {
           scheduler.tick(null);
         } catch (InterruptedException e) {
