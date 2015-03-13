@@ -68,13 +68,11 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable command, long delayInMillis) {
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(false, command);
-    OneTimeTaskWrapper ottw = pScheduler.new OneTimeTaskWrapper(taskFuture, 
-                                                                pScheduler.getDefaultPriority(), 
-                                                                delayInMillis);
+    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis);
     if (delayInMillis == 0) {
-      pScheduler.addToExecuteQueue(ottw);
+      pScheduler.addToExecuteQueue(pScheduler.getDefaultPriority(), ottw);
     } else {
-      pScheduler.addToScheduleQueue(ottw);
+      pScheduler.addToScheduleQueue(pScheduler.getDefaultPriority(), ottw);
     }
     
     return new ScheduledFutureDelegate<Object>(taskFuture, ottw);
@@ -83,13 +81,11 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(false, callable);
-    OneTimeTaskWrapper ottw = pScheduler.new OneTimeTaskWrapper(taskFuture, 
-                                                                pScheduler.getDefaultPriority(), 
-                                                                delayInMillis);
+    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis);
     if (delayInMillis == 0) {
-      pScheduler.addToExecuteQueue(ottw);
+      pScheduler.addToExecuteQueue(pScheduler.getDefaultPriority(), ottw);
     } else {
-      pScheduler.addToScheduleQueue(ottw);
+      pScheduler.addToScheduleQueue(pScheduler.getDefaultPriority(), ottw);
     }
     
     return new ScheduledFutureDelegate<V>(taskFuture, ottw);
@@ -103,10 +99,11 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
-    RecurringDelayTaskWrapper rdtw = pScheduler.new RecurringDelayTaskWrapper(taskFuture, 
-                                                                              pScheduler.getDefaultPriority(), 
-                                                                              initialDelayInMs, delayInMs);
-    pScheduler.addToScheduleQueue(rdtw);
+    TaskPriority priority = pScheduler.getDefaultPriority();
+    RecurringDelayTaskWrapper rdtw = new RecurringDelayTaskWrapper(taskFuture, 
+                                                                   pScheduler.getQueueManager(priority),
+                                                                   initialDelayInMs, delayInMs);
+    pScheduler.addToScheduleQueue(priority, rdtw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, rdtw);
   }
@@ -119,10 +116,11 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     task = new ThrowableHandlingRecurringRunnable(pScheduler, task);
     
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
-    RecurringRateTaskWrapper rrtw = pScheduler.new RecurringRateTaskWrapper(taskFuture, 
-                                                                            pScheduler.getDefaultPriority(), 
-                                                                            initialDelayInMillis, periodInMillis);
-    pScheduler.addToScheduleQueue(rrtw);
+    TaskPriority priority = pScheduler.getDefaultPriority();
+    RecurringRateTaskWrapper rrtw = new RecurringRateTaskWrapper(taskFuture, 
+                                                                 pScheduler.getQueueManager(priority),
+                                                                 initialDelayInMillis, periodInMillis);
+    pScheduler.addToScheduleQueue(priority, rrtw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, rrtw);
   }

@@ -53,14 +53,11 @@ public class PrioritySchedulerTaskWrapperTest {
     }
     
     protected TestWrapper(int delay) {
-      this(new TestRunnable(), 
-           TaskPriority.High, delay);
+      this(new TestRunnable(), delay);
     }
     
-    protected TestWrapper(Runnable task,
-                          TaskPriority priority, 
-                          int delayInMs) {
-      super(task, priority);
+    protected TestWrapper(Runnable task, int delayInMs) {
+      super(task);
       
       this.delayInMs = delayInMs;
       executingCalled = false;
@@ -73,7 +70,7 @@ public class PrioritySchedulerTaskWrapperTest {
     }
     
     @Override
-    protected long getDelayEstimateInMillis() {
+    protected long getDelayEstimateInMs() {
       return delayInMs;
     }
 

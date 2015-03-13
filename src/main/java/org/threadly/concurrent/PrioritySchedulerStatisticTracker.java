@@ -31,14 +31,7 @@ import org.threadly.util.Clock;
 public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   protected static final int MAX_WINDOW_SIZE = 1000;
   
-  protected final AtomicInteger totalHighPriorityExecutions;
-  protected final AtomicInteger totalLowPriorityExecutions;
-  protected final ConcurrentHashMap<Wrapper, Long> runningTasks;
-  protected final ConcurrentArrayList<Long> runTimes;
-  protected final ConcurrentArrayList<Boolean> lowPriorityWorkerAvailable;
-  protected final ConcurrentArrayList<Boolean> highPriorityWorkerAvailable;
-  protected final ConcurrentArrayList<Long> lowPriorityExecutionDelay;
-  protected final ConcurrentArrayList<Long> highPriorityExecutionDelay;
+  protected final StatsManager statsManager;
   
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
@@ -50,19 +43,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
    */
-  public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
+  public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize, 
                                            long keepAliveTimeInMs) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs);
-    
-    totalHighPriorityExecutions = new AtomicInteger();
-    totalLowPriorityExecutions = new AtomicInteger();
-    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    int endPadding = MAX_WINDOW_SIZE * 2;
-    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
-    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
-    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
+         DEFAULT_NEW_THREADS_DAEMON);
   }
   
   /**
@@ -77,17 +62,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    */
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, boolean useDaemonThreads) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, useDaemonThreads);
-    
-    totalHighPriorityExecutions = new AtomicInteger();
-    totalLowPriorityExecutions = new AtomicInteger();
-    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    int endPadding = MAX_WINDOW_SIZE * 2;
-    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
-    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
-    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
+         useDaemonThreads);
   }
   
   /**
@@ -106,18 +83,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-          defaultPriority, maxWaitForLowPriorityInMs);
-    
-    totalHighPriorityExecutions = new AtomicInteger();
-    totalLowPriorityExecutions = new AtomicInteger();
-    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    int endPadding = MAX_WINDOW_SIZE * 2;
-    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
-    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
-    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+         defaultPriority, maxWaitForLowPriorityInMs, 
+         DEFAULT_NEW_THREADS_DAEMON);
   }
   
   /**
@@ -138,18 +106,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
                                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            boolean useDaemonThreads) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-          defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads);
-    
-    totalHighPriorityExecutions = new AtomicInteger();
-    totalLowPriorityExecutions = new AtomicInteger();
-    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    int endPadding = MAX_WINDOW_SIZE * 2;
-    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
-    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
-    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
+         defaultPriority, maxWaitForLowPriorityInMs, 
+         new ConfigurableThreadFactory(PrioritySchedulerStatisticTracker.class.getSimpleName() + "-", 
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
   }
   
   /**
@@ -169,19 +129,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
                                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-          defaultPriority, maxWaitForLowPriorityInMs, 
-          threadFactory);
+    super(new StatisticWorkerPool(threadFactory, corePoolSize, maxPoolSize, 
+                                  keepAliveTimeInMs, maxWaitForLowPriorityInMs, new StatsManager()), 
+          defaultPriority);
     
-    totalHighPriorityExecutions = new AtomicInteger();
-    totalLowPriorityExecutions = new AtomicInteger();
-    runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-    int endPadding = MAX_WINDOW_SIZE * 2;
-    runTimes = new ConcurrentArrayList<Long>(0, endPadding);
-    lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
-    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
-    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
   }
   
   @Override
@@ -212,118 +164,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * This does NOT reset the total execution counts.
    */
   public void resetCollectedStats() {
-    runTimes.clear();
-    lowPriorityWorkerAvailable.clear();
-    lowPriorityExecutionDelay.clear();
-    highPriorityWorkerAvailable.clear();
-    highPriorityExecutionDelay.clear();
-  }
-
-  // Overridden so we can track the availability for workers for high priority tasks
-  @Override
-  protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
-    Worker w = null;
-    synchronized (workersLock) {
-      if (! getShutdownFinishing()) {
-        synchronized (highPriorityWorkerAvailable.getModificationLock()) {
-          highPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
-          trimList(highPriorityWorkerAvailable);
-        }
-        if (getCurrentPoolSize() >= getMaxPoolSize()) {
-          lastHighDelay = task.getDelayEstimateInMillis();
-          // we can't make the pool any bigger
-          w = getExistingWorker(Long.MAX_VALUE);
-        } else {
-          lastHighDelay = 0;
-          
-          if (availableWorkers.isEmpty()) {
-            w = makeNewWorker();
-          } else {
-            // always remove from the front, to get the newest worker
-            w = availableWorkers.removeFirst();
-          }
-        }
-      }
-    }
-    
-    if (w != null) {  // may be null if shutdown
-      Clock.systemNanoTime(); // update clock for task to ensure it is accurate
-      long executionDelay = task.getDelayEstimateInMillis();
-      synchronized (highPriorityExecutionDelay.getModificationLock()) {
-        highPriorityExecutionDelay.add(executionDelay * -1);
-        trimList(highPriorityExecutionDelay);
-      }
-      
-      w.nextTask(task);
-    }
-  }
-
-  // Overridden so we can track the availability for workers for low priority tasks
-  @Override
-  protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
-    Worker w = null;
-    synchronized (workersLock) {
-      if (! getShutdownFinishing()) {
-        // wait for high priority tasks that have been waiting longer than us if all workers are consumed
-        long waitAmount;
-        while (getCurrentPoolSize() >= getMaxPoolSize() && 
-               availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
-               ! getShutdownFinishing() &&
-               ! highPriorityConsumer.isQueueEmpty() && 
-               (waitAmount = task.getDelayEstimateInMillis() - lastHighDelay) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
-          workersLock.wait(waitAmount);
-          Clock.systemNanoTime(); // update for getDelayEstimateInMillis
-        }
-        // check if we should reset the high delay for future low priority tasks
-        if (highPriorityConsumer.isQueueEmpty()) {
-          lastHighDelay = 0;
-        }
-        
-        if (! getShutdownFinishing()) {  // check again that we are still running
-          if (getCurrentPoolSize() >= getMaxPoolSize()) {
-            synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
-              lowPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
-              trimList(lowPriorityWorkerAvailable);
-            }
-            w = getExistingWorker(Long.MAX_VALUE);
-          } else if (getCurrentPoolSize() == 0) {
-            synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
-              lowPriorityWorkerAvailable.add(false);
-              trimList(lowPriorityWorkerAvailable);
-            }
-            w = makeNewWorker();
-          } else {
-            w = getExistingWorker(getMaxWaitForLowPriority());
-            synchronized (lowPriorityWorkerAvailable.getModificationLock()) {
-              lowPriorityWorkerAvailable.add(w != null);
-              trimList(lowPriorityWorkerAvailable);
-            }
-            if (w == null) {
-              // this means we expired past our wait time, so create a worker if we can
-              if (getCurrentPoolSize() >= getMaxPoolSize()) {
-                // more workers were created while waiting, now have reached our max
-                w = getExistingWorker(Long.MAX_VALUE);
-              } else {
-                w = makeNewWorker();
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    if (w != null) {  // may be null if shutdown
-      Clock.systemNanoTime(); // update clock for task to ensure it is accurate
-      long executionDelay = task.getDelayEstimateInMillis();
-      if (executionDelay <= 0) {  // recurring tasks will be rescheduled with a positive value already
-        synchronized (lowPriorityExecutionDelay.getModificationLock()) {
-          lowPriorityExecutionDelay.add(executionDelay * -1);
-          trimList(lowPriorityExecutionDelay);
-        }
-      }
-      
-      w.nextTask(task);
-    }
+    statsManager.runTimes.clear();
+    statsManager.lowPriorityWorkerAvailable.clear();
+    statsManager.lowPriorityExecutionDelay.clear();
+    statsManager.highPriorityWorkerAvailable.clear();
+    statsManager.highPriorityExecutionDelay.clear();
   }
   
   /**
@@ -335,13 +180,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @param recurring {@code true} if the task is a recurring task
    * @return Runnable which is our wrapped implementation
    */
-  private Runnable wrap(Runnable task, 
-                        TaskPriority priority, 
-                        boolean recurring) {
+  private Runnable wrap(Runnable task, TaskPriority priority, boolean recurring) {
     if (task == null) {
       return null;
     } else {
-      return new RunnableStatWrapper(task, priority, recurring);
+      return new RunnableStatWrapper(statsManager, task, priority, recurring);
     }
   }
   
@@ -354,13 +197,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @param recurring {{@code true} if the task is a recurring task
    * @return Runnable which is our wrapped implementation
    */
-  private <T> Callable<T> wrap(Callable<T> task, 
-                               TaskPriority priority, 
-                               boolean recurring) {
+  private <T> Callable<T> wrap(Callable<T> task, TaskPriority priority, boolean recurring) {
     if (task == null) {
       return null;
     } else {
-      return new CallableStatWrapper<T>(task, priority, recurring);
+      return new CallableStatWrapper<T>(statsManager, task, priority, recurring);
     }
   }
   
@@ -405,15 +246,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   }
 
   @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay,
-                                     long recurringDelay) {
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
     scheduleWithFixedDelay(task, initialDelay, recurringDelay, defaultPriority);
   }
 
   @Override
   public void schedule(Runnable task, long delayInMs, TaskPriority priority) {
-    super.schedule(wrap(task, priority, false), 
-                   delayInMs, priority);
+    super.schedule(wrap(task, priority, false), delayInMs, priority);
   }
 
   @Override
@@ -425,15 +264,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
                                                  TaskPriority priority) {
-    return super.submitScheduled(wrap(task, priority, false), 
-                                 result, delayInMs, priority);
+    return super.submitScheduled(wrap(task, priority, false), result, delayInMs, priority);
   }
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
                                                  TaskPriority priority) {
-    return super.submitScheduled(wrap(task, priority, false), 
-                                 delayInMs, priority);
+    return super.submitScheduled(wrap(task, priority, false), delayInMs, priority);
   }
 
   @Override
@@ -460,7 +297,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return median time in milliseconds tasks run
    */
   public long getMedianTaskRunTime() {
-    List<Long> times = new ArrayList<Long>(runTimes);
+    List<Long> times = new ArrayList<Long>(statsManager.runTimes);
     if (times.isEmpty()) {
       return -1;
     }
@@ -475,8 +312,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return average delay for tasks to be executed
    */
   public long getAvgExecutionDelay() {
-    List<Long> resultList = new ArrayList<Long>(lowPriorityExecutionDelay);
-    resultList.addAll(highPriorityExecutionDelay);
+    List<Long> resultList = new ArrayList<Long>(statsManager.lowPriorityExecutionDelay);
+    resultList.addAll(statsManager.highPriorityExecutionDelay);
     
     return getAvgTime(resultList);
   }
@@ -506,7 +343,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return median delay for high priority tasks to be executed
    */
   public long getHighPriorityMedianExecutionDelay() {
-    List<Long> times = new ArrayList<Long>(highPriorityExecutionDelay);
+    List<Long> times = new ArrayList<Long>(statsManager.highPriorityExecutionDelay);
     if (times.isEmpty()) {
       return -1;
     }
@@ -522,7 +359,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return median delay for low priority tasks to be executed
    */
   public long getLowPriorityMedianExecutionDelay() {
-    List<Long> times = new ArrayList<Long>(lowPriorityExecutionDelay);
+    List<Long> times = new ArrayList<Long>(statsManager.lowPriorityExecutionDelay);
     if (times.isEmpty()) {
       return -1;
     }
@@ -539,7 +376,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return list which represents execution delay samples
    */
   public List<Long> getHighPriorityExecutionDelays() {
-    List<Long> result = new ArrayList<Long>(highPriorityExecutionDelay);
+    List<Long> result = new ArrayList<Long>(statsManager.highPriorityExecutionDelay);
     
     return Collections.unmodifiableList(result);
   }
@@ -552,7 +389,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return list which represents execution delay samples
    */
   public List<Long> getLowPriorityExecutionDelays() {
-    List<Long> result = new ArrayList<Long>(lowPriorityExecutionDelay);
+    List<Long> result = new ArrayList<Long>(statsManager.lowPriorityExecutionDelay);
     
     return Collections.unmodifiableList(result);
   }
@@ -585,7 +422,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return the list of currently recorded run times for tasks
    */
   public List<Long> getRunTimes() {
-    List<Long> result = new ArrayList<Long>(runTimes);
+    List<Long> result = new ArrayList<Long>(statsManager.runTimes);
     
     return Collections.unmodifiableList(result);
   }
@@ -606,7 +443,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return total quantity of high priority tasks run
    */
   public int getHighPriorityTotalExecutionCount() {
-    return totalHighPriorityExecutions.get();
+    return statsManager.totalHighPriorityExecutions.get();
   }
   
   /**
@@ -615,7 +452,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return total quantity of low priority tasks run
    */
   public int getLowPriorityTotalExecutionCount() {
-    return totalLowPriorityExecutions.get();
+    return statsManager.totalLowPriorityExecutions.get();
   }
   
   /**
@@ -631,7 +468,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     List<Runnable> result = new LinkedList<Runnable>();
     
     long now = Clock.accurateForwardProgressingMillis();
-    Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
+    Iterator<Entry<Wrapper, Long>> it = statsManager.runningTasks.entrySet().iterator();
     while (it.hasNext()) {
       Entry<Wrapper, Long> entry = it.next();
       if (! entry.getKey().callable) {
@@ -657,7 +494,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     List<Callable<?>> result = new LinkedList<Callable<?>>();
     
     long now = Clock.accurateForwardProgressingMillis();
-    Iterator<Entry<Wrapper, Long>> it = runningTasks.entrySet().iterator();
+    Iterator<Entry<Wrapper, Long>> it = statsManager.runningTasks.entrySet().iterator();
     while (it.hasNext()) {
       Entry<Wrapper, Long> entry = it.next();
       if (entry.getKey().callable) {
@@ -681,7 +518,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     int result = 0;
     
     long now = Clock.accurateForwardProgressingMillis();
-    Iterator<Long> it = runningTasks.values().iterator();
+    Iterator<Long> it = statsManager.runningTasks.values().iterator();
     while (it.hasNext()) {
       Long startTime = it.next();
       if (now - startTime >= timeInMs) {
@@ -699,7 +536,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    */
   @Override
   public int getCurrentRunningCount() {
-    return runningTasks.size();
+    return statsManager.runningTasks.size();
   }
   
   /**
@@ -711,8 +548,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return percent of time that threads are able to be reused
    */
   public double getThreadAvailablePercent() {
-    List<Boolean> totalList = new ArrayList<Boolean>(lowPriorityWorkerAvailable);
-    totalList.addAll(highPriorityWorkerAvailable);
+    List<Boolean> totalList = new ArrayList<Boolean>(statsManager.lowPriorityWorkerAvailable);
+    totalList.addAll(statsManager.highPriorityWorkerAvailable);
       
     return getTruePercent(totalList);
   }
@@ -726,7 +563,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return percent of time that threads are able to be reused for high priority tasks
    */
   public double getHighPriorityThreadAvailablePercent() {
-    List<Boolean> list = new ArrayList<Boolean>(highPriorityWorkerAvailable);
+    List<Boolean> list = new ArrayList<Boolean>(statsManager.highPriorityWorkerAvailable);
     
     return getTruePercent(list);
   }
@@ -740,7 +577,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return percent of time that threads are able to be reused for low priority tasks
    */
   public double getLowPriorityThreadAvailablePercent() {
-    List<Boolean> list = new ArrayList<Boolean>(lowPriorityWorkerAvailable);
+    List<Boolean> list = new ArrayList<Boolean>(statsManager.lowPriorityWorkerAvailable);
     
     return getTruePercent(list);
   }
@@ -769,50 +606,207 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   }
   
   /**
-   * Called at the start of execution to track statistics around task execution.
+   * <p>This class primarily holds the structures used to store the statistics.  These can not be 
+   * maintained in the parent class since sub classes need to be able to access them.  This is to 
+   * help facilitate allowing the parent class to be garbage collected freely despite references 
+   * to subclasses from other thread garbage collection roots.</p>
    * 
-   * @param taskWrapper Wrapper that is about to be executed
+   * @author jent - Mike Jensen
+   * @since 3.5.0
    */
-  protected void trackTaskStart(Wrapper taskWrapper) {
-    runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.accurateForwardProgressingMillis());
+  protected static class StatsManager {
+    protected final AtomicInteger totalHighPriorityExecutions;
+    protected final AtomicInteger totalLowPriorityExecutions;
+    protected final ConcurrentHashMap<Wrapper, Long> runningTasks;
+    protected final ConcurrentArrayList<Long> runTimes;
+    protected final ConcurrentArrayList<Boolean> lowPriorityWorkerAvailable;
+    protected final ConcurrentArrayList<Boolean> highPriorityWorkerAvailable;
+    protected final ConcurrentArrayList<Long> lowPriorityExecutionDelay;
+    protected final ConcurrentArrayList<Long> highPriorityExecutionDelay;
     
-    switch (taskWrapper.priority) {
-      case High:
-        totalHighPriorityExecutions.incrementAndGet();
-        break;
-      case Low:
-        totalLowPriorityExecutions.incrementAndGet();
-        break;
-      default:
-        throw new UnsupportedOperationException();
+    protected StatsManager() {
+      totalHighPriorityExecutions = new AtomicInteger(0);
+      totalLowPriorityExecutions = new AtomicInteger(0);
+      runningTasks = new ConcurrentHashMap<Wrapper, Long>();
+      int endPadding = MAX_WINDOW_SIZE * 2;
+      runTimes = new ConcurrentArrayList<Long>(0, endPadding);
+      lowPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+      highPriorityWorkerAvailable = new ConcurrentArrayList<Boolean>(0, endPadding);
+      lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+      highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+    }
+
+    /**
+     * Called at the start of execution to track statistics around task execution.
+     * 
+     * @param taskWrapper Wrapper that is about to be executed
+     */
+    protected void trackTaskStart(Wrapper taskWrapper) {
+      runningTasks.put(taskWrapper, taskWrapper.startTime = Clock.accurateForwardProgressingMillis());
+      
+      switch (taskWrapper.priority) {
+        case High:
+          totalHighPriorityExecutions.incrementAndGet();
+          break;
+        case Low:
+          totalLowPriorityExecutions.incrementAndGet();
+          break;
+        default:
+          throw new UnsupportedOperationException();
+      }
+    }
+    
+    /**
+     * Used to track how long tasks are tacking to complete.
+     * 
+     * @param taskWrapper wrapper for task that completed
+     */
+    protected void trackTaskFinish(Wrapper taskWrapper) {
+      long finishTime = Clock.accurateForwardProgressingMillis();
+      synchronized (runTimes.getModificationLock()) {
+        runTimes.add(finishTime - taskWrapper.startTime);
+        trimList(runTimes);
+      }
+      runningTasks.remove(taskWrapper);
+    }
+    
+    /**
+     * Reduces the list size to be within the max window size.
+     * 
+     * Should have the list synchronized/locked before calling.
+     * 
+     * @param list LinkedList to check size of.
+     */
+    @SuppressWarnings("rawtypes")
+    protected static void trimList(Deque list) {
+      while (list.size() > MAX_WINDOW_SIZE) {
+        list.removeFirst();
+      }
     }
   }
   
   /**
-   * Used to track how long tasks are tacking to complete.
+   * <p>An extending class of {@link WorkerPool}, allowing us to gather statistics about how 
+   * workers are used in the executor.  An example of such statistics are how long tasks are 
+   * delayed from their desired execution.  Another example is how often a worker can be reused vs 
+   * how often they have to be created.</p>
    * 
-   * @param taskWrapper wrapper for task that completed
+   * @author jent - Mike Jensen
+   * @since 3.5.0
    */
-  protected void trackTaskFinish(Wrapper taskWrapper) {
-    long finishTime = Clock.accurateForwardProgressingMillis();
-    synchronized (runTimes.getModificationLock()) {
-      runTimes.add(finishTime - taskWrapper.startTime);
-      trimList(runTimes);
-    }
-    runningTasks.remove(taskWrapper);
-  }
+  protected static class StatisticWorkerPool extends WorkerPool {
+    protected final StatsManager statsManager;
   
-  /**
-   * Reduces the list size to be within the max window size.
-   * 
-   * Should have the list synchronized/locked before calling.
-   * 
-   * @param list LinkedList to check size of.
-   */
-  @SuppressWarnings("rawtypes")
-  protected static void trimList(Deque list) {
-    while (list.size() > MAX_WINDOW_SIZE) {
-      list.removeFirst();
+    protected StatisticWorkerPool(ThreadFactory threadFactory, int corePoolSize,
+                                  int maxPoolSize, long keepAliveTimeInMs,
+                                  long maxWaitForLorPriorityInMs, StatsManager statsManager) {
+      super(threadFactory, corePoolSize, maxPoolSize, keepAliveTimeInMs, maxWaitForLorPriorityInMs);
+      
+      this.statsManager = statsManager;
+    }
+
+    // Overridden so we can track the availability for workers for high priority tasks
+    @Override
+    protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
+      Worker w = null;
+      synchronized (workersLock) {
+        if (! isShutdownFinished()) {
+          synchronized (statsManager.highPriorityWorkerAvailable.getModificationLock()) {
+            statsManager.highPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
+            StatsManager.trimList(statsManager.highPriorityWorkerAvailable);
+          }
+          if (getCurrentPoolSize() >= getMaxPoolSize()) {
+            lastHighDelayMillis = task.getDelayEstimateInMs();
+            // we can't make the pool any bigger
+            w = getExistingWorker(Long.MAX_VALUE);
+          } else {
+            lastHighDelayMillis = 0;
+            
+            if (availableWorkers.isEmpty()) {
+              w = makeNewWorker();
+            } else {
+              // always remove from the front, to get the newest worker
+              w = availableWorkers.removeFirst();
+            }
+          }
+        }
+      }
+      
+      if (w != null) {  // may be null if shutdown
+        synchronized (statsManager.highPriorityExecutionDelay.getModificationLock()) {
+          Clock.systemNanoTime(); // update clock for task to ensure it is accurate
+          long executionDelay = task.getDelayEstimateInMs();
+          if (executionDelay <= 0) {
+            statsManager.highPriorityExecutionDelay.add(executionDelay * -1);
+            StatsManager.trimList(statsManager.highPriorityExecutionDelay);
+          }
+        }
+        
+        w.nextTask(task);
+      }
+    }
+  
+    // Overridden so we can track the availability for workers for low priority tasks
+    @Override
+    protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
+      Worker w = null;
+      synchronized (workersLock) {
+        if (! isShutdownFinished()) {
+          // wait for high priority tasks that have been waiting longer than us if all workers are consumed
+          long waitMs;
+          while (getCurrentPoolSize() >= getMaxPoolSize() && 
+                 availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
+                 ! isShutdownFinished() &&
+                 (waitMs = task.getDelayEstimateInMs() - lastHighDelayMillis) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
+            workersLock.wait(waitMs);
+            Clock.systemNanoTime(); // update for getDelayEstimateInMillis
+          }
+          
+          if (! isShutdownFinished()) {  // check again that we are still running
+            if (getCurrentPoolSize() >= getMaxPoolSize()) {
+              synchronized (statsManager.lowPriorityWorkerAvailable.getModificationLock()) {
+                statsManager.lowPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
+                StatsManager.trimList(statsManager.lowPriorityWorkerAvailable);
+              }
+              w = getExistingWorker(Long.MAX_VALUE);
+            } else if (getCurrentPoolSize() == 0) {
+              synchronized (statsManager.lowPriorityWorkerAvailable.getModificationLock()) {
+                statsManager.lowPriorityWorkerAvailable.add(false);
+                StatsManager.trimList(statsManager.lowPriorityWorkerAvailable);
+              }
+              w = makeNewWorker();
+            } else {
+              w = getExistingWorker(getMaxWaitForLowPriority());
+              synchronized (statsManager.lowPriorityWorkerAvailable.getModificationLock()) {
+                statsManager.lowPriorityWorkerAvailable.add(w != null);
+                StatsManager.trimList(statsManager.lowPriorityWorkerAvailable);
+              }
+              if (w == null) {
+                // this means we expired past our wait time, so create a worker if we can
+                if (getCurrentPoolSize() >= getMaxPoolSize()) {
+                  // more workers were created while waiting, now have reached our max
+                  w = getExistingWorker(Long.MAX_VALUE);
+                } else {
+                  w = makeNewWorker();
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      if (w != null) {  // may be null if shutdown
+        synchronized (statsManager.lowPriorityExecutionDelay.getModificationLock()) {
+          Clock.systemNanoTime(); // update clock for task to ensure it is accurate
+          long executionDelay = task.getDelayEstimateInMs();
+          if (executionDelay <= 0) {
+            statsManager.lowPriorityExecutionDelay.add(executionDelay * -1);
+            StatsManager.trimList(statsManager.lowPriorityExecutionDelay);
+          }
+        }
+        
+        w.nextTask(task);
+      }
     }
   }
   
@@ -822,7 +816,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract class Wrapper {
+  protected abstract static class Wrapper {
     public final boolean callable;
     public final TaskPriority priority;
     public final boolean recurring;
@@ -830,9 +824,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     // so should only be accessed and used from within the same thread
     private long startTime;
     
-    public Wrapper(boolean callable, 
-                   TaskPriority priority, 
-                   boolean recurring) {
+    public Wrapper(boolean callable, TaskPriority priority, boolean recurring) {
       this.callable = callable;
       this.priority = priority;
       this.recurring = recurring;
@@ -846,26 +838,27 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected class RunnableStatWrapper extends Wrapper 
-                                      implements Runnable, 
-                                                 RunnableContainerInterface {
+  protected static class RunnableStatWrapper extends Wrapper 
+                                             implements Runnable, 
+                                                        RunnableContainerInterface {
+    private final StatsManager statsManager;
     private final Runnable toRun;
     
-    public RunnableStatWrapper(Runnable toRun, 
-                               TaskPriority priority, 
-                               boolean recurring) {
+    public RunnableStatWrapper(StatsManager statsManager, Runnable toRun, 
+                               TaskPriority priority, boolean recurring) {
       super(false, priority, recurring);
       
+      this.statsManager = statsManager;
       this.toRun = toRun;
     }
     
     @Override
     public void run() {
-      trackTaskStart(this);
+      statsManager.trackTaskStart(this);
       try {
         toRun.run();
       } finally {
-        trackTaskFinish(this);
+        statsManager.trackTaskFinish(this);
       }
     }
 
@@ -881,26 +874,27 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected class CallableStatWrapper<T> extends Wrapper 
-                                         implements Callable<T>, 
-                                                    CallableContainerInterface<T> {
+  protected static class CallableStatWrapper<T> extends Wrapper 
+                                                implements Callable<T>, 
+                                                           CallableContainerInterface<T> {
+    private final StatsManager statsManager;
     private final Callable<T> toRun;
     
-    public CallableStatWrapper(Callable<T> toRun, 
-                               TaskPriority priority, 
-                               boolean recurring) {
+    public CallableStatWrapper(StatsManager statsManager, Callable<T> toRun, 
+                               TaskPriority priority, boolean recurring) {
       super(true, priority, recurring);
       
+      this.statsManager = statsManager;
       this.toRun = toRun;
     }
     
     @Override
     public T call() throws Exception {
-      trackTaskStart(this);
+      statsManager.trackTaskStart(this);
       try {
         return toRun.call();
       } finally {
-        trackTaskFinish(this);
+        statsManager.trackTaskFinish(this);
       }
     }
 
