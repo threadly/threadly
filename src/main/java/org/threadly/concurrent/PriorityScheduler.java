@@ -595,7 +595,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       priority = defaultPriority;
     }
 
-    addToScheduleQueue(priority, new RecurringRateTaskWrapper(task, getQueueManager(priority), initialDelay, period));
+    addToScheduleQueue(priority, new RecurringRateTaskWrapper(task, getQueueManager(priority), 
+                                                              initialDelay, period));
   }
   
   /**

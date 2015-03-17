@@ -154,4 +154,60 @@ public class SchedulingUtilsTest {
       // expected
     }
   }
+  
+  @Test
+  public void shiftLocalHourToUTCWithoutRangeChangeNegShiftTest() {
+    int hourShift = SchedulingUtils.cachedHourShift = -2;
+    int startHour = -1 * hourShift;
+    
+    assertEquals(startHour - hourShift, SchedulingUtils.shiftLocalHourToUTC(startHour));
+  }
+  
+  @Test
+  public void shiftLocalHourToUTCWithoutRangeChangePosShiftTest() {
+    int hourShift = SchedulingUtils.cachedHourShift = 2;
+    int startHour = 24 - hourShift;
+    
+    assertEquals(startHour - hourShift, SchedulingUtils.shiftLocalHourToUTC(startHour));
+  }
+  
+  @Test
+  public void shiftLocalHourToUTCOverflowNegShiftTest() {
+    int hourShift = SchedulingUtils.cachedHourShift = -2;
+    int startHour = 23;
+    
+    assertEquals((startHour - hourShift) % 24, SchedulingUtils.shiftLocalHourToUTC(startHour));
+  }
+  
+  @Test
+  public void shiftLocalHourToUTCOverflowPosShiftTest() {
+    int hourShift = SchedulingUtils.cachedHourShift = 2;
+    int startHour = 0;
+    
+    assertEquals(24 - hourShift, SchedulingUtils.shiftLocalHourToUTC(startHour));
+  }
+  
+  @Test
+  public void shiftLocalHourToUTCUnderflowNegShiftTest() {
+    int hourShift = SchedulingUtils.cachedHourShift = -2;
+    int startHour = 0;
+    
+    assertEquals(-1 * hourShift, SchedulingUtils.shiftLocalHourToUTC(startHour));
+  }
+  
+  @Test
+  public void shiftLocalHourToUTCFail() {
+    try {
+      SchedulingUtils.shiftLocalHourToUTC(-1);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      SchedulingUtils.shiftLocalHourToUTC(24);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
 }

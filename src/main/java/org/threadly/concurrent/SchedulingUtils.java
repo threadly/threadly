@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.util.ArgumentVerifier;
@@ -16,6 +17,8 @@ import org.threadly.util.Clock;
  * @since 3.5.0
  */
 public class SchedulingUtils {
+  protected static volatile int cachedHourShift = Integer.MIN_VALUE;
+  
   /**
    * Call to calculate how many milliseconds until the provided minute.  If we are past the 
    * provided minute, it will be the milliseconds until we reach that minute with the NEXT hour.  
@@ -65,6 +68,10 @@ public class SchedulingUtils {
    * Call to calculate how many milliseconds until the provided time.  If we are past the 
    * provided hour/minute, it will be the milliseconds until we reach that time with the NEXT day.  
    * 
+   * It is important to note that the time zone for this hour is UTC.  If you want to use this for 
+   * local time, just pass the hour through {@link #shiftLocalHourToUTC(int)}.  This will convert 
+   * a local time's hour to UTC so that it can be used in this invocation.  
+   * 
    * Because of use of {@link Clock#lastKnownTimeMillis()}, this calculation will only be accurate 
    * within about 100 milliseconds.  Of course if provided to a scheduler, depending on it's work 
    * load that variation may be greater.
@@ -86,6 +93,10 @@ public class SchedulingUtils {
   /**
    * Call to calculate how many milliseconds until the provided time.  If we are past the 
    * provided hour/minute, it will be the milliseconds until we reach that time with the NEXT day.  
+   * 
+   * It is important to note that the time zone for this hour is UTC.  If you want to use this for 
+   * local time, just pass the hour through {@link #shiftLocalHourToUTC(int)}.  This will convert 
+   * a local time's hour to UTC so that it can be used in this invocation.  
    * 
    * Because of use of {@link Clock#lastKnownTimeMillis()}, this calculation will only be accurate 
    * within about 100 milliseconds.  Of course if provided to a scheduler, depending on it's work 
@@ -117,5 +128,34 @@ public class SchedulingUtils {
     // subtract minutes, seconds, and milliseconds that have passed
     long offset = now % TimeUnit.HOURS.toMillis(1);
     return delayInMillis - offset;
+  }
+  
+  /**
+   * This will shift an hour from the local time zone to UTC.  This shift will take into account 
+   * the current local state of daylight savings time.  The primary usage of this is so that 
+   * {@link #getDelayTillHour(int, int)} can be used with a local time zone hour.
+   * 
+   * @param hour Hour to be shifted in the local time zone in 24 hour format
+   * @return Hour shifted to the UTC time zone in 24 hour format
+   */
+  public static int shiftLocalHourToUTC(int hour) {
+    ArgumentVerifier.assertLessThan(hour, TimeUnit.DAYS.toHours(1), "hour");
+    ArgumentVerifier.assertNotNegative(hour, "hour");
+    
+    if (cachedHourShift == Integer.MIN_VALUE) {
+      Calendar calendar = Calendar.getInstance();
+      int shiftInMillis = calendar.get(Calendar.ZONE_OFFSET) + calendar.get(Calendar.DST_OFFSET);
+      cachedHourShift = (int)(shiftInMillis / TimeUnit.HOURS.toMillis(1));
+    }
+    
+
+    hour -= cachedHourShift;
+    if (hour > TimeUnit.DAYS.toHours(1) - 1) {
+      hour %= TimeUnit.DAYS.toHours(1);
+    } else if (hour < 0) {
+      hour += TimeUnit.DAYS.toHours(1);
+    }
+    
+    return hour;
   }
 }
