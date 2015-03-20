@@ -88,7 +88,6 @@ public class SchedulingUtils {
     
     return getDelayTillHour(Clock.lastKnownTimeMillis(), hour, minute);
   }
-
   
   /**
    * Call to calculate how many milliseconds until the provided time.  If we are past the 
@@ -147,7 +146,6 @@ public class SchedulingUtils {
       int shiftInMillis = calendar.get(Calendar.ZONE_OFFSET) + calendar.get(Calendar.DST_OFFSET);
       cachedHourShift = (int)(shiftInMillis / TimeUnit.HOURS.toMillis(1));
     }
-    
 
     hour -= cachedHourShift;
     if (hour > TimeUnit.DAYS.toHours(1) - 1) {

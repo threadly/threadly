@@ -1,6 +1,10 @@
 package org.threadly.test.concurrent;
 
+import java.util.concurrent.Callable;
+
+import org.threadly.concurrent.AbstractSubmitterScheduler;
 import org.threadly.concurrent.NoThreadScheduler;
+import org.threadly.concurrent.SchedulerServiceInterface;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandlerInterface;
 
@@ -20,21 +24,47 @@ import org.threadly.util.ExceptionHandlerInterface;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-public class TestableScheduler extends NoThreadScheduler {
+public class TestableScheduler extends AbstractSubmitterScheduler 
+                               implements SchedulerServiceInterface {
+  private final InternalScheduler scheduler;
   private long nowInMillis;
   
   /**
    * Constructs a new {@link TestableScheduler} scheduler.
    */
   public TestableScheduler() {
-    super(false);
-    
+    scheduler = new InternalScheduler();
     nowInMillis = Clock.lastKnownTimeMillis();
   }
 
   @Override
-  protected long nowInMillis() {
-    return nowInMillis;
+  public boolean remove(Runnable task) {
+    return scheduler.remove(task);
+  }
+
+  @Override
+  public boolean remove(Callable<?> task) {
+    return scheduler.remove(task);
+  }
+
+  @Override
+  public boolean isShutdown() {
+    return scheduler.isShutdown();
+  }
+
+  @Override
+  protected void doSchedule(Runnable task, long delayInMillis) {
+    scheduler.schedule(task, delayInMillis);
+  }
+
+  @Override
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+    scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay);
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+    scheduler.scheduleAtFixedRate(task, initialDelay, period);
   }
   
   /**
@@ -113,7 +143,6 @@ public class TestableScheduler extends NoThreadScheduler {
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run during this tick call
    */
-  @Override
   public int tick(ExceptionHandlerInterface exceptionHandler) {
     long currentRealTime = Clock.accurateTimeMillis();
     if (nowInMillis > currentRealTime) {
@@ -170,12 +199,20 @@ public class TestableScheduler extends NoThreadScheduler {
     }
     nowInMillis = currentTime;
     
-    try {
-      return super.tick(exceptionHandler);
-    } catch (InterruptedException e) {
-      // should not be possible with a false for blocking
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(e);
+    return scheduler.tick(exceptionHandler);
+  }
+  
+  /**
+   * <p>Small internal wrapper class so that we can control what from the "NoThreadScheduler" 
+   * api's we want to expose from this implementation.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 2.4.0
+   */
+  private class InternalScheduler extends NoThreadScheduler {
+    @Override
+    protected long nowInMillis() {
+      return nowInMillis;
     }
   }
 }

@@ -5,13 +5,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
-import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>A collection of small utilities for handling futures.</p>
@@ -22,54 +20,6 @@ import org.threadly.util.ArgumentVerifier;
 public class FutureUtils {
   private FutureUtils() {
     // don't construct
-  }
-  
-  /**
-   * Adds a callback to a given future to be called once the future completes.  Please see 
-   * {@link ListenableFuture#addListener(Runnable)} to understand more about how these callbacks 
-   * are called.
-   * 
-   * The callback of this call will be called either on this thread (if the future has already 
-   * completed), or on the resulting thread.  If the callback has high complexity, consider 
-   * passing an {@link Executor} in for it to be called on.
-   * 
-   * @deprecated Call directly on the ListenableFuture: {@link ListenableFuture#addCallback(FutureCallback)}
-   * 
-   * @since 1.2.0
-   * 
-   * @param <T> The result object type returned from the future
-   * @param future future to attach callback to
-   * @param callback callback to call once future completes
-   */
-  @Deprecated
-  public static <T> void addCallback(ListenableFuture<T> future, 
-                                     FutureCallback<? super T> callback) {
-    ArgumentVerifier.assertNotNull(future, "future");
-    
-    future.addCallback(callback);
-  }
-  
-  /**
-   * Adds a callback to a given future to be called once the future completes.  Please see 
-   * {@link ListenableFuture#addListener(Runnable, Executor)} to understand more about how these 
-   * callbacks are called.
-   * 
-   * @deprecated Call directly on the ListenableFuture: {@link ListenableFuture#addCallback(FutureCallback)}
-   * 
-   * @since 1.2.0
-   * 
-   * @param <T> The result object type returned from the future
-   * @param future future to attach callback to
-   * @param callback callback to call once future completes
-   * @param executor executor to call callback on
-   */
-  @Deprecated
-  public static <T> void addCallback(ListenableFuture<T> future, 
-                                     FutureCallback<? super T> callback, 
-                                     Executor executor) {
-    ArgumentVerifier.assertNotNull(future, "future");
-    
-    future.addCallback(callback, executor);
   }
   
   /**

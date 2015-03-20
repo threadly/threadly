@@ -253,7 +253,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     protected final Thread execThread;
     
     public SchedulerManager(ThreadFactory threadFactory) {
-      scheduler = new NoThreadScheduler(true);  // true so we wont tight loop in the run
+      scheduler = new NoThreadScheduler();
       execThread = threadFactory.newThread(this);
       if (execThread.isAlive()) {
         throw new IllegalThreadStateException();
@@ -338,7 +338,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     public void run() {
       while (state.get() != 2) {
         try {
-          scheduler.tick(null);
+          scheduler.blockingTick(null);
         } catch (InterruptedException e) {
           // reset interrupted status
           Thread.interrupted();
