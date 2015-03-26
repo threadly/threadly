@@ -91,7 +91,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
   
   @Test
   public void isShutdownTest() {
-    PriorityScheduler executor = new StrictPriorityScheduler(1, 1, 100);
+    PriorityScheduler executor = new StrictPriorityScheduler(1);
     try {
       SchedulerServiceLimiter limiter = new SchedulerServiceLimiter(executor, 1);
       
@@ -141,10 +141,9 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
-        executor.prestartAllCoreThreads();
+        executor.prestartAllThreads();
       }
       executors.add(executor);
       

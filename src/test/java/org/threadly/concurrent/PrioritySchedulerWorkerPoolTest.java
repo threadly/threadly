@@ -43,35 +43,46 @@ public class PrioritySchedulerWorkerPoolTest {
     assertTrue(workerPool.isShutdownFinished());
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetCorePoolSizeTest() {
     int corePoolSize = 10;
     workerPool.setMaxPoolSize(corePoolSize + 10);
-    workerPool.setCorePoolSize(corePoolSize);
+    workerPool.setPoolSize(corePoolSize);
       
-    assertEquals(corePoolSize, workerPool.getCorePoolSize());
+    assertEquals(corePoolSize, workerPool.corePoolSize);
   }
   
   @Test
-  public void getAndSetCorePoolSizeAboveMaxTest() {
-    int corePoolSize = workerPool.getMaxPoolSize() * 2;
-    workerPool.setCorePoolSize(corePoolSize);
-    
-    assertEquals(corePoolSize, workerPool.getCorePoolSize());
+  public void getAndSetPoolSizeTest() {
+    int corePoolSize = 10;
+    workerPool.setPoolSize(corePoolSize);
+      
     assertEquals(corePoolSize, workerPool.getMaxPoolSize());
   }
   
+  @SuppressWarnings("deprecation")
+  @Test
+  public void getAndSetCorePoolSizeAboveMaxTest() {
+    int corePoolSize = workerPool.getMaxPoolSize() * 2;
+    workerPool.setPoolSize(corePoolSize);
+    
+    assertEquals(corePoolSize, workerPool.corePoolSize);
+    assertEquals(corePoolSize, workerPool.getMaxPoolSize());
+  }
+  
+  @SuppressWarnings("deprecation")
   @Test
   public void lowerSetCorePoolSizeCleansWorkerTest() {
     workerPool.setKeepAliveTime(0);
     
-    workerPool.setCorePoolSize(5);
-    workerPool.prestartAllCoreThreads();
+    workerPool.setPoolSize(5);
+    workerPool.prestartAllThreads();
     // must allow core thread timeout for this to work
     workerPool.allowCoreThreadTimeOut(true);
     TestUtils.blockTillClockAdvances();
     
-    workerPool.setCorePoolSize(1);
+    workerPool.setPoolSize(1);
     
     // verify worker was cleaned up
     assertEquals(0, workerPool.getCurrentPoolSize());
@@ -81,13 +92,14 @@ public class PrioritySchedulerWorkerPoolTest {
   public void setCorePoolSizeFail() {
     // verify no negative values
     try {
-      workerPool.setCorePoolSize(-1);
+      workerPool.setPoolSize(-1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException expected) {
       // ignored
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetMaxPoolSizeTest() {
     int newMaxPoolSize = workerPool.getMaxPoolSize() * 2;
@@ -96,21 +108,23 @@ public class PrioritySchedulerWorkerPoolTest {
     assertEquals(newMaxPoolSize, workerPool.getMaxPoolSize());
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetMaxPoolSizeBelowCoreTest() {
-    workerPool.setCorePoolSize(5);
+    workerPool.setPoolSize(5);
     workerPool.setMaxPoolSize(1);
     
     assertEquals(1, workerPool.getMaxPoolSize());
-    assertEquals(1, workerPool.getCorePoolSize());
+    assertEquals(1, workerPool.corePoolSize);
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void lowerSetMaxPoolSizeCleansWorkerTest() {
     workerPool.setKeepAliveTime(0);
     
-    workerPool.setCorePoolSize(5);
-    workerPool.prestartAllCoreThreads();
+    workerPool.setPoolSize(5);
+    workerPool.prestartAllThreads();
     // must allow core thread timeout for this to work
     workerPool.allowCoreThreadTimeOut(true);
     TestUtils.blockTillClockAdvances();
@@ -121,9 +135,16 @@ public class PrioritySchedulerWorkerPoolTest {
     assertEquals(0, workerPool.getCurrentPoolSize());
   }
   
+  @SuppressWarnings("deprecation")
   @Test (expected = IllegalArgumentException.class)
   public void setMaxPoolSizeFail() {
     workerPool.setMaxPoolSize(-1); // should throw exception for negative value
+    fail("Exception should have been thrown");
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void setPoolSizeFail() {
+    workerPool.setPoolSize(-1); // should throw exception for negative value
     fail("Exception should have been thrown");
   }
   
@@ -149,19 +170,21 @@ public class PrioritySchedulerWorkerPoolTest {
     assertEquals(PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, workerPool.getMaxWaitForLowPriority());
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetKeepAliveTimeTest() {
-    assertEquals(DEFAULT_KEEP_ALIVE_TIME, workerPool.getKeepAliveTime());
+    assertEquals(DEFAULT_KEEP_ALIVE_TIME, workerPool.keepAliveTimeInMs);
     
     long keepAliveTime = Long.MAX_VALUE;
     workerPool.setKeepAliveTime(keepAliveTime);
     
-    assertEquals(keepAliveTime, workerPool.getKeepAliveTime());
+    assertEquals(keepAliveTime, workerPool.keepAliveTimeInMs);
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void lowerSetKeepAliveTimeCleansWorkerTest() {
-    workerPool.prestartAllCoreThreads();
+    workerPool.prestartAllThreads();
     // must allow core thread timeout for this to work
     workerPool.allowCoreThreadTimeOut(true);
     TestUtils.blockTillClockAdvances();
@@ -172,18 +195,20 @@ public class PrioritySchedulerWorkerPoolTest {
     assertEquals(0, workerPool.getCurrentPoolSize());
   }
   
+  @SuppressWarnings("deprecation")
   @Test (expected = IllegalArgumentException.class)
   public void setKeepAliveTimeFail() {
     workerPool.setKeepAliveTime(-1L); // should throw exception for negative value
     fail("Exception should have been thrown");
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void allowCoreThreadTimeOutTest() {
     int corePoolSize = 5;
     
-    workerPool.setCorePoolSize(corePoolSize);
-    workerPool.prestartAllCoreThreads();
+    workerPool.setPoolSize(corePoolSize);
+    workerPool.prestartAllThreads();
     workerPool.setKeepAliveTime(0);
     
     workerPool.allowCoreThreadTimeOut(false);
@@ -204,13 +229,13 @@ public class PrioritySchedulerWorkerPoolTest {
   }
   
   @Test
-  public void prestartAllCoreThreadsTest() {
+  public void prestartAllThreadsTest() {
     int corePoolSize = 5;
-    workerPool.setCorePoolSize(corePoolSize);
+    workerPool.setPoolSize(corePoolSize);
     
     assertEquals(0, workerPool.getCurrentPoolSize());
     
-    workerPool.prestartAllCoreThreads();
+    workerPool.prestartAllThreads();
     
     assertEquals(corePoolSize, workerPool.getCurrentPoolSize());
   }
@@ -243,6 +268,7 @@ public class PrioritySchedulerWorkerPoolTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void expireOldWorkersTest() {
     workerPool.setKeepAliveTime(0);
@@ -296,12 +322,6 @@ public class PrioritySchedulerWorkerPoolTest {
     
     assertEquals(1, workerPool.availableWorkers.size());
     
-    workerPool.setKeepAliveTime(0);
-    workerPool.workerDone(workerPool.makeNewWorker());
-    
-    assertEquals(1, workerPool.availableWorkers.size());
-    
-    workerPool.setKeepAliveTime(1000);
     workerPool.startShutdown();
     workerPool.finishShutdown();
     final Worker w = workerPool.makeNewWorker();

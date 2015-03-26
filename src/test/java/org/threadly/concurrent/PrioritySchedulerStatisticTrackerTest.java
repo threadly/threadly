@@ -23,9 +23,15 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     return new PrioritySchedulerStatisticTrackerTestFactory();
   }
   
-  @SuppressWarnings("unused")
+  @SuppressWarnings({ "unused", "deprecation" })
   @Test
   public void constructorTest() {
+    new PrioritySchedulerStatisticTracker(1);
+    new PrioritySchedulerStatisticTracker(1, false);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, false);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 
+                                          new ConfigurableThreadFactory());
     new PrioritySchedulerStatisticTracker(1, 1, 1000);
     new PrioritySchedulerStatisticTracker(1, 1, 1000, false);
     new PrioritySchedulerStatisticTracker(1, 1, 1000, 
@@ -38,12 +44,12 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   
   @Test
   public void constructorNullFactoryTest() {
-    PriorityScheduler ps = new PrioritySchedulerStatisticTracker(1, 1, 1, TaskPriority.High, 1, null);
+    PriorityScheduler ps = new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 1, null);
     // should be set with default
     assertNotNull(ps.workerPool.threadFactory);
   }
   
-  @SuppressWarnings("unused")
+  @SuppressWarnings({ "unused", "deprecation" })
   @Test
   public void constructorFail() {
     try {
@@ -70,6 +76,18 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     } catch (IllegalArgumentException e) {
       // expected
     }
+    try {
+      new PrioritySchedulerStatisticTracker(0, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PrioritySchedulerStatisticTracker(1, TaskPriority.High, -1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test
@@ -83,7 +101,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   }
   
   public static void removeCallableTest(TaskPriority priority) {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(2, 2, 1000);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(2);
     try {
       TestCallable task = new TestCallable();
       scheduler.submitScheduled(task, 1000 * 10, priority);
@@ -111,11 +129,10 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   
   @Test
   public void resetCollectedStatsTest() {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       // prestart so reuse percent is not zero
-      scheduler.prestartAllCoreThreads();
+      scheduler.prestartAllThreads();
       TestRunnable lastRunnable = null;
       boolean flip = false;
       for (int i = 0; i < TEST_QTY; i++) {
@@ -148,8 +165,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   
   @Test
   public void getAvgRunTimeNoInputTest() {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       assertEquals(-1, scheduler.getAverageTaskRunTime());
     } finally {
@@ -161,9 +177,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   public void getAvgRunTimeTest() {
     int lowPriorityCount = TEST_QTY;
     int highPriorityCount = TEST_QTY * 2;
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
-                                                                                        highPriorityCount + lowPriorityCount, 
-                                                                                        1000, TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount);
     try {
       for (int i = 0; i < lowPriorityCount; i++) {
         scheduler.execute(new TestRunnable(), 
@@ -204,9 +218,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     int lowPriorityCount = TEST_QTY;
     int highPriorityCount = TEST_QTY * 2;
     final PrioritySchedulerStatisticTracker scheduler;
-    scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
-                                                      highPriorityCount + lowPriorityCount, 
-                                                      1000, TaskPriority.High, 100);
+    scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount);
     try {
       TestRunnable lastLowPriorityRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {
@@ -242,8 +254,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   
   @Test
   public void getThreadAvailablePercentTest() {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       assertEquals(-1, scheduler.getThreadAvailablePercent(), 0);
       assertEquals(-1, scheduler.getLowPriorityThreadAvailablePercent(), 0);
@@ -286,8 +297,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   
   @Test
   public void getMedianTaskRunTimeNoInputTest() {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       assertEquals(-1, scheduler.getMedianTaskRunTime());
     } finally {
@@ -299,9 +309,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   public void getMedianTaskRunTimeTest() {
     int lowPriorityCount = TEST_QTY;
     int highPriorityCount = TEST_QTY * 2;
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount, 
-                                                                                        highPriorityCount + lowPriorityCount, 
-                                                                                        1000, TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount);
     try {
       BlockingTestRunnable lastRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {
@@ -337,8 +345,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   
   @Test
   public void getAvgExecutionDelayNoInputTest() {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       assertEquals(-1, scheduler.getAvgExecutionDelay());
     } finally {
@@ -347,8 +354,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   }
 
   public void getPriorityAvgExecutionDelayNoInputTest(TaskPriority testPriority) {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       BlockingTestRunnable br = new BlockingTestRunnable();
       switch (testPriority) { // submit with opposite priority
@@ -396,8 +402,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   public void getPriorityAvgExecutionDelayTest(TaskPriority priority) {
     int lowPriorityCount = TEST_QTY;
     int highPriorityCount = TEST_QTY * 2;
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       BlockingTestRunnable lastRunnable = null;
       for (int i = 0; i < lowPriorityCount; i++) {
@@ -471,8 +476,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   public void getPriorityMedianExecutionDelayTest(TaskPriority priority) {
     int lowPriorityCount = TEST_QTY;
     int highPriorityCount = TEST_QTY * 2;
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
 
     assertEquals(-1, scheduler.getHighPriorityMedianExecutionDelay());
     assertEquals(-1, scheduler.getLowPriorityMedianExecutionDelay());
@@ -543,8 +547,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   @Test
   public void getRunnablesRunningOverTimeTest() {
     final int checkTime = 20;
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                        TaskPriority.High, 100);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       BlockingTestRunnable br = new BlockingTestRunnable();
       scheduler.execute(br);
@@ -574,8 +577,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   @Test
   public void getCallablesRunningOverTimeTest() {
     final int checkTime = 20;
-    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                                                                              TaskPriority.High, 100);
+    final PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       BlockCallable bc = new BlockCallable();
       scheduler.submit(bc);
@@ -625,7 +627,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler result = makePriorityScheduler(poolSize, poolSize, Long.MAX_VALUE);
       if (prestartIfAvailable) {
-        result.prestartAllCoreThreads();
+        result.prestartAllThreads();
       }
       
       return result;
@@ -636,6 +638,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
                                                    long keepAliveTimeInMs,
                                                    TaskPriority defaultPriority,
                                                    long maxWaitForLowPriority) {
+      @SuppressWarnings("deprecation")
       PriorityScheduler result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
                                                                        keepAliveTimeInMs, defaultPriority, 
                                                                        maxWaitForLowPriority);
@@ -647,8 +650,27 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     @Override
     public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
                                                    long keepAliveTimeInMs) {
+      @SuppressWarnings("deprecation")
       PriorityScheduler result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
                                                                        keepAliveTimeInMs);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority,
+                                                   long maxWaitForLowPriority) {
+      PriorityScheduler result = new PrioritySchedulerStatisticTracker(poolSize, defaultPriority, 
+                                                                       maxWaitForLowPriority);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize) {
+      PriorityScheduler result = new PrioritySchedulerStatisticTracker(poolSize);
       executors.add(result);
       
       return result;

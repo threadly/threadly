@@ -33,7 +33,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(PARALLEL_COUNT, THREAD_COUNT, 1000);
+    scheduler = new StrictPriorityScheduler(THREAD_COUNT);
     
     SubmitterExecutorInterfaceTest.setupClass();
   }
@@ -202,10 +202,9 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     
     @Override
     public ExecutorLimiter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
-        executor.prestartAllCoreThreads();
+        executor.prestartAllThreads();
       }
       executors.add(executor);
       

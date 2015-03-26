@@ -17,7 +17,7 @@ public class PrioritySchedulerWrapperTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(1, 2, 1000);
+    scheduler = new StrictPriorityScheduler(2);
   }
   
   @AfterClass

@@ -12,15 +12,18 @@ import java.util.concurrent.ThreadFactory;
  */
 @SuppressWarnings("javadoc")
 public class StrictPriorityScheduler extends PriorityScheduler {
+  @Deprecated
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize, long keepAliveTimeInMs) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs);
   }
 
+  @Deprecated
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
                                  long keepAliveTimeInMs, boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, useDaemonThreads);
   }
 
+  @Deprecated
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
                                  long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs) {
@@ -28,12 +31,31 @@ public class StrictPriorityScheduler extends PriorityScheduler {
           defaultPriority, maxWaitForLowPriorityInMs);
   }
 
+  @Deprecated
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
                                  long keepAliveTimeInMs, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
     super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
           defaultPriority, maxWaitForLowPriorityInMs, 
           useDaemonThreads);
+  }
+  
+  public StrictPriorityScheduler(int pollSize) {
+    super(pollSize);
+  }
+
+  public StrictPriorityScheduler(int pollSize, boolean useDaemonThreads) {
+    super(pollSize, useDaemonThreads);
+  }
+
+  public StrictPriorityScheduler(int pollSize, TaskPriority defaultPriority, 
+                                 long maxWaitForLowPriorityInMs) {
+    super(pollSize, defaultPriority, maxWaitForLowPriorityInMs);
+  }
+
+  public StrictPriorityScheduler(int pollSize, TaskPriority defaultPriority, 
+                                 long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
+    super(pollSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads);
   }
 
   public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
@@ -144,11 +166,6 @@ public class StrictPriorityScheduler extends PriorityScheduler {
       }
       
       deligateWorker.nextTask(task);
-    }
-    
-    @Override
-    public long getLastRunTime() {
-      return deligateWorker.getLastRunTime();
     }
   }
 }

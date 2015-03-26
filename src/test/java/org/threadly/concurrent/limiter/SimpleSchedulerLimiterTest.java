@@ -70,10 +70,9 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize,
                                                               boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
-        executor.prestartAllCoreThreads();
+        executor.prestartAllThreads();
       }
       executors.add(executor);
       
