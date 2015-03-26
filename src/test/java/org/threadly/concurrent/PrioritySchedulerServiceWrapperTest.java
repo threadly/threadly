@@ -10,12 +10,9 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerServiceWrapperTest extends ScheduledExecutorServiceTest {
-  private static final int KEEP_ALIVE_TIME = 1000;
-  
   @Override
   protected ScheduledExecutorService makeScheduler(int poolSize) {
-    PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                             KEEP_ALIVE_TIME);
+    PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
     return new PrioritySchedulerServiceWrapper(executor);
   }
   
@@ -28,7 +25,7 @@ public class PrioritySchedulerServiceWrapperTest extends ScheduledExecutorServic
   
   @Test
   public void listenableFutureTest() {
-    PriorityScheduler executor = new StrictPriorityScheduler(1, 1, 200);
+    PriorityScheduler executor = new StrictPriorityScheduler(1);
     try {
       PrioritySchedulerServiceWrapper wrapper = new PrioritySchedulerServiceWrapper(executor);
       TestRunnable futureListener = new TestRunnable();

@@ -53,11 +53,10 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
     @Override
     public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
                                                               boolean prestartIfAvailable) {
-      PriorityScheduler scheduler = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                                1000 * 10);
+      PriorityScheduler scheduler = new StrictPriorityScheduler(poolSize);
       executors.add(scheduler);
       if (prestartIfAvailable) {
-        scheduler.prestartAllCoreThreads();
+        scheduler.prestartAllThreads();
       }
       
       KeyDistributedScheduler distributor = new KeyDistributedScheduler(poolSize, scheduler);

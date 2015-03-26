@@ -52,10 +52,10 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
   
   @Test
   public void getDefaultPriorityTest() {
-    PriorityScheduler executor = new StrictPriorityScheduler(1, 1, 10, TaskPriority.Low, 100);
+    PriorityScheduler executor = new StrictPriorityScheduler(1, TaskPriority.Low, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
     
-    executor = new StrictPriorityScheduler(1, 1, 10, TaskPriority.High, 100);
+    executor = new StrictPriorityScheduler(1, TaskPriority.High, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
   }
   
@@ -115,10 +115,9 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
-        executor.prestartAllCoreThreads();
+        executor.prestartAllThreads();
       }
       executors.add(executor);
       

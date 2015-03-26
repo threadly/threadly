@@ -137,7 +137,7 @@ public class ProfilerTest {
   
   @Test
   public void startWitExecutorTest() {
-    PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1, 1, 1000);
+    PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1);
     try {
       assertEquals(0, e.getCurrentPoolSize());
       assertEquals(0, e.getCurrentRunningCount());

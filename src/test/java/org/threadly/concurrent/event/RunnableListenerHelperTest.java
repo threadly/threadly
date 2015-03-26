@@ -44,7 +44,7 @@ public class RunnableListenerHelperTest {
   
   @Test
   public void runListenerExecutorTest() {
-    PriorityScheduler executor = new StrictPriorityScheduler(1, 1, 100);
+    PriorityScheduler executor = new StrictPriorityScheduler(1);
     try {
       TestRunnable tr = new TestRunnable();
       onceHelper.runListener(tr, executor, true);

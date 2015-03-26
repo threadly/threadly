@@ -37,9 +37,7 @@ public class KeyDistributedExecutorTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL + 1, 
-                                            PARALLEL_LEVEL * 2, 
-                                            1000 * 10);
+    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL * 2);
     
     ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
@@ -388,7 +386,7 @@ public class KeyDistributedExecutorTest {
   
   @Test
   public void limitExecutionPerCycleStressTest() {
-    PriorityScheduler scheduler = new StrictPriorityScheduler(3, 3, 1000 * 10);
+    PriorityScheduler scheduler = new StrictPriorityScheduler(3);
     final AtomicBoolean testComplete = new AtomicBoolean(false);
     try {
       final Integer key1 = 1;

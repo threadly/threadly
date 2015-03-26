@@ -94,7 +94,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   public void limitTest() throws InterruptedException, ExecutionException {
     int rateLimit = 100;
     final AtomicInteger ranPermits = new AtomicInteger();
-    PriorityScheduler pse = new PriorityScheduler(32, 32, 1000);
+    PriorityScheduler pse = new StrictPriorityScheduler(32);
     try {
       RateLimiterExecutor rls = new RateLimiterExecutor(pse, rateLimit);
       ListenableFuture<?> lastFuture = null;
@@ -186,10 +186,9 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     @Override
     public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
                                                             boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize, poolSize, 
-                                                               1000 * 10);
+      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
-        executor.prestartAllCoreThreads();
+        executor.prestartAllThreads();
       }
       executors.add(executor);
       

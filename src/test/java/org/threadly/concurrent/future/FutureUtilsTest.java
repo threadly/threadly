@@ -29,7 +29,7 @@ public class FutureUtilsTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(1, 1, 1000);
+    scheduler = new StrictPriorityScheduler(1);
     
     ThreadlyTestUtil.setIgnoreExceptionHandler();
   }

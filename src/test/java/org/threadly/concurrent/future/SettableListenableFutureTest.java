@@ -206,7 +206,7 @@ public class SettableListenableFutureTest {
   public void getResultTest() throws InterruptedException, ExecutionException {
     final String testResult = StringUtils.randomString(5);
     
-    PriorityScheduler scheduler = new StrictPriorityScheduler(1, 1, 100);
+    PriorityScheduler scheduler = new StrictPriorityScheduler(1);
     try {
       scheduler.schedule(new Runnable() {
         @Override
@@ -227,9 +227,9 @@ public class SettableListenableFutureTest {
                                                 TimeoutException {
     final String testResult = StringUtils.randomString(5);
     
-    PriorityScheduler scheduler = new StrictPriorityScheduler(1, 1, 100);
+    PriorityScheduler scheduler = new StrictPriorityScheduler(1);
     try {
-      scheduler.prestartAllCoreThreads();
+      scheduler.prestartAllThreads();
       scheduler.schedule(new Runnable() {
         @Override
         public void run() {

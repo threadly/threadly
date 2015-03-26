@@ -36,9 +36,7 @@ public class KeyDistributedSchedulerTest {
   
   @Before
   public void setup() {
-    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL + 1, 
-                                            PARALLEL_LEVEL * 2, 
-                                            1000 * 10);
+    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL * 2);
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
     distributor = new KeyDistributedScheduler(scheduler, sLock, 

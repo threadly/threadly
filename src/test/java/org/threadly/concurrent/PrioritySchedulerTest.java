@@ -48,19 +48,19 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     TaskPriority priority = TaskPriority.High;
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000, priority, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1, priority, 1000);
       
       assertEquals(priority, scheduler.getDefaultPriority());
       
       priority = TaskPriority.Low;
-      scheduler = factory.makePriorityScheduler(1, 1, 1000, priority, 1000);
+      scheduler = factory.makePriorityScheduler(1, priority, 1000);
       assertEquals(priority, scheduler.getDefaultPriority());
     } finally {
       factory.shutdown();
     }
   }
   
-  @SuppressWarnings("unused")
+  @SuppressWarnings({ "unused", "deprecation" })
   @Test
   public void constructorFail() {
     try {
@@ -87,13 +87,25 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+    try {
+      new PriorityScheduler(0, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PriorityScheduler(1, TaskPriority.High, -1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   @Test
   public void constructorNullPriorityTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler executor = factory.makePriorityScheduler(1, 1, 1, null, 1);
+      PriorityScheduler executor = factory.makePriorityScheduler(1, null, 1);
       
       assertTrue(executor.getDefaultPriority() == PriorityScheduler.DEFAULT_PRIORITY);
     } finally {
@@ -103,7 +115,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   
   @Test
   public void constructorNullFactoryTest() {
-    PriorityScheduler ps = new PriorityScheduler(1, 1, 1, TaskPriority.High, 1, null);
+    PriorityScheduler ps = new PriorityScheduler(1, TaskPriority.High, 1, null);
     // should be set with default
     assertNotNull(ps.workerPool.threadFactory);
   }
@@ -113,8 +125,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     TaskPriority originalPriority = TaskPriority.Low;
     TaskPriority newPriority = TaskPriority.High;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000, 
-                                                                originalPriority, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1, originalPriority, 1000);
     assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
     PrioritySchedulerInterface newScheduler = scheduler.makeWithDefaultPriority(newPriority);
     try {
@@ -124,6 +135,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetCorePoolSizeTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -143,6 +155,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetCorePoolSizeAboveMaxTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -159,13 +172,14 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void lowerSetCorePoolSizeCleansWorkerTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     final int poolSize = 5;
     PriorityScheduler scheduler = factory.makePriorityScheduler(poolSize, poolSize, 0); // must have no keep alive time to work
     try {
-      scheduler.prestartAllCoreThreads();
+      scheduler.prestartAllThreads();
       // must allow core thread timeout for this to work
       scheduler.allowCoreThreadTimeOut(true);
       TestUtils.blockTillClockAdvances();
@@ -179,6 +193,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void setCorePoolSizeFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -200,6 +215,42 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   @Test
+  public void getAndSetPoolSizeTest() {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    int corePoolSize = 1;
+    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize);
+    try {
+      assertEquals(corePoolSize, scheduler.getMaxPoolSize());
+      
+      corePoolSize = 10;
+      scheduler.setPoolSize(corePoolSize);
+      
+      assertEquals(corePoolSize, scheduler.getMaxPoolSize());
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void setPoolSizeFail() {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    // first construct a valid scheduler
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1);
+    try {
+      // verify no negative values
+      try {
+        scheduler.setPoolSize(-1);
+        fail("Exception should have been thrown");
+      } catch (IllegalArgumentException expected) {
+        // ignored
+      }
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @SuppressWarnings("deprecation")
+  @Test
   public void getAndSetMaxPoolSizeTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     final int originalCorePoolSize = 5;
@@ -215,6 +266,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetMaxPoolSizeBelowCoreTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -232,13 +284,14 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void lowerSetMaxPoolSizeCleansWorkerTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     final int poolSize = 5;
     PriorityScheduler scheduler = factory.makePriorityScheduler(poolSize, poolSize, 0); // must have no keep alive time to work
     try {
-      scheduler.prestartAllCoreThreads();
+      scheduler.prestartAllThreads();
       // must allow core thread timeout for this to work
       scheduler.allowCoreThreadTimeOut(true);
       TestUtils.blockTillClockAdvances();
@@ -255,7 +308,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   @Test
   public void increaseMaxPoolSizeWithWaitingTaskTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 0);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
       scheduler.execute(btr);
@@ -263,7 +316,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       // all these runnables should be blocked
       List<TestRunnable> executedRunnables = executeTestRunnables(scheduler, 0);
       
-      scheduler.setMaxPoolSize((TEST_QTY / 2) + 1); // this should allow the waiting test runnables to quickly execute
+      scheduler.setPoolSize((TEST_QTY / 2) + 1); // this should allow the waiting test runnables to quickly execute
       
       Iterator<TestRunnable> it = executedRunnables.iterator();
       while (it.hasNext()) {
@@ -275,6 +328,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void setMaxPoolSizeFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -292,10 +346,10 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
 
   @Test
-  public void setMaxPoolSizeBlockedThreadsTest() {
+  public void setPoolSizeBlockedThreadsTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       
       BlockingTestRunnable btr = new BlockingTestRunnable();
       try {
@@ -308,7 +362,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
         // should not be able to start
         assertEquals(0, tr.getRunCount());
         
-        scheduler.setMaxPoolSize(2);
+        scheduler.setPoolSize(2);
         
         // tr should now be able to start, will throw exception if unable to
         tr.blockTillStarted();
@@ -325,8 +379,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void getAndSetLowPriorityWaitTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     long lowPriorityWait = 1000;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, lowPriorityWait / 10, 
-                                                                TaskPriority.High, lowPriorityWait);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1, TaskPriority.High, lowPriorityWait);
     try {
       assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
       
@@ -343,8 +396,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void setLowPriorityWaitFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     long lowPriorityWait = 1000;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, lowPriorityWait / 10, 
-                                                                TaskPriority.High, lowPriorityWait);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1, TaskPriority.High, lowPriorityWait);
     try {
       try {
         scheduler.setMaxWaitForLowPriority(-1);
@@ -359,6 +411,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetKeepAliveTimeTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -376,6 +429,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void lowerSetKeepAliveTimeCleansWorkerTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -396,6 +450,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test (expected = IllegalArgumentException.class)
   public void setKeepAliveTimeFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -413,7 +468,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void getScheduledTaskCountTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler result = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler result = factory.makePriorityScheduler(1);
       // add directly to avoid starting the consumer
       result.highPriorityConsumer
             .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0));
@@ -438,7 +493,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void getScheduledTaskCountLowPriorityTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler result = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler result = factory.makePriorityScheduler(1);
       // add directly to avoid starting the consumer
       result.highPriorityConsumer
             .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0));
@@ -462,7 +517,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void getScheduledTaskCountHighPriorityTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler result = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler result = factory.makePriorityScheduler(1);
       // add directly to avoid starting the consumer
       result.highPriorityConsumer
             .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0));
@@ -485,7 +540,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   @Test
   public void getCurrentPoolSizeTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     try {
       // verify nothing at the start
       assertEquals(0, scheduler.getCurrentPoolSize());
@@ -504,7 +559,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   @Test
   public void getCurrentRunningCountTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     try {
       // verify nothing at the start
       assertEquals(0, scheduler.getCurrentRunningCount());
@@ -529,7 +584,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   @Test
   public void makeSubPoolTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(10, 10, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(10);
     try {
       PrioritySchedulerInterface subPool = scheduler.makeSubPool(2);
       assertNotNull(subPool);
@@ -542,7 +597,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   @Test (expected = IllegalArgumentException.class)
   public void makeSubPoolFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     try {
       scheduler.makeSubPool(2);
       fail("Exception should have been thrown");
@@ -556,7 +611,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     final long taskRunTime = 1000 * 10;
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       final AsyncVerifier interruptSentAV = new AsyncVerifier();
       TestRunnable tr = new TestRunnable() {
         @Override
@@ -607,8 +662,8 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void interruptedAfterRunTest() throws InterruptedException, TimeoutException {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
-      scheduler.prestartAllCoreThreads();
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
+      scheduler.prestartAllThreads();
       
       // send interrupt
       scheduler.workerPool.availableWorkers.getFirst().thread.interrupt();
@@ -635,7 +690,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.executeTest();
 
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2, 2, 1000);
+      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -658,7 +713,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.submitRunnableTest();
       
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2, 2, 1000);
+      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -681,7 +736,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.submitRunnableWithResultTest();
 
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2, 2, 1000);
+      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -704,7 +759,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.submitCallableTest();
 
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2, 2, 1000);
+      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestCallable tc1 = new TestCallable(0);
       TestCallable tc2 = new TestCallable(0);
@@ -723,8 +778,8 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory priorityFactory = getPrioritySchedulerFactory();
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
-      final PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1, 1, 1000);
-      scheduler.prestartAllCoreThreads();
+      final PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1);
+      scheduler.prestartAllThreads();
       int behindWaitTime = -1 * (DELAY_TIME + PriorityScheduler.LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS + 1);
       scheduler.highPriorityConsumer
                .scheduleQueue.add(new OneTimeTaskWrapper(btr, behindWaitTime));
@@ -746,8 +801,8 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void lowPriorityFlowControlTest() {
     PrioritySchedulerFactory priorityFactory = getPrioritySchedulerFactory();
     try {
-      final PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1, 1, 1000);
-      scheduler.prestartAllCoreThreads();
+      final PriorityScheduler scheduler = priorityFactory.makePriorityScheduler(1);
+      scheduler.prestartAllThreads();
       int behindWaitTime = -1 * (DELAY_TIME + PriorityScheduler.LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS + 1);
       // make it seem like there is a high priority delay
       scheduler.workerPool.lastHighDelayMillis = behindWaitTime;
@@ -775,7 +830,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     int runFrequency = 1;
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       TestRunnable removedTask = new TestRunnable();
       TestRunnable keptTask = new TestRunnable();
       scheduler.scheduleWithFixedDelay(removedTask, 0, runFrequency, priority);
@@ -814,7 +869,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   private void removeRunnableTest(TaskPriority priority) {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       TestRunnable removedTask = new TestRunnable();
       scheduler.submitScheduled(removedTask, 10 * 1000, priority);
       
@@ -839,7 +894,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   private void removeCallableTest(TaskPriority priority) {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       TestCallable task = new TestCallable();
       scheduler.submitScheduled(task, 1000 * 10, priority);
       
@@ -855,10 +910,10 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void wrapperSamePriorityTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler highPriorityScheduler = factory.makePriorityScheduler(1, 1, 100, TaskPriority.High, 200);
+      PriorityScheduler highPriorityScheduler = factory.makePriorityScheduler(1, TaskPriority.High, 200);
       assertTrue(highPriorityScheduler.makeWithDefaultPriority(TaskPriority.High) == highPriorityScheduler);
       
-      PriorityScheduler lowPriorityScheduler = factory.makePriorityScheduler(1, 1, 100, TaskPriority.Low, 200);
+      PriorityScheduler lowPriorityScheduler = factory.makePriorityScheduler(1, TaskPriority.Low, 200);
       assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.Low) == lowPriorityScheduler);
     } finally {
       factory.shutdown();
@@ -869,10 +924,10 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void wrapperTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler highPriorityScheduler = factory.makePriorityScheduler(1, 1, 100, TaskPriority.High, 200);
+      PriorityScheduler highPriorityScheduler = factory.makePriorityScheduler(1, TaskPriority.High, 200);
       assertTrue(highPriorityScheduler.makeWithDefaultPriority(TaskPriority.Low).getDefaultPriority() == TaskPriority.Low);
       
-      PriorityScheduler lowPriorityScheduler = factory.makePriorityScheduler(1, 1, 100, TaskPriority.Low, 200);
+      PriorityScheduler lowPriorityScheduler = factory.makePriorityScheduler(1, TaskPriority.Low, 200);
       assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.High).getDefaultPriority() == TaskPriority.High);
     } finally {
       factory.shutdown();
@@ -883,7 +938,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void isShutdownTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       
       assertFalse(scheduler.isShutdown());
       
@@ -891,7 +946,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       
       assertTrue(scheduler.isShutdown());
       
-      scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      scheduler = factory.makePriorityScheduler(1);
       scheduler.shutdownNow();
       
       assertTrue(scheduler.isShutdown());
@@ -904,7 +959,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void shutdownTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       /* adding a run time to have greater chances that runnable 
        * will be waiting to execute after shutdown call.
        */
@@ -923,7 +978,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void shutdownRecurringTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      final PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      final PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       TestRunnable tr = new TestRunnable();
       scheduler.scheduleWithFixedDelay(tr, 0, 0);
       
@@ -946,7 +1001,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void shutdownFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       
       scheduler.shutdown();
       
@@ -978,7 +1033,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
-      final PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      final PriorityScheduler scheduler = factory.makePriorityScheduler(1);
 
       // execute one runnable which will not complete
       scheduler.execute(btr);
@@ -1026,7 +1081,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   public void shutdownNowFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
       
       scheduler.shutdownNow();
       
@@ -1058,7 +1113,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     long taskDelay = 1000 * 10; // make it long to prevent it from getting consumed from the queue
     
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     try {
       // verify before state
       assertFalse(scheduler.highPriorityConsumer.isRunning());
@@ -1087,9 +1142,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   @Test
   public void makeNewWorkerAfterLowPriorityWaitTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 2, 1000, 
-                                                                TaskPriority.High, 
-                                                                DELAY_TIME);
+    PriorityScheduler scheduler = factory.makePriorityScheduler(2, TaskPriority.High, DELAY_TIME);
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
       scheduler.execute(btr);
@@ -1111,12 +1164,18 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   public interface PrioritySchedulerFactory extends SchedulerServiceFactory {
+    @Deprecated
     public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
                                                    long keepAliveTimeInMs, 
                                                    TaskPriority defaultPriority, 
-                                                   long maxWaitForLowPrioriyt);
+                                                   long maxWaitForLowPriority);
+    @Deprecated
     public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
                                                    long keepAliveTimeInMs);
+    
+    public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority, 
+                                                   long maxWaitForLowPriority);
+    public PriorityScheduler makePriorityScheduler(int poolSize);
   }
   
   private static class PrioritySchedulerTestFactory implements PrioritySchedulerFactory {
@@ -1142,7 +1201,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler result = makePriorityScheduler(poolSize, poolSize, Long.MAX_VALUE);
       if (prestartIfAvailable) {
-        result.prestartAllCoreThreads();
+        result.prestartAllThreads();
       }
       
       return result;
@@ -1153,6 +1212,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
                                                    long keepAliveTimeInMs,
                                                    TaskPriority defaultPriority,
                                                    long maxWaitForLowPriority) {
+      @SuppressWarnings("deprecation")
       PriorityScheduler result = new StrictPriorityScheduler(corePoolSize, maxPoolSize, 
                                                              keepAliveTimeInMs, defaultPriority, 
                                                              maxWaitForLowPriority);
@@ -1164,8 +1224,27 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     @Override
     public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
                                                    long keepAliveTimeInMs) {
+      @SuppressWarnings("deprecation")
       PriorityScheduler result = new StrictPriorityScheduler(corePoolSize, maxPoolSize, 
                                                              keepAliveTimeInMs);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority,
+                                                   long maxWaitForLowPriority) {
+      PriorityScheduler result = new StrictPriorityScheduler(poolSize, defaultPriority, 
+                                                             maxWaitForLowPriority);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize) {
+      PriorityScheduler result = new StrictPriorityScheduler(poolSize);
       executors.add(result);
       
       return result;

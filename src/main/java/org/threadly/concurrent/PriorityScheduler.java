@@ -28,10 +28,10 @@ import org.threadly.util.ListUtils;
 /**
  * <p>Executor to run tasks, schedule tasks.  Unlike 
  * {@link java.util.concurrent.ScheduledThreadPoolExecutor} this scheduled executor's pool size 
- * can grow and shrink based off usage.  It also has the benefit that you can provide "low 
- * priority" tasks which will attempt to use existing workers and not instantly create new threads 
- * on demand.  Thus allowing you to better take the benefits of a thread pool for tasks which 
- * specific execution time is less important.</p>
+ * can shrink if set with a lower value via {@link #setPoolSize(int)}.  It also has the benefit 
+ * that you can provide "low priority" tasks which will attempt to use existing workers and not 
+ * instantly create new threads on demand.  Thus allowing you to better take the benefits of a 
+ * thread pool for tasks which specific execution time is less important.</p>
  * 
  * <p>Most tasks provided into this pool will likely want to be "high priority", to more closely 
  * match the behavior of other thread pools.  That is why unless specified by the constructor, the 
@@ -51,7 +51,7 @@ import org.threadly.util.ListUtils;
  * @author jent - Mike Jensen
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
  */
-public class PriorityScheduler extends AbstractSubmitterScheduler
+public class PriorityScheduler extends AbstractSubmitterScheduler 
                                implements PrioritySchedulerInterface {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
@@ -78,15 +78,28 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
    * threads being daemon threads.
    * 
+   * @param poolSize Thread pool size that should be maintained
+   */
+  public PriorityScheduler(int poolSize) {
+    this(poolSize, null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, DEFAULT_NEW_THREADS_DAEMON);
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This constructs a default priority of high (which makes sense for most use cases).  
+   * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
+   * threads being daemon threads.
+   * 
+   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
+   * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
    */
-  public PriorityScheduler(int corePoolSize, int maxPoolSize,
-                           long keepAliveTimeInMs) {
+  @Deprecated
+  public PriorityScheduler(int corePoolSize, int maxPoolSize, long keepAliveTimeInMs) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
-         DEFAULT_NEW_THREADS_DAEMON);
+         null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, DEFAULT_NEW_THREADS_DAEMON);
   }
   
   /**
@@ -94,24 +107,56 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.
    * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param useDaemonThreads {@code true} if newly created threads should be daemon
+   */
+  public PriorityScheduler(int poolSize, boolean useDaemonThreads) {
+    this(poolSize, null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, useDaemonThreads);
+  }
+  
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This constructs a default priority of high (which makes sense for most use cases).  
+   * It also defaults low priority worker wait as 500ms.
+   * 
+   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
+   * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
    * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
+  @Deprecated
   public PriorityScheduler(int corePoolSize, int maxPoolSize,
                            long keepAliveTimeInMs, boolean useDaemonThreads) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
-         useDaemonThreads);
+         null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, useDaemonThreads);
   }
 
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This provides the extra parameters to tune what tasks submitted without a priority 
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   */
+  public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
+                           long maxWaitForLowPriorityInMs) {
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_NEW_THREADS_DAEMON);
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
+   * 
+   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -119,20 +164,42 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    */
+  @Deprecated
   public PriorityScheduler(int corePoolSize, int maxPoolSize,
                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs) {
     this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         defaultPriority, maxWaitForLowPriorityInMs, 
-         DEFAULT_NEW_THREADS_DAEMON);
+         defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_NEW_THREADS_DAEMON);
   }
 
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This provides the extra parameters to tune what tasks submitted without a priority 
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param useDaemonThreads {@code true} if newly created threads should be daemon
+   */
+  public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
+                           long maxWaitForLowPriorityInMs, 
+                           boolean useDaemonThreads) {
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+         new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
+   * 
+   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -141,6 +208,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
+  @Deprecated
   public PriorityScheduler(int corePoolSize, int maxPoolSize,
                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, 
@@ -155,8 +223,28 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This provides the extra parameters to tune what tasks submitted without a priority 
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to make a thread.  But it 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
+                           long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
+    this(new WorkerPool(threadFactory, poolSize, poolSize, Long.MAX_VALUE, maxWaitForLowPriorityInMs), 
+         defaultPriority);
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
+   * 
+   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
    * 
    * @param corePoolSize pool size that should be maintained
    * @param maxPoolSize maximum allowed thread count
@@ -165,11 +253,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    * @param threadFactory thread factory for producing new threads within executor
    */
+  @Deprecated
   public PriorityScheduler(int corePoolSize, int maxPoolSize,
                            long keepAliveTimeInMs, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    this(new WorkerPool(threadFactory, corePoolSize, maxPoolSize, 
-                        keepAliveTimeInMs, maxWaitForLowPriorityInMs), 
+    this(new WorkerPool(threadFactory, corePoolSize, maxPoolSize, keepAliveTimeInMs, maxWaitForLowPriorityInMs), 
          defaultPriority);
   }
   
@@ -216,10 +304,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   /**
    * Getter for the current set core thread pool size.
    * 
+   * @deprecated Will be removed in 4.0.0 when dynamic pool size support is removed
+   * 
    * @return current core pool size
    */
+  @Deprecated
   public int getCorePoolSize() {
-    return workerPool.getCorePoolSize();
+    return workerPool.corePoolSize;
   }
   
   /**
@@ -234,14 +325,20 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   /**
    * Getter for the currently set thread keep alive time.
    * 
+   * @deprecated Will be removed in 4.0.0 when dynamic pool size support is removed
+   * 
    * @return current keep alive time
    */
+  @Deprecated
   public long getKeepAliveTime() {
-    return workerPool.getKeepAliveTime();
+    return workerPool.keepAliveTimeInMs;
   }
   
   /**
-   * Getter for the current quantity of workers constructed (either running or idle).
+   * Getter for the current quantity of workers/threads constructed (either running or idle).  
+   * This is different than the size returned from {@link #getMaxPoolSize()} in that we 
+   * lazily create threads.  This represents the amount of threads needed to be created so far, 
+   * where {@link #getMaxPoolSize()} represents the amount of threads the pool may grow to.
    * 
    * @return current worker count
    */
@@ -250,12 +347,31 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Call to check how many tasks are currently being executed in this thread pool.
+   * Call to check how many tasks are currently being executed in this thread pool.  Unlike 
+   * {@link #getCurrentPoolSize()}, this count will NOT include idle threads waiting to execute 
+   * tasks.
    * 
    * @return current number of running tasks
    */
   public int getCurrentRunningCount() {
     return workerPool.getCurrentRunningCount();
+  }
+  
+  /**
+   * Change the set thread pool size.
+   * 
+   * If the value is less than the current running threads, as threads finish they will exit 
+   * rather than accept new tasks.  No currently running tasks will be interrupted, rather we 
+   * will just wait for them to finish before killing the thread.
+   * 
+   * If this is an increase in the pool size, threads will be lazily started as needed till the 
+   * new size is reached.  If there are tasks waiting for threads to run on, they immediately 
+   * will be started.
+   * 
+   * @param newPoolSize New core pool size, must be at least one
+   */
+  public void setPoolSize(int newPoolSize) {
+    workerPool.setPoolSize(newPoolSize);
   }
   
   /**
@@ -267,10 +383,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * thread count is higher than the new max size, this call will NOT block till the pool is 
    * reduced.  Instead as those workers complete, they will clean up on their own.
    * 
+   * @deprecated Use {@link #setPoolSize(int)}
+   * 
    * @param corePoolSize New core pool size, must be at least one
    */
+  @Deprecated
   public void setCorePoolSize(int corePoolSize) {
-    workerPool.setCorePoolSize(corePoolSize);
+    workerPool.setPoolSize(corePoolSize);
   }
   
   /**
@@ -282,8 +401,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * size, this call will NOT block till the pool is reduced.  Instead as those workers complete, 
    * they will clean up on their own.
    * 
+   * @deprecated Will be removed in 4.0.0 when dynamic pool size support is removed
+   * 
    * @param maxPoolSize New max pool size, must be at least one
    */
+  @Deprecated
   public void setMaxPoolSize(int maxPoolSize) {
     workerPool.setMaxPoolSize(maxPoolSize);
   }
@@ -292,8 +414,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * Change the set idle thread keep alive time.  If this is a reduction in the previously set 
    * keep alive time, this call will then check for expired worker threads.
    * 
+   * @deprecated Will be removed in 4.0.0 when dynamic pool size support is removed
+   * 
    * @param keepAliveTimeInMs New keep alive time in milliseconds
    */
+  @Deprecated
   public void setKeepAliveTime(long keepAliveTimeInMs) {
     workerPool.setKeepAliveTime(keepAliveTimeInMs);
   }
@@ -344,10 +469,23 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Ensures all core threads have been started.  This will make new idle workers to accept tasks.
+   * Ensures all threads have been started, it will create threads till the thread count matches 
+   * the set pool size (checked via {@link #getMaxPoolSize()}).  If this is able to start threads 
+   * (meaning that many threads are not already running), those threads will remain idle till 
+   * there is tasks ready to execute.
    */
+  public void prestartAllThreads() {
+    workerPool.prestartAllThreads();
+  }
+  
+  /**
+   * Ensures all core threads have been started.  This will make new idle workers to accept tasks.
+   * 
+   * @deprecated Please use {@link #prestartAllThreads()}
+   */
+  @Deprecated
   public void prestartAllCoreThreads() {
-    workerPool.prestartAllCoreThreads();
+    workerPool.prestartAllThreads();
   }
 
   /**
@@ -355,8 +493,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * changing to allow core thread timeout, this call will then perform a check to look for 
    * expired workers.
    * 
+   * @deprecated Will be removed in 4.0.0 when dynamic pool size support is removed
+   * 
    * @param value {@code true} if core threads should be expired when idle.
    */
+  @Deprecated
   public void allowCoreThreadTimeOut(boolean value) {
     workerPool.allowCoreThreadTimeOut(value);
   }
@@ -670,9 +811,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     protected long lastHighDelayMillis;   // is locked around workersLock
     private int waitingForWorkerCount;  // is locked around workersLock
     private int currentPoolSize;  // is locked around workersLock
-    private volatile int corePoolSize;  // can only be changed when poolSizeChangeLock locked
+    protected volatile int corePoolSize;  // can only be changed when poolSizeChangeLock locked
     private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
-    private volatile long keepAliveTimeInMs;
+    protected volatile long keepAliveTimeInMs;
     private volatile boolean allowCorePoolTimeout;
     private final AtomicBoolean shutdownStarted;
     private volatile boolean shutdownFinishing; // once true, never goes to false
@@ -701,7 +842,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       this.threadFactory = threadFactory;
       this.corePoolSize = corePoolSize;
       this.maxPoolSize = maxPoolSize;
-      this.keepAliveTimeInMs = keepAliveTimeInMs;
       this.allowCorePoolTimeout = false;
       shutdownStarted = new AtomicBoolean(false);
       shutdownFinishing = false;
@@ -757,30 +897,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
 
     /**
-     * Getter for the current set core worker pool size.
-     * 
-     * @return current core pool size
-     */
-    public int getCorePoolSize() {
-      return corePoolSize;
-    }
-
-    /**
      * Getter for the currently set max worker pool size.
      * 
      * @return current max pool size
      */
     public int getMaxPoolSize() {
       return maxPoolSize;
-    }
-
-    /**
-     * Getter for the currently set worker keep alive time.
-     * 
-     * @return current keep alive time
-     */
-    public long getKeepAliveTime() {
-      return keepAliveTimeInMs;
     }
 
     /**
@@ -792,19 +914,19 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * thread count is higher than the new max size, this call will NOT block till the pool is 
      * reduced.  Instead as those workers complete, they will clean up on their own.
      * 
-     * @param corePoolSize New core pool size, must be at least one
+     * @param newPoolSize New core pool size, must be at least one
      */
-    public void setCorePoolSize(int corePoolSize) {
-      ArgumentVerifier.assertGreaterThanZero(corePoolSize, "corePoolSize");
+    public void setPoolSize(int newPoolSize) {
+      ArgumentVerifier.assertGreaterThanZero(newPoolSize, "corePoolSize");
       
       synchronized (poolSizeChangeLock) {
-        boolean lookForExpiredWorkers = this.corePoolSize > corePoolSize;
+        boolean lookForExpiredWorkers = this.corePoolSize > newPoolSize;
         
-        if (maxPoolSize < corePoolSize) {
-          setMaxPoolSize(corePoolSize);
+        if (maxPoolSize < newPoolSize) {
+          setMaxPoolSize(newPoolSize);
         }
         
-        this.corePoolSize = corePoolSize;
+        this.corePoolSize = newPoolSize;
         
         if (lookForExpiredWorkers) {
           synchronized (workersLock) {
@@ -823,8 +945,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * size, this call will NOT block till the pool is reduced.  Instead as those workers complete, 
      * they will clean up on their own.
      * 
+     * @deprecated This will be removed in 4.0.0 when dynamic pool size support is removed
+     * 
      * @param maxPoolSize New max pool size, must be at least one
      */
+    @Deprecated
     public void setMaxPoolSize(int maxPoolSize) {
       ArgumentVerifier.assertGreaterThanZero(maxPoolSize, "maxPoolSize");
       
@@ -859,15 +984,15 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * Change the set idle worker keep alive time.  If this is a reduction in the previously set 
      * keep alive time, this call will then check for expired workers.
      * 
+     * @deprecated This will be removed in 4.0.0 when dynamic pool size support is removed
+     * 
      * @param keepAliveTimeInMs New keep alive time in milliseconds
      */
+    @Deprecated
     public void setKeepAliveTime(long keepAliveTimeInMs) {
       ArgumentVerifier.assertNotNegative(keepAliveTimeInMs, "keepAliveTimeInMs");
-      
       boolean checkForExpiredWorkers = this.keepAliveTimeInMs > keepAliveTimeInMs;
-      
       this.keepAliveTimeInMs = keepAliveTimeInMs;
-      
       if (checkForExpiredWorkers) {
         synchronized (workersLock) {
           expireOldWorkers();
@@ -880,13 +1005,14 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * changing to allow core thread timeout, this call will then perform a check to look for 
      * expired workers.
      * 
+     * @deprecated This will be removed in 4.0.0 when dynamic pool size support is removed
+     * 
      * @param value {@code true} if core threads should be expired when idle.
      */
+    @Deprecated
     public void allowCoreThreadTimeOut(boolean value) {
       boolean checkForExpiredWorkers = ! allowCorePoolTimeout && value;
-      
       allowCorePoolTimeout = value;
-      
       if (checkForExpiredWorkers) {
         synchronized (workersLock) {
           expireOldWorkers();
@@ -917,9 +1043,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
 
     /**
-     * Ensures all core threads have been started.  This will make new idle workers to accept tasks.
+     * Ensures all threads have been started.  This will make new idle workers to accept tasks.
      */
-    public void prestartAllCoreThreads() {
+    public void prestartAllThreads() {
       synchronized (workersLock) {
         boolean startedThreads = false;
         while (currentPoolSize < corePoolSize) {
@@ -970,32 +1096,24 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       try {
         long waitTime = maxWaitTimeInMs;
         while (availableWorkers.isEmpty() && waitTime > 0) {
-          long now;
-          if (startTime < 0) {
-            // only set the start time at the first run
-            startTime = Clock.accurateForwardProgressingMillis();
-            now = startTime;
-          } else {
-            now = Clock.accurateForwardProgressingMillis();
-          }
-          
           if (waitTime == Long.MAX_VALUE) {  // prevent overflow
             workersLock.wait();
           } else {
-            long elapsedTime = now - startTime;
-            waitTime = maxWaitTimeInMs - elapsedTime;
+            if (startTime < 0) {
+              // only set the start time at the first run
+              startTime = Clock.accurateForwardProgressingMillis();
+            } else {
+              long elapsedTime = Clock.accurateForwardProgressingMillis() - startTime;
+              waitTime = maxWaitTimeInMs - elapsedTime;
+            }
             if (waitTime > 0) {
               workersLock.wait(waitTime);
             }
           }
         }
         
-        if (availableWorkers.isEmpty()) {
-          return null;  // we exceeded the wait time
-        } else {
-          // always remove from the front, to get the newest worker
-          return availableWorkers.removeFirst();
-        }
+        // always return from the front, if this returns null it's because we exceeded our wait time
+        return availableWorkers.pollFirst();
       } finally {
         waitingForWorkerCount--;
       }
@@ -1022,13 +1140,16 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * YOU MUST HOLD THE {@code workersLock} BEFORE CALLING THIS!!
      * 
      * Checks idle workers to see if any old/unused workers should be killed.
+     * 
+     * @deprecated In 4.0.0 we wont expire idle workers, but just let them remain idle
      */
+    @Deprecated
     protected void expireOldWorkers() {
       long now = Clock.lastKnownForwardProgressingMillis();
       // we search backwards because the oldest workers will be at the back of the stack
       while ((currentPoolSize > corePoolSize || allowCorePoolTimeout) && 
              ! availableWorkers.isEmpty() && 
-             (now - availableWorkers.getLast().getLastRunTime() > keepAliveTimeInMs || 
+             (now - availableWorkers.getLast().lastRunTime > keepAliveTimeInMs || 
                 currentPoolSize > maxPoolSize)) {  // it does not matter how old it is, the max pool size has changed
         Worker w = availableWorkers.removeLast();
         killWorker(w);
@@ -1065,7 +1186,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     protected void workerDone(Worker worker) {
       synchronized (workersLock) {
-        if (shutdownFinishing) {
+        if (shutdownFinishing || currentPoolSize > maxPoolSize) {
           killWorker(worker);
         } else {
           expireOldWorkers();
@@ -1082,13 +1203,16 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * Should be called from a high priority queue consumer when there are no tasks currently 
      * ready for execution.  This should be called before it blocks to wait for new tasks.  It 
      * allows the {@link WorkerPool} to optimize task distribution to know that there are not 
-     * any currently ready high priority tasks, and how long until the next one is expected.
-     *  
-     * @param delayEstimateInMs How long till next high priority task, or {@code Long.MAX_VALUE} if none are queued
+     * any currently ready tasks, and how long until the next one is expected.
+     * 
+     * @param queueManager QueueManager that is about to block waiting for a task to run
+     * @param delayEstimateInMs How long till next task, or {@code Long.MAX_VALUE} if none are queued
      */
-    protected void handleEstimatedTimeTillNextHighPriority(long delayEstimateInMs) {
-      if (delayEstimateInMs > lastHighDelayMillis) {
-        lastHighDelayMillis = 0;
+    protected void handleEstimatedTimeTillNextTask(QueueManager queueManager, long delayEstimateInMs) {
+      if (queueManager.queuePriority == TaskPriority.High) {
+        if (delayEstimateInMs > lastHighDelayMillis) {
+          lastHighDelayMillis = 0;
+        }
       }
     }
   
@@ -1142,33 +1266,31 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
       Worker w = null;
       synchronized (workersLock) {
+        // wait for high priority tasks that have been waiting longer than us if all workers are consumed
+        long waitMs;
+        while (currentPoolSize >= maxPoolSize && 
+            availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
+            ! shutdownFinishing &&
+            (waitMs = task.getDelayEstimateInMs() - lastHighDelayMillis) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
+          workersLock.wait(waitMs);
+          Clock.systemNanoTime(); // update for getDelayEstimateInMillis
+        }
+        
         if (! shutdownFinishing) {
-          // wait for high priority tasks that have been waiting longer than us if all workers are consumed
-          long waitMs;
-          while (currentPoolSize >= maxPoolSize && 
-                 availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
-                 ! shutdownFinishing &&
-                 (waitMs = task.getDelayEstimateInMs() - lastHighDelayMillis) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
-            workersLock.wait(waitMs);
-            Clock.systemNanoTime(); // update for getDelayEstimateInMillis
-          }
-          
-          if (! shutdownFinishing) {  // check again that we are still running
-            if (currentPoolSize >= maxPoolSize) {
-              w = getExistingWorker(Long.MAX_VALUE);
-            } else if (currentPoolSize == 0) {
-              // first task is low priority, we obviously wont get any workers if we wait, so just make one
-              w = makeNewWorker();
-            } else {
-              w = getExistingWorker(maxWaitForLowPriorityInMs);
-              if (w == null) {
-                // this means we expired past our wait time, so create a worker if we can
-                if (currentPoolSize >= maxPoolSize) {
-                  // more workers were created while waiting, now have reached our max
-                  w = getExistingWorker(Long.MAX_VALUE);
-                } else {
-                  w = makeNewWorker();
-                }
+          if (currentPoolSize >= maxPoolSize) {
+            w = getExistingWorker(Long.MAX_VALUE);
+          } else if (currentPoolSize == 0) {
+            // first task is low priority, we obviously wont get any workers if we wait, so just make one
+            w = makeNewWorker();
+          } else {
+            w = getExistingWorker(maxWaitForLowPriorityInMs);
+            if (w == null) {
+              // this means we expired past our wait time, so create a worker if we can
+              if (currentPoolSize >= maxPoolSize) {
+                // more workers were created while waiting, now have reached our max
+                w = getExistingWorker(Long.MAX_VALUE);
+              } else {
+                w = makeNewWorker();
               }
             }
           }
@@ -1492,15 +1614,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
               }
             }
           } else {
-            if (queuePriority == TaskPriority.High) {
-              workerPool.handleEstimatedTimeTillNextHighPriority(nextScheduledTask.getDelayEstimateInMs());
-            }
+            workerPool.handleEstimatedTimeTillNextTask(this, nextScheduledTask.getDelayEstimateInMs());
             LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextScheduledTask.getDelay(TimeUnit.MILLISECONDS));
           }
         } else {
-          if (queuePriority == TaskPriority.High) {
-              workerPool.handleEstimatedTimeTillNextHighPriority(Long.MAX_VALUE);
-          }
+          workerPool.handleEstimatedTimeTillNextTask(this, Long.MAX_VALUE);
           LockSupport.park();
         }
         
@@ -1614,15 +1732,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           break;
         }
       }
-    }
-    
-    /**
-     * Checks what the last time this worker serviced a task was.
-     * 
-     * @return time in milliseconds since the last worker task
-     */
-    public long getLastRunTime() {
-      return lastRunTime;
     }
   }
   
