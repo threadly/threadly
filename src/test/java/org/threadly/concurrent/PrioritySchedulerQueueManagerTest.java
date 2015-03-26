@@ -32,7 +32,7 @@ public class PrioritySchedulerQueueManagerTest {
   @Before
   public void setup() {
     ConfigurableThreadFactory threadFactory = new ConfigurableThreadFactory();
-    workerPool = new WorkerPool(threadFactory, 1, 1, 1000, PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    workerPool = new WorkerPool(threadFactory, 1, PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     queueManager = new QueueManager(workerPool, TaskPriority.High, THREAD_NAME) {
       @Override
       protected void startupService() {
@@ -58,7 +58,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test (expected = IllegalThreadStateException.class)
   public void threadFactoryReturnRunningThreadFail() {
-    WorkerPool workerPool = new WorkerPool(new StartingThreadFactory(), 1, 1, 1000, 
+    WorkerPool workerPool = new WorkerPool(new StartingThreadFactory(), 1, 
                                            PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     queueManager = new QueueManager(workerPool, TaskPriority.High, THREAD_NAME);
     queueManager.start();

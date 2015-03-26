@@ -23,7 +23,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     return new PrioritySchedulerStatisticTrackerTestFactory();
   }
   
-  @SuppressWarnings({ "unused", "deprecation" })
+  @SuppressWarnings("unused")
   @Test
   public void constructorTest() {
     new PrioritySchedulerStatisticTracker(1);
@@ -31,14 +31,6 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100);
     new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, false);
     new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 
-                                          new ConfigurableThreadFactory());
-    new PrioritySchedulerStatisticTracker(1, 1, 1000);
-    new PrioritySchedulerStatisticTracker(1, 1, 1000, false);
-    new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                          TaskPriority.High, 100);
-    new PrioritySchedulerStatisticTracker(1, 1, 1000, 
-                                          TaskPriority.High, 100, false);
-    new PrioritySchedulerStatisticTracker(1, 1, 1000, TaskPriority.High, 100, 
                                           new ConfigurableThreadFactory());
   }
   
@@ -49,33 +41,9 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     assertNotNull(ps.workerPool.threadFactory);
   }
   
-  @SuppressWarnings({ "unused", "deprecation" })
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
-    try {
-      new PrioritySchedulerStatisticTracker(0, 1, 1, TaskPriority.High, 1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new PrioritySchedulerStatisticTracker(2, 1, 1, TaskPriority.High, 1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new PrioritySchedulerStatisticTracker(1, 1, -1, TaskPriority.High, 1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new PrioritySchedulerStatisticTracker(1, 1, 1, TaskPriority.High, -1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
     try {
       new PrioritySchedulerStatisticTracker(0, TaskPriority.High, 1, null);
       fail("Exception should have thrown");
@@ -625,35 +593,10 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler result = makePriorityScheduler(poolSize, poolSize, Long.MAX_VALUE);
+      PriorityScheduler result = makePriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         result.prestartAllThreads();
       }
-      
-      return result;
-    }
-
-    @Override
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize,
-                                                   long keepAliveTimeInMs,
-                                                   TaskPriority defaultPriority,
-                                                   long maxWaitForLowPriority) {
-      @SuppressWarnings("deprecation")
-      PriorityScheduler result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
-                                                                       keepAliveTimeInMs, defaultPriority, 
-                                                                       maxWaitForLowPriority);
-      executors.add(result);
-      
-      return result;
-    }
-
-    @Override
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
-                                                   long keepAliveTimeInMs) {
-      @SuppressWarnings("deprecation")
-      PriorityScheduler result = new PrioritySchedulerStatisticTracker(corePoolSize, maxPoolSize, 
-                                                                       keepAliveTimeInMs);
-      executors.add(result);
       
       return result;
     }

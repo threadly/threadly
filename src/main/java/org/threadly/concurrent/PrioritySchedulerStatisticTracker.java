@@ -49,26 +49,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
-   * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
-   * threads being daemon threads.
-   * 
-   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
-   * 
-   * @param corePoolSize pool size that should be maintained
-   * @param maxPoolSize maximum allowed thread count
-   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
-   */
-  @Deprecated
-  public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize, 
-                                           long keepAliveTimeInMs) {
-    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
-         DEFAULT_NEW_THREADS_DAEMON);
-  }
-  
-  /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.
    * 
    * @param poolSize Thread pool size that should be maintained
@@ -76,26 +56,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    */
   public PrioritySchedulerStatisticTracker(int poolSize, boolean useDaemonThreads) {
     this(poolSize, DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, useDaemonThreads);
-  }
-  
-  /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This constructs a default priority of high (which makes sense for most use cases).  
-   * It also defaults low priority worker wait as 500ms.
-   * 
-   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
-   * 
-   * @param corePoolSize pool size that should be maintained
-   * @param maxPoolSize maximum allowed thread count
-   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
-   * @param useDaemonThreads {@code true} if newly created threads should be daemon
-   */
-  @Deprecated
-  public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs, boolean useDaemonThreads) {
-    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
-         useDaemonThreads);
   }
   
   /**
@@ -112,30 +72,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs) {
     this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_NEW_THREADS_DAEMON);
-  }
-  
-  /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
-   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
-   * also makes low priority tasks execution time less predictable.
-   * 
-   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
-   * 
-   * @param corePoolSize pool size that should be maintained
-   * @param maxPoolSize maximum allowed thread count
-   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
-   * @param defaultPriority priority to give tasks which do not specify it
-   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
-   */
-  @Deprecated
-  public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                           long maxWaitForLowPriorityInMs) {
-    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         defaultPriority, maxWaitForLowPriorityInMs, 
-         DEFAULT_NEW_THREADS_DAEMON);
   }
   
   /**
@@ -165,33 +101,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.
    * 
-   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
-   * 
-   * @param corePoolSize pool size that should be maintained
-   * @param maxPoolSize maximum allowed thread count
-   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
-   * @param defaultPriority priority to give tasks which do not specify it
-   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
-   * @param useDaemonThreads {@code true} if newly created threads should be daemon
-   */
-  @Deprecated
-  public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                           long maxWaitForLowPriorityInMs, 
-                                           boolean useDaemonThreads) {
-    this(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-         defaultPriority, maxWaitForLowPriorityInMs, 
-         new ConfigurableThreadFactory(PrioritySchedulerStatisticTracker.class.getSimpleName() + "-", 
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
-  }
-  
-  /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
-   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
-   * also makes low priority tasks execution time less predictable.
-   * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
@@ -199,35 +108,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    */
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(new StatisticWorkerPool(threadFactory, poolSize, poolSize, 
-                                  Long.MAX_VALUE, maxWaitForLowPriorityInMs, new StatsManager()), 
-          defaultPriority);
-    
-    this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
-  }
-  
-  /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
-   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
-   * also makes low priority tasks execution time less predictable.
-   * 
-   * @deprecated Dynamic thread pool size support will be removed in 4.0.0
-   * 
-   * @param corePoolSize pool size that should be maintained
-   * @param maxPoolSize maximum allowed thread count
-   * @param keepAliveTimeInMs time to wait for a given thread to be idle before killing
-   * @param defaultPriority priority to give tasks which do not specify it
-   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
-   * @param threadFactory thread factory for producing new threads within executor
-   */
-  @Deprecated
-  public PrioritySchedulerStatisticTracker(int corePoolSize, int maxPoolSize,
-                                           long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                           long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(new StatisticWorkerPool(threadFactory, corePoolSize, maxPoolSize, 
-                                  keepAliveTimeInMs, maxWaitForLowPriorityInMs, new StatsManager()), 
+    super(new StatisticWorkerPool(threadFactory, poolSize, maxWaitForLowPriorityInMs, new StatsManager()), 
           defaultPriority);
     
     this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
@@ -794,10 +675,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   protected static class StatisticWorkerPool extends WorkerPool {
     protected final StatsManager statsManager;
   
-    protected StatisticWorkerPool(ThreadFactory threadFactory, int corePoolSize,
-                                  int maxPoolSize, long keepAliveTimeInMs,
+    protected StatisticWorkerPool(ThreadFactory threadFactory, int poolSize, 
                                   long maxWaitForLorPriorityInMs, StatsManager statsManager) {
-      super(threadFactory, corePoolSize, maxPoolSize, keepAliveTimeInMs, maxWaitForLorPriorityInMs);
+      super(threadFactory, poolSize, maxWaitForLorPriorityInMs);
       
       this.statsManager = statsManager;
     }

@@ -12,34 +12,6 @@ import java.util.concurrent.ThreadFactory;
  */
 @SuppressWarnings("javadoc")
 public class StrictPriorityScheduler extends PriorityScheduler {
-  @Deprecated
-  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize, long keepAliveTimeInMs) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs);
-  }
-
-  @Deprecated
-  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
-                                 long keepAliveTimeInMs, boolean useDaemonThreads) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, useDaemonThreads);
-  }
-
-  @Deprecated
-  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
-                                 long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                 long maxWaitForLowPriorityInMs) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-          defaultPriority, maxWaitForLowPriorityInMs);
-  }
-
-  @Deprecated
-  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
-                                 long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                 long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
-    super(corePoolSize, maxPoolSize, keepAliveTimeInMs, 
-          defaultPriority, maxWaitForLowPriorityInMs, 
-          useDaemonThreads);
-  }
-  
   public StrictPriorityScheduler(int pollSize) {
     super(pollSize);
   }
@@ -57,18 +29,10 @@ public class StrictPriorityScheduler extends PriorityScheduler {
                                  long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
     super(pollSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads);
   }
-
-  public StrictPriorityScheduler(int corePoolSize, int maxPoolSize,
-                                 long keepAliveTimeInMs, TaskPriority defaultPriority, 
-                                 long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(new StrictWorkerPool(threadFactory, corePoolSize, maxPoolSize, keepAliveTimeInMs, maxWaitForLowPriorityInMs), 
-          defaultPriority);
-  }
   
   protected static class StrictWorkerPool extends WorkerPool {
-    protected StrictWorkerPool(ThreadFactory threadFactory, int corePoolSize, int maxPoolSize,
-                               long keepAliveTimeInMs, long maxWaitForLorPriorityInMs) {
-      super(threadFactory, corePoolSize, maxPoolSize, keepAliveTimeInMs, maxWaitForLorPriorityInMs);
+    protected StrictWorkerPool(ThreadFactory threadFactory, int poolSize, long maxWaitForLorPriorityInMs) {
+      super(threadFactory, poolSize, maxWaitForLorPriorityInMs);
     }
 
     private void verifyWorkersLock() {

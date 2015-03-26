@@ -60,33 +60,9 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
-  @SuppressWarnings({ "unused", "deprecation" })
+  @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
-    try {
-      new PriorityScheduler(0, 1, 1, TaskPriority.High, 1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new PriorityScheduler(2, 1, 1, TaskPriority.High, 1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new PriorityScheduler(1, 1, -1, TaskPriority.High, 1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new PriorityScheduler(1, 1, 1, TaskPriority.High, -1, null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
     try {
       new PriorityScheduler(0, TaskPriority.High, 1, null);
       fail("Exception should have thrown");
@@ -135,85 +111,6 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
-  @SuppressWarnings("deprecation")
-  @Test
-  public void getAndSetCorePoolSizeTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    int corePoolSize = 1;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, 
-                                                                corePoolSize + 10, 1000);
-    try {
-      assertEquals(corePoolSize, scheduler.getCorePoolSize());
-      
-      corePoolSize = 10;
-      scheduler.setMaxPoolSize(corePoolSize + 10);
-      scheduler.setCorePoolSize(corePoolSize);
-      
-      assertEquals(corePoolSize, scheduler.getCorePoolSize());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void getAndSetCorePoolSizeAboveMaxTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    int corePoolSize = 1;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, corePoolSize, 1000);
-    try {
-      corePoolSize = scheduler.getMaxPoolSize() * 2;
-      scheduler.setCorePoolSize(corePoolSize);
-      
-      assertEquals(corePoolSize, scheduler.getCorePoolSize());
-      assertEquals(corePoolSize, scheduler.getMaxPoolSize());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void lowerSetCorePoolSizeCleansWorkerTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    final int poolSize = 5;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(poolSize, poolSize, 0); // must have no keep alive time to work
-    try {
-      scheduler.prestartAllThreads();
-      // must allow core thread timeout for this to work
-      scheduler.allowCoreThreadTimeOut(true);
-      TestUtils.blockTillClockAdvances();
-      
-      scheduler.setCorePoolSize(1);
-      
-      // verify worker was cleaned up
-      assertEquals(0, scheduler.getCurrentPoolSize());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void setCorePoolSizeFail() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    int corePoolSize = 1;
-    int maxPoolSize = 10;
-    // first construct a valid scheduler
-    PriorityScheduler scheduler = factory.makePriorityScheduler(corePoolSize, maxPoolSize, 1000);
-    try {
-      // verify no negative values
-      try {
-        scheduler.setCorePoolSize(-1);
-        fail("Exception should have been thrown");
-      } catch (IllegalArgumentException expected) {
-        // ignored
-      }
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
   @Test
   public void getAndSetPoolSizeTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -249,62 +146,6 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
   }
   
-  @SuppressWarnings("deprecation")
-  @Test
-  public void getAndSetMaxPoolSizeTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    final int originalCorePoolSize = 5;
-    int maxPoolSize = originalCorePoolSize;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(originalCorePoolSize, maxPoolSize, 1000);
-    try {
-      maxPoolSize *= 2;
-      scheduler.setMaxPoolSize(maxPoolSize);
-      
-      assertEquals(maxPoolSize, scheduler.getMaxPoolSize());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void getAndSetMaxPoolSizeBelowCoreTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    final int originalPoolSize = 5;  // must be above 1
-    int maxPoolSize = originalPoolSize;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(originalPoolSize, maxPoolSize, 1000);
-    try {
-      maxPoolSize = 1;
-      scheduler.setMaxPoolSize(1);
-      
-      assertEquals(maxPoolSize, scheduler.getMaxPoolSize());
-      assertEquals(maxPoolSize, scheduler.getCorePoolSize());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void lowerSetMaxPoolSizeCleansWorkerTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    final int poolSize = 5;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(poolSize, poolSize, 0); // must have no keep alive time to work
-    try {
-      scheduler.prestartAllThreads();
-      // must allow core thread timeout for this to work
-      scheduler.allowCoreThreadTimeOut(true);
-      TestUtils.blockTillClockAdvances();
-      
-      scheduler.setMaxPoolSize(1);
-      
-      // verify worker was cleaned up
-      assertEquals(0, scheduler.getCurrentPoolSize());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
   @Test
   public void increaseMaxPoolSizeWithWaitingTaskTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
@@ -324,23 +165,6 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       }
     } finally {
       btr.unblock();
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void setMaxPoolSizeFail() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    try {
-      PriorityScheduler scheduler = factory.makePriorityScheduler(2, 2, 1000);
-      try {
-        scheduler.setMaxPoolSize(-1); // should throw exception for negative value
-        fail("Exception should have been thrown");
-      } catch (IllegalArgumentException e) {
-        //expected
-      }
-    } finally {
       factory.shutdown();
     }
   }
@@ -406,59 +230,6 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       }
       
       assertEquals(lowPriorityWait, scheduler.getMaxWaitForLowPriority());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void getAndSetKeepAliveTimeTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    long keepAliveTime = 1000;
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, keepAliveTime);
-    try {
-      assertEquals(keepAliveTime, scheduler.getKeepAliveTime());
-      
-      keepAliveTime = Long.MAX_VALUE;
-      scheduler.setKeepAliveTime(keepAliveTime);
-      
-      assertEquals(keepAliveTime, scheduler.getKeepAliveTime());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test
-  public void lowerSetKeepAliveTimeCleansWorkerTest() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    long keepAliveTime = 1000;
-    final PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, keepAliveTime);
-    try {
-      scheduler.prestartAllCoreThreads();
-      // must allow core thread timeout for this to work
-      scheduler.allowCoreThreadTimeOut(true);
-      TestUtils.blockTillClockAdvances();
-      
-      scheduler.setKeepAliveTime(0);
-      
-      // verify worker was cleaned up
-      assertEquals(0, scheduler.getCurrentPoolSize());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @SuppressWarnings("deprecation")
-  @Test (expected = IllegalArgumentException.class)
-  public void setKeepAliveTimeFail() {
-    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1, 1, 1000);
-    
-    try {
-      scheduler.setKeepAliveTime(-1L); // should throw exception for negative value
-      fail("Exception should have been thrown");
     } finally {
       factory.shutdown();
     }
@@ -1164,17 +935,9 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
   }
   
   public interface PrioritySchedulerFactory extends SchedulerServiceFactory {
-    @Deprecated
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
-                                                   long keepAliveTimeInMs, 
-                                                   TaskPriority defaultPriority, 
-                                                   long maxWaitForLowPriority);
-    @Deprecated
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
-                                                   long keepAliveTimeInMs);
-    
     public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                                                    long maxWaitForLowPriority);
+    
     public PriorityScheduler makePriorityScheduler(int poolSize);
   }
   
@@ -1199,35 +962,10 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
 
     @Override
     public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler result = makePriorityScheduler(poolSize, poolSize, Long.MAX_VALUE);
+      PriorityScheduler result = makePriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         result.prestartAllThreads();
       }
-      
-      return result;
-    }
-
-    @Override
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize,
-                                                   long keepAliveTimeInMs,
-                                                   TaskPriority defaultPriority,
-                                                   long maxWaitForLowPriority) {
-      @SuppressWarnings("deprecation")
-      PriorityScheduler result = new StrictPriorityScheduler(corePoolSize, maxPoolSize, 
-                                                             keepAliveTimeInMs, defaultPriority, 
-                                                             maxWaitForLowPriority);
-      executors.add(result);
-      
-      return result;
-    }
-
-    @Override
-    public PriorityScheduler makePriorityScheduler(int corePoolSize, int maxPoolSize, 
-                                                   long keepAliveTimeInMs) {
-      @SuppressWarnings("deprecation")
-      PriorityScheduler result = new StrictPriorityScheduler(corePoolSize, maxPoolSize, 
-                                                             keepAliveTimeInMs);
-      executors.add(result);
       
       return result;
     }
