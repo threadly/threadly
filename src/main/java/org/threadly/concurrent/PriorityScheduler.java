@@ -1327,7 +1327,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected static class Worker extends AbstractService implements Runnable {
     protected final WorkerPool workerPool;
     protected final Thread thread;
-    protected volatile long lastRunTime;
     protected volatile Runnable nextTask;
     
     protected Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
@@ -1336,7 +1335,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       if (thread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      lastRunTime = Clock.lastKnownForwardProgressingMillis();
       nextTask = null;
     }
 
@@ -1411,7 +1409,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         // once done handling task
         if (isRunning()) {
           // only check if still running, otherwise worker has already been killed
-          lastRunTime = Clock.lastKnownForwardProgressingMillis();
           workerPool.workerDone(this);
         } else {
           break;
