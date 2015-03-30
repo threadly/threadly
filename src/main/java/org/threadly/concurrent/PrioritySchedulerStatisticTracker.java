@@ -643,7 +643,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
       long finishTime = Clock.accurateForwardProgressingMillis();
       synchronized (runTimes.getModificationLock()) {
         runTimes.add(finishTime - taskWrapper.startTime);
-        trimList(runTimes);
+        trimWindow(runTimes);
       }
       runningTasks.remove(taskWrapper);
     }
@@ -653,12 +653,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
      * 
      * Should have the list synchronized/locked before calling.
      * 
-     * @param list LinkedList to check size of.
+     * @param list Collection to check size of and ensure is under max size
      */
     @SuppressWarnings("rawtypes")
-    protected static void trimList(Deque list) {
-      while (list.size() > MAX_WINDOW_SIZE) {
-        list.removeFirst();
+    protected static void trimWindow(Deque window) {
+      while (window.size() > MAX_WINDOW_SIZE) {
+        window.removeFirst();
       }
     }
   }
@@ -690,7 +690,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
         if (! isShutdownFinished()) {
           synchronized (statsManager.highPriorityWorkerAvailable.getModificationLock()) {
             statsManager.highPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
-            StatsManager.trimList(statsManager.highPriorityWorkerAvailable);
+            StatsManager.trimWindow(statsManager.highPriorityWorkerAvailable);
           }
           if (getCurrentPoolSize() >= getMaxPoolSize()) {
             lastHighDelayMillis = task.getDelayEstimateInMs();
@@ -715,7 +715,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
           long executionDelay = task.getDelayEstimateInMs();
           if (executionDelay <= 0) {
             statsManager.highPriorityExecutionDelay.add(executionDelay * -1);
-            StatsManager.trimList(statsManager.highPriorityExecutionDelay);
+            StatsManager.trimWindow(statsManager.highPriorityExecutionDelay);
           }
         }
         
@@ -743,20 +743,20 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
             if (getCurrentPoolSize() >= getMaxPoolSize()) {
               synchronized (statsManager.lowPriorityWorkerAvailable.getModificationLock()) {
                 statsManager.lowPriorityWorkerAvailable.add(! availableWorkers.isEmpty());
-                StatsManager.trimList(statsManager.lowPriorityWorkerAvailable);
+                StatsManager.trimWindow(statsManager.lowPriorityWorkerAvailable);
               }
               w = getExistingWorker(Long.MAX_VALUE);
             } else if (getCurrentPoolSize() == 0) {
               synchronized (statsManager.lowPriorityWorkerAvailable.getModificationLock()) {
                 statsManager.lowPriorityWorkerAvailable.add(false);
-                StatsManager.trimList(statsManager.lowPriorityWorkerAvailable);
+                StatsManager.trimWindow(statsManager.lowPriorityWorkerAvailable);
               }
               w = makeNewWorker();
             } else {
               w = getExistingWorker(getMaxWaitForLowPriority());
               synchronized (statsManager.lowPriorityWorkerAvailable.getModificationLock()) {
                 statsManager.lowPriorityWorkerAvailable.add(w != null);
-                StatsManager.trimList(statsManager.lowPriorityWorkerAvailable);
+                StatsManager.trimWindow(statsManager.lowPriorityWorkerAvailable);
               }
               if (w == null) {
                 // this means we expired past our wait time, so create a worker if we can
@@ -778,7 +778,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
           long executionDelay = task.getDelayEstimateInMs();
           if (executionDelay <= 0) {
             statsManager.lowPriorityExecutionDelay.add(executionDelay * -1);
-            StatsManager.trimList(statsManager.lowPriorityExecutionDelay);
+            StatsManager.trimWindow(statsManager.lowPriorityExecutionDelay);
           }
         }
         
