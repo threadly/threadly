@@ -31,9 +31,7 @@ public interface SimpleSchedulerInterface extends Executor {
    * @param initialDelay delay in milliseconds until first run
    * @param recurringDelay delay in milliseconds for running task after last finish
    */
-  public void scheduleWithFixedDelay(Runnable task, 
-                                     long initialDelay, 
-                                     long recurringDelay);
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay);
   
   /**
    * Schedule a fixed rate recurring task to run.  The recurring delay will be the same, 

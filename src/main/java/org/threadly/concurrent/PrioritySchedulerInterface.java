@@ -48,8 +48,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed
    */
-  public <T> ListenableFuture<T> submit(Runnable task, T result, 
-                                        TaskPriority priority);
+  public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority);
 
   /**
    * Submit a {@link Callable} to run as soon as possible for the given priority.  This is needed 
@@ -84,8 +83,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * @param priority priority for task to get available thread to run on
    * @return a future to know when the task has completed
    */
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
-                                             TaskPriority priority);
+  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, TaskPriority priority);
   
   /**
    * Schedule a task with a given delay and a specified priority.  
@@ -101,8 +99,7 @@ public interface PrioritySchedulerInterface extends SchedulerServiceInterface {
    * @return a future to know when the task has completed
    */
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
-                                                 long delayInMs, 
-                                                 TaskPriority priority);
+                                                 long delayInMs, TaskPriority priority);
   
   /**
    * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 

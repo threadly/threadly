@@ -12,8 +12,8 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A simple and light weight implementation of the {@link SubmitterSchedulerInterface}.  This 
- * is designed to be a lighter weight option to the {@link PriorityScheduler}, for when multiple 
+ * <p>A simple and light weight implementation of the {@link SchedulerServiceInterface}.  This is 
+ * designed to be a lighter weight option to the {@link PriorityScheduler}, for when multiple 
  * threads are either not needed, or not desired.<p>
  * 
  * @author jent - Mike Jensen
