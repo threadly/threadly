@@ -61,7 +61,6 @@ public class PrioritySchedulerWorkerPoolTest {
     assertEquals(corePoolSize, workerPool.getMaxPoolSize());
   }
   
-  @SuppressWarnings("deprecation")
   @Test
   public void getAndSetCorePoolSizeAboveMaxTest() {
     int corePoolSize = workerPool.getMaxPoolSize() * 2;

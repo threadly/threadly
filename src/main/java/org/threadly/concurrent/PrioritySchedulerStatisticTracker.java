@@ -642,8 +642,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * 
    * Returns -1 if no statistics have been recorded yet.
    * 
+   * @deprecated Removed in 4.0.0
+   * 
    * @return percent of time that threads are able to be reused
    */
+  @Deprecated
   public double getThreadAvailablePercent() {
     List<Boolean> totalList = new ArrayList<Boolean>(statsManager.lowPriorityWorkerAvailable);
     totalList.addAll(statsManager.highPriorityWorkerAvailable);
@@ -657,8 +660,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
+   * @deprecated Removed in 4.0.0
+   * 
    * @return percent of time that threads are able to be reused for high priority tasks
    */
+  @Deprecated
   public double getHighPriorityThreadAvailablePercent() {
     List<Boolean> list = new ArrayList<Boolean>(statsManager.highPriorityWorkerAvailable);
     
@@ -671,8 +677,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * 
    * Returns -1 if no statistics for high priority tasks have been recorded yet.
    * 
+   * @deprecated Removed in 4.0.0
+   * 
    * @return percent of time that threads are able to be reused for low priority tasks
    */
+  @Deprecated
   public double getLowPriorityThreadAvailablePercent() {
     List<Boolean> list = new ArrayList<Boolean>(statsManager.lowPriorityWorkerAvailable);
     

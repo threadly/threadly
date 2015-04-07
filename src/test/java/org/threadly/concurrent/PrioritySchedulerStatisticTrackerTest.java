@@ -127,6 +127,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     }.blockTillTrue();
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void resetCollectedStatsTest() {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
@@ -252,6 +253,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test
   public void getThreadAvailablePercentTest() {
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
