@@ -442,14 +442,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       }
       scheduledQueue.clear();
     }
-      
-    List<Runnable> result = new ArrayList<Runnable>(containers.size());
-    Iterator<TaskContainer> it = containers.iterator();
-    while (it.hasNext()) {
-      result.add(it.next().runnable);
-    }
     
-    return result;
+    return ContainerHelper.getContainedRunnables(containers);
   }
   
   /**

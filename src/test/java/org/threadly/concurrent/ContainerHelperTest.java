@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -67,6 +68,22 @@ public class ContainerHelperTest {
     TestCallable tc = new TestCallable();
     assertFalse(ContainerHelper.isContained(new TestRunnableContainer(new TestRunnable()), tc));
     assertFalse(ContainerHelper.isContained(new TestRunnable(), tc));
+  }
+  
+  @Test
+  public void getContainedRunnablesTest() {
+    List<TestRunnableContainer> containers = new ArrayList<TestRunnableContainer>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      containers.add(new TestRunnableContainer(new TestRunnable()));
+    }
+    
+    List<Runnable> resultList = ContainerHelper.getContainedRunnables(containers);
+    assertEquals(containers.size(), resultList.size());
+    
+    Iterator<TestRunnableContainer> it = containers.iterator();
+    while (it.hasNext()) {
+      assertTrue(resultList.contains(it.next().r));
+    }
   }
   
   private static class TestRunnableContainer implements RunnableContainerInterface, Runnable {

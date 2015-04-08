@@ -44,7 +44,7 @@ public class PrioritySchedulerTaskWrapperTest {
   private class TestWrapper extends TaskWrapper {
     private final int delayInMs;
     @SuppressWarnings("unused")
-    private boolean executingCalled;
+    private boolean canExecuteCalled;
     @SuppressWarnings("unused")
     private boolean runCalled;
     
@@ -60,7 +60,7 @@ public class PrioritySchedulerTaskWrapperTest {
       super(task);
       
       this.delayInMs = delayInMs;
-      executingCalled = false;
+      canExecuteCalled = false;
       runCalled = false;
     }
 
@@ -70,7 +70,7 @@ public class PrioritySchedulerTaskWrapperTest {
     }
     
     @Override
-    protected long getDelayEstimateInMs() {
+    protected long getDelayInMs(long now) {
       return delayInMs;
     }
 
@@ -80,8 +80,9 @@ public class PrioritySchedulerTaskWrapperTest {
     }
 
     @Override
-    public void executing() {
-      executingCalled = true;
+    public boolean canExecute() {
+      canExecuteCalled = true;
+      return true;
     }
   }
 }

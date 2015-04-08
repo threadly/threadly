@@ -18,6 +18,11 @@ public class SingleThreadSchedulerSchedulerManagerTest {
   @SuppressWarnings("unused")
   @Test (expected = IllegalThreadStateException.class)
   public void constructorFail() {
-    new SchedulerManager(new StartingThreadFactory());
+    StartingThreadFactory threadFactory = new StartingThreadFactory();
+    try {
+      new SchedulerManager(threadFactory);
+    } finally {
+      threadFactory.killThreads();
+    }
   }
 }

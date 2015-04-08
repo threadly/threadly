@@ -1,7 +1,9 @@
 package org.threadly.concurrent;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -223,5 +225,23 @@ public class ContainerHelper {
         return false;
       }
     }
+  }
+  
+  /**
+   * Takes in a list of runnable containers, and instead makes a list of the runnables which are 
+   * contained in each item of the list.
+   * 
+   * @param sourceList List of runnable containers to get interior runnable from
+   * @return A list of runnables which were contained in the source list
+   * @since 4.0.0
+   */
+  public static List<Runnable> getContainedRunnables(List<? extends RunnableContainerInterface> sourceList) {
+    List<Runnable> result = new ArrayList<Runnable>(sourceList.size());
+    Iterator<? extends RunnableContainerInterface> it = sourceList.iterator();
+    while (it.hasNext()) {
+      result.add(it.next().getContainedRunnable());
+    }
+    
+    return result;
   }
 }

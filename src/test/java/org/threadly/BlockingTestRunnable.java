@@ -4,7 +4,7 @@ import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class BlockingTestRunnable extends TestRunnable {
-  private boolean unblocked = false;
+  private volatile boolean unblocked = false;
   
   @Override
   public void handleRunStart() throws InterruptedException {
@@ -13,6 +13,10 @@ public class BlockingTestRunnable extends TestRunnable {
         this.wait();
       }
     }
+  }
+  
+  public boolean isUnblocked() {
+    return unblocked;
   }
   
   public void unblock() {
