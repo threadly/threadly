@@ -525,4 +525,31 @@ public class TestableSchedulerTest {
     scheduler.tick(scheduler.getLastTickTime() - 1);
     fail("Exception should have been thrown");
   }
+  
+  @Test
+  public void hasTaskReadyToRunTest() {
+    assertFalse(scheduler.hasTaskReadyToRun());
+    
+    scheduler.schedule(new TestRunnable(), 1);
+    assertFalse(scheduler.hasTaskReadyToRun());
+    
+    scheduler.execute(new TestRunnable());
+    assertTrue(scheduler.hasTaskReadyToRun());
+  }
+  
+  @Test
+  public void clearTasksTest() {
+    assertTrue(scheduler.clearTasks().isEmpty());
+    
+    TestRunnable executeTask = new TestRunnable();
+    TestRunnable scheduleTask = new TestRunnable();
+    scheduler.execute(executeTask);
+    scheduler.schedule(scheduleTask, 1);
+    
+    List<Runnable> result = scheduler.clearTasks();
+    
+    assertEquals(2, result.size());
+    assertTrue(result.contains(executeTask));
+    assertTrue(result.contains(scheduleTask));
+  }
 }

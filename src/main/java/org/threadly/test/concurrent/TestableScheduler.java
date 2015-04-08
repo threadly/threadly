@@ -1,5 +1,6 @@
 package org.threadly.test.concurrent;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.AbstractSubmitterScheduler;
@@ -200,6 +201,35 @@ public class TestableScheduler extends AbstractSubmitterScheduler
     nowInMillis = currentTime;
     
     return scheduler.tick(exceptionHandler);
+  }
+  
+  /**
+   * Checks if there are tasks ready to be run on the scheduler.  If 
+   * {@link #tick(ExceptionHandlerInterface)} is not currently being called, this call indicates 
+   * if the next {@link #tick(ExceptionHandlerInterface)} will have at least one task to run.  If 
+   * {@link #tick(ExceptionHandlerInterface)} is currently being invoked, this call will o a best 
+   * attempt to indicate if there is at least one more task to run (not including the task which 
+   * may currently be running).  It's a best attempt as it will try not to block the thread 
+   * invoking {@link #tick(ExceptionHandlerInterface)} to prevent it from accepting additional 
+   * work.
+   *  
+   * @return {@code true} if there are task waiting to run
+   */
+  public boolean hasTaskReadyToRun() {
+    return scheduler.hasTaskReadyToRun();
+  }
+  
+  /**
+   * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
+   * {@link #tick(ExceptionHandlerInterface)} is being called.  But will avoid additional tasks 
+   * from being run on the current {@link #tick(ExceptionHandlerInterface)} call.  
+   * 
+   * If tasks are added concurrently during this invocation they may or may not be removed.
+   * 
+   * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
+   */
+  public List<Runnable> clearTasks() {
+    return scheduler.clearTasks();
   }
   
   /**
