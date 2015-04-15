@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
@@ -29,24 +30,23 @@ import org.threadly.util.ListUtils;
  * <p>Executor to run tasks, schedule tasks.  Unlike 
  * {@link java.util.concurrent.ScheduledThreadPoolExecutor} this scheduled executor's pool size 
  * can shrink if set with a lower value via {@link #setPoolSize(int)}.  It also has the benefit 
- * that you can provide "low priority" tasks which will attempt to use existing workers and not 
- * instantly create new threads on demand.  Thus allowing you to better take the benefits of a 
- * thread pool for tasks which specific execution time is less important.</p>
+ * that you can provide "low priority" tasks.</p>
+ * 
+ * <p>These low priority tasks will delay their execution if there are other high priority tasks 
+ * ready to run, as long as they have not exceeded their maximum wait time.  If they have exceeded 
+ * their maximum wait time, and high priority tasks delay time is less than the low priority delay 
+ * time, then those low priority tasks will be executed.  What this results in is a task which has 
+ * lower priority, but which wont be starved from execution.</p>
  * 
  * <p>Most tasks provided into this pool will likely want to be "high priority", to more closely 
  * match the behavior of other thread pools.  That is why unless specified by the constructor, the 
  * default {@link TaskPriority} is High.</p>
  * 
- * <p>When providing a "low priority" task, the task wont execute till one of the following is 
- * true.  The pool is has low load, and there are available threads already to run on.  The pool 
- * has no available threads, but is under it's max size and has waited the maximum wait time for a 
- * thread to be become available.</p>
- * 
- * <p>In all conditions, "low priority" tasks will never be starved.  They only attempt to allow 
- * "high priority" tasks the priority.  This makes "low priority" tasks ideal which do regular 
- * cleanup, or in general anything that must run, but cares little if there is a 1, or 10 second 
- * gap in the execution time.  That amount of tolerance for "low priority" tasks is adjustable by 
- * setting the {@code maxWaitForLowPriorityInMs} either in the constructor, or at runtime.</p>
+ * <p>In all conditions, "low priority" tasks will never be starved.  This makes "low priority" 
+ * tasks ideal which do regular leanup, or in general anything that must run, but cares little if 
+ * there is a 1, or 10 second gap in the execution time.  That amount of tolerance is adjustable 
+ * by setting the {@code maxWaitForLowPriorityInMs} either in the constructor, or at runtime via 
+ * {@link #setMaxWaitForLowPriority(long)}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
@@ -58,25 +58,19 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   protected static final int WORKER_CONTENTION_LEVEL = 2; // level at which no worker contention is considered
   protected static final int LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS = 2;
-  protected static final String QUEUE_CONSUMER_THREAD_NAME_SUFFIX;
   // tuned for performance of scheduled tasks
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
-  static {
-    QUEUE_CONSUMER_THREAD_NAME_SUFFIX = " priority task consumer for " + PriorityScheduler.class.getSimpleName();
-  }
-  
   protected final WorkerPool workerPool;
   protected final TaskPriority defaultPriority;
-  protected final QueueManager highPriorityConsumer;  // is locked around highPriorityLock
-  protected final QueueManager lowPriorityConsumer;    // is locked around lowPriorityLock
+  protected final QueueManager taskConsumer;
 
   /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This constructs a default priority of high (which makes sense for most use cases).  
-   * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
-   * threads being daemon threads.
+   * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
+   * run.  This constructs a default priority of high (which makes sense for most use cases).  It 
+   * also defaults low priority task wait as 500ms.  It also defaults to all newly created threads 
+   * to being daemon threads.
    * 
    * @param poolSize Thread pool size that should be maintained
    */
@@ -85,9 +79,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This constructs a default priority of high (which makes sense for most use cases).  
-   * It also defaults low priority worker wait as 500ms.
+   * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
+   * run.  This constructs a default priority of high (which makes sense for most use cases).  It 
+   * also defaults low priority task wait as 500ms.
    * 
    * @param poolSize Thread pool size that should be maintained
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
@@ -97,15 +91,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
-   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
-   * also makes low priority tasks execution time less predictable.
+   * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
+   * run.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.
    * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
-   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs) {
@@ -113,15 +105,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
-   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
-   * also makes low priority tasks execution time less predictable.
+   * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
+   * run.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.
    * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
-   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
@@ -133,21 +123,19 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
 
   /**
-   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
-   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
-   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
-   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
-   * also makes low priority tasks execution time less predictable.
+   * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
+   * run.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.
    * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
-   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    * @param threadFactory thread factory for producing new threads within executor
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    this(new WorkerPool(threadFactory, poolSize, maxWaitForLowPriorityInMs), 
-         defaultPriority);
+    this(new WorkerPool(threadFactory, poolSize), 
+         maxWaitForLowPriorityInMs, defaultPriority);
   }
   
   /**
@@ -155,19 +143,20 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * implementation of {@link WorkerPool}.  Ultimately all constructors will defer to this one.
    * 
    * @param workerPool WorkerPool to handle accepting tasks and providing them to a worker for execution
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    * @param defaultPriority Default priority to store in case no priority is provided for tasks
    */
-  protected PriorityScheduler(WorkerPool workerPool, TaskPriority defaultPriority) {
+  protected PriorityScheduler(WorkerPool workerPool, long maxWaitForLowPriorityInMs, 
+                              TaskPriority defaultPriority) {
     if (defaultPriority == null) {
       defaultPriority = DEFAULT_PRIORITY;
     }
     
     this.workerPool = workerPool;
     this.defaultPriority = defaultPriority;
-    highPriorityConsumer = new QueueManager(workerPool, TaskPriority.High, 
-                                            TaskPriority.High + QUEUE_CONSUMER_THREAD_NAME_SUFFIX);
-    lowPriorityConsumer = new QueueManager(workerPool, TaskPriority.Low, 
-                                           TaskPriority.Low + QUEUE_CONSUMER_THREAD_NAME_SUFFIX);
+    taskConsumer = new QueueManager(workerPool, 
+                                    "task consumer for " + this.getClass().getSimpleName(), 
+                                    maxWaitForLowPriorityInMs);
   }
   
   /**
@@ -240,23 +229,26 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Changes the max wait time for an idle worker for low priority tasks.  Changing this will only 
-   * take effect for future low priority tasks, it will have no impact for the current low priority 
-   * task attempting to get a worker.
+   * Changes the max wait time for low priority tasks.  This is the amount of time that a low 
+   * priority task will wait if there are ready to execute high priority tasks.  After a low 
+   * priority task has waited this amount of time, it will be executed fairly with high priority 
+   * tasks (meaning it will only execute the high priority task if it has been waiting longer than 
+   * the low priority task).
    * 
-   * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds
+   * @param maxWaitForLowPriorityInMs new wait time in milliseconds for low priority tasks during thread contention
    */
   public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-    workerPool.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
+    taskConsumer.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
   }
   
   /**
-   * Getter for the maximum amount of time a low priority task will wait for an available worker.
+   * Getter for the amount of time a low priority task will wait during thread contention before 
+   * it is eligible for execution.
    * 
    * @return currently set max wait for low priority task
    */
   public long getMaxWaitForLowPriority() {
-    return workerPool.getMaxWaitForLowPriority();
+    return taskConsumer.getMaxWaitForLowPriority();
   }
   
   /**
@@ -266,7 +258,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @return quantity of tasks waiting execution or scheduled to be executed later
    */
   public int getScheduledTaskCount() {
-    return highPriorityConsumer.queueSize() + lowPriorityConsumer.queueSize();
+    return taskConsumer.getScheduledTaskCount();
   }
   
   /**
@@ -281,7 +273,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       return getScheduledTaskCount();
     }
     
-    return getQueueManager(priority).queueSize();
+    return taskConsumer.getQueueSet(priority).queueSize();
   }
   
   /**
@@ -309,8 +301,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    */
   public void shutdown() {
     if (workerPool.startShutdown()) {
-      ShutdownRunnable sr = new ShutdownRunnable(workerPool, lowPriorityConsumer, highPriorityConsumer);
-      highPriorityConsumer.addExecute(new OneTimeTaskWrapper(sr,  1));
+      ShutdownRunnable sr = new ShutdownRunnable(workerPool, taskConsumer);
+      QueueSet queueSet = taskConsumer.highPriorityQueueSet;
+      queueSet.addExecute(new OneTimeTaskWrapper(sr, 1, queueSet.executeQueue));
     }
   }
   
@@ -322,11 +315,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @return A list of Runnables that had been removed from the queues
    */
   protected List<Runnable> clearTaskQueue() {
-    List<Runnable> removedTasks = new ArrayList<Runnable>(getScheduledTaskCount());
-    lowPriorityConsumer.stopAndDrainQueueInto(removedTasks);
-    highPriorityConsumer.stopAndDrainQueueInto(removedTasks);
-    
-    return removedTasks;
+    return taskConsumer.stopAndClearQueue();
   }
 
   /**
@@ -377,15 +366,18 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * run until this call has returned.
    * 
    * Note that this call has high guarantees on the ability to remove the task (as in a complete 
-   * guarantee).  But while this task is called, it will reduce the throughput of execution, so 
-   * should not be used extremely frequently.
+   * guarantee).  But while this is being invoked, it will reduce the throughput of execution, so 
+   * should NOT be used extremely frequently.
    * 
-   * @param task The original task provided to the executor
-   * @return {@code true} if the task was found and removed
+   * For non-recurring tasks using a future and calling {@link Future#cancel(boolean)} can be a 
+   * better solution.
+   * 
+   * @param task The original runnable provided to the executor
+   * @return {@code true} if the runnable was found and removed
    */
   @Override
   public boolean remove(Runnable task) {
-    return highPriorityConsumer.remove(task) || lowPriorityConsumer.remove(task);
+    return taskConsumer.remove(task);
   }
 
   /**
@@ -393,15 +385,18 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * run until this call has returned.
    * 
    * Note that this call has high guarantees on the ability to remove the task (as in a complete 
-   * guarantee).  But while this task is called, it will reduce the throughput of execution, so 
-   * should not be used extremely frequently.
+   * guarantee).  But while this is being invoked, it will reduce the throughput of execution, so 
+   * should NOT be used extremely frequently.
+   * 
+   * For non-recurring tasks using a future and calling {@link Future#cancel(boolean)} can be a 
+   * better solution.
    * 
    * @param task The original callable provided to the executor
    * @return {@code true} if the callable was found and removed
    */
   @Override
   public boolean remove(Callable<?> task) {
-    return highPriorityConsumer.remove(task) || lowPriorityConsumer.remove(task);
+    return taskConsumer.remove(task);
   }
 
   @Override
@@ -419,11 +414,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @param priority Priority for task execution
    */
   protected void doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
-    OneTimeTaskWrapper taskWrapper = new OneTimeTaskWrapper(task, delayInMillis);
+    QueueSet queueSet = taskConsumer.getQueueSet(priority);
     if (delayInMillis == 0) {
-      addToExecuteQueue(priority, taskWrapper);
+      addToExecuteQueue(queueSet, new OneTimeTaskWrapper(task, delayInMillis, queueSet.executeQueue));
     } else {
-      addToScheduleQueue(priority, taskWrapper);
+      addToScheduleQueue(queueSet, new OneTimeTaskWrapper(task, delayInMillis, queueSet.scheduleQueue));
     }
   }
 
@@ -509,7 +504,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       priority = defaultPriority;
     }
 
-    addToScheduleQueue(priority, new RecurringDelayTaskWrapper(task, getQueueManager(priority), 
+    QueueSet queueSet = taskConsumer.getQueueSet(priority);
+    addToScheduleQueue(queueSet, new RecurringDelayTaskWrapper(task, queueSet, 
                                                                initialDelay, recurringDelay));
   }
 
@@ -528,25 +524,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       priority = defaultPriority;
     }
 
-    addToScheduleQueue(priority, new RecurringRateTaskWrapper(task, getQueueManager(priority), 
+    QueueSet queueSet = taskConsumer.getQueueSet(priority);
+    addToScheduleQueue(queueSet, new RecurringRateTaskWrapper(task, queueSet, 
                                                               initialDelay, period));
-  }
-  
-  /**
-   * Simple class to return the appropriate {@link QueueManager} for a given priority.
-   * 
-   * @param priority Priority to check against for finding the queue
-   * @return Task queue which makes sense for the given priority 
-   */
-  protected QueueManager getQueueManager(TaskPriority priority) {
-    switch (priority) {
-      case High:
-        return highPriorityConsumer;
-      case Low:
-        return lowPriorityConsumer;
-      default:
-        throw new UnsupportedOperationException();
-    }
   }
   
   /**
@@ -557,12 +537,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
    */
-  protected void addToExecuteQueue(TaskPriority priority, OneTimeTaskWrapper task) {
+  protected void addToExecuteQueue(QueueSet queueSet, OneTimeTaskWrapper task) {
     if (workerPool.isShutdownStarted()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
     
-    getQueueManager(priority).addExecute(task);
+    queueSet.addExecute(task);
   }
   
   /**
@@ -573,18 +553,493 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
    */
-  protected void addToScheduleQueue(TaskPriority priority, TaskWrapper task) {
+  protected void addToScheduleQueue(QueueSet queueSet, TaskWrapper task) {
     if (workerPool.isShutdownStarted()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
     
-    getQueueManager(priority).addScheduled(task);
+    queueSet.addScheduled(task);
   }
   
   @Override
   protected void finalize() {
     // shutdown the thread pool so we don't leak threads if garbage collected
     shutdown();
+  }
+  
+  /* TODO - Can we make this structure more generic?  The logic is very similar as what is done in 
+   * the NoThreadScheduler.  I attempted to do this but it caused us to make a bunch of top level 
+   * interfaces (due to the need of creating generics in the QueueSet structure).
+   * 
+   * Ultimately to do this in a clean way we would probably need to make "TaskWrapper" a generic 
+   * implementation as well.
+   */
+  /**
+   * <p>Class to contain structures for both execution and scheduling.  It also contains logic for 
+   * how we get and add tasks to this queue.</p>
+   * 
+   * <p>This allows us to have one structure for each priority.  Each structure determines what is  
+   * the next task for a given priority</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.0.0
+   */
+  protected static class QueueSet {
+    protected final Thread runningThread;
+    protected final WorkerPool workerPool;
+    protected final ConcurrentLinkedQueue<OneTimeTaskWrapper> executeQueue;
+    protected final ConcurrentArrayList<TaskWrapper> scheduleQueue;
+    
+    public QueueSet(Thread runningThread, WorkerPool workerPool) {
+      this.runningThread = runningThread;
+      this.workerPool = workerPool;
+      this.executeQueue = new ConcurrentLinkedQueue<OneTimeTaskWrapper>();
+      this.scheduleQueue = new ConcurrentArrayList<TaskWrapper>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
+    }
+
+    /**
+     * Adds a task for immediate execution.  No safety checks are done at this point, the task 
+     * will be immediately added and available for consumption.
+     * 
+     * @param task Task to add to end of execute queue
+     */
+    public void addExecute(OneTimeTaskWrapper task) {
+      executeQueue.add(task);
+
+      LockSupport.unpark(runningThread);
+    }
+
+    /**
+     * Adds a task for delayed execution.  No safety checks are done at this point.  This call 
+     * will safely find the insertion point in the scheduled queue and insert it into that 
+     * queue.
+     * 
+     * @param task Task to insert into the schedule queue
+     */
+    public void addScheduled(TaskWrapper task) {
+      int insertionIndex;
+      synchronized (scheduleQueue.getModificationLock()) {
+        ClockWrapper.stopForcingUpdate();
+        try {
+          insertionIndex = ListUtils.getInsertionEndIndex(scheduleQueue, task, true);
+          
+          scheduleQueue.add(insertionIndex, task);
+        } finally {
+          ClockWrapper.resumeForcingUpdate();
+        }
+      }
+      
+      if (insertionIndex == 0) {
+        LockSupport.unpark(runningThread);
+      }
+    }
+
+    /**
+     * Call to find and reposition a scheduled task.  It is expected that the task provided has 
+     * already been added to the queue.  This call will use 
+     * {@link RecurringTaskWrapper#getNextDelayInMillis()} to figure out what the new position 
+     * within the queue should be.
+     * 
+     * @param task Task to find in queue and reposition based off next delay
+     */
+    public void reschedule(RecurringTaskWrapper task) {
+      int insertionIndex = 1;
+      synchronized (scheduleQueue.getModificationLock()) {
+        if (! workerPool.isShutdownStarted()) {
+          ClockWrapper.stopForcingUpdate();
+          try {
+            insertionIndex = ListUtils.getInsertionEndIndex(scheduleQueue, 
+                                                            task.getNextDelayInMillis(), true);
+            
+            scheduleQueue.reposition(task, insertionIndex, true);
+          } finally {
+            ClockWrapper.resumeForcingUpdate();
+          }
+        }
+      }
+      
+      // need to unpark even if the task is not ready, otherwise we may get stuck on an infinite park
+      if (insertionIndex == 0) {
+        LockSupport.unpark(runningThread);
+      }
+    }
+
+    /**
+     * Removes a given callable from the internal queues (if it exists).
+     * 
+     * @param task Callable to search for and remove
+     * @return {@code true} if the task was found and removed
+     */
+    public boolean remove(Callable<?> task) {
+      {
+        Iterator<? extends TaskWrapper> it = executeQueue.iterator();
+        while (it.hasNext()) {
+          TaskWrapper tw = it.next();
+          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
+            tw.cancel();
+            return true;
+          }
+        }
+      }
+      synchronized (scheduleQueue.getModificationLock()) {
+        Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
+        while (it.hasNext()) {
+          TaskWrapper tw = it.next();
+          if (ContainerHelper.isContained(tw.task, task)) {
+            tw.cancel();
+            it.remove();
+            
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    }
+
+    /**
+     * Removes a given Runnable from the internal queues (if it exists).
+     * 
+     * @param task Runnable to search for and remove
+     * @return {@code true} if the task was found and removed
+     */
+    public boolean remove(Runnable task) {
+      {
+        Iterator<? extends TaskWrapper> it = executeQueue.iterator();
+        while (it.hasNext()) {
+          TaskWrapper tw = it.next();
+          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
+            tw.cancel();
+            return true;
+          }
+        }
+      }
+      synchronized (scheduleQueue.getModificationLock()) {
+        Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
+        while (it.hasNext()) {
+          TaskWrapper tw = it.next();
+          if (ContainerHelper.isContained(tw.task, task)) {
+            tw.cancel();
+            it.remove();
+            
+            return true;
+          }
+        }
+      }
+      
+      return false;
+    }
+
+    /**
+     * Call to get the total quantity of tasks within both stored queues.  This returns the total 
+     * quantity of items in both the execute and scheduled queue.  If there are scheduled tasks 
+     * which are NOT ready to run, they will still be included in this total.
+     * 
+     * @return Total quantity of tasks queued
+     */
+    public int queueSize() {
+      return executeQueue.size() + scheduleQueue.size();
+    }
+
+    public void drainQueueInto(List<TaskWrapper> removedTasks) {
+      clearQueue(executeQueue, removedTasks);
+      synchronized (scheduleQueue.getModificationLock()) {
+        clearQueue(scheduleQueue, removedTasks);
+      }
+    }
+  
+    private static void clearQueue(Collection<? extends TaskWrapper> queue, List<TaskWrapper> resultList) {
+      Iterator<? extends TaskWrapper> it = queue.iterator();
+      while (it.hasNext()) {
+        TaskWrapper tw = it.next();
+        tw.cancel();
+        if (! (tw.task instanceof ShutdownRunnable)) {
+          int index = ListUtils.getInsertionEndIndex(resultList, tw, true);
+          resultList.add(index, tw);
+        }
+      }
+      queue.clear();
+    }
+    
+    /**
+     * Gets the next task from this {@link QueueSet}.  This inspects both the execute queue and 
+     * against scheduled tasks to determine which task in this {@link QueueSet} should be executed 
+     * next.
+     * 
+     * The task returned from this may not be ready to executed, but at the time of calling it 
+     * will be the next one to execute.
+     * 
+     * @return TaskWrapper which will be executed next, or {@code null} if there are no tasks
+     */
+    public TaskWrapper getNextTask() {
+      TaskWrapper scheduledTask = scheduleQueue.peekFirst();
+      TaskWrapper executeTask = executeQueue.peek();
+      if (executeTask != null) {
+        if (scheduledTask != null) {
+          if (scheduledTask.getDelayInMs(0) < executeTask.getDelayInMs(0)) {
+            return scheduledTask;
+          } else {
+            return executeTask;
+          }
+        } else {
+          return executeTask;
+        }
+      } else {
+        return scheduledTask;
+      }
+    }
+  }
+  
+  /**
+   * <p>A service which manages the execute queues.  It runs a task to consume from the queues and 
+   * execute those tasks as workers become available.  It also manages the queues as tasks are 
+   * added, removed, or rescheduled.</p>
+   * 
+   * <p>Right now this class has a pretty tight dependency on {@link PriorityScheduler}, which is 
+   * why this is an inner class.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.4.0
+   */
+  protected static class QueueManager extends AbstractService implements Runnable {
+    protected final WorkerPool workerPool;
+    protected final QueueSet highPriorityQueueSet;
+    protected final QueueSet lowPriorityQueueSet;
+    protected volatile Thread runningThread;
+    private volatile long maxWaitForLowPriorityInMs;
+    
+    public QueueManager(WorkerPool workerPool, String threadName, 
+                        long maxWaitForLowPriorityInMs) {
+      this.workerPool = workerPool;
+      runningThread = workerPool.threadFactory.newThread(this);
+      if (runningThread.isAlive()) {
+        runningThread = null;
+        throw new IllegalThreadStateException();
+      }
+      runningThread.setDaemon(true);
+      runningThread.setName(threadName);
+      this.highPriorityQueueSet = new QueueSet(runningThread, workerPool);
+      this.lowPriorityQueueSet = new QueueSet(runningThread, workerPool);
+      
+      // call to verify and set values
+      setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
+      
+      start();
+    }
+    
+    /**
+     * Returns the {@link QueueSet} for a specified priority.
+     * 
+     * @param priority Priority that should match to the given {@link QueueSet}
+     * @return {@link QueueSet} which matches to the priority
+     */
+    public QueueSet getQueueSet(TaskPriority priority) {
+      if (priority == TaskPriority.High) {
+        return highPriorityQueueSet;
+      } else {
+        return lowPriorityQueueSet;
+      }
+    }
+
+    /**
+     * Stops the thread which is consuming tasks and providing them to {@link Worker}'s.  If we 
+     * already have an idle worker, that worker will be returned to the WorkerPool.
+     * 
+     * Once stopped, the tasks remaining in queue will be cleared, and returned.
+     * 
+     * @return List of runnables that were waiting in queue, in an approximate order of execution
+     */
+    public List<Runnable> stopAndClearQueue() {
+      stopIfRunning();
+
+      List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(getScheduledTaskCount());
+      highPriorityQueueSet.drainQueueInto(wrapperList);
+      lowPriorityQueueSet.drainQueueInto(wrapperList);
+      
+      return ContainerHelper.getContainedRunnables(wrapperList);
+    }
+
+    @Override
+    protected void startupService() {
+      runningThread.start();
+    }
+
+    @Override
+    protected void shutdownService() {
+      Thread runningThread = this.runningThread;
+      this.runningThread = null;
+      runningThread.interrupt();
+    }
+
+    @Override
+    public void run() {
+      Worker worker = null;
+      while (runningThread != null) {
+        try {
+          worker = workerPool.getWorker();
+          if (worker != null) {
+            TaskWrapper nextTask = getNextReadyTask();
+            if (nextTask != null) {
+              worker.nextTask(nextTask);
+            } else {
+              workerPool.workerDone(worker);
+            }
+          }
+        } catch (InterruptedException e) {
+          if (worker != null) {
+            workerPool.workerDone(worker);
+          }
+          stopIfRunning();
+          Thread.currentThread().interrupt();
+        } catch (Throwable t) {
+          if (worker != null) {
+            // we kill the worker here because this condition is not expected
+            workerPool.killWorker(worker);
+          }
+          ExceptionUtils.handleException(t);
+        } finally {
+          worker = null;
+        }
+      }
+    }
+    
+    /**
+     * Gets the next task that is ready to execute immediately.  This call gets the next high and 
+     * low priority task, compares them and determines which one should be executed next.
+     * 
+     * If there are no tasks ready to be executed this will block until one becomes available 
+     * and ready to execute.
+     * 
+     * @return Task to be executed next, or {@code null} if shutdown while waiting for task
+     * @throws InterruptedException Thrown if calling thread is interrupted while waiting for a task
+     */
+    protected TaskWrapper getNextReadyTask() throws InterruptedException {
+      while (runningThread != null) {  // loop till we have something to return
+        TaskWrapper nextHighPriorityTask = highPriorityQueueSet.getNextTask();
+        TaskWrapper nextLowPriorityTask = lowPriorityQueueSet.getNextTask();
+        if (nextLowPriorityTask == null) {
+          if (nextHighPriorityTask == null) {
+            // no tasks, so just wait till any tasks come in
+            LockSupport.park();
+          } else {
+            // only high priority task is queued, so run if ready
+            long nextTaskDelay = nextHighPriorityTask.getDelayInMs(Clock.accurateForwardProgressingMillis());
+            if (nextTaskDelay > 0) {
+              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
+            } else if (nextHighPriorityTask.canExecute()) {
+              return nextHighPriorityTask;
+            }
+          }
+        } else if (nextHighPriorityTask == null) {
+          // only low priority task is queued, so run if ready
+          long nextTaskDelay = nextLowPriorityTask.getDelayInMs(Clock.accurateForwardProgressingMillis());
+          if (nextTaskDelay > 0) {
+            LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
+          } else if (nextLowPriorityTask.canExecute()) {
+            return nextLowPriorityTask;
+          }
+        } else {
+          // both tasks are available, so see which one makes sense to run
+          long now = Clock.accurateForwardProgressingMillis();
+          long nextHighDelay = nextHighPriorityTask.getDelayInMs(now);
+          long nextLowDelay = nextLowPriorityTask.getDelayInMs(now);
+          if (nextHighDelay <= 0) {
+            /* high task is ready, make sure it should be picked...we will pick the low priority task 
+             * if it has been waiting longer than the high, and if the low priority has been waiting at 
+             * least the max wait time...otherwise we favor the high priority task
+             */
+            if (nextHighDelay > nextLowDelay && nextLowDelay < maxWaitForLowPriorityInMs * -1) {
+              if (nextLowPriorityTask.canExecute()) {
+                return nextLowPriorityTask;
+              }
+            } else if (nextHighPriorityTask.canExecute()) {
+              return nextHighPriorityTask;
+            }
+          } else if (nextLowDelay <= 0) {
+            if (nextLowPriorityTask.canExecute()) {
+              return nextLowPriorityTask;
+            }
+          } else {
+            if (nextLowDelay < nextHighDelay) {
+              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextLowDelay);
+            } else {
+              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextHighDelay);
+            }
+          }
+        }
+        
+        if (Thread.currentThread().isInterrupted()) {
+          throw new InterruptedException();
+        }
+      }
+      
+      return null;
+    }
+    
+    /**
+     * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
+     * a future point.
+     * 
+     * @return quantity of tasks waiting execution or scheduled to be executed later
+     */
+    public int getScheduledTaskCount() {
+      return highPriorityQueueSet.queueSize() + lowPriorityQueueSet.queueSize();
+    }
+    
+    /**
+     * Removes the runnable task from the execution queue.  It is possible for the runnable to 
+     * still run until this call has returned.
+     * 
+     * Note that this call has high guarantees on the ability to remove the task (as in a complete 
+     * guarantee).  But while this is being invoked, it will reduce the throughput of execution, 
+     * so should NOT be used extremely frequently.
+     * 
+     * @param task The original runnable provided to the executor
+     * @return {@code true} if the runnable was found and removed
+     */
+    public boolean remove(Runnable task) {
+      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+    }
+    
+    /**
+     * Removes the callable task from the execution queue.  It is possible for the callable to 
+     * still run until this call has returned.
+     * 
+     * Note that this call has high guarantees on the ability to remove the task (as in a complete 
+     * guarantee).  But while this is being invoked, it will reduce the throughput of execution, 
+     * so should NOT be used extremely frequently.
+     * 
+     * @param task The original callable provided to the executor
+     * @return {@code true} if the callable was found and removed
+     */
+    public boolean remove(Callable<?> task) {
+      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+    }
+    
+    /**
+     * Changes the max wait time for low priority tasks.  This is the amount of time that a low 
+     * priority task will wait if there are ready to execute high priority tasks.  After a low 
+     * priority task has waited this amount of time, it will be executed fairly with high priority 
+     * tasks (meaning it will only execute the high priority task if it has been waiting longer than 
+     * the low priority task).
+     * 
+     * @param maxWaitForLowPriorityInMs new wait time in milliseconds for low priority tasks during thread contention
+     */
+    public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
+      ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
+      
+      this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
+    }
+    
+    /**
+     * Getter for the amount of time a low priority task will wait during thread contention before 
+     * it is eligible for execution.
+     * 
+     * @return currently set max wait for low priority task
+     */
+    public long getMaxWaitForLowPriority() {
+      return maxWaitForLowPriorityInMs;
+    }
   }
   
   /**
@@ -600,15 +1055,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     protected final Object poolSizeChangeLock;
     protected final Object workersLock;
     protected final Deque<Worker> availableWorkers;        // is locked around workersLock
-    protected long lastHighDelayMillis;   // is locked around workersLock
-    private int waitingForWorkerCount;  // is locked around workersLock
-    private int currentPoolSize;  // is locked around workersLock
+    protected boolean waitingForWorker;  // is locked around workersLock
+    protected int currentPoolSize;  // is locked around workersLock
     private final AtomicBoolean shutdownStarted;
     private volatile boolean shutdownFinishing; // once true, never goes to false
-    private volatile long maxWaitForLowPriorityInMs;
     private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
     
-    protected WorkerPool(ThreadFactory threadFactory, int poolSize, long maxWaitForLowPriorityInMs) {
+    protected WorkerPool(ThreadFactory threadFactory, int poolSize) {
       ArgumentVerifier.assertGreaterThanZero(poolSize, "poolSize");
       if (threadFactory == null) {
         threadFactory = new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", true);
@@ -617,17 +1070,13 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       poolSizeChangeLock = new Object();
       workersLock = new Object();
       availableWorkers = new ArrayDeque<Worker>(poolSize);
-      waitingForWorkerCount = 0;
+      waitingForWorker = false;
       currentPoolSize = 0;
-      
-      //calls to verify and set values
-      setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
       
       this.threadFactory = threadFactory;
       this.maxPoolSize = poolSize;
       shutdownStarted = new AtomicBoolean(false);
       shutdownFinishing = false;
-      lastHighDelayMillis = 0;
     }
 
     /**
@@ -709,11 +1158,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         synchronized (workersLock) {
           if (poolSizeIncrease) {
             // now that pool size increased, start any workers we can for the waiting tasks
-            if (waitingForWorkerCount > 0) {
-              while (availableWorkers.size() < waitingForWorkerCount && 
-                     currentPoolSize <= newPoolSize) {
-                availableWorkers.add(makeNewWorker());
-              }
+            if (waitingForWorker) {
+              availableWorkers.add(makeNewWorker());
               
               workersLock.notifyAll();
             }
@@ -745,7 +1191,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      */
     public int getCurrentRunningCount() {
       synchronized (workersLock) {
-        return currentPoolSize - availableWorkers.size();
+        int workerOutQty = currentPoolSize - availableWorkers.size();
+        if (waitingForWorker || currentPoolSize == 0) {
+          return workerOutQty;
+        } else {
+          return workerOutQty - 1;
+        }
       }
     }
 
@@ -765,64 +1216,30 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         }
       }
     }
-
+    
     /**
-     * Getter for the maximum amount of time a low priority task will wait for an available worker.
+     * Call to get (or create, if able to) an idle worker.  If there are no idle workers available 
+     * then this call will block until one does become available.
      * 
-     * @return currently set max wait for low priority task
+     * @return A worker ready to accept a task or {@code null} if the pool was shutdown
+     * @throws InterruptedException Thrown if this thread is interrupted while waiting to acquire a worker
      */
-    public long getMaxWaitForLowPriority() {
-      return maxWaitForLowPriorityInMs;
-    }
-
-    /**
-     * Changes the max wait time for an idle worker for low priority tasks.  Changing this will only 
-     * take effect for future low priority tasks, it will have no impact for the current low priority 
-     * task attempting to get a worker.
-     * 
-     * @param maxWaitForLowPriorityInMs new time to wait for a thread in milliseconds
-     */
-    public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-      ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
-      
-      this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
-    }
-  
-    /**
-     * This function REQUIRES that workersLock is synchronized before calling.  It returns an 
-     * available worker if it can get one before the wait time expires.  It will never create 
-     * a new worker.
-     * 
-     * @param maxWaitTimeInMs time to wait for a worker to become available
-     * @return an available worker, or {@code null} if no worker became available within the maxWaitTimeInMs
-     * @throws InterruptedException Thrown if thread is interrupted while waiting for worker
-     */
-    protected Worker getExistingWorker(long maxWaitTimeInMs) throws InterruptedException {
-      long startTime = -1;
-      waitingForWorkerCount++;
-      try {
-        long waitTime = maxWaitTimeInMs;
-        while (availableWorkers.isEmpty() && waitTime > 0) {
-          if (waitTime == Long.MAX_VALUE) {  // prevent overflow
-            workersLock.wait();
+    public Worker getWorker() throws InterruptedException {
+      synchronized (workersLock) {
+        while (availableWorkers.isEmpty() && ! shutdownFinishing) {
+          if (currentPoolSize < maxPoolSize) {
+            return makeNewWorker();
           } else {
-            if (startTime < 0) {
-              // only set the start time at the first run
-              startTime = Clock.accurateForwardProgressingMillis();
-            } else {
-              long elapsedTime = Clock.accurateForwardProgressingMillis() - startTime;
-              waitTime = maxWaitTimeInMs - elapsedTime;
-            }
-            if (waitTime > 0) {
-              workersLock.wait(waitTime);
+            waitingForWorker = true;
+            try {
+              workersLock.wait();
+            } finally {
+              waitingForWorker = false;
             }
           }
         }
         
-        // always return from the front, if this returns null it's because we exceeded our wait time
-        return availableWorkers.pollFirst();
-      } finally {
-        waitingForWorkerCount--;
+        return availableWorkers.poll();
       }
     }
     
@@ -878,441 +1295,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         } else {
           // always add to the front so older workers are at the back
           availableWorkers.addFirst(worker);
-              
-          workersLock.notify();
-        }
-      }
-    }
-    
-    /**
-     * Should be called from a high priority queue consumer when there are no tasks currently 
-     * ready for execution.  This should be called before it blocks to wait for new tasks.  It 
-     * allows the {@link WorkerPool} to optimize task distribution to know that there are not 
-     * any currently ready tasks, and how long until the next one is expected.
-     * 
-     * @param queueManager QueueManager that is about to block waiting for a task to run
-     * @param delayEstimateInMs How long till next task, or {@code Long.MAX_VALUE} if none are queued
-     */
-    protected void handleEstimatedTimeTillNextTask(QueueManager queueManager, long delayEstimateInMs) {
-      if (queueManager.queuePriority == TaskPriority.High) {
-        if (delayEstimateInMs > lastHighDelayMillis) {
-          lastHighDelayMillis = 0;
-        }
-      }
-    }
-  
-    /**
-     * After a task has been pulled from the queue and is ready to execute it is provided here.  
-     * This function will get an available worker (or create one if necessary and possible), and 
-     * then provide the task to that available worker.
-     * 
-     * @param task Task to execute once we have an available worker
-     * @throws InterruptedException Thrown if thread is interrupted while waiting for a worker
-     */
-    protected void runHighPriorityTask(TaskWrapper task) throws InterruptedException {
-      Worker w = null;
-      synchronized (workersLock) {
-        if (! shutdownFinishing) {
-          if (currentPoolSize >= maxPoolSize) {
-            // set this value initially so that incoming low priority tasks will recognized the needed delay
-            lastHighDelayMillis = task.getDelayEstimateInMs();
-            // we can't make the pool any bigger
-            w = getExistingWorker(Long.MAX_VALUE);
-            // we re-set this value to include the time it took to get a thread
-            lastHighDelayMillis = task.getDelayEstimateInMs();
-          } else {
-            lastHighDelayMillis = 0;
-            
-            if (availableWorkers.isEmpty()) {
-              w = makeNewWorker();
-            } else {
-              // always remove from the front, to get the newest worker
-              w = availableWorkers.removeFirst();
-            }
-          }
-        }
-      }
-      
-      if (w != null) {  // may be null if shutdown
-        w.nextTask(task);
-      }
-    }
-  
-    /**
-     * After a task has been pulled from the queue and is ready to execute it is provided here.  
-     * This function will get an available worker, waiting a bit of time for one to become 
-     * available if none are immediately available.  If after that there is still none available it 
-     * will create one (assuming we have not reached our max pool size).  Then the acquired worker 
-     * will be provided the task to execute.
-     * 
-     * @param task Task to execute once we have an available worker
-     * @throws InterruptedException Thrown if thread is interrupted while waiting for a worker
-     */
-    protected void runLowPriorityTask(TaskWrapper task) throws InterruptedException {
-      Worker w = null;
-      synchronized (workersLock) {
-        // wait for high priority tasks that have been waiting longer than us if all workers are consumed
-        long waitMs;
-        while (currentPoolSize >= maxPoolSize && 
-            availableWorkers.size() < WORKER_CONTENTION_LEVEL &&   // only care if there is worker contention
-            ! shutdownFinishing &&
-            (waitMs = task.getDelayEstimateInMs() - lastHighDelayMillis) > LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS) {
-          workersLock.wait(waitMs);
-          Clock.systemNanoTime(); // update for getDelayEstimateInMillis
-        }
-        
-        if (! shutdownFinishing) {
-          if (currentPoolSize >= maxPoolSize) {
-            w = getExistingWorker(Long.MAX_VALUE);
-          } else if (currentPoolSize == 0) {
-            // first task is low priority, we obviously wont get any workers if we wait, so just make one
-            w = makeNewWorker();
-          } else {
-            w = getExistingWorker(maxWaitForLowPriorityInMs);
-            if (w == null) {
-              // this means we expired past our wait time, so create a worker if we can
-              if (currentPoolSize >= maxPoolSize) {
-                // more workers were created while waiting, now have reached our max
-                w = getExistingWorker(Long.MAX_VALUE);
-              } else {
-                w = makeNewWorker();
-              }
-            }
-          }
-        }
-      }
-      
-      if (w != null) {  // may be null if shutdown
-        w.nextTask(task);
-      }
-    }
-  }
-  
-  /**
-   * <p>A service which manages the execute queues.  It runs a task to consume from the queues and 
-   * execute those tasks as workers become available.  It also manages the queues as tasks are 
-   * added, removed, or rescheduled.</p>
-   * 
-   * <p>Right now this class has a pretty tight dependency on {@link PriorityScheduler}, which is 
-   * why this is an inner class.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 3.4.0
-   */
-  protected static class QueueManager extends AbstractService implements Runnable {
-    protected final WorkerPool workerPool;
-    protected final String threadName;
-    protected final ConcurrentLinkedQueue<OneTimeTaskWrapper> executeQueue;
-    protected final ConcurrentArrayList<TaskWrapper> scheduleQueue;
-    protected final TaskPriority queuePriority;
-    protected volatile Thread runningThread;
-    
-    public QueueManager(WorkerPool workerPool, TaskPriority queuePriority, String threadName) {
-      this.workerPool = workerPool;
-      this.threadName = threadName;
-      this.executeQueue = new ConcurrentLinkedQueue<OneTimeTaskWrapper>();
-      this.scheduleQueue = new ConcurrentArrayList<TaskWrapper>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
-      this.queuePriority = queuePriority;
-      runningThread = null;
-    }
-
-    /**
-     * Removes a given callable from the internal queues (if it exists).
-     * 
-     * @param task Callable to search for and remove
-     * @return {@code true} if the task was found and removed
-     */
-    public boolean remove(Callable<?> task) {
-      {
-        Iterator<? extends TaskWrapper> it = executeQueue.iterator();
-        while (it.hasNext()) {
-          TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
-            tw.cancel();
-            return true;
-          }
-        }
-      }
-      synchronized (scheduleQueue.getModificationLock()) {
-        Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
-        while (it.hasNext()) {
-          TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task)) {
-            tw.cancel();
-            it.remove();
-            
-            return true;
-          }
-        }
-      }
-      
-      return false;
-    }
-
-    /**
-     * Removes a given Runnable from the internal queues (if it exists).
-     * 
-     * @param task Runnable to search for and remove
-     * @return {@code true} if the task was found and removed
-     */
-    public boolean remove(Runnable task) {
-      {
-        Iterator<? extends TaskWrapper> it = executeQueue.iterator();
-        while (it.hasNext()) {
-          TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
-            tw.cancel();
-            return true;
-          }
-        }
-      }
-      synchronized (scheduleQueue.getModificationLock()) {
-        Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
-        while (it.hasNext()) {
-          TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task)) {
-            tw.cancel();
-            it.remove();
-            
-            return true;
-          }
-        }
-      }
-      
-      return false;
-    }
-
-    /**
-     * Adds a task for immediate execution.  No safety checks are done at this point, the task 
-     * will be immediately added and available for consumption.
-     * 
-     * @param task Task to add to end of execute queue
-     */
-    public void addExecute(OneTimeTaskWrapper task) {
-      executeQueue.add(task);
-
-      handleQueueUpdate();
-    }
-
-    /**
-     * Adds a task for delayed execution.  No safety checks are done at this point.  This call 
-     * will safely find the insertion point in the scheduled queue and insert it into that 
-     * queue.
-     * 
-     * @param task Task to insert into the schedule queue
-     */
-    public void addScheduled(TaskWrapper task) {
-      synchronized (scheduleQueue.getModificationLock()) {
-        ClockWrapper.stopForcingUpdate();
-        try {
-          int index = ListUtils.getInsertionEndIndex(scheduleQueue, task, true);
           
-          scheduleQueue.add(index, task);
-        } finally {
-          ClockWrapper.resumeForcingUpdate();
-        }
-      }
-      
-      handleQueueUpdate();
-    }
-
-    /**
-     * Adds a scheduled task to the end of the scheduled queue.  It is expected that this task is 
-     * NOT ready for execution, and will later be moved from invoking 
-     * {@link #reschedule(RecurringTaskWrapper)}.
-     * 
-     * @param task Task to add to end of schedule queue
-     */
-    public void addScheduledLast(RecurringTaskWrapper task) {
-      scheduleQueue.addLast(task);
-      // no need to notify since this task wont be ready to run
-    }
-
-    /**
-     * Call to find and reposition a scheduled task.  It is expected that the task provided has 
-     * already been added to the queue (likely from a call to 
-     * {@link #addScheduledLast(RecurringTaskWrapper)}).  This call will use 
-     * {@link RecurringTaskWrapper#getNextDelayInMillis()} to figure out what the new position 
-     * within the queue should be.
-     * 
-     * @param task Task to find in queue and reposition based off next delay
-     */
-    public void reschedule(RecurringTaskWrapper task) {
-      synchronized (scheduleQueue.getModificationLock()) {
-        if (! workerPool.isShutdownStarted()) {
-          ClockWrapper.stopForcingUpdate();
-          try {
-            long nextDelay = task.getNextDelayInMillis();
-            int insertionIndex = ListUtils.getInsertionEndIndex(scheduleQueue, nextDelay, true);
-            
-            scheduleQueue.reposition(task, insertionIndex, true);
-          } finally {
-            ClockWrapper.resumeForcingUpdate();
+          if (waitingForWorker) {
+            workersLock.notify();
           }
         }
       }
-      
-      // need to unpark even if the task is not ready, otherwise we may get stuck on an infinite park
-      handleQueueUpdate();
-    }
-
-    /**
-     * Called to check if either queue has anything to run.  This is just if the queues are empty.  
-     * If there are scheduled tasks queued, but not ready to run, this will still return 
-     * {@code false}.
-     * 
-     * @return {@code true} if there are no tasks in either queue
-     */
-    public boolean isQueueEmpty() {
-      return executeQueue.isEmpty() && scheduleQueue.isEmpty();
-    }
-
-    /**
-     * Call to get the total quantity of tasks within both stored queues.  If you can, 
-     * {@link #isQueueEmpty()} is a more efficient call.  This returns the total amount of items 
-     * in both the execute and scheduled queue.  If there are scheduled tasks which are NOT ready 
-     * to run, they will still be included in this total.
-     * 
-     * @return Total quantity of tasks queued
-     */
-    public int queueSize() {
-      return scheduleQueue.size() + executeQueue.size();
-    }
-
-    public void stopAndDrainQueueInto(List<Runnable> removedTasks) {
-      stopIfRunning();
-      
-      clearQueue(executeQueue, removedTasks);
-      synchronized (scheduleQueue.getModificationLock()) {
-        clearQueue(scheduleQueue, removedTasks);
-      }
-    }
-  
-    private static void clearQueue(Collection<? extends TaskWrapper> queue, List<Runnable> resultList) {
-      Iterator<? extends TaskWrapper> it = queue.iterator();
-      while (it.hasNext()) {
-        TaskWrapper tw = it.next();
-        tw.cancel();
-        if (resultList != null && ! (tw.task instanceof ShutdownRunnable)) {
-          resultList.add(tw.task);
-        }
-      }
-      queue.clear();
-    }
-
-    @Override
-    protected void startupService() {
-      runningThread = workerPool.threadFactory.newThread(this);
-      if (runningThread.isAlive()) {
-        throw new IllegalThreadStateException();
-      }
-      runningThread.setDaemon(true);
-      runningThread.setName(threadName);
-      runningThread.start();
-    }
-
-    @Override
-    protected void shutdownService() {
-      Thread runningThread = this.runningThread;
-      this.runningThread = null;
-      runningThread.interrupt();
-    }
-    
-    /**
-     * Called when the queue has been updated and we may need to wake up the consumer thread.
-     */
-    protected void handleQueueUpdate() {
-      if (! startIfNotStarted()) {
-        Thread currRunningThread = runningThread;
-        if (currRunningThread != null) {
-          LockSupport.unpark(currRunningThread);
-        }
-      }
-    }
-
-    @Override
-    public void run() {
-      while (runningThread != null) {
-        try {
-          TaskWrapper nextTask = getNextTask();
-          if (nextTask != null) {
-            switch (queuePriority) {
-              case High:
-                workerPool.runHighPriorityTask(nextTask);
-                break;
-              case Low:
-                workerPool.runLowPriorityTask(nextTask);
-                break;
-              default:
-                throw new UnsupportedOperationException();
-            }
-          }
-        } catch (InterruptedException e) {
-          stopIfRunning();
-          Thread.currentThread().interrupt();
-        } catch (Throwable t) {
-          ExceptionUtils.handleException(t);
-        }
-      }
-    }
-    
-    protected TaskWrapper getNextTask() throws InterruptedException {
-      while (runningThread != null) {  // loop till we have something to return
-        TaskWrapper nextScheduledTask = scheduleQueue.peekFirst();
-        TaskWrapper nextExecuteTask = executeQueue.peek();
-        if (nextExecuteTask != null) {
-          if (nextScheduledTask != null) {
-            long scheduleDelay;
-            long executeDelay;
-            ClockWrapper.stopForcingUpdate();
-            try {
-              scheduleDelay = nextScheduledTask.getDelay(TimeUnit.MILLISECONDS);
-              executeDelay = nextExecuteTask.getDelay(TimeUnit.MILLISECONDS);
-            } finally {
-              ClockWrapper.resumeForcingUpdate();
-            }
-            if (scheduleDelay < executeDelay) {
-              synchronized (scheduleQueue.getModificationLock()) {
-                // scheduled tasks must be removed, and call .executing() while holding the lock
-                if (scheduleQueue.remove(nextScheduledTask)) {
-                  nextScheduledTask.executing();
-                  return nextScheduledTask;
-                }
-              }
-            } else if (executeQueue.remove(nextExecuteTask)) {
-              // if we can remove the task (aka it has not been removed already), we can execute it
-              nextExecuteTask.executing();
-              return nextExecuteTask;
-            }
-          } else if (executeQueue.remove(nextExecuteTask)) {
-            // if we can remove the task (aka it has not been removed already), we can execute it
-            nextExecuteTask.executing();
-            return nextExecuteTask;
-          }
-        } else if (nextScheduledTask != null) {
-          if (nextScheduledTask.getDelay(TimeUnit.MILLISECONDS) <= 0) {
-            synchronized (scheduleQueue.getModificationLock()) {
-              // scheduled tasks must be removed, and call .executing() while holding the lock
-              if (scheduleQueue.remove(nextScheduledTask)) {
-                nextScheduledTask.executing();
-                return nextScheduledTask;
-              }
-            }
-          } else {
-            workerPool.handleEstimatedTimeTillNextTask(this, nextScheduledTask.getDelayEstimateInMs());
-            LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextScheduledTask.getDelay(TimeUnit.MILLISECONDS));
-          }
-        } else {
-          workerPool.handleEstimatedTimeTillNextTask(this, Long.MAX_VALUE);
-          LockSupport.park();
-        }
-        
-        if (Thread.currentThread().isInterrupted()) {
-          throw new InterruptedException();
-        }
-      }
-      
-      return null;
     }
   }
   
@@ -1355,7 +1343,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * 
      * @param task Task to run on this workers thread
      */
-    public void nextTask(Runnable task) {
+    public void nextTask(TaskWrapper task) {
       nextTask = task;
 
       LockSupport.unpark(thread);
@@ -1424,7 +1412,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @since 1.0.0
    */
   protected abstract static class TaskWrapper extends AbstractDelayed 
-                                              implements Runnable {
+                                              implements Runnable, RunnableContainerInterface {
     protected final Runnable task;
     protected volatile boolean canceled;
     
@@ -1446,22 +1434,36 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     
     /**
      * Called as the task is being removed from the queue to prepare for execution.
+     * 
+     * @return true if the task should be executed
      */
-    public void executing() {
-      // nothing by default, override to handle
-    }
+    public abstract boolean canExecute();
     
     /**
-     * Similar to getDelay, except this implementation is an estimate.  It is only in 
-     * milliseconds, and having some slight inaccuracy is not an issue.
+     * Similar to getDelay, except this implementation accepts in the current time.  This allows 
+     * two things.  The first is that you can give an inaccurate time (like 
+     * {@link Clock#lastKnownForwardProgressingMillis()}) to get a cheap estimate.  The other is 
+     * that you can compare multiple tasks by giving them the same time to see how their execution 
+     * order should be defined.
      * 
+     * @param now Current time in milliseconds
      * @return time in milliseconds till task is ready to run
      */
-    protected abstract long getDelayEstimateInMs();
+    protected abstract long getDelayInMs(long now);
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+      return unit.convert(getDelayInMs(ClockWrapper.getSemiAccurateMillis()), TimeUnit.MILLISECONDS);
+    }
     
     @Override
     public String toString() {
       return task.toString();
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
     }
   }
   
@@ -1472,22 +1474,19 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @since 1.0.0
    */
   protected static class OneTimeTaskWrapper extends TaskWrapper {
+    protected final Queue<? extends TaskWrapper> taskQueue;
     protected final long runTime;
     
-    protected OneTimeTaskWrapper(Runnable task, long delay) {
+    protected OneTimeTaskWrapper(Runnable task, long delay, Queue<? extends TaskWrapper> taskQueue) {
       super(task);
       
+      this.taskQueue = taskQueue;
       runTime = Clock.accurateForwardProgressingMillis() + delay;
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return unit.convert(runTime - ClockWrapper.getSemiAccurateMillis(), TimeUnit.MILLISECONDS);
     }
     
     @Override
-    protected long getDelayEstimateInMs() {
-      return runTime - Clock.lastKnownForwardProgressingMillis();
+    protected long getDelayInMs(long now) {
+      return runTime - now;
     }
 
     @Override
@@ -1495,6 +1494,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       if (! canceled) {
         task.run();
       }
+    }
+
+    @Override
+    public boolean canExecute() {
+      return taskQueue.remove(this);
     }
   }
 
@@ -1505,25 +1509,16 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @since 3.1.0
    */
   protected abstract static class RecurringTaskWrapper extends TaskWrapper {
-    protected final QueueManager queueManager;
+    protected final QueueSet queueSet;
     protected volatile boolean executing;
     protected long nextRunTime;
     
-    protected RecurringTaskWrapper(Runnable task, QueueManager queueManager, long initialDelay) {
+    protected RecurringTaskWrapper(Runnable task, QueueSet queueSet, long initialDelay) {
       super(task);
       
-      this.queueManager = queueManager;
+      this.queueSet = queueSet;
       executing = false;
       this.nextRunTime = Clock.accurateForwardProgressingMillis() + initialDelay;
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      if (executing) {
-        return Long.MAX_VALUE;
-      } else {
-        return unit.convert(getNextDelayInMillis(), TimeUnit.MILLISECONDS);
-      }
     }
     
     /**
@@ -1536,21 +1531,31 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     @Override
-    protected long getDelayEstimateInMs() {
-      return nextRunTime - Clock.lastKnownForwardProgressingMillis();
-    }
-    
-    @Override
-    public void executing() {
-      if (canceled) {
-        return;
+    protected long getDelayInMs(long now) {
+      if (executing) {
+        return Long.MAX_VALUE;
+      } else {
+        return nextRunTime - now;
       }
-      executing = true;
-      /* add to queue before started, so that it can be removed if necessary
-       * We add to the end because the task wont re-run till it has finished, 
-       * so there is no reason to sort at this point
-       */
-      queueManager.addScheduledLast(this);
+    }
+
+    @Override
+    public boolean canExecute() {
+      synchronized (queueSet.scheduleQueue.getModificationLock()) {
+        int index = queueSet.scheduleQueue.indexOf(this);
+        if (index < 0) {
+          return false;
+        } else {
+          /* we have to reposition to the end atomically so that this task can be removed if 
+           * requested to be removed.  We can put it at the end because we know this task wont 
+           * run again till it has finished (which it will be inserted at the correct point in 
+           * queue then.
+           */
+          queueSet.scheduleQueue.reposition(index, queueSet.scheduleQueue.size());
+          executing = true;
+          return true;
+        }
+      }
     }
     
     /**
@@ -1558,18 +1563,6 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      * next absolute time in milliseconds the task should run.
      */
     protected abstract void updateNextRunTime();
-    
-    /**
-     * After the task has completed, this will reschedule the task to run again.
-     */
-    private void reschedule() {
-      updateNextRunTime();
-      
-      // now that nextRunTime has been set, resort the queue
-      queueManager.reschedule(this);
-      
-      executing = false;
-    }
 
     @Override
     public void run() {
@@ -1581,7 +1574,12 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       } finally {
         if (! canceled) {
           try {
-            reschedule();
+            updateNextRunTime();
+            
+            // now that nextRunTime has been set, resort the queue
+            queueSet.reschedule(this);
+            
+            executing = false;
           } catch (java.util.NoSuchElementException e) {
             if (canceled) {
               /* this is a possible condition where shutting down 
@@ -1610,9 +1608,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected static class RecurringDelayTaskWrapper extends RecurringTaskWrapper {
     protected final long recurringDelay;
     
-    protected RecurringDelayTaskWrapper(Runnable task, QueueManager queueManager, 
+    protected RecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, 
                                         long initialDelay, long recurringDelay) {
-      super(task, queueManager, initialDelay);
+      super(task, queueSet, initialDelay);
       
       this.recurringDelay = recurringDelay;
     }
@@ -1632,9 +1630,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected static class RecurringRateTaskWrapper extends RecurringTaskWrapper {
     protected final long period;
     
-    protected RecurringRateTaskWrapper(Runnable task, QueueManager queueManager, 
+    protected RecurringRateTaskWrapper(Runnable task, QueueSet queueSet, 
                                        long initialDelay, long period) {
-      super(task, queueManager, initialDelay);
+      super(task, queueSet, initialDelay);
       
       this.period = period;
     }
@@ -1656,19 +1654,16 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    */
   protected static class ShutdownRunnable implements Runnable {
     private final WorkerPool wm;
-    private final QueueManager lowPriorityConsumer;
-    private final QueueManager highPriorityConsumer;
+    private final QueueManager taskConsumer;
     
-    protected ShutdownRunnable(WorkerPool wm, QueueManager lowPriorityConsumer, QueueManager highPriorityConsumer) {
+    protected ShutdownRunnable(WorkerPool wm, QueueManager taskConsumer) {
       this.wm = wm;
-      this.lowPriorityConsumer = lowPriorityConsumer;
-      this.highPriorityConsumer = highPriorityConsumer;
+      this.taskConsumer = taskConsumer;
     }
     
     @Override
     public void run() {
-      lowPriorityConsumer.stopAndDrainQueueInto(null);
-      highPriorityConsumer.stopAndDrainQueueInto(null);
+      taskConsumer.stopAndClearQueue();
       wm.finishShutdown();
     }
   }

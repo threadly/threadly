@@ -123,9 +123,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
       
       assertEquals(-1, scheduler.getAverageTaskRunTime(), 0);
       assertEquals(-1, scheduler.getHighPriorityAvgExecutionDelay(), 0);
-      assertEquals(-1, scheduler.getHighPriorityThreadAvailablePercent(), 0);
       assertEquals(-1, scheduler.getLowPriorityAvgExecutionDelay(), 0);
-      assertEquals(-1, scheduler.getLowPriorityThreadAvailablePercent(), 0);
     } finally {
       scheduler.shutdownNow();
     }
@@ -215,49 +213,6 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
                    scheduler.getTotalExecutionCount());
       assertEquals(lowPriorityCount, scheduler.getLowPriorityTotalExecutionCount());
       assertEquals(highPriorityCount, scheduler.getHighPriorityTotalExecutionCount());
-    } finally {
-      scheduler.shutdownNow();
-    }
-  }
-  
-  @Test
-  public void getThreadAvailablePercentTest() {
-    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
-    try {
-      assertEquals(-1, scheduler.getThreadAvailablePercent(), 0);
-      assertEquals(-1, scheduler.getLowPriorityThreadAvailablePercent(), 0);
-      assertEquals(-1, scheduler.getHighPriorityThreadAvailablePercent(), 0);
-      
-      TestRunnable tr = new TestRunnable();
-      scheduler.execute(tr, TaskPriority.High);
-      tr.blockTillFinished();
-      
-      assertEquals(0, scheduler.getThreadAvailablePercent(), 0);
-      assertEquals(-1, scheduler.getLowPriorityThreadAvailablePercent(), 0);
-      assertEquals(0, scheduler.getHighPriorityThreadAvailablePercent(), 0);
-      
-      tr = new TestRunnable();
-      scheduler.execute(tr, TaskPriority.High);
-      tr.blockTillFinished();
-      
-      assertEquals(50, scheduler.getThreadAvailablePercent(), 0);
-      assertEquals(-1, scheduler.getLowPriorityThreadAvailablePercent(), 0);
-      assertEquals(50, scheduler.getHighPriorityThreadAvailablePercent(), 0);
-      
-      tr = new TestRunnable();
-      scheduler.execute(tr, TaskPriority.Low);
-      tr.blockTillFinished();
-      
-      assertEquals(100, scheduler.getLowPriorityThreadAvailablePercent(), 0);
-      assertEquals(50, scheduler.getHighPriorityThreadAvailablePercent(), 0);
-      
-      tr = new TestRunnable();
-      scheduler.execute(tr, TaskPriority.Low);
-      tr.blockTillFinished();
-      
-      assertEquals(75, scheduler.getThreadAvailablePercent(), 0);
-      assertEquals(100, scheduler.getLowPriorityThreadAvailablePercent(), 0);
-      assertEquals(50, scheduler.getHighPriorityThreadAvailablePercent(), 0);
     } finally {
       scheduler.shutdownNow();
     }

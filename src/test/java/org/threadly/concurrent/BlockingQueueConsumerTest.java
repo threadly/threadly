@@ -76,9 +76,13 @@ public class BlockingQueueConsumerTest {
   
   @Test (expected = IllegalThreadStateException.class)
   public void startFail() {
-    queueConsumer = new BlockingQueueConsumer<Object>(new StartingThreadFactory(), 
-                                                      queue, acceptor);
-    queueConsumer.start();
+    StartingThreadFactory threadFactory = new StartingThreadFactory();
+    try {
+      queueConsumer = new BlockingQueueConsumer<Object>(threadFactory, queue, acceptor);
+      queueConsumer.start();
+    } finally {
+      threadFactory.killThreads();
+    }
   }
   
   @Test

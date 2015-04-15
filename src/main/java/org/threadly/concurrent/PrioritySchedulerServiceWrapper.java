@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.PriorityScheduler.OneTimeTaskWrapper;
+import org.threadly.concurrent.PriorityScheduler.QueueSet;
 import org.threadly.concurrent.PriorityScheduler.RecurringDelayTaskWrapper;
 import org.threadly.concurrent.PriorityScheduler.RecurringRateTaskWrapper;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -66,13 +67,17 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   }
 
   @Override
-  protected ListenableScheduledFuture<?> schedule(Runnable command, long delayInMillis) {
-    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(false, command);
-    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis);
+  protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
+    ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(false, task);
+    OneTimeTaskWrapper ottw;
+    TaskPriority priority = pScheduler.getDefaultPriority();
+    QueueSet queueSet = pScheduler.taskConsumer.getQueueSet(priority);
     if (delayInMillis == 0) {
-      pScheduler.addToExecuteQueue(pScheduler.getDefaultPriority(), ottw);
+      ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis, queueSet.executeQueue);
+      pScheduler.addToExecuteQueue(queueSet, ottw);
     } else {
-      pScheduler.addToScheduleQueue(pScheduler.getDefaultPriority(), ottw);
+      ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis, queueSet.scheduleQueue);
+      pScheduler.addToScheduleQueue(queueSet, ottw);
     }
     
     return new ScheduledFutureDelegate<Object>(taskFuture, ottw);
@@ -81,11 +86,15 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(false, callable);
-    OneTimeTaskWrapper ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis);
+    OneTimeTaskWrapper ottw;
+    TaskPriority priority = pScheduler.getDefaultPriority();
+    QueueSet queueSet = pScheduler.taskConsumer.getQueueSet(priority);
     if (delayInMillis == 0) {
-      pScheduler.addToExecuteQueue(pScheduler.getDefaultPriority(), ottw);
+      ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis, queueSet.executeQueue);
+      pScheduler.addToExecuteQueue(queueSet, ottw);
     } else {
-      pScheduler.addToScheduleQueue(pScheduler.getDefaultPriority(), ottw);
+      ottw = new OneTimeTaskWrapper(taskFuture, delayInMillis, queueSet.scheduleQueue);
+      pScheduler.addToScheduleQueue(queueSet, ottw);
     }
     
     return new ScheduledFutureDelegate<V>(taskFuture, ottw);
@@ -100,10 +109,10 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
     TaskPriority priority = pScheduler.getDefaultPriority();
-    RecurringDelayTaskWrapper rdtw = new RecurringDelayTaskWrapper(taskFuture, 
-                                                                   pScheduler.getQueueManager(priority),
+    QueueSet queueSet = pScheduler.taskConsumer.getQueueSet(priority);
+    RecurringDelayTaskWrapper rdtw = new RecurringDelayTaskWrapper(taskFuture, queueSet,
                                                                    initialDelayInMs, delayInMs);
-    pScheduler.addToScheduleQueue(priority, rdtw);
+    pScheduler.addToScheduleQueue(queueSet, rdtw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, rdtw);
   }
@@ -117,10 +126,10 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     
     ListenableRunnableFuture<Object> taskFuture = new ListenableFutureTask<Object>(true, task);
     TaskPriority priority = pScheduler.getDefaultPriority();
-    RecurringRateTaskWrapper rrtw = new RecurringRateTaskWrapper(taskFuture, 
-                                                                 pScheduler.getQueueManager(priority),
+    QueueSet queueSet = pScheduler.taskConsumer.getQueueSet(priority);
+    RecurringRateTaskWrapper rrtw = new RecurringRateTaskWrapper(taskFuture, queueSet,
                                                                  initialDelayInMillis, periodInMillis);
-    pScheduler.addToScheduleQueue(priority, rrtw);
+    pScheduler.addToScheduleQueue(queueSet, rrtw);
     
     return new ScheduledFutureDelegate<Object>(taskFuture, rrtw);
   }

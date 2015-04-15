@@ -37,9 +37,9 @@ public class KeyDistributedExecutorTest {
   
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL * 2);
-    
     ThreadlyTestUtil.setIgnoreExceptionHandler();
+    
+    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL * 2);
   }
   
   @AfterClass
@@ -345,7 +345,7 @@ public class KeyDistributedExecutorTest {
     TestRunnable followRunnable = new TestRunnable();
     distributor.addTask(key, exceptionRunnable);
     distributor.addTask(key, followRunnable);
-    exceptionRunnable.blockTillStarted();
+    exceptionRunnable.blockTillFinished();
     followRunnable.blockTillStarted();  // verify that it ran despite the exception
     
     assertEquals(1, teh.getCallCount());

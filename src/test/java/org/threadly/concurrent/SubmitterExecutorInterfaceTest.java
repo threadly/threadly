@@ -211,8 +211,6 @@ public abstract class SubmitterExecutorInterfaceTest {
       ListenableFuture<?> future = executor.submit(tr);
       // no exception should propagate
       
-      tr.blockTillFinished();
-      assertTrue(future.isDone());
       try {
         future.get();
         fail("Exception should have thrown");

@@ -182,8 +182,7 @@ public class TestRunnable implements Runnable {
    * @param timeout time to wait for run to be called before throwing exception
    * @param expectedRunCount run count to wait for
    */
-  public void blockTillFinished(int timeout, 
-                                int expectedRunCount) {
+  public void blockTillFinished(int timeout, int expectedRunCount) {
     final int blockRunCount = expectedRunCount;
     
     new TestCondition() {

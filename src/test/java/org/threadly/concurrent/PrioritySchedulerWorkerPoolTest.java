@@ -17,8 +17,7 @@ public class PrioritySchedulerWorkerPoolTest {
   
   @Before
   public void setup() {
-    workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1, 
-                                PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1);
   }
   
   @After
@@ -51,6 +50,16 @@ public class PrioritySchedulerWorkerPoolTest {
   }
   
   @Test
+  public void setPoolSizeSmallerTest() {
+    workerPool.setPoolSize(10);
+    workerPool.prestartAllThreads();
+    
+    workerPool.setPoolSize(1);
+      
+    assertEquals(1, workerPool.getMaxPoolSize());
+  }
+  
+  @Test
   public void setCorePoolSizeFail() {
     // verify no negative values
     try {
@@ -65,28 +74,6 @@ public class PrioritySchedulerWorkerPoolTest {
   public void setPoolSizeFail() {
     workerPool.setPoolSize(-1); // should throw exception for negative value
     fail("Exception should have been thrown");
-  }
-  
-  @Test
-  public void getAndSetLowPriorityWaitTest() {
-    assertEquals(PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, workerPool.getMaxWaitForLowPriority());
-    
-    long lowPriorityWait = Long.MAX_VALUE;
-    workerPool.setMaxWaitForLowPriority(lowPriorityWait);
-    
-    assertEquals(lowPriorityWait, workerPool.getMaxWaitForLowPriority());
-  }
-  
-  @Test
-  public void setLowPriorityWaitFail() {
-    try {
-      workerPool.setMaxWaitForLowPriority(-1);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    
-    assertEquals(PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, workerPool.getMaxWaitForLowPriority());
   }
   
   @Test
@@ -112,7 +99,7 @@ public class PrioritySchedulerWorkerPoolTest {
   }
   
   @Test
-  public void getExistingWorkerTest() {
+  public void getWorkerTest() {
     synchronized (workerPool.workersLock) {
       // add an idle worker
       Worker testWorker = workerPool.makeNewWorker();
@@ -121,7 +108,7 @@ public class PrioritySchedulerWorkerPoolTest {
       assertEquals(1, workerPool.availableWorkers.size());
       
       try {
-        Worker returnedWorker = workerPool.getExistingWorker(100);
+        Worker returnedWorker = workerPool.getWorker();
         assertTrue(returnedWorker == testWorker);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
