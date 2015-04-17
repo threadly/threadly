@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.util;
 
 import static org.junit.Assert.*;
 
@@ -98,7 +98,6 @@ public class AbstractServiceTest {
     assertFalse(service.stopIfRunning());
   }
   
-  @SuppressWarnings("deprecation")
   private static class TestService extends AbstractService {
     private final AtomicBoolean startCalled = new AtomicBoolean(false);
     private final AtomicBoolean stopCalled = new AtomicBoolean(false);
