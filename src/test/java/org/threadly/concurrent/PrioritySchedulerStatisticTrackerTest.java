@@ -34,6 +34,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
                                           new ConfigurableThreadFactory());
   }
   
+  @Override
   @Test
   public void constructorNullFactoryTest() {
     PriorityScheduler ps = new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 1, null);
@@ -41,6 +42,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     assertNotNull(ps.workerPool.threadFactory);
   }
   
+  @Override
   @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
@@ -58,11 +60,13 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     }
   }
   
+  @Override
   @Test
   public void removeHighPriorityCallableTest() {
     removeCallableTest(TaskPriority.High);
   }
   
+  @Override
   @Test
   public void removeLowPriorityCallableTest() {
     removeCallableTest(TaskPriority.Low);

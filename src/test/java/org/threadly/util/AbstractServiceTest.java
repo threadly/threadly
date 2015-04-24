@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.util;
 
 import static org.junit.Assert.*;
 
