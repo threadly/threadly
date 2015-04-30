@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -38,7 +37,6 @@ import org.threadly.util.ExceptionUtils;
  */
 public class Profiler {
   protected static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
-  protected static final short THREAD_PADDING_AMMOUNT = 10;
   protected static final short NUMBER_TARGET_LINE_LENGTH = 6;
   protected static final String THREAD_DELIMITER = "--------------------------------------------------";
   protected static final String FUNCTION_BY_NET_HEADER;
@@ -248,9 +246,6 @@ public class Profiler {
       if (runningThread != null) {
         runningThread.interrupt();
         pStore.collectorThread.set(null);
-        if (pStore.ti != null) {
-          pStore.ti = null;
-        }
         
         if (outputFile != null) {
           try {
@@ -504,54 +499,64 @@ public class Profiler {
   }
   
   /**
-   * <p>An iterator which will enumerate all the running threads within the VM.  You must call 
-   * {@link #refreshThreads()} before it can be used.  It is expected that this iterator is NOT 
-   * called in parallel.  When {@link #refreshThreads()} is called the iterator will reset to the 
-   * starting position with current threads.</p>
+   * <p>A small interface to represent and provide access to details for a sampled thread.</p>
    * 
-   * <p>This class exists for two reasons...The first just to avoid another inner class.  The 
-   * second is for a performance improvement for frequent profile polling.  If there is a large 
-   * thread count we can avoid allocating a new Thread[] for each poll.  Instead we can just fill 
-   * for the current threads, then null out any former threads that existed.  This can provide 
-   * much more accurate polling</p>
+   * @author jent - Mike Jensen
+   * @since 3.8.0
+   */
+  protected interface ThreadSample {
+    /**
+     * Get the reference to the thread which is to be sampled.  No attempt should be made to get 
+     * the stack trace directly from that thread, instead {@link #getStackTrace()} will be used.
+     * 
+     * @return Thread reference that the provided stack trace originated from
+     */
+    public Thread getThread();
+    
+    /**
+     * Returns the stack trace to be used for sampling.  This stack trace may have been generated 
+     * previously (for example at constructor), or may have been generated lazily at the time of 
+     * invocation.
+     * 
+     * @return Array of stack trace elements representing the threads state
+     */
+    public StackTraceElement[] getStackTrace();
+  }
+  
+  /**
+   * <p>An iterator which will enumerate all the running threads within the VM.  It is expected 
+   * that this iterator is NOT called in parallel.  This is also a single use object, once 
+   * iteration is complete it should be allowed to be garabage collected.</p>
    * 
    * @author jent - Mike Jensen
    * @since 3.4.0
    */
-  protected static class ThreadIterator implements Iterator<Thread> {
-    protected Thread[] threads = new Thread[0];
-    protected int enumerateCount = 0;
-    protected int currentIndex = 0;
+  protected static class ThreadIterator implements Iterator<ThreadSample> {
+    protected final Iterator<Map.Entry<Thread, StackTraceElement[]>> it;
     
-    public void refreshThreads() {
-      int minThreadArraySize = Thread.activeCount() + THREAD_PADDING_AMMOUNT;
-      int previousEnumerateCount;
-      if (threads.length < minThreadArraySize) {
-        threads = new Thread[minThreadArraySize];
-        previousEnumerateCount = 0;
-      } else {
-        previousEnumerateCount = enumerateCount;
-      }
-      enumerateCount = Thread.enumerate(threads);
-      // null out any threads no longer tracked (to avoid memory leak)
-      if (enumerateCount < previousEnumerateCount) {
-        Arrays.fill(threads, enumerateCount, previousEnumerateCount, null);
-      }
-      currentIndex = 0;
+    protected ThreadIterator() {
+      it = Thread.getAllStackTraces().entrySet().iterator();
     }
     
     @Override
     public boolean hasNext() {
-      return currentIndex < enumerateCount;
+      return it.hasNext();
     }
 
     @Override
-    public Thread next() {
-      if (hasNext()) {
-        return threads[currentIndex++];
-      } else {
-        throw new NoSuchElementException();
-      }
+    public ThreadSample next() {
+      final Map.Entry<Thread, StackTraceElement[]> entry = it.next();
+      return new ThreadSample() {
+        @Override
+        public Thread getThread() {
+          return entry.getKey();
+        }
+        
+        @Override
+        public StackTraceElement[] getStackTrace() {
+          return entry.getValue();
+        }
+      };
     }
 
     @Override
@@ -574,7 +579,6 @@ public class Profiler {
     protected final AtomicInteger collectedSamples;
     protected volatile int pollIntervalInMs;
     protected volatile Thread dumpingThread;
-    private volatile ThreadIterator ti;
     
     public ProfileStorage(int pollIntervalInMs) {
       ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
@@ -592,21 +596,12 @@ public class Profiler {
      * This is a protected call, so it can be overridden to implement other profilers that want to 
      * control which threads are being profiled.
      * 
-     * It is garunteed that this will be called in a single threaded manner.  In addition any 
-     * previously returned Iterators will no longer be used by the time this one is called.
+     * It is guaranteed that this will be called in a single threaded manner.
      * 
-     * @return an {@link Iterator} of threads to examine and add data for our profile.
+     * @return an {@link Iterator} of {@link ThreadSample} to examine and add data for our profile
      */
-    protected Iterator<Thread> getProfileThreadsIterator() {
-      ThreadIterator result = ti;
-      if (result == null) {
-        result = new ThreadIterator();
-        if (collectorThread.get() != null) {
-          ti = result;
-        }
-      }
-      result.refreshThreads();
-      return result;
+    protected Iterator<? extends ThreadSample> getProfileThreadsIterator() {
+      return new ThreadIterator();
     }
   }
   
@@ -628,17 +623,17 @@ public class Profiler {
       Thread runningThread = Thread.currentThread();
       while (pStore.collectorThread.get() == runningThread) {
         boolean storedSample = false;
-        Iterator<Thread> it = pStore.getProfileThreadsIterator();
+        Iterator<? extends ThreadSample> it = pStore.getProfileThreadsIterator();
         while (it.hasNext()) {
-          Thread currentThread = it.next();
+          ThreadSample threadSample = it.next();
           
           // we skip the Profiler threads (collector thread, and dumping thread if one exists)
-          if (currentThread != runningThread && 
-              currentThread != pStore.dumpingThread) {
-            StackTraceElement[] threadStack = currentThread.getStackTrace();
+          if (threadSample.getThread() != runningThread && 
+              threadSample.getThread() != pStore.dumpingThread) {
+            StackTraceElement[] threadStack = threadSample.getStackTrace();
             if (threadStack.length > 0) {
               storedSample = true;
-              String threadIdentifier = getThreadIdentifier(currentThread);
+              String threadIdentifier = getThreadIdentifier(threadSample.getThread());
               Trace t = new Trace(threadStack);
               
               Map<Trace, Trace> existingTraces = pStore.threadTraces.get(threadIdentifier);
