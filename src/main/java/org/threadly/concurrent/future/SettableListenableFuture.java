@@ -160,7 +160,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
 
   @Override
   public boolean cancel(boolean interruptThread) {
-    if (done || canceled) {
+    if (done) {
       return false;
     }
     
