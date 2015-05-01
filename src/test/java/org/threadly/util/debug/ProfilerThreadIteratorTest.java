@@ -22,51 +22,9 @@ public class ProfilerThreadIteratorTest {
   }
   
   @Test
-  public void refreshThreadsTest() {
-    ti.refreshThreads();
-    
-    assertTrue(ti.threads.length > 0);
-    assertTrue(ti.enumerateCount > 0);
-    assertEquals(0, ti.currentIndex);
-  }
-  
-  @Test
-  public void refreshThreadsNullPreviousThreadsTest() {
-    ti.refreshThreads();
-    Thread t = new Thread();
-    ti.threads = new Thread[ti.enumerateCount * 10];
-    for (int i = 0; i < ti.threads.length; i++) {
-      ti.threads[i] = t;
-    }
-    ti.enumerateCount = ti.threads.length;
-    
-    ti.refreshThreads();
-    
-    for (int i = ti.enumerateCount; i < ti.threads.length; i++) {
-      assertNull(ti.threads[i]);
-    }
-  }
-  
-  @Test
-  public void hasNextTest() {
-    assertFalse(ti.hasNext());
-    
-    ti.refreshThreads();
-    
-    assertTrue(ti.hasNext());
-    
-    ti.currentIndex = ti.enumerateCount;
-    
-    assertFalse(ti.hasNext());
-  }
-  
-  @Test
-  public void nextTest() {
-    ti.refreshThreads();
-    Thread t = new Thread();
-    ti.threads[0] = t;
-    
-    assertTrue(t == ti.next());
+  public void constructorTest() {
+    assertNotNull(ti.it);
+    assertTrue(ti.it.hasNext());
   }
   
   @Test (expected = UnsupportedOperationException.class)
