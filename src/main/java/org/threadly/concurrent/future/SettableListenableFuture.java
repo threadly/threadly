@@ -1,5 +1,6 @@
 package org.threadly.concurrent.future;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -17,11 +18,12 @@ import org.threadly.util.Clock;
  * @since 1.2.0
  * @param <T> The result object type returned by this future
  */
-public class SettableListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
-                                         implements ListenableFuture<T>, FutureCallback<T> {
+public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureCallback<T> {
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
+  private volatile Thread runningThread;
   private volatile boolean done;
+  private volatile boolean canceled;
   private boolean resultCleared;
   private T result;
   private Throwable failure;
@@ -105,9 +107,9 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
    */
   public void setResult(T result) {
     synchronized (resultLock) {
-      setDone();
-      
       this.result = result;
+      
+      setDone();
       
       resultLock.notifyAll();
     }
@@ -129,15 +131,66 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
       failure = new Exception();
     }
     synchronized (resultLock) {
-      setDone();
-      
       this.failure = failure;
+      
+      setDone();
       
       resultLock.notifyAll();
     }
     
     // call outside of lock
     listenerHelper.callListeners();
+  }
+  
+  /**
+   * Optional call to set the thread internally that will be generating the result for this 
+   * future.  Setting this thread allows it so that if a {@link #cancel(boolean)} call is invoked 
+   * with {@code true}, we can send an interrupt to this thread.  
+   * 
+   * The reference to this thread will be cleared after this future has completed (thus allowing 
+   * it to be garbage collected).
+   * 
+   * @param thread Thread that is generating the result for this future
+   */
+  public void setRunningThread(Thread thread) {
+    if (! done) {
+      this.runningThread = thread;
+    }
+  }
+
+  @Override
+  public boolean cancel(boolean interruptThread) {
+    boolean canceled;
+    synchronized (resultLock) {
+      if (! done) {
+        this.canceled = true;
+        
+        if (interruptThread) {
+          Thread runningThread = this.runningThread;
+          if (runningThread != null) {
+            runningThread.interrupt();
+          }
+        }
+        
+        setDone();
+        
+        canceled = true;
+      } else {
+        canceled = false;
+      }
+    }
+    
+    if (canceled) {
+      // call outside of lock
+      listenerHelper.callListeners();
+    }
+    
+    return canceled;
+  }
+
+  @Override
+  public boolean isCancelled() {
+    return canceled;
   }
   
   /**
@@ -168,6 +221,7 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
     }
     
     done = true;
+    runningThread = null;
   }
 
   @Override
@@ -187,6 +241,8 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
       
       if (failure != null) {
         throw new ExecutionException(failure);
+      } else if (canceled) {
+        throw new CancellationException();
       } else {
         return result;
       }
@@ -211,6 +267,8 @@ public class SettableListenableFuture<T> extends AbstractNoncancelableListenable
       
       if (failure != null) {
         throw new ExecutionException(failure);
+      } else if (canceled) {
+        throw new CancellationException();
       } else if (done) {
         return result;
       } else {
