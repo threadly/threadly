@@ -84,8 +84,9 @@ public class Watchdog {
   /**
    * Watch a given {@link ListenableFuture} to ensure that it completes within the constructed 
    * time limit.  If the future is not marked as done by the time limit then it will be 
-   * completed by invoking {@link ListenableFuture#cancel(boolean)} with {@code true} to interrupt 
-   * the running thread.
+   * completed by invoking {@link ListenableFuture#cancel(boolean)}.  Weather a {@code true} or 
+   * {@code false} will be provided to interrupt the running thread is dependent on how this 
+   * {@link Watchdog} was constructed.
    * 
    * @param future Future to inspect to ensure completion
    */
