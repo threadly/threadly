@@ -3,6 +3,7 @@ package org.threadly.concurrent.future;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -10,6 +11,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.test.concurrent.TestRunnable;
@@ -187,10 +189,29 @@ public class SettableListenableFutureTest {
   
   @Test
   public void cancelTest() {
+    assertTrue(slf.cancel(false));
     assertFalse(slf.cancel(false));
-    assertFalse(slf.cancel(true));
-    assertFalse(slf.isCancelled());
-    assertFalse(slf.isDone());
+    
+    assertTrue(slf.isCancelled());
+    assertTrue(slf.isDone());
+  }
+  
+  @Test
+  public void cancelWithInterruptTest() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    Thread runningThread = new Thread(btr);
+    try {
+      runningThread.start();
+      slf.setRunningThread(runningThread);
+      btr.blockTillStarted();
+      
+      assertTrue(slf.cancel(true));
+      
+      // should unblock when interrupted
+      btr.blockTillFinished();
+    } finally {
+      btr.unblock();
+    }
   }
   
   @Test
@@ -289,6 +310,30 @@ public class SettableListenableFutureTest {
       fail("Exception should have thrown");
     } catch (ExecutionException e) {
       assertTrue(failure == e.getCause());
+    }
+  }
+  
+  @Test
+  public void getCancellationTest() throws InterruptedException, ExecutionException {
+    slf.cancel(false);
+    
+    try {
+      slf.get();
+      fail("Exception should have thrown");
+    } catch (CancellationException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void getWithTimeoutCancellationTest() throws InterruptedException, ExecutionException, TimeoutException {
+    slf.cancel(false);
+    
+    try {
+      slf.get(100, TimeUnit.MILLISECONDS);
+      fail("Exception should have thrown");
+    } catch (CancellationException e) {
+      // expected
     }
   }
 }
