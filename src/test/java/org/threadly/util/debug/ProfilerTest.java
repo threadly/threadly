@@ -85,7 +85,7 @@ public class ProfilerTest {
   
   @Test
   public void getProfileThreadsIteratorTest() {
-    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
+    Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
     
     assertNotNull(it);
     assertTrue(it.hasNext());
@@ -94,7 +94,7 @@ public class ProfilerTest {
   
   @Test (expected = NoSuchElementException.class)
   public void profileThreadsIteratorNextFail() {
-    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
+    Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
     
     while (it.hasNext()) {
       assertNotNull(it.next());
@@ -106,7 +106,7 @@ public class ProfilerTest {
   
   @Test (expected = UnsupportedOperationException.class)
   public void profileThreadsIteratorRemoveFail() {
-    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
+    Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
     it.next();
     
     // not currently supported

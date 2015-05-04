@@ -76,8 +76,9 @@ public class ControlledThreadProfiler extends Profiler {
     }
     
     synchronized (controledThreadStore.profiledThreads.getModificationLock()) {
-      if (! controledThreadStore.profiledThreads.contains(t)) {
-        controledThreadStore.profiledThreads.add(t);
+      SelectedThreadSample threadSample = new SelectedThreadSample(t);
+      if (! controledThreadStore.profiledThreads.contains(threadSample)) {
+        controledThreadStore.profiledThreads.add(threadSample);
       }
     }
   }
@@ -91,7 +92,7 @@ public class ControlledThreadProfiler extends Profiler {
    * @return {@code true} if the thread was found and removed.
    */
   public boolean removedProfiledThread(Thread t) {
-    return controledThreadStore.profiledThreads.remove(t);
+    return controledThreadStore.profiledThreads.remove(new SelectedThreadSample(t));
   }
   
   /**
@@ -115,17 +116,59 @@ public class ControlledThreadProfiler extends Profiler {
    * @since 3.5.0
    */
   protected static class ControlledThreadProfileStorage extends ProfileStorage {
-    protected final ConcurrentArrayList<Thread> profiledThreads;
+    protected final ConcurrentArrayList<SelectedThreadSample> profiledThreads;
 
     public ControlledThreadProfileStorage(int pollIntervalInMs) {
       super(pollIntervalInMs);
       
-      profiledThreads = new ConcurrentArrayList<Thread>(0, TRACKED_THREAD_BUFFER);
+      profiledThreads = new ConcurrentArrayList<SelectedThreadSample>(0, TRACKED_THREAD_BUFFER);
     }
     
     @Override
-    protected Iterator<Thread> getProfileThreadsIterator() {
+    protected Iterator<? extends ThreadSample> getProfileThreadsIterator() {
       return profiledThreads.iterator();
+    }
+  }
+  
+  /**
+   * <p>A wrapper for a thread to implement {@link ThreadSample}.  This wrapper allows us to just 
+   * use a simple collection for storing threads (and thus to iterate over), and then lazily 
+   * generate the stack trace when {@link ThreadSample#getStackTrace()} is invoked.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 3.8.0
+   */
+  protected static class SelectedThreadSample implements ThreadSample {
+    private final Thread t;
+    
+    protected SelectedThreadSample(Thread t) {
+      this.t = t;
+    }
+    
+    @Override
+    public Thread getThread() {
+      return t;
+    }
+    
+    @Override
+    public StackTraceElement[] getStackTrace() {
+      return t.getStackTrace();
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+      if (o == this) {
+        return true;
+      } else if (o instanceof ThreadSample) {
+        return ((ThreadSample)o).getThread() == t;
+      } else {
+        return false;
+      }
+    }
+    
+    @Override
+    public int hashCode() {
+      return t.hashCode();
     }
   }
 }

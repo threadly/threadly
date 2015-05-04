@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.util.debug.Profiler.ThreadSample;
 
 @SuppressWarnings("javadoc")
 public class ControlledThreadProfilerTest extends ProfilerTest {
@@ -20,6 +21,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   private ControlledThreadProfiler ctProfiler;
   
   @Before
+  @Override
   public void setup() {
     ctProfiler = new ControlledThreadProfiler(POLL_INTERVAL);
     profiler = ctProfiler;
@@ -75,20 +77,21 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   
   @Test
   public void getProfileThreadsIteratorEmptyTest() {
-    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
+    Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
     
     assertNotNull(it);
     assertFalse(it.hasNext());
   }
   
   @Test
+  @Override
   public void getProfileThreadsIteratorTest() {
     ctProfiler.addProfiledThread(Thread.currentThread());
-    Iterator<Thread> it = profiler.pStore.getProfileThreadsIterator();
+    Iterator<? extends ThreadSample> it = profiler.pStore.getProfileThreadsIterator();
     
     assertNotNull(it);
     assertTrue(it.hasNext());
-    assertTrue(it.next() == Thread.currentThread());
+    assertTrue(it.next().getThread() == Thread.currentThread());
     // should only have the one added thread
     assertFalse(it.hasNext());
   }
@@ -99,6 +102,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     // not relevant for this class
   }
   
+  @Override
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
@@ -245,6 +249,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   }
   
   @Test
+  @Override
   public void dumpStringTest() {
     ctProfiler.addProfiledThread(Thread.currentThread());
     
@@ -267,6 +272,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   }
   
   @Test
+  @Override
   public void dumpOutputStreamTest() {
     ctProfiler.addProfiledThread(Thread.currentThread());
     
