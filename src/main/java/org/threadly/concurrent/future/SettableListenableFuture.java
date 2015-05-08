@@ -110,8 +110,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       this.result = result;
       
       setDone();
-      
-      resultLock.notifyAll();
     }
     
     // call outside of lock
@@ -134,8 +132,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       this.failure = failure;
       
       setDone();
-      
-      resultLock.notifyAll();
     }
     
     // call outside of lock
@@ -226,6 +222,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     
     done = true;
     runningThread = null;
+    
+    resultLock.notifyAll();
   }
 
   @Override
