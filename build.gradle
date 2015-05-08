@@ -1,20 +1,13 @@
 apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'signing'
 apply plugin: 'checkstyle'
+apply plugin: 'jacoco'
 
 repositories {
   mavenCentral()
 }
 
-configurations {
-  emma
-}
-
 dependencies {
   testCompile group: 'junit', name: 'junit', version: '4.12'
-  emma "emma:emma:2.1.5320"
-  emma "emma:emma_ant:2.1.5320"
 }
 
 compileJava {
@@ -25,90 +18,44 @@ compileTestJava {
   options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
 }
 
-def emmaConvention = new EmmaPluginConvention(project)
-project.convention.plugins.emma = emmaConvention
-
-class EmmaPluginConvention {
-  def verbosityLevel = "info" 
-  def reportPath;
-  def coverageFileName;
-  def tmpDir;
-  def instrDir;
-  def metaDataFilePath;
-
-  def emma(Closure close) {
-    close.delegate = this;
-    close.run()
-  }
-
-  EmmaPluginConvention(Project project) {
-    reportPath = "${project.reporting.baseDir.absolutePath}/emma"
-    coverageFileName = "coverage"
-    tmpDir = "${project.buildDir}/tmp/emma"
-    instrDir = "${tmpDir}/instr"
-    metaDataFilePath = "${tmpDir}/metadata.emma"
-  }
-}
-
 plugins.withType(JavaPlugin) {
   checkstyle.sourceSets = [sourceSets.main]
 }
 
 test {
-  getReports().getJunitXml().setDestination(file("$buildDir/test-results/xml"))
-
-  // add EMMA related JVM args to our tests
-  jvmArgs "-XX:-UseSplitVerifier", "-Demma.coverage.out.file=$buildDir/tmp/emma/metadata.emma", "-Demma.coverage.out.merge=true"
-
-  doFirst {
-    // define the custom EMMA ant tasks
-    ant.taskdef( resource:"emma_ant.properties", classpath: configurations.emma.asPath)
-
-    ant.path(id:"run.classpath") {
-      pathelement(location:sourceSets.main.output.classesDir.absolutePath)
-    }
-
-    def emmaInstDir = new File(sourceSets.main.output.classesDir.parentFile.parentFile, "tmp/emma/instr")
-    emmaInstDir.mkdirs()
-    // instruct our compiled classes and store them at $buildDir/tmp/emma/instr
-    ant.emma(enabled: 'true', verbosity:'info') {
-      instr(merge:"true", destdir: emmaInstDir.absolutePath, instrpathref:"run.classpath",
-            metadatafile: new File(emmaInstDir, '/metadata.emma').absolutePath) {
-        instrpath {
-          fileset(dir:sourceSets.main.output.classesDir.absolutePath, includes:"**/*.class")
-        }
-      }
-    }
-    setClasspath(files("$buildDir/tmp/emma/instr") + configurations.emma +    getClasspath())
+  jacoco {
+    excludes = ['**/package-info**','**/*Test']
+    destinationFile = file("$buildDir/reports/jacoco/test.exec")
   }
+  getReports().getJunitXml().setDestination(file("${buildDir}/reports/tests/xml"))
+  getReports().getHtml().setDestination(file("${buildDir}/reports/tests/html"))
+  setBinResultsDir(file("${buildDir}/reports/tests/bin"))
+}
 
-  // The report should be generated directly after the tests are done.
-  // We create three types (txt, html, xml) of reports here. Running your build script now should
-  // result in output like that:
+build.dependsOn("jacocoTestReport");
+
+jacocoTestReport {
+  doFirst {
+    classDirectories = fileTree(dir: 'build/classes/main', include: 'org/threadly/**')
+    sourceDirectories = fileTree(dir: 'scr/main/java', include: 'org/threadly/**')
+  }
+  reports {
+    csv.enabled false
+    xml.enabled true
+    xml.destination "${buildDir}/reports/jacoco/jacoco.xml"
+    html.enabled true
+    html.destination "${buildDir}/reports/jacoco/html"
+  }
   doLast {
-    def srcDir = sourceSets.main.java.srcDirs.toArray()[0]
-    def emmaInstDir = new File(sourceSets.main.output.classesDir.parentFile.parentFile, "tmp/emma")
-    ant.emma(enabled:"true") {
-      new File("$buildDir/reports/emma").mkdirs()
-      report(sourcepath: srcDir) {
-        fileset(dir: emmaInstDir.absolutePath) {
-          include(name:"**/*.emma")
-        }
-        txt(outfile:"$buildDir/reports/emma/coverage.txt")
-        html(outfile:"$buildDir/reports/emma/coverage.html")
-        xml(outfile:"$buildDir/reports/emma/coverage.xml")
-      }
-    }
-
     println "Test results available at:"
-    println "html - $buildDir/reports/tests/index.html"
+    println "html - $buildDir/reports/tests/html/index.html"
     println "Test coverage reports available at:"
-    println "txt  - $buildDir/reports/emma/coverage.txt"
-    println "html - $buildDir/reports/emma/coverage.html"
-    println "xml  - $buildDir/reports/emma/coverage.xml"
+    println "html - $buildDir/reports/jacoco/html/index.html"
+    println "xml  - $buildDir/reports/jacoco/jacoco.xml"
   }
 }
 
+ 
 jar {
   manifest {
     attributes 'Implementation-Title': 'Threadly', 'Implementation-Version': version
