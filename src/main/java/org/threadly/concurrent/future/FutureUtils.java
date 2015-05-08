@@ -183,6 +183,24 @@ public class FutureUtils {
   }
   
   /**
+   * Invoked {@link Future#cancel(boolean)} for every future in this collection.  Thus if there 
+   * are any futures which have not already completed, they will now be marked as canceled.
+   * 
+   * @param futures Collection of futures to iterate through and cancel
+   * @param interruptThread Valued passed in to interrupt thread when calling {@link Future#cancel(boolean)}
+   */
+  public static void cancelIncompleteFutures(Iterable<? extends Future<?>> futures, 
+                                             boolean interruptThread) {
+    if (futures == null) {
+      return;
+    }
+    Iterator<? extends Future<?>> it = futures.iterator();
+    while (it.hasNext()) {
+      it.next().cancel(interruptThread);
+    }
+  }
+  
+  /**
    * Constructs a {@link ListenableFuture} that has already had the provided result given to it.  
    * Thus the resulting future can not error, block, or be canceled.
    * 

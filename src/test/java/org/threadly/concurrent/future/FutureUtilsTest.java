@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
@@ -364,13 +363,8 @@ public class FutureUtilsTest {
   @Test
   public void makeSuccessListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>() {
-      @Override
-      public Object get() {
-        throw new CancellationException();
-      }
-    };
-    cancelFuture.setResult(null);
+    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>();
+    cancelFuture.cancel(false);
     futures.add(cancelFuture);
 
     ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeSuccessListFuture(futures);
@@ -449,13 +443,8 @@ public class FutureUtilsTest {
   @Test
   public void makeFailureListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>() {
-      @Override
-      public Object get() {
-        throw new CancellationException();
-      }
-    };
-    cancelFuture.setResult(null);
+    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>();
+    cancelFuture.cancel(false);
     futures.add(cancelFuture);
 
     ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(futures);
@@ -463,6 +452,31 @@ public class FutureUtilsTest {
     verifyCompleteFuture(f, futures);
     
     verifyNoneIncluded(futures, f.get(), cancelFuture);
+  }
+  
+  @Test
+  public void cancelIncompleteFuturesTest() throws InterruptedException, ExecutionException {
+    List<SettableListenableFuture<?>> futures = new ArrayList<SettableListenableFuture<?>>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<?> slf = new SettableListenableFuture<Object>();
+      futures.add(slf);
+      if (i % 2 == 0) {
+        slf.setResult(null);
+      }
+    }
+    
+    FutureUtils.cancelIncompleteFutures(futures, false);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<?> slf = futures.get(i);
+      assertTrue(slf.isDone());
+      if (i % 2 == 0) {
+        slf.get();
+        // should not throw as was completed normally
+      } else {
+        assertTrue(slf.isCancelled());
+      }
+    }
   }
   
   @Test
