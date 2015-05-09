@@ -1,17 +1,24 @@
 package org.threadly.util.debug;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.PrioritySchedulerStatisticTracker;
+import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestCondition;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class ProfilerTest {
@@ -150,6 +157,37 @@ public class ProfilerTest {
     } finally {
       profiler.stop();
       e.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void startWithTimeoutTest() throws InterruptedException, ExecutionException, TimeoutException {
+    long start = Clock.accurateForwardProgressingMillis();
+    ListenableFuture<String> lf = profiler.start(DELAY_TIME);
+    String result = lf.get(DELAY_TIME * 10, TimeUnit.MILLISECONDS);
+    long end = Clock.accurateForwardProgressingMillis();
+
+    // profiler should be stopped now
+    assertFalse(profiler.isRunning());
+    assertTrue(end - start >= DELAY_TIME);
+    assertNotNull(result);
+  }
+  
+  @Test
+  public void startWitExecutorAndTimeoutTest() throws InterruptedException, ExecutionException, TimeoutException {
+    StrictPriorityScheduler ps = new StrictPriorityScheduler(2);
+    try {
+      long start = Clock.accurateForwardProgressingMillis();
+      ListenableFuture<String> lf = profiler.start(ps, DELAY_TIME);
+      String result = lf.get(DELAY_TIME * 10, TimeUnit.MILLISECONDS);
+      long end = Clock.accurateForwardProgressingMillis();
+
+      // profiler should be stopped now
+      assertFalse(profiler.isRunning());
+      assertTrue(end - start >= DELAY_TIME);
+      assertNotNull(result);
+    } finally {
+      ps.shutdownNow();
     }
   }
   

@@ -39,11 +39,25 @@ public class SettableListenableFutureTest {
     fail("Should have thrown exception");
   }
   
+  @Test
+  public void setResultResultTest() {
+    slf = new SettableListenableFuture<String>(false);
+    slf.setResult(null);
+    slf.setResult(null);
+  }
+  
   @Test (expected = IllegalStateException.class)
   public void setFailureResultFail() {
     slf.setFailure(null);
     slf.setResult(null);
     fail("Should have thrown exception");
+  }
+  
+  @Test
+  public void setFailureResultTest() {
+    slf = new SettableListenableFuture<String>(false);
+    slf.setFailure(null);
+    slf.setResult(null);
   }
   
   @Test (expected = IllegalStateException.class)
@@ -53,11 +67,53 @@ public class SettableListenableFutureTest {
     fail("Should have thrown exception");
   }
   
+  @Test
+  public void setResultFailureTest() {
+    slf = new SettableListenableFuture<String>(false);
+    slf.setResult(null);
+    slf.setFailure(null);
+  }
+  
   @Test (expected = IllegalStateException.class)
   public void setFailureFailureFail() {
     slf.setFailure(null);
     slf.setFailure(null);
     fail("Should have thrown exception");
+  }
+  
+  @Test
+  public void setFailureFailureTest() {
+    slf = new SettableListenableFuture<String>(false);
+    slf.setFailure(null);
+    slf.setFailure(null);
+  }
+  
+  @Test (expected = IllegalStateException.class)
+  public void cancelSetResultFail() {
+    slf.cancel(false);
+    slf.setResult(null);
+    fail("Should have thrown exception");
+  }
+  
+  @Test
+  public void cancelSetResultTest() {
+    slf = new SettableListenableFuture<String>(false);
+    slf.cancel(false);
+    slf.setResult(null);
+  }
+  
+  @Test (expected = IllegalStateException.class)
+  public void cancelSetFailureFail() {
+    slf.cancel(false);
+    slf.setFailure(null);
+    fail("Should have thrown exception");
+  }
+  
+  @Test
+  public void cancelSetFailureTest() {
+    slf = new SettableListenableFuture<String>(false);
+    slf.cancel(false);
+    slf.setFailure(null);
   }
   
   @Test (expected = IllegalStateException.class)
