@@ -25,7 +25,16 @@ public class Clock {
    * @since 3.1.0
    */
   public static final int NANOS_IN_MILLISECOND = 1000000;
-  protected static final short AUTOMATIC_UPDATE_FREQUENCY_IN_MS = 100;
+  /**
+   * This is the frequency at which the thread which regularly updates the clock wakes up and 
+   * updates the time.  Invocations to {@link #accurateForwardProgressingMillis()} and 
+   * {@link #accurateTimeMillis()} both update their respective times, but this will make sure 
+   * that even if those calls are not made requests to {@link #lastKnownForwardProgressingMillis()} 
+   * and {@link #lastKnownTimeMillis()} have at least some level of accuracy.
+   *  
+   * @since 4.0.0
+   */
+  public static final short AUTOMATIC_UPDATE_FREQUENCY_IN_MS = 100;
   protected static final short STOP_PARK_TIME_NANOS = 25000;
   
   protected static final Object UPDATE_LOCK = new Object();
