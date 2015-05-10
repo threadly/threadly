@@ -7,10 +7,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -20,6 +22,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
@@ -52,6 +56,7 @@ public class Profiler {
   protected final File outputFile;
   protected final Object startStopLock;
   protected final ProfileStorage pStore;
+  protected final List<SettableListenableFuture<String>> stopFutures; // guarded by startStopLock
   
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
@@ -111,6 +116,7 @@ public class Profiler {
     this.outputFile = outputFile;
     this.startStopLock = new Object();
     this.pStore = pStore;
+    this.stopFutures = new ArrayList<SettableListenableFuture<String>>(2);
   }
   
   /**
@@ -172,7 +178,7 @@ public class Profiler {
    * out previous runs you must call {@link #reset()} first.
    */
   public void start() {
-    start(null);
+    start(null, -1, null);
   }
   
   /**
@@ -188,7 +194,81 @@ public class Profiler {
    * @param executor executor to execute on, or {@code null} if new thread should be created
    */
   public void start(Executor executor) {
+    start(executor, -1, null);
+  }
+  
+  /**
+   * Starts the profiler running in a new thread.  
+   * 
+   * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
+   * statistics from the previous run will still be included in this run.  If you wish to clear 
+   * out previous runs you must call {@link #reset()} first.  
+   * 
+   * If {@code sampleDurationInMillis} is greater than zero the Profiler will invoke 
+   * {@link #stop()} in that many milliseconds.  
+   * 
+   * The returned {@link ListenableFuture} will be provided the dump when {@link #stop()} is 
+   * invoked next.  Either from a timeout provided to this call, or a manual invocation of 
+   * {@link #stop()}.
+   * 
+   * @param sampleDurationInMillis if greater than {@code 0} the profiler will only run for this many milliseconds
+   * @return Future that will be completed with the dump string when the profiler is stopped
+   */
+  public ListenableFuture<String> start(long sampleDurationInMillis) {
+    return start(null, sampleDurationInMillis);
+  }
+  
+  /**
+   * Starts the profiler running in a new thread.  
+   * 
+   * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
+   * statistics from the previous run will still be included in this run.  If you wish to clear 
+   * out previous runs you must call {@link #reset()} first.  
+   * 
+   * If an executor is provided, this call will block until the the profiler has been started on 
+   * the provided executor.
+   * 
+   * If {@code sampleDurationInMillis} is greater than zero the Profiler will invoke 
+   * {@link #stop()} in that many milliseconds.  If a provided executor is also a 
+   * {@link SimpleSchedulerInterface} then this will be used to schedule out when the profiler 
+   * should be stopped.
+   * 
+   * The returned {@link ListenableFuture} will be provided the dump when {@link #stop()} is 
+   * invoked next.  Either from a timeout provided to this call, or a manual invocation of 
+   * {@link #stop()}.
+   * 
+   * @param executor executor to execute on, or {@code null} if new thread should be created
+   * @param sampleDurationInMillis if greater than {@code 0} the profiler will only run for this many milliseconds
+   * @return Future that will be completed with the dump string when the profiler is stopped
+   */
+  public ListenableFuture<String> start(Executor executor, long sampleDurationInMillis) {
+    SettableListenableFuture<String> result = new SettableListenableFuture<String>();
+    start(executor, sampleDurationInMillis, result);
+    return result;
+  }
+  
+  /**
+   * The ultimate start call for the profiler.  This handles all possible start permutations.  
+   * If an {@link Executor} is provided, that will be used to run the profiler thread.  If there 
+   * is a duration provided > 0, a thread will be started to perform profiler shutdown.  If a 
+   * provided executor is also a {@link SimpleSchedulerInterface} then that will be used for 
+   * scheduling a task to stop the profiler.  If {@code sampleDurationInMillis} is greater than 
+   * {@code 0} and the profiler is already running, it will be stopped and restarted.
+   * 
+   * @param executor Executor or scheduler to use for execution as possible
+   * @param sampleDurationInMillis if greater than {@code 0} an automatic stop will occur after that many milliseconds 
+   * @param completionFuture If not {@code null} future will be called once the next {@link #stop()} is invoked
+   */
+  private void start(Executor executor, final long sampleDurationInMillis, 
+                     SettableListenableFuture<String> completionFuture) {
     synchronized (startStopLock) {
+      if (sampleDurationInMillis > 0) {
+        // stop in case it's running, this allows us to simplify our start logic
+        stop();
+      }
+      if (completionFuture != null) {
+        stopFutures.add(completionFuture);
+      }
       if (pStore.collectorThread.get() == null) {
         final ProfilerRunner pr = new ProfilerRunner(pStore);
         if (executor == null) {
@@ -231,6 +311,30 @@ public class Profiler {
             throw ExceptionUtils.makeRuntime(e.getCause());
           }
         }
+        // start or schedule to handle run time limit
+        if (sampleDurationInMillis > 0) {
+          if (executor instanceof SimpleSchedulerInterface) {
+            ((SimpleSchedulerInterface)executor).schedule(new Runnable() {
+              @Override
+              public void run() {
+                stop();
+              }
+            }, sampleDurationInMillis);
+          } else {
+            new Thread(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  Thread.sleep(sampleDurationInMillis);
+                  stop();
+                } catch (InterruptedException e) {
+                  // if interrupted let thread exit
+                  return;
+                }
+              }
+            }).start();
+          }
+        }
       }
     }
   }
@@ -247,11 +351,23 @@ public class Profiler {
         runningThread.interrupt();
         pStore.collectorThread.set(null);
         
+        String result = null;
+        if (! stopFutures.isEmpty()) {
+          result = dump();
+          Iterator<SettableListenableFuture<String>> it = stopFutures.iterator();
+          while (it.hasNext()) {
+            it.next().setResult(result);
+          }
+        }
         if (outputFile != null) {
           try {
             OutputStream out = new FileOutputStream(outputFile);
             try {
-              dump(out);
+              if (result == null) {
+                dump(out);
+              } else {
+                out.write(result.getBytes());
+              }
             } finally {
               out.close();
             }

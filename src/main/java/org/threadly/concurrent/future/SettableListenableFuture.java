@@ -21,6 +21,7 @@ import org.threadly.util.Clock;
 public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureCallback<T> {
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
+  protected final boolean throwIfAlreadyComplete;
   private volatile Thread runningThread;
   private volatile boolean done;
   private volatile boolean canceled;
@@ -30,11 +31,36 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   
   /**
    * Constructs a new {@link SettableListenableFuture}.  You can return this immediately and 
-   * provide a result to the object later when it is ready.
+   * provide a result to the object later when it is ready.  
+   * 
+   * This defaults in the behavior since version 1.2.0 where if the future has completed (either 
+   * by {@link #cancel(boolean)}, {@link #setResult(Object)}, or {@link #setFailure(Throwable)}), 
+   * any additional attempts to {@link #setResult(Object)} or {@link #setFailure(Throwable)} will 
+   * result in a {@link IllegalStateException} being thrown.
    */
   public SettableListenableFuture() {
+    this(true);
+  }
+  
+  /**
+   * Constructs a new {@link SettableListenableFuture}.  You can return this immediately and 
+   * provide a result to the object later when it is ready.  
+   * 
+   * This constructor allows you to control the behavior when results are attempt to be set after 
+   * the future has already completed (either by 
+   * {@link #cancel(boolean)}, {@link #setResult(Object)}, or {@link #setFailure(Throwable)}).  
+   * 
+   * If {@code true}, any additional attempts to {@link #setResult(Object)} or 
+   * {@link #setFailure(Throwable)} will result in a {@link IllegalStateException} being thrown.  
+   * 
+   * If {@code false}, additional attempts to set a result will just be silently ignored.
+   * 
+   * @param throwIfAlreadyComplete Defines the behavior when result or failure is set on a completed future
+   */
+  public SettableListenableFuture(boolean throwIfAlreadyComplete) {
     this.listenerHelper = new RunnableListenerHelper(true);
-    resultLock = new Object();
+    this.resultLock = new Object();
+    this.throwIfAlreadyComplete = throwIfAlreadyComplete;
     done = false;
     resultCleared = false;
     result = null;
@@ -101,15 +127,22 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   
   /**
    * Call to indicate this future is done, and provide the given result.  It is expected that only 
-   * this or {@link #setFailure(Throwable)} are called, and only called once.
+   * this or {@link #setFailure(Throwable)} are called.
+   * 
+   * If future has already completed and constructed with {@link #SettableListenableFuture()} or 
+   * {@code true} provided to {@link #SettableListenableFuture(boolean)} this will throw an 
+   * {@link IllegalStateException}.  If complete but constructed with a {@code false} this result 
+   * will be ignored.
    * 
    * @param result result to provide for {@link #get()} call, can be {@code null}
    */
   public void setResult(T result) {
     synchronized (resultLock) {
-      this.result = result;
+      if (! setDone()) {
+        return;
+      }
       
-      setDone();
+      this.result = result;
     }
     
     // call outside of lock
@@ -122,16 +155,23 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * failure is {@code null}, a new {@link Exception} will be created so that something is always 
    * provided in the {@link ExecutionException} on calls to {@link #get()}.
    * 
+   * If future has already completed and constructed with {@link #SettableListenableFuture()} or 
+   * {@code true} provided to {@link #SettableListenableFuture(boolean)} this will throw an 
+   * {@link IllegalStateException}.  If complete but constructed with a {@code false} this failure 
+   * result will be ignored.
+   * 
    * @param failure Throwable that caused failure during computation.
    */
   public void setFailure(Throwable failure) {
-    if (failure == null) {
-      failure = new Exception();
-    }
     synchronized (resultLock) {
+      if (! setDone()) {
+        return;
+      }
+
+      if (failure == null) {
+        failure = new Exception();
+      }
       this.failure = failure;
-      
-      setDone();
     }
     
     // call outside of lock
@@ -215,15 +255,20 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   }
   
   // should be synchronized on resultLock before calling
-  private void setDone() {
+  private boolean setDone() {
     if (done) {
-      throw new IllegalStateException("Already done");
+      if (throwIfAlreadyComplete) {
+        throw new IllegalStateException("Future already done");
+      }
+      
+      return false;
     }
     
     done = true;
     runningThread = null;
     
     resultLock.notifyAll();
+    return true;
   }
 
   @Override

@@ -1,6 +1,6 @@
 package org.threadly.concurrent;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 
 import org.threadly.util.ExceptionUtils;
@@ -24,7 +24,7 @@ public class RunnableChain implements Runnable {
   public RunnableChain(boolean exceptionStopsChain, 
                        Iterable<? extends Runnable> toRun) {
     if (toRun == null) {
-      toRun = new ArrayList<Runnable>(0);
+      toRun = Collections.emptyList();
     }
     
     this.exceptionStopsChain = exceptionStopsChain;
