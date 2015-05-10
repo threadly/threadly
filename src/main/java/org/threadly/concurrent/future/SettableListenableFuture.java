@@ -135,11 +135,12 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * will be ignored.
    * 
    * @param result result to provide for {@link #get()} call, can be {@code null}
+   * @return {@code true} if the result was set (ie future did not complete in failure or cancel}
    */
-  public void setResult(T result) {
+  public boolean setResult(T result) {
     synchronized (resultLock) {
       if (! setDone()) {
-        return;
+        return false;
       }
       
       this.result = result;
@@ -147,6 +148,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     
     // call outside of lock
     listenerHelper.callListeners();
+    
+    return true;
   }
   
   /**
@@ -161,11 +164,12 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * result will be ignored.
    * 
    * @param failure Throwable that caused failure during computation.
+   * @return {@code true} if the failure was set (ie future did not complete with result or cancel}
    */
-  public void setFailure(Throwable failure) {
+  public boolean setFailure(Throwable failure) {
     synchronized (resultLock) {
       if (! setDone()) {
-        return;
+        return false;
       }
 
       if (failure == null) {
@@ -176,6 +180,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     
     // call outside of lock
     listenerHelper.callListeners();
+    
+    return true;
   }
   
   /**

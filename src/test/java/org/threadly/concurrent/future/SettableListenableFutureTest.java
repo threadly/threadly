@@ -42,8 +42,8 @@ public class SettableListenableFutureTest {
   @Test
   public void setResultResultTest() {
     slf = new SettableListenableFuture<String>(false);
-    slf.setResult(null);
-    slf.setResult(null);
+    assertTrue(slf.setResult(null));
+    assertFalse(slf.setResult(null));
   }
   
   @Test (expected = IllegalStateException.class)
@@ -56,8 +56,8 @@ public class SettableListenableFutureTest {
   @Test
   public void setFailureResultTest() {
     slf = new SettableListenableFuture<String>(false);
-    slf.setFailure(null);
-    slf.setResult(null);
+    assertTrue(slf.setFailure(null));
+    assertFalse(slf.setResult(null));
   }
   
   @Test (expected = IllegalStateException.class)
@@ -70,8 +70,8 @@ public class SettableListenableFutureTest {
   @Test
   public void setResultFailureTest() {
     slf = new SettableListenableFuture<String>(false);
-    slf.setResult(null);
-    slf.setFailure(null);
+    assertTrue(slf.setResult(null));
+    assertFalse(slf.setFailure(null));
   }
   
   @Test (expected = IllegalStateException.class)
@@ -84,8 +84,8 @@ public class SettableListenableFutureTest {
   @Test
   public void setFailureFailureTest() {
     slf = new SettableListenableFuture<String>(false);
-    slf.setFailure(null);
-    slf.setFailure(null);
+    assertTrue(slf.setFailure(null));
+    assertFalse(slf.setFailure(null));
   }
   
   @Test (expected = IllegalStateException.class)
@@ -98,8 +98,8 @@ public class SettableListenableFutureTest {
   @Test
   public void cancelSetResultTest() {
     slf = new SettableListenableFuture<String>(false);
-    slf.cancel(false);
-    slf.setResult(null);
+    assertTrue(slf.cancel(false));
+    assertFalse(slf.setResult(null));
   }
   
   @Test (expected = IllegalStateException.class)
@@ -112,8 +112,8 @@ public class SettableListenableFutureTest {
   @Test
   public void cancelSetFailureTest() {
     slf = new SettableListenableFuture<String>(false);
-    slf.cancel(false);
-    slf.setFailure(null);
+    assertTrue(slf.cancel(false));
+    assertFalse(slf.setFailure(null));
   }
   
   @Test (expected = IllegalStateException.class)
