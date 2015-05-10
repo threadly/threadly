@@ -164,7 +164,7 @@ public class ProfilerTest {
   public void startWithTimeoutTest() throws InterruptedException, ExecutionException, TimeoutException {
     long start = Clock.accurateForwardProgressingMillis();
     ListenableFuture<String> lf = profiler.start(DELAY_TIME);
-    String result = lf.get(DELAY_TIME * 10, TimeUnit.MILLISECONDS);
+    String result = lf.get(DELAY_TIME + (10 * 1000), TimeUnit.MILLISECONDS);
     long end = Clock.accurateForwardProgressingMillis();
 
     // profiler should be stopped now
