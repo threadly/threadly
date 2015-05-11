@@ -6,10 +6,13 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.util.Clock;
 
 /**
  * <p>A collection of small utilities for handling futures.</p>
@@ -26,23 +29,56 @@ public class FutureUtils {
    * This call blocks till all futures in the list have completed.  If the future completed with 
    * an error, the {@link ExecutionException} is swallowed.  Meaning that this does not attempt to 
    * verify that all futures completed successfully.  If you need to know if any failed, please 
-   * use {@link #blockTillAllCompleteOrFirstError(Iterable)}.
+   * use {@link #blockTillAllCompleteOrFirstError(Iterable)}.  
+   * 
+   * If you need to specify a timeout to control how long to block, consider using 
+   * {@link #blockTillAllComplete(Iterable, long)}.
    * 
    * @param futures Structure of futures to iterate over
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
    */
   public static void blockTillAllComplete(Iterable<? extends Future<?>> futures) throws InterruptedException {
+    countFuturesWithResult(futures, null);
+  }
+  
+  /**
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error, the {@link ExecutionException} is swallowed.  Meaning that this does not attempt to 
+   * verify that all futures completed successfully.  If you need to know if any failed, please 
+   * use {@link #blockTillAllCompleteOrFirstError(Iterable, long)}.
+   * 
+   * @param futures Structure of futures to iterate over
+   * @param timeoutInMillis timeout to wait for futures to complete in milliseconds
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future
+   * @throws TimeoutException Thrown if the timeout elapsed while waiting on futures to complete
+   */
+  public static void blockTillAllComplete(Iterable<? extends Future<?>> futures, long timeoutInMillis) 
+      throws InterruptedException, TimeoutException {
+    countFuturesWithResult(futures, null, timeoutInMillis);
+  }
+
+  /**
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error an {@link ExecutionException} is thrown.  If this exception is thrown, all futures 
+   * may or may not be completed, the exception is thrown as soon as it is hit.  There also may be 
+   * additional futures that errored (but were not hit yet).  
+   * 
+   * If you need to specify a timeout to control how long to block, consider using 
+   * {@link #blockTillAllCompleteOrFirstError(Iterable, long)}.
+   * 
+   * @param futures Structure of futures to iterate over
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future
+   * @throws ExecutionException Thrown if future throws exception on .get() call
+   */
+  public static void blockTillAllCompleteOrFirstError(Iterable<? extends Future<?>> futures) 
+      throws InterruptedException, ExecutionException {
     if (futures == null) {
       return;
     }
     
     Iterator<? extends Future<?>> it = futures.iterator();
     while (it.hasNext()) {
-      try {
-        it.next().get();
-      } catch (ExecutionException e) {
-        // swallowed
-      }
+      it.next().get();
     }
   }
 
@@ -53,20 +89,123 @@ public class FutureUtils {
    * additional futures that errored (but were not hit yet).
    * 
    * @param futures Structure of futures to iterate over
+   * @param timeoutInMillis timeout to wait for futures to complete in milliseconds
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
+   * @throws TimeoutException Thrown if the timeout elapsed while waiting on futures to complete
    * @throws ExecutionException Thrown if future throws exception on .get() call
    */
-  public static void blockTillAllCompleteOrFirstError(Iterable<? extends Future<?>> futures) 
-      throws InterruptedException, 
-             ExecutionException {
+  public static void blockTillAllCompleteOrFirstError(Iterable<? extends Future<?>> futures, long timeoutInMillis) 
+      throws InterruptedException, TimeoutException, ExecutionException {
     if (futures == null) {
       return;
     }
     
     Iterator<? extends Future<?>> it = futures.iterator();
-    while (it.hasNext()) {
-      it.next().get();
+    long startTime = Clock.accurateForwardProgressingMillis();
+    long remainingTime;
+    while (it.hasNext() && 
+           (remainingTime = timeoutInMillis - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
+      it.next().get(remainingTime, TimeUnit.MILLISECONDS);
     }
+    if (it.hasNext()) {
+      throw new TimeoutException();
+    }
+  }
+  
+  /**
+   * Counts how many futures provided completed with a result that matches the one provided here.  
+   * This can be most useful if your looking to know if an error occurred that was not an 
+   * {@link ExecutionException}.  For example assume an API return's {@code Future<Boolean>} and a 
+   * {@code false} represents a failure, this can be used to look for those types of error 
+   * results.  
+   * 
+   * Just like {@link #blockTillAllComplete(Iterable)}, this will block until all futures have 
+   * completed (so we can verify if their result matches or not).  
+   * 
+   * If you need to specify a timeout to control how long to block, consider using 
+   * {@link #countFuturesWithResult(Iterable, Object, long)}.
+   * 
+   * @param <T> type of result futures provide to compare against
+   * @param futures Structure of futures to iterate over
+   * @param comparisonResult Object to compare future results against to look for match
+   * @return Number of futures which match the result using a {@link Object#equals(Object)} comparison
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future's result
+   */
+  public static <T> int countFuturesWithResult(Iterable<? extends Future<?>> futures, T comparisonResult) 
+      throws InterruptedException {
+    if (futures == null) {
+      return 0;
+    }
+    
+    int resultCount = 0;
+    Iterator<? extends Future<?>> it = futures.iterator();
+    while (it.hasNext()) {
+      Future<?> f = it.next();
+      try {
+        if (comparisonResult == null && f.get() == null) {
+          resultCount++;
+        } else if (comparisonResult.equals(f.get())) {
+          resultCount++;
+        }
+      } catch (CancellationException e) {
+        // swallowed
+      } catch (ExecutionException e) {
+        // swallowed
+      }
+    }
+    
+    return resultCount;
+  }
+  
+  /**
+   * Counts how many futures provided completed with a result that matches the one provided here.  
+   * This can be most useful if your looking to know if an error occurred that was not an 
+   * {@link ExecutionException}.  For example assume an API return's {@code Future<Boolean>} and a 
+   * {@code false} represents a failure, this can be used to look for those types of error 
+   * results.  
+   * 
+   * Just like {@link #blockTillAllComplete(Iterable)}, this will block until all futures have 
+   * completed (so we can verify if their result matches or not).
+   * 
+   * @param <T> type of result futures provide to compare against
+   * @param futures Structure of futures to iterate over
+   * @param comparisonResult Object to compare future results against to look for match
+   * @param timeoutInMillis timeout to wait for futures to complete in milliseconds
+   * @return Number of futures which match the result using a {@link Object#equals(Object)} comparison
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future's result
+   * @throws TimeoutException Thrown if the timeout elapsed while waiting on futures to complete
+   */
+  public static <T> int countFuturesWithResult(Iterable<? extends Future<?>> futures, 
+                                               T comparisonResult, long timeoutInMillis) throws InterruptedException, 
+                                                                                                TimeoutException {
+    if (futures == null) {
+      return 0;
+    }
+    
+    int resultCount = 0;
+    Iterator<? extends Future<?>> it = futures.iterator();
+    long startTime = Clock.accurateForwardProgressingMillis();
+    long remainingTime;
+    while (it.hasNext() && 
+           (remainingTime = timeoutInMillis - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
+      Future<?> f = it.next();
+      try {
+        if (comparisonResult == null && f.get(remainingTime, TimeUnit.MILLISECONDS) == null) {
+          resultCount++;
+        } else if (comparisonResult.equals(f.get(remainingTime, TimeUnit.MILLISECONDS))) {
+          resultCount++;
+        }
+      } catch (CancellationException e) {
+        // swallowed
+      } catch (ExecutionException e) {
+        // swallowed
+      }
+    }
+    if (it.hasNext()) {
+      throw new TimeoutException();
+    }
+    
+    return resultCount;
   }
   
   /**

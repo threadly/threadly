@@ -11,45 +11,21 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
-import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.StrictPriorityScheduler;
-import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.AsyncVerifier;
-import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest {
-  private static PriorityScheduler scheduler;
-  
-  @BeforeClass
-  public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(1);
-    
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
-  }
-  
-  @AfterClass
-  public static void cleanupClass() {
-    scheduler.shutdownNow();
-    scheduler = null;
-  }
-  
   private static List<ListenableFuture<?>> makeFutures(int count, int errorIndex) {
     List<ListenableFuture<?>> result = new ArrayList<ListenableFuture<?>>(count + 1);
     
     for (int i = 0; i < count; i++) {
-      TestRunnable tr;
       if (i == errorIndex) {
-        tr = new TestRuntimeFailureRunnable(DELAY_TIME);
+        result.add(FutureUtils.immediateFailureFuture(null));
       } else {
-        tr = new TestRunnable(DELAY_TIME);
+        result.add(FutureUtils.immediateResultFuture(null));
       }
-      result.add(scheduler.submit(tr));
     }
     
     return result;
@@ -84,6 +60,53 @@ public class FutureUtilsTest {
     while (it.hasNext()) {
       assertTrue(it.next().isDone());
     }
+  }
+  
+  @Test
+  public void blockTillAllCompleteWithTimeoutNullTest() throws InterruptedException, TimeoutException {
+    FutureUtils.blockTillAllComplete(null, 1); // should return immediately
+  }
+  
+  @Test
+  public void blockTillAllCompleteWithTimeoutTest() throws InterruptedException, TimeoutException {
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    
+    FutureUtils.blockTillAllComplete(futures, 1000 * 10);
+    
+    Iterator<ListenableFuture<?>> it = futures.iterator();
+    while (it.hasNext()) {
+      assertTrue(it.next().isDone());
+    }
+  }
+  
+  @Test
+  public void blockTillAllCompleteWithTimeoutErrorTest() throws InterruptedException, TimeoutException {
+    int errorIndex = TEST_QTY / 2;
+    
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
+    
+    FutureUtils.blockTillAllComplete(futures, 1000 * 10);
+    
+    Iterator<ListenableFuture<?>> it = futures.iterator();
+    while (it.hasNext()) {
+      assertTrue(it.next().isDone());
+    }
+  }
+  
+  @Test (expected = TimeoutException.class)
+  public void blockTillAllCompleteWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    
+    FutureUtils.blockTillAllComplete(futures, 100);
+    fail("Exception should have thrown");
+  }
+  
+  @Test (expected = TimeoutException.class)
+  public void blockTillAllCompleteWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    
+    FutureUtils.blockTillAllComplete(futures, 0);
+    fail("Exception should have thrown");
   }
   
   @Test
@@ -126,6 +149,100 @@ public class FutureUtilsTest {
         }
       }
     }
+  }
+  
+  @Test
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutNullTest() throws InterruptedException, ExecutionException, TimeoutException {
+    FutureUtils.blockTillAllCompleteOrFirstError(null, 10); // should return immediately
+  }
+  
+  @Test
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutTest() throws InterruptedException, ExecutionException, TimeoutException {
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
+    
+    FutureUtils.blockTillAllCompleteOrFirstError(futures, 1000 * 10);
+    
+    Iterator<ListenableFuture<?>> it = futures.iterator();
+    while (it.hasNext()) {
+      assertTrue(it.next().isDone());
+    }
+  }
+  
+  @Test
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutErrorTest() throws InterruptedException, TimeoutException {
+    int errorIndex = TEST_QTY / 2;
+    
+    List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
+    
+    FutureUtils.blockTillAllComplete(futures, 1000 * 10);
+
+    Iterator<ListenableFuture<?>> it = futures.iterator();
+    for (int i = 0; i <= errorIndex; i++) {
+      Future<?> f = it.next();
+      
+      if (i < errorIndex) {
+        assertTrue(f.isDone());
+      } else if (i == errorIndex) {
+        try {
+          f.get();
+          fail("Exception should have thrown");
+        } catch (ExecutionException e) {
+          // expected
+        }
+      }
+    }
+  }
+  
+  @Test (expected = TimeoutException.class)
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException, ExecutionException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    
+    FutureUtils.blockTillAllCompleteOrFirstError(futures, 100);
+    fail("Exception should have thrown");
+  }
+  
+  @Test (expected = TimeoutException.class)
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException, ExecutionException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    
+    FutureUtils.blockTillAllCompleteOrFirstError(futures, 0);
+    fail("Exception should have thrown");
+  }
+  
+  @Test
+  public void countFuturesWithResultTest() throws InterruptedException {
+    List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(TEST_QTY * 2);
+    for (int i = 0; i < TEST_QTY * 2; i++) {
+      futures.add(FutureUtils.immediateResultFuture(i % 2 == 1));
+    }
+    
+    assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false));
+  }
+  
+  @Test
+  public void countFuturesWithResultWithTimeoutTest() throws InterruptedException, TimeoutException {
+    List<ListenableFuture<Boolean>> futures = new ArrayList<ListenableFuture<Boolean>>(TEST_QTY * 2);
+    for (int i = 0; i < TEST_QTY * 2; i++) {
+      futures.add(FutureUtils.immediateResultFuture(i % 2 == 1));
+    }
+    
+    assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 100));
+  }
+  
+  @Test (expected = TimeoutException.class)
+  public void countFuturesWithResultWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    
+    assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 100));
+    fail("Exception should have thrown");
+  }
+  
+  @Test (expected = TimeoutException.class)
+  public void countFuturesWithResultWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    
+    assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 0));
+    fail("Exception should have thrown");
   }
   
   @Test

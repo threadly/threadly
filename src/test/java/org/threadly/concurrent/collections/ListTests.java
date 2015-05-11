@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -158,7 +159,7 @@ public class ListTests {
   }
   
   public static void addAllIndexFail(List<String> testList) {
-    List<String> toAdd = new ArrayList<String>(0);
+    List<String> toAdd = new ArrayList<String>(1);
     toAdd.add("foo");
     
     try {
@@ -392,11 +393,11 @@ public class ListTests {
   
   public static void retainAllTest(List<String> testList) {
     // verify with empty list
-    assertFalse(testList.retainAll(new ArrayList<String>(0)));
+    assertFalse(testList.retainAll(Collections.emptyList()));
     
     populateIntStrings(testList, TEST_QTY);
     
-    assertTrue(testList.retainAll(new ArrayList<String>(0)));
+    assertTrue(testList.retainAll(Collections.emptyList()));
     
     assertEquals(0, testList.size());
     
