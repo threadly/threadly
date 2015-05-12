@@ -142,8 +142,10 @@ public class FutureUtils {
     while (it.hasNext()) {
       Future<?> f = it.next();
       try {
-        if (comparisonResult == null && f.get() == null) {
-          resultCount++;
+        if (comparisonResult == null) {
+          if (f.get() == null) {
+            resultCount++;
+          }
         } else if (comparisonResult.equals(f.get())) {
           resultCount++;
         }
