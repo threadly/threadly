@@ -22,10 +22,10 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -229,9 +229,7 @@ public class Profiler {
    * the provided executor.
    * 
    * If {@code sampleDurationInMillis} is greater than zero the Profiler will invoke 
-   * {@link #stop()} in that many milliseconds.  If a provided executor is also a 
-   * {@link SimpleSchedulerInterface} then this will be used to schedule out when the profiler 
-   * should be stopped.
+   * {@link #stop()} in that many milliseconds.
    * 
    * The returned {@link ListenableFuture} will be provided the dump when {@link #stop()} is 
    * invoked next.  Either from a timeout provided to this call, or a manual invocation of 
@@ -250,10 +248,9 @@ public class Profiler {
   /**
    * The ultimate start call for the profiler.  This handles all possible start permutations.  
    * If an {@link Executor} is provided, that will be used to run the profiler thread.  If there 
-   * is a duration provided > 0, a thread will be started to perform profiler shutdown.  If a 
-   * provided executor is also a {@link SimpleSchedulerInterface} then that will be used for 
-   * scheduling a task to stop the profiler.  If {@code sampleDurationInMillis} is greater than 
-   * {@code 0} and the profiler is already running, it will be stopped and restarted.
+   * is a duration provided > 0, a thread will be started to perform profiler shutdown.  If 
+   * {@code sampleDurationInMillis} is greater than {@code 0} and the profiler is already running, 
+   * it will be stopped and restarted.
    * 
    * @param executor Executor or scheduler to use for execution as possible
    * @param sampleDurationInMillis if greater than {@code 0} an automatic stop will occur after that many milliseconds 
@@ -313,27 +310,17 @@ public class Profiler {
         }
         // start or schedule to handle run time limit
         if (sampleDurationInMillis > 0) {
-          if (executor instanceof SimpleSchedulerInterface) {
-            ((SimpleSchedulerInterface)executor).schedule(new Runnable() {
-              @Override
-              public void run() {
+          pStore.dumpLoopRun = new Runnable() {
+            private final long startTime = Clock.accurateForwardProgressingMillis();
+            
+            @Override
+            public void run() {
+              if (Clock.lastKnownForwardProgressingMillis() - startTime > sampleDurationInMillis) {
+                pStore.dumpLoopRun = null;
                 stop();
               }
-            }, sampleDurationInMillis);
-          } else {
-            new Thread(new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  Thread.sleep(sampleDurationInMillis);
-                  stop();
-                } catch (InterruptedException e) {
-                  // if interrupted let thread exit
-                  return;
-                }
-              }
-            }).start();
-          }
+            }
+          };
         }
       }
     }
@@ -695,6 +682,7 @@ public class Profiler {
     protected final AtomicInteger collectedSamples;
     protected volatile int pollIntervalInMs;
     protected volatile Thread dumpingThread;
+    protected volatile Runnable dumpLoopRun;
     
     public ProfileStorage(int pollIntervalInMs) {
       ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
@@ -704,6 +692,7 @@ public class Profiler {
       collectedSamples = new AtomicInteger(0);
       this.pollIntervalInMs = pollIntervalInMs;
       dumpingThread = null;
+      dumpLoopRun = null;
     }
     
     /**
@@ -779,6 +768,10 @@ public class Profiler {
           pStore.collectorThread.compareAndSet(runningThread, null);
           Thread.currentThread().interrupt(); // reset status
           return;
+        }
+        Runnable toRun = pStore.dumpLoopRun;
+        if (toRun != null) {
+          ExceptionUtils.runRunnable(toRun);
         }
       }
     }
