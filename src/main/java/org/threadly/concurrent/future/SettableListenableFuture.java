@@ -138,14 +138,15 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * @return {@code true} if the result was set (ie future did not complete in failure or cancel}
    */
   public boolean setResult(T result) {
-    if (! setDone()) {
-      return false;
+    if (setDone()) {
+      this.result = result;
+      synchronized(resultLock) {
+        resultLock.notifyAll();
+      }
+      listenerHelper.callListeners();
+      return true;
     }
-    
-    this.result = result;
-    // call outside of lock
-    listenerHelper.callListeners();
-    return true;
+    return false;
   }
   
   /**
@@ -163,18 +164,18 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * @return {@code true} if the failure was set (ie future did not complete with result or cancel}
    */
   public boolean setFailure(Throwable failure) {
-    if (! setDone()) {
-      return false;
+    if (setDone()) {
+      if (failure == null) {
+        failure = new Exception();
+      }
+      this.failure = failure;
+      synchronized(resultLock) {
+        resultLock.notifyAll();
+      }
+      listenerHelper.callListeners();
+      return true;
     }
-    
-    if (failure == null) {
-      failure = new Exception();
-    }
-    this.failure = failure;
-    // call outside of lock
-    listenerHelper.callListeners();
-    
-    return true;
+    return false;
   }
   
   /**
@@ -195,9 +196,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   
   @Override
   public boolean cancel(boolean interruptThread) {
-    if (done.get()) {
-      return false;
-    }
     Thread localThread = runningThread;
     if (setDone()) {
       this.canceled = true;
@@ -205,6 +203,9 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
         if (localThread != null) {
           localThread.interrupt();
         }
+      }
+      synchronized(resultLock) {
+        resultLock.notifyAll();
       }
       listenerHelper.callListeners();
       return true;
@@ -237,13 +238,9 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     failure = null;
   }
   
-  // should be synchronized on resultLock before calling
   private boolean setDone() {
     if (done.compareAndSet(false, true)) {
       runningThread = null;
-      synchronized(resultLock) {
-        resultLock.notifyAll();
-      }
       return true;
     } else {
       if (throwIfAlreadyComplete) {
@@ -280,8 +277,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   
   @Override
   public T get(long timeout, TimeUnit unit) throws InterruptedException, 
-  ExecutionException,
-  TimeoutException {
+                                                   ExecutionException, 
+                                                   TimeoutException {
     long startTime = Clock.accurateForwardProgressingMillis();
     long timeoutInMs = unit.toMillis(timeout);
     synchronized (resultLock) {
