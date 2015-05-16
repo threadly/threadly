@@ -82,6 +82,29 @@ public class Watchdog {
   }
   
   /**
+   * Request the timeout in milliseconds until futures that have not completed are canceled.  This 
+   * is the timeout that the class was constructed with (since it can not be changed after 
+   * construction).
+   * 
+   * @return Time in milliseconds till incomplete futures have {@link ListenableFuture#cancel(boolean)} invoked
+   */
+  public long getTimeoutInMillis() {
+    return timeoutInMillis;
+  }
+  
+  /**
+   * Checks to see if this watchdog is currently active.  Meaning there are futures on it which 
+   * either have not been completed yet, or have not been inspected for completion.  If this 
+   * returns false, it means that there are no futures waiting to complete, and no scheduled tasks 
+   * currently scheduled to inspect them.
+   * 
+   * @return {@code true} if this watchdog is currently in use
+   */
+  public boolean isActive() {
+    return checkRunnerStatus.get() > -1;
+  }
+  
+  /**
    * Watch a given {@link ListenableFuture} to ensure that it completes within the constructed 
    * time limit.  If the future is not marked as done by the time limit then it will be 
    * completed by invoking {@link ListenableFuture#cancel(boolean)}.  Weather a {@code true} or 
@@ -158,11 +181,11 @@ public class Watchdog {
       while (it.hasNext()) {
         fw = it.next();
         if (Clock.lastKnownForwardProgressingMillis() >= fw.expireTime) {
+          it.remove();
           try {
             fw.future.cancel(sendInterruptToTrackedThreads);
           } finally {
             fw = null;
-            it.remove();
           }
         } else {
           /* since futures are added in order of expiration, 
