@@ -196,22 +196,28 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   
   @Override
   public boolean cancel(boolean interruptThread) {
-    Thread localThread = runningThread;
-    if (setDone()) {
-      this.canceled = true;
-      if (interruptThread) {
-        if (localThread != null) {
-          localThread.interrupt();
-        }
-      }
-      synchronized(resultLock) {
-        resultLock.notifyAll();
-      }
-      listenerHelper.callListeners();
-      return true;
-    } else {
+    if(done.get()) {
       return false;
     }
+    try {
+      Thread localThread = runningThread;
+      if (setDone()) {
+        this.canceled = true;
+        if (interruptThread) {
+          if (localThread != null) {
+            localThread.interrupt();
+          }
+        }
+        synchronized(resultLock) {
+          resultLock.notifyAll();
+        }
+        listenerHelper.callListeners();
+        return true;
+      }
+    } catch (IllegalStateException e){
+      //Cancel does not throw on set
+    }
+    return false;
   }
   
   @Override
