@@ -26,9 +26,9 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   private final AtomicBoolean done = new AtomicBoolean(false);
   private volatile Thread runningThread;
   private volatile boolean canceled;
+  private volatile T result;
+  private volatile Throwable failure;
   private boolean resultCleared;
-  private T result;
-  private Throwable failure;
   
   /**
    * Constructs a new {@link SettableListenableFuture}.  You can return this immediately and 
@@ -138,7 +138,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * @return {@code true} if the result was set (ie future did not complete in failure or cancel}
    */
   public boolean setResult(T result) {
-    if (setDone()) {
+    if (setDone(throwIfAlreadyComplete)) {
       this.result = result;
       synchronized(resultLock) {
         resultLock.notifyAll();
@@ -164,7 +164,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * @return {@code true} if the failure was set (ie future did not complete with result or cancel}
    */
   public boolean setFailure(Throwable failure) {
-    if (setDone()) {
+    if (setDone(throwIfAlreadyComplete)) {
       if (failure == null) {
         failure = new Exception();
       }
@@ -199,23 +199,19 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     if(done.get()) {
       return false;
     }
-    try {
-      Thread localThread = runningThread;
-      if (setDone()) {
-        this.canceled = true;
-        if (interruptThread) {
-          if (localThread != null) {
-            localThread.interrupt();
-          }
+    Thread localThread = runningThread;
+    if (setDone(false)) {
+      this.canceled = true;
+      if (interruptThread) {
+        if (localThread != null) {
+          localThread.interrupt();
         }
-        synchronized(resultLock) {
-          resultLock.notifyAll();
-        }
-        listenerHelper.callListeners();
-        return true;
       }
-    } catch (IllegalStateException e){
-      //Cancel does not throw on set
+      synchronized(resultLock) {
+        resultLock.notifyAll();
+      }
+      listenerHelper.callListeners();
+      return true;
     }
     return false;
   }
@@ -244,12 +240,12 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     failure = null;
   }
   
-  private boolean setDone() {
+  private boolean setDone(boolean throwIfSet) {
     if (done.compareAndSet(false, true)) {
       runningThread = null;
       return true;
     } else {
-      if (throwIfAlreadyComplete) {
+      if (throwIfSet) {
         throw new IllegalStateException("Future already done");
       }
       return false;
