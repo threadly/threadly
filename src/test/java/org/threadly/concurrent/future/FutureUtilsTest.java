@@ -17,14 +17,14 @@ import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest {
-  private static List<ListenableFuture<?>> makeFutures(int count, int errorIndex) {
-    List<ListenableFuture<?>> result = new ArrayList<ListenableFuture<?>>(count + 1);
+  private static <T> List<ListenableFuture<? extends T>> makeFutures(int count, int errorIndex) {
+    List<ListenableFuture<? extends T>> result = new ArrayList<ListenableFuture<? extends T>>(count + 1);
     
     for (int i = 0; i < count; i++) {
       if (i == errorIndex) {
-        result.add(FutureUtils.immediateFailureFuture(null));
+        result.add(FutureUtils.<T>immediateFailureFuture(null));
       } else {
-        result.add(FutureUtils.immediateResultFuture(null));
+        result.add(FutureUtils.<T>immediateResultFuture(null));
       }
     }
     
@@ -569,6 +569,62 @@ public class FutureUtilsTest {
     verifyCompleteFuture(f, futures);
     
     verifyNoneIncluded(futures, f.get(), cancelFuture);
+  }
+  
+  @Test
+  public void makeResultListFutureNullFuturesTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<List<String>> resultFuture = FutureUtils.makeResultListFuture(null, false);
+    
+    assertTrue(resultFuture.isDone());
+    assertNotNull(resultFuture.get());
+    assertTrue(resultFuture.get().isEmpty());
+  }
+  
+  @Test
+  public void makeResultListFutureAlreadyDoneFuturesTest() throws InterruptedException, ExecutionException {
+    List<ListenableFuture<? extends String>> futures = makeFutures(TEST_QTY, -1);
+    
+    ListenableFuture<List<String>> resultFuture = FutureUtils.makeResultListFuture(futures, false);
+    
+    assertTrue(resultFuture.isDone());
+    assertEquals(TEST_QTY, resultFuture.get().size());
+  }
+  
+  @Test
+  public void makeResultListFutureIgnoreFailureTest() throws InterruptedException, ExecutionException {
+    List<ListenableFuture<? extends String>> futures = makeFutures(TEST_QTY, TEST_QTY / 2);
+    
+    ListenableFuture<List<String>> resultFuture = FutureUtils.makeResultListFuture(futures, true);
+    
+    assertTrue(resultFuture.isDone());
+    assertEquals(TEST_QTY - 1, resultFuture.get().size());
+  }
+  
+  @Test (expected = ExecutionException.class)
+  public void makeResultListFutureWithFailureTest() throws InterruptedException, ExecutionException {
+    List<ListenableFuture<? extends String>> futures = makeFutures(TEST_QTY, TEST_QTY / 2);
+    
+    ListenableFuture<List<String>> resultFuture = FutureUtils.makeResultListFuture(futures, false);
+    
+    assertTrue(resultFuture.isDone());
+    resultFuture.get();
+    fail("Exception should have thrown");
+  }
+  
+  @Test
+  public void makeResultListFutureResultsTest() throws InterruptedException, ExecutionException {
+    List<String> expectedResults = new ArrayList<String>(TEST_QTY);
+    List<ListenableFuture<String>> futures = new ArrayList<ListenableFuture<String>>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String result = StringUtils.randomString(5);
+      expectedResults.add(result);
+      futures.add(FutureUtils.immediateResultFuture(result));
+    }
+    
+    List<String> actualResults = FutureUtils.makeResultListFuture(futures, false).get();
+   
+    assertTrue(actualResults.containsAll(expectedResults));
+    assertTrue(expectedResults.containsAll(actualResults));
   }
   
   @Test

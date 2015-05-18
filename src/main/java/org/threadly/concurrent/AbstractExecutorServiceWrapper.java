@@ -48,8 +48,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   }
 
   @Override
-  public boolean awaitTermination(long timeout, 
-                                  TimeUnit unit) {
+  public boolean awaitTermination(long timeout, TimeUnit unit) {
     long startTime = Clock.accurateForwardProgressingMillis();
     long waitTimeInMs = unit.toMillis(timeout);
     Thread currentThread = Thread.currentThread();

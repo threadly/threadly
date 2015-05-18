@@ -1,5 +1,6 @@
 package org.threadly.concurrent.future;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -47,6 +48,8 @@ public class FutureUtils {
    * verify that all futures completed successfully.  If you need to know if any failed, please 
    * use {@link #blockTillAllCompleteOrFirstError(Iterable, long)}.
    * 
+   * @since 4.0.0
+   * 
    * @param futures Structure of futures to iterate over
    * @param timeoutInMillis timeout to wait for futures to complete in milliseconds
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
@@ -88,6 +91,8 @@ public class FutureUtils {
    * may or may not be completed, the exception is thrown as soon as it is hit.  There also may be 
    * additional futures that errored (but were not hit yet).
    * 
+   * @since 4.0.0
+   * 
    * @param futures Structure of futures to iterate over
    * @param timeoutInMillis timeout to wait for futures to complete in milliseconds
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
@@ -124,6 +129,8 @@ public class FutureUtils {
    * 
    * If you need to specify a timeout to control how long to block, consider using 
    * {@link #countFuturesWithResult(Iterable, Object, long)}.
+   * 
+   * @since 4.0.0
    * 
    * @param <T> type of result futures provide to compare against
    * @param futures Structure of futures to iterate over
@@ -168,6 +175,8 @@ public class FutureUtils {
    * 
    * Just like {@link #blockTillAllComplete(Iterable)}, this will block until all futures have 
    * completed (so we can verify if their result matches or not).
+   * 
+   * @since 4.0.0
    * 
    * @param <T> type of result futures provide to compare against
    * @param futures Structure of futures to iterate over
@@ -321,6 +330,63 @@ public class FutureUtils {
   public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
       makeFailureListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
     return new FailureFutureCollection<T>(futures);
+  }
+  
+  /**
+   * This returns a future which provides the results of all the provided futures.  Thus 
+   * preventing the need to iterate over all the futures and manually extract the results.  This 
+   * call does NOT block, instead it will return a future which will not complete until all the 
+   * provided futures complete.  
+   * 
+   * The order of the result list is NOT deterministic.
+   * 
+   * If called with {@code true} for {@code ignoreFailedFutures}, even if some of the provided 
+   * futures finished in error, they will be ignored and just the successful results will be 
+   * provided.  If called with {@code false} then if any futures complete in error, then the 
+   * returned future will throw a {@link ExecutionException} with the error as the cause when 
+   * {@link Future#get()} is invoked.
+   * 
+   * @since 4.0.0
+   * 
+   * @param <T> The result object type returned from the futures
+   * @param futures Structure of futures to iterate over and extract results from
+   * @param ignoreFailedFutures {@code true} to ignore any future failures
+   * @return A {@link ListenableFuture} which will provide a list of the results from the provided futures
+   */
+  public static <T> ListenableFuture<List<T>> 
+      makeResultListFuture(Iterable<? extends ListenableFuture<? extends T>> futures, 
+                           final boolean ignoreFailedFutures) {
+    if (futures == null) {
+      return immediateResultFuture(Collections.<T>emptyList());
+    }
+    
+    final SettableListenableFuture<List<T>> result = new SettableListenableFuture<List<T>>();
+    
+    makeCompleteListFuture(futures).addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
+      @Override
+      public void handleResult(List<ListenableFuture<? extends T>> resultFutures) {
+        ArrayList<T> results = new ArrayList<T>(resultFutures.size());
+        Iterator<ListenableFuture<? extends T>> it = resultFutures.iterator();
+        while (it.hasNext()) {
+          try {
+            results.add(it.next().get());
+          } catch (Exception e) {
+            if (! ignoreFailedFutures) {
+              result.setFailure(e);
+              return;
+            }
+          }
+        }
+        result.setResult(results);
+      }
+
+      @Override
+      public void handleFailure(Throwable t) {
+        result.setFailure(t);
+      }
+    });
+    
+    return result;
   }
   
   /**
