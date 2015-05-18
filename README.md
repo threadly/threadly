@@ -7,33 +7,41 @@ For information about compiling, importing into eclipse, or contributing to the 
 
 If you find this library useful, feel free to donate LTC/Litecoin to: LiTeCoinLRQrrP2B6xAq2aZ5WFHpHc28Ry
 
+For a complete list of features in threadly please view the features page on the wiki:
+
+https://github.com/threadly/threadly/wiki/Threadly-Features
+
 -- General Concurrency Tools --
 
-*    PriorityScheduler - Another thread pool, but often times could be a better fit than using java.util.concurrent.ScheduledThreadPoolExecutor. It offers a few advantages and disadvantages. Often times it can be better performing, or at least equally performing.
+*    PriorityScheduler - A thread pool which makes different trade offs from java.util.concurrent.ScheduledThreadPoolExecutor.  It offers a few advantages and disadvantages.  Often times it can be better performing, or at least equally performing.
+
+Advantages compared to ScheduledThreadPoolExecutor:
+
+Better .execute task performance.  Because it uses different structures for scheduled/recurring tasks from execute task we are able to use a structure which fits the job better.  This provides a DRAMATIC improvement in the performance of executed jobs.
+
+The ability to provide a priority with a task means that things which are more critical are impacted less by things which are recurring or a delay wont matter as long as those low priority tasks are not starved.  Low priority tasks will delay longer if there is high usage on the pool, until they reach their maximum wait time (assuming that high priority tasks are not further delayed).  Using multiple priorities also reduces lock contention between the different priorities.
+
+PriorityScheduler is only focused on the Runnable provided into it.  So for example removing a task you can provide the original runnable (not a returned future).  The runnables returned in .shutdownNow() are the original runnables, not wrapped in future tasks, etc, etc.
 
 PriorityScheduler provides calls that do, and do not return a future, so if a future is not necessary the performance hit can be avoided.
 
 If you need a thread pool that implements java.util.concurrent.ScheduledExecutorService you can wrap it in "PrioritySchedulerServiceWrapper".
 
-PriorityScheduler removes tasks much easier than java.util.concurrent.ScheduledThreadPoolExecutor, by allowing you to just provide the original runnable, instead of requiring you to cast the future that was originally provided.
-
-It offers the ability to submit tasks with a given priority. Low priority tasks will be less aggressive about making new threads, thus taking better advantage of it being a thread pool if the execution time does not have to be very precise. Using multiple priorities also reduces lock contention for higher priority tasks.
-
-The other large difference compared to ScheduledThreadPoolExecutor is that the pool size is dynamic. In ScheduledThreadPoolExecutor you can only provide one size, and that pool can not grow or shrink. In this implementation you have a core size, max size, and workers can be expired if they are no longer used.
+The other large difference compared to ScheduledThreadPoolExecutor is that the pool size is adjustable at runtime.  In ScheduledThreadPoolExecutor you can only provide one size, and that pool can grow, but never shrink once started.  In this implementation you construct with a start size, and if you ever want to adjust the size it can be done at any point with calls to "setPoolSize".  This will NEVER interrupt or stop running tasks, but as they finish the threads will be destroyed.
 
 *    ExecutorLimiter, SimpleSchedulerLimiter, SchedulerServiceLimiter and PrioritySchedulerLimiter - These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
 
 The design is such so that you create one large pool, and then wrap it in one of these two wrappers.  You then pass the wrapper to your different parts of code.  It relies on the large pool in order to actually get a thread, but this prevents any one section of code from completely dominating the thread pool.
 
-*    KeyDistributedExecutor and KeyDistributedScheduler provide you the ability to execute (or schedule) tasks with a given key such that tasks with the same key hash code will NEVER run concurrently. This is designed as an ability to help the developer from having to deal with concurrent issues when ever possible. It allows you to have multiple runnables or tasks that share memory, but don't force the developer to deal with synchronization and memory barriers (assuming they all share the same key).  These now also allow you to continue to use Future's with the key based execution.
+*    KeyDistributedExecutor and KeyDistributedScheduler - Provide you the ability to execute (or schedule) tasks with a given key such that tasks with the same key hash code will NEVER run concurrently. This is designed as an ability to help the developer from having to deal with concurrent issues when ever possible. It allows you to have multiple runnables or tasks that share memory, but don't force the developer to deal with synchronization and memory barriers (assuming they all share the same key).  These now also allow you to continue to use Future's with the key based execution.
 
-*    NoThreadScheduler, sometimes even one thread is too many.  This provides you the ability to schedule tasks, or execute tasks on the scheduler, but they wont be run till you call .tick() on the scheduler.  This allows you to control which thread these tasks run on (since you have to explicitly call the .tick()).  A great example of where this could be useful is if you want to schedule tasks which can only run on a GUI thread.  Another example would be in NIO programming, where you want to modify the selector, you can just call .tick() before you call .select() on the selector to apply any modifications you need in a thread safe way (without worrying about blocking).
+*    NoThreadScheduler - Sometimes even one thread is too many.  This provides you the ability to schedule tasks, or execute tasks on the scheduler, but they wont be run till you call .tick() on the scheduler.  This allows you to control which thread these tasks run on (since you have to explicitly call the .tick()).  A great example of where this could be useful is if you want to schedule tasks which can only run on a GUI thread.  Another example would be in NIO programming, where you want to modify the selector, you can just call .tick() before you call .select() on the selector to apply any modifications you need in a thread safe way (without worrying about blocking).
 
-*    ConcurrentArrayList is a thread safe array list that also implements a Dequeue. It may be better performing than a CopyOnWriteArrayList depending on what the use case is. It is able to avoid copies for some operations, primarily adding and removing from the ends of a list (and can be tuned for the specific application to possibly make copies very rare).
+*    ConcurrentArrayList - A thread safe array list that also implements a Dequeue. It may be better performing than a CopyOnWriteArrayList depending on what the use case is. It is able to avoid copies for some operations, primarily adding and removing from the ends of a list (and can be tuned for the specific application to possibly make copies very rare).
 
-*    FutureUtils provides some nice utilities for working with futures. A couple of the nice operations are the ability to combine several futures, and either block till all have finished, or get a future which combines all the results for once they have completed.
+*    FutureUtils - Provides some nice utilities for working with futures. It provides many things when dealing with collections of futures, for example canceling any which have not finished in a collection. A couple of other the nice operations are the ability to combine several futures, and either block till all have finished, or get a future which combines all the results for once they have completed. As well as being able to get different formats (for example give me a future which provides a list of all futures in the collection which had an error).
 
-*    ListenerHelper and RunnableListenerHelper, listeners are a very common design pattern for asynchronous designs. ListenerHelper helps in building these designs (no matter what the interface for the listeners is), RunnableListenerHelper is a very efficent implementation designed around the common "Runnable" interface.  I am sure we have all done similar implementations a million times, this is one robust implementation that will hopefully reduce duplicated code in the future.  In addition there are varriants of these, "AsyncCallListenerHelper", and "DefaultExecutorListenerHelper" (the same exists for the Runnable version as well) which allow different threading designs around how listeners are called.
+*    ListenerHelper and RunnableListenerHelper - Listeners are a very common design pattern for asynchronous designs. ListenerHelper helps in building these designs (no matter what the interface for the listeners is), RunnableListenerHelper is a very efficent implementation designed around the common "Runnable" interface.  I am sure we have all done similar implementations a million times, this is one robust implementation that will hopefully reduce duplicated code in the future.  In addition there are varriants of these, "AsyncCallListenerHelper", and "DefaultExecutorListenerHelper" (the same exists for the Runnable version as well) which allow different threading designs around how listeners are called.
 
 -- Debugging utilities --
 
