@@ -82,6 +82,10 @@ public class WatchdogCache {
     
     dog.watch(future);
     
+    maybeScheduleCleaner();
+  }
+  
+  private void maybeScheduleCleaner() {
     if (! cleanerScheduled.get() && cleanerScheduled.compareAndSet(false, true)) {
       scheduler.schedule(cacheCleaner, INSPECTION_INTERVAL_MILLIS);
     }
@@ -111,9 +115,8 @@ public class WatchdogCache {
       /* if is empty but added after the first part of this check, we are covered due to 
        * switching scheduled to false before starting our check.
        */
-      if (! cachedDogs.isEmpty() && 
-          ! cleanerScheduled.get() && cleanerScheduled.compareAndSet(false, true)) {
-        scheduler.schedule(cacheCleaner, INSPECTION_INTERVAL_MILLIS);
+      if (! cachedDogs.isEmpty()) {
+        maybeScheduleCleaner();
       }
     }
   }
