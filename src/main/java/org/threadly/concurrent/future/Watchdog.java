@@ -26,7 +26,7 @@ public class Watchdog {
     STATIC_SCHEDULER = new AtomicReference<SingleThreadScheduler>();
   }
   
-  private static final SimpleSchedulerInterface getStaticScheduler() {
+  protected static final SimpleSchedulerInterface getStaticScheduler() {
     SingleThreadScheduler sts = STATIC_SCHEDULER.get();
     if (sts == null) {
       sts = new SingleThreadScheduler();
@@ -51,31 +51,32 @@ public class Watchdog {
    * Constructs a new {@link Watchdog}.  This constructor will use a default static scheduler 
    * (which is lazily constructed).  This should be fine in most cases, but you can provide your 
    * own scheduler if you want to avoid the thread creation (which is shared among all instances 
-   * that were constructed with this constructor).
+   * that were constructed with this constructor or {@link WatchdogCache#WatchdogCache(boolean)}).
    * 
    * @param timeoutInMillis Time in milliseconds that futures will be set to error if they are not done
-   * @param sendInterruptToTrackedThreads If {@code true}, and a thread is provided with the future, 
-   *                                        an interrupt will be sent on timeout
+   * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
+   *                                      an interrupt will be sent on timeout
    */
-  public Watchdog(long timeoutInMillis, boolean sendInterruptToTrackedThreads) {
-    this(getStaticScheduler(), timeoutInMillis, sendInterruptToTrackedThreads);
+  public Watchdog(long timeoutInMillis, boolean sendInterruptOnFutureCancel) {
+    this(getStaticScheduler(), timeoutInMillis, sendInterruptOnFutureCancel);
   }
   
   /**
    * Constructs a new {@link Watchdog} with a scheduler of your choosing.  It is critical that 
    * this scheduler has a free thread available to inspect futures which may not have completed in 
-   * the given timeout.  You may want to use a limiter to ensure that there are threads available.
+   * the given timeout.  You may want to use a {@link org.threadly.concurrent.limiter} to ensure 
+   * that there are threads available.
    * 
    * @param scheduler Scheduler to schedule task to look for expired futures
    * @param timeoutInMillis Time in milliseconds that futures will be set to error if they are not done
-   * @param sendInterruptToTrackedThreads If {@code true}, and a thread is provided with the future, 
-   *                                        an interrupt will be sent on timeout
+   * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
+   *                                      an interrupt will be sent on timeout
    */
   public Watchdog(SimpleSchedulerInterface scheduler, long timeoutInMillis, 
-                  boolean sendInterruptToTrackedThreads) {
+                  boolean sendInterruptOnFutureCancel) {
     this.scheduler = scheduler;
     this.timeoutInMillis = timeoutInMillis;
-    this.sendInterruptToTrackedThreads = sendInterruptToTrackedThreads;
+    this.sendInterruptToTrackedThreads = sendInterruptOnFutureCancel;
     this.checkRunner = new CheckRunner();
     this.futures = new ConcurrentLinkedQueue<FutureWrapper>();
     this.checkRunnerStatus = new AtomicInteger(-1);
@@ -101,7 +102,9 @@ public class Watchdog {
    * @return {@code true} if this watchdog is currently in use
    */
   public boolean isActive() {
-    return checkRunnerStatus.get() > -1;
+    return ! futures.isEmpty() || 
+             checkRunnerStatus.get() == 0 || 
+             checkRunnerStatus.get() == 2;
   }
   
   /**
