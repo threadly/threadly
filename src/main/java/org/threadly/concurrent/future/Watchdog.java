@@ -64,8 +64,8 @@ public class Watchdog {
   /**
    * Constructs a new {@link Watchdog} with a scheduler of your choosing.  It is critical that 
    * this scheduler has a free thread available to inspect futures which may not have completed in 
-   * the given timeout.  You may want to use a {@link org.threadly.concurrent.limiter} to ensure 
-   * that there are threads available.
+   * the given timeout.  You may want to use a org.threadly.concurrent.limiter to ensure that 
+   * there are threads available.
    * 
    * @param scheduler Scheduler to schedule task to look for expired futures
    * @param timeoutInMillis Time in milliseconds that futures will be set to error if they are not done

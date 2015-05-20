@@ -481,36 +481,35 @@ public class FutureUtils {
     }
     
     /**
-     * Provides the lazily constructed buildingResult in case any futures need to be saved.  This 
-     * is complex because it may be called very early, and we try to keep this as efficient as 
-     * possible.
-     * 
-     * @return A stored list of futures that can be modified
+     * Adds item to the result list.  This list may be lazily constructed and thus why you must add 
+     * through this function rather than directly on to the list.
      */
-    protected List<ListenableFuture<? extends T>> getBuildingResult() {
-      List<ListenableFuture<? extends T>> result = buildingResult.get();
+    protected void addResult(ListenableFuture<? extends T> f) {
+      List<ListenableFuture<? extends T>> list = buildingResult.get();
       
-      if (result == null) {
+      if (list == null) {
         int rearPadding = remainingResult.get();
         if (rearPadding < 0) {
           rearPadding *= -1;
         }
         
-        ConcurrentArrayList<ListenableFuture<? extends T>> resultList;
-        resultList = new ConcurrentArrayList<ListenableFuture<? extends T>>(0, rearPadding);
+        ConcurrentArrayList<ListenableFuture<? extends T>> newList;
+        newList = new ConcurrentArrayList<ListenableFuture<? extends T>>(0, rearPadding);
         
-        if (buildingResult.compareAndSet(null, resultList)) {
-          result = resultList;
+        if (buildingResult.compareAndSet(null, newList)) {
+          list = newList;
+          list.add(f);  // must add before updating the rear padding
           if (rearPadding != 0) {
             // set back to zero after construction in hopes that we wont have to expand much
-            resultList.setRearPadding(0);
+            newList.setRearPadding(0);
           }
+          return; // return so we don't add again
         } else {
-          result = buildingResult.get();
+          list = buildingResult.get();
         }
       }
       
-      return result;
+      list.add(f);
     }
     
     /**
@@ -574,13 +573,11 @@ public class FutureUtils {
   protected static class AllFutureCollection<T> extends FutureCollection<T> {
     protected AllFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
       super(source);
-      
-      getBuildingResult();
     }
 
     @Override
     protected void handleFutureDone(ListenableFuture<? extends T> f) {
-      getBuildingResult().add(f);
+      addResult(f);
     }
   }
   

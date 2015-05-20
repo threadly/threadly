@@ -40,8 +40,8 @@ public class WatchdogCache {
   /**
    * Constructs a new {@link WatchdogCache} with a scheduler of your choosing.  It is critical 
    * that this scheduler has a free thread available to inspect futures which may not have 
-   * completed in the given timeout.  You may want to use a 
-   * {@link org.threadly.concurrent.limiter} to ensure that there are threads available.
+   * completed in the given timeout.  You may want to use a org.threadly.concurrent.limiter to 
+   * ensure that there are threads available.
    * 
    * @param scheduler Scheduler to schedule task to look for expired futures
    * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
