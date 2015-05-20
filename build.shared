@@ -5,6 +5,9 @@ repositories {
   mavenCentral()
 }
 
+group = 'org.threadly'
+version = '4.1.0-SNAPSHOT'
+
 dependencies {
   testCompile group: 'junit', name: 'junit', version: '4.12'
 }
