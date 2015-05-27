@@ -180,6 +180,20 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     return currentData.rearPadding;
   }
 
+  /**
+   * Trims the internally array to discard any unused storage.  It is good to invoke this if 
+   * future adds are unlikely, and it is desired to keep memory usage minimal.  This does not 
+   * adjust the set front or rear padding, so additional modifications will expand the array based 
+   * off those set values.  To make sure additional modifications do not expand the array any more 
+   * than necessary invoke {@link #setFrontPadding(int)} and {@link #setRearPadding(int)} with 
+   * {@code 0}.
+   */
+  public void trimToSize() {
+    synchronized (modificationLock) {
+      currentData = currentData.trimToSize();
+    }
+  }
+
   @Override
   public int size() {
     return currentData.size;
@@ -951,7 +965,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
            dataArray.length - rearPadding, 
            frontPadding, rearPadding);
     }
-    
+
     protected DataSet(Object[] dataArray, 
                       int dataStartIndex, 
                       int dataEndIndex, 
@@ -963,6 +977,23 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
       this.size = dataEndIndex - dataStartIndex;
       this.frontPadding = frontPadding;
       this.rearPadding = rearPadding;
+    }
+    
+    /**
+     * Returns a new {@link DataSet} that contains only relevant and active items in the data 
+     * array.  The returned DataSet has the same set front and rear padding, so additional 
+     * modifications will expand the array based off those set values.
+     * 
+     * @return New trimmed {@link DataSet}, or {@code this} if already trimmed
+     */
+    public DataSet<T> trimToSize() {
+      if (dataStartIndex == 0 && dataEndIndex == dataArray.length) {
+        return this;
+      } else {
+        Object[] newData = new Object[size];
+        System.arraycopy(dataArray, dataStartIndex, newData, 0, size);
+        return new DataSet<T>(newData, 0, size, frontPadding, rearPadding);
+      }
     }
 
     /**

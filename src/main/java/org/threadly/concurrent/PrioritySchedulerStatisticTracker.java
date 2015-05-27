@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -181,7 +180,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return Runnable which is our wrapped implementation
    */
   private <T> Runnable wrap(Callable<T> task, TaskPriority priority, boolean recurring, 
-                               SettableListenableFuture<T> future) {
+                            SettableListenableFuture<T> future) {
     if (priority == null) {
       priority = getDefaultPriority();
     }
@@ -474,7 +473,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return list of runnables which are, or had been running over the provided time length
    */
   public List<Runnable> getRunnablesRunningOverTime(long timeInMs) {
-    List<Runnable> result = new LinkedList<Runnable>();
+    ArrayList<Runnable> result = new ArrayList<Runnable>();
     
     long now = Clock.accurateForwardProgressingMillis();
     Iterator<Entry<Wrapper, Long>> it = statsManager.runningTasks.entrySet().iterator();
@@ -487,6 +486,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
       }
     }
     
+    result.trimToSize();
     return result;
   }
   
@@ -500,7 +500,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return list of callables which are, or had been running over the provided time length
    */
   public List<Callable<?>> getCallablesRunningOverTime(long timeInMs) {
-    List<Callable<?>> result = new LinkedList<Callable<?>>();
+    ArrayList<Callable<?>> result = new ArrayList<Callable<?>>();
     
     long now = Clock.accurateForwardProgressingMillis();
     Iterator<Entry<Wrapper, Long>> it = statsManager.runningTasks.entrySet().iterator();
@@ -513,6 +513,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
       }
     }
     
+    result.trimToSize();
     return result;
   }
   
@@ -569,10 +570,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
       totalHighPriorityExecutions = new AtomicInteger(0);
       totalLowPriorityExecutions = new AtomicInteger(0);
       runningTasks = new ConcurrentHashMap<Wrapper, Long>();
-      int endPadding = MAX_WINDOW_SIZE * 2;
-      runTimes = new ConcurrentArrayList<Long>(0, endPadding);
-      lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
-      highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, endPadding);
+      runTimes = new ConcurrentArrayList<Long>(0, MAX_WINDOW_SIZE);
+      lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, MAX_WINDOW_SIZE);
+      highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, MAX_WINDOW_SIZE);
     }
 
     /**

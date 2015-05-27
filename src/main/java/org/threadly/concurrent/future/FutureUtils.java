@@ -447,11 +447,11 @@ public class FutureUtils {
   protected abstract static class FutureCollection<T> 
       extends SettableListenableFuture<List<ListenableFuture<? extends T>>> {
     protected final AtomicInteger remainingResult;
-    private final AtomicReference<List<ListenableFuture<? extends T>>> buildingResult;
+    private final AtomicReference<ConcurrentArrayList<ListenableFuture<? extends T>>> buildingResult;
     
     protected FutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
       remainingResult = new AtomicInteger(0); // may go negative if results finish before all are added
-      buildingResult = new AtomicReference<List<ListenableFuture<? extends T>>>(null);
+      buildingResult = new AtomicReference<ConcurrentArrayList<ListenableFuture<? extends T>>>(null);
       
       int expectedResultCount = 0;
       if (source != null) {
@@ -499,9 +499,9 @@ public class FutureUtils {
         if (buildingResult.compareAndSet(null, newList)) {
           list = newList;
           list.add(f);  // must add before updating the rear padding
-          if (rearPadding != 0) {
-            // set back to zero after construction in hopes that we wont have to expand much
-            newList.setRearPadding(0);
+          if (rearPadding > 2) {
+            // set back to reasonable number after construction in hopes that we wont have to expand much
+            newList.setRearPadding(2);
           }
           return; // return so we don't add again
         } else {
@@ -525,15 +525,14 @@ public class FutureUtils {
      * @return List to satisfy ListenableFuture result with
      */
     protected List<ListenableFuture<? extends T>> getFinalResultList() {
-      List<ListenableFuture<? extends T>> result;
-      if (buildingResult.get() == null) {
-        result = Collections.emptyList();
+      ConcurrentArrayList<ListenableFuture<? extends T>> resultsList = buildingResult.get();
+      if (resultsList == null) {
+        return Collections.emptyList();
       } else {
-        result = Collections.unmodifiableList(buildingResult.get());
         buildingResult.set(null);
+        resultsList.trimToSize();
+        return Collections.unmodifiableList(resultsList);
       }
-      
-      return result;
     }
   }
   

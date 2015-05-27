@@ -45,6 +45,9 @@ public class Profiler {
   protected static final String THREAD_DELIMITER = "--------------------------------------------------";
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
+  private static final short DEFAULT_MAP_INITIAL_SIZE = 16;
+  private static final float DEFAULT_MAP_LOAD_FACTOR = .75f;
+  private static final short DEFAULT_MAP_CONCURRENCY_LEVEL = 2;
   
   static {
     String prefix = "functions by ";
@@ -688,7 +691,9 @@ public class Profiler {
       ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
       
       collectorThread = new AtomicReference<Thread>(null);
-      threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>();
+      threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>(DEFAULT_MAP_INITIAL_SIZE, 
+                                                                      DEFAULT_MAP_LOAD_FACTOR, 
+                                                                      DEFAULT_MAP_CONCURRENCY_LEVEL);
       collectedSamples = new AtomicInteger(0);
       this.pollIntervalInMs = pollIntervalInMs;
       dumpingThread = null;
@@ -743,7 +748,9 @@ public class Profiler {
               
               Map<Trace, Trace> existingTraces = pStore.threadTraces.get(threadIdentifier);
               if (existingTraces == null) {
-                existingTraces = new ConcurrentHashMap<Trace, Trace>();
+                existingTraces = new ConcurrentHashMap<Trace, Trace>(DEFAULT_MAP_INITIAL_SIZE, 
+                                                                     DEFAULT_MAP_LOAD_FACTOR, 
+                                                                     DEFAULT_MAP_CONCURRENCY_LEVEL);
                 pStore.threadTraces.put(threadIdentifier, existingTraces);
   
                 existingTraces.put(t, t);

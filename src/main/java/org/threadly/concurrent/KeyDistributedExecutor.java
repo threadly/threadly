@@ -36,9 +36,9 @@ import org.threadly.util.ExceptionUtils;
 public class KeyDistributedExecutor {
   protected static final int DEFAULT_THREAD_KEEPALIVE_TIME = 1000 * 10;
   protected static final int DEFAULT_LOCK_PARALISM = 16;
-  protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = (float)0.75;  // 0.75 is ConcurrentHashMap default
-  protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 100;
-  protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 100;
+  protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = 0.75f;  // 0.75 is ConcurrentHashMap default
+  protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 32;
+  protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
   protected static final int ARRAY_DEQUE_INITIAL_SIZE = 8;  // minimum is 8, should be 2^X
   
   protected final Executor executor;
@@ -176,8 +176,7 @@ public class KeyDistributedExecutor {
    *                 possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public KeyDistributedExecutor(int expectedParallism, Executor executor, 
-                                int maxTasksPerCycle) {
+  public KeyDistributedExecutor(int expectedParallism, Executor executor, int maxTasksPerCycle) {
     this(expectedParallism, executor, maxTasksPerCycle, false);
   }
   

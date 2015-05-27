@@ -91,6 +91,27 @@ public class ConcurrentArrayListTest {
   public void setRearPaddingFail() {
     testList.setRearPadding(-1);
   }
+  
+  @Test
+  public void trimToSizeTest() {
+    testList.setRearPadding(2);
+    testList.add("foo");
+    
+    assertEquals(3, testList.currentData.dataArray.length);
+    testList.trimToSize();
+    assertEquals(1, testList.currentData.dataArray.length);
+    
+    testList.add("bar");
+    // verify that padding set does not change
+    assertEquals(4, testList.currentData.dataArray.length);
+    
+    testList.add("1");
+    testList.add("2");
+    DataSet<?> originalDS = testList.currentData;
+    testList.trimToSize();
+    // verify no-op if no trimming needed
+    assertTrue(originalDS == testList.currentData);
+  }
 
   @Test
   public void sizeTest() {
