@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 
+import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.util.ArgumentVerifier;
@@ -102,25 +103,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       }
     }
     // block till all tasks finish, or we reach our timeout
-    {
-      Iterator<Future<T>> it = resultList.iterator();
-      long remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime); 
-      while (it.hasNext() && remainingTime > 0) {
-        Future<T> f = it.next();
-        try {
-          f.get(remainingTime, TimeUnit.MILLISECONDS);
-        } catch (ExecutionException e) {
-          // ignored here
-        } catch (TimeoutException e) {
-          f.cancel(true);
-          break;
-        }
-        remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime); 
-      }
-      // cancel any which have not completed yet (assuming they are not done)
-      while (it.hasNext()) {
-        it.next().cancel(true);
-      }
+    long remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
+    try {
+      FutureUtils.blockTillAllComplete(resultList, remainingTime);
+    } catch (TimeoutException e) {
+      FutureUtils.cancelIncompleteFutures(resultList, true);
     }
     
     return resultList;
