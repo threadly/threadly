@@ -278,4 +278,12 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     
     super.dumpOutputStreamTest();
   }
+  
+  @Test
+  @Override
+  public void dumpStringOnlySummaryTest() {
+    ctProfiler.addProfiledThread(Thread.currentThread());
+    
+    super.dumpStringOnlySummaryTest();
+  }
 }

@@ -385,8 +385,18 @@ public class Profiler {
    * @return The dumped results as a single String
    */
   public String dump() {
+    return dump(true);
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output stream.
+   * 
+   * @return The dumped results as a single String
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   */
+  public String dump(boolean dumpIndividualThreads) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    dump(new BufferedOutputStream(baos));
+    dump(new BufferedOutputStream(baos), dumpIndividualThreads);
     
     return baos.toString();
   }
@@ -397,7 +407,17 @@ public class Profiler {
    * @param out OutputStream to write results to
    */
   public void dump(OutputStream out) {
-    dump(new PrintStream(out, false));
+    dump(out, true);
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output stream.
+   * 
+   * @param out OutputStream to write results to
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   */
+  public void dump(OutputStream out, boolean dumpIndividualThreads) {
+    dump(new PrintStream(out, false), dumpIndividualThreads);
   }
   
   /**
@@ -406,6 +426,16 @@ public class Profiler {
    * @param ps PrintStream to write results to
    */
   public void dump(PrintStream ps) {
+    dump(ps, true);
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output stream.
+   * 
+   * @param ps PrintStream to write results to
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   */
+  public void dump(PrintStream ps, boolean dumpIndividualThreads) {
     pStore.dumpingThread = Thread.currentThread();
     try {
       Map<Trace, Integer> globalTraces = new HashMap<Trace, Integer>();
@@ -416,8 +446,10 @@ public class Profiler {
       Iterator<Entry<String, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
       while (it.hasNext()) {
         Entry<String, Map<Trace, Trace>> entry = it.next();
-        ps.println("Profile for thread: " + entry.getKey());
-        dumpTraces(entry.getValue().keySet(), null, ps);
+        if (dumpIndividualThreads) {
+          ps.println("Profile for thread: " + entry.getKey());
+          dumpTraces(entry.getValue().keySet(), null, ps);
+        }
         
         // add in this threads trace data to the global trace map
         Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
@@ -432,13 +464,15 @@ public class Profiler {
             globalTraces.put(currTrace, currTrace.getThreadCount() + globalTraceCount);
           }
         }
-        
-        ps.println(THREAD_DELIMITER);
-        ps.println();
+
+        if (dumpIndividualThreads) {
+          ps.println(THREAD_DELIMITER);
+          ps.println();
+        }
       }
         
       // log out global data
-      if (globalTraces.size() > 1) {
+      if (globalTraces.size() > 1 || ! dumpIndividualThreads) {
         ps.println("Combined profile for all threads....");
         dumpTraces(globalTraces.keySet(), globalTraces, ps);
       }

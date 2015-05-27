@@ -280,6 +280,18 @@ public class ProfilerTest {
     verifyDumpStr(resultStr);
   }
   
+  @Test
+  public void dumpStringOnlySummaryTest() {
+    profiler.start();
+    
+    blockForProfilerSample();
+    
+    String resultStr = profiler.dump(false);
+    System.out.println(resultStr);
+    
+    assertTrue(resultStr.startsWith("Combined profile for all threads"));
+  }
+  
   protected static void verifyDumpStr(String resultStr) {
     assertTrue(resultStr.length() > MIN_RESPONSE_LENGTH);
     
