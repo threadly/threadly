@@ -201,8 +201,10 @@ public class FutureUtils {
            (remainingTime = timeoutInMillis - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
       Future<?> f = it.next();
       try {
-        if (comparisonResult == null && f.get(remainingTime, TimeUnit.MILLISECONDS) == null) {
-          resultCount++;
+        if (comparisonResult == null) {
+          if (f.get(remainingTime, TimeUnit.MILLISECONDS) == null) {
+            resultCount++;
+          }
         } else if (comparisonResult.equals(f.get(remainingTime, TimeUnit.MILLISECONDS))) {
           resultCount++;
         }
