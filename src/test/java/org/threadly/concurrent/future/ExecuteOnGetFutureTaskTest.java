@@ -29,7 +29,7 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Test
   public void executeViaGetTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
-    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Object>(tr);
+    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Void>(tr);
     
     geft.get();
     
@@ -39,7 +39,7 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Test
   public void executeOnceTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
-    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Object>(tr);
+    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Void>(tr);
     
     geft.get();
     geft.run();

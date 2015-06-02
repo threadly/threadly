@@ -9,7 +9,7 @@ import org.junit.Test;
 public class ImmediateResultListenableFutureTest {
   @Test
   public void nullResultTest() throws InterruptedException, ExecutionException, TimeoutException {
-    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<Object>(null);
+    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<Void>(null);
     
     ImmediateListenableFutureTest.resultTest(testFuture, null);
   }
@@ -24,14 +24,14 @@ public class ImmediateResultListenableFutureTest {
   
   @Test
   public void cancelTest() {
-    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<Object>(null);
+    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<Void>(null);
 
     ImmediateListenableFutureTest.cancelTest(testFuture);
   }
   
   @Test
   public void addListenerTest() {
-    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<Object>(null);
+    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<Void>(null);
     
     ImmediateListenableFutureTest.addListenerTest(testFuture);
   }

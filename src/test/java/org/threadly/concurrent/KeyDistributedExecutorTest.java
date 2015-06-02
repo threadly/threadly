@@ -246,7 +246,7 @@ public class KeyDistributedExecutorTest {
       // expected
     }
     try {
-      distributor.submitTask(new Object(), (Callable<Object>)null);
+      distributor.submitTask(new Object(), (Callable<Void>)null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected

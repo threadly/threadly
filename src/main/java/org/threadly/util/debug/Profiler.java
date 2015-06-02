@@ -282,7 +282,7 @@ public class Profiler {
           thread.start();
         } else {
           final SettableListenableFuture<?> runningThreadFuture;
-          runningThreadFuture = new SettableListenableFuture<Object>();
+          runningThreadFuture = new SettableListenableFuture<Void>();
           
           executor.execute(new Runnable() {
             @Override

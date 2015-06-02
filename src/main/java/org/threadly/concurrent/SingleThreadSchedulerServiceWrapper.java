@@ -56,7 +56,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
-    ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(false, task);
+    ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(false, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
     if (delayInMillis == 0) {
@@ -65,7 +65,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
       nts.addScheduled(ott);
     }
     
-    return new ScheduledFutureDelegate<Object>(lft, ott);
+    return new ScheduledFutureDelegate<Void>(lft, ott);
   }
 
   @Override
@@ -89,12 +89,12 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
+    ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringDelayTask(lft, initialDelayInMillis, delayInMillis);
     nts.addScheduled(rt);
     
-    return new ScheduledFutureDelegate<Object>(lft, rt);
+    return new ScheduledFutureDelegate<Void>(lft, rt);
   }
 
   @Override
@@ -104,11 +104,11 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Object> lft = new ListenableFutureTask<Object>(true, task);
+    ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     NoThreadScheduler.RecurringTask rt = nts.new RecurringRateTask(lft, initialDelayInMillis, periodInMillis);
     nts.addScheduled(rt);
     
-    return new ScheduledFutureDelegate<Object>(lft, rt);
+    return new ScheduledFutureDelegate<Void>(lft, rt);
   }
 }

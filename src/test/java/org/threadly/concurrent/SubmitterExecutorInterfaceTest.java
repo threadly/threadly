@@ -344,9 +344,9 @@ public abstract class SubmitterExecutorInterfaceTest {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       final RuntimeException failure = new RuntimeException();
-      ListenableFuture<?> future = executor.submit(new Callable<Object>() {
+      ListenableFuture<?> future = executor.submit(new Callable<Void>() {
         @Override
-        public Object call() throws Exception {
+        public Void call() throws Exception {
           throw failure;
         }
       });
@@ -395,7 +395,7 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
       
-      executor.submit((Callable<Object>)null);
+      executor.submit((Callable<Void>)null);
       fail("Execption should have thrown");
     } finally {
       factory.shutdown();

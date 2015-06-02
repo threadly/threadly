@@ -111,9 +111,9 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
           });
           flip = false;
         } else {
-          lastFuture = rls.submit(permit, new Callable<Object>() {
+          lastFuture = rls.submit(permit, new Callable<Void>() {
             @Override
-            public Object call() {
+            public Void call() {
               ranPermits.addAndGet(permit);
               return null;
             }

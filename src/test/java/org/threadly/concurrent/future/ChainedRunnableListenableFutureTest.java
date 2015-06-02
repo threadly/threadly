@@ -39,12 +39,12 @@ public class ChainedRunnableListenableFutureTest {
   @Test
   public void getCallableFailureTest() throws InterruptedException {
     final RuntimeException failure = new RuntimeException();
-    RunnableFuture<Object> future;
-    future = new ChainedRunnableListenableFuture<Object>(new SettableListenableFuture<Object>(), 
-                                                         SameThreadSubmitterExecutor.instance(), 
-                                                         new Callable<Object>() {
+    RunnableFuture<Void> future;
+    future = new ChainedRunnableListenableFuture<Void>(new SettableListenableFuture<Void>(), 
+                                                       SameThreadSubmitterExecutor.instance(), 
+                                                       new Callable<Void>() {
       @Override
-      public Object call() {
+      public Void call() {
         throw failure;
       }
     });
@@ -63,14 +63,14 @@ public class ChainedRunnableListenableFutureTest {
   public void getResultOnExecutorTest() throws InterruptedException, ExecutionException, TimeoutException {
     final AtomicReference<Thread> executeThread = new AtomicReference<Thread>(null);
     final AtomicInteger callCount = new AtomicInteger(0);
-    RunnableFuture<Object> future = new ChainedRunnableListenableFuture<Object>(new Executor() {
+    RunnableFuture<Void> future = new ChainedRunnableListenableFuture<Void>(new Executor() {
       @Override
       public void execute(Runnable command) {
         new Thread(command).start();
       }
-    }, new Callable<Object>() {
+    }, new Callable<Void>() {
       @Override
-      public Object call() {
+      public Void call() {
         executeThread.set(Thread.currentThread());
         callCount.incrementAndGet();
         return null;
@@ -88,14 +88,14 @@ public class ChainedRunnableListenableFutureTest {
   public void getResultOnInitialThreadTest() throws InterruptedException, ExecutionException, TimeoutException {
     final AtomicReference<Thread> executeThread = new AtomicReference<Thread>(null);
     final AtomicInteger callCount = new AtomicInteger(0);
-    RunnableFuture<Object> future = new ChainedRunnableListenableFuture<Object>(new Executor() {
+    RunnableFuture<Void> future = new ChainedRunnableListenableFuture<Void>(new Executor() {
       @Override
       public void execute(Runnable command) {
         throw new UnsupportedOperationException();
       }
-    }, new Callable<Object>() {
+    }, new Callable<Void>() {
       @Override
-      public Object call() {
+      public Void call() {
         executeThread.set(Thread.currentThread());
         callCount.incrementAndGet();
         return null;
@@ -142,11 +142,11 @@ public class ChainedRunnableListenableFutureTest {
   }
   
   private static void listenersCallTest(final boolean failure) {
-    ListenableRunnableFuture<Object> future;
-    future = new ChainedRunnableListenableFuture<Object>(SameThreadSubmitterExecutor.instance(), 
-                                                         new Callable<Object>() {
+    ListenableRunnableFuture<Void> future;
+    future = new ChainedRunnableListenableFuture<Void>(SameThreadSubmitterExecutor.instance(), 
+                                                       new Callable<Void>() {
       @Override
-      public Object call() {
+      public Void call() {
         if (failure) {
           throw new RuntimeException();
         } else {

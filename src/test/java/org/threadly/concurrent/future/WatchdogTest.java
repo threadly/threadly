@@ -44,12 +44,12 @@ public class WatchdogTest {
   public void isActiveTest() {
     assertFalse(watchdog.isActive());
     
-    ListenableFuture<Object> future = FutureUtils.immediateResultFuture(null);
+    ListenableFuture<?> future = FutureUtils.immediateResultFuture(null);
     watchdog.watch(future);
     
     assertFalse(watchdog.isActive());
     
-    SettableListenableFuture<Object> slf = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
     watchdog.watch(slf);
 
     assertTrue(watchdog.isActive());
@@ -62,7 +62,7 @@ public class WatchdogTest {
   
   @Test
   public void alreadyDoneFutureWatchTest() {
-    ListenableFuture<Object> future = FutureUtils.immediateResultFuture(null);
+    ListenableFuture<?> future = FutureUtils.immediateResultFuture(null);
     watchdog.watch(future);
     
     assertTrue(watchdog.futures.isEmpty());
@@ -70,7 +70,7 @@ public class WatchdogTest {
   
   @Test
   public void futureFinishTest() {
-    SettableListenableFuture<Object> slf = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
     
     watchdog.watch(slf);
     
@@ -83,7 +83,7 @@ public class WatchdogTest {
   
   @Test
   public void expiredFutureTest() {
-    SettableListenableFuture<Object> slf = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
     watchdog.watch(slf);
     
     TestUtils.blockTillClockAdvances();
@@ -97,10 +97,10 @@ public class WatchdogTest {
   @Test
   public void rescheduledFutureCheckTest() throws InterruptedException {
     watchdog = new Watchdog(scheduler, DELAY_TIME * 2, true);
-    SettableListenableFuture<Object> slf1 = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> slf1 = new SettableListenableFuture<Void>();
     watchdog.watch(slf1);
     TestUtils.sleep(DELAY_TIME);
-    SettableListenableFuture<Object> slf2 = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> slf2 = new SettableListenableFuture<Void>();
     watchdog.watch(slf2);
     
     assertEquals(1, scheduler.blockingTick(null));

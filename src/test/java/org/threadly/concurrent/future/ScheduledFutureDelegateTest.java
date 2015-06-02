@@ -19,7 +19,7 @@ public class ScheduledFutureDelegateTest<T> {
     int endVal = TEST_QTY;
     for(int i = startVal; i <= endVal; i++) {
       TestDelayed td = new TestDelayed(i);
-      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(null, td);
+      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Void>(null, td);
       
       assertEquals(td.getDelay(TimeUnit.MILLISECONDS), testItem.getDelay(TimeUnit.MILLISECONDS));
       assertEquals(td.getDelay(TimeUnit.NANOSECONDS), testItem.getDelay(TimeUnit.NANOSECONDS));
@@ -38,7 +38,7 @@ public class ScheduledFutureDelegateTest<T> {
     int endVal = TEST_QTY;
     for(int i = startVal; i <= endVal; i++) {
       TestDelayed td = new TestDelayed(i);
-      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(null, td);
+      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Void>(null, td);
       
       assertEquals(0, testItem.compareTo(td));
       assertEquals(0, testItem.compareTo(new TestDelayed(i)));

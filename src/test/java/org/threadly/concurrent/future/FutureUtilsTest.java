@@ -95,7 +95,7 @@ public class FutureUtilsTest {
   
   @Test (expected = TimeoutException.class)
   public void blockTillAllCompleteWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Void>());
     
     FutureUtils.blockTillAllComplete(futures, 100);
     fail("Exception should have thrown");
@@ -103,7 +103,7 @@ public class FutureUtilsTest {
   
   @Test (expected = TimeoutException.class)
   public void blockTillAllCompleteWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Void>());
     
     FutureUtils.blockTillAllComplete(futures, 0);
     fail("Exception should have thrown");
@@ -194,16 +194,18 @@ public class FutureUtilsTest {
   }
   
   @Test (expected = TimeoutException.class)
-  public void blockTillAllCompleteOrFirstErrorWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException, ExecutionException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutTimeoutTest() throws InterruptedException, 
+                                                                              TimeoutException, ExecutionException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Void>());
     
     FutureUtils.blockTillAllCompleteOrFirstError(futures, 100);
     fail("Exception should have thrown");
   }
   
   @Test (expected = TimeoutException.class)
-  public void blockTillAllCompleteOrFirstErrorWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException, ExecutionException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutZeroTimeoutTest() throws InterruptedException, 
+                                                                                  TimeoutException, ExecutionException {
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Void>());
     
     FutureUtils.blockTillAllCompleteOrFirstError(futures, 0);
     fail("Exception should have thrown");
@@ -231,7 +233,7 @@ public class FutureUtilsTest {
   
   @Test (expected = TimeoutException.class)
   public void countFuturesWithResultWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Void>());
     
     assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 100));
     fail("Exception should have thrown");
@@ -239,7 +241,7 @@ public class FutureUtilsTest {
   
   @Test (expected = TimeoutException.class)
   public void countFuturesWithResultWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Object>());
+    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<Void>());
     
     assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 0));
     fail("Exception should have thrown");
@@ -265,7 +267,7 @@ public class FutureUtilsTest {
     List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
-      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Void>();
       future.setResult(null);
       futures.add(future);
     }
@@ -375,7 +377,7 @@ public class FutureUtilsTest {
     List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
-      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Void>();
       if (i == TEST_QTY / 2) {
         future.setFailure(null);
       } else {
@@ -406,16 +408,18 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void makeCompleteListFutureTest() throws ExecutionException, InterruptedException, TimeoutException {
+  public void makeCompleteListFutureTest() throws InterruptedException, TimeoutException, ExecutionException {
     makeCompleteListFutureTest(-1);
   }
   
   @Test
-  public void makeCompleteListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+  public void makeCompleteListFutureWithErrorTest() throws InterruptedException, 
+                                                           TimeoutException, ExecutionException {
     makeCompleteListFutureTest(TEST_QTY / 2);
   }
   
-  private static void makeCompleteListFutureTest(int errorIndex) throws ExecutionException, InterruptedException, TimeoutException {
+  private static void makeCompleteListFutureTest(int errorIndex) throws InterruptedException, 
+                                                                        TimeoutException, ExecutionException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, errorIndex);
 
     ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeCompleteListFuture(futures);
@@ -446,7 +450,7 @@ public class FutureUtilsTest {
     ListenableFuture<?> failureFuture = null;
     
     for (int i = 0; i < TEST_QTY; i++) {
-      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Void>();
       if (i == TEST_QTY / 2) {
         failureFuture = future;
         future.setFailure(null);
@@ -466,7 +470,7 @@ public class FutureUtilsTest {
   @Test
   public void makeSuccessListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    SettableListenableFuture<?> failureFuture = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> failureFuture = new SettableListenableFuture<Void>();
     failureFuture.setFailure(null);
     futures.add(failureFuture);
 
@@ -480,7 +484,7 @@ public class FutureUtilsTest {
   @Test
   public void makeSuccessListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Void>();
     cancelFuture.cancel(false);
     futures.add(cancelFuture);
 
@@ -512,7 +516,7 @@ public class FutureUtilsTest {
     ListenableFuture<?> failureFuture = null;
     
     for (int i = 0; i < TEST_QTY; i++) {
-      SettableListenableFuture<?> future = new SettableListenableFuture<Object>();
+      SettableListenableFuture<?> future = new SettableListenableFuture<Void>();
       if (i == TEST_QTY / 2) {
         failureFuture = future;
         future.setFailure(null);
@@ -544,9 +548,10 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void makeFailureListFutureWithErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+  public void makeFailureListFutureWithErrorTest() throws InterruptedException, 
+                                                          TimeoutException, ExecutionException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    SettableListenableFuture<?> failureFuture = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> failureFuture = new SettableListenableFuture<Void>();
     failureFuture.setFailure(null);
     futures.add(failureFuture);
 
@@ -558,9 +563,10 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void makeFailureListFutureWithCancelErrorTest() throws ExecutionException, InterruptedException, TimeoutException {
+  public void makeFailureListFutureWithCancelErrorTest() throws InterruptedException, 
+                                                                TimeoutException, ExecutionException {
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
-    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Object>();
+    SettableListenableFuture<?> cancelFuture = new SettableListenableFuture<Void>();
     cancelFuture.cancel(false);
     futures.add(cancelFuture);
 
@@ -631,7 +637,7 @@ public class FutureUtilsTest {
   public void cancelIncompleteFuturesTest() throws InterruptedException, ExecutionException {
     List<SettableListenableFuture<?>> futures = new ArrayList<SettableListenableFuture<?>>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
-      SettableListenableFuture<?> slf = new SettableListenableFuture<Object>();
+      SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
       futures.add(slf);
       if (i % 2 == 0) {
         slf.setResult(null);

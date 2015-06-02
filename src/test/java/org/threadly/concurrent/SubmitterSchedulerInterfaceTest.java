@@ -433,7 +433,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     try {
       SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
       try {
-        scheduler.submitScheduled((Callable<Object>)null, 1000);
+        scheduler.submitScheduled((Callable<Void>)null, 1000);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected

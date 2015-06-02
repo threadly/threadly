@@ -14,14 +14,14 @@ public class ImmediateFailureListenableFutureTest {
   
   @Test
   public void cancelTest() {
-    ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<Object>(null);
+    ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<Void>(null);
 
     ImmediateListenableFutureTest.cancelTest(testFuture);
   }
   
   @Test
   public void addListenerTest() {
-    ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<Object>(null);
+    ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<Void>(null);
     
     ImmediateListenableFutureTest.addListenerTest(testFuture);
   }

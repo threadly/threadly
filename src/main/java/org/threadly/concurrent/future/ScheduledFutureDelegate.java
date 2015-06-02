@@ -15,7 +15,7 @@ import java.util.concurrent.TimeoutException;
  * @param <T> The result object type returned by this future
  */
 public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
-  protected final ListenableFuture<T> futureImp;
+  protected final ListenableFuture<? extends T> futureImp;
   protected final Delayed delayed;
   
   /**
@@ -25,8 +25,7 @@ public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> 
    * @param futureImp implementation to call to for all Future calls
    * @param delayed implementation to call to for getDelay and compareTo
    */
-  public ScheduledFutureDelegate(ListenableFuture<T> futureImp, 
-                                 Delayed delayed) {
+  public ScheduledFutureDelegate(ListenableFuture<? extends T> futureImp, Delayed delayed) {
     this.futureImp = futureImp;
     this.delayed = delayed;
   }
