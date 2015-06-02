@@ -3,6 +3,7 @@ package org.threadly.concurrent.limiter;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -82,12 +83,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     if (currentMinimumDelay <= maximumDelay) {
       return FutureUtils.immediateResultFuture(null);
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<Object>(false, new Runnable() {
-        @Override
-        public void run() {
-          // nothing to execute
-        }
-      });
+      ListenableFutureTask<?> lft = new ListenableFutureTask<Void>(false, new DoNothingRunnable());
       
       scheduler.schedule(lft, currentMinimumDelay - maximumDelay);
       

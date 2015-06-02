@@ -86,7 +86,8 @@ public class ContainerHelperTest {
     }
   }
   
-  private static class TestRunnableContainer implements RunnableContainerInterface, Runnable {
+  private static class TestRunnableContainer extends DoNothingRunnable 
+                                             implements RunnableContainerInterface {
     private final Runnable r;
     
     private TestRunnableContainer(Runnable r) {
@@ -97,15 +98,11 @@ public class ContainerHelperTest {
     public Runnable getContainedRunnable() {
       return r;
     }
-
-    @Override
-    public void run() {
-      // ignored
-    }
   }
   
   @SuppressWarnings("rawtypes")
-  private static class TestCallableContainer implements CallableContainerInterface, Runnable {
+  private static class TestCallableContainer extends DoNothingRunnable 
+                                             implements CallableContainerInterface, Runnable {
     private final Callable<?> c;
     
     private TestCallableContainer(Callable<?> c) {
@@ -115,11 +112,6 @@ public class ContainerHelperTest {
     @Override
     public Callable<?> getContainedCallable() {
       return c;
-    }
-
-    @Override
-    public void run() {
-      // ignored
     }
   }
 }
