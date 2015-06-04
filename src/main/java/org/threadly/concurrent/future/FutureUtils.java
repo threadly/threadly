@@ -262,8 +262,9 @@ public class FutureUtils {
    */
   public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                                            final T result) {
-    final SettableListenableFuture<T> resultFuture = new SettableListenableFuture<T>();
-    new EmptyFutureCollection(futures).addCallback(new FutureCallback<Object>() {
+    final EmptyFutureCollection efc = new EmptyFutureCollection(futures);
+    final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<T>(efc);
+    efc.addCallback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object ignored) {
         resultFuture.setResult(result);
@@ -271,7 +272,11 @@ public class FutureUtils {
 
       @Override
       public void handleFailure(Throwable t) {
-        resultFuture.setFailure(t);
+        if (t instanceof CancellationException) {
+          // should be canceled via CancelDelegateSettableListenableFuture
+        } else {
+          resultFuture.setFailure(t);
+        }
       }
     });
     return resultFuture;
@@ -279,11 +284,13 @@ public class FutureUtils {
   
   /**
    * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
-   * provide a future that can not be canceled, and will not be satisfied till all provided 
-   * futures complete.  
+   * provide a future that will not be satisfied till all provided futures complete.  
    * 
    * This future provides a list of the completed futures as the result.  The order of this list 
    * is NOT deterministic.
+   * 
+   * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
+   * futures will attempt to be canceled in the same way.
    * 
    * @since 1.2.0
    * 
@@ -298,11 +305,13 @@ public class FutureUtils {
   
   /**
    * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
-   * provide a future that can not be canceled, and will not be satisfied till all provided 
-   * futures complete.  
+   * provide a future that will not be satisfied till all provided futures complete.  
    * 
    * This future provides a list of the futures that completed without throwing an exception nor 
    * were canceled.  The order of the resulting list is NOT deterministic.
+   * 
+   * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
+   * futures will attempt to be canceled in the same way.
    * 
    * @since 1.2.0
    * 
@@ -317,11 +326,13 @@ public class FutureUtils {
   
   /**
    * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
-   * provide a future that can not be canceled, and will not be satisfied till all provided 
-   * futures complete.  
+   * provide a future that will not be satisfied till all provided futures complete.  
    * 
    * This future provides a list of the futures that failed by either throwing an exception or 
    * were canceled.  The order of the resulting list is NOT deterministic.
+   * 
+   * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
+   * futures will attempt to be canceled in the same way.
    * 
    * @since 1.2.0
    * 
@@ -362,9 +373,11 @@ public class FutureUtils {
       return immediateResultFuture(Collections.<T>emptyList());
     }
     
-    final SettableListenableFuture<List<T>> result = new SettableListenableFuture<List<T>>();
+    ListenableFuture<List<ListenableFuture<? extends T>>> completeFuture = makeCompleteListFuture(futures);
+    final SettableListenableFuture<List<T>> result;
+    result = new CancelDelegateSettableListenableFuture<List<T>>(completeFuture);
     
-    makeCompleteListFuture(futures).addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
+    completeFuture.addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
       @Override
       public void handleResult(List<ListenableFuture<? extends T>> resultFutures) {
         ArrayList<T> results = new ArrayList<T>(resultFutures.size());
@@ -384,7 +397,11 @@ public class FutureUtils {
 
       @Override
       public void handleFailure(Throwable t) {
-        result.setFailure(t);
+        if (t instanceof CancellationException) {
+          // should be canceled via CancelDelegateSettableListenableFuture
+        } else {
+          result.setFailure(t);
+        }
       }
     });
     
@@ -439,6 +456,32 @@ public class FutureUtils {
   }
   
   /**
+   * <p>Implementation of {@link SettableListenableFuture} which delegates it's cancel operation 
+   * to a parent future.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.1.0
+   * @param <T> The result object type returned from the futures
+   */
+  protected static class CancelDelegateSettableListenableFuture<T> extends SettableListenableFuture<T> {
+    private final ListenableFuture<?> cancelDelegateFuture;
+    
+    protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf) {
+      super(false);
+      cancelDelegateFuture = lf;
+    }
+    
+    @Override
+    public boolean cancel(boolean interruptThread) {
+      if (cancelDelegateFuture.cancel(interruptThread)) {
+        return super.cancel(interruptThread);
+      } else {
+        return false;
+      }
+    }
+  }
+  
+  /**
    * <p>A future implementation that will return a List of futures as the result.  The future will 
    * not be satisfied till all provided futures have completed.</p>
    * 
@@ -450,18 +493,19 @@ public class FutureUtils {
       extends SettableListenableFuture<List<ListenableFuture<? extends T>>> {
     protected final AtomicInteger remainingResult;
     private final AtomicReference<ConcurrentArrayList<ListenableFuture<? extends T>>> buildingResult;
+    private ArrayList<ListenableFuture<? extends T>> futures;
     
     protected FutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+      super(false);
       remainingResult = new AtomicInteger(0); // may go negative if results finish before all are added
       buildingResult = new AtomicReference<ConcurrentArrayList<ListenableFuture<? extends T>>>(null);
+      futures = new ArrayList<ListenableFuture<? extends T>>();
       
-      int expectedResultCount = 0;
       if (source != null) {
         Iterator<? extends ListenableFuture<? extends T>> it = source.iterator();
         while (it.hasNext()) {
-          expectedResultCount++;
-          
           final ListenableFuture<? extends T> f = it.next();
+          futures.add(f);
           f.addListener(new Runnable() {
             @Override
             public void run() {
@@ -476,9 +520,30 @@ public class FutureUtils {
         }
       }
       
+      futures.trimToSize();
+      
       // we need to verify that all futures have not already completed
-      if (remainingResult.addAndGet(expectedResultCount) == 0) {
+      if (remainingResult.addAndGet(futures.size()) == 0) {
         setResult(getFinalResultList());
+      }
+      
+      this.addListener(new Runnable() {
+        @Override
+        public void run() {
+          futures = null;
+        }
+      });
+    }
+    
+    @Override
+    public boolean cancel(boolean interrupt) {
+      // we need a copy in case canceling clears out the futures
+      ArrayList<ListenableFuture<? extends T>> futures = this.futures;
+      if (super.cancel(interrupt)) {
+        FutureUtils.cancelIncompleteFutures(futures, interrupt);
+        return true;
+      } else {
+        return false;
       }
     }
     
