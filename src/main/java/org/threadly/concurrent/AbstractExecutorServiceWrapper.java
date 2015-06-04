@@ -144,9 +144,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       Iterator<? extends Callable<T>> it = tasks.iterator();
       // submit first one
       submittedFutures.add(ecs.submit(it.next()));
-      
-      while (it.hasNext() && 
-             Clock.accurateForwardProgressingMillis() - startTime < timeoutInMs) {
+
+      long remainingTime = timeoutInMs - (Clock.lastKnownForwardProgressingMillis() - startTime);
+      while (it.hasNext() && remainingTime > 0) {
         Future<T> completedFuture = ecs.poll();
         if (completedFuture == null) {
           // submit another
@@ -159,9 +159,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
             lastEE = e;
           }
         }
+        remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
       }
       
-      long remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
       // we must compare against failure count otherwise we may throw a TimeoutException when all tasks have failed
       while (remainingTime > 0 && failureCount < submittedFutures.size()) {
         Future<T> completedFuture = ecs.poll(remainingTime, TimeUnit.MILLISECONDS);
@@ -175,7 +175,6 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
             lastEE = e;
           }
         }
-        
         remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
       }
       
@@ -188,10 +187,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
         throw lastEE;
       }
     } finally {
-      Iterator<Future<T>> it = submittedFutures.iterator();
-      while (it.hasNext()) {
-        it.next().cancel(true);
-      }
+      FutureUtils.cancelIncompleteFutures(submittedFutures, true);
     }
   }
 
