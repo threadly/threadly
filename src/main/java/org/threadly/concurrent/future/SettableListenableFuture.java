@@ -208,7 +208,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     
     boolean canceled;
     synchronized (resultLock) {
-      if (! done) {
+      canceled = ! done;
+      if (canceled) {
         this.canceled = true;
         
         if (interruptThread) {
@@ -219,10 +220,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
         }
         
         setDone();
-        
-        canceled = true;
-      } else {
-        canceled = false;
       }
     }
     
