@@ -1004,7 +1004,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
      * @return a new {@link DataSet} which represents the change (or the same reference if the inputs are a no-op)
      */
     public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
-      if (origCurrentIndex == size - 1 && origNewIndex == size) {
+      if (origNewIndex == size && origCurrentIndex == size - 1) {
         // no-op, moving end item to end
         return this;
       }
@@ -1056,8 +1056,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         Object[] newData; // will not be allocated till necessary
         
         if (newIndex == dataStartIndex) {
-          if (currentIndex == dataEndIndex - 1 && 
-              dataStartIndex > 0 && 
+          if (dataStartIndex > 0 && 
+              currentIndex == dataEndIndex - 1 && 
               dataArray[dataStartIndex - 1] == null) {
             // reposition the end item to the front without an array copy
             dataArray[dataStartIndex - 1] = dataArray[currentIndex];
@@ -1493,8 +1493,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
         return true;
       } else {
         if (dataStartIndex != ds.dataStartIndex || 
-              dataEndIndex != ds.dataEndIndex || 
-              dataArray.length != ds.dataArray.length) {
+            dataEndIndex != ds.dataEndIndex || 
+            dataArray.length != ds.dataArray.length) {
           return false;
         } else {
           for (int i = 0; i < dataArray.length; i++) {
