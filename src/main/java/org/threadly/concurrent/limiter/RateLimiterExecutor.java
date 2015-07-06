@@ -80,12 +80,19 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   public ListenableFuture<?> getFutureTillDelay(int maximumDelay) {
     int currentMinimumDelay = getMinimumDelay();
-    if (currentMinimumDelay <= maximumDelay) {
+    if (currentMinimumDelay == 0) {
       return FutureUtils.immediateResultFuture(null);
     } else {
       ListenableFutureTask<?> lft = new ListenableFutureTask<Void>(false, DoNothingRunnable.instance());
       
-      scheduler.schedule(lft, currentMinimumDelay - maximumDelay);
+      long futureDelay;
+      if (maximumDelay > 0 && currentMinimumDelay > maximumDelay) {
+        futureDelay = maximumDelay;
+      } else {
+        futureDelay = currentMinimumDelay;
+      }
+      
+      scheduler.schedule(lft, futureDelay);
       
       return lft;
     }
@@ -178,13 +185,13 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     synchronized (permitLock) {
       int effectiveDelay = (int)(((double)permits / permitsPerSecond) * 1000);
       long scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
-      if (scheduleDelay < 0) {
-        scheduleDelay = 0;
+      if (scheduleDelay < 1) {
+        lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
+        scheduler.execute(task);
+      } else {
+        lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay + scheduleDelay;
+        scheduler.schedule(task, scheduleDelay);
       }
-      
-      scheduler.schedule(task, scheduleDelay);
-      
-      lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay + scheduleDelay;
     }
   }
 }
