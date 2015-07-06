@@ -35,8 +35,8 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
     return new ExecutorFactory();
   }
   
-  @Override
   @Test
+  @Override
   public void executeTest() {
     TestRunnable tr = new TestRunnable();
     executor.execute(tr);
@@ -47,8 +47,8 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
     super.executeTest();
   }
   
-  @Override
   @Test
+  @Override
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
     ListenableFuture<?> future = executor.submit(tr);
@@ -61,8 +61,8 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
     super.submitRunnableTest();
   }
   
-  @Override
   @Test
+  @Override
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     Object result = new Object();
     TestRunnable tr = new TestRunnable();
@@ -74,6 +74,11 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
     assertTrue(future.get() == result);
     
     super.submitRunnableWithResultTest();
+  }
+  
+  @Test
+  public void staticInstanceTest() {
+    assertNotNull(SameThreadSubmitterExecutor.instance());
   }
   
   private static class TestRunnable extends org.threadly.test.concurrent.TestRunnable {

@@ -83,7 +83,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     if (currentMinimumDelay <= maximumDelay) {
       return FutureUtils.immediateResultFuture(null);
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<Void>(false, new DoNothingRunnable());
+      ListenableFutureTask<?> lft = new ListenableFutureTask<Void>(false, DoNothingRunnable.instance());
       
       scheduler.schedule(lft, currentMinimumDelay - maximumDelay);
       

@@ -27,8 +27,8 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
   }
   
   /**
-   * Call to get a default instance of the SameThreadSubmitterExecutor.  Because there is no saved 
-   * or shared state, the same instance can be reused as much as desired.
+   * Call to get a default instance of the {@link SameThreadSubmitterExecutor}.  Because there is 
+   * no saved or shared state, the same instance can be reused as much as desired.
    * 
    * @return a static instance of SameThreadSubmitterExecutor
    */
