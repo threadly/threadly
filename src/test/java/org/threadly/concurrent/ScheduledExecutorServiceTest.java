@@ -136,7 +136,7 @@ public abstract class ScheduledExecutorServiceTest {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       Object expectedResult = new Object();
-      Future<Object> f = scheduler.submit(new TestRunnable(), expectedResult);
+      Future<Object> f = scheduler.submit(DoNothingRunnable.instance(), expectedResult);
       
       assertTrue(f.get() == expectedResult);
     } finally {
@@ -278,10 +278,10 @@ public abstract class ScheduledExecutorServiceTest {
   private static void recurringScheduleTest(ScheduledExecutorService scheduler, boolean fixedDelay) {
     // schedule a task first in case there are any initial startup actions which may be slow
     if (fixedDelay) {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 0, (int)(DELAY_TIME * 2.5), 
+      scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), 0, (int)(DELAY_TIME * 2.5), 
                                        TimeUnit.MILLISECONDS);
     } else {
-      scheduler.scheduleAtFixedRate(new TestRunnable(), 0, (int)(DELAY_TIME * 2.5), 
+      scheduler.scheduleAtFixedRate(DoNothingRunnable.instance(), 0, (int)(DELAY_TIME * 2.5), 
                                     TimeUnit.MILLISECONDS);
     }
     

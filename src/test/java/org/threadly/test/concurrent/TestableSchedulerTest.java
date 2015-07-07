@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
@@ -136,7 +137,7 @@ public class TestableSchedulerTest {
   
   @Test
   public void advanceThenTickTest() {
-    scheduler.execute(new TestRunnable());
+    scheduler.execute(DoNothingRunnable.instance());
     scheduler.advance(1000 * 10);
     
     TestRunnable tr = new TestRunnable();
@@ -530,10 +531,10 @@ public class TestableSchedulerTest {
   public void hasTaskReadyToRunTest() {
     assertFalse(scheduler.hasTaskReadyToRun());
     
-    scheduler.schedule(new TestRunnable(), 1);
+    scheduler.schedule(DoNothingRunnable.instance(), 1);
     assertFalse(scheduler.hasTaskReadyToRun());
     
-    scheduler.execute(new TestRunnable());
+    scheduler.execute(DoNothingRunnable.instance());
     assertTrue(scheduler.hasTaskReadyToRun());
   }
   

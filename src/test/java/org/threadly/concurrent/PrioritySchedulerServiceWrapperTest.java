@@ -29,7 +29,7 @@ public class PrioritySchedulerServiceWrapperTest extends ScheduledExecutorServic
     try {
       PrioritySchedulerServiceWrapper wrapper = new PrioritySchedulerServiceWrapper(executor);
       TestRunnable futureListener = new TestRunnable();
-      ListenableFuture<?> future = wrapper.submit(new TestRunnable());
+      ListenableFuture<?> future = wrapper.submit(DoNothingRunnable.instance());
       future.addListener(futureListener);
       
       futureListener.blockTillFinished(); // throws exception if never called

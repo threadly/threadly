@@ -217,16 +217,16 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       PriorityScheduler result = factory.makePriorityScheduler(1);
       // add directly to avoid starting the consumer
       result.taskConsumer.highPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       result.taskConsumer.highPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       
       assertEquals(2, result.getScheduledTaskCount());
       
       result.taskConsumer.lowPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       result.taskConsumer.lowPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       
       assertEquals(4, result.getScheduledTaskCount());
       assertEquals(4, result.getScheduledTaskCount(null));
@@ -242,16 +242,16 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       PriorityScheduler result = factory.makePriorityScheduler(1);
       // add directly to avoid starting the consumer
       result.taskConsumer.highPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       result.taskConsumer.highPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       
       assertEquals(0, result.getScheduledTaskCount(TaskPriority.Low));
       
       result.taskConsumer.lowPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       result.taskConsumer.lowPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       
       assertEquals(2, result.getScheduledTaskCount(TaskPriority.Low));
     } finally {
@@ -266,16 +266,16 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
       PriorityScheduler result = factory.makePriorityScheduler(1);
       // add directly to avoid starting the consumer
       result.taskConsumer.highPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       result.taskConsumer.highPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       
       assertEquals(2, result.getScheduledTaskCount(TaskPriority.High));
       
       result.taskConsumer.lowPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       result.taskConsumer.lowPriorityQueueSet
-            .executeQueue.add(new OneTimeTaskWrapper(new TestRunnable(), 0, null));
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 0, null));
       
       assertEquals(2, result.getScheduledTaskCount(TaskPriority.High));
     } finally {

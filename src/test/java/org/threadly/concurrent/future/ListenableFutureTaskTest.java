@@ -14,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
@@ -40,7 +41,7 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   
   @Test (expected = IllegalArgumentException.class)
   public void addListenerFail() {
-    ListenableFutureTask<Object> future = makeFutureTask(new TestRunnable(), null);
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     
     future.addListener(null);
     fail("Exception should have thrown");
@@ -87,7 +88,7 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   public void listenerExceptionAddBeforeRunTest() {
     TestRunnable listener = new TestRuntimeFailureRunnable();
     
-    ListenableFutureTask<Object> future = makeFutureTask(new TestRunnable(), null);
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     
     future.addListener(listener);
     future.run();
@@ -99,7 +100,7 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   public void listenerExceptionAddAfterRunTest() {
     TestRunnable listener = new TestRuntimeFailureRunnable();
     
-    ListenableFutureTask<Object> future = makeFutureTask(new TestRunnable(), null);
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     
     future.run();
     try {

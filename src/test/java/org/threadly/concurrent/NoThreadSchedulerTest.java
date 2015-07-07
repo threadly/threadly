@@ -130,7 +130,7 @@ public class NoThreadSchedulerTest {
           }
         }
       };
-      scheduler.schedule(new TestRunnable(), 5);
+      scheduler.schedule(DoNothingRunnable.instance(), 5);
       scheduler.execute(lastRun);
     }
     
@@ -545,12 +545,12 @@ public class NoThreadSchedulerTest {
     assertFalse(scheduler.hasTaskReadyToRun());
     
     // schedule in the future
-    scheduler.schedule(new TestRunnable(), 1000 * 15);
+    scheduler.schedule(DoNothingRunnable.instance(), 1000 * 15);
     
     // still should have nothing ready to run
     assertFalse(scheduler.hasTaskReadyToRun());
     
-    scheduler.execute(new TestRunnable());
+    scheduler.execute(DoNothingRunnable.instance());
     
     // should now have tasks ready to run
     assertTrue(scheduler.hasTaskReadyToRun());
@@ -560,7 +560,7 @@ public class NoThreadSchedulerTest {
     // should no longer have anything to run
     assertFalse(scheduler.hasTaskReadyToRun());
     
-    scheduler.addScheduled(scheduler.new OneTimeTask(new TestRunnable(), 0));
+    scheduler.addScheduled(scheduler.new OneTimeTask(DoNothingRunnable.instance(), 0));
     
     // now should be true with scheduled task which is ready to run
     assertTrue(scheduler.hasTaskReadyToRun());
@@ -573,7 +573,7 @@ public class NoThreadSchedulerTest {
       public void run() {
         assertFalse(scheduler.hasTaskReadyToRun());
         
-        scheduler.execute(new TestRunnable());
+        scheduler.execute(DoNothingRunnable.instance());
         assertTrue(scheduler.hasTaskReadyToRun());
         
         scheduler.remove(this);
@@ -585,8 +585,8 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void clearTasksTest() {
-    scheduler.schedule(new TestRunnable(), 1000 * 15);
-    scheduler.execute(new TestRunnable());
+    scheduler.schedule(DoNothingRunnable.instance(), 1000 * 15);
+    scheduler.execute(DoNothingRunnable.instance());
     
     scheduler.clearTasks();
     

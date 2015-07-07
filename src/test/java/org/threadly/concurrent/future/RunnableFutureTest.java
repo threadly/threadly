@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
@@ -38,7 +39,7 @@ public abstract class RunnableFutureTest {
   public void getRunnableResultTest() throws InterruptedException, ExecutionException {
     FutureFactory ff = makeFutureFactory();
     final Object result = new Object();
-    RunnableFuture<Object> future = ff.make(new TestRunnable(), result);
+    RunnableFuture<Object> future = ff.make(DoNothingRunnable.instance(), result);
     
     future.run();
     

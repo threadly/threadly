@@ -150,7 +150,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount);
     try {
       for (int i = 0; i < lowPriorityCount; i++) {
-        scheduler.execute(new TestRunnable(), 
+        scheduler.execute(DoNothingRunnable.instance(), 
                           TaskPriority.Low);
       }
       TestRunnable lastRunnable = null;

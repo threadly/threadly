@@ -9,7 +9,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerWrapperTest {
@@ -68,12 +67,12 @@ public class PrioritySchedulerWrapperTest {
   public void executeTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.execute(new TestRunnable());
+    psw.execute(DoNothingRunnable.instance());
     assertTrue(testScheduler.executeCalled);
     
     // reset and try with priority
     testScheduler.executeCalled = false;
-    psw.execute(new TestRunnable(), TaskPriority.High);
+    psw.execute(DoNothingRunnable.instance(), TaskPriority.High);
     assertTrue(testScheduler.executeCalled);
   }
   
@@ -81,12 +80,12 @@ public class PrioritySchedulerWrapperTest {
   public void scheduleTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.schedule(new TestRunnable(), 10);
+    psw.schedule(DoNothingRunnable.instance(), 10);
     assertTrue(testScheduler.scheduleCalled);
     
     // reset and try with priority
     testScheduler.scheduleCalled = false;
-    psw.schedule(new TestRunnable(), 10, TaskPriority.High);
+    psw.schedule(DoNothingRunnable.instance(), 10, TaskPriority.High);
     assertTrue(testScheduler.scheduleCalled);
   }
   
@@ -94,12 +93,12 @@ public class PrioritySchedulerWrapperTest {
   public void submitRunnableTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.submit(new TestRunnable());
+    psw.submit(DoNothingRunnable.instance());
     assertTrue(testScheduler.submitRunnableCalled);
     
     // reset and try with priority
     testScheduler.submitRunnableCalled = false;
-    psw.submit(new TestRunnable(), TaskPriority.High);
+    psw.submit(DoNothingRunnable.instance(), TaskPriority.High);
     assertTrue(testScheduler.submitRunnableCalled);
   }
   
@@ -107,12 +106,12 @@ public class PrioritySchedulerWrapperTest {
   public void submitRunnableWithResultTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.submit(new TestRunnable(), new Object());
+    psw.submit(DoNothingRunnable.instance(), new Object());
     assertTrue(testScheduler.submitRunnableResultCalled);
     
     // reset and try with priority
     testScheduler.submitRunnableResultCalled = false;
-    psw.submit(new TestRunnable(), new Object(), TaskPriority.High);
+    psw.submit(DoNothingRunnable.instance(), new Object(), TaskPriority.High);
     assertTrue(testScheduler.submitRunnableResultCalled);
   }
   
@@ -133,12 +132,12 @@ public class PrioritySchedulerWrapperTest {
   public void submitScheduledRunnableTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.submitScheduled(new TestRunnable(), 10);
+    psw.submitScheduled(DoNothingRunnable.instance(), 10);
     assertTrue(testScheduler.submitScheduledRunnableCalled);
     
     // reset and try with priority
     testScheduler.submitScheduledRunnableCalled = false;
-    psw.submitScheduled(new TestRunnable(), 10, TaskPriority.High);
+    psw.submitScheduled(DoNothingRunnable.instance(), 10, TaskPriority.High);
     assertTrue(testScheduler.submitScheduledRunnableCalled);
   }
   
@@ -146,12 +145,12 @@ public class PrioritySchedulerWrapperTest {
   public void submitScheduledRunnableWithResultTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.submitScheduled(new TestRunnable(), new Object(), 10);
+    psw.submitScheduled(DoNothingRunnable.instance(), new Object(), 10);
     assertTrue(testScheduler.submitScheduledRunnableResultCalled);
     
     // reset and try with priority
     testScheduler.submitScheduledRunnableResultCalled = false;
-    psw.submitScheduled(new TestRunnable(), new Object(), 10, TaskPriority.High);
+    psw.submitScheduled(DoNothingRunnable.instance(), new Object(), 10, TaskPriority.High);
     assertTrue(testScheduler.submitScheduledRunnableResultCalled);
   }
   
@@ -172,12 +171,12 @@ public class PrioritySchedulerWrapperTest {
   public void scheduleWithFixedDelayTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.scheduleWithFixedDelay(new TestRunnable(), 10, 10);
+    psw.scheduleWithFixedDelay(DoNothingRunnable.instance(), 10, 10);
     assertTrue(testScheduler.scheduleWithFixedDelayCalled);
     
     // reset and try with priority
     testScheduler.scheduleWithFixedDelayCalled = false;
-    psw.scheduleWithFixedDelay(new TestRunnable(), 10, 10, TaskPriority.High);
+    psw.scheduleWithFixedDelay(DoNothingRunnable.instance(), 10, 10, TaskPriority.High);
     assertTrue(testScheduler.scheduleWithFixedDelayCalled);
   }
   
@@ -185,12 +184,12 @@ public class PrioritySchedulerWrapperTest {
   public void scheduleAtFixedRateTest() {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
-    psw.scheduleAtFixedRate(new TestRunnable(), 10, 10);
+    psw.scheduleAtFixedRate(DoNothingRunnable.instance(), 10, 10);
     assertTrue(testScheduler.scheduleAtFixedRateCalled);
     
     // reset and try with priority
     testScheduler.scheduleAtFixedRateCalled = false;
-    psw.scheduleAtFixedRate(new TestRunnable(), 10, 10, TaskPriority.High);
+    psw.scheduleAtFixedRate(DoNothingRunnable.instance(), 10, 10, TaskPriority.High);
     assertTrue(testScheduler.scheduleAtFixedRateCalled);
   }
   
@@ -199,7 +198,7 @@ public class PrioritySchedulerWrapperTest {
     TestPriorityScheduler testScheduler = new TestPriorityScheduler();
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(testScheduler, TaskPriority.Low);
     
-    psw.remove(new TestRunnable());
+    psw.remove(DoNothingRunnable.instance());
     
     assertTrue(testScheduler.removeRunnableCalled);
   }

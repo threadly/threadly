@@ -48,7 +48,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
             av.signalComplete();
           }
         };
-        executor.schedule(new TestRunnable(), 5);
+        executor.schedule(DoNothingRunnable.instance(), 5);
         executor.execute(lastRun);
       }
       

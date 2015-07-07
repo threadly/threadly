@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler.TaskWrapper;
-import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerTaskWrapperTest {
@@ -53,7 +52,7 @@ public class PrioritySchedulerTaskWrapperTest {
     }
     
     protected TestWrapper(int delay) {
-      this(new TestRunnable(), delay);
+      this(DoNothingRunnable.instance(), delay);
     }
     
     protected TestWrapper(Runnable task, int delayInMs) {

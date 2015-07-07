@@ -30,7 +30,7 @@ public class SingleThreadSchedulerServiceWrapperTest extends ScheduledExecutorSe
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       // schedule a task first in case there are any initial startup actions which may be slow
-      scheduler.scheduleAtFixedRate(new TestRunnable(), 0, (int)(DELAY_TIME * 2.5), 
+      scheduler.scheduleAtFixedRate(DoNothingRunnable.instance(), 0, (int)(DELAY_TIME * 2.5), 
                                     TimeUnit.MILLISECONDS);
 
       TestRunnable tr = new TestRunnable(DELAY_TIME - 1);

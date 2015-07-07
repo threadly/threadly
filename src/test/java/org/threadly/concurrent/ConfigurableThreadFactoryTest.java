@@ -20,8 +20,8 @@ public class ConfigurableThreadFactoryTest {
     ThreadFactory defaultFactory = new ConfigurableThreadFactory();
     ConfigurableThreadFactory ctf = new ConfigurableThreadFactory();
     
-    Thread defaultThread = defaultFactory.newThread(new TestRunnable());
-    Thread configurableThread = ctf.newThread(new TestRunnable());
+    Thread defaultThread = defaultFactory.newThread(DoNothingRunnable.instance());
+    Thread configurableThread = ctf.newThread(DoNothingRunnable.instance());
     
     String defaultName = defaultThread.getName();
     String configurableName = configurableThread.getName();
@@ -49,7 +49,7 @@ public class ConfigurableThreadFactoryTest {
     assertTrue(ctf1.threadNamePrefix.contains(poolPrefix));
     assertFalse(ctf1.threadNamePrefix.equals(ctf2.threadNamePrefix));
     
-    Thread t = ctf1.newThread(new TestRunnable());
+    Thread t = ctf1.newThread(DoNothingRunnable.instance());
     assertTrue(t.getName().contains(ctf1.threadNamePrefix));
   }
   
@@ -62,7 +62,7 @@ public class ConfigurableThreadFactoryTest {
     assertTrue(ctf1.threadNamePrefix.contains(poolPrefix));
     assertTrue(ctf1.threadNamePrefix.equals(ctf2.threadNamePrefix));
     
-    Thread t = ctf1.newThread(new TestRunnable());
+    Thread t = ctf1.newThread(DoNothingRunnable.instance());
     assertTrue(t.getName().contains(ctf1.threadNamePrefix));
   }
   
@@ -73,11 +73,11 @@ public class ConfigurableThreadFactoryTest {
     
     Thread t;
     assertFalse(ctfFalse.useDaemonThreads);
-    t = ctfFalse.newThread(new TestRunnable());
+    t = ctfFalse.newThread(DoNothingRunnable.instance());
     assertFalse(t.isDaemon());
     
     assertTrue(ctfTrue.useDaemonThreads);
-    t = ctfTrue.newThread(new TestRunnable());
+    t = ctfTrue.newThread(DoNothingRunnable.instance());
     assertTrue(t.isDaemon());
   }
   
@@ -101,7 +101,7 @@ public class ConfigurableThreadFactoryTest {
     ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(priority);
     
     assertEquals(priority, ctf.threadPriority);
-    Thread t = ctf.newThread(new TestRunnable());
+    Thread t = ctf.newThread(DoNothingRunnable.instance());
     assertEquals(priority, t.getPriority());
   }
   
@@ -111,7 +111,7 @@ public class ConfigurableThreadFactoryTest {
     ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(ueh);
     
     assertEquals(ueh, ctf.defaultUncaughtExceptionHandler);
-    Thread t = ctf.newThread(new TestRunnable());
+    Thread t = ctf.newThread(DoNothingRunnable.instance());
     assertEquals(ueh, t.getUncaughtExceptionHandler());
   }
   

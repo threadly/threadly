@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
@@ -87,8 +88,8 @@ public class RunnableListenerHelperTest {
     assertEquals(0, onceHelper.registeredListenerCount());
     assertEquals(0, repeatedHelper.registeredListenerCount());
     
-    onceHelper.addListener(new TestRunnable());
-    repeatedHelper.addListener(new TestRunnable());
+    onceHelper.addListener(DoNothingRunnable.instance());
+    repeatedHelper.addListener(DoNothingRunnable.instance());
     
     assertEquals(1, onceHelper.registeredListenerCount());
     assertEquals(1, repeatedHelper.registeredListenerCount());
@@ -247,7 +248,7 @@ public class RunnableListenerHelperTest {
       }
     };
     repeatedHelper.addListener(tr);
-    repeatedHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(DoNothingRunnable.instance());
     
     repeatedHelper.callListeners();
     
