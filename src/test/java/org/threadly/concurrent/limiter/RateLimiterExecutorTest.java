@@ -13,13 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.Clock;
 
@@ -66,11 +66,11 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   public void getCurrentMinimumDelayTest() {
     assertEquals(0, limiter.getMinimumDelay());
     
-    limiter.execute(10, new TestRunnable());
+    limiter.execute(10, DoNothingRunnable.instance());
     int delay = limiter.getMinimumDelay();
     assertEquals(10000, delay, 1000);
     
-    limiter.execute(10, new TestRunnable());
+    limiter.execute(10, DoNothingRunnable.instance());
     delay = limiter.getMinimumDelay();
     assertEquals(20000, delay, 1000);
   }
@@ -82,7 +82,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     assertTrue(f.isDone());
     
     // verify a it works if the limiter has waiting tasks
-    limiter.execute(1, new TestRunnable());
+    limiter.execute(1, DoNothingRunnable.instance());
     f = limiter.getFutureTillDelay(0);
     assertFalse(f.isDone());
     
@@ -134,7 +134,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   @Test
   public void executeWithPermitsFail() {
     try {
-      limiter.execute(-1, new TestRunnable());
+      limiter.execute(-1, DoNothingRunnable.instance());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -150,7 +150,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   @Test
   public void submitRunnableWithPermitsFail() {
     try {
-      limiter.submit(-1, new TestRunnable());
+      limiter.submit(-1, DoNothingRunnable.instance());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected

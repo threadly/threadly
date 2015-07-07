@@ -33,7 +33,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
   protected final int permitsPerSecond;
   protected final Object permitLock;
-  private long lastScheduleTime;
+  private double lastScheduleTime;
   
   /**
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
@@ -182,15 +182,19 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param task Runnable to be executed once rate can be maintained
    */
   protected void doExecute(int permits, Runnable task) {
+    double effectiveDelay = ((double)permits / permitsPerSecond) * 1000;
     synchronized (permitLock) {
-      int effectiveDelay = (int)(((double)permits / permitsPerSecond) * 1000);
-      long scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
+      double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
       if (scheduleDelay < 1) {
-        lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
+        if (scheduleDelay < 0) {
+          lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
+        } else {
+          lastScheduleTime += effectiveDelay;
+        }
         scheduler.execute(task);
       } else {
-        lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay + scheduleDelay;
-        scheduler.schedule(task, scheduleDelay);
+        lastScheduleTime += effectiveDelay;
+        scheduler.schedule(task, (long)scheduleDelay);
       }
     }
   }
