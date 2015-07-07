@@ -13,7 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutorInterface;
@@ -67,11 +66,11 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   public void getCurrentMinimumDelayTest() {
     assertEquals(0, limiter.getMinimumDelay());
     
-    limiter.execute(10, DoNothingRunnable.instance());
+    limiter.execute(10, new TestRunnable());
     int delay = limiter.getMinimumDelay();
     assertEquals(10000, delay, 1000);
     
-    limiter.execute(10, DoNothingRunnable.instance());
+    limiter.execute(10, new TestRunnable());
     delay = limiter.getMinimumDelay();
     assertEquals(20000, delay, 1000);
   }
@@ -83,11 +82,11 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     assertTrue(f.isDone());
     
     // verify a it works if the limiter has waiting tasks
-    limiter.execute(2, DoNothingRunnable.instance());
+    limiter.execute(1, new TestRunnable());
     f = limiter.getFutureTillDelay(0);
     assertFalse(f.isDone());
     
-    scheduler.advance(2000);
+    scheduler.advance(1000);
     assertTrue(f.isDone());
   }
   
@@ -98,12 +97,11 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     PriorityScheduler pse = new StrictPriorityScheduler(32);
     try {
       RateLimiterExecutor rls = new RateLimiterExecutor(pse, rateLimit);
-      rls.execute(rateLimit + 1, DoNothingRunnable.instance());
       ListenableFuture<?> lastFuture = null;
       double startTime = Clock.accurateForwardProgressingMillis();
       boolean flip = true;
       for (int i = 0; i < TEST_QTY * 2; i++) {
-        final int permit = 10;
+        final int permit = 5;
         if (flip) {
           lastFuture = rls.submit(permit, new Runnable() {
             @Override

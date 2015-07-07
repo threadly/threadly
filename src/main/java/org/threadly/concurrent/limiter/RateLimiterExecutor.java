@@ -33,7 +33,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
   protected final int permitsPerSecond;
   protected final Object permitLock;
-  private double lastScheduleTime;
+  private long lastScheduleTime;
   
   /**
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
@@ -51,7 +51,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     this.scheduler = scheduler;
     this.permitsPerSecond = permitsPerSecond;
     this.permitLock = new Object();
-    this.lastScheduleTime = Long.MIN_VALUE;
+    this.lastScheduleTime = Clock.lastKnownForwardProgressingMillis();
   }
   
   /**
@@ -63,12 +63,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   public int getMinimumDelay() {
     synchronized (permitLock) {
-      int delay = (int)(lastScheduleTime - Clock.lastKnownForwardProgressingMillis());
-      if (delay <= 0) {
-        return 0;
-      } else {
-        return delay + 1000;
-      }
+      return (int)Math.max(0, lastScheduleTime - Clock.lastKnownForwardProgressingMillis());
     }
   }
   
@@ -188,17 +183,15 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   protected void doExecute(int permits, Runnable task) {
     synchronized (permitLock) {
-      long referenceTime = Clock.accurateForwardProgressingMillis() - 1000;
-      if (lastScheduleTime < referenceTime) {
-        lastScheduleTime = referenceTime;
-      }
-      long scheduleDelay = (long)(lastScheduleTime - Clock.lastKnownForwardProgressingMillis());
+      int effectiveDelay = (int)(((double)permits / permitsPerSecond) * 1000);
+      long scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
       if (scheduleDelay < 1) {
+        lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
         scheduler.execute(task);
       } else {
-        scheduler.schedule(task, scheduleDelay + 1000);
+        lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay + scheduleDelay;
+        scheduler.schedule(task, scheduleDelay);
       }
-      lastScheduleTime += ((double)permits / permitsPerSecond) * 1000;
     }
   }
 }
