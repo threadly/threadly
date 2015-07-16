@@ -31,7 +31,7 @@ import org.threadly.util.Clock;
  */
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
-  protected final int permitsPerSecond;
+  protected final double permitsPerSecond;
   protected final Object permitLock;
   private double lastScheduleTime;
   
@@ -43,8 +43,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param scheduler scheduler to schedule/execute tasks on
    * @param permitsPerSecond how many permits should be allowed per second
    */
-  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, 
-                             int permitsPerSecond) {
+  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     ArgumentVerifier.assertGreaterThanZero(permitsPerSecond, "permitsPerSecond");
     
@@ -78,7 +77,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param maximumDelay maximum delay in milliseconds until returned Future should unblock
    * @return Future that will unblock {@code get()} calls once delay has been reduced below the provided maximum
    */
-  public ListenableFuture<?> getFutureTillDelay(int maximumDelay) {
+  public ListenableFuture<?> getFutureTillDelay(long maximumDelay) {
     int currentMinimumDelay = getMinimumDelay();
     if (currentMinimumDelay == 0) {
       return FutureUtils.immediateResultFuture(null);
@@ -106,7 +105,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param permits resource permits for this task
    * @param task Runnable to execute when ready
    */
-  public void execute(int permits, Runnable task) {
+  public void execute(double permits, Runnable task) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
@@ -122,7 +121,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param task Runnable to execute when ready
    * @return Future that will indicate when the execution of this task has completed
    */
-  public ListenableFuture<?> submit(int permits, Runnable task) {
+  public ListenableFuture<?> submit(double permits, Runnable task) {
     return submit(permits, task, null);
   }
 
@@ -137,7 +136,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param result result to return from future when task completes
    * @return Future that will return provided result when the execution has completed
    */
-  public <T> ListenableFuture<T> submit(int permits, Runnable task, T result) {
+  public <T> ListenableFuture<T> submit(double permits, Runnable task, T result) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
@@ -158,7 +157,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param task Callable to execute when ready
    * @return Future that will return the callables provided result when the execution has completed
    */
-  public <T> ListenableFuture<T> submit(int permits, Callable<T> task) {
+  public <T> ListenableFuture<T> submit(double permits, Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
@@ -181,8 +180,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param permits number of permits for this task
    * @param task Runnable to be executed once rate can be maintained
    */
-  protected void doExecute(int permits, Runnable task) {
-    double effectiveDelay = ((double)permits / permitsPerSecond) * 1000;
+  protected void doExecute(double permits, Runnable task) {
+    double effectiveDelay = (permits / permitsPerSecond) * 1000;
     synchronized (permitLock) {
       double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
       if (scheduleDelay < 1) {

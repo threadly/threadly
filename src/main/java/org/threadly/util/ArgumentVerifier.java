@@ -36,7 +36,7 @@ public class ArgumentVerifier {
    * @param name Name to provide the argument in the message of the thrown exception
    * @throws IllegalArgumentException Thrown if value is less than zero
    */
-  public static void assertNotNegative(long val, String name) {
+  public static void assertNotNegative(double val, String name) {
     if (val < 0) {
       throw new IllegalArgumentException(StringUtils.makeNonNull(name) + 
                                            " can not be negative");
@@ -51,7 +51,7 @@ public class ArgumentVerifier {
    * @param name Name to provide the argument in the message of the thrown exception
    * @throws IllegalArgumentException Thrown if value is less than one
    */
-  public static void assertGreaterThanZero(long val, String name) {
+  public static void assertGreaterThanZero(double val, String name) {
     if (val < 1) {
       throw new IllegalArgumentException(StringUtils.makeNonNull(name) + 
                                            " must be > 0");
@@ -67,7 +67,7 @@ public class ArgumentVerifier {
    * @param name Name to provide the argument in the message of the thrown exception
    * @throws IllegalArgumentException Thrown if value is greather than or equal to compareVal
    */
-  public static void assertLessThan(long val, long compareVal, String name) {
+  public static void assertLessThan(double val, double compareVal, String name) {
     if (val >= compareVal) {
       throw new IllegalArgumentException(StringUtils.makeNonNull(name) + 
                                            " must be < " + compareVal);
