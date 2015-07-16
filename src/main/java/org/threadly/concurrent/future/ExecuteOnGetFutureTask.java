@@ -61,7 +61,7 @@ public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
    * that execution will only occur once.
    */
   protected void executeIfNotStarted() {
-    if (executionStarted.compareAndSet(false, true)) {
+    if (! executionStarted.get() && executionStarted.compareAndSet(false, true)) {
       super.run();
     }
   }
