@@ -52,7 +52,7 @@ public class ArgumentVerifier {
    * @throws IllegalArgumentException Thrown if value is less than one
    */
   public static void assertGreaterThanZero(double val, String name) {
-    if (val < 1) {
+    if (val <= 0) {
       throw new IllegalArgumentException(StringUtils.makeNonNull(name) + 
                                            " must be > 0");
     }
