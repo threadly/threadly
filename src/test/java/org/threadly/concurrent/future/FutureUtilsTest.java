@@ -711,6 +711,7 @@ public class FutureUtilsTest {
     ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(null);
     
     ImmediateListenableFutureTest.resultTest(testFuture, null);
+    assertTrue(testFuture == ImmediateResultListenableFuture.NULL_RESULT);
   }
   
   @Test

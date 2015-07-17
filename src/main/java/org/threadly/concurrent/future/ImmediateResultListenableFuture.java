@@ -13,6 +13,20 @@ import java.util.concurrent.TimeUnit;
  * @param <T> The result object type returned by this future
  */
 public class ImmediateResultListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
+  /**
+   * Static instance of {@link ImmediateResultListenableFuture} which provides a {@code null} 
+   * result.  Since this is a common case this can avoid GC overhead.  If you want to get this in 
+   * any generic type use {@link FutureUtils#immediateResultFuture(Object)}, which when provided a 
+   * {@code null} will always return this static instance.
+   * 
+   * @since 4.2.0
+   */
+  public static final ImmediateResultListenableFuture<?> NULL_RESULT;
+  
+  static {
+    NULL_RESULT = new ImmediateResultListenableFuture<Object>(null);
+  }
+  
   protected final T result;
   
   /**

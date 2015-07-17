@@ -428,7 +428,10 @@ public class FutureUtils {
   
   /**
    * Constructs a {@link ListenableFuture} that has already had the provided result given to it.  
-   * Thus the resulting future can not error, block, or be canceled.
+   * Thus the resulting future can not error, block, or be canceled.  
+   * 
+   * If {@code null} is provided here the static instance of 
+   * {@link ImmediateResultListenableFuture#NULL_RESULT} will be returned to reduce GC overhead.
    * 
    * @since 1.2.0
    * 
@@ -436,8 +439,13 @@ public class FutureUtils {
    * @param result result to be provided in .get() call
    * @return Already satisfied future
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<T> immediateResultFuture(T result) {
-    return new ImmediateResultListenableFuture<T>(result);
+    if (result == null) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.NULL_RESULT;
+    } else {
+      return new ImmediateResultListenableFuture<T>(result);
+    }
   }
   
   /**

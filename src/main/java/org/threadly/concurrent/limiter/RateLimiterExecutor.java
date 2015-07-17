@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SimpleSchedulerInterface;
-import org.threadly.concurrent.future.FutureUtils;
+import org.threadly.concurrent.future.ImmediateResultListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
@@ -80,7 +80,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   public ListenableFuture<?> getFutureTillDelay(long maximumDelay) {
     int currentMinimumDelay = getMinimumDelay();
     if (currentMinimumDelay == 0) {
-      return FutureUtils.immediateResultFuture(null);
+      return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
       ListenableFutureTask<?> lft = new ListenableFutureTask<Void>(false, DoNothingRunnable.instance());
       
