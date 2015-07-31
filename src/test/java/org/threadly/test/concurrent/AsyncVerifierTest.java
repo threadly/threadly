@@ -138,7 +138,7 @@ public class AsyncVerifierTest {
   
   @Test
   public void failMsgTest() {
-    String msg = StringUtils.randomString(5);
+    String msg = StringUtils.makeRandomString(5);
     try {
       verifier.fail(msg);
       fail("Exception should have thrown");

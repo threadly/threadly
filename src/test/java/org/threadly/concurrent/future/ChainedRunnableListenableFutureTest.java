@@ -169,7 +169,7 @@ public class ChainedRunnableListenableFutureTest {
   
   @Test
   public void addCallbackTest() {
-    final String result = StringUtils.randomString(5);
+    final String result = StringUtils.makeRandomString(5);
     ListenableRunnableFuture<String> future;
     future = new ChainedRunnableListenableFuture<String>(SameThreadSubmitterExecutor.instance(), 
                                                          new Callable<String>() {
@@ -191,7 +191,7 @@ public class ChainedRunnableListenableFutureTest {
   
   @Test
   public void addCallbackAlreadyDoneFutureTest() {
-    final String result = StringUtils.randomString(5);
+    final String result = StringUtils.makeRandomString(5);
     ListenableRunnableFuture<String> future;
     future = new ChainedRunnableListenableFuture<String>(SameThreadSubmitterExecutor.instance(), 
                                                          new Callable<String>() {

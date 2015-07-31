@@ -61,9 +61,9 @@ public class ListenerHelperTest {
   @Test
   public void addListenerFromCallTest() {
     int firstCallInt = 42;
-    String firstCallStr = StringUtils.randomString(10);
+    String firstCallStr = StringUtils.makeRandomString(10);
     int secondCallInt = 1337;
-    String secondCallStr = StringUtils.randomString(10);
+    String secondCallStr = StringUtils.makeRandomString(10);
     final TestImp addedListener = new TestImp();
     final ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp() {
@@ -112,7 +112,7 @@ public class ListenerHelperTest {
     assertTrue(ch.removeListener(ti));
     assertEquals(0, ch.registeredListenerCount());
     
-    ch.call().call(10, StringUtils.randomString(10));
+    ch.call().call(10, StringUtils.makeRandomString(10));
     // verify not called
     assertNull(ti.lastString);
   }
@@ -120,9 +120,9 @@ public class ListenerHelperTest {
   @Test
   public void removeListenerFromCallTest() {
     int firstCallInt = 42;
-    String firstCallStr = StringUtils.randomString(10);
+    String firstCallStr = StringUtils.makeRandomString(10);
     int secondCallInt = 1337;
-    String secondCallStr = StringUtils.randomString(10);
+    String secondCallStr = StringUtils.makeRandomString(10);
     final TestImp removedListener = new TestImp();
     final ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp() {
@@ -191,7 +191,7 @@ public class ListenerHelperTest {
   
   private void callTest(boolean useExecutor) {
     int testInt = 10;
-    String testStr = StringUtils.randomString(10);
+    String testStr = StringUtils.makeRandomString(10);
     List<TestImp> listeners = new ArrayList<TestImp>(TEST_QTY);
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     
@@ -218,7 +218,7 @@ public class ListenerHelperTest {
   @Test
   public void callMultipleFunctionListenersTest() {
     int testInt = 10;
-    String testStr = StringUtils.randomString(10);
+    String testStr = StringUtils.makeRandomString(10);
     List<TestMultipleFunctionImp> listeners = new ArrayList<TestMultipleFunctionImp>(TEST_QTY);
     ListenerHelper<TestMultipleFunctionInterface> ch = makeListenerHelper(TestMultipleFunctionInterface.class);
     
@@ -250,7 +250,7 @@ public class ListenerHelperTest {
   @Test
   public void listenerExceptionTest() {
     int testInt = 10;
-    String testStr = StringUtils.randomString(10);
+    String testStr = StringUtils.makeRandomString(10);
     TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setThreadExceptionHandler(teh);
     final RuntimeException e = new RuntimeException();
