@@ -14,7 +14,7 @@ public class ArgumentVerifierTest {
   
   @Test
   public void assertNotNullFail() {
-    String name = StringUtils.randomString(5);
+    String name = StringUtils.makeRandomString(5);
     try {
       ArgumentVerifier.assertNotNull(null, name);
       fail("Exception should have thrown");
@@ -31,7 +31,7 @@ public class ArgumentVerifierTest {
   
   @Test
   public void assertNotNegativeFail() {
-    String name = StringUtils.randomString(5);
+    String name = StringUtils.makeRandomString(5);
     try {
       ArgumentVerifier.assertNotNegative(-1, name);
       fail("Exception should have thrown");
@@ -48,7 +48,7 @@ public class ArgumentVerifierTest {
   
   @Test
   public void assertGreaterThanZeroFail() {
-    String name = StringUtils.randomString(5);
+    String name = StringUtils.makeRandomString(5);
     try {
       ArgumentVerifier.assertGreaterThanZero(0, name);
       fail("Exception should have thrown");
@@ -65,7 +65,7 @@ public class ArgumentVerifierTest {
   
   @Test
   public void assertLessThanFail() {
-    String name = StringUtils.randomString(5);
+    String name = StringUtils.makeRandomString(5);
     try {
       ArgumentVerifier.assertLessThan(10, 10, name);
       fail("Exception should have thrown");

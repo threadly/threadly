@@ -327,7 +327,7 @@ public class FutureUtilsTest {
   
   @Test
   public void makeCompleteFutureWithResultNullTest() throws InterruptedException, ExecutionException {
-    String result = StringUtils.randomString(5);
+    String result = StringUtils.makeRandomString(5);
     ListenableFuture<String> f = FutureUtils.makeCompleteFuture(null, result);
     
     assertTrue(f.isDone());
@@ -336,7 +336,7 @@ public class FutureUtilsTest {
   
   @Test
   public void makeCompleteFutureWithResultEmptyListTest() throws InterruptedException, ExecutionException {
-    String result = StringUtils.randomString(5);
+    String result = StringUtils.makeRandomString(5);
     List<ListenableFuture<?>> futures = Collections.emptyList();
     ListenableFuture<String> f = FutureUtils.makeCompleteFuture(futures, result);
     
@@ -346,7 +346,7 @@ public class FutureUtilsTest {
   
   @Test
   public void makeCompleteFutureWithResultTest() throws InterruptedException, TimeoutException, ExecutionException {
-    String result = StringUtils.randomString(5);
+    String result = StringUtils.makeRandomString(5);
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
     
     ListenableFuture<String> f = FutureUtils.makeCompleteFuture(futures, result);
@@ -670,7 +670,7 @@ public class FutureUtilsTest {
     List<String> expectedResults = new ArrayList<String>(TEST_QTY);
     List<ListenableFuture<String>> futures = new ArrayList<ListenableFuture<String>>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
-      String result = StringUtils.randomString(5);
+      String result = StringUtils.makeRandomString(5);
       expectedResults.add(result);
       futures.add(FutureUtils.immediateResultFuture(result));
     }

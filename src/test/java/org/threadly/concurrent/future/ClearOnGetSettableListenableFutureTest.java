@@ -60,7 +60,7 @@ public class ClearOnGetSettableListenableFutureTest extends SettableListenableFu
       // expected
     }
     
-    String result = StringUtils.randomString(5);
+    String result = StringUtils.makeRandomString(5);
     slf.setResult(result);
     
     assertTrue(slf.get() == result);

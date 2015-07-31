@@ -42,7 +42,7 @@ public class ConfigurableThreadFactoryTest {
   
   @Test
   public void setPrefixWithPoolIdTest() {
-    String poolPrefix = StringUtils.randomString(5);
+    String poolPrefix = StringUtils.makeRandomString(5);
     ConfigurableThreadFactory ctf1 = new ConfigurableThreadFactory(poolPrefix, true);
     ConfigurableThreadFactory ctf2 = new ConfigurableThreadFactory(poolPrefix, true);
 
@@ -55,7 +55,7 @@ public class ConfigurableThreadFactoryTest {
   
   @Test
   public void setPrefixWithoutPoolIdTest() {
-    String poolPrefix = StringUtils.randomString(5);
+    String poolPrefix = StringUtils.makeRandomString(5);
     ConfigurableThreadFactory ctf1 = new ConfigurableThreadFactory(poolPrefix, false);
     ConfigurableThreadFactory ctf2 = new ConfigurableThreadFactory(poolPrefix, false);
 

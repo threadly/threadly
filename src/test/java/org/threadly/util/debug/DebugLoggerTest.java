@@ -27,7 +27,7 @@ public class DebugLoggerTest {
   
   @Test
   public void getAllSingleTest() {
-    String testStr = StringUtils.randomString(5);
+    String testStr = StringUtils.makeRandomString(5);
     DebugLogger.log(testStr);
     
     assertTrue(DebugLogger.getAllStoredMessages(false).equals(testStr));
@@ -37,8 +37,8 @@ public class DebugLoggerTest {
   
   @Test
   public void getAllMultipleTest() {
-    String testStr1 = StringUtils.randomString(5);
-    String testStr2 = StringUtils.randomString(5);
+    String testStr1 = StringUtils.makeRandomString(5);
+    String testStr2 = StringUtils.makeRandomString(5);
     DebugLogger.log(testStr1);
     DebugLogger.log(testStr2);
     
@@ -52,7 +52,7 @@ public class DebugLoggerTest {
   
   @Test
   public void getQtySingleTest() {
-    String testStr = StringUtils.randomString(5);
+    String testStr = StringUtils.makeRandomString(5);
     DebugLogger.log(testStr);
     
     assertTrue(DebugLogger.getOldestLogMessages(2).equals(testStr));
@@ -62,8 +62,8 @@ public class DebugLoggerTest {
   
   @Test
   public void getQtyMultipleTest() {
-    String testStr1 = StringUtils.randomString(5);
-    String testStr2 = StringUtils.randomString(5);
+    String testStr1 = StringUtils.makeRandomString(5);
+    String testStr2 = StringUtils.makeRandomString(5);
     DebugLogger.log(testStr1);
     DebugLogger.log(testStr2);
     
@@ -77,8 +77,8 @@ public class DebugLoggerTest {
   
   @Test
   public void getQtyLimitedTest() {
-    String testStr1 = StringUtils.randomString(5);
-    String testStr2 = StringUtils.randomString(5);
+    String testStr1 = StringUtils.makeRandomString(5);
+    String testStr2 = StringUtils.makeRandomString(5);
     DebugLogger.log(testStr1);
     DebugLogger.log(testStr2);
     

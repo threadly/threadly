@@ -51,7 +51,7 @@ public class StringBufferWriterTest {
   
   @Test
   public void appendCharSquenceTest() {
-    String testStr = StringUtils.randomString(50);
+    String testStr = StringUtils.makeRandomString(50);
     
     sbw.append(testStr);
     
@@ -66,7 +66,7 @@ public class StringBufferWriterTest {
   public void appendCharSquenceRangeTest() {
     int rangeStart = 0;
     int rangeEnd = 10;
-    String testStr = StringUtils.randomString(50);
+    String testStr = StringUtils.makeRandomString(50);
     
     sbw.append(testStr, 0, rangeEnd);
     

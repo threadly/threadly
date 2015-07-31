@@ -56,7 +56,7 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
   @Test
   public void submitRunnableWithResultAndPriorityTest() throws InterruptedException, 
                                                                ExecutionException {
-    String result = StringUtils.randomString(5);
+    String result = StringUtils.makeRandomString(5);
     TestRunnable tr = new TestRunnable();
     ListenableFuture<String> f = priorityScheduler.submit(tr, result, TaskPriority.High);
     
@@ -69,7 +69,7 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
   
   @Test
   public void submitCallableWithPriorityTest() throws InterruptedException, ExecutionException {
-    final String result = StringUtils.randomString(5);
+    final String result = StringUtils.makeRandomString(5);
     ListenableFuture<String> f = priorityScheduler.submit(new Callable<String>() {
       @Override
       public String call() {
@@ -110,7 +110,7 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
   public void submitScheduledRunnableWithResultAndPriorityTest() throws InterruptedException, 
                                                                         ExecutionException {
     final int delay = 100;
-    String result = StringUtils.randomString(5);
+    String result = StringUtils.makeRandomString(5);
     TestRunnable tr = new TestRunnable();
     ListenableFuture<String> f = priorityScheduler.submitScheduled(tr, result, delay, 
                                                                    TaskPriority.High);
@@ -126,7 +126,7 @@ public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
   public void submitScheduledCallableWithPriorityTest() throws InterruptedException, 
                                                                ExecutionException {
     final int delay = 100;
-    final String result = StringUtils.randomString(5);
+    final String result = StringUtils.makeRandomString(5);
     ListenableFuture<String> f = priorityScheduler.submitScheduled(new Callable<String>() {
       @Override
       public String call() {

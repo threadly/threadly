@@ -475,11 +475,11 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void elementTest() {
-    String foo = StringUtils.randomString(5);
+    String foo = StringUtils.makeRandomString(5);
     testList.add(foo);
     assertEquals(foo, testList.element());
     
-    testList.add(StringUtils.randomString(5));
+    testList.add(StringUtils.makeRandomString(5));
     assertEquals(foo, testList.element());
   }
   
