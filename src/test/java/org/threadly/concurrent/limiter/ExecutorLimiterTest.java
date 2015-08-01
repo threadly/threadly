@@ -77,7 +77,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void constructorEmptySubPoolNameTest() {
-    ExecutorLimiter limiter = new ExecutorLimiter(scheduler, 1, " ");
+    ExecutorLimiter limiter = new ExecutorLimiter(scheduler, 1, "");
     
     assertNull(limiter.subPoolName);
   }

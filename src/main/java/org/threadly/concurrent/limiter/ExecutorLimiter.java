@@ -9,6 +9,7 @@ import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableContainerInterface;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.StringUtils;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens on a provided 
@@ -55,20 +56,10 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
     ArgumentVerifier.assertNotNull(executor, "executor");
     
     this.executor = executor;
-    waitingTasks = new ConcurrentLinkedQueue<LimiterRunnableWrapper>();
-    
+    this.waitingTasks = new ConcurrentLinkedQueue<LimiterRunnableWrapper>();
     this.maxConcurrency = maxConcurrency;
-    
-    if (subPoolName != null) {
-      subPoolName = subPoolName.trim();
-      
-      if (subPoolName.length() == 0) {
-        subPoolName = null;
-      }
-    }
-    this.subPoolName = subPoolName;
-    
-    currentlyRunning = new AtomicInteger(0);
+    this.subPoolName = StringUtils.emptyToNull(subPoolName);
+    this.currentlyRunning = new AtomicInteger(0);
   }
   
   /**

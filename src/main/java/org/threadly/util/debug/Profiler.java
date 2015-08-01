@@ -27,6 +27,7 @@ import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.StringUtils;
 
 /**
  * <p>Tool for profiling a running java application to get an idea of where the slow points 
@@ -531,8 +532,10 @@ public class Profiler {
     
     Function[] methodArray = methods.keySet().toArray(new Function[methods.size()]);
     
-    out.println(" total count: " + format(total));
-    out.println("native count: " + format(nativeCount));
+    out.println(" total count: " + StringUtils.padStart(Integer.toString(total), 
+                                                        NUMBER_TARGET_LINE_LENGTH, ' '));
+    out.println("native count: " + StringUtils.padStart(Integer.toString(nativeCount), 
+                                                        NUMBER_TARGET_LINE_LENGTH, ' '));
     
     out.println();
     out.println(FUNCTION_BY_NET_HEADER);
@@ -605,31 +608,14 @@ public class Profiler {
    * @param out PrintStream to print out to
    */
   private static void dumpFunction(Function f, PrintStream out) {
-    out.print(format(f.getCount()));
-    out.print(format(f.getStackTopCount()));
+    out.print(StringUtils.padStart(Integer.toString(f.getCount()), 
+                                   NUMBER_TARGET_LINE_LENGTH, ' '));
+    out.print(StringUtils.padStart(Integer.toString(f.getStackTopCount()), 
+                                   NUMBER_TARGET_LINE_LENGTH, ' '));
     out.print(' ');
     out.print(f.className);
     out.print('.');
     out.println(f.function);
-  }
-  
-  /**
-   * Consistently formats an integer, adding spacing in front of it if necessary.
-   * 
-   * @param c Integer to use to represent within outputted string
-   * @return Consistently sized string to represent the integer
-   */
-  private static String format(int c) {
-    String s = Integer.toString(c);
-    StringBuilder sb = new StringBuilder();
-    
-    while (sb.length() + s.length() < NUMBER_TARGET_LINE_LENGTH) {
-      sb.append(' ');
-    }
-    
-    sb.append(s);
-    
-    return sb.toString();
   }
   
   @Override
