@@ -1441,11 +1441,11 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     public abstract boolean canExecute();
     
     /**
-     * Similar to getDelay, except this implementation accepts in the current time.  This allows 
-     * two things.  The first is that you can give an inaccurate time (like 
+     * Similar to {@link #getDelay(TimeUnit)}, except this implementation accepts in the current 
+     * time.  This allows that you can give an inaccurate time (like from 
      * {@link Clock#lastKnownForwardProgressingMillis()}) to get a cheap estimate.  The other is 
      * that you can compare multiple tasks by giving them the same time to see how their execution 
-     * order should be defined.
+     * order should be defined (in this case if just comparison is needed zero can be provided).
      * 
      * @param now Current time in milliseconds
      * @return time in milliseconds till task is ready to run
@@ -1454,7 +1454,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
 
     @Override
     public long getDelay(TimeUnit unit) {
-      return unit.convert(getDelayInMs(ClockWrapper.getSemiAccurateMillis()), TimeUnit.MILLISECONDS);
+      return unit.convert(getDelayInMs(ClockWrapper.getSemiAccurateMillis()), 
+                          TimeUnit.MILLISECONDS);
     }
     
     @Override
@@ -1482,7 +1483,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       super(task);
       
       this.taskQueue = taskQueue;
-      runTime = Clock.accurateForwardProgressingMillis() + delay;
+      this.runTime = Clock.accurateForwardProgressingMillis() + delay;
     }
     
     @Override
