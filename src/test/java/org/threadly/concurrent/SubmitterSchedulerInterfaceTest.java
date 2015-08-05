@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.junit.Test;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -208,11 +207,12 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   
   protected void recurringExecutionTest(boolean initialDelay, boolean fixedDelay, 
                                         boolean singleThreaded) {
-    final long initialDelayInMillis = initialDelay ? DELAY_TIME : 0;
+    final int initialDelayInMillis = initialDelay ? DELAY_TIME : 0;
+    final int expectedMinimumDelay = DELAY_TIME * (CYCLE_COUNT - (initialDelay ? 0 : 1));
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
       SimpleSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
-  
+      
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable(fixedDelay ? 0 : DELAY_TIME);
@@ -228,22 +228,21 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
       Iterator<TestRunnable> it = runnables.iterator();
       while (it.hasNext()) {
         TestRunnable tr = it.next();
-        tr.blockTillFinished((TEST_QTY * (DELAY_TIME * (CYCLE_COUNT + 1))) + 2000, CYCLE_COUNT);
+        tr.blockTillFinished((TEST_QTY * expectedMinimumDelay) + 2000, CYCLE_COUNT);
         if (initialDelay) {
           long executionDelay = tr.getDelayTillFirstRun();
           assertTrue(executionDelay >= DELAY_TIME);
           if (! singleThreaded) {
             // should be very timely with a core pool size that matches runnable count
-            assertTrue(executionDelay <= (DELAY_TIME + 2000));
+            assertTrue(executionDelay <= DELAY_TIME + 2000);
           }
         }
         
-        tr.blockTillFinished((DELAY_TIME * (CYCLE_COUNT - 1)) + 2000, CYCLE_COUNT);
         long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
-        assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
+        assertTrue(executionDelay >= expectedMinimumDelay);
         // should be very timely with a core pool size that matches runnable count
         if (! singleThreaded) {
-          assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
+          assertTrue(executionDelay <= expectedMinimumDelay + 2000);
         }
       }
     } finally {

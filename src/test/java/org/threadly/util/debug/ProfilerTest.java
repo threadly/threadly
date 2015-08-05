@@ -283,11 +283,9 @@ public class ProfilerTest {
   @Test
   public void dumpStringOnlySummaryTest() {
     profiler.start();
-    
     blockForProfilerSample();
     
     String resultStr = profiler.dump(false);
-    System.out.println(resultStr);
     
     assertTrue(resultStr.startsWith("Combined profile for all threads"));
   }
