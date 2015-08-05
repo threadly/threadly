@@ -65,7 +65,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
       nts.addScheduled(ott);
     }
     
-    return new ScheduledFutureDelegate<Void>(lft, ott);
+    return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(ott));
   }
 
   @Override
@@ -79,7 +79,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
       nts.addScheduled(ott);
     }
     
-    return new ScheduledFutureDelegate<V>(lft, ott);
+    return new ScheduledFutureDelegate<V>(lft, new DelayedTaskWrapper(ott));
   }
 
   @Override
@@ -94,7 +94,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     NoThreadScheduler.RecurringTask rt = nts.new RecurringDelayTask(lft, initialDelayInMillis, delayInMillis);
     nts.addScheduled(rt);
     
-    return new ScheduledFutureDelegate<Void>(lft, rt);
+    return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rt));
   }
 
   @Override
@@ -109,6 +109,6 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     NoThreadScheduler.RecurringTask rt = nts.new RecurringRateTask(lft, initialDelayInMillis, periodInMillis);
     nts.addScheduled(rt);
     
-    return new ScheduledFutureDelegate<Void>(lft, rt);
+    return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rt));
   }
 }

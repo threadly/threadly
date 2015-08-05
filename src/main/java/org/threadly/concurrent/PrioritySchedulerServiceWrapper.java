@@ -80,7 +80,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
       pScheduler.addToScheduleQueue(queueSet, ottw);
     }
     
-    return new ScheduledFutureDelegate<Void>(taskFuture, ottw);
+    return new ScheduledFutureDelegate<Void>(taskFuture, new DelayedTaskWrapper(ottw));
   }
 
   @Override
@@ -97,7 +97,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
       pScheduler.addToScheduleQueue(queueSet, ottw);
     }
     
-    return new ScheduledFutureDelegate<V>(taskFuture, ottw);
+    return new ScheduledFutureDelegate<V>(taskFuture, new DelayedTaskWrapper(ottw));
   }
 
   @Override
@@ -114,7 +114,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
                                                                    initialDelayInMs, delayInMs);
     pScheduler.addToScheduleQueue(queueSet, rdtw);
     
-    return new ScheduledFutureDelegate<Void>(taskFuture, rdtw);
+    return new ScheduledFutureDelegate<Void>(taskFuture, new DelayedTaskWrapper(rdtw));
   }
 
   @Override
@@ -131,6 +131,6 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
                                                                  initialDelayInMillis, periodInMillis);
     pScheduler.addToScheduleQueue(queueSet, rrtw);
     
-    return new ScheduledFutureDelegate<Void>(taskFuture, rrtw);
+    return new ScheduledFutureDelegate<Void>(taskFuture, new DelayedTaskWrapper(rrtw));
   }
 }

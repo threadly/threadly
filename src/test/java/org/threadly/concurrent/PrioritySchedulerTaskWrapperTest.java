@@ -2,10 +2,9 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler.TaskWrapper;
+import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerTaskWrapperTest {
@@ -17,18 +16,6 @@ public class PrioritySchedulerTaskWrapperTest {
     tw.cancel();
     
     assertTrue(tw.canceled);
-  }
-  
-  @Test
-  public void compareToTest() {
-    TestWrapper tw0 = new TestWrapper(0);
-    TestWrapper tw1 = new TestWrapper(1);
-    TestWrapper tw10 = new TestWrapper(10);
-    
-    assertEquals(0, tw0.compareTo(tw0));
-    assertEquals(-1, tw0.compareTo(tw1));
-    assertEquals(1, tw10.compareTo(tw1));
-    assertEquals(0, tw10.compareTo(new TestWrapper(10)));
   }
   
   @Test
@@ -64,13 +51,8 @@ public class PrioritySchedulerTaskWrapperTest {
     }
 
     @Override
-    public long getDelay(TimeUnit unit) {
-      return unit.convert(delayInMs, TimeUnit.MILLISECONDS);
-    }
-    
-    @Override
-    protected long getDelayInMs(long now) {
-      return delayInMs;
+    public long getRunTime() {
+      return Clock.lastKnownForwardProgressingMillis() + delayInMs;
     }
 
     @Override

@@ -269,6 +269,27 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                                                       long periodInMillis);
   
   /**
+   * <p>Small wrapper to convert from a {@link PriorityScheduler.TaskWrapper} into a Delayed 
+   * interface.</p>
+   * 
+   * @author jent
+   * @since 4.2.0
+   */
+  protected static class DelayedTaskWrapper extends AbstractDelayed {
+    private final DelayedTaskInterface task;
+    
+    public DelayedTaskWrapper(DelayedTaskInterface task) {
+      this.task = task;
+    }
+
+    @Override
+    public long getDelay(TimeUnit unit) {
+      return unit.convert(task.getRunTime() - Clock.accurateForwardProgressingMillis(), 
+                          TimeUnit.MILLISECONDS);
+    }
+  }
+  
+  /**
    * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
    * recurring task causes the task to stop executing, we have to wrap the task.  That way we can 
    * remove the recurring task if the error occurs (since {@link SimpleSchedulerInterface} will 

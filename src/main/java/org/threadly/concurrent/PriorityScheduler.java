@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
@@ -25,7 +24,6 @@ import org.threadly.util.AbstractService;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.ListUtils;
 
 /**
  * <p>Executor to run tasks, schedule tasks.  Unlike 
@@ -620,14 +618,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     public void addScheduled(TaskWrapper task) {
       int insertionIndex;
       synchronized (scheduleQueue.getModificationLock()) {
-        ClockWrapper.stopForcingUpdate();
-        try {
-          insertionIndex = ListUtils.getInsertionEndIndex(scheduleQueue, task, true);
-          
-          scheduleQueue.add(insertionIndex, task);
-        } finally {
-          ClockWrapper.resumeForcingUpdate();
-        }
+        insertionIndex = TaskListUtils.getInsertionEndIndex(scheduleQueue, task.getRunTime());
+        
+        scheduleQueue.add(insertionIndex, task);
       }
       
       if (insertionIndex == 0) {
@@ -638,8 +631,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     /**
      * Call to find and reposition a scheduled task.  It is expected that the task provided has 
      * already been added to the queue.  This call will use 
-     * {@link RecurringTaskWrapper#getNextDelayInMillis()} to figure out what the new position 
-     * within the queue should be.
+     * {@link RecurringTaskWrapper#getRunTime()} to figure out what the new position within the 
+     * queue should be.
      * 
      * @param task Task to find in queue and reposition based off next delay
      */
@@ -647,15 +640,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       int insertionIndex = 1;
       synchronized (scheduleQueue.getModificationLock()) {
         if (! workerPool.isShutdownStarted()) {
-          ClockWrapper.stopForcingUpdate();
-          try {
-            insertionIndex = ListUtils.getInsertionEndIndex(scheduleQueue, 
-                                                            task.getNextDelayInMillis(), true);
-            
-            scheduleQueue.reposition(task, insertionIndex, true);
-          } finally {
-            ClockWrapper.resumeForcingUpdate();
-          }
+          insertionIndex = TaskListUtils.getInsertionEndIndex(scheduleQueue, task.getNextRunTime());
+          
+          scheduleQueue.reposition(task, insertionIndex, true);
         }
       }
       
@@ -755,7 +742,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         TaskWrapper tw = it.next();
         tw.cancel();
         if (! (tw.task instanceof ShutdownRunnable)) {
-          int index = ListUtils.getInsertionEndIndex(resultList, tw, true);
+          int index = TaskListUtils.getInsertionEndIndex(resultList, tw.getRunTime());
           resultList.add(index, tw);
         }
       }
@@ -777,7 +764,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
       TaskWrapper executeTask = executeQueue.peek();
       if (executeTask != null) {
         if (scheduledTask != null) {
-          if (scheduledTask.getDelayInMs(0) < executeTask.getDelayInMs(0)) {
+          if (scheduledTask.getRunTime() < executeTask.getRunTime()) {
             return scheduledTask;
           } else {
             return executeTask;
@@ -924,7 +911,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
             LockSupport.park();
           } else {
             // only high priority task is queued, so run if ready
-            long nextTaskDelay = nextHighPriorityTask.getDelayInMs(Clock.accurateForwardProgressingMillis());
+            long nextTaskDelay = nextHighPriorityTask.getScheduleDelay();
             if (nextTaskDelay > 0) {
               LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
             } else if (nextHighPriorityTask.canExecute()) {
@@ -933,7 +920,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           }
         } else if (nextHighPriorityTask == null) {
           // only low priority task is queued, so run if ready
-          long nextTaskDelay = nextLowPriorityTask.getDelayInMs(Clock.accurateForwardProgressingMillis());
+          long nextTaskDelay = nextLowPriorityTask.getScheduleDelay();
           if (nextTaskDelay > 0) {
             LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
           } else if (nextLowPriorityTask.canExecute()) {
@@ -942,8 +929,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         } else {
           // both tasks are available, so see which one makes sense to run
           long now = Clock.accurateForwardProgressingMillis();
-          long nextHighDelay = nextHighPriorityTask.getDelayInMs(now);
-          long nextLowDelay = nextLowPriorityTask.getDelayInMs(now);
+          long nextHighDelay = nextHighPriorityTask.getRunTime() - now;
+          long nextLowDelay = nextLowPriorityTask.getRunTime() - now;
           if (nextHighDelay <= 0) {
             /* high task is ready, make sure it should be picked...we will pick the low priority task 
              * if it has been waiting longer than the high, and if the low priority has been waiting at 
@@ -1412,8 +1399,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class TaskWrapper extends AbstractDelayed 
-                                              implements Runnable, RunnableContainerInterface {
+  protected abstract static class TaskWrapper implements DelayedTaskInterface, Runnable, 
+                                                         RunnableContainerInterface {
     protected final Runnable task;
     protected volatile boolean canceled;
     
@@ -1441,21 +1428,20 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     public abstract boolean canExecute();
     
     /**
-     * Similar to {@link #getDelay(TimeUnit)}, except this implementation accepts in the current 
-     * time.  This allows that you can give an inaccurate time (like from 
-     * {@link Clock#lastKnownForwardProgressingMillis()}) to get a cheap estimate.  The other is 
-     * that you can compare multiple tasks by giving them the same time to see how their execution 
-     * order should be defined (in this case if just comparison is needed zero can be provided).
+     * Call to see how long the task should be delayed before execution.  While this may return 
+     * either positive or negative numbers, only an accurate number is returned if the task must 
+     * be delayed for execution.  If the task is ready to execute it may return zero even though 
+     * it is past due.  For that reason you can NOT use this to compare two tasks for execution 
+     * order, instead you should use {@link #getRunTime()}.
      * 
-     * @param now Current time in milliseconds
-     * @return time in milliseconds till task is ready to run
+     * @return delay in milliseconds till task can be run
      */
-    protected abstract long getDelayInMs(long now);
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return unit.convert(getDelayInMs(ClockWrapper.getSemiAccurateMillis()), 
-                          TimeUnit.MILLISECONDS);
+    public long getScheduleDelay() {
+      if (getRunTime() > Clock.lastKnownForwardProgressingMillis()) {
+        return getRunTime() - Clock.accurateForwardProgressingMillis();
+      } else {
+        return 0;
+      }
     }
     
     @Override
@@ -1487,8 +1473,8 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     @Override
-    protected long getDelayInMs(long now) {
-      return runTime - now;
+    public long getRunTime() {
+      return runTime;
     }
 
     @Override
@@ -1528,16 +1514,16 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
      *  
      * @return time in milliseconds till next execution
      */
-    protected long getNextDelayInMillis() {
-      return nextRunTime - ClockWrapper.getSemiAccurateMillis();
+    public long getNextRunTime() {
+      return nextRunTime;
     }
     
     @Override
-    protected long getDelayInMs(long now) {
+    public long getRunTime() {
       if (executing) {
         return Long.MAX_VALUE;
       } else {
-        return nextRunTime - now;
+        return nextRunTime;
       }
     }
 

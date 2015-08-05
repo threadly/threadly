@@ -5,13 +5,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
-
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandlerInterface;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.ListUtils;
 
 /**
  * <p>Executor which has no threads itself.  This allows you to have the same scheduler abilities 
@@ -58,7 +56,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return current time in milliseconds
    */
   protected long nowInMillis() {
-    return ClockWrapper.getSemiAccurateMillis();
+    return Clock.accurateForwardProgressingMillis();
   }
   
   /**
@@ -186,7 +184,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
             if (nextTask == null) {
               taskNotifyLock.wait();
             } else {
-              long nextTaskDelay = nextTask.getDelayInMillis();
+              long nextTaskDelay = nextTask.getScheduleDelay();
               if (nextTaskDelay > 0) {
                 taskNotifyLock.wait(nextTaskDelay);
               } else {
@@ -281,14 +279,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    */
   protected void addScheduled(TaskContainer runnable) {
     synchronized (scheduledQueue.getModificationLock()) {
-      ClockWrapper.stopForcingUpdate();
-      try {
-        int insertionIndex = ListUtils.getInsertionEndIndex(scheduledQueue, runnable, true);
-          
-        scheduledQueue.add(insertionIndex, runnable);
-      } finally {
-        ClockWrapper.resumeForcingUpdate();
-      }
+      int insertionIndex = TaskListUtils.getInsertionEndIndex(scheduledQueue, runnable.getRunTime());
+      
+      scheduledQueue.add(insertionIndex, runnable);
     }
 
     notifyQueueUpdate();
@@ -335,16 +328,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     TaskContainer nextExecuteTask = executeQueue.peek();
     if (nextExecuteTask != null) {
       if (nextScheduledTask != null) {
-        long scheduleDelay;
-        long executeDelay;
-        ClockWrapper.stopForcingUpdate();
-        try {
-          scheduleDelay = nextScheduledTask.getDelayInMillis();
-          executeDelay = nextExecuteTask.getDelayInMillis();
-        } finally {
-          ClockWrapper.resumeForcingUpdate();
-        }
-        if (scheduleDelay < executeDelay) {
+        if (nextScheduledTask.getRunTime() < nextExecuteTask.getRunTime()) {
           return nextScheduledTask;
         } else {
           return nextExecuteTask;
@@ -353,7 +337,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
         return nextExecuteTask;
       }
     } else if (! onlyReturnReadyTask || 
-                 (nextScheduledTask != null && nextScheduledTask.getDelayInMillis() <= 0)) {
+                 (nextScheduledTask != null && nextScheduledTask.getScheduleDelay() <= 0)) {
       return nextScheduledTask;
     } else {
       return null;
@@ -394,7 +378,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
         TaskContainer scheduledTask = it.next();
         if (scheduledTask.running) {
           continue;
-        } else if (scheduledTask.getDelayInMillis() <= 0) {
+        } else if (scheduledTask.getScheduleDelay() <= 0) {
           return true;
         } else {
           return false;
@@ -427,7 +411,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
          * This is to assure it is atomically removed (without executing)
          */
         if (! tc.running && executeQueue.remove(tc)) {
-          int index = ListUtils.getInsertionEndIndex(containers, tc, true);
+          int index = TaskListUtils.getInsertionEndIndex(containers, tc.getRunTime());
           containers.add(index, tc);
         }
       }
@@ -436,7 +420,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
       while (it.hasNext()) {
         TaskContainer tc = it.next();
         if (! tc.running) {
-          int index = ListUtils.getInsertionEndIndex(containers, tc, true);
+          int index = TaskListUtils.getInsertionEndIndex(containers, tc.getRunTime());
           containers.add(index, tc);
         }
       }
@@ -452,8 +436,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class TaskContainer extends AbstractDelayed 
-                                                implements RunnableContainerInterface {
+  protected abstract class TaskContainer implements DelayedTaskInterface, 
+                                                    RunnableContainerInterface {
     protected final Runnable runnable;
     protected volatile boolean running;
     
@@ -465,6 +449,23 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     @Override
     public Runnable getContainedRunnable() {
       return runnable;
+    }
+
+    /**
+     * Call to see how long the task should be delayed before execution.  While this may return 
+     * either positive or negative numbers, only an accurate number is returned if the task must 
+     * be delayed for execution.  If the task is ready to execute it may return zero even though 
+     * it is past due.  For that reason you can NOT use this to compare two tasks for execution 
+     * order, instead you should use {@link #getRunTime()}.
+     * 
+     * @return delay in milliseconds till task can be run
+     */
+    public long getScheduleDelay() {
+      if (getRunTime() > nowInMillis()) {
+        return getRunTime() - nowInMillis();
+      } else {
+        return 0;
+      }
     }
     
     protected void runTask() {
@@ -497,19 +498,6 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
      */
     protected void runComplete() {
       // nothing by default, override to handle
-    }
-    
-    /**
-     * Call to get the delay till execution in milliseconds.
-     * 
-     * @return number of milliseconds to wait before executing task
-     */
-    protected abstract long getDelayInMillis();
-    
-    @Override
-    public long getDelay(TimeUnit timeUnit) {
-      return timeUnit.convert(getDelayInMillis(), 
-                              TimeUnit.MILLISECONDS);
     }
   }
   
@@ -544,8 +532,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     }
 
     @Override
-    public long getDelayInMillis() {
-      return runTime - nowInMillis();
+    public long getRunTime() {
+      return runTime;
     }
   }
   
@@ -575,32 +563,23 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
     @Override
     public void runComplete() {
       synchronized (scheduledQueue.getModificationLock()) {
-        ClockWrapper.stopForcingUpdate();
-        try {
-          updateNextRunTime();
-          
-          // almost certainly will be the first item in the queue
-          int currentIndex = scheduledQueue.indexOf(this);
-          if (currentIndex < 0) {
-            // task was removed from queue, do not re-insert
-            return;
-          }
-          long nextDelay = getDelayInMillis();
-          if (nextDelay < 0) {
-            nextDelay = 0;
-          }
-          int insertionIndex = ListUtils.getInsertionEndIndex(scheduledQueue, nextDelay, true);
-          
-          scheduledQueue.reposition(currentIndex, insertionIndex);
-        } finally {
-          ClockWrapper.resumeForcingUpdate();
+        updateNextRunTime();
+        
+        // almost certainly will be the first item in the queue
+        int currentIndex = scheduledQueue.indexOf(this);
+        if (currentIndex < 0) {
+          // task was removed from queue, do not re-insert
+          return;
         }
+        int insertionIndex = TaskListUtils.getInsertionEndIndex(scheduledQueue, getRunTime());
+        
+        scheduledQueue.reposition(currentIndex, insertionIndex);
       }
     }
 
     @Override
-    public long getDelayInMillis() {
-      return nextRunTime - nowInMillis();
+    public long getRunTime() {
+      return nextRunTime;
     }
   }
   

@@ -1,56 +1,37 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Random;
-
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.NoThreadScheduler.TaskContainer;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTaskContainerTest {
-  @Test
-  public void compareToTest() {
-    TestContainer tc0 = new TestContainer(0, false);
-    
-    assertEquals(0, tc0.compareTo(tc0));
-    assertEquals(0, tc0.compareTo(new TestContainer(0, false)));
-    
-    assertTrue(tc0.compareTo(new TestContainer(1, false)) < 0);
-    assertTrue(tc0.compareTo(new TestContainer(-1, false)) > 0);
-    
-    Random r = new Random(Clock.lastKnownTimeMillis());
-    List<TestContainer> testList = new ArrayList<TestContainer>(TEST_QTY);
-    for (int i = 0; i < TEST_QTY; i++) {
-      testList.add(new TestContainer(r.nextInt(100), false));
-    }
-    
-    Collections.sort(testList);
-    
-    int lastDelay = Integer.MIN_VALUE;
-    Iterator<TestContainer> it = testList.iterator();
-    while (it.hasNext()) {
-      assertTrue(lastDelay <= (lastDelay = it.next().delay));
-    }
+  private NoThreadScheduler scheduler;
+  
+  @Before
+  public void setup() {
+    scheduler = new NoThreadScheduler();
+  }
+  
+  @After
+  public void cleanup() {
+    scheduler = null;
   }
   
   @Test
   public void getContainedRunnableTest() {
-    TestContainer tc = new TestContainer(0, false);
+    TestContainer tc = new TestContainer(false);
     
     assertTrue(tc.getContainedRunnable() == tc.runnable);
   }
   
   @Test
   public void runTaskTest() {
-    TestContainer tc = new TestContainer(0, false);
+    TestContainer tc = new TestContainer(false);
     
     tc.runTask();
     
@@ -61,7 +42,7 @@ public class NoThreadSchedulerTaskContainerTest {
   
   @Test
   public void runTaskExceptionTest() {
-    TestContainer tc = new TestContainer(0, true);
+    TestContainer tc = new TestContainer(true);
     
     try {
       tc.runTask();
@@ -75,14 +56,11 @@ public class NoThreadSchedulerTaskContainerTest {
   }
   
   private class TestContainer extends TaskContainer {
-    private final int delay;
     private boolean prepareCalled = false;
     private boolean runCompleteCalled = false;
     
-    protected TestContainer(int delay, boolean throwException) {
-      super(throwException ? new TestRuntimeFailureRunnable() : new TestRunnable());
-      
-      this.delay = delay;
+    protected TestContainer(boolean throwException) {
+      scheduler.super(throwException ? new TestRuntimeFailureRunnable() : new TestRunnable());
     }
 
     @Override
@@ -102,8 +80,8 @@ public class NoThreadSchedulerTaskContainerTest {
     }
 
     @Override
-    protected long getDelayInMillis() {
-      return delay;
+    public long getRunTime() {
+      throw new UnsupportedOperationException();
     }
   }
 }
