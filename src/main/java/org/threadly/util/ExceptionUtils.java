@@ -116,10 +116,14 @@ public class ExceptionUtils {
         ueHandler.uncaughtException(currentThread, t);
       }
     } catch (Throwable handlerThrown) {
-      System.err.println("Error handling exception: ");
-      t.printStackTrace();
-      System.err.println("Error thrown when handling exception: ");
-      handlerThrown.printStackTrace();
+      try {
+        System.err.println("Error handling exception: ");
+        t.printStackTrace();
+        System.err.println("Error thrown when handling exception: ");
+        handlerThrown.printStackTrace();
+      } catch (Throwable ignored) {
+        // sigh...I give up
+      }
     }
   }
   

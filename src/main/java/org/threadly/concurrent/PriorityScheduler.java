@@ -1303,7 +1303,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
   protected static class Worker extends AbstractService implements Runnable {
     protected final WorkerPool workerPool;
     protected final Thread thread;
-    protected volatile Runnable nextTask;
+    protected volatile TaskWrapper nextTask;
     
     protected Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;
@@ -1379,7 +1379,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
         blockTillNextTask();
         
         if (nextTask != null) {
-          ExceptionUtils.runRunnable(nextTask);
+          nextTask.runTask();
           nextTask = null;
         }
         // once done handling task
@@ -1399,7 +1399,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class TaskWrapper implements DelayedTaskInterface, Runnable, 
+  protected abstract static class TaskWrapper implements DelayedTaskInterface, 
                                                          RunnableContainerInterface {
     protected final Runnable task;
     protected volatile boolean canceled;
@@ -1410,7 +1410,16 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
     
     /**
-     * Attempts to cancel the task from running (assuming it has not started yet).
+     * Similar to {@link Runnable#run()}, this is invoked to execute the contained task.  One 
+     * critical difference is this implementation should never throw an exception (even 
+     * {@link RuntimeException}'s).  Throwing such an exception would result in the worker thread 
+     * dying (and being leaked from the pool).
+     */
+    public abstract void runTask();
+
+    /**
+     * Attempts to cancel the task from running (assuming it has not started yet).  If the task is 
+     * recurring then future executions will also be avoided.
      */
     public void cancel() {
       canceled = true;
@@ -1478,9 +1487,9 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     }
 
     @Override
-    public void run() {
+    public void runTask() {
       if (! canceled) {
-        task.run();
+        ExceptionUtils.runRunnable(task);
       }
     }
 
@@ -1553,34 +1562,32 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
     protected abstract void updateNextRunTime();
 
     @Override
-    public void run() {
+    public void runTask() {
       if (canceled) {
         return;
       }
-      try {
-        task.run();
-      } finally {
-        if (! canceled) {
-          try {
-            updateNextRunTime();
-            
-            // now that nextRunTime has been set, resort the queue
-            queueSet.reschedule(this);
-            
-            executing = false;
-          } catch (java.util.NoSuchElementException e) {
-            if (canceled) {
-              /* this is a possible condition where shutting down 
-               * the thread pool occurred while rescheduling the item. 
-               * 
-               * Since this is unlikely, we just swallow the exception here.
-               */
-            } else {
-              /* This condition however would not be expected, 
-               * so we should throw the exception.
-               */
-              throw e;
-            }
+      // no need for try/finally due to ExceptionUtils usage
+      ExceptionUtils.runRunnable(task);
+      if (! canceled) {
+        try {
+          updateNextRunTime();
+          
+          // now that nextRunTime has been set, resort the queue
+          queueSet.reschedule(this);
+          
+          executing = false;
+        } catch (java.util.NoSuchElementException e) {
+          if (canceled) {
+            /* this is a possible condition where shutting down 
+             * the thread pool occurred while rescheduling the item. 
+             * 
+             * Since this is unlikely, we just swallow the exception here.
+             */
+          } else {
+            /* This condition however would not be expected, 
+             * so we should ensure it's handled.
+             */
+            ExceptionUtils.handleException(e);
           }
         }
       }
