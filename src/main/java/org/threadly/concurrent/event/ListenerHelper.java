@@ -118,7 +118,9 @@ public class ListenerHelper<T> {
    * @param executor {@link Executor} to call listener on, or {@code null}
    */
   public void addListener(T listener, Executor executor) {
-    ArgumentVerifier.assertNotNull(listener, "listener");
+    if (listener == null) {
+      return;
+    }
     
     boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {

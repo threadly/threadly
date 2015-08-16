@@ -8,7 +8,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.threadly.concurrent.ContainerHelper;
-import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -151,7 +150,9 @@ public class RunnableListenerHelper {
    * @param executor executor listener should run on, or {@code null}
    */
   public void addListener(Runnable listener, Executor executor) {
-    ArgumentVerifier.assertNotNull(listener, "listener");
+    if (listener == null) {
+      return;
+    }
     
     boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {

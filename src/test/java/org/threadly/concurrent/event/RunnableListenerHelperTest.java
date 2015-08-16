@@ -35,6 +35,13 @@ public class RunnableListenerHelperTest {
   }
   
   @Test
+  public void addNullListenerTest() {
+    onceHelper.addListener(null);
+    repeatedHelper.addListener(null);
+    // no exception thrown
+  }
+  
+  @Test
   public void runListenerNoExecutorTest() {
     TestRunnable tr = new TestRunnable();
     onceHelper.runListener(tr, null, true);
