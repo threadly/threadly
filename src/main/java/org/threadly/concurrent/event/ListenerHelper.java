@@ -4,6 +4,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -74,6 +77,22 @@ public class ListenerHelper<T> {
     return (T) Proxy.newProxyInstance(listenerInterface.getClassLoader(), 
                                       new Class<?>[] { listenerInterface }, 
                                       new ListenerCaller());
+  }
+  
+  /**
+   * Return a collection of the currently subscribed listener instances.  This returned collection 
+   * can NOT be modified.
+   * 
+   * @return A non-null collection of currently subscribed listeners
+   */
+  public Collection<T> getSubscribedListeners() {
+    synchronized (listenersLock) {
+      if (listeners == null) {
+        return Collections.emptyList();
+      } else {
+        return Collections.unmodifiableList(new ArrayList<T>(listeners.keySet()));
+      }
+    }
   }
   
   /**

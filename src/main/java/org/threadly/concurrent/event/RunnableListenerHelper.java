@@ -1,5 +1,8 @@
 package org.threadly.concurrent.event;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -39,6 +42,22 @@ public class RunnableListenerHelper {
     this.callOnce = callListenersOnce;
     this.done = new AtomicBoolean(false);
     this.listeners = null;
+  }
+  
+  /**
+   * Return a collection of the currently subscribed listener instances.  This returned collection 
+   * can NOT be modified.
+   * 
+   * @return A non-null collection of currently subscribed listeners
+   */
+  public Collection<Runnable> getSubscribedListeners() {
+    synchronized (listenersLock) {
+      if (listeners == null) {
+        return Collections.emptyList();
+      } else {
+        return Collections.unmodifiableList(new ArrayList<Runnable>(listeners.keySet()));
+      }
+    }
   }
   
   /**

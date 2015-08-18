@@ -35,6 +35,16 @@ public class RunnableListenerHelperTest {
   }
   
   @Test
+  public void getSubscribedListenersTest() {
+    assertTrue(onceHelper.getSubscribedListeners().isEmpty());
+    TestRunnable tr = new TestRunnable();
+    onceHelper.addListener(tr);
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr));
+    onceHelper.removeListener(tr);
+    assertTrue(onceHelper.getSubscribedListeners().isEmpty());
+  }
+  
+  @Test
   public void addNullListenerTest() {
     onceHelper.addListener(null);
     repeatedHelper.addListener(null);

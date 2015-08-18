@@ -38,6 +38,17 @@ public class ListenerHelperTest {
   }
   
   @Test
+  public void getSubscribedListenersTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    assertTrue(lh.getSubscribedListeners().isEmpty());
+    TestImp ti = new TestImp();
+    lh.addListener(ti);
+    assertTrue(lh.getSubscribedListeners().contains(ti));
+    lh.removeListener(ti);
+    assertTrue(lh.getSubscribedListeners().isEmpty());
+  }
+  
+  @Test
   public void addNullListenerTest() {
     makeListenerHelper(TestInterface.class).addListener(null);
     // no exception thrown
