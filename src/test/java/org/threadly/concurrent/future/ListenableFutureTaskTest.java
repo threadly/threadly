@@ -39,12 +39,12 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
     return new ListenableFutureTask<T>(false, task);
   }
   
-  @Test (expected = IllegalArgumentException.class)
-  public void addListenerFail() {
+  @Test
+  public void addNullListenerTest() {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     
     future.addListener(null);
-    fail("Exception should have thrown");
+    // no exception should have been thrown
   }
   
   @Test

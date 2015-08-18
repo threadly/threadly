@@ -38,6 +38,23 @@ public class ListenerHelperTest {
   }
   
   @Test
+  public void getSubscribedListenersTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    assertTrue(lh.getSubscribedListeners().isEmpty());
+    TestImp ti = new TestImp();
+    lh.addListener(ti);
+    assertTrue(lh.getSubscribedListeners().contains(ti));
+    lh.removeListener(ti);
+    assertTrue(lh.getSubscribedListeners().isEmpty());
+  }
+  
+  @Test
+  public void addNullListenerTest() {
+    makeListenerHelper(TestInterface.class).addListener(null);
+    // no exception thrown
+  }
+  
+  @Test
   public void addListenerTest() {
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp();
@@ -90,11 +107,6 @@ public class ListenerHelperTest {
     ch.call().call(secondCallInt, secondCallStr);
     assertEquals(secondCallInt, addedListener.lastInt);
     assertEquals(secondCallStr, addedListener.lastString);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  public void addListenerFail() {
-    makeListenerHelper(TestInterface.class).addListener(null);
   }
   
   @Test

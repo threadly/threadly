@@ -49,6 +49,9 @@ public class DefaultExecutorRunnableListenerHelper extends RunnableListenerHelpe
   
   @Override
   public void addListener(Runnable listener, Executor executor) {
+    if (listener == null) {
+      return;
+    }
     if (executor == null) {
       executor = taskDistributor.getSubmitterForKey(listener);
     }

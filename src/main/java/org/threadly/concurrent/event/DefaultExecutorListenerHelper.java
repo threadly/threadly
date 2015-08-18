@@ -65,6 +65,9 @@ public class DefaultExecutorListenerHelper<T> extends ListenerHelper<T> {
   
   @Override
   public void addListener(T listener, Executor executor) {
+    if (listener == null) {
+      return;
+    }
     if (executor == null) {
       executor = taskDistributor.getSubmitterForKey(listener);
     }

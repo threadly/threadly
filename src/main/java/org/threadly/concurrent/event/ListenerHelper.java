@@ -4,6 +4,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -77,6 +80,22 @@ public class ListenerHelper<T> {
   }
   
   /**
+   * Return a collection of the currently subscribed listener instances.  This returned collection 
+   * can NOT be modified.
+   * 
+   * @return A non-null collection of currently subscribed listeners
+   */
+  public Collection<T> getSubscribedListeners() {
+    synchronized (listenersLock) {
+      if (listeners == null) {
+        return Collections.emptyList();
+      } else {
+        return Collections.unmodifiableList(new ArrayList<T>(listeners.keySet()));
+      }
+    }
+  }
+  
+  /**
    * Calls to notify the subscribed listeners with the given call.  This returns an implementation 
    * of the listener interface, you can then call to the function you wish to have called on the 
    * listeners (of course providing the arguments you want the listeners to be called with).
@@ -118,7 +137,9 @@ public class ListenerHelper<T> {
    * @param executor {@link Executor} to call listener on, or {@code null}
    */
   public void addListener(T listener, Executor executor) {
-    ArgumentVerifier.assertNotNull(listener, "listener");
+    if (listener == null) {
+      return;
+    }
     
     boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
