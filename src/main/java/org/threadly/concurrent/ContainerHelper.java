@@ -7,9 +7,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * Class which is designed to help with determining if a Runnable or Callable is contained at some 
- * point within a chain of {@link CallableContainerInterface} or 
- * {@link RunnableContainerInterface}.
+ * <p>Class which is designed to help with determining if a Runnable or Callable is contained at some 
+ * point within a chain of {@link CallableContainer} or {@link RunnableContainer}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -25,11 +24,11 @@ public class ContainerHelper {
    * @param compareTo Runnable to compare against in search
    * @return {@code true} if collection was modified
    */
-  public static boolean remove(Collection<? extends RunnableContainerInterface> source, 
+  public static boolean remove(Collection<? extends RunnableContainer> source, 
                                Runnable compareTo) {
-    Iterator<? extends RunnableContainerInterface> it = source.iterator();
+    Iterator<? extends RunnableContainer> it = source.iterator();
     while (it.hasNext()) {
-      RunnableContainerInterface rc = it.next();
+      RunnableContainer rc = it.next();
       // we use source.remove() instead of it.remove() for usage with concurrent structures
       if (ContainerHelper.isContained(rc.getContainedRunnable(), compareTo) && source.remove(rc)) {
         return true;
@@ -49,11 +48,11 @@ public class ContainerHelper {
    * @param compareTo Callable to compare against in search
    * @return {@code true} if collection was modified
    */
-  public static boolean remove(Collection<? extends RunnableContainerInterface> source, 
+  public static boolean remove(Collection<? extends RunnableContainer> source, 
                                Callable<?> compareTo) {
-    Iterator<? extends RunnableContainerInterface> it = source.iterator();
+    Iterator<? extends RunnableContainer> it = source.iterator();
     while (it.hasNext()) {
-      RunnableContainerInterface rc = it.next();
+      RunnableContainer rc = it.next();
       // we use source.remove() instead of it.remove() for usage with concurrent structures
       if (ContainerHelper.isContained(rc.getContainedRunnable(), compareTo) && source.remove(rc)) {
         return true;
@@ -77,14 +76,14 @@ public class ContainerHelper {
     }
     
     boolean containedAsRCCI = false;
-    if (startRunnable instanceof RunnableContainerInterface) {
-      RunnableContainerInterface rci = (RunnableContainerInterface)startRunnable;
+    if (startRunnable instanceof RunnableContainer) {
+      RunnableContainer rci = (RunnableContainer)startRunnable;
       containedAsRCCI = isContained(rci, compareTo);
     }
     if (containedAsRCCI) {
       return true;
-    } else if (startRunnable instanceof CallableContainerInterface<?>) {
-      CallableContainerInterface<?> cci = (CallableContainerInterface<?>)startRunnable;
+    } else if (startRunnable instanceof CallableContainer<?>) {
+      CallableContainer<?> cci = (CallableContainer<?>)startRunnable;
       return isContained(cci, compareTo);
     } else {
       return false;
@@ -94,25 +93,24 @@ public class ContainerHelper {
   /**
    * Checks if the compareTo runnable is contained by the provided 
    * {@link RunnableContainerInterface}.  If it's not we check to see if we can continue our 
-   * search by looking for another {@link RunnableContainerInterface}, or a 
-   * {@link CallableContainerInterface}.
+   * search by looking for another {@link RunnableContainer}, or a {@link CallableContainer}.
    * 
    * @param rci Container to check contents of
    * @param compareTo Runnable to compare against
    * @return {@code true} if the runnable is contained at some point within the container
    */
-  private static boolean isContained(RunnableContainerInterface rci, Runnable compareTo) {
+  private static boolean isContained(RunnableContainer rci, Runnable compareTo) {
     while (true) {
       Runnable containedTask = rci.getContainedRunnable();
       if (containedTask != null) {
         if (containedTask.equals(compareTo)) {
           return true;
-        } else if (containedTask instanceof CallableContainerInterface<?> && 
-                   isContained((CallableContainerInterface<?>)containedTask, compareTo)) {
+        } else if (containedTask instanceof CallableContainer<?> && 
+                   isContained((CallableContainer<?>)containedTask, compareTo)) {
           return true;
-        } else if (containedTask instanceof RunnableContainerInterface) {
+        } else if (containedTask instanceof RunnableContainer) {
           // loop again
-          rci = (RunnableContainerInterface)containedTask;
+          rci = (RunnableContainer)containedTask;
         } else {
           return false;
         }
@@ -125,23 +123,22 @@ public class ContainerHelper {
   /**
    * Checks if the compareTo runnable is contained by the provided 
    * {@link CallableContainerInterface}.  If it's not we check to see if we can continue our 
-   * search by looking for another {@link RunnableContainerInterface}, or a 
-   * {@link CallableContainerInterface}.
+   * search by looking for another {@link RunnableContainer}, or a {@link CallableContainer}.
    * 
    * @param cci Container to check contents of
    * @param compareTo Runnable to compare against
    * @return {@code true} if the runnable is contained at some point within the container
    */
-  private static boolean isContained(CallableContainerInterface<?> cci, Runnable compareTo) {
+  private static boolean isContained(CallableContainer<?> cci, Runnable compareTo) {
     while (true) {
       Callable<?> containedTask = cci.getContainedCallable();
       if (containedTask != null) {
-        if (containedTask instanceof RunnableContainerInterface && 
-            isContained((RunnableContainerInterface)containedTask, compareTo)) {
+        if (containedTask instanceof RunnableContainer && 
+            isContained((RunnableContainer)containedTask, compareTo)) {
           return true;
-        } else if (containedTask instanceof CallableContainerInterface<?>) {
+        } else if (containedTask instanceof CallableContainer<?>) {
           // loop again
-          cci = (CallableContainerInterface<?>)containedTask;
+          cci = (CallableContainer<?>)containedTask;
         } else {
           return false;
         }
@@ -163,30 +160,30 @@ public class ContainerHelper {
      * CallableContainerInterface and a RunnableContainerInterface
      */
     boolean isContainedAsCCI = false;
-    if (startRunnable instanceof CallableContainerInterface<?>) {
-      CallableContainerInterface<?> cci = (CallableContainerInterface<?>)startRunnable;
+    if (startRunnable instanceof CallableContainer<?>) {
+      CallableContainer<?> cci = (CallableContainer<?>)startRunnable;
       isContainedAsCCI = isContained(cci, compareTo);
     }
     if (isContainedAsCCI) {
       return true;
-    } else if (startRunnable instanceof RunnableContainerInterface) {
-      RunnableContainerInterface rci = (RunnableContainerInterface)startRunnable;
+    } else if (startRunnable instanceof RunnableContainer) {
+      RunnableContainer rci = (RunnableContainer)startRunnable;
       return isContained(rci, compareTo);
     } else {
       return false;
     }
   }
 
-  private static boolean isContained(RunnableContainerInterface rci, Callable<?> compareTo) {
+  private static boolean isContained(RunnableContainer rci, Callable<?> compareTo) {
     while (true) {
       Runnable containedTask = rci.getContainedRunnable();
       if (containedTask != null) {
-        if (containedTask instanceof CallableContainerInterface<?> && 
-            isContained((CallableContainerInterface<?>)containedTask, compareTo)) {
+        if (containedTask instanceof CallableContainer<?> && 
+            isContained((CallableContainer<?>)containedTask, compareTo)) {
           return true;
-        } else if (containedTask instanceof RunnableContainerInterface) {
+        } else if (containedTask instanceof RunnableContainer) {
           // loop again
-          rci = (RunnableContainerInterface)containedTask;
+          rci = (RunnableContainer)containedTask;
         } else {
           return false;
         }
@@ -199,25 +196,24 @@ public class ContainerHelper {
   /**
    * Checks if the compareTo runnable is contained by the provided 
    * {@link CallableContainerInterface}.  If it's not we check to see if we can continue our 
-   * search by looking for another {@link RunnableContainerInterface}, or a 
-   * {@link CallableContainerInterface}.
+   * search by looking for another {@link RunnableContainer}, or a {@link CallableContainer}.
    * 
    * @param cci Container to check contents of
    * @param compareTo Callable to compare against
    * @return {@code true} if the callable is contained at some point within the container
    */
-  private static boolean isContained(CallableContainerInterface<?> cci, Callable<?> compareTo) {
+  private static boolean isContained(CallableContainer<?> cci, Callable<?> compareTo) {
     while (true) {
       Callable<?> containedTask = cci.getContainedCallable();
       if (containedTask != null) {
         if (containedTask.equals(compareTo)) {
           return true;
-        } else if (containedTask instanceof RunnableContainerInterface && 
-                   isContained((RunnableContainerInterface)containedTask, compareTo)) {
+        } else if (containedTask instanceof RunnableContainer && 
+                   isContained((RunnableContainer)containedTask, compareTo)) {
           return true;
-        } else if (containedTask instanceof CallableContainerInterface<?>) {
+        } else if (containedTask instanceof CallableContainer<?>) {
           // loop again
-          cci = (CallableContainerInterface<?>)containedTask;
+          cci = (CallableContainer<?>)containedTask;
         } else {
           return false;
         }
@@ -235,9 +231,9 @@ public class ContainerHelper {
    * @return A list of runnables which were contained in the source list
    * @since 4.0.0
    */
-  public static List<Runnable> getContainedRunnables(List<? extends RunnableContainerInterface> sourceList) {
+  public static List<Runnable> getContainedRunnables(List<? extends RunnableContainer> sourceList) {
     List<Runnable> result = new ArrayList<Runnable>(sourceList.size());
-    Iterator<? extends RunnableContainerInterface> it = sourceList.iterator();
+    Iterator<? extends RunnableContainer> it = sourceList.iterator();
     while (it.hasNext()) {
       result.add(it.next().getContainedRunnable());
     }

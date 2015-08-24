@@ -10,6 +10,7 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 2.3.0
  */
+@SuppressWarnings("deprecation")
 public class ThrowableSuppressingRunnable implements RunnableContainerInterface, Runnable {
   protected final Runnable task;
   

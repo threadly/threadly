@@ -50,6 +50,7 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
  */
+@SuppressWarnings("deprecation")
 public class PriorityScheduler extends AbstractSubmitterScheduler 
                                implements PrioritySchedulerInterface {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
@@ -1399,7 +1400,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class TaskWrapper implements DelayedTaskInterface, 
+  protected abstract static class TaskWrapper implements DelayedTask, 
                                                          RunnableContainerInterface {
     protected final Runnable task;
     protected volatile boolean canceled;

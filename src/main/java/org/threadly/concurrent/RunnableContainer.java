@@ -5,12 +5,14 @@ package org.threadly.concurrent;
  * implemented in order for the {@link PriorityScheduler} (and others) remove function to work 
  * correctly if that wrapper is ever provided to the thread pool.</p>
  * 
- * @deprecated Please use {@link RunnableContainer}
- * 
  * @author jent - Mike Jensen
- * @since 1.0.0
+ * @since 4.3.0 (since 1.0.0 as RunnableContainerInterface)
  */
-@Deprecated
-public interface RunnableContainerInterface extends RunnableContainer {
-  // nothing to be removed with this deprecated interface
+public interface RunnableContainer {
+  /**
+   * Call to get the contained runnable within the wrapper.
+   * 
+   * @return runnable contained, or {@code null} if none is contained
+   */
+  public Runnable getContainedRunnable();
 }

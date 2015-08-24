@@ -214,7 +214,7 @@ public class PrioritySchedulerWrapperTest {
   }
   
   // TODO - this may be good to move to something like mockito
-  private static class TestPriorityScheduler implements PrioritySchedulerInterface {
+  private static class TestPriorityScheduler implements PrioritySchedulerService {
     private boolean isShutdownCalled = false;
     private boolean executeCalled = false;
     private boolean scheduleCalled = false;

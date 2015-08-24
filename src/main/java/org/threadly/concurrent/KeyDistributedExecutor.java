@@ -266,12 +266,13 @@ public class KeyDistributedExecutor {
   }
   
   /**
-   * Returns a {@link SubmitterExecutorInterface} implementation where all tasks submitted on this 
-   * executor will run on the provided key.
+   * Returns a {@link SubmitterExecutor} implementation where all tasks submitted on this executor 
+   * will run on the provided key.
    * 
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @return executor which will only execute based on the provided key
    */
+  @SuppressWarnings("deprecation")
   public SubmitterExecutorInterface getSubmitterForKey(Object threadKey) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     
@@ -572,6 +573,7 @@ public class KeyDistributedExecutor {
    * @author jent - Mike Jensen
    * @since 2.5.0
    */
+  @SuppressWarnings("deprecation")
   protected class KeySubmitter implements SubmitterExecutorInterface {
     protected final Object threadKey;
     

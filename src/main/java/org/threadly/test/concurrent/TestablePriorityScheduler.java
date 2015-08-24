@@ -18,6 +18,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * @author jent - Mike Jensen
  * @since 3.4.0
  */
+@SuppressWarnings({ "deprecation", "javadoc" })
 public class TestablePriorityScheduler extends TestableScheduler 
                                        implements PrioritySchedulerInterface {
   @Override

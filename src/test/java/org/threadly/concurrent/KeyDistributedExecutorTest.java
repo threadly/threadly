@@ -135,7 +135,7 @@ public class KeyDistributedExecutorTest {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
-        SubmitterExecutorInterface keySubmitter = distributor.getSubmitterForKey(key);
+        SubmitterExecutor keySubmitter = distributor.getSubmitterForKey(key);
         keySubmitter.submit(tdr);
       }
     });

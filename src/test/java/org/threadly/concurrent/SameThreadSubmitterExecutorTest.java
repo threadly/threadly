@@ -92,8 +92,7 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
   
   private static class ExecutorFactory implements SubmitterExecutorFactory {
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return new SameThreadSubmitterExecutor();
     }
 

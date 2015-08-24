@@ -231,19 +231,17 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     }
 
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize,
-                                                              boolean prestartIfAvailable) {
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
+    public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       SingleThreadScheduler sts = new SingleThreadScheduler();
       schedulers.add(sts);
       

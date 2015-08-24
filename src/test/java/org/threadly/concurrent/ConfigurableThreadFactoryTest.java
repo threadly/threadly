@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.StringUtils;
 import org.threadly.util.TestExceptionHandler;
@@ -122,7 +122,7 @@ public class ConfigurableThreadFactoryTest {
     
     assertEquals(teh, ctf.defaultThreadlyExceptionHandler);
     
-    final AtomicReference<ExceptionHandlerInterface> ehi = new AtomicReference<ExceptionHandlerInterface>(null);
+    final AtomicReference<ExceptionHandler> ehi = new AtomicReference<ExceptionHandler>(null);
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunStart() {

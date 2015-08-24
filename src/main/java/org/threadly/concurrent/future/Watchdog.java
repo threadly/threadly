@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.SimpleScheduler;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.util.Clock;
 
@@ -26,7 +26,7 @@ public class Watchdog {
     STATIC_SCHEDULER = new AtomicReference<SingleThreadScheduler>();
   }
   
-  protected static final SimpleSchedulerInterface getStaticScheduler() {
+  protected static final SimpleScheduler getStaticScheduler() {
     SingleThreadScheduler sts = STATIC_SCHEDULER.get();
     if (sts == null) {
       sts = new SingleThreadScheduler();
@@ -39,7 +39,7 @@ public class Watchdog {
     return sts;
   }
   
-  protected final SimpleSchedulerInterface scheduler;
+  protected final SimpleScheduler scheduler;
   protected final long timeoutInMillis;
   protected final boolean sendInterruptToTrackedThreads;
   protected final Runnable checkRunner;
@@ -72,7 +72,7 @@ public class Watchdog {
    * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
    *                                      an interrupt will be sent on timeout
    */
-  public Watchdog(SimpleSchedulerInterface scheduler, long timeoutInMillis, 
+  public Watchdog(SimpleScheduler scheduler, long timeoutInMillis, 
                   boolean sendInterruptOnFutureCancel) {
     this.scheduler = scheduler;
     this.timeoutInMillis = timeoutInMillis;

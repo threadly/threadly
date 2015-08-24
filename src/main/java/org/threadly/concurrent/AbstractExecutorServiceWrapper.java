@@ -30,14 +30,14 @@ import org.threadly.util.ExceptionUtils;
 abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorService {
   private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS = 1000000 * 100;  // 100ms
   
-  protected final SchedulerServiceInterface scheduler;
+  protected final SchedulerService scheduler;
   
   /**
    * Constructs a new wrapper to adhere to the {@link ScheduledExecutorService} interface.
    * 
    * @param scheduler scheduler implementation to rely on
    */
-  public AbstractExecutorServiceWrapper(SchedulerServiceInterface scheduler) {
+  public AbstractExecutorServiceWrapper(SchedulerService scheduler) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     
     this.scheduler = scheduler;
@@ -276,9 +276,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @since 4.2.0
    */
   protected static class DelayedTaskWrapper extends AbstractDelayed {
-    private final DelayedTaskInterface task;
+    private final DelayedTask task;
     
-    public DelayedTaskWrapper(DelayedTaskInterface task) {
+    public DelayedTaskWrapper(DelayedTask task) {
       this.task = task;
     }
 
@@ -298,11 +298,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @author jent - Mike Jensen
    * @since 2.1.0
    */
-  protected static class ThrowableHandlingRecurringRunnable implements RunnableContainerInterface, Runnable {
-    private final SchedulerServiceInterface scheduler;
+  protected static class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
+    private final SchedulerService scheduler;
     private final Runnable task;
     
-    protected ThrowableHandlingRecurringRunnable(SchedulerServiceInterface scheduler, Runnable task) {
+    protected ThrowableHandlingRecurringRunnable(SchedulerService scheduler, Runnable task) {
       this.scheduler = scheduler;
       this.task = task;
     }

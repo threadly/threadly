@@ -20,7 +20,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
-import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
@@ -78,7 +78,7 @@ public class NoThreadSchedulerTest {
     final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
-    int runCount = scheduler.tick(new ExceptionHandlerInterface() {
+    int runCount = scheduler.tick(new ExceptionHandler() {
       @Override
       public void handleException(Throwable thrown) {
         handledException.set(thrown);

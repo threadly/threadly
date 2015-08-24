@@ -7,7 +7,7 @@ import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor} to use 
- * that implementation with the {@link SubmitterSchedulerInterface}.</p>
+ * that implementation with the {@link SubmitterScheduler}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0

@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.SimpleScheduler;
 
 /**
  * <p>A class which handles a collection of  {@link Watchdog} instances.  Because the timeout for 
@@ -18,7 +18,7 @@ import org.threadly.concurrent.SimpleSchedulerInterface;
 public class WatchdogCache {
   protected static final int INSPECTION_INTERVAL_MILLIS = 1000 * 10;
   
-  protected final SimpleSchedulerInterface scheduler;
+  protected final SimpleScheduler scheduler;
   protected final boolean sendInterruptOnFutureCancel;
   protected final ConcurrentMap<Long, Watchdog> cachedDogs;
   protected final Runnable cacheCleaner;
@@ -47,7 +47,7 @@ public class WatchdogCache {
    * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
    *                                      an interrupt will be sent on timeout
    */
-  public WatchdogCache(SimpleSchedulerInterface scheduler, boolean sendInterruptOnFutureCancel) {
+  public WatchdogCache(SimpleScheduler scheduler, boolean sendInterruptOnFutureCancel) {
     this.scheduler = scheduler;
     this.sendInterruptOnFutureCancel = sendInterruptOnFutureCancel;
     cachedDogs = new ConcurrentHashMap<Long, Watchdog>();

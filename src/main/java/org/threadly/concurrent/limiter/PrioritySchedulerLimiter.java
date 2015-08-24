@@ -3,6 +3,7 @@ package org.threadly.concurrent.limiter;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.PrioritySchedulerInterface;
+import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -11,7 +12,7 @@ import org.threadly.util.Clock;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens on a provided 
- * {@link PrioritySchedulerInterface}.  This allows the implementor to have one thread pool for 
+ * {@link PrioritySchedulerService}.  This allows the implementor to have one thread pool for 
  * all their code, and if they want certain sections to have less levels of parallelism 
  * (possibly because those those sections would completely consume the global pool), they can wrap 
  * the executor in this class.</p>
@@ -25,29 +26,30 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
+@SuppressWarnings("deprecation")
 public class PrioritySchedulerLimiter extends SchedulerServiceLimiter 
                                       implements PrioritySchedulerInterface {
-  protected final PrioritySchedulerInterface scheduler;
+  protected final PrioritySchedulerService scheduler;
   
   /**
-   * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
+   * Constructs a new limiter that implements the {@link PrioritySchedulerService}.
    * 
-   * @param scheduler {@link PrioritySchedulerInterface} implementation to submit task executions to.
+   * @param scheduler {@link PrioritySchedulerService} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
-  public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
+  public PrioritySchedulerLimiter(PrioritySchedulerService scheduler, 
                                   int maxConcurrency) {
     this(scheduler, maxConcurrency, null);
   }
   
   /**
-   * Constructs a new limiter that implements the {@link PrioritySchedulerInterface}.
+   * Constructs a new limiter that implements the {@link PrioritySchedulerService}.
    * 
-   * @param scheduler {@link PrioritySchedulerInterface} implementation to submit task executions to.
+   * @param scheduler {@link PrioritySchedulerService} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
    */
-  public PrioritySchedulerLimiter(PrioritySchedulerInterface scheduler, 
+  public PrioritySchedulerLimiter(PrioritySchedulerService scheduler, 
                                   int maxConcurrency, String subPoolName) {
     super(scheduler, maxConcurrency, subPoolName);
     

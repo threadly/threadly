@@ -87,7 +87,7 @@ public class ContainerHelperTest {
   }
   
   private static class TestRunnableContainer extends DoNothingRunnable 
-                                             implements RunnableContainerInterface {
+                                             implements RunnableContainer {
     private final Runnable r;
     
     private TestRunnableContainer(Runnable r) {
@@ -102,7 +102,7 @@ public class ContainerHelperTest {
   
   @SuppressWarnings("rawtypes")
   private static class TestCallableContainer extends DoNothingRunnable 
-                                             implements CallableContainerInterface, Runnable {
+                                             implements CallableContainer, Runnable {
     private final Callable<?> c;
     
     private TestCallableContainer(Callable<?> c) {

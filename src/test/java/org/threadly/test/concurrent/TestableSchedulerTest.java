@@ -19,7 +19,7 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
-import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class TestableSchedulerTest {
@@ -86,7 +86,7 @@ public class TestableSchedulerTest {
     final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
-    int runCount = scheduler.advance(10, new ExceptionHandlerInterface() {
+    int runCount = scheduler.advance(10, new ExceptionHandler() {
       @Override
       public void handleException(Throwable thrown) {
         handledException.set(thrown);
@@ -116,7 +116,7 @@ public class TestableSchedulerTest {
     final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
-    int runCount = scheduler.tick(new ExceptionHandlerInterface() {
+    int runCount = scheduler.tick(new ExceptionHandler() {
       @Override
       public void handleException(Throwable thrown) {
         handledException.set(thrown);

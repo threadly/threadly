@@ -19,8 +19,7 @@ public class KeyDistributedExecutorKeySubmitterTest extends SubmitterExecutorInt
     }
     
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, 
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         executor.prestartAllThreads();

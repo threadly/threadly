@@ -80,7 +80,7 @@ public class ExceptionUtilsTest {
   public void handleExceptionThrowExceptionTest() {
     final RuntimeException thrownException = new RuntimeException();
     // set handler that will throw exception
-    ExceptionUtils.setThreadExceptionHandler(new ExceptionHandlerInterface() {
+    ExceptionUtils.setThreadExceptionHandler(new ExceptionHandler() {
       @Override
       public void handleException(Throwable thrown) {
         throw thrownException;

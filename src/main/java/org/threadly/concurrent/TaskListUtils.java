@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * <p>Counterpart to {@link org.threadly.util.ListUtils} except for use with the 
- * {@link DelayedTaskInterface}.  Eventually this class will be removed when 
+ * {@link DelayedTask}.  Eventually this class will be removed when 
  * {@link org.threadly.util.ListUtils} can be written more generically easily.</p>
  * 
  * @author jent
@@ -22,11 +22,11 @@ class TaskListUtils {
    * @param insertionRunTime Absolute time for insertion
    * @return Index provided runtime should be inserted into
    */
-  protected static int getInsertionEndIndex(List<? extends DelayedTaskInterface> list, 
+  protected static int getInsertionEndIndex(List<? extends DelayedTask> list, 
                                             long insertionRunTime) {
     int searchResult = binarySearch(list, insertionRunTime);
     if (searchResult >= 0) {
-      Iterator<? extends DelayedTaskInterface> it = list.listIterator(searchResult);
+      Iterator<? extends DelayedTask> it = list.listIterator(searchResult);
       while (it.hasNext() && it.next().getRunTime() <= insertionRunTime) {
         searchResult++;
       }
@@ -36,7 +36,7 @@ class TaskListUtils {
     }
   }
   
-  private static int binarySearch(List<? extends DelayedTaskInterface> list, long insertionRunTime) {
+  private static int binarySearch(List<? extends DelayedTask> list, long insertionRunTime) {
     if (list.isEmpty()) {
       return -1;
     }

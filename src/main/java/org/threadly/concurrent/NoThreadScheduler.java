@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
-import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -19,16 +19,16 @@ import org.threadly.util.ExceptionUtils;
  * very similar way.</p>
  * 
  * <p>The tasks in this scheduler are only progressed forward with calls to 
- * {@link #tick(ExceptionHandlerInterface)}.  Since it is running on the calling thread, calls to 
+ * {@link #tick(ExceptionHandler)}.  Since it is running on the calling thread, calls to 
  * {@code Object.wait()} and {@code Thread.sleep()} from sub tasks will block (possibly forever).  
- * The call to {@link #tick(ExceptionHandlerInterface)} will not unblock till there is no more 
- * work for the scheduler to currently handle.</p>
+ * The call to {@link #tick(ExceptionHandler)} will not unblock till there is no more work for the 
+ * scheduler to currently handle.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
 public class NoThreadScheduler extends AbstractSubmitterScheduler 
-                               implements SchedulerServiceInterface {
+                               implements SchedulerService {
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
   
@@ -61,11 +61,11 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Call to cancel current or the next tick call.  If currently in a 
-   * {@link #tick(ExceptionHandlerInterface)} call (weather blocking waiting for tasks, or 
-   * currently running tasks), this will call the {@link #tick(ExceptionHandlerInterface)} to 
-   * return.  If a task is currently running it will finish the current task before returning.  If 
-   * not currently in a {@link #tick(ExceptionHandlerInterface)} call, the next tick call will 
-   * return immediately without running anything.
+   * {@link #tick(ExceptionHandler)} call (weather blocking waiting for tasks, or currently running 
+   * tasks), this will call the {@link #tick(ExceptionHandler)} to return.  If a task is currently 
+   * running it will finish the current task before returning.  If not currently in a 
+   * {@link #tick(ExceptionHandler)} call, the next tick call will return immediately without 
+   * running anything.
    */
   public void cancelTick() {
     tickCanceled = true;
@@ -76,20 +76,19 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   /**
    * Invoking this will run any tasks which are ready to be run.  This will block as it runs as 
    * many scheduled or waiting tasks as possible.  It is CRITICAL that only one thread at a time 
-   * calls the {@link #tick(ExceptionHandlerInterface)} OR 
-   * {@link #blockingTick(ExceptionHandlerInterface)}.  While this class is in general thread 
-   * safe, if multiple threads invoke either function at the same time, it is possible a given 
-   * task may run more than once.  In order to maintain high performance, threadly does not guard 
-   * against this condition.
+   * calls the {@link #tick(ExceptionHandler)} OR {@link #blockingTick(ExceptionHandler)}.  While 
+   * this class is in general thread safe, if multiple threads invoke either function at the same 
+   * time, it is possible a given task may run more than once.  In order to maintain high 
+   * performance, threadly does not guard against this condition.
    * 
-   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
-   * tasks throw an exception, this will be called to communicate the exception.  This allows you 
-   * to ensure that you get a returned task count (meaning if provided, no exceptions will be 
-   * thrown from this invocation).  If {@code null} is provided for the exception handler, than 
-   * any tasks which throw a {@link RuntimeException}, will throw out of this invocation.
+   * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
+   * an exception, this will be called to communicate the exception.  This allows you to ensure 
+   * that you get a returned task count (meaning if provided, no exceptions will be thrown from 
+   * this invocation).  If {@code null} is provided for the exception handler, than any tasks 
+   * which throw a {@link RuntimeException}, will throw out of this invocation.
    * 
-   * This call is NOT thread safe, calling {@link #tick(ExceptionHandlerInterface)} or 
-   * {@link #blockingTick(ExceptionHandlerInterface)} in parallel could cause the same task to be 
+   * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
+   * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
    * run multiple times in parallel.
    * 
    * @since 3.2.0
@@ -98,7 +97,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run during this tick invocation
    */
-  public int tick(ExceptionHandlerInterface exceptionHandler) {
+  public int tick(ExceptionHandler exceptionHandler) {
     return tick(exceptionHandler, true);
   }
   
@@ -113,7 +112,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    *                                      not, otherwise cancelTick will only be reset if tasks ran 
    * @return quantity of tasks run during this tick invocation
    */
-  private int tick(ExceptionHandlerInterface exceptionHandler, boolean resetCancelTickIfNoTasksRan) {
+  private int tick(ExceptionHandler exceptionHandler, boolean resetCancelTickIfNoTasksRan) {
     int tasks = 0;
     TaskContainer nextTask;
     while ((nextTask = getNextTask(true)) != null && ! tickCanceled) {
@@ -140,23 +139,23 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * This is similar to {@link #tick(ExceptionHandlerInterface)}, except that it will block until 
-   * there are tasks ready to run, or until {@link #cancelTick()} is invoked.  
+   * This is similar to {@link #tick(ExceptionHandler)}, except that it will block until there are 
+   * tasks ready to run, or until {@link #cancelTick()} is invoked.  
    * 
    * Once there are tasks ready to run, this will continue to block as it runs as many tasks that 
    * are ready to run.  
    * 
-   * It is CRITICAL that only one thread at a time calls the 
-   * {@link #tick(ExceptionHandlerInterface)} OR {@link #blockingTick(ExceptionHandlerInterface)}.  
+   * It is CRITICAL that only one thread at a time calls the {@link #tick(ExceptionHandler)} OR 
+   * {@link #blockingTick(ExceptionHandler)}.  
    * 
-   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
-   * tasks throw an exception, this will be called to communicate the exception.  This allows you 
-   * to ensure that you get a returned task count (meaning if provided, no exceptions will be 
-   * thrown from this invocation).  If {@code null} is provided for the exception handler, than 
-   * any tasks which throw a {@link RuntimeException}, will throw out of this invocation.
+   * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
+   * an exception, this will be called to communicate the exception.  This allows you to ensure 
+   * that you get a returned task count (meaning if provided, no exceptions will be thrown from 
+   * this invocation).  If {@code null} is provided for the exception handler, than any tasks 
+   * which throw a {@link RuntimeException}, will throw out of this invocation.
    * 
-   * This call is NOT thread safe, calling {@link #tick(ExceptionHandlerInterface)} or 
-   * {@link #blockingTick(ExceptionHandlerInterface)} in parallel could cause the same task to be 
+   * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
+   * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
    * run multiple times in parallel.
    * 
    * @since 4.0.0
@@ -166,7 +165,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return quantity of tasks run during this tick invocation
    * @throws InterruptedException thrown if thread is interrupted waiting for task to run
    */
-  public int blockingTick(ExceptionHandlerInterface exceptionHandler) throws InterruptedException {
+  public int blockingTick(ExceptionHandler exceptionHandler) throws InterruptedException {
     int initialTickResult = tick(exceptionHandler, false);
     if (initialTickResult == 0) {
       currentlyBlocking = true;
@@ -346,14 +345,13 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Checks if there are tasks ready to be run on the scheduler.  Generally this is called from 
-   * the same thread that would call {@link #tick(ExceptionHandlerInterface)} (but does not have 
-   * to be).  If {@link #tick(ExceptionHandlerInterface)} is not currently being called, this call 
-   * indicates if the next {@link #tick(ExceptionHandlerInterface)} will have at least one task to 
-   * run.  If {@link #tick(ExceptionHandlerInterface)} is currently being invoked, this call will 
-   * do a best attempt to indicate if there is at least one more task to run (not including the 
-   * task which may currently be running).  It's a best attempt as it will try not to block the 
-   * thread invoking {@link #tick(ExceptionHandlerInterface)} to prevent it from accepting 
-   * additional work.
+   * the same thread that would call {@link #tick(ExceptionHandler)} (but does not have to be).  
+   * If {@link #tick(ExceptionHandler)} is not currently being called, this call indicates if the 
+   * next {@link #tick(ExceptionHandler)} will have at least one task to run.  If 
+   * {@link #tick(ExceptionHandler)} is currently being invoked, this call will do a best attempt 
+   * to indicate if there is at least one more task to run (not including the task which may 
+   * currently be running).  It's a best attempt as it will try not to block the thread invoking 
+   * {@link #tick(ExceptionHandler)} to prevent it from accepting additional work.
    *  
    * @return {@code true} if there are task waiting to run
    */
@@ -391,8 +389,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   
   /**
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
-   * {@link #tick(ExceptionHandlerInterface)} is being called.  But will avoid additional tasks 
-   * from being run on the current {@link #tick(ExceptionHandlerInterface)} call.  
+   * {@link #tick(ExceptionHandler)} is being called.  But will avoid additional tasks from being 
+   * run on the current {@link #tick(ExceptionHandler)} call.  
    * 
    * If tasks are added concurrently during this invocation they may or may not be removed.
    * 
@@ -436,8 +434,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract class TaskContainer implements DelayedTaskInterface, 
-                                                    RunnableContainerInterface {
+  protected abstract class TaskContainer implements DelayedTask, RunnableContainer {
     protected final Runnable runnable;
     protected volatile boolean running;
     

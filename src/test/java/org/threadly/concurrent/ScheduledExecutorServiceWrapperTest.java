@@ -20,14 +20,12 @@ public class ScheduledExecutorServiceWrapperTest extends SubmitterSchedulerInter
     }
 
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSubmitterScheduler(poolSize, prestartIfAvailable);
     }
     
     @Override
-    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
-                                                              boolean prestartIfAvailable) {
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(poolSize);
       if (prestartIfAvailable) {
         executor.prestartAllCoreThreads();

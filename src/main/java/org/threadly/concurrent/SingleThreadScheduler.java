@@ -12,13 +12,14 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A simple and light weight implementation of the {@link SchedulerServiceInterface}.  This is 
- * designed to be a lighter weight option to the {@link PriorityScheduler}, for when multiple 
- * threads are either not needed, or not desired.<p>
+ * <p>A simple and light weight implementation of the {@link SchedulerService}.  This is designed 
+ * to be a lighter weight option to the {@link PriorityScheduler}, for when multiple threads are 
+ * either not needed, or not desired.<p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
+@SuppressWarnings("deprecation")
 public class SingleThreadScheduler extends AbstractSubmitterScheduler
                                    implements SchedulerServiceInterface {
   protected final ThreadFactory threadFactory;

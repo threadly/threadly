@@ -6,7 +6,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
-import org.threadly.concurrent.RunnableContainerInterface;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.StringUtils;
@@ -26,6 +26,7 @@ import org.threadly.util.StringUtils;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
+@SuppressWarnings("deprecation")
 public class ExecutorLimiter extends AbstractSubmitterExecutor
                              implements SubmitterExecutorInterface {
   protected final Executor executor;
@@ -180,8 +181,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected class LimiterRunnableWrapper implements Runnable, 
-                                                    RunnableContainerInterface {
+  protected class LimiterRunnableWrapper implements Runnable, RunnableContainer {
     protected final Executor executor;
     protected final Runnable runnable;
     

@@ -6,7 +6,7 @@ import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>A simple wrapper class for {@link Executor} implementations to provide 
- * {@link SubmitterExecutorInterface} capabilities.</p>
+ * {@link SubmitterExecutor} capabilities.</p>
  * 
  * <p>In addition this implementation returns 
  * {@link org.threadly.concurrent.future.ListenableFuture} future implementations, making it an 

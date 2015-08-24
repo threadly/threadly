@@ -7,16 +7,16 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Since the conversion to a {@link SubmitterExecutorInterface} from an executor is often the 
- * same (just using the {@link ListenableFutureTask} to wrap the task).  This class provides an 
- * easy way to create a {@link SubmitterExecutorInterface}.  Take a look at 
- * {@link ExecutorWrapper} for an easy example of how this is used.  In general this wont be 
- * useful outside of Threadly developers, but must be a public interface since it is used in 
- * sub-packages.</p>
+ * <p>Since the conversion to a {@link SubmitterExecutor} from an executor is often the same (just 
+ * using the {@link ListenableFutureTask} to wrap the task).  This class provides an easy way to 
+ * create a {@link SubmitterExecutor}.  Take a look at {@link ExecutorWrapper} for an easy example 
+ * of how this is used.  In general this wont be useful outside of Threadly developers, but must 
+ * be a public interface since it is used in sub-packages.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.3.0
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractSubmitterExecutor implements SubmitterExecutorInterface {
   /**
    * Should execute the provided task, or provide the task to a given executor.  All error 

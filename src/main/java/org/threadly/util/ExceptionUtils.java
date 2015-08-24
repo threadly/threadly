@@ -13,13 +13,13 @@ import java.lang.Thread.UncaughtExceptionHandler;
 public class ExceptionUtils {
   private static final short INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE = 16;
   private static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 64;
-  private static final ThreadLocal<ExceptionHandlerInterface> THREAD_LOCAL_EXCEPTION_HANDLER;
-  private static final InheritableThreadLocal<ExceptionHandlerInterface> INHERITED_EXCEPTION_HANDLER;
-  private static volatile ExceptionHandlerInterface defaultExceptionHandler = null;
+  private static final ThreadLocal<ExceptionHandler> THREAD_LOCAL_EXCEPTION_HANDLER;
+  private static final InheritableThreadLocal<ExceptionHandler> INHERITED_EXCEPTION_HANDLER;
+  private static volatile ExceptionHandler defaultExceptionHandler = null;
   
   static {
-    THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<ExceptionHandlerInterface>();
-    INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<ExceptionHandlerInterface>();
+    THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<ExceptionHandler>();
+    INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<ExceptionHandler>();
   }
   
   private ExceptionUtils() {
@@ -27,54 +27,72 @@ public class ExceptionUtils {
   }
   
   /**
-   * Sets the {@link ExceptionHandlerInterface} for this thread.  This exception handler will be 
+   * Sets the {@link ExceptionHandler} for this thread.  This exception handler will be 
    * called if this thread calls to {@link ExceptionUtils#handleException(Throwable)}.
    * 
    * @param exceptionHandler Exception handler instance, or {@code null} to remove any handler
    */
-  public static void setThreadExceptionHandler(ExceptionHandlerInterface exceptionHandler) {
+  public static void setThreadExceptionHandler(ExceptionHandler exceptionHandler) {
     THREAD_LOCAL_EXCEPTION_HANDLER.set(exceptionHandler);
   }
   
   /**
-   * Sets the {@link ExceptionHandlerInterface} for this thread, and any threads that spawn off of 
-   * this thread.  If this thread, or any children threads (that do not override their 
-   * {@link ExceptionHandlerInterface}), calls {@link ExceptionUtils#handleException(Throwable)}, 
+   * Sets the {@link ExceptionHandler} for this thread, and any threads that spawn off of this 
+   * thread.  If this thread, or any children threads (that do not override their 
+   * {@link ExceptionHandler}), calls {@link ExceptionUtils#handleException(Throwable)}, 
    * the provided interface will be called.
    * 
    * @param exceptionHandler Exception handler instance, or {@code null} to remove any handler
    */
-  public static void setInheritableExceptionHandler(ExceptionHandlerInterface exceptionHandler) {
+  public static void setInheritableExceptionHandler(ExceptionHandler exceptionHandler) {
     INHERITED_EXCEPTION_HANDLER.set(exceptionHandler);
   }
   
   /**
-   * Sets the default {@link ExceptionHandlerInterface} to be used by all threads.  Assuming 
-   * a threads local, or inheritable {@link ExceptionHandlerInterface} has not been set, this 
-   * default instance will be relied on.
+   * Sets the default {@link ExceptionHandler} to be used by all threads.  Assuming a threads 
+   * local, or inheritable {@link ExceptionHandler} has not been set, this default instance will 
+   * be relied on.
    * 
    * @param exceptionHandler Exception handler instance, or {@code null} to remove any handler
    */
-  public static void setDefaultExceptionHandler(ExceptionHandlerInterface exceptionHandler) {
+  public static void setDefaultExceptionHandler(ExceptionHandler exceptionHandler) {
     defaultExceptionHandler = exceptionHandler;
   }
   
   /**
-   * Gets the set {@link ExceptionHandlerInterface} if one is set, or null if none are set.  This 
+   * Gets the set {@link ExceptionHandler} if one is set, or null if none are set.  This 
    * prioritizes to the threads locally set handler, with the second priority being an inherited 
    * handler, with the final option being the default handler.  If none of those are set, a 
    * {@code null} is returned.
    * 
    * @return Handling instance for this thread, or {@code null} if none are available
    */
+  @SuppressWarnings("deprecation")
   public static ExceptionHandlerInterface getExceptionHandler() {
-    ExceptionHandlerInterface ehi = THREAD_LOCAL_EXCEPTION_HANDLER.get();
-    if (ehi != null) {
-      return ehi;
+    final ExceptionHandler eh = getInternalExceptionHandler();
+    if (eh == null) {
+      return null;
+    } else if (eh instanceof ExceptionHandlerInterface) {
+      return (ExceptionHandlerInterface)eh;
+    } else {
+      return new ExceptionHandlerInterface() {
+        @Override
+        public void handleException(Throwable thrown) {
+          eh.handleException(thrown);
+        }
+      };
     }
-    ehi = INHERITED_EXCEPTION_HANDLER.get();
-    if (ehi != null) {
-      return ehi;
+  }
+  
+  // TODO - remove once ExceptionHandlerInterface is removed
+  private static ExceptionHandler getInternalExceptionHandler() {
+    ExceptionHandler eh = THREAD_LOCAL_EXCEPTION_HANDLER.get();
+    if (eh != null) {
+      return eh;
+    }
+    eh = INHERITED_EXCEPTION_HANDLER.get();
+    if (eh != null) {
+      return eh;
     }
     return defaultExceptionHandler;
   }
@@ -107,7 +125,7 @@ public class ExceptionUtils {
     }
     
     try {
-      ExceptionHandlerInterface ehi = getExceptionHandler();
+      ExceptionHandler ehi = getExceptionHandler();
       if (ehi != null) {
         ehi.handleException(t);
       } else {
