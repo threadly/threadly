@@ -927,9 +927,18 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
           } else if (nextLowPriorityTask.canExecute()) {
             return nextLowPriorityTask;
           }
+        } else if (nextHighPriorityTask.getRunTime() <= nextLowPriorityTask.getRunTime()) {
+          // through cheap check we can see the high priority has been waiting longer
+          long nextTaskDelay = nextHighPriorityTask.getScheduleDelay();
+          if (nextTaskDelay > 0) {
+            LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
+          } else if (nextHighPriorityTask.canExecute()) {
+            return nextHighPriorityTask;
+          }
         } else {
           // both tasks are available, so see which one makes sense to run
           long now = Clock.accurateForwardProgressingMillis();
+          // at this point we know nextHighDelay > nextLowDelay due to check above
           long nextHighDelay = nextHighPriorityTask.getRunTime() - now;
           long nextLowDelay = nextLowPriorityTask.getRunTime() - now;
           if (nextHighDelay <= 0) {
@@ -937,7 +946,7 @@ public class PriorityScheduler extends AbstractSubmitterScheduler
              * if it has been waiting longer than the high, and if the low priority has been waiting at 
              * least the max wait time...otherwise we favor the high priority task
              */
-            if (nextHighDelay > nextLowDelay && nextLowDelay < maxWaitForLowPriorityInMs * -1) {
+            if (nextLowDelay < maxWaitForLowPriorityInMs * -1) {
               if (nextLowPriorityTask.canExecute()) {
                 return nextLowPriorityTask;
               }
