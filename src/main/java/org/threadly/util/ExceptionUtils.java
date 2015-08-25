@@ -58,10 +58,24 @@ public class ExceptionUtils {
   public static void setDefaultExceptionHandler(ExceptionHandler exceptionHandler) {
     defaultExceptionHandler = exceptionHandler;
   }
+
+  /**
+   * Gets the thread local {@link ExceptionHandler} if one is set, or {@code null} if none 
+   * is set.  Since {@link #getExceptionHandler()} prioritizes to the thread local handler, this can 
+   * be used to get a reference to the current handler before changing the thread local handler to 
+   * ensure that {@link #getExceptionHandler()} (and down stream use like 
+   * {@link #handleException(Throwable)}) invoke a handler of your choosing.  Once done you can then 
+   * choose to reset the original handler with the one returned from this invocation.
+   * 
+   * @return Thread local ExceptionHandler, or {@code null} if none is set
+   */
+  public static ExceptionHandler getThreadLocalExceptionHandler() {
+    return THREAD_LOCAL_EXCEPTION_HANDLER.get();
+  }
   
   /**
-   * Gets the set {@link ExceptionHandler} if one is set, or null if none are set.  This 
-   * prioritizes to the threads locally set handler, with the second priority being an inherited 
+   * Gets the set {@link ExceptionHandler} if one is set, or {@code null} if none is set.  
+   * This prioritizes to the threads locally set handler, with the second priority being an inherited 
    * handler, with the final option being the default handler.  If none of those are set, a 
    * {@code null} is returned.
    * 
