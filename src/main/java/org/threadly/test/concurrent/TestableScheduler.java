@@ -25,6 +25,7 @@ import org.threadly.util.ExceptionHandler;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
+// TODO - make this be a PriorityScheduler, and deprecate TestablePriorityScheduler
 @SuppressWarnings("deprecation")
 public class TestableScheduler extends AbstractSubmitterScheduler 
                                implements SchedulerServiceInterface {
@@ -241,7 +242,7 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    */
   private class InternalScheduler extends NoThreadScheduler {
     @Override
-    protected long nowInMillis() {
+    protected long nowInMillis(boolean accurate) {
       return nowInMillis;
     }
   }

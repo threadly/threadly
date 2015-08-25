@@ -46,6 +46,37 @@ public class ExceptionUtilsTest {
     assertTrue(exceptionHandler.getLastThrowable() == failure);
   }
   
+  @Test
+  public void getThreadLocalExceptionHandlerTest() {
+    ExceptionUtils.setDefaultExceptionHandler(new TestExceptionHandler());
+    ExceptionUtils.setInheritableExceptionHandler(new TestExceptionHandler());
+    assertNull(ExceptionUtils.getThreadLocalExceptionHandler());
+    
+    TestExceptionHandler exceptionHandler = new TestExceptionHandler();
+    ExceptionUtils.setThreadExceptionHandler(exceptionHandler);
+    
+    assertTrue(exceptionHandler == ExceptionUtils.getThreadLocalExceptionHandler());
+  }
+  
+  @Test
+  public void getThreadExceptionHandlerTest() {
+    TestExceptionHandler defaultExceptionHandler = new TestExceptionHandler();
+    TestExceptionHandler inheritableExceptionHandler = new TestExceptionHandler();
+    TestExceptionHandler threadExceptionHandler = new TestExceptionHandler();
+    
+    assertNull(ExceptionUtils.getExceptionHandler());
+    
+    
+    ExceptionUtils.setDefaultExceptionHandler(defaultExceptionHandler);
+    assertTrue(defaultExceptionHandler == ExceptionUtils.getExceptionHandler());
+    
+    ExceptionUtils.setInheritableExceptionHandler(inheritableExceptionHandler);
+    assertTrue(inheritableExceptionHandler == ExceptionUtils.getExceptionHandler());
+    
+    ExceptionUtils.setThreadExceptionHandler(threadExceptionHandler);
+    assertTrue(threadExceptionHandler == ExceptionUtils.getExceptionHandler());
+  }
+  
   @SuppressWarnings("resource")
   @Test
   public void handleExceptionWithoutUncaughtExceptionHandler() {
