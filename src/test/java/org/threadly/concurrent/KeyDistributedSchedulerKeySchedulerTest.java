@@ -45,14 +45,12 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
     }
 
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSubmitterScheduler(poolSize, prestartIfAvailable);
     }
     
     @Override
-    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
-                                                              boolean prestartIfAvailable) {
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler scheduler = new StrictPriorityScheduler(poolSize);
       executors.add(scheduler);
       if (prestartIfAvailable) {

@@ -46,7 +46,7 @@ public class ExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
     }
     
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         executor.prestartAllThreads();

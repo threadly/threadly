@@ -539,19 +539,17 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     }
 
     @Override
-    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize,
-                                                              boolean prestartIfAvailable) {
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
+    public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler result = makePriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         result.prestartAllThreads();

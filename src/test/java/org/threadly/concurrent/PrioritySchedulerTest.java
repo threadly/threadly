@@ -93,7 +93,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     TaskPriority newPriority = TaskPriority.High;
     PriorityScheduler scheduler = factory.makePriorityScheduler(1, originalPriority, 1000);
     assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
-    PrioritySchedulerInterface newScheduler = scheduler.makeWithDefaultPriority(newPriority);
+    PrioritySchedulerService newScheduler = scheduler.makeWithDefaultPriority(newPriority);
     try {
       assertEquals(newPriority, newScheduler.getDefaultPriority());
     } finally {
@@ -335,7 +335,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     PriorityScheduler scheduler = factory.makePriorityScheduler(10);
     try {
-      PrioritySchedulerInterface subPool = scheduler.makeSubPool(2);
+      PrioritySchedulerService subPool = scheduler.makeSubPool(2);
       assertNotNull(subPool);
       assertTrue(subPool instanceof PrioritySchedulerLimiter);  // if true, test cases are covered under PrioritySchedulerLimiter unit cases
     } finally {
@@ -429,7 +429,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.executeTest();
 
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
+      PrioritySchedulerService scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -452,7 +452,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.submitRunnableTest();
       
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
+      PrioritySchedulerService scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -475,7 +475,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.submitRunnableWithResultTest();
 
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
+      PrioritySchedulerService scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
@@ -498,7 +498,7 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     try {
       super.submitCallableTest();
 
-      PrioritySchedulerInterface scheduler = priorityFactory.makePriorityScheduler(2);
+      PrioritySchedulerService scheduler = priorityFactory.makePriorityScheduler(2);
       
       TestCallable tc1 = new TestCallable(0);
       TestCallable tc2 = new TestCallable(0);
@@ -859,19 +859,17 @@ public class PrioritySchedulerTest extends SchedulerServiceInterfaceTest {
     }
 
     @Override
-    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize,
-                                                              boolean prestartIfAvailable) {
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SchedulerServiceInterface makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
+    public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler result = makePriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         result.prestartAllThreads();

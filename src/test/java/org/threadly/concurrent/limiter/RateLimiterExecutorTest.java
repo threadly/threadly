@@ -16,7 +16,7 @@ import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
-import org.threadly.concurrent.SubmitterExecutorInterface;
+import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -184,8 +184,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     private final List<PriorityScheduler> executors = new LinkedList<PriorityScheduler>();
 
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         executor.prestartAllThreads();

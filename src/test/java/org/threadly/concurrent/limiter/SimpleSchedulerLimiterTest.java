@@ -9,8 +9,8 @@ import java.util.List;
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
-import org.threadly.concurrent.SubmitterExecutorInterface;
-import org.threadly.concurrent.SubmitterSchedulerInterface;
+import org.threadly.concurrent.SubmitterExecutor;
+import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 
 @SuppressWarnings("javadoc")
@@ -62,14 +62,12 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
     }
 
     @Override
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize,
-                                                            boolean prestartIfAvailable) {
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSubmitterScheduler(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize,
-                                                              boolean prestartIfAvailable) {
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         executor.prestartAllThreads();

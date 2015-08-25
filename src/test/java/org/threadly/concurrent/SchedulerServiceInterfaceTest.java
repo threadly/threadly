@@ -22,7 +22,7 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
   public void removeRunnableTest() {
     SchedulerServiceFactory factory = getSchedulerServiceFactory();
     
-    SchedulerServiceInterface scheduler = factory.makeSchedulerService(1, false);
+    SchedulerService scheduler = factory.makeSchedulerService(1, false);
     BlockingTestRunnable btr1 = new BlockingTestRunnable();
     BlockingTestRunnable btr2 = new BlockingTestRunnable();
     try {
@@ -74,7 +74,7 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
   public void removeCallableTest() {
     SchedulerServiceFactory factory = getSchedulerServiceFactory();
     
-    SchedulerServiceInterface scheduler = factory.makeSchedulerService(1, false);
+    SchedulerService scheduler = factory.makeSchedulerService(1, false);
     BlockingTestRunnable btr1 = new BlockingTestRunnable();
     BlockingTestRunnable btr2 = new BlockingTestRunnable();
     try {
@@ -103,7 +103,6 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
   }
   
   public interface SchedulerServiceFactory extends SubmitterSchedulerFactory {
-    public SchedulerServiceInterface makeSchedulerService(int poolSize, 
-                                                          boolean prestartIfAvailable);
+    public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable);
   }
 }

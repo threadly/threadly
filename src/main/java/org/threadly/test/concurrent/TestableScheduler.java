@@ -7,7 +7,7 @@ import org.threadly.concurrent.AbstractSubmitterScheduler;
 import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.concurrent.SchedulerServiceInterface;
 import org.threadly.util.Clock;
-import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionHandler;
 
 /**
  * <p>This differs from {@link org.threadly.concurrent.NoThreadScheduler} in that time is ONLY 
@@ -25,6 +25,7 @@ import org.threadly.util.ExceptionHandlerInterface;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
+@SuppressWarnings("deprecation")
 public class TestableScheduler extends AbstractSubmitterScheduler 
                                implements SchedulerServiceInterface {
   private final InternalScheduler scheduler;
@@ -95,12 +96,12 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    * Where tick accepts an absolute time, this accepts an amount of time to advance forward.  That 
    * way the user does not have to track the current time.  
    * 
-   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
-   * tasks throw an exception, this will be called to inform them of the exception.  This allows 
-   * you to ensure that you get a returned task count (meaning if provided, no exceptions except 
-   * a possible {@link InterruptedException} can be thrown).  If null is provided for the 
-   * exception handler, than any tasks which throw a {@link RuntimeException}, will throw out of 
-   * this invocation.
+   * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
+   * an exception, this will be called to inform them of the exception.  This allows you to ensure 
+   * that you get a returned task count (meaning if provided, no exceptions except a possible 
+   * {@link InterruptedException} can be thrown).  If {@code null} is provided for the exception 
+   * handler, than any tasks which throw a {@link RuntimeException}, will throw out of this 
+   * invocation.
    * 
    * @since 3.2.0
    * 
@@ -109,7 +110,7 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run during this tick call
    */
-  public int advance(long timeInMillis, ExceptionHandlerInterface exceptionHandler) {
+  public int advance(long timeInMillis, ExceptionHandler exceptionHandler) {
     return tick(nowInMillis + timeInMillis, exceptionHandler);
   }
   
@@ -131,12 +132,12 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
    * waiting tasks as possible.  This call will NOT block if no task are currently ready to run.  
    * 
-   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
-   * tasks throw an exception, this will be called to inform them of the exception.  This allows 
-   * you to ensure that you get a returned task count (meaning if provided, no exceptions except 
-   * a possible {@link InterruptedException} can be thrown).  If null is provided for the 
-   * exception handler, than any tasks which throw a {@link RuntimeException}, will throw out of 
-   * this invocation.
+   * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
+   * an exception, this will be called to inform them of the exception.  This allows you to ensure 
+   * that you get a returned task count (meaning if provided, no exceptions except a possible 
+   * {@link InterruptedException} can be thrown).  If {@code null} is provided for the exception 
+   * handler, than any tasks which throw a {@link RuntimeException}, will throw out of this 
+   * invocation.
    * 
    * @since 3.2.0
    * 
@@ -144,7 +145,7 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run during this tick call
    */
-  public int tick(ExceptionHandlerInterface exceptionHandler) {
+  public int tick(ExceptionHandler exceptionHandler) {
     long currentRealTime = Clock.accurateTimeMillis();
     if (nowInMillis > currentRealTime) {
       return tick(nowInMillis, exceptionHandler);
@@ -177,12 +178,12 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    * providing a possible time in the future (to execute future tasks).  This call will NOT block 
    * if no task are currently ready to run.  
    * 
-   * This call allows you to specify an {@link ExceptionHandlerInterface}.  If provided, if any 
-   * tasks throw an exception, this will be called to inform them of the exception.  This allows 
-   * you to ensure that you get a returned task count (meaning if provided, no exceptions except 
-   * a possible {@link InterruptedException} can be thrown).  If null is provided for the 
-   * exception handler, than any tasks which throw a {@link RuntimeException}, will throw out of 
-   * this invocation.
+   * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
+   * an exception, this will be called to inform them of the exception.  This allows you to ensure 
+   * that you get a returned task count (meaning if provided, no exceptions except a possible 
+   * {@link InterruptedException} can be thrown).  If {@code null} is provided for the exception 
+   * handler, than any tasks which throw a {@link RuntimeException}, will throw out of this 
+   * invocation.
    * 
    * This call accepts the absolute time in milliseconds.  If you want to advance the scheduler a 
    * specific amount of time forward, look at the "advance" call.
@@ -194,7 +195,7 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run in this tick call
    */
-  public int tick(long currentTime, ExceptionHandlerInterface exceptionHandler) {
+  public int tick(long currentTime, ExceptionHandler exceptionHandler) {
     if (nowInMillis > currentTime) {
       throw new IllegalArgumentException("Time can not go backwards");
     }
@@ -205,13 +206,12 @@ public class TestableScheduler extends AbstractSubmitterScheduler
   
   /**
    * Checks if there are tasks ready to be run on the scheduler.  If 
-   * {@link #tick(ExceptionHandlerInterface)} is not currently being called, this call indicates 
-   * if the next {@link #tick(ExceptionHandlerInterface)} will have at least one task to run.  If 
-   * {@link #tick(ExceptionHandlerInterface)} is currently being invoked, this call will o a best 
-   * attempt to indicate if there is at least one more task to run (not including the task which 
-   * may currently be running).  It's a best attempt as it will try not to block the thread 
-   * invoking {@link #tick(ExceptionHandlerInterface)} to prevent it from accepting additional 
-   * work.
+   * {@link #tick(ExceptionHandler)} is not currently being called, this call indicates if the 
+   * next {@link #tick(ExceptionHandler)} will have at least one task to run.  If 
+   * {@link #tick(ExceptionHandler)} is currently being invoked, this call will do a best attempt 
+   * to indicate if there is at least one more task to run (not including the task which may 
+   * currently be running).  It's a best attempt as it will try not to block the thread invoking 
+   * {@link #tick(ExceptionHandler)} to prevent it from accepting additional work.
    *  
    * @return {@code true} if there are task waiting to run
    */
@@ -221,8 +221,8 @@ public class TestableScheduler extends AbstractSubmitterScheduler
   
   /**
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
-   * {@link #tick(ExceptionHandlerInterface)} is being called.  But will avoid additional tasks 
-   * from being run on the current {@link #tick(ExceptionHandlerInterface)} call.  
+   * {@link #tick(ExceptionHandler)} is being called.  But will avoid additional tasks from being 
+   * run on the current {@link #tick(ExceptionHandler)} call.  
    * 
    * If tasks are added concurrently during this invocation they may or may not be removed.
    * 

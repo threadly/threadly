@@ -11,9 +11,9 @@ package org.threadly.concurrent;
  * reference the time since epoc (since that time is sensitive to clock changes).</p>
  * 
  * @author jent
- * @since 4.2.0
+ * @since 4.3.0 (since 4.2.0 as DelayedTaskInterface)
  */
-interface DelayedTaskInterface {
+interface DelayedTask {
   /**
    * Get the absolute time when this should run, in comparison with the time returned from 
    * {@link org.threadly.util.Clock#accurateForwardProgressingMillis()}.

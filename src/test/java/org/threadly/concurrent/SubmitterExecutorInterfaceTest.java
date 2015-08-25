@@ -43,8 +43,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void executeTest() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
-      
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       List<TestRunnable> runnables = executeTestRunnables(executor, 0);
       
@@ -80,7 +79,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void executeInOrderTest() throws InterruptedException, TimeoutException {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       final AsyncVerifier av = new AsyncVerifier();
       TestRunnable lastRun = null;
       int testQty = 0;
@@ -110,7 +109,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void executeWithFailureRunnableTest() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
@@ -140,7 +139,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void executeFail() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
       executor.execute(null);
       fail("Execption should have thrown");
@@ -153,7 +152,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
@@ -204,7 +203,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitRunnableExceptionTest() throws InterruptedException {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       RuntimeException failure = new RuntimeException();
       TestRuntimeFailureRunnable tr = new TestRuntimeFailureRunnable(failure);
@@ -226,7 +225,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(TEST_QTY);
@@ -278,7 +277,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitRunnableWithResultExceptionTest() throws InterruptedException {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       RuntimeException failure = new RuntimeException();
       TestRuntimeFailureRunnable tr = new TestRuntimeFailureRunnable(failure);
@@ -302,7 +301,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       List<TestCallable> callables = new ArrayList<TestCallable>(TEST_QTY);
       List<Future<Object>> futures = new ArrayList<Future<Object>>(TEST_QTY);
@@ -341,7 +340,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitCallableExceptionTest() throws InterruptedException {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
       final RuntimeException failure = new RuntimeException();
       ListenableFuture<?> future = executor.submit(new Callable<Void>() {
@@ -367,7 +366,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitRunnableFail() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
       executor.submit((Runnable)null);
       fail("Execption should have thrown");
@@ -380,7 +379,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitRunnableWithResultFail() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
       executor.submit((Runnable)null, new Object());
       fail("Execption should have thrown");
@@ -393,7 +392,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void submitCallableFail() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutorInterface executor = factory.makeSubmitterExecutor(1, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
       executor.submit((Callable<Void>)null);
       fail("Execption should have thrown");
@@ -403,7 +402,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   }
   
   public interface SubmitterExecutorFactory {
-    public SubmitterExecutorInterface makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable);
+    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable);
 
     public void shutdown();
   }

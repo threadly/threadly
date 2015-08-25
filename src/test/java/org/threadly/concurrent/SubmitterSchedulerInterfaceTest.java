@@ -30,7 +30,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void executeInOrderTest() throws InterruptedException, TimeoutException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface executor = factory.makeSubmitterScheduler(1, false);
+      SubmitterScheduler executor = factory.makeSubmitterScheduler(1, false);
       final AsyncVerifier av = new AsyncVerifier();
       TestRunnable lastRun = null;
       long startTime = System.currentTimeMillis();
@@ -61,7 +61,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void scheduleInOrderTest() throws InterruptedException, TimeoutException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(1, false);
       final AsyncVerifier av = new AsyncVerifier();
       TestRunnable lastRun = null;
       int testQty = 0;
@@ -92,7 +92,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void scheduleTest() {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SimpleSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
@@ -120,7 +120,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void scheduleNoDelayTest() {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SimpleSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       TestRunnable tr = new TestRunnable();
       scheduler.schedule(tr, 0);
@@ -135,7 +135,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void submitScheduledRunnableNoDelayTest() throws InterruptedException, ExecutionException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       TestRunnable tr = new TestRunnable();
       ListenableFuture<?> f = scheduler.submitScheduled(tr, 0);
@@ -152,7 +152,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void submitScheduledCallableNoDelayTest() throws InterruptedException, ExecutionException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       TestCallable tc = new TestCallable(0);
       ListenableFuture<?> f = scheduler.submitScheduled(tc, 0);
@@ -167,7 +167,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void scheduleFail() {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SimpleSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(1, false);
       try {
         scheduler.schedule(null, 1000);
         fail("Exception should have been thrown");
@@ -211,7 +211,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     final int expectedMinimumDelay = DELAY_TIME * (CYCLE_COUNT - (initialDelay ? 0 : 1));
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SimpleSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
@@ -254,7 +254,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void recurringExecutionFail() {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SimpleSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(1, false);
       try {
         scheduler.scheduleWithFixedDelay(null, 1000, 1000);
         fail("Exception should have been thrown");
@@ -282,7 +282,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void submitScheduledRunnableTest() throws InterruptedException, ExecutionException, TimeoutException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
@@ -321,7 +321,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void submitScheduledRunnableWithResultTest() throws InterruptedException, ExecutionException, TimeoutException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
       List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(TEST_QTY);
@@ -360,7 +360,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void submitScheduledCallableTest() throws InterruptedException, ExecutionException, TimeoutException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
       List<TestCallable> callables = new ArrayList<TestCallable>(TEST_QTY);
       List<Future<Object>> futures = new ArrayList<Future<Object>>(TEST_QTY);
@@ -396,7 +396,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void submitScheduledRunnableFail() {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(1, false);
       try {
         scheduler.submitScheduled((Runnable)null, 1000);
         fail("Exception should have been thrown");
@@ -430,7 +430,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   public void submitScheduledCallableFail() {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {
-      SubmitterSchedulerInterface scheduler = factory.makeSubmitterScheduler(1, false);
+      SubmitterScheduler scheduler = factory.makeSubmitterScheduler(1, false);
       try {
         scheduler.submitScheduled((Callable<Void>)null, 1000);
         fail("Exception should have been thrown");
@@ -449,7 +449,6 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   }
   
   public interface SubmitterSchedulerFactory extends SubmitterExecutorFactory {
-    public SubmitterSchedulerInterface makeSubmitterScheduler(int poolSize, 
-                                                              boolean prestartIfAvailable);
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable);
   }
 }

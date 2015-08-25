@@ -16,6 +16,7 @@ import org.threadly.util.ArgumentVerifier;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecutor
                                                  implements SubmitterSchedulerInterface {
   @Override

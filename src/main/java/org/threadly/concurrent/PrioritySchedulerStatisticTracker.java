@@ -729,7 +729,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @since 1.0.0
    */
   protected static class RunnableStatWrapper extends Wrapper 
-                                             implements RunnableContainerInterface {
+                                             implements RunnableContainer {
     private final StatsManager statsManager;
     private final Runnable toRun;
     
@@ -764,7 +764,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @since 1.0.0
    */
   protected static class CallableStatWrapper<T> extends Wrapper 
-                                                implements CallableContainerInterface<T> {
+                                                implements CallableContainer<T> {
     private final StatsManager statsManager;
     private final Callable<T> toRun;
     private final SettableListenableFuture<T> future;

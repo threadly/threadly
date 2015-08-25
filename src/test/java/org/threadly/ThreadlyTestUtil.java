@@ -2,7 +2,7 @@ package org.threadly;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
-import org.threadly.util.ExceptionHandlerInterface;
+import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 
 @SuppressWarnings("javadoc")
@@ -19,7 +19,7 @@ public class ThreadlyTestUtil {
   }
   
   private static class IgnoreExceptionHandler implements UncaughtExceptionHandler, 
-                                                         ExceptionHandlerInterface {
+                                                         ExceptionHandler {
     @Override
     public void uncaughtException(Thread t, Throwable e) {
       // ignored

@@ -6,12 +6,15 @@ package org.threadly.util;
  * interface are handled on the same thread that threw the exception, and the thread that threw it 
  * likely WONT die.</p>
  * 
- * @deprecated Please use {@link ExceptionHandler}
- * 
  * @author jent - Mike Jensen
- * @since 2.4.0
+ * @since 4.3.0 (since 2.4.0 as ExceptionHandlerInterface)
  */
-@Deprecated
-public interface ExceptionHandlerInterface extends ExceptionHandler {
-  // nothing to be removed with this deprecated interface
+public interface ExceptionHandler {
+  /**
+   * An exception was thrown on this thread, and is now being provided to this handler to handle 
+   * it (possibly just to simply log it occurred).
+   * 
+   * @param thrown Throwable that was thrown, and caught
+   */
+  public void handleException(Throwable thrown);
 }
