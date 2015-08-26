@@ -59,7 +59,7 @@ public class ListenerHelper<T> {
       throw new IllegalArgumentException("listenerInterface must be an interface");
     }
     
-    proxyInstance = getProxyInstance(listenerInterface);
+    proxyInstance = makeProxyInstance(listenerInterface);
     listenersLock = new Object();
   }
   
@@ -73,7 +73,7 @@ public class ListenerHelper<T> {
    * @return Instance of the interface which will call listeners
    */
   @SuppressWarnings("unchecked")
-  protected T getProxyInstance(Class<? super T> listenerInterface) {
+  protected T makeProxyInstance(Class<? super T> listenerInterface) {
     return (T) Proxy.newProxyInstance(listenerInterface.getClassLoader(), 
                                       new Class<?>[] { listenerInterface }, 
                                       new ListenerCaller());
