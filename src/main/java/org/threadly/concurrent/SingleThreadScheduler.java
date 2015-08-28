@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.threadly.concurrent.AbstractPriorityScheduler.InternalRunnable;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
@@ -306,7 +307,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
             /* add to the end of the ready to execute queue a task which 
              * will finish the shutdown of the scheduler. 
              */
-            scheduler.execute(new Runnable() {
+            scheduler.execute(new InternalRunnable() {
               @Override
               public void run() {
                 finishShutdown();
