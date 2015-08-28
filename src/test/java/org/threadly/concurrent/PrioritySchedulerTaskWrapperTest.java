@@ -3,7 +3,7 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler.TaskWrapper;
+import org.threadly.concurrent.AbstractPriorityScheduler.TaskWrapper;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")

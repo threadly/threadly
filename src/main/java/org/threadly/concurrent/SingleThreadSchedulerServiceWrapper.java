@@ -3,10 +3,13 @@ package org.threadly.concurrent;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.threadly.concurrent.NoThreadScheduler.NoThreadRecurringDelayTaskWrapper;
+import org.threadly.concurrent.NoThreadScheduler.NoThreadRecurringRateTaskWrapper;
 import org.threadly.concurrent.SingleThreadScheduler.SchedulerManager;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.concurrent.future.ScheduledFutureDelegate;
+import org.threadly.util.Clock;
 
 /**
  * <p>This is a wrapper for {@link SingleThreadScheduler} to be a drop in replacement for any 
@@ -58,12 +61,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
     ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(false, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
-    NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
-    if (delayInMillis == 0) {
-      nts.addImmediateExecute(ott);
-    } else {
-      nts.addScheduled(ott);
-    }
+    // TODO - handle priority
+    NoThreadScheduler.OneTimeTaskWrapper ott = nts.doSchedule(lft, delayInMillis, nts.getDefaultPriority());
     
     return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(ott));
   }
@@ -72,42 +71,44 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableFutureTask<V> lft = new ListenableFutureTask<V>(false, callable);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
-    NoThreadScheduler.OneTimeTask ott = nts.new OneTimeTask(lft, delayInMillis);
-    if (delayInMillis == 0) {
-      nts.addImmediateExecute(ott);
-    } else {
-      nts.addScheduled(ott);
-    }
+    // TODO - handle priority
+    NoThreadScheduler.OneTimeTaskWrapper ott = nts.doSchedule(lft, delayInMillis, nts.getDefaultPriority());
     
     return new ScheduledFutureDelegate<V>(lft, new DelayedTaskWrapper(ott));
   }
 
   @Override
   protected ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable task,
-                                                                long initialDelayInMillis,
+                                                                long initialDelay,
                                                                 long delayInMillis) {
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
-    NoThreadScheduler.RecurringTask rt = nts.new RecurringDelayTask(lft, initialDelayInMillis, delayInMillis);
-    nts.addScheduled(rt);
+    NoThreadRecurringDelayTaskWrapper rdt = 
+        nts.new NoThreadRecurringDelayTaskWrapper(lft, nts.queueSet, 
+                                                  Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                                  delayInMillis);
+    nts.queueSet.addScheduled(rdt);
     
-    return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rt));
+    return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rdt));
   }
 
   @Override
   protected ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
-                                                             long initialDelayInMillis,
+                                                             long initialDelay,
                                                              long periodInMillis) {
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
-    NoThreadScheduler.RecurringTask rt = nts.new RecurringRateTask(lft, initialDelayInMillis, periodInMillis);
-    nts.addScheduled(rt);
+    NoThreadRecurringRateTaskWrapper rt = 
+        nts.new NoThreadRecurringRateTaskWrapper(lft, nts.queueSet, 
+                                                  Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                                  periodInMillis);
+    nts.queueSet.addScheduled(rt);
     
     return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rt));
   }
