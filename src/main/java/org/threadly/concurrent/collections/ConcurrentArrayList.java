@@ -1004,7 +1004,10 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
      * @return a new {@link DataSet} which represents the change (or the same reference if the inputs are a no-op)
      */
     public DataSet<T> reposition(int origCurrentIndex, int origNewIndex) {
-      if (origNewIndex == size && origCurrentIndex == size - 1) {
+      if (size == 1) {
+        // no-op, moving single item to same position
+        return this;
+      } else if (origNewIndex == size && origCurrentIndex == size - 1) {
         // no-op, moving end item to end
         return this;
       }
