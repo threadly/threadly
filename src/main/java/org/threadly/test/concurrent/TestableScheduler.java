@@ -3,9 +3,9 @@ package org.threadly.test.concurrent;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.threadly.concurrent.AbstractSubmitterScheduler;
+import org.threadly.concurrent.AbstractPriorityScheduler;
 import org.threadly.concurrent.NoThreadScheduler;
-import org.threadly.concurrent.SchedulerServiceInterface;
+import org.threadly.concurrent.TaskPriority;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
 
@@ -25,10 +25,7 @@ import org.threadly.util.ExceptionHandler;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-// TODO - make this be a PriorityScheduler, and deprecate TestablePriorityScheduler
-@SuppressWarnings("deprecation")
-public class TestableScheduler extends AbstractSubmitterScheduler 
-                               implements SchedulerServiceInterface {
+public class TestableScheduler extends AbstractPriorityScheduler {
   private final InternalScheduler scheduler;
   private long nowInMillis;
   
@@ -36,7 +33,19 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    * Constructs a new {@link TestableScheduler} scheduler.
    */
   public TestableScheduler() {
-    scheduler = new InternalScheduler();
+    this(null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+  }
+  
+  /**
+   * Constructs a new {@link TestableScheduler} scheduler.
+   * 
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   */
+  public TestableScheduler(TaskPriority defaultPriority, long maxWaitForLowPriorityInMs) {
+    super(defaultPriority);
+    
+    scheduler = new InternalScheduler(defaultPriority, maxWaitForLowPriorityInMs);
     nowInMillis = Clock.lastKnownTimeMillis();
   }
 
@@ -56,18 +65,40 @@ public class TestableScheduler extends AbstractSubmitterScheduler
   }
 
   @Override
-  protected void doSchedule(Runnable task, long delayInMillis) {
-    scheduler.schedule(task, delayInMillis);
+  public long getMaxWaitForLowPriority() {
+    return scheduler.getMaxWaitForLowPriority();
   }
 
   @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-    scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay);
+  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
+    scheduler.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
   }
 
   @Override
-  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-    scheduler.scheduleAtFixedRate(task, initialDelay, period);
+  public int getCurrentRunningCount() {
+    return scheduler.getCurrentRunningCount();
+  }
+
+  @Override
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
+                                     TaskPriority priority) {
+    scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay, priority);
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
+                                  TaskPriority priority) {
+    scheduler.scheduleAtFixedRate(task, initialDelay, period, priority);
+  }
+
+  @Override
+  protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
+    return scheduler.doSchedule(task, delayInMillis, priority);
+  }
+
+  @Override
+  protected QueueSet getQueueSet(TaskPriority priority) {
+    return scheduler.getQueueSet(priority);
   }
   
   /**
@@ -241,9 +272,23 @@ public class TestableScheduler extends AbstractSubmitterScheduler
    * @since 2.4.0
    */
   private class InternalScheduler extends NoThreadScheduler {
+    public InternalScheduler(TaskPriority defaultPriority, long maxWaitForLowPriorityInMs) {
+      super(defaultPriority, maxWaitForLowPriorityInMs);
+    }
+
     @Override
     protected long nowInMillis(boolean accurate) {
       return nowInMillis;
+    }
+    
+    @Override
+    protected QueueSet getQueueSet(TaskPriority priority) {
+      return super.getQueueSet(priority);
+    }
+    
+    @Override
+    protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
+      return super.doSchedule(task, delayInMillis, priority);
     }
   }
 }

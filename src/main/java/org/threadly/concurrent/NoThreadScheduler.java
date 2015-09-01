@@ -28,7 +28,11 @@ import org.threadly.util.ExceptionUtils;
  */
 public class NoThreadScheduler extends AbstractPriorityScheduler {
   protected final Object taskNotifyLock;
-  protected final QueueSet queueSet;
+  protected final QueueSet highPriorityQueueSet;
+  protected final QueueSet lowPriorityQueueSet;
+  private final QueueSetListener queueListener;
+  private volatile long maxWaitForLowPriorityInMs;
+  private volatile boolean tickRunning;
   private volatile boolean currentlyBlocking;
   private volatile boolean tickCanceled;
   
@@ -36,10 +40,20 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * Constructs a new {@link NoThreadScheduler} scheduler.
    */
   public NoThreadScheduler() {
-    super(null);
+    this(null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+  }
+  
+  /**
+   * Constructs a new {@link NoThreadScheduler} scheduler.
+   * 
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   */
+  public NoThreadScheduler(TaskPriority defaultPriority, long maxWaitForLowPriorityInMs) {
+    super(defaultPriority);
     
     taskNotifyLock = new Object();
-    queueSet = new QueueSet(new QueueSetListener() {
+    queueListener = new QueueSetListener() {
       @Override
       public void handleQueueUpdate() {
         /* This is an optimization as we only need to synchronize and notify if there is a blocking 
@@ -57,9 +71,36 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
           }
         }
       }
-    });
+    };
+    highPriorityQueueSet = new QueueSet(queueListener);
+    lowPriorityQueueSet = new QueueSet(queueListener);
+    tickRunning = false;
     currentlyBlocking = false;
     tickCanceled = false;
+    
+    // call to verify and set values
+    setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
+  }
+  
+  @Override
+  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
+    ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
+    
+    this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
+  }
+  
+  @Override
+  public long getMaxWaitForLowPriority() {
+    return maxWaitForLowPriorityInMs;
+  }
+  
+  @Override
+  protected QueueSet getQueueSet(TaskPriority priority) {
+    if (priority == TaskPriority.High) {
+      return highPriorityQueueSet;
+    } else {
+      return lowPriorityQueueSet;
+    }
   }
 
   /**
@@ -88,7 +129,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   public void cancelTick() {
     tickCanceled = true;
     
-    queueSet.queueListener.handleQueueUpdate();
+    queueListener.handleQueueUpdate();
   }
   
   /**
@@ -107,7 +148,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * 
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
-   * run multiple times in parallel.
+   * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
+   * {@link #getCurrentRunningCount()} non-deterministic and inaccurate.
    * 
    * @since 3.2.0
    * 
@@ -133,29 +175,34 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   private int tick(ExceptionHandler exceptionHandler, boolean resetCancelTickIfNoTasksRan) {
     int tasks = 0;
     TaskWrapper nextTask;
-    while ((nextTask = getNextReadyTask()) != null && ! tickCanceled) {
-      // call will remove task from queue, or reposition as necessary
-      if (nextTask.canExecute()) {
-        try {
-          nextTask.runTask();
-        } catch (Throwable t) {
-          if (exceptionHandler != null) {
-            exceptionHandler.handleException(t);
-          } else {
-            throw ExceptionUtils.makeRuntime(t);
+    tickRunning = true;
+    try {
+      while ((nextTask = getNextReadyTask()) != null && ! tickCanceled) {
+        // call will remove task from queue, or reposition as necessary
+        if (nextTask.canExecute()) {
+          try {
+            nextTask.runTask();
+          } catch (Throwable t) {
+            if (exceptionHandler != null) {
+              exceptionHandler.handleException(t);
+            } else {
+              throw ExceptionUtils.makeRuntime(t);
+            }
           }
+          
+          tasks++;
         }
-        
-        tasks++;
       }
+      
+      if ((tasks != 0 || resetCancelTickIfNoTasksRan) && tickCanceled) {
+        // reset for future tick calls
+        tickCanceled = false;
+      }
+      
+      return tasks;
+    } finally {
+      tickRunning = false;
     }
-    
-    if ((tasks != 0 || resetCancelTickIfNoTasksRan) && tickCanceled) {
-      // reset for future tick calls
-      tickCanceled = false;
-    }
-    
-    return tasks;
   }
   
   /**
@@ -176,7 +223,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * 
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
-   * run multiple times in parallel.
+   * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
+   * {@link #getCurrentRunningCount()} non-deterministic and inaccurate.
    * 
    * @since 4.0.0
    * 
@@ -199,7 +247,9 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
               tickCanceled = false;
               return 0;
             }
-            TaskWrapper nextTask = queueSet.getNextTask();
+            TaskWrapper nextTask = getNextTask(highPriorityQueueSet, 
+                                               lowPriorityQueueSet, 
+                                               maxWaitForLowPriorityInMs);
             if (nextTask == null) {
               taskNotifyLock.wait();
             } else {
@@ -225,7 +275,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
 
   @Override
   protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
-    // TODO - handle priority
+    QueueSet queueSet = getQueueSet(priority);
     OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
       queueSet.addExecute((result = new NoThreadOneTimeTaskWrapper(task, queueSet.executeQueue, 
@@ -243,8 +293,11 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
+    if (priority == null) {
+      priority = defaultPriority;
+    }
     
-    // TODO - handle priority
+    QueueSet queueSet = getQueueSet(priority);
     
     NoThreadRecurringDelayTaskWrapper taskWrapper = 
         new NoThreadRecurringDelayTaskWrapper(task, queueSet, 
@@ -258,8 +311,11 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertGreaterThanZero(period, "period");
+    if (priority == null) {
+      priority = defaultPriority;
+    }
     
-    // TODO - handle priority
+    QueueSet queueSet = getQueueSet(priority);
     
     NoThreadRecurringRateTaskWrapper taskWrapper = 
         new NoThreadRecurringRateTaskWrapper(task, queueSet, 
@@ -269,12 +325,17 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   
   @Override
   public boolean remove(Runnable task) {
-    return queueSet.remove(task);
+    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
   }
   
   @Override
   public boolean remove(Callable<?> task) {
-    return queueSet.remove(task);
+    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+  }
+
+  @Override
+  public int getCurrentRunningCount() {
+    return tickRunning ? 1 : 0;
   }
 
   @Override
@@ -293,7 +354,9 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return next ready task, or {@code null} if there are none
    */
   protected TaskWrapper getNextReadyTask() {
-    TaskWrapper tw = queueSet.getNextTask();
+    TaskWrapper tw = getNextTask(highPriorityQueueSet, 
+                                 lowPriorityQueueSet, 
+                                 maxWaitForLowPriorityInMs);
     if (tw != null && tw.getScheduleDelay() <= 0) {
       return tw;
     } else {
@@ -314,6 +377,10 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return {@code true} if there are task waiting to run
    */
   public boolean hasTaskReadyToRun() {
+    return hasTaskReadyToRun(highPriorityQueueSet) || hasTaskReadyToRun(lowPriorityQueueSet);
+  }
+  
+  private static boolean hasTaskReadyToRun(QueueSet queueSet) {
     if (queueSet.executeQueue.isEmpty()) {
       TaskWrapper headTask = queueSet.scheduleQueue.peekFirst();
       return headTask != null && headTask.getScheduleDelay() <= 0;
@@ -332,9 +399,10 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
    */
   public List<Runnable> clearTasks() {
-    ArrayList<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(queueSet.queueSize());
-    queueSet.drainQueueInto(wrapperList);
-    wrapperList.trimToSize();
+    List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(highPriorityQueueSet.queueSize() + 
+                                                                 lowPriorityQueueSet.queueSize());
+    highPriorityQueueSet.drainQueueInto(wrapperList);
+    lowPriorityQueueSet.drainQueueInto(wrapperList);
     
     return ContainerHelper.getContainedRunnables(wrapperList);
   }

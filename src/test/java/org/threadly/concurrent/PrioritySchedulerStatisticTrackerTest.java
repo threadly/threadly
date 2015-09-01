@@ -559,6 +559,18 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     }
 
     @Override
+    public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize,
+                                                                   TaskPriority defaultPriority,
+                                                                   long maxWaitForLowPriority) {
+      return makePriorityScheduler(poolSize, defaultPriority, maxWaitForLowPriority);
+    }
+
+    @Override
+    public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize) {
+      return makePriorityScheduler(poolSize);
+    }
+
+    @Override
     public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority,
                                                    long maxWaitForLowPriority) {
       PriorityScheduler result = new PrioritySchedulerStatisticTracker(poolSize, defaultPriority, 

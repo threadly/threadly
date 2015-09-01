@@ -15,9 +15,9 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
+public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   @Override
-  protected SchedulerServiceFactory getSchedulerServiceFactory() {
+  protected AbstractPrioritySchedulerFactory getAbstractPrioritySchedulerFactory() {
     return new SingleThreadSchedulerFactory();
   }
   
@@ -113,7 +113,7 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     new TestCondition() {
       @Override
       public boolean get() {
-        return ! sts.sManager.get().execThread.isAlive();
+        return ! sts.sManager.execThread.isAlive();
       }
     }.blockTillTrue();
   }
@@ -218,7 +218,7 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
     sts.execute(new TestRunnable());
   }
 
-  private class SingleThreadSchedulerFactory implements SchedulerServiceFactory {
+  private class SingleThreadSchedulerFactory implements AbstractPrioritySchedulerFactory {
     private final List<SingleThreadScheduler> schedulers = new LinkedList<SingleThreadScheduler>();
 
     @Override
@@ -242,6 +242,29 @@ public class SingleThreadSchedulerTest extends SchedulerServiceInterfaceTest {
 
     @Override
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
+      SchedulerService result = makeAbstractPriorityScheduler(1);
+      if (prestartIfAvailable) {
+        try {
+          result.submit(DoNothingRunnable.instance()).get();
+        } catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      }
+      return result;
+    }
+
+    @Override
+    public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize,
+                                                                   TaskPriority defaultPriority,
+                                                                   long maxWaitForLowPriority) {
+      SingleThreadScheduler sts = new SingleThreadScheduler(defaultPriority, maxWaitForLowPriority);
+      schedulers.add(sts);
+      
+      return sts;
+    }
+
+    @Override
+    public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize) {
       SingleThreadScheduler sts = new SingleThreadScheduler();
       schedulers.add(sts);
       

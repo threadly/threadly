@@ -6,9 +6,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.threadly.concurrent.AbstractPriorityScheduler.InternalRunnable;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
@@ -20,18 +17,26 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-@SuppressWarnings("deprecation")
-public class SingleThreadScheduler extends AbstractSubmitterScheduler
-                                   implements SchedulerServiceInterface {
-  protected final ThreadFactory threadFactory;
-  protected final AtomicReference<SchedulerManager> sManager;
+public class SingleThreadScheduler extends AbstractPriorityScheduler {
+  protected final SchedulerManager sManager;
   
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  This defaults to using a daemon thread for the scheduler.
    */
   public SingleThreadScheduler() {
-    this(true);
+    this(null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+  }
+  
+  /**
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
+   * is provided.  This defaults to using a daemon thread for the scheduler.
+   * 
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   */
+  public SingleThreadScheduler(TaskPriority defaultPriority, long maxWaitForLowPriorityInMs) {
+    this(defaultPriority, maxWaitForLowPriorityInMs, true);
   }
   
   /**
@@ -41,7 +46,22 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * @param daemonThread {@code true} if scheduler thread should be a daemon thread
    */
   public SingleThreadScheduler(boolean daemonThread) {
-    this(new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
+    this(null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, daemonThread);
+  }
+  
+  /**
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
+   * is provided.
+   * 
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   * @param daemonThread {@code true} if scheduler thread should be a daemon thread
+   */
+  public SingleThreadScheduler(TaskPriority defaultPriority, 
+                               long maxWaitForLowPriorityInMs, 
+                               boolean daemonThread) {
+    this(defaultPriority, maxWaitForLowPriorityInMs, 
+         new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
                                        true, daemonThread, Thread.NORM_PRIORITY, null, null));
   }
   
@@ -52,33 +72,25 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * @param threadFactory factory to make thread for scheduler
    */
   public SingleThreadScheduler(ThreadFactory threadFactory) {
-    ArgumentVerifier.assertNotNull(threadFactory, "threadFactory");
-    
-    sManager = new AtomicReference<SchedulerManager>(null);
-    this.threadFactory = threadFactory;
+    this(null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, threadFactory);
   }
   
   /**
-   * Returns the {@link SchedulerManager} instance that contains the scheduler.  This does no 
-   * safety checks on if the scheduler is running or not, it just ensures that the single instance 
-   * of the manager is returned.
+   * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
+   * is provided.
    * 
-   * @return Single instance of the SchedulerManager container
+   * 
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   * @param threadFactory factory to make thread for scheduler
    */
-  private SchedulerManager getSchedulerManager() {
-    // we lazily construct and start the manager
-    SchedulerManager result = sManager.get();
-    if (result == null) {
-      result = new SchedulerManager(threadFactory);
-      if (sManager.compareAndSet(null, result)) {
-        // we are the one and only, so start now
-        result.start();
-      } else {
-        result = sManager.get();
-      }
-    }
+  public SingleThreadScheduler(TaskPriority defaultPriority, 
+                               long maxWaitForLowPriorityInMs, 
+                               ThreadFactory threadFactory) {
+    super(defaultPriority);
+    ArgumentVerifier.assertNotNull(threadFactory, "threadFactory");
     
-    return result;
+    sManager = new SchedulerManager(defaultPriority, maxWaitForLowPriorityInMs, threadFactory);
   }
   
   /**
@@ -90,13 +102,12 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * @throws RejectedExecutionException thrown if the scheduler has been shutdown
    */
   protected NoThreadScheduler getRunningScheduler() throws RejectedExecutionException {
-    SchedulerManager result = getSchedulerManager();
-    
-    if (result.hasBeenStopped()) {
+    sManager.startIfNotRunning();
+    if (sManager.hasBeenStopped()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
     
-    return result.scheduler;
+    return sManager.scheduler;
   }
   
   /**
@@ -106,15 +117,7 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    * @return if stopped immediately a list of Runnables that were in queue at stop will be returned
    */
   private List<Runnable> shutdown(boolean stopImmediately) {
-    SchedulerManager sm = sManager.get();
-    if (sm == null) {
-      sm = new SchedulerManager(threadFactory);
-      if (! sManager.compareAndSet(null, sm)) {
-        sm = sManager.get();
-      }
-    }
-    
-    return sm.stop(stopImmediately);
+    return sManager.stop(stopImmediately);
   }
 
   /**
@@ -172,10 +175,9 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
   public boolean shutdownAndAwaitTermination(long timeoutMillis) throws InterruptedException {
     shutdown(false);
     
-    SchedulerManager sm = sManager.get();
-    sm.execThread.join(timeoutMillis);
+    sManager.execThread.join(timeoutMillis);
     
-    return ! sm.execThread.isAlive();
+    return ! sManager.execThread.isAlive();
   }
   
   /**
@@ -190,55 +192,67 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
    */
   public List<Runnable> shutdownNowAndAwaitTermination() throws InterruptedException {
     List<Runnable> result = shutdown(true);
-    
-    SchedulerManager sm = sManager.get();
-    sm.execThread.join();
+    sManager.execThread.join();
     
     return result;
   }
 
   @Override
   public boolean isShutdown() {
-    SchedulerManager sm = sManager.get();
-    if (sm != null) {
-      return sm.hasBeenStopped();
-    } else {
-      // if not created yet, the not shutdown
-      return false;
-    }
+    return sManager.hasBeenStopped();
   }
 
   @Override
   public boolean remove(Runnable task) {
-    return getSchedulerManager().scheduler.remove(task);
+    return sManager.scheduler.remove(task);
   }
 
   @Override
   public boolean remove(Callable<?> task) {
-    return getSchedulerManager().scheduler.remove(task);
+    return sManager.scheduler.remove(task);
   }
 
   @Override
-  protected void doSchedule(Runnable task, long delayInMillis) {
-    getRunningScheduler().doSchedule(task, delayInMillis);
+  public long getMaxWaitForLowPriority() {
+    return sManager.scheduler.getMaxWaitForLowPriority();
   }
 
   @Override
-  public void scheduleWithFixedDelay(Runnable task, 
-                                     long initialDelay, 
-                                     long recurringDelay) {
-    getRunningScheduler().scheduleWithFixedDelay(task, initialDelay, recurringDelay);
+  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
+    sManager.scheduler.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
   }
 
   @Override
-  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-    getRunningScheduler().scheduleAtFixedRate(task, initialDelay, period);
+  protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
+    return getRunningScheduler().doSchedule(task, delayInMillis, priority);
+  }
+
+  @Override
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
+                                     TaskPriority priority) {
+    getRunningScheduler().scheduleWithFixedDelay(task, initialDelay, recurringDelay, priority);
+  }
+
+  @Override
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
+                                  TaskPriority priority) {
+    getRunningScheduler().scheduleAtFixedRate(task, initialDelay, period, priority);
   }
   
   @Override
   protected void finalize() {
     // if being GC'ed, stop thread so that it also can be GC'ed
     shutdown();
+  }
+
+  @Override
+  public int getCurrentRunningCount() {
+    return sManager.scheduler.getCurrentRunningCount();
+  }
+
+  @Override
+  protected QueueSet getQueueSet(TaskPriority priority) {
+    return sManager.scheduler.getQueueSet(priority);
   }
   
   /**
@@ -254,8 +268,10 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
     protected final AtomicInteger state = new AtomicInteger(-1); // -1 = new, 0 = started, 1 = stopping, 2 = stopped
     protected final Thread execThread;
     
-    public SchedulerManager(ThreadFactory threadFactory) {
-      scheduler = new NoThreadScheduler();
+    public SchedulerManager(TaskPriority defaultPriority, 
+                            long maxWaitForLowPriorityInMs, 
+                            ThreadFactory threadFactory) {
+      scheduler = new NoThreadScheduler(defaultPriority, maxWaitForLowPriorityInMs);
       execThread = threadFactory.newThread(this);
       if (execThread.isAlive()) {
         throw new IllegalThreadStateException();
@@ -277,11 +293,9 @@ public class SingleThreadScheduler extends AbstractSubmitterScheduler
      * Starts the scheduler thread.  If it has already been started this will throw an 
      * {@link IllegalStateException}.
      */
-    public void start() {
-      if (state.compareAndSet(-1, 0)) {
+    public void startIfNotRunning() {
+      if (state.get() == -1 && state.compareAndSet(-1, 0)) {
         execThread.start();
-      } else {
-        throw new IllegalStateException();
       }
     }
     

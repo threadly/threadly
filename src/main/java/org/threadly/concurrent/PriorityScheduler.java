@@ -43,10 +43,7 @@ import org.threadly.util.ExceptionUtils;
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
  */
 public class PriorityScheduler extends AbstractPriorityScheduler {
-  protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
-  protected static final int WORKER_CONTENTION_LEVEL = 2; // level at which no worker contention is considered
-  protected static final int LOW_PRIORITY_WAIT_TOLLERANCE_IN_MS = 2;
   
   protected final WorkerPool workerPool;
   protected final QueueManager taskConsumer;
@@ -81,7 +78,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * will be scheduled as.  As well as the maximum wait for low priority tasks.
    * 
    * @param poolSize Thread pool size that should be maintained
-   * @param defaultPriority priority to give tasks which do not specify it
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
    * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
@@ -95,7 +92,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * will be scheduled as.  As well as the maximum wait for low priority tasks.
    * 
    * @param poolSize Thread pool size that should be maintained
-   * @param defaultPriority priority to give tasks which do not specify it
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
    * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
@@ -113,7 +110,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * will be scheduled as.  As well as the maximum wait for low priority tasks.
    * 
    * @param poolSize Thread pool size that should be maintained
-   * @param defaultPriority priority to give tasks which do not specify it
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
    * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    * @param threadFactory thread factory for producing new threads within executor
    */
@@ -169,6 +166,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @return current number of running tasks
    */
+  @Override
   public int getCurrentRunningCount() {
     return workerPool.getCurrentRunningCount();
   }
@@ -190,25 +188,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     workerPool.setPoolSize(newPoolSize);
   }
   
-  /**
-   * Changes the max wait time for low priority tasks.  This is the amount of time that a low 
-   * priority task will wait if there are ready to execute high priority tasks.  After a low 
-   * priority task has waited this amount of time, it will be executed fairly with high priority 
-   * tasks (meaning it will only execute the high priority task if it has been waiting longer than 
-   * the low priority task).
-   * 
-   * @param maxWaitForLowPriorityInMs new wait time in milliseconds for low priority tasks during thread contention
-   */
+  @Override
   public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
     taskConsumer.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
   }
   
-  /**
-   * Getter for the amount of time a low priority task will wait during thread contention before 
-   * it is eligible for execution.
-   * 
-   * @return currently set max wait for low priority task
-   */
+  @Override
   public long getMaxWaitForLowPriority() {
     return taskConsumer.getMaxWaitForLowPriority();
   }
@@ -440,6 +425,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     // shutdown the thread pool so we don't leak threads if garbage collected
     shutdown();
   }
+
+  @Override
+  protected QueueSet getQueueSet(TaskPriority priority) {
+    return taskConsumer.getQueueSet(priority);
+  }
   
   /**
    * <p>A service which manages the execute queues.  It runs a task to consume from the queues and 
@@ -509,10 +499,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public List<Runnable> stopAndClearQueue() {
       stopIfRunning();
 
-      ArrayList<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(getScheduledTaskCount());
+      List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(getScheduledTaskCount());
       highPriorityQueueSet.drainQueueInto(wrapperList);
       lowPriorityQueueSet.drainQueueInto(wrapperList);
-      wrapperList.trimToSize();
       
       return ContainerHelper.getContainedRunnables(wrapperList);
     }
@@ -573,65 +562,16 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      */
     protected TaskWrapper getNextReadyTask() throws InterruptedException {
       while (runningThread != null) {  // loop till we have something to return
-        TaskWrapper nextHighPriorityTask = highPriorityQueueSet.getNextTask();
-        TaskWrapper nextLowPriorityTask = lowPriorityQueueSet.getNextTask();
-        if (nextLowPriorityTask == null) {
-          if (nextHighPriorityTask == null) {
-            // no tasks, so just wait till any tasks come in
-            LockSupport.park();
-          } else {
-            // only high priority task is queued, so run if ready
-            long nextTaskDelay = nextHighPriorityTask.getScheduleDelay();
-            if (nextTaskDelay > 0) {
-              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
-            } else if (nextHighPriorityTask.canExecute()) {
-              return nextHighPriorityTask;
-            }
-          }
-        } else if (nextHighPriorityTask == null) {
-          // only low priority task is queued, so run if ready
-          long nextTaskDelay = nextLowPriorityTask.getScheduleDelay();
-          if (nextTaskDelay > 0) {
-            LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
-          } else if (nextLowPriorityTask.canExecute()) {
-            return nextLowPriorityTask;
-          }
-        } else if (nextHighPriorityTask.getRunTime() <= nextLowPriorityTask.getRunTime()) {
-          // through cheap check we can see the high priority has been waiting longer
-          long nextTaskDelay = nextHighPriorityTask.getScheduleDelay();
-          if (nextTaskDelay > 0) {
-            LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
-          } else if (nextHighPriorityTask.canExecute()) {
-            return nextHighPriorityTask;
-          }
+        TaskWrapper nextTask = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
+                                           maxWaitForLowPriorityInMs);
+        if (nextTask == null) {
+          LockSupport.park();
         } else {
-          // both tasks are available, so see which one makes sense to run
-          long now = Clock.accurateForwardProgressingMillis();
-          // at this point we know nextHighDelay > nextLowDelay due to check above
-          long nextHighDelay = nextHighPriorityTask.getRunTime() - now;
-          long nextLowDelay = nextLowPriorityTask.getRunTime() - now;
-          if (nextHighDelay <= 0) {
-            /* high task is ready, make sure it should be picked...we will pick the low priority task 
-             * if it has been waiting longer than the high, and if the low priority has been waiting at 
-             * least the max wait time...otherwise we favor the high priority task
-             */
-            if (nextLowDelay < maxWaitForLowPriorityInMs * -1) {
-              if (nextLowPriorityTask.canExecute()) {
-                return nextLowPriorityTask;
-              }
-            } else if (nextHighPriorityTask.canExecute()) {
-              return nextHighPriorityTask;
-            }
-          } else if (nextLowDelay <= 0) {
-            if (nextLowPriorityTask.canExecute()) {
-              return nextLowPriorityTask;
-            }
-          } else {
-            if (nextLowDelay < nextHighDelay) {
-              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextLowDelay);
-            } else {
-              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextHighDelay);
-            }
+          long nextTaskDelay = nextTask.getScheduleDelay();
+          if (nextTaskDelay > 0) {
+            LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
+          } else if (nextTask.canExecute()) {
+            return nextTask;
           }
         }
         

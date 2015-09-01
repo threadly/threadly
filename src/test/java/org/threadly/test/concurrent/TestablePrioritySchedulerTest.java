@@ -13,7 +13,7 @@ import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.StringUtils;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class TestablePrioritySchedulerTest extends TestableSchedulerTest {
   protected TestablePriorityScheduler priorityScheduler;
   

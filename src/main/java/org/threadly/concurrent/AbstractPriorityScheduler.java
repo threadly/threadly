@@ -17,17 +17,21 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Abstract implementation for implementations of {@link PrioritySchedulerInterface}.  This likely 
- * is not useful to many people outside of threadly, and is thus why it is package protected 
- * visibility.</p>
+ * <p>Abstract implementation for implementations of {@link PrioritySchedulerService}.  In 
+ * general this wont be useful outside of Threadly developers, but must be a public interface 
+ * since it is used in sub-packages.</p>
+ * 
+ * <p>If you do find yourself using this class, please post an issue on github to tell us why.  If 
+ * there is something you want our schedulers to provide, we are happy to hear about it.</p>
  * 
  * @author jent - Mike Jensen
  * @since 4.3.0
  */
 @SuppressWarnings("deprecation")
-abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler 
-                                         implements PrioritySchedulerInterface {
+public abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler 
+                                                implements PrioritySchedulerInterface {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
+  protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   // tuned for performance of scheduled tasks
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
@@ -42,11 +46,22 @@ abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler
   }
   
   /**
+   * Changes the max wait time for low priority tasks.  This is the amount of time that a low 
+   * priority task will wait if there are ready to execute high priority tasks.  After a low 
+   * priority task has waited this amount of time, it will be executed fairly with high priority 
+   * tasks (meaning it will only execute the high priority task if it has been waiting longer than 
+   * the low priority task).
+   * 
+   * @param maxWaitForLowPriorityInMs new wait time in milliseconds for low priority tasks during thread contention
+   */
+  public abstract void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs);
+  
+  /**
    * If a section of code wants a different default priority, or wanting to provide a specific 
    * default priority in for {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.
    * 
-   * @param priority default priority for PrioritySchedulerInterface implementation
-   * @return a PrioritySchedulerInterface with the default priority specified
+   * @param priority default priority for {@link PrioritySchedulerService} implementation
+   * @return a {@link PrioritySchedulerService} with the default priority specified
    */
   public PrioritySchedulerInterface makeWithDefaultPriority(TaskPriority priority) {
     if (priority == defaultPriority) {
@@ -76,7 +91,9 @@ abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler
    * @param priority Priority for task execution
    * @return Wrapper that was scheduled
    */
-  protected abstract TaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority);
+  protected abstract OneTimeTaskWrapper doSchedule(Runnable task, 
+                                                   long delayInMillis, 
+                                                   TaskPriority priority);
 
   @Override
   public void execute(Runnable task, TaskPriority priority) {
@@ -154,6 +171,47 @@ abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler
   public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
     scheduleAtFixedRate(task, initialDelay, period, null);
   }
+
+  protected static TaskWrapper getNextTask(QueueSet highPriorityQueueSet, QueueSet lowPriorityQueueSet, 
+                                           long maxWaitForLowPriorityInMs) {
+    TaskWrapper nextHighPriorityTask = highPriorityQueueSet.getNextTask();
+    TaskWrapper nextLowPriorityTask = lowPriorityQueueSet.getNextTask();
+    if (nextLowPriorityTask == null) {
+      return nextHighPriorityTask;
+    } else if (nextHighPriorityTask == null) {
+      return nextLowPriorityTask;
+    } else if (nextHighPriorityTask.getRunTime() <= nextLowPriorityTask.getRunTime()) {
+      return nextHighPriorityTask;
+    } else if (nextHighPriorityTask.getScheduleDelay() > 0 || 
+        // before the above check we know the low priority has been waiting longer than the high 
+        // priority, but since the high priority is not ready to run, we can just return the low 
+        // priority a clock call was invoked IF the high priority task was not already known to 
+        // be ready to run
+        //
+        // OR
+        //
+        // at this point we know the high task is ready to run
+        // but the low priority task has been waiting LONGER (and thus also ready to run)
+        // So we will return the low priority task IF it has been waiting over the max wait time
+        // At this point there may or may not have been a single clock invocation to check if the 
+        // high priority task was ready (if it was known ready, none was invoked)
+        // because of that we _may_ have to invoke the clock here
+        Clock.lastKnownForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs || 
+        Clock.accurateForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs) {
+      return nextLowPriorityTask;
+    } else {
+      // task is ready to run, low priority is also ready, but has not been waiting long enough
+      return nextHighPriorityTask;
+    }
+  }
+
+  /**
+   * Returns the {@link QueueSet} for a specified priority.
+   * 
+   * @param priority Priority that should match to the given {@link QueueSet}
+   * @return {@link QueueSet} which matches to the priority
+   */
+  protected abstract QueueSet getQueueSet(TaskPriority priority);
   
   /**
    * <p>Interface to be notified when relevant changes happen to the queue set.</p>
@@ -230,7 +288,7 @@ abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler
      * @param task Task to find in queue and reposition based off next delay
      */
     public void reschedule(RecurringTaskWrapper task) {
-      int insertionIndex = 1;
+      int insertionIndex = -1;
       synchronized (scheduleQueue.getModificationLock()) {
         int currentIndex = scheduleQueue.lastIndexOf(task);
         if (currentIndex > 0) {
@@ -519,8 +577,8 @@ abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler
     @Override
     public boolean canExecute() {
       synchronized (queueSet.scheduleQueue.getModificationLock()) {
-        int index = queueSet.scheduleQueue.indexOf(this);
-        if (index < 0) {
+        if (queueSet.scheduleQueue.peekFirst() != this) {
+          // must be at front of queue to be able to be ran
           return false;
         } else {
           /* we have to reposition to the end atomically so that this task can be removed if 
@@ -528,7 +586,7 @@ abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler
            * run again till it has finished (which it will be inserted at the correct point in 
            * queue then.
            */
-          queueSet.scheduleQueue.reposition(index, queueSet.scheduleQueue.size());
+          queueSet.scheduleQueue.reposition(0, queueSet.scheduleQueue.size());
           executing = true;
           return true;
         }

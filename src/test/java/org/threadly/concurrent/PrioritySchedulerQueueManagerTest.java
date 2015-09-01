@@ -28,7 +28,7 @@ public class PrioritySchedulerQueueManagerTest {
     ConfigurableThreadFactory threadFactory = new ConfigurableThreadFactory();
     workerPool = new WorkerPool(threadFactory, 1);
     queueManager = new QueueManager(workerPool, THREAD_NAME, 
-                                    PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS) {
+                                    AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS) {
       @Override
       protected void startupService() {
         // we override this so we can avoid starting threads in these tests
@@ -57,7 +57,7 @@ public class PrioritySchedulerQueueManagerTest {
     try {
       WorkerPool workerPool = new WorkerPool(threadFactory, 1);
       queueManager = new QueueManager(workerPool, THREAD_NAME, 
-                                      PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+                                      AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
     } finally {
       threadFactory.killThreads();
     }
@@ -245,7 +245,7 @@ public class PrioritySchedulerQueueManagerTest {
   
   @Test
   public void getAndSetLowPriorityWaitTest() {
-    assertEquals(PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, queueManager.getMaxWaitForLowPriority());
+    assertEquals(AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, queueManager.getMaxWaitForLowPriority());
     
     long lowPriorityWait = Long.MAX_VALUE;
     queueManager.setMaxWaitForLowPriority(lowPriorityWait);
@@ -262,6 +262,6 @@ public class PrioritySchedulerQueueManagerTest {
       // expected
     }
     
-    assertEquals(PriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, queueManager.getMaxWaitForLowPriority());
+    assertEquals(AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, queueManager.getMaxWaitForLowPriority());
   }
 }

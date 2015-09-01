@@ -13,6 +13,9 @@ import org.threadly.util.ArgumentVerifier;
  * of how this is used.  In general this wont be useful outside of Threadly developers, but must 
  * be a public interface since it is used in sub-packages.</p>
  * 
+ * <p>If you do find yourself using this class, please post an issue on github to tell us why.  If 
+ * there is something you want our schedulers to provide, we are happy to hear about it.</p>
+ * 
  * @author jent - Mike Jensen
  * @since 1.3.0
  */

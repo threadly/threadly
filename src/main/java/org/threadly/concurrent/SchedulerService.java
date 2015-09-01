@@ -31,6 +31,13 @@ public interface SchedulerService extends SubmitterSchedulerInterface {
   public boolean remove(Callable<?> task);
   
   /**
+   * Call to check how many tasks are currently being executed in this scheduler.
+   * 
+   * @return current number of running tasks
+   */
+  public int getCurrentRunningCount();
+  
+  /**
    * Function to check if the thread pool is currently accepting and handling tasks.
    * 
    * @return {@code true} if thread pool is running
