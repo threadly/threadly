@@ -159,4 +159,12 @@ public interface PrioritySchedulerService extends SchedulerServiceInterface {
    * @return the set default task priority
    */
   public TaskPriority getDefaultPriority();
+  
+  /**
+   * Getter for the amount of time a low priority task will wait during thread contention before 
+   * it is eligible for execution.
+   * 
+   * @return currently set max wait for low priority task
+   */
+  public long getMaxWaitForLowPriority();
 }

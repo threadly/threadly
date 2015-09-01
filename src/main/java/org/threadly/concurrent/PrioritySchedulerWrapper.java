@@ -157,6 +157,16 @@ public class PrioritySchedulerWrapper implements PrioritySchedulerInterface {
   }
 
   @Override
+  public long getMaxWaitForLowPriority() {
+    return scheduler.getMaxWaitForLowPriority();
+  }
+
+  @Override
+  public int getCurrentRunningCount() {
+    return scheduler.getCurrentRunningCount();
+  }
+
+  @Override
   public boolean remove(Runnable task) {
     return scheduler.remove(task);
   }

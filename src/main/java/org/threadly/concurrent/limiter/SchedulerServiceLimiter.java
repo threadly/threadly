@@ -83,6 +83,11 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
   }
 
   @Override
+  public int getCurrentRunningCount() {
+    return scheduler.getCurrentRunningCount();
+  }
+
+  @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
   }

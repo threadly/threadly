@@ -311,6 +311,16 @@ public class PrioritySchedulerWrapperTest {
     public TaskPriority getDefaultPriority() {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public long getMaxWaitForLowPriority() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getCurrentRunningCount() {
+      throw new UnsupportedOperationException();
+    }
     
     // NO OPERATIONS WITHOUT PRIORITY SHOULD BE CALLED
     @Override

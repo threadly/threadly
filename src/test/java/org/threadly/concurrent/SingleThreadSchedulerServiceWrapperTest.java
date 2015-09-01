@@ -24,24 +24,22 @@ public class SingleThreadSchedulerServiceWrapperTest extends ScheduledExecutorSe
     fail("Exception should have thrown");
   }
 
-  @Override // must be overridden because we can only do this test with one task for the single threaded version
   @Test
+  @Override // must be overridden because we can only do this test with one task for the single threaded version
   public void scheduleAtFixedRateTest() {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
-      // schedule a task first in case there are any initial startup actions which may be slow
-      scheduler.scheduleAtFixedRate(DoNothingRunnable.instance(), 0, (int)(DELAY_TIME * 2.5), 
-                                    TimeUnit.MILLISECONDS);
+      // execute a task first in case there are any initial startup actions which may be slow
+      scheduler.execute(DoNothingRunnable.instance());
 
       TestRunnable tr = new TestRunnable(DELAY_TIME - 1);
-      scheduler.scheduleAtFixedRate(tr, 0, DELAY_TIME, 
-                                    TimeUnit.MILLISECONDS);
+      scheduler.scheduleAtFixedRate(tr, 0, DELAY_TIME, TimeUnit.MILLISECONDS);
 
       tr.blockTillFinished((DELAY_TIME * (CYCLE_COUNT - 1)) + 2000, CYCLE_COUNT);
       long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
       assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
+      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 1000);
     } finally {
       scheduler.shutdownNow();
     }

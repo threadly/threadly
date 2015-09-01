@@ -9,7 +9,9 @@ import org.threadly.concurrent.SingleThreadScheduler.SchedulerManager;
 public class SingleThreadSchedulerSchedulerManagerTest {
   @Test
   public void constructorTest() {
-    SchedulerManager sm = new SchedulerManager(new ConfigurableThreadFactory());
+    SchedulerManager sm = new SchedulerManager(AbstractPriorityScheduler.DEFAULT_PRIORITY, 
+                                               AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
+                                               new ConfigurableThreadFactory());
     
     assertNotNull(sm.scheduler);
     assertNotNull(sm.execThread);
@@ -20,7 +22,8 @@ public class SingleThreadSchedulerSchedulerManagerTest {
   public void constructorFail() {
     StartingThreadFactory threadFactory = new StartingThreadFactory();
     try {
-      new SchedulerManager(threadFactory);
+      new SchedulerManager(AbstractPriorityScheduler.DEFAULT_PRIORITY, 
+                           AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, threadFactory);
     } finally {
       threadFactory.killThreads();
     }

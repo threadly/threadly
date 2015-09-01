@@ -1,11 +1,10 @@
 package org.threadly.concurrent;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import org.threadly.concurrent.collections.ConcurrentArrayList;
+
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
@@ -27,14 +26,13 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-public class NoThreadScheduler extends AbstractSubmitterScheduler 
-                               implements SchedulerService {
-  protected static final int QUEUE_FRONT_PADDING = 0;
-  protected static final int QUEUE_REAR_PADDING = 2;
-  
+public class NoThreadScheduler extends AbstractPriorityScheduler {
   protected final Object taskNotifyLock;
-  protected final ConcurrentLinkedQueue<OneTimeTask> executeQueue;
-  protected final ConcurrentArrayList<TaskContainer> scheduledQueue;
+  protected final QueueSet highPriorityQueueSet;
+  protected final QueueSet lowPriorityQueueSet;
+  private final QueueSetListener queueListener;
+  private volatile long maxWaitForLowPriorityInMs;
+  private volatile boolean tickRunning;
   private volatile boolean currentlyBlocking;
   private volatile boolean tickCanceled;
   
@@ -42,21 +40,82 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * Constructs a new {@link NoThreadScheduler} scheduler.
    */
   public NoThreadScheduler() {
+    this(null, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+  }
+  
+  /**
+   * Constructs a new {@link NoThreadScheduler} scheduler.
+   * 
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   */
+  public NoThreadScheduler(TaskPriority defaultPriority, long maxWaitForLowPriorityInMs) {
+    super(defaultPriority);
+    
     taskNotifyLock = new Object();
-    executeQueue = new ConcurrentLinkedQueue<OneTimeTask>();
-    scheduledQueue = new ConcurrentArrayList<TaskContainer>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
+    queueListener = new QueueSetListener() {
+      @Override
+      public void handleQueueUpdate() {
+        /* This is an optimization as we only need to synchronize and notify if there is a blocking 
+         * tick.
+         * 
+         * This works because it is set BEFORE synchronizing in blocking tick, and we are only 
+         * notified here AFTER the queue has already been updated.
+         * 
+         * So if the currentlyBlocking has not been set by the time we check it, but we will block, 
+         * then when it synchronizes it should see the queue update that already occured anyways.
+         */
+        if (currentlyBlocking) {
+          synchronized (taskNotifyLock) {
+            taskNotifyLock.notify();
+          }
+        }
+      }
+    };
+    highPriorityQueueSet = new QueueSet(queueListener);
+    lowPriorityQueueSet = new QueueSet(queueListener);
+    tickRunning = false;
     currentlyBlocking = false;
     tickCanceled = false;
+    
+    // call to verify and set values
+    setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
+  }
+  
+  @Override
+  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
+    ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
+    
+    this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
+  }
+  
+  @Override
+  public long getMaxWaitForLowPriority() {
+    return maxWaitForLowPriorityInMs;
+  }
+  
+  @Override
+  protected QueueSet getQueueSet(TaskPriority priority) {
+    if (priority == TaskPriority.High) {
+      return highPriorityQueueSet;
+    } else {
+      return lowPriorityQueueSet;
+    }
   }
 
   /**
    * Abstract call to get the value the scheduler should use to represent the current time.  This 
    * can be overridden if someone wanted to artificially change the time.
    * 
+   * @param accurate If {@code true} then time estimates are not acceptable
    * @return current time in milliseconds
    */
-  protected long nowInMillis() {
-    return Clock.accurateForwardProgressingMillis();
+  protected long nowInMillis(boolean accurate) {
+    if (accurate) {
+      return Clock.accurateForwardProgressingMillis();
+    } else {
+      return Clock.lastKnownForwardProgressingMillis();
+    }
   }
   
   /**
@@ -70,7 +129,7 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   public void cancelTick() {
     tickCanceled = true;
     
-    notifyQueueUpdate();
+    queueListener.handleQueueUpdate();
   }
   
   /**
@@ -89,7 +148,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * 
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
-   * run multiple times in parallel.
+   * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
+   * {@link #getCurrentRunningCount()} non-deterministic and inaccurate.
    * 
    * @since 3.2.0
    * 
@@ -114,28 +174,35 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    */
   private int tick(ExceptionHandler exceptionHandler, boolean resetCancelTickIfNoTasksRan) {
     int tasks = 0;
-    TaskContainer nextTask;
-    while ((nextTask = getNextTask(true)) != null && ! tickCanceled) {
-      // call will remove task from queue, or reposition as necessary
-      try {
-        nextTask.runTask();
-      } catch (Throwable t) {
-        if (exceptionHandler != null) {
-          exceptionHandler.handleException(t);
-        } else {
-          throw ExceptionUtils.makeRuntime(t);
+    TaskWrapper nextTask;
+    tickRunning = true;
+    try {
+      while ((nextTask = getNextReadyTask()) != null && ! tickCanceled) {
+        // call will remove task from queue, or reposition as necessary
+        if (nextTask.canExecute()) {
+          try {
+            nextTask.runTask();
+          } catch (Throwable t) {
+            if (exceptionHandler != null) {
+              exceptionHandler.handleException(t);
+            } else {
+              throw ExceptionUtils.makeRuntime(t);
+            }
+          }
+          
+          tasks++;
         }
       }
       
-      tasks++;
+      if ((tasks != 0 || resetCancelTickIfNoTasksRan) && tickCanceled) {
+        // reset for future tick calls
+        tickCanceled = false;
+      }
+      
+      return tasks;
+    } finally {
+      tickRunning = false;
     }
-    
-    if ((tasks != 0 || resetCancelTickIfNoTasksRan) && tickCanceled) {
-      // reset for future tick calls
-      tickCanceled = false;
-    }
-    
-    return tasks;
   }
   
   /**
@@ -156,7 +223,8 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * 
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
-   * run multiple times in parallel.
+   * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
+   * {@link #getCurrentRunningCount()} non-deterministic and inaccurate.
    * 
    * @since 4.0.0
    * 
@@ -179,7 +247,9 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
               tickCanceled = false;
               return 0;
             }
-            TaskContainer nextTask = getNextTask(false);
+            TaskWrapper nextTask = getNextTask(highPriorityQueueSet, 
+                                               lowPriorityQueueSet, 
+                                               maxWaitForLowPriorityInMs);
             if (nextTask == null) {
               taskNotifyLock.wait();
             } else {
@@ -204,106 +274,68 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
 
   @Override
-  protected void doSchedule(Runnable task, long delayInMillis) {
-    OneTimeTask taskWrapper = new OneTimeTask(task, delayInMillis);
+  protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
+    QueueSet queueSet = getQueueSet(priority);
+    OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
-      addImmediateExecute(taskWrapper);
+      queueSet.addExecute((result = new NoThreadOneTimeTaskWrapper(task, queueSet.executeQueue, 
+                                                                   nowInMillis(false))));
     } else {
-      addScheduled(taskWrapper);
+      queueSet.addScheduled((result = new NoThreadOneTimeTaskWrapper(task, queueSet.scheduleQueue, 
+                                                                     nowInMillis(true) + delayInMillis)));
     }
+    return result;
   }
 
   @Override
-  public void scheduleWithFixedDelay(Runnable task, 
-                                     long initialDelay, 
-                                     long recurringDelay) {
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
+                                     TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
+    if (priority == null) {
+      priority = defaultPriority;
+    }
     
-    RecurringDelayTask taskWrapper = new RecurringDelayTask(task, initialDelay, recurringDelay);
-    addScheduled(taskWrapper);
+    QueueSet queueSet = getQueueSet(priority);
+    
+    NoThreadRecurringDelayTaskWrapper taskWrapper = 
+        new NoThreadRecurringDelayTaskWrapper(task, queueSet, 
+                                              nowInMillis(true) + initialDelay, recurringDelay);
+    queueSet.addScheduled(taskWrapper);
   }
 
   @Override
-  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
+                                  TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertGreaterThanZero(period, "period");
-    
-    RecurringRateTask taskWrapper = new RecurringRateTask(task, initialDelay, period);
-    addScheduled(taskWrapper);
-  }
-  
-  /**
-   * Notifies that the queue has been updated.  Thus allowing any threads blocked on the 
-   * {@code taskNotifyLock} to wake up and check for new work to run.
-   * 
-   *  This must be called AFTER the queue has been updated.
-   */
-  protected void notifyQueueUpdate() {
-    /* This is an optimization as we only need to synchronize and notify if there is a blocking 
-     * tick.
-     * 
-     * This works because it is set BEFORE synchronizing in blocking tick, and we are only 
-     * notified here AFTER the queue has already been updated.
-     * 
-     * So if the currentlyBlocking has not been set by the time we check it, but we will block, 
-     * then when it synchronizes it should see the queue update that already occured anyways.
-     */
-    if (currentlyBlocking) {
-      synchronized (taskNotifyLock) {
-        taskNotifyLock.notify();
-      }
+    if (priority == null) {
+      priority = defaultPriority;
     }
-  }
-  
-  /**
-   * Adds a task to the simple execute queue.  This avoids locking for adding into the queue.
-   * 
-   * @param runnable Task to execute on next {@link #tick(ExceptionHandlerInterface)} call
-   */
-  protected void addImmediateExecute(OneTimeTask runnable) {
-    executeQueue.add(runnable);
     
-    notifyQueueUpdate();
-  }
-
-  /**
-   * Adds a task to scheduled/recurring queue.  This call is more expensive than 
-   * {@link #addImmediateExecute(OneTimeTask)}, but is necessary for any tasks which are either 
-   * delayed or recurring.
-   * 
-   * @param runnable Task to execute on next {@link #tick(ExceptionHandlerInterface)} call
-   */
-  protected void addScheduled(TaskContainer runnable) {
-    synchronized (scheduledQueue.getModificationLock()) {
-      int insertionIndex = TaskListUtils.getInsertionEndIndex(scheduledQueue, runnable.getRunTime());
-      
-      scheduledQueue.add(insertionIndex, runnable);
-    }
-
-    notifyQueueUpdate();
+    QueueSet queueSet = getQueueSet(priority);
+    
+    NoThreadRecurringRateTaskWrapper taskWrapper = 
+        new NoThreadRecurringRateTaskWrapper(task, queueSet, 
+                                             nowInMillis(true) + initialDelay, period);
+    queueSet.addScheduled(taskWrapper);
   }
   
   @Override
   public boolean remove(Runnable task) {
-    if (ContainerHelper.remove(executeQueue, task)) {
-      return true;
-    }
-    synchronized (scheduledQueue.getModificationLock()) {
-      return ContainerHelper.remove(scheduledQueue, task);
-    }
+    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
   }
   
   @Override
   public boolean remove(Callable<?> task) {
-    if (ContainerHelper.remove(executeQueue, task)) {
-      return true;
-    }
-    synchronized (scheduledQueue.getModificationLock()) {
-      return ContainerHelper.remove(scheduledQueue, task);
-    }
+    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+  }
+
+  @Override
+  public int getCurrentRunningCount() {
+    return tickRunning ? 1 : 0;
   }
 
   @Override
@@ -312,32 +344,21 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
   }
   
   /**
-   * Call to get the next task that is ready to be run.  If there are no tasks, or the next task 
-   * still has a remaining delay, this will return {@code null}.
+   * Call to get the next ready task that is ready to be run.  If there are no tasks, or the next 
+   * task still has a remaining delay, this will return {@code null}.
    * 
    * If this is being called in parallel with a {@link #tick(ExecutionHandlerInterface)} call, the 
    * returned task may already be running.  You must check the {@code TaskContainer.running} 
    * boolean if this condition is important to you.
    * 
-   * @param onlyReturnReadyTask {@code false} to return scheduled tasks which may not be ready for execution
    * @return next ready task, or {@code null} if there are none
    */
-  protected TaskContainer getNextTask(boolean onlyReturnReadyTask) {
-    TaskContainer nextScheduledTask = scheduledQueue.peekFirst();
-    TaskContainer nextExecuteTask = executeQueue.peek();
-    if (nextExecuteTask != null) {
-      if (nextScheduledTask != null) {
-        if (nextScheduledTask.getRunTime() < nextExecuteTask.getRunTime()) {
-          return nextScheduledTask;
-        } else {
-          return nextExecuteTask;
-        }
-      } else {
-        return nextExecuteTask;
-      }
-    } else if (! onlyReturnReadyTask || 
-                 (nextScheduledTask != null && nextScheduledTask.getScheduleDelay() <= 0)) {
-      return nextScheduledTask;
+  protected TaskWrapper getNextReadyTask() {
+    TaskWrapper tw = getNextTask(highPriorityQueueSet, 
+                                 lowPriorityQueueSet, 
+                                 maxWaitForLowPriorityInMs);
+    if (tw != null && tw.getScheduleDelay() <= 0) {
+      return tw;
     } else {
       return null;
     }
@@ -356,35 +377,16 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return {@code true} if there are task waiting to run
    */
   public boolean hasTaskReadyToRun() {
-    while (true) {
-      TaskContainer nextExecuteTask = executeQueue.peek();
-      if (nextExecuteTask != null) {
-        if (nextExecuteTask.running) {
-          // loop and retry, should be removed from queue shortly
-          Thread.yield();
-        } else {
-          return true;
-        }
-      } else {
-        break;
-      }
+    return hasTaskReadyToRun(highPriorityQueueSet) || hasTaskReadyToRun(lowPriorityQueueSet);
+  }
+  
+  private static boolean hasTaskReadyToRun(QueueSet queueSet) {
+    if (queueSet.executeQueue.isEmpty()) {
+      TaskWrapper headTask = queueSet.scheduleQueue.peekFirst();
+      return headTask != null && headTask.getScheduleDelay() <= 0;
+    } else {
+      return true;
     }
-    
-    synchronized (scheduledQueue.getModificationLock()) {
-      Iterator<TaskContainer> it = scheduledQueue.iterator();
-      while (it.hasNext()) {
-        TaskContainer scheduledTask = it.next();
-        if (scheduledTask.running) {
-          continue;
-        } else if (scheduledTask.getScheduleDelay() <= 0) {
-          return true;
-        } else {
-          return false;
-        }
-      }
-    }
-    
-    return false;
   }
   
   /**
@@ -397,225 +399,131 @@ public class NoThreadScheduler extends AbstractSubmitterScheduler
    * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
    */
   public List<Runnable> clearTasks() {
-    List<TaskContainer> containers;
-    synchronized (scheduledQueue.getModificationLock()) {
-      containers = new ArrayList<TaskContainer>(executeQueue.size() + 
-                                                  scheduledQueue.size());
-      
-      Iterator<? extends TaskContainer> it = executeQueue.iterator();
-      while (it.hasNext()) {
-        TaskContainer tc = it.next();
-        /* we must use executeQueue.remove(Object) instead of it.remove() 
-         * This is to assure it is atomically removed (without executing)
-         */
-        if (! tc.running && executeQueue.remove(tc)) {
-          int index = TaskListUtils.getInsertionEndIndex(containers, tc.getRunTime());
-          containers.add(index, tc);
-        }
-      }
-      
-      it = scheduledQueue.iterator();
-      while (it.hasNext()) {
-        TaskContainer tc = it.next();
-        if (! tc.running) {
-          int index = TaskListUtils.getInsertionEndIndex(containers, tc.getRunTime());
-          containers.add(index, tc);
-        }
-      }
-      scheduledQueue.clear();
-    }
+    List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(highPriorityQueueSet.queueSize() + 
+                                                                 lowPriorityQueueSet.queueSize());
+    highPriorityQueueSet.drainQueueInto(wrapperList);
+    lowPriorityQueueSet.drainQueueInto(wrapperList);
     
-    return ContainerHelper.getContainedRunnables(containers);
+    return ContainerHelper.getContainedRunnables(wrapperList);
   }
   
   /**
-   * <p>Container abstraction to hold runnables for scheduler.</p>
+   * <p>Wrapper for tasks which only executes once.</p>
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract class TaskContainer implements DelayedTask, RunnableContainer {
-    protected final Runnable runnable;
-    protected volatile boolean running;
+  protected class NoThreadOneTimeTaskWrapper extends OneTimeTaskWrapper {
+    protected NoThreadOneTimeTaskWrapper(Runnable task, 
+                                         Queue<? extends TaskWrapper> taskQueue, long runTime) {
+      super(task, taskQueue, runTime);
+    }
     
-    protected TaskContainer(Runnable runnable) {
-      this.runnable = runnable;
-      this.running = false;
+    @Override
+    public long getScheduleDelay() {
+      if (getRunTime() > nowInMillis(false)) {
+        return getRunTime() - nowInMillis(true);
+      } else {
+        return 0;
+      }
     }
 
     @Override
-    public Runnable getContainedRunnable() {
-      return runnable;
+    public void runTask() {
+      if (! canceled) {
+        // Do not use ExceptionUtils to run task, so that exceptions can be handled in .tick()
+        task.run();
+      }
     }
+  }
 
-    /**
-     * Call to see how long the task should be delayed before execution.  While this may return 
-     * either positive or negative numbers, only an accurate number is returned if the task must 
-     * be delayed for execution.  If the task is ready to execute it may return zero even though 
-     * it is past due.  For that reason you can NOT use this to compare two tasks for execution 
-     * order, instead you should use {@link #getRunTime()}.
-     * 
-     * @return delay in milliseconds till task can be run
-     */
+  /**
+   * <p>Abstract wrapper for any tasks which run repeatedly.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.3.0
+   */
+  protected abstract class NoThreadRecurringTaskWrapper extends RecurringTaskWrapper {
+    protected NoThreadRecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
+      super(task, queueSet, firstRunTime);
+    }
+    
+    @Override
     public long getScheduleDelay() {
-      if (getRunTime() > nowInMillis()) {
-        return getRunTime() - nowInMillis();
+      if (getRunTime() > nowInMillis(false)) {
+        return getRunTime() - nowInMillis(true);
       } else {
         return 0;
       }
     }
     
-    protected void runTask() {
-      running = true;
-      if (! prepareForRun()) {
-        return;
-      }
-      try {
-        runnable.run();
-      } finally {
-        runComplete();
-        running = false;
-      }
-    }
-    
-    /**
-     * Called before the task starts.  Allowing the container to do any pre-execution tasks 
-     * necessary, and give a last chance to avoid execution (for example if the task has been 
-     * canceled or removed).
-     * 
-     * @return {@code true} if execution should continue
-     */
-    protected boolean prepareForRun() {
-      // nothing by default, override to handle
-      return true;
-    }
-
-    /**
-     * Called after the task completes, weather an exception was thrown or it exited normally.
-     */
-    protected void runComplete() {
-      // nothing by default, override to handle
-    }
-  }
-  
-  /**
-   * <p>Runnable container for runnables that only run once with an optional delay.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 1.0.0
-   */
-  protected class OneTimeTask extends TaskContainer {
-    protected final long delay;
-    protected final long runTime;
-    
-    public OneTimeTask(Runnable runnable, long delay) {
-      super(runnable);
-      
-      this.delay = delay;
-      this.runTime = nowInMillis() + delay;
-    }
-    
-    @Override
-    protected boolean prepareForRun() {
-      boolean allowRun;
-      // can be removed since this is a one time task
-      if (delay == 0) {
-        allowRun = executeQueue.remove(this);
-      } else {
-        allowRun = scheduledQueue.removeFirstOccurrence(this);
-      }
-      
-      return allowRun;
-    }
-
-    @Override
-    public long getRunTime() {
-      return runTime;
-    }
-  }
-  
-  /**
-   * <p>Container for runnables which run multiple times.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 3.1.0
-   */
-  protected abstract class RecurringTask extends TaskContainer {
-    protected final long initialDelay;
-    protected long nextRunTime;
-    
-    public RecurringTask(Runnable runnable, long initialDelay) {
-      super(runnable);
-      
-      this.initialDelay = initialDelay;
-      nextRunTime = nowInMillis() + initialDelay;
-    }
-
     /**
      * Called when the implementing class should update the variable {@code nextRunTime} to be the 
      * next absolute time in milliseconds the task should run.
      */
-    protected abstract void updateNextRunTime();
-    
     @Override
-    public void runComplete() {
-      synchronized (scheduledQueue.getModificationLock()) {
-        updateNextRunTime();
-        
-        // almost certainly will be the first item in the queue
-        int currentIndex = scheduledQueue.indexOf(this);
-        if (currentIndex < 0) {
-          // task was removed from queue, do not re-insert
-          return;
-        }
-        int insertionIndex = TaskListUtils.getInsertionEndIndex(scheduledQueue, getRunTime());
-        
-        scheduledQueue.reposition(currentIndex, insertionIndex);
-      }
-    }
+    protected abstract void updateNextRunTime();
 
     @Override
-    public long getRunTime() {
-      return nextRunTime;
+    public void runTask() {
+      if (canceled) {
+        return;
+      }
+      
+      try {
+        // Do not use ExceptionUtils to run task, so that exceptions can be handled in .tick()
+        task.run();
+      } finally {
+        if (! canceled) {
+          updateNextRunTime();
+          // now that nextRunTime has been set, resort the queue
+          queueSet.reschedule(this);
+          
+          // only set executing to false AFTER rescheduled
+          executing = false;
+        }
+      }
     }
   }
   
   /**
-   * <p>Container for runnables which run with a fixed delay after the previous run.</p>
+   * <p>Container for tasks which run with a fixed delay after the previous run.</p>
    * 
    * @author jent - Mike Jensen
-   * @since 3.1.0
+   * @since 4.3.0
    */
-  protected class RecurringDelayTask extends RecurringTask {
+  protected class NoThreadRecurringDelayTaskWrapper extends NoThreadRecurringTaskWrapper {
     protected final long recurringDelay;
     
-    public RecurringDelayTask(Runnable runnable, long initialDelay, long recurringDelay) {
-      super(runnable, initialDelay);
+    protected NoThreadRecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, 
+                                                long firstRunTime, long recurringDelay) {
+      super(task, queueSet, firstRunTime);
       
       this.recurringDelay = recurringDelay;
     }
-
+    
     @Override
     protected void updateNextRunTime() {
-      nextRunTime = nowInMillis() + recurringDelay;
+      nextRunTime = nowInMillis(true) + recurringDelay;
     }
   }
   
   /**
-   * <p>Container for runnables which run with a fixed rate, regardless of execution time.</p>
+   * <p>Wrapper for tasks which run at a fixed period (regardless of execution time).</p>
    * 
    * @author jent - Mike Jensen
-   * @since 3.1.0
+   * @since 4.3.0
    */
-  protected class RecurringRateTask extends RecurringTask {
+  protected class NoThreadRecurringRateTaskWrapper extends NoThreadRecurringTaskWrapper {
     protected final long period;
     
-    public RecurringRateTask(Runnable runnable, long initialDelay, long period) {
-      super(runnable, initialDelay);
+    protected NoThreadRecurringRateTaskWrapper(Runnable task, QueueSet queueSet, 
+                                               long firstRunTime, long period) {
+      super(task, queueSet, firstRunTime);
       
       this.period = period;
     }
-
+    
     @Override
     protected void updateNextRunTime() {
       nextRunTime += period;

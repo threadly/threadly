@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -560,7 +561,10 @@ public class NoThreadSchedulerTest {
     // should no longer have anything to run
     assertFalse(scheduler.hasTaskReadyToRun());
     
-    scheduler.addScheduled(scheduler.new OneTimeTask(DoNothingRunnable.instance(), 0));
+    scheduler.highPriorityQueueSet
+             .addScheduled(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                  scheduler.highPriorityQueueSet.scheduleQueue, 
+                                                  Clock.lastKnownForwardProgressingMillis()));
     
     // now should be true with scheduled task which is ready to run
     assertTrue(scheduler.hasTaskReadyToRun());
@@ -590,7 +594,7 @@ public class NoThreadSchedulerTest {
     
     scheduler.clearTasks();
     
-    assertEquals(0, scheduler.executeQueue.size());
-    assertEquals(0, scheduler.scheduledQueue.size());
+    assertEquals(0, scheduler.highPriorityQueueSet.queueSize());
+    assertEquals(0, scheduler.lowPriorityQueueSet.queueSize());
   }
 }
