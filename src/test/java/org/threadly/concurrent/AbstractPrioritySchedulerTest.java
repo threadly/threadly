@@ -33,6 +33,10 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       priority = TaskPriority.Low;
       scheduler = factory.makeAbstractPriorityScheduler(1, priority, 1000);
       assertEquals(priority, scheduler.getDefaultPriority());
+      
+      priority = TaskPriority.Starvable;
+      scheduler = factory.makeAbstractPriorityScheduler(1, priority, 1000);
+      assertEquals(priority, scheduler.getDefaultPriority());
     } finally {
       factory.shutdown();
     }
@@ -140,13 +144,17 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
+      TestRunnable tr3 = new TestRunnable();
       scheduler.execute(tr1, TaskPriority.High);
       scheduler.execute(tr2, TaskPriority.Low);
+      scheduler.execute(tr3, TaskPriority.Starvable);
       scheduler.execute(tr1, TaskPriority.High);
       scheduler.execute(tr2, TaskPriority.Low);
+      scheduler.execute(tr3, TaskPriority.Starvable);
       
       tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr3.blockTillFinished(1000 * 1, 2); // throws exception if fails
     } finally {
       priorityFactory.shutdown();
     }
@@ -160,16 +168,20 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       super.submitRunnableTest();
       
       PrioritySchedulerService scheduler = priorityFactory.makeAbstractPriorityScheduler(2);
-      
+
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
+      TestRunnable tr3 = new TestRunnable();
       scheduler.submit(tr1, TaskPriority.High);
       scheduler.submit(tr2, TaskPriority.Low);
+      scheduler.submit(tr3, TaskPriority.Starvable);
       scheduler.submit(tr1, TaskPriority.High);
       scheduler.submit(tr2, TaskPriority.Low);
+      scheduler.submit(tr3, TaskPriority.Starvable);
       
       tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr3.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       priorityFactory.shutdown();
     }
@@ -186,13 +198,17 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       
       TestRunnable tr1 = new TestRunnable();
       TestRunnable tr2 = new TestRunnable();
+      TestRunnable tr3 = new TestRunnable();
       scheduler.submit(tr1, tr1, TaskPriority.High);
       scheduler.submit(tr2, tr2, TaskPriority.Low);
+      scheduler.submit(tr3, tr3, TaskPriority.Starvable);
       scheduler.submit(tr1, tr1, TaskPriority.High);
       scheduler.submit(tr2, tr2, TaskPriority.Low);
+      scheduler.submit(tr3, tr3, TaskPriority.Starvable);
       
       tr1.blockTillFinished(1000 * 10, 2); // throws exception if fails
       tr2.blockTillFinished(1000 * 10, 2); // throws exception if fails
+      tr3.blockTillFinished(1000 * 10, 2); // throws exception if fails
     } finally {
       priorityFactory.shutdown();
     }
@@ -209,11 +225,14 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       
       TestCallable tc1 = new TestCallable(0);
       TestCallable tc2 = new TestCallable(0);
+      TestCallable tc3 = new TestCallable(0);
       scheduler.submit(tc1, TaskPriority.High);
       scheduler.submit(tc2, TaskPriority.Low);
+      scheduler.submit(tc3, TaskPriority.Starvable);
       
       tc1.blockTillTrue(); // throws exception if fails
       tc2.blockTillTrue(); // throws exception if fails
+      tc3.blockTillTrue(); // throws exception if fails
     } finally {
       priorityFactory.shutdown();
     }
@@ -257,6 +276,11 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
     removeRecurringRunnableTest(TaskPriority.Low);
   }
   
+  @Test
+  public void removeStarvablePriorityRecurringRunnableTest() {
+    removeRecurringRunnableTest(TaskPriority.Starvable);
+  }
+  
   private void removeRecurringRunnableTest(TaskPriority priority) {
     int runFrequency = 1;
     AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
@@ -297,6 +321,11 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
     removeRunnableTest(TaskPriority.Low);
   }
   
+  @Test
+  public void removeStarvablePriorityRunnableTest() {
+    removeRunnableTest(TaskPriority.Starvable);
+  }
+  
   private void removeRunnableTest(TaskPriority priority) {
     AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
     try {
@@ -320,6 +349,11 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
   @Test
   public void removeLowPriorityCallableTest() {
     removeCallableTest(TaskPriority.Low);
+  }
+  
+  @Test
+  public void removeStarvablePriorityCallableTest() {
+    removeCallableTest(TaskPriority.Starvable);
   }
   
   private void removeCallableTest(TaskPriority priority) {
@@ -346,6 +380,9 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       
       AbstractPriorityScheduler lowPriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.Low, 200);
       assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.Low) == lowPriorityScheduler);
+      
+      AbstractPriorityScheduler starvablePriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.Starvable, 200);
+      assertTrue(starvablePriorityScheduler.makeWithDefaultPriority(TaskPriority.Starvable) == starvablePriorityScheduler);
     } finally {
       factory.shutdown();
     }
@@ -360,6 +397,7 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       
       AbstractPriorityScheduler lowPriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.Low, 200);
       assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.High).getDefaultPriority() == TaskPriority.High);
+      assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.Starvable).getDefaultPriority() == TaskPriority.Starvable);
     } finally {
       factory.shutdown();
     }

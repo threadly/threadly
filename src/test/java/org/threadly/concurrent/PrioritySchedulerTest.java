@@ -157,6 +157,34 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  public void getScheduledTaskCountStarvablePriorityTest() {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduler result = factory.makePriorityScheduler(1);
+      // add directly to avoid starting the consumer
+      result.taskConsumer.highPriorityQueueSet
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                     Clock.lastKnownForwardProgressingMillis()));
+      result.taskConsumer.highPriorityQueueSet
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                     Clock.lastKnownForwardProgressingMillis()));
+      
+      assertEquals(0, result.getScheduledTaskCount(TaskPriority.Starvable));
+      
+      result.taskConsumer.starvablePriorityQueueSet
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                     Clock.lastKnownForwardProgressingMillis()));
+      result.taskConsumer.starvablePriorityQueueSet
+            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                     Clock.lastKnownForwardProgressingMillis()));
+      
+      assertEquals(2, result.getScheduledTaskCount(TaskPriority.Starvable));
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void getScheduledTaskCountLowPriorityTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {

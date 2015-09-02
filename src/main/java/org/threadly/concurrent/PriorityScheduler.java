@@ -447,6 +447,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final WorkerPool workerPool;
     protected final QueueSet highPriorityQueueSet;
     protected final QueueSet lowPriorityQueueSet;
+    protected final QueueSet starvablePriorityQueueSet;
     protected volatile Thread runningThread;
     private volatile long maxWaitForLowPriorityInMs;
     
@@ -462,6 +463,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       runningThread.setName(threadName);
       this.highPriorityQueueSet = new QueueSet(this);
       this.lowPriorityQueueSet = new QueueSet(this);
+      this.starvablePriorityQueueSet = new QueueSet(this);
       
       // call to verify and set values
       setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
@@ -483,8 +485,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public QueueSet getQueueSet(TaskPriority priority) {
       if (priority == TaskPriority.High) {
         return highPriorityQueueSet;
-      } else {
+      } else if (priority == TaskPriority.Low) {
         return lowPriorityQueueSet;
+      } else {
+        return starvablePriorityQueueSet;
       }
     }
 
@@ -499,9 +503,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public List<Runnable> stopAndClearQueue() {
       stopIfRunning();
 
-      List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(getScheduledTaskCount());
+      ArrayList<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(getScheduledTaskCount());
       highPriorityQueueSet.drainQueueInto(wrapperList);
       lowPriorityQueueSet.drainQueueInto(wrapperList);
+      starvablePriorityQueueSet.drainQueueInto(wrapperList);
+      wrapperList.trimToSize();
       
       return ContainerHelper.getContainedRunnables(wrapperList);
     }
@@ -565,11 +571,33 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         TaskWrapper nextTask = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
                                            maxWaitForLowPriorityInMs);
         if (nextTask == null) {
-          LockSupport.park();
+          TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
+          if (nextStarvableTask == null) {
+            LockSupport.park();
+          } else {
+            long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
+            if (nextStarvableTaskDelay > 0) {
+              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextStarvableTaskDelay);
+            } else if (nextStarvableTask.canExecute()) {
+              return nextStarvableTask;
+            }
+          }
         } else {
           long nextTaskDelay = nextTask.getScheduleDelay();
           if (nextTaskDelay > 0) {
-            LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
+            TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
+            if (nextStarvableTask == null) {
+              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
+            } else {
+              long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
+              if (nextStarvableTaskDelay > 0) {
+                LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * 
+                                        (nextTaskDelay > nextStarvableTaskDelay ? 
+                                           nextStarvableTaskDelay : nextTaskDelay));
+              } else if (nextStarvableTask.canExecute()) {
+                return nextStarvableTask;
+              }
+            }
           } else if (nextTask.canExecute()) {
             return nextTask;
           }
@@ -590,7 +618,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return quantity of tasks waiting execution or scheduled to be executed later
      */
     public int getScheduledTaskCount() {
-      return highPriorityQueueSet.queueSize() + lowPriorityQueueSet.queueSize();
+      return highPriorityQueueSet.queueSize() + lowPriorityQueueSet.queueSize() + 
+               starvablePriorityQueueSet.queueSize();
     }
     
     /**
@@ -605,7 +634,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if the runnable was found and removed
      */
     public boolean remove(Runnable task) {
-      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task) || 
+               starvablePriorityQueueSet.remove(task);
     }
     
     /**
@@ -620,7 +650,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if the callable was found and removed
      */
     public boolean remove(Callable<?> task) {
-      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task) || 
+               starvablePriorityQueueSet.remove(task);
     }
     
     /**

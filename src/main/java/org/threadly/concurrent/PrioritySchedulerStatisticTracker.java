@@ -146,6 +146,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    */
   public void resetCollectedStats() {
     statsManager.runTimes.clear();
+    statsManager.starvablePriorityExecutionDelay.clear();
     statsManager.lowPriorityExecutionDelay.clear();
     statsManager.highPriorityExecutionDelay.clear();
   }
@@ -315,65 +316,129 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   }
   
   /**
-   * Gets the average delay from when the task is ready, to when it is actually executed.
+   * Gets the average delay from when the task is ready, to when it is actually executed.  This call 
+   * averages over all priority types, if you want the delay for a specific type use 
+   * {@link #getAvgExecutionDelay(TaskPriority)}.
    * 
    * @return average delay for tasks to be executed
    */
   public long getAvgExecutionDelay() {
-    List<Long> resultList = new ArrayList<Long>(statsManager.lowPriorityExecutionDelay);
-    resultList.addAll(statsManager.highPriorityExecutionDelay);
+    List<Long> resultList = new ArrayList<Long>(statsManager.highPriorityExecutionDelay);
+    resultList.addAll(statsManager.lowPriorityExecutionDelay);
+    resultList.addAll(statsManager.starvablePriorityExecutionDelay);
     
     return getAvgTime(resultList);
   }
   
   /**
+   * Gets the average delay from when the task is ready, to when it is actually executed.  This will 
+   * only inspect the times for a specific priority.
+   * 
+   * @param priority Specific priority for statistics on tasks with this given priority
+   * @return average delay for tasks to be executed
+   */
+  public long getAvgExecutionDelay(TaskPriority priority) {
+    if (priority == null) {
+      return getAvgExecutionDelay();
+    }
+    return getAvgTime(getExecutionDelays(priority));
+  }
+  
+  /**
    * Gets the average delay from when the task is ready, to when it is actually executed.
+   * 
+   * @deprecated Use {@link #getAvgExecutionDelay(TaskPriority)} with a high priority
    * 
    * @return average delay for high priority tasks to be executed
    */
+  @Deprecated
   public long getHighPriorityAvgExecutionDelay() {
-    return getAvgTime(getHighPriorityExecutionDelays());
+    return getAvgExecutionDelay(TaskPriority.High);
   }
   
   /**
    * Gets the average delay from when the task is ready, to when it is actually executed.
    * 
+   * @deprecated Use {@link #getAvgExecutionDelay(TaskPriority)} with a low priority
+   * 
    * @return average delay for low priority tasks to be executed
    */
+  @Deprecated
   public long getLowPriorityAvgExecutionDelay() {
-    return getAvgTime(getLowPriorityExecutionDelays());
+    return getAvgExecutionDelay(TaskPriority.Low);
   }
   
   /**
    * Gets the median delay from when the task is ready, to when it is actually executed.  Returns 
    * -1 if no statistics have been collected yet.
+   * 
+   * @param priority Specific priority for statistics on tasks with this given priority
+   * @return median delay for high priority tasks to be executed
+   */
+  public long getMedianExecutionDelay(TaskPriority priority) {
+    List<Long> times = getExecutionDelays(priority);
+    if (times.isEmpty()) {
+      return -1;
+    }
+    Collections.sort(times);
+    
+    return times.get(times.size() / 2);
+  }
+  
+  /**
+   * Gets the median delay from when the task is ready, to when it is actually executed.  Returns 
+   * -1 if no statistics have been collected yet.
+   * 
+   * @deprecated Use {@link #getMedianExecutionDelay(TaskPriority)} with a high priority
    * 
    * @return median delay for high priority tasks to be executed
    */
+  @Deprecated
   public long getHighPriorityMedianExecutionDelay() {
-    List<Long> times = new ArrayList<Long>(statsManager.highPriorityExecutionDelay);
-    if (times.isEmpty()) {
-      return -1;
-    }
-    Collections.sort(times);
-    
-    return times.get(times.size() / 2);
+    return getMedianExecutionDelay(TaskPriority.High);
   }
   
   /**
    * Gets the median delay from when the task is ready, to when it is actually executed.  Returns 
    * -1 if no statistics have been collected yet.
    * 
+   * @deprecated Use {@link #getMedianExecutionDelay(TaskPriority)} with a low priority
+   * 
    * @return median delay for low priority tasks to be executed
    */
+  @Deprecated
   public long getLowPriorityMedianExecutionDelay() {
-    List<Long> times = new ArrayList<Long>(statsManager.lowPriorityExecutionDelay);
-    if (times.isEmpty()) {
-      return -1;
+    return getMedianExecutionDelay(TaskPriority.Low);
+  }
+  
+  /**
+   * Call to get a list of all currently recorded times for execution delays.  This is the window 
+   * used for the rolling average for {@link #getAvgExecutionDelay(TaskPriority)}.  This call 
+   * allows for more complex statistics (ie looking for outliers, etc).
+   * 
+   * @param priority Specific priority for statistics on tasks with this given priority
+   * @return list which represents execution delay samples
+   */
+  public List<Long> getExecutionDelays(TaskPriority priority) {
+    ArgumentVerifier.assertNotNull(priority, "priority");
+
+    List<Long> sourceList;
+    switch (priority) {
+      case High:
+        sourceList = statsManager.highPriorityExecutionDelay;
+        break;
+      case Low:
+        sourceList = statsManager.lowPriorityExecutionDelay;
+        break;
+      case Starvable:
+        sourceList = statsManager.starvablePriorityExecutionDelay;
+        break;
+      default:
+        throw new UnsupportedOperationException();
     }
-    Collections.sort(times);
     
-    return times.get(times.size() / 2);
+    
+    return new ArrayList<Long>(sourceList);
   }
   
   /**
@@ -381,12 +446,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * used for the rolling average for {@link #getHighPriorityAvgExecutionDelay()}.  This call 
    * allows for more complex statistics (ie looking for outliers, etc).
    * 
+   * @deprecated use {@link #getExecutionDelays(TaskPriority)} with a high priority
+   * 
    * @return list which represents execution delay samples
    */
+  @Deprecated
   public List<Long> getHighPriorityExecutionDelays() {
-    List<Long> result = new ArrayList<Long>(statsManager.highPriorityExecutionDelay);
-    
-    return Collections.unmodifiableList(result);
+    return getExecutionDelays(TaskPriority.High);
   }
   
   /**
@@ -394,12 +460,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * used for the rolling average for {@link #getLowPriorityAvgExecutionDelay()}.  This call 
    * allows for more complex statistics (ie looking for outliers, etc).
    * 
+   * @deprecated use {@link #getExecutionDelays(TaskPriority)} with a low priority
+   * 
    * @return list which represents execution delay samples
    */
+  @Deprecated
   public List<Long> getLowPriorityExecutionDelays() {
-    List<Long> result = new ArrayList<Long>(statsManager.lowPriorityExecutionDelay);
-    
-    return Collections.unmodifiableList(result);
+    return getExecutionDelays(TaskPriority.Low);
   }
   
   /**
@@ -430,9 +497,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return the list of currently recorded run times for tasks
    */
   public List<Long> getRunTimes() {
-    List<Long> result = new ArrayList<Long>(statsManager.runTimes);
-    
-    return Collections.unmodifiableList(result);
+    return new ArrayList<Long>(statsManager.runTimes);
   }
   
   /**
@@ -441,26 +506,57 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return total quantity of tasks run
    */
   public int getTotalExecutionCount() {
-    return getHighPriorityTotalExecutionCount() + 
-             getLowPriorityTotalExecutionCount();
+    int result = 0;
+    for (TaskPriority p : TaskPriority.values()) {
+      result += getTotalExecutionCount(p);
+    }
+    return result;
+  }
+  
+  /**
+   * Call to get the total quantity of tasks this executor has handled for a specific priority.
+   * 
+   * @param priority Specific priority for statistics on tasks with this given priority
+   * @return total quantity of tasks run
+   */
+  public int getTotalExecutionCount(TaskPriority priority) {
+    if (priority == null) {
+      return getTotalExecutionCount();
+    }
+    switch (priority) {
+      case High:
+        return statsManager.totalHighPriorityExecutions.get();
+      case Low:
+        return statsManager.totalLowPriorityExecutions.get();
+      case Starvable:
+        return statsManager.totalStarvablePriorityExecutions.get();
+      default:
+        throw new UnsupportedOperationException();
+    }
   }
   
   /**
    * Call to get the total quantity of high priority tasks this executor has handled.
    * 
+   * @deprecated use {@link #getTotalExecutionCount(TaskPriority)} with a high priority
+   * 
    * @return total quantity of high priority tasks run
    */
+  @Deprecated
   public int getHighPriorityTotalExecutionCount() {
-    return statsManager.totalHighPriorityExecutions.get();
+    return getTotalExecutionCount(TaskPriority.High);
   }
   
   /**
    * Call to get the total quantity of low priority tasks this executor has handled.
    * 
+   * @deprecated use {@link #getTotalExecutionCount(TaskPriority)} with a low priority
+   * 
    * @return total quantity of low priority tasks run
    */
+  @Deprecated
   public int getLowPriorityTotalExecutionCount() {
-    return statsManager.totalLowPriorityExecutions.get();
+    return getTotalExecutionCount(TaskPriority.Low);
   }
   
   /**
@@ -561,16 +657,20 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   protected static class StatsManager {
     protected final AtomicInteger totalHighPriorityExecutions;
     protected final AtomicInteger totalLowPriorityExecutions;
+    protected final AtomicInteger totalStarvablePriorityExecutions;
     protected final ConcurrentHashMap<Wrapper, Long> runningTasks;
     protected final ConcurrentArrayList<Long> runTimes;
+    protected final ConcurrentArrayList<Long> starvablePriorityExecutionDelay;
     protected final ConcurrentArrayList<Long> lowPriorityExecutionDelay;
     protected final ConcurrentArrayList<Long> highPriorityExecutionDelay;
     
     protected StatsManager() {
       totalHighPriorityExecutions = new AtomicInteger(0);
       totalLowPriorityExecutions = new AtomicInteger(0);
+      totalStarvablePriorityExecutions = new AtomicInteger(0);
       runningTasks = new ConcurrentHashMap<Wrapper, Long>();
       runTimes = new ConcurrentArrayList<Long>(0, MAX_WINDOW_SIZE);
+      starvablePriorityExecutionDelay = new ConcurrentArrayList<Long>(0, MAX_WINDOW_SIZE);
       lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, MAX_WINDOW_SIZE);
       highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, MAX_WINDOW_SIZE);
     }
@@ -589,6 +689,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
           break;
         case Low:
           totalLowPriorityExecutions.incrementAndGet();
+          break;
+        case Starvable:
+          totalStarvablePriorityExecutions.incrementAndGet();
           break;
         default:
           throw new UnsupportedOperationException();
@@ -685,6 +788,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
             break;
           case Low:
             priorityStats = statsManager.lowPriorityExecutionDelay;
+            break;
+          case Starvable:
+            priorityStats = statsManager.starvablePriorityExecutionDelay;
             break;
           default:
             throw new UnsupportedOperationException();

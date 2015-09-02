@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
-
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
@@ -30,6 +29,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   protected final Object taskNotifyLock;
   protected final QueueSet highPriorityQueueSet;
   protected final QueueSet lowPriorityQueueSet;
+  protected final QueueSet starvablePriorityQueueSet;
   private final QueueSetListener queueListener;
   private volatile long maxWaitForLowPriorityInMs;
   private volatile boolean tickRunning;
@@ -74,6 +74,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     };
     highPriorityQueueSet = new QueueSet(queueListener);
     lowPriorityQueueSet = new QueueSet(queueListener);
+    starvablePriorityQueueSet = new QueueSet(queueListener);
     tickRunning = false;
     currentlyBlocking = false;
     tickCanceled = false;
@@ -98,8 +99,10 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   protected QueueSet getQueueSet(TaskPriority priority) {
     if (priority == TaskPriority.High) {
       return highPriorityQueueSet;
-    } else {
+    } else if (priority == TaskPriority.Low) {
       return lowPriorityQueueSet;
+    } else {
+      return starvablePriorityQueueSet;
     }
   }
 
@@ -247,15 +250,37 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
               tickCanceled = false;
               return 0;
             }
-            TaskWrapper nextTask = getNextTask(highPriorityQueueSet, 
-                                               lowPriorityQueueSet, 
+            TaskWrapper nextTask = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
                                                maxWaitForLowPriorityInMs);
             if (nextTask == null) {
-              taskNotifyLock.wait();
+              TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
+              if (nextStarvableTask == null) {
+                taskNotifyLock.wait();
+              } else {
+                long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
+                if (nextStarvableTaskDelay > 0) {
+                  taskNotifyLock.wait(nextStarvableTaskDelay);
+                } else {
+                  // starvable task is ready to run, so break loop
+                  break;
+                }
+              }
             } else {
               long nextTaskDelay = nextTask.getScheduleDelay();
               if (nextTaskDelay > 0) {
-                taskNotifyLock.wait(nextTaskDelay);
+                TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
+                if (nextStarvableTask == null) {
+                  taskNotifyLock.wait(nextTaskDelay);
+                } else {
+                  long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
+                  if (nextStarvableTaskDelay > 0) {
+                    taskNotifyLock.wait(nextTaskDelay > nextStarvableTaskDelay ? 
+                                          nextStarvableTaskDelay : nextTaskDelay);
+                  } else {
+                    // starvable task is ready to run, so break loop
+                    break;
+                  }
+                }
               } else {
                 // task is ready to run, so break loop
                 break;
@@ -298,7 +323,6 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     }
     
     QueueSet queueSet = getQueueSet(priority);
-    
     NoThreadRecurringDelayTaskWrapper taskWrapper = 
         new NoThreadRecurringDelayTaskWrapper(task, queueSet, 
                                               nowInMillis(true) + initialDelay, recurringDelay);
@@ -325,12 +349,14 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   
   @Override
   public boolean remove(Runnable task) {
-    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task) || 
+             starvablePriorityQueueSet.remove(task);
   }
   
   @Override
   public boolean remove(Callable<?> task) {
-    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task);
+    return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task) || 
+             starvablePriorityQueueSet.remove(task);
   }
 
   @Override
@@ -354,13 +380,13 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return next ready task, or {@code null} if there are none
    */
   protected TaskWrapper getNextReadyTask() {
-    TaskWrapper tw = getNextTask(highPriorityQueueSet, 
-                                 lowPriorityQueueSet, 
+    TaskWrapper tw = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
                                  maxWaitForLowPriorityInMs);
-    if (tw != null && tw.getScheduleDelay() <= 0) {
-      return tw;
+    if (tw == null || tw.getScheduleDelay() > 0) {
+      tw = starvablePriorityQueueSet.getNextTask();
+      return tw == null || tw.getScheduleDelay() > 0 ? null : tw;
     } else {
-      return null;
+      return tw;
     }
   }
   
@@ -377,7 +403,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return {@code true} if there are task waiting to run
    */
   public boolean hasTaskReadyToRun() {
-    return hasTaskReadyToRun(highPriorityQueueSet) || hasTaskReadyToRun(lowPriorityQueueSet);
+    return hasTaskReadyToRun(highPriorityQueueSet) || hasTaskReadyToRun(lowPriorityQueueSet) || 
+             hasTaskReadyToRun(starvablePriorityQueueSet);
   }
   
   private static boolean hasTaskReadyToRun(QueueSet queueSet) {
@@ -400,9 +427,11 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    */
   public List<Runnable> clearTasks() {
     List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(highPriorityQueueSet.queueSize() + 
-                                                                 lowPriorityQueueSet.queueSize());
+                                                                 lowPriorityQueueSet.queueSize() + 
+                                                                 starvablePriorityQueueSet.queueSize());
     highPriorityQueueSet.drainQueueInto(wrapperList);
     lowPriorityQueueSet.drainQueueInto(wrapperList);
+    starvablePriorityQueueSet.drainQueueInto(wrapperList);
     
     return ContainerHelper.getContainedRunnables(wrapperList);
   }
