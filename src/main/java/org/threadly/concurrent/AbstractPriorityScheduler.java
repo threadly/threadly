@@ -204,6 +204,30 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    */
   protected abstract QueueSet getQueueSet(TaskPriority priority);
   
+  @Override
+  public int getScheduledTaskCount() {
+    int result = 0;
+    for (TaskPriority p : TaskPriority.values()) {
+      result += getQueueSet(p).queueSize();
+    }
+    return result;
+  }
+  
+  /**
+   * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
+   * executed at a future point for a specific priority.
+   * 
+   * @param priority priority for tasks to be counted
+   * @return quantity of tasks waiting execution or scheduled to be executed later
+   */
+  public int getScheduledTaskCount(TaskPriority priority) {
+    if (priority == null) {
+      return getScheduledTaskCount();
+    }
+    
+    return getQueueSet(priority).queueSize();
+  }
+  
   /**
    * <p>Interface to be notified when relevant changes happen to the queue set.</p>
    * 

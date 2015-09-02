@@ -160,18 +160,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * Call to check how many tasks are currently being executed in this thread pool.  Unlike 
-   * {@link #getCurrentPoolSize()}, this count will NOT include idle threads waiting to execute 
-   * tasks.
-   * 
-   * @return current number of running tasks
-   */
-  @Override
-  public int getCurrentRunningCount() {
-    return workerPool.getCurrentRunningCount();
-  }
-  
-  /**
    * Change the set thread pool size.
    * 
    * If the value is less than the current running threads, as threads finish they will exit 
@@ -188,6 +176,18 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     workerPool.setPoolSize(newPoolSize);
   }
   
+  /**
+   * Call to check how many tasks are currently being executed in this thread pool.  Unlike 
+   * {@link #getCurrentPoolSize()}, this count will NOT include idle threads waiting to execute 
+   * tasks.
+   * 
+   * @return current number of running tasks
+   */
+  @Override
+  public int getCurrentRunningCount() {
+    return workerPool.getCurrentRunningCount();
+  }
+  
   @Override
   public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
     taskConsumer.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
@@ -196,31 +196,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   @Override
   public long getMaxWaitForLowPriority() {
     return taskConsumer.getMaxWaitForLowPriority();
-  }
-  
-  /**
-   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
-   * a future point.
-   * 
-   * @return quantity of tasks waiting execution or scheduled to be executed later
-   */
-  public int getScheduledTaskCount() {
-    return taskConsumer.getScheduledTaskCount();
-  }
-  
-  /**
-   * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
-   * executed at a future point for a specific priority.
-   * 
-   * @param priority priority for tasks to be counted
-   * @return quantity of tasks waiting execution or scheduled to be executed later
-   */
-  public int getScheduledTaskCount(TaskPriority priority) {
-    if (priority == null) {
-      return getScheduledTaskCount();
-    }
-    
-    return taskConsumer.getQueueSet(priority).queueSize();
   }
   
   /**
@@ -503,11 +478,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public List<Runnable> stopAndClearQueue() {
       stopIfRunning();
 
-      ArrayList<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(getScheduledTaskCount());
+      List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(highPriorityQueueSet.queueSize() + 
+                                                                   lowPriorityQueueSet.queueSize() + 
+                                                                   starvablePriorityQueueSet.queueSize());
       highPriorityQueueSet.drainQueueInto(wrapperList);
       lowPriorityQueueSet.drainQueueInto(wrapperList);
       starvablePriorityQueueSet.drainQueueInto(wrapperList);
-      wrapperList.trimToSize();
       
       return ContainerHelper.getContainedRunnables(wrapperList);
     }
@@ -609,17 +585,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       }
       
       return null;
-    }
-    
-    /**
-     * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
-     * a future point.
-     * 
-     * @return quantity of tasks waiting execution or scheduled to be executed later
-     */
-    public int getScheduledTaskCount() {
-      return highPriorityQueueSet.queueSize() + lowPriorityQueueSet.queueSize() + 
-               starvablePriorityQueueSet.queueSize();
     }
     
     /**

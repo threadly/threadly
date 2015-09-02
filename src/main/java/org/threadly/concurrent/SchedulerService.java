@@ -38,6 +38,14 @@ public interface SchedulerService extends SubmitterSchedulerInterface {
   public int getCurrentRunningCount();
   
   /**
+   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
+   * a future point.
+   * 
+   * @return quantity of tasks waiting execution or scheduled to be executed later
+   */
+  public int getScheduledTaskCount();
+  
+  /**
    * Function to check if the thread pool is currently accepting and handling tasks.
    * 
    * @return {@code true} if thread pool is running

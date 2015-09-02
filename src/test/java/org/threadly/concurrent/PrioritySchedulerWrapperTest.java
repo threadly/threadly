@@ -321,6 +321,11 @@ public class PrioritySchedulerWrapperTest {
     public int getCurrentRunningCount() {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public int getScheduledTaskCount() {
+      throw new UnsupportedOperationException();
+    }
     
     // NO OPERATIONS WITHOUT PRIORITY SHOULD BE CALLED
     @Override

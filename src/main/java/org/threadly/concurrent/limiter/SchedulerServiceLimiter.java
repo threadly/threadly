@@ -88,6 +88,11 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
   }
 
   @Override
+  public int getScheduledTaskCount() {
+    return scheduler.getScheduledTaskCount() + waitingTasks.size();
+  }
+
+  @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
   }
