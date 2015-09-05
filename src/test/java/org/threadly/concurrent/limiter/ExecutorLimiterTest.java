@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.BlockingTestRunnable;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
@@ -73,6 +75,27 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   @Test
   public void getMaxConcurrencyTest() {
     assertEquals(PARALLEL_COUNT, getLimiter(PARALLEL_COUNT).getMaxConcurrency());
+  }
+  
+  @Test
+  public void getUnsubmittedTaskCountTest() {
+    ExecutorLimiter limiter = getLimiter(1);
+    
+    assertEquals(0, limiter.getUnsubmittedTaskCount());
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      limiter.execute(btr);
+      // block till started, and first check should still be zero
+      btr.blockTillStarted();
+      
+      for (int i = 0; i < TEST_QTY; i ++) {
+        assertEquals(i, limiter.getUnsubmittedTaskCount());
+        limiter.execute(DoNothingRunnable.instance());
+      }
+    } finally {
+      btr.unblock();
+    }
   }
   
   @Test

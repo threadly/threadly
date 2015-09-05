@@ -73,6 +73,16 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
   }
   
   /**
+   * Returns how many tasks are currently being "limited" and thus are in queue to run from this 
+   * limiter.
+   * 
+   * @return Quantity of tasks queued in this limiter
+   */
+  public int getUnsubmittedTaskCount() {
+    return waitingTasks.size();
+  }
+  
+  /**
    * Thread safe verification that the pool has space remaining to accept additional tasks.
    * 
    * If this returns {@code true} {@code currentlyRunning} has been incremented and it expects the 
