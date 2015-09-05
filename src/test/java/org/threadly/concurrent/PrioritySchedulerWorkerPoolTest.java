@@ -11,8 +11,6 @@ import org.threadly.test.concurrent.TestCondition;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerWorkerPoolTest {
-  protected static int DEFAULT_KEEP_ALIVE_TIME = 1000;
-  
   protected WorkerPool workerPool;
   
   @Before
