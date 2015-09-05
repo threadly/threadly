@@ -173,8 +173,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    */
   public KeyDistributedScheduler(int expectedParallism, SimpleScheduler scheduler, 
                                  int maxTasksPerCycle, boolean accurateQueueSize) {
-    this(scheduler, new StripedLock(expectedParallism), 
-         maxTasksPerCycle, accurateQueueSize);
+    this(scheduler, new StripedLock(expectedParallism), maxTasksPerCycle, accurateQueueSize);
   }
   
   /**
@@ -215,13 +214,26 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * Schedule a one time task with a given delay that will not run concurrently based off the 
    * thread key.
    * 
+   * @deprecated Use {@link #schedule(Object, Runnable, long)} as a direct replacement
+   * 
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to execute
    * @param delayInMs Time to wait to execute task
    */
-  public void scheduleTask(Object threadKey, 
-                           Runnable task, 
-                           long delayInMs) {
+  @Deprecated
+  public void scheduleTask(Object threadKey, Runnable task, long delayInMs) {
+    schedule(threadKey, task, delayInMs);
+  }
+
+  /**
+   * Schedule a one time task with a given delay that will not run concurrently based off the 
+   * thread key.
+   * 
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task Task to execute
+   * @param delayInMs Time to wait to execute task
+   */
+  public void schedule(Object threadKey, Runnable task, long delayInMs) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
@@ -229,9 +241,28 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (delayInMs == 0) {
       addTask(threadKey, task, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, task), 
-                         delayInMs);
+      scheduler.schedule(new AddTask(threadKey, task), delayInMs);
     }
+  }
+
+  /**
+   * Schedule a task with a given delay.  There is a slight increase in load when using 
+   * {@link #submitScheduledTask(Object, Runnable, long)} over 
+   * {@link #scheduleTask(Object, Runnable, long)}.  So this should only be used when the future 
+   * is necessary.
+   * 
+   * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has completed.
+   * 
+   * @deprecated Use {@link #submitScheduled(Object, Runnable, long)} as a directed replacement
+   * 
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task runnable to execute
+   * @param delayInMs time in milliseconds to wait to execute task
+   * @return a future to know when the task has completed
+   */
+  @Deprecated
+  public ListenableFuture<?> submitScheduledTask(Object threadKey, Runnable task, long delayInMs) {
+    return submitScheduled(threadKey, task, delayInMs);
   }
 
   /**
@@ -247,10 +278,27 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public ListenableFuture<?> submitScheduledTask(Object threadKey, 
-                                                 Runnable task, 
-                                                 long delayInMs) {
+  public ListenableFuture<?> submitScheduled(Object threadKey, Runnable task, long delayInMs) {
     return submitScheduledTask(threadKey, task, null, delayInMs);
+  }
+
+  /**
+   * Schedule a task with a given delay.  The future {@link ListenableFuture#get()} method will 
+   * return null once the runnable has completed.
+   * 
+   * @deprecated Use {@link #submitScheduled(Object, Runnable, Object, long)} as a direct replacement
+   * 
+   * @param <T> type of result returned from the future
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task runnable to execute
+   * @param result result to be returned from resulting {@link ListenableFuture#get()} when runnable completes
+   * @param delayInMs time in milliseconds to wait to execute task
+   * @return a future to know when the task has completed
+   */
+  @Deprecated
+  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, Runnable task, 
+                                                     T result, long delayInMs) {
+    return submitScheduled(threadKey, task, result, delayInMs);
   }
 
   /**
@@ -264,8 +312,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, Runnable task, 
-                                                     T result, long delayInMs) {
+  public <T> ListenableFuture<T> submitScheduled(Object threadKey, Runnable task, 
+                                                 T result, long delayInMs) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
@@ -285,15 +333,32 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 
    * consumed from the callable.
    * 
+   * @deprecated Use {@link #submitScheduled(Object, Callable, long)} as a direct replacement
+   * 
    * @param <T> type of result returned from the future
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task callable to be executed
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed and get the result of the callable
    */
+  @Deprecated
   public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, 
-                                                     Callable<T> task, 
-                                                     long delayInMs) {
+                                                     Callable<T> task, long delayInMs) {
+    return submitScheduled(threadKey, task, delayInMs);
+  }
+
+  /**
+   * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 
+   * consumed from the callable.
+   * 
+   * @param <T> type of result returned from the future
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task callable to be executed
+   * @param delayInMs time in milliseconds to wait to execute task
+   * @return a future to know when the task has completed and get the result of the callable
+   */
+  public <T> ListenableFuture<T> submitScheduled(Object threadKey, 
+                                                 Callable<T> task,  long delayInMs) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
@@ -303,8 +368,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (delayInMs == 0) {
       addTask(threadKey, rf, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rf), 
-                         delayInMs);
+      scheduler.schedule(new AddTask(threadKey, rf), delayInMs);
     }
     
     return rf;
@@ -331,8 +395,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (initialDelay == 0) {
       addTask(threadKey, rdt, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rdt), 
-                         initialDelay);
+      scheduler.schedule(new AddTask(threadKey, rdt), initialDelay);
     }
   }
   
@@ -358,8 +421,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (initialDelay == 0) {
       addTask(threadKey, rrt, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rrt), 
-                         initialDelay);
+      scheduler.schedule(new AddTask(threadKey, rrt), initialDelay);
     }
   }
   
@@ -466,8 +528,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
 
     @Override
     public void schedule(Runnable task, long delayInMs) {
-      KeyDistributedScheduler.this.scheduleTask(threadKey, task, 
-                                                delayInMs);
+      KeyDistributedScheduler.this.schedule(threadKey, task, delayInMs);
     }
 
     @Override
@@ -477,12 +538,12 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
 
     @Override
     public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-      return KeyDistributedScheduler.this.submitScheduledTask(threadKey, task, result, delayInMs);
+      return KeyDistributedScheduler.this.submitScheduled(threadKey, task, result, delayInMs);
     }
 
     @Override
     public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-      return KeyDistributedScheduler.this.submitScheduledTask(threadKey, task, delayInMs);
+      return KeyDistributedScheduler.this.submitScheduled(threadKey, task, delayInMs);
     }
 
     @Override

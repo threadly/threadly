@@ -117,6 +117,7 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addTaskTest() {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
@@ -136,6 +137,26 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
+  public void executeTest() {
+    List<TDRunnable> runs = populate(new AddHandler() {
+      @Override
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        distributor.execute(key, tdr);
+      }
+    });
+    
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(1000);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
   public void addTaskFail() {
     try {
       distributor.addTask(null, new TestRunnable());
@@ -153,7 +174,25 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void submitRunnableFail() {
+  public void executeFail() {
+    try {
+      distributor.execute(null, new TestRunnable());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    try {
+      distributor.execute(new Object(), null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitTaskRunnableFail() {
     try {
       distributor.submitTask(null, new TestRunnable());
       fail("Exception should have been thrown");
@@ -169,7 +208,24 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void submitCallableConsistentThreadTest() {
+  public void submitRunnableFail() {
+    try {
+      distributor.submit(null, new TestRunnable());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submit(new Object(), null, null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitTaskCallableConsistentThreadTest() {
     List<TDCallable> runs = new ArrayList<TDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
     
     // hold agent lock to avoid execution till all are submitted
@@ -197,7 +253,36 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void submitCallableFail() {
+  public void submitCallableConsistentThreadTest() {
+    List<TDCallable> runs = new ArrayList<TDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    
+    // hold agent lock to avoid execution till all are submitted
+    synchronized (agentLock) {
+      for (int i = 0; i < PARALLEL_LEVEL; i++) {
+        ThreadContainer tc = new ThreadContainer();
+        TDCallable previous = null;
+        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+          TDCallable tr = new TDCallable(tc, previous);
+          runs.add(tr);
+          distributor.submit(tc, tr);
+          
+          previous = tr;
+        }
+      }
+    }
+    
+    Iterator<TDCallable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDCallable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitTaskCallableFail() {
     try {
       distributor.submitTask(null, new TestCallable());
       fail("Exception should have been thrown");
@@ -213,7 +298,24 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void scheduleExecutionTest() {
+  public void submitCallableFail() {
+    try {
+      distributor.submit(null, new TestCallable());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submit(new Object(), (Callable<Void>)null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void scheduleTaskExecutionTest() {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
@@ -231,7 +333,26 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void scheduleExecutionFail() {
+  public void scheduleExecutionTest() {
+    List<TDRunnable> runs = populate(new AddHandler() {
+      @Override
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        distributor.schedule(key, tdr, DELAY_TIME);
+      }
+    });
+    
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(1000);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.getDelayTillFirstRun() >= DELAY_TIME);
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void scheduleTaskExecutionFail() {
     try {
       distributor.scheduleTask(new Object(), null, 1000);
       fail("Exception should have been thrown");
@@ -253,7 +374,30 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void submitScheduledRunnableFail() {
+  public void scheduleExecutionFail() {
+    try {
+      distributor.schedule(new Object(), null, 1000);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.schedule(new Object(), new TestRunnable(), -1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.schedule(null, new TestRunnable(), 100);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitScheduledTaskRunnableFail() {
     try {
       distributor.submitScheduledTask(new Object(), (Runnable)null, 1000);
       fail("Exception should have been thrown");
@@ -275,7 +419,30 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void submitScheduledCallableFail() {
+  public void submitScheduledRunnableFail() {
+    try {
+      distributor.submitScheduled(new Object(), (Runnable)null, 1000);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduled(new Object(), new TestRunnable(), -1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduled(null, new TestRunnable(), 100);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitScheduledTaskCallableFail() {
     try {
       distributor.submitScheduledTask(new Object(), (Callable<?>)null, 1000);
       fail("Exception should have been thrown");
@@ -290,6 +457,28 @@ public class KeyDistributedSchedulerTest {
     }
     try {
       distributor.submitScheduledTask(null, new TestCallable(), 100);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void submitScheduledCallableFail() {
+    try {
+      distributor.submitScheduled(new Object(), (Callable<?>)null, 1000);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduled(new Object(), new TestCallable(), -1);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submitScheduled(null, new TestCallable(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -351,8 +540,8 @@ public class KeyDistributedSchedulerTest {
     TestRunnable submitScheduledRunnable = new TestRunnable();
     TestRunnable scheduleWithFixedDelayRunnable = new TestRunnable();
     
-    distributor.scheduleTask(scheduleRunnable, scheduleRunnable, 10);
-    distributor.submitScheduledTask(submitScheduledRunnable, submitScheduledRunnable, 10);
+    distributor.schedule(scheduleRunnable, scheduleRunnable, 10);
+    distributor.submitScheduled(submitScheduledRunnable, submitScheduledRunnable, 10);
     distributor.scheduleTaskWithFixedDelay(scheduleWithFixedDelayRunnable, scheduleWithFixedDelayRunnable, 10, 10);
     
     assertTrue(scheduler.remove(scheduleRunnable));
@@ -366,7 +555,7 @@ public class KeyDistributedSchedulerTest {
     KeyDistributedScheduler distributor = new KeyDistributedScheduler(scheduler);
     TestCallable submitScheduledCallable = new TestCallable();
     
-    distributor.submitScheduledTask(submitScheduledCallable, submitScheduledCallable, 10);
+    distributor.submitScheduled(submitScheduledCallable, submitScheduledCallable, 10);
     
     assertTrue(scheduler.remove(submitScheduledCallable));
   }

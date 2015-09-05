@@ -1,7 +1,9 @@
 package org.threadly.concurrent;
 
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -200,8 +202,7 @@ public class KeyDistributedExecutor {
    */
   public KeyDistributedExecutor(int expectedParallism, Executor executor, 
                                 int maxTasksPerCycle, boolean accurateQueueSize) {
-    this(executor, new StripedLock(expectedParallism), 
-         maxTasksPerCycle, accurateQueueSize);
+    this(executor, new StripedLock(expectedParallism), maxTasksPerCycle, accurateQueueSize);
   }
   
   /**
@@ -234,18 +235,14 @@ public class KeyDistributedExecutor {
     if (accurateQueueSize) {
       wFactory = new WorkerFactory() {
         @Override
-        public TaskQueueWorker build(Object mapKey, 
-                                     Object workerLock, 
-                                     Runnable firstTask) {
+        public TaskQueueWorker build(Object mapKey, Object workerLock, Runnable firstTask) {
           return new StatisticWorker(mapKey, workerLock, firstTask);
         }
       };
     } else {
       wFactory = new WorkerFactory() {
         @Override
-        public TaskQueueWorker build(Object mapKey, 
-                                     Object workerLock, 
-                                     Runnable firstTask) {
+        public TaskQueueWorker build(Object mapKey, Object workerLock, Runnable firstTask) {
           return new TaskQueueWorker(mapKey, workerLock, firstTask);
         }
       };
@@ -309,12 +306,54 @@ public class KeyDistributedExecutor {
   }
   
   /**
+   * Get a map of all the keys and how many tasks are queued per key.  This map is generated 
+   * without locking.  Due to that, this may be inaccurate as task queue sizes changed while 
+   * iterating all key's active workers.
+   * 
+   * Because this requires an iteration of all task workers, if only a single key's queue size is 
+   * needed, use {@link #getTaskQueueSize(Object)} as a cheaper alternative.
+   * 
+   * If {@code true} was not supplied in the constructor for {@code accurateQueueSize}, this will 
+   * only report how many tasks have not been accepted by the worker yet.  The accepting of those 
+   * tasks occur in batches, so this number will vary dramatically (and probably be unusable).
+   * 
+   * So it is highly recommended that if your interested in this functionality you supply a 
+   * {@code true} into the constructor.
+   * 
+   * Supplying a {@code true} for {@code accurateQueueSize} in the constructor does involve some 
+   * performance cost, but that overhead should be minimal (just no reason to accept any loss if 
+   * not interested in this feature).
+   * 
+   * @return Map of task key's to their respective queue size
+   */
+  public Map<Object, Integer> getTaskQueueSizeMap() {
+    Map<Object, Integer> result = new HashMap<Object, Integer>(taskWorkers.size());
+    for (Map.Entry<Object, TaskQueueWorker> e : taskWorkers.entrySet()) {
+      result.put(e.getKey(), e.getValue().getQueueSize());
+    }
+    return result;
+  }
+  
+  /**
+   * Provide a task to be run with a given thread key.
+   * 
+   * @deprecated use {@link #execute(Object, Runnable)} as a direct replacement
+   * 
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task Task to be executed
+   */
+  @Deprecated
+  public void addTask(Object threadKey, Runnable task) {
+    execute(threadKey, task);
+  }
+  
+  /**
    * Provide a task to be run with a given thread key.
    * 
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be executed
    */
-  public void addTask(Object threadKey, Runnable task) {
+  public void execute(Object threadKey, Runnable task) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
@@ -354,12 +393,42 @@ public class KeyDistributedExecutor {
   /**
    * Submit a task to be run with a given thread key.
    * 
+   * @deprecated Use {@link #submit(Object, Runnable)} as a direct replacement
+   * 
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be executed
    * @return Future to represent when the execution has occurred
    */
+  @Deprecated
   public ListenableFuture<?> submitTask(Object threadKey, Runnable task) {
+    return submit(threadKey, task);
+  }
+  
+  /**
+   * Submit a task to be run with a given thread key.
+   * 
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task Task to be executed
+   * @return Future to represent when the execution has occurred
+   */
+  public ListenableFuture<?> submit(Object threadKey, Runnable task) {
     return submitTask(threadKey, task, null);
+  }
+  
+  /**
+   * Submit a task to be run with a given thread key.
+   * 
+   * @deprecated Use {@link #submit(Object, Runnable, Object)} as a direct replacement
+   * 
+   * @param <T> type of result returned from the future
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task Runnable to be executed
+   * @param result Result to be returned from future when task completes
+   * @return Future to represent when the execution has occurred and provide the given result
+   */
+  @Deprecated
+  public <T> ListenableFuture<T> submitTask(Object threadKey, Runnable task, T result) {
+    return submit(threadKey, task, result);
   }
   
   /**
@@ -371,8 +440,7 @@ public class KeyDistributedExecutor {
    * @param result Result to be returned from future when task completes
    * @return Future to represent when the execution has occurred and provide the given result
    */
-  public <T> ListenableFuture<T> submitTask(Object threadKey, Runnable task, 
-                                            T result) {
+  public <T> ListenableFuture<T> submit(Object threadKey, Runnable task, T result) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
@@ -386,12 +454,27 @@ public class KeyDistributedExecutor {
   /**
    * Submit a callable to be run with a given thread key.
    * 
+   * @deprecated Use {@link #submit(Object, Callable)} as a direct replacement
+   * 
    * @param <T> type of result returned from the future
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task Callable to be executed
    * @return Future to represent when the execution has occurred and provide the result from the callable
    */
+  @Deprecated
   public <T> ListenableFuture<T> submitTask(Object threadKey, Callable<T> task) {
+    return submit(threadKey, task);
+  }
+  
+  /**
+   * Submit a callable to be run with a given thread key.
+   * 
+   * @param <T> type of result returned from the future
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @param task Callable to be executed
+   * @return Future to represent when the execution has occurred and provide the result from the callable
+   */
+  public <T> ListenableFuture<T> submit(Object threadKey, Callable<T> task) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
@@ -427,9 +510,7 @@ public class KeyDistributedExecutor {
     protected volatile Runnable firstTask;
     protected Queue<Runnable> queue;  // locked around workerLock
     
-    protected TaskQueueWorker(Object mapKey, 
-                              Object workerLock, 
-                              Runnable firstTask) {
+    protected TaskQueueWorker(Object mapKey, Object workerLock, Runnable firstTask) {
       this.mapKey = mapKey;
       this.workerLock = workerLock;
       this.queue = null;
@@ -444,8 +525,7 @@ public class KeyDistributedExecutor {
     public int getQueueSize() {
       // the default implementation is very inaccurate
       synchronized (workerLock) {
-        return (firstTask == null ? 0 : 1) + 
-                 (queue == null ? 0 : queue.size());
+        return (firstTask == null ? 0 : 1) + (queue == null ? 0 : queue.size());
       }
     }
     
@@ -520,9 +600,8 @@ public class KeyDistributedExecutor {
           }
         }
         
-        Iterator<Runnable> it = nextQueue.iterator();
-        while (it.hasNext()) {
-          runTask(it.next());
+        for (Runnable r : nextQueue) {
+          runTask(r);
         }
       }
     }
@@ -538,9 +617,7 @@ public class KeyDistributedExecutor {
   protected class StatisticWorker extends TaskQueueWorker {
     private final AtomicInteger queueSize;
     
-    protected StatisticWorker(Object mapKey, 
-                              Object workerLock, 
-                              Runnable firstTask) {
+    protected StatisticWorker(Object mapKey, Object workerLock, Runnable firstTask) {
       super(mapKey, workerLock, firstTask);
       
       queueSize = new AtomicInteger(1);
@@ -582,22 +659,22 @@ public class KeyDistributedExecutor {
     
     @Override
     public void execute(Runnable command) {
-      addTask(threadKey, command);
+      KeyDistributedExecutor.this.execute(threadKey, command);
     }
 
     @Override
     public ListenableFuture<?> submit(Runnable task) {
-      return submitTask(threadKey, task);
+      return KeyDistributedExecutor.this.submit(threadKey, task);
     }
 
     @Override
     public <T> ListenableFuture<T> submit(Runnable task, T result) {
-      return submitTask(threadKey, task, result);
+      return KeyDistributedExecutor.this.submit(threadKey, task, result);
     }
 
     @Override
     public <T> ListenableFuture<T> submit(Callable<T> task) {
-      return submitTask(threadKey, task);
+      return KeyDistributedExecutor.this.submit(threadKey, task);
     }
   }
 }

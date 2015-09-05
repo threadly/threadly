@@ -156,7 +156,43 @@ public class KeyDistributedExecutorTest {
   }
   
   @Test
-  public void executeConsistentThreadTest() {
+  @SuppressWarnings("deprecation")
+  public void addTaskFail() {
+    try {
+      distributor.addTask(null, new TestRunnable());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    try {
+      distributor.addTask(new Object(), null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void executeFail() {
+    try {
+      distributor.execute(null, new TestRunnable());
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+    try {
+      distributor.execute(new Object(), null);
+      fail("Exception should have been thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void addTaskConsistentThreadTest() {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
@@ -175,7 +211,27 @@ public class KeyDistributedExecutorTest {
   }
   
   @Test
-  public void submitRunnableFail() {
+  public void executeConsistentThreadTest() {
+    List<TDRunnable> runs = populate(new AddHandler() {
+      @Override
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        distributor.execute(key, tdr);
+      }
+    });
+
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitTaskRunnableFail() {
     try {
       distributor.submitTask(null, new TestRunnable());
       fail("Exception should have thrown");
@@ -191,7 +247,24 @@ public class KeyDistributedExecutorTest {
   }
   
   @Test
-  public void submitRunnableConsistentThreadTest() {
+  public void submitRunnableFail() {
+    try {
+      distributor.submit(null, new TestRunnable());
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submit(new Object(), null, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitTaskRunnableConsistentThreadTest() {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
@@ -210,7 +283,27 @@ public class KeyDistributedExecutorTest {
   }
   
   @Test
-  public void submitCallableConsistentThreadTest() {
+  public void submitRunnableConsistentThreadTest() {
+    List<TDRunnable> runs = populate(new AddHandler() {
+      @Override
+      public void addTDRunnable(Object key, TDRunnable tdr) {
+        distributor.submit(key, tdr);
+      }
+    });
+    
+    Iterator<TDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDRunnable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitTaskCallableConsistentThreadTest() {
     List<TDCallable> runs = new ArrayList<TDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
     
     // hold agent lock to avoid execution till all are submitted
@@ -238,7 +331,36 @@ public class KeyDistributedExecutorTest {
   }
   
   @Test
-  public void submitCallableFail() {
+  public void submitCallableConsistentThreadTest() {
+    List<TDCallable> runs = new ArrayList<TDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    
+    // hold agent lock to avoid execution till all are submitted
+    synchronized (agentLock) {
+      for (int i = 0; i < PARALLEL_LEVEL; i++) {
+        ThreadContainer tc = new ThreadContainer();
+        TDCallable previous = null;
+        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+          TDCallable tr = new TDCallable(tc, previous);
+          runs.add(tr);
+          distributor.submit(tc, tr);
+          
+          previous = tr;
+        }
+      }
+    }
+    
+    Iterator<TDCallable> it = runs.iterator();
+    while (it.hasNext()) {
+      TDCallable tr = it.next();
+      tr.blockTillFinished(20 * 1000);
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void submitTaskCallableFail() {
     try {
       distributor.submitTask(null, new TestCallable());
       fail("Exception should have thrown");
@@ -247,6 +369,22 @@ public class KeyDistributedExecutorTest {
     }
     try {
       distributor.submitTask(new Object(), (Callable<Void>)null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+  
+  @Test
+  public void submitCallableFail() {
+    try {
+      distributor.submit(null, new TestCallable());
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      distributor.submit(new Object(), (Callable<Void>)null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -282,13 +420,13 @@ public class KeyDistributedExecutorTest {
                 @Override
                 public void handleRunFinish() {
                   if (! added) {
-                    distributor.addTask(threadTracker, this);
+                    distributor.execute(threadTracker, this);
                     added = true;
                   }
                 }
               };
               runs.add(tr);
-              distributor.addTask(tc, tr);
+              distributor.execute(tc, tr);
               previousRunnables.put(j, tr);
             }
           }
@@ -319,23 +457,6 @@ public class KeyDistributedExecutorTest {
   }
   
   @Test
-  public void addTaskFail() {
-    try {
-      distributor.addTask(null, new TestRunnable());
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-
-    try {
-      distributor.addTask(new Object(), null);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
   public void taskExceptionTest() {
     Integer key = 1;
     TestExceptionHandler teh = new TestExceptionHandler();
@@ -343,8 +464,8 @@ public class KeyDistributedExecutorTest {
     ExceptionUtils.setDefaultExceptionHandler(teh);
     TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
     TestRunnable followRunnable = new TestRunnable();
-    distributor.addTask(key, exceptionRunnable);
-    distributor.addTask(key, followRunnable);
+    distributor.execute(key, exceptionRunnable);
+    distributor.execute(key, followRunnable);
     exceptionRunnable.blockTillFinished();
     followRunnable.blockTillStarted();  // verify that it ran despite the exception
     
@@ -366,12 +487,12 @@ public class KeyDistributedExecutorTest {
     
     BlockingTestRunnable btr = new BlockingTestRunnable();
     
-    distributor.addTask(this, btr);
+    distributor.execute(this, btr);
     btr.blockTillStarted();
     
     // add second task while we know worker is active
     TestRunnable secondTask = new TestRunnable();
-    distributor.addTask(this, secondTask);
+    distributor.execute(this, secondTask);
     
     assertEquals(1, distributor.taskWorkers.size());
     assertEquals(1, distributor.taskWorkers.get(this).queue.size());
@@ -409,7 +530,7 @@ public class KeyDistributedExecutorTest {
             };
             lastTestRunnable.set(next);
             waitingTasks.incrementAndGet();
-            distributor.addTask(key1, next);
+            distributor.execute(key1, next);
           }
         }
       });
@@ -423,7 +544,7 @@ public class KeyDistributedExecutorTest {
       }.blockTillTrue();
       
       TestRunnable key2Runnable = new TestRunnable();
-      distributor.addTask(key2, key2Runnable);
+      distributor.execute(key2, key2Runnable);
       TestRunnable lastKey1Runnable = lastTestRunnable.get();
       key2Runnable.blockTillStarted();  // will throw exception if not started
       // verify it ran before the lastKey1Runnable
@@ -445,12 +566,12 @@ public class KeyDistributedExecutorTest {
     
     assertEquals(0, kde.getTaskQueueSize(taskKey));
     
-    kde.addTask(taskKey, new TestRunnable());
+    kde.execute(taskKey, new TestRunnable());
     
     // should add as first task
     assertEquals(1, kde.getTaskQueueSize(taskKey));
     
-    kde.addTask(taskKey, new TestRunnable());
+    kde.execute(taskKey, new TestRunnable());
     
     // will now add into the queue
     assertEquals(2, kde.getTaskQueueSize(taskKey));
@@ -463,11 +584,11 @@ public class KeyDistributedExecutorTest {
     assertEquals(0, kde.getTaskQueueSize(taskKey));
     
     BlockingTestRunnable btr = new BlockingTestRunnable();
-    kde.addTask(taskKey, btr);
+    kde.execute(taskKey, btr);
     
     // add more tasks while remaining blocked
-    kde.addTask(taskKey, new TestRunnable());
-    kde.addTask(taskKey, new TestRunnable());
+    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, new TestRunnable());
     
     btr.blockTillStarted();
     
@@ -486,6 +607,68 @@ public class KeyDistributedExecutorTest {
   public void getTaskQueueSizeAccurateTest() {
     getTaskQueueSizeSimpleTest(true);
     getTaskQueueSizeThreadedTest(true);
+  }
+  
+  private static void getTaskQueueSizeMapSimpleTest(boolean accurateDistributor) {
+    final Object taskKey = new Object();
+    KeyDistributedExecutor kde = new KeyDistributedExecutor(new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        // kidding, don't actually execute, haha
+      }
+    }, accurateDistributor);
+    
+    Map<?, Integer> result = kde.getTaskQueueSizeMap();
+    assertTrue(result.isEmpty());
+    
+    kde.execute(taskKey, new TestRunnable());
+    
+    // should add as first task
+    result = kde.getTaskQueueSizeMap();
+    assertEquals(1, result.size());
+    assertEquals((Integer)1, result.get(taskKey));
+    
+    kde.execute(taskKey, new TestRunnable());
+    
+    // will now add into the queue
+    result = kde.getTaskQueueSizeMap();
+    assertEquals(1, result.size());
+    assertEquals((Integer)2, result.get(taskKey));
+  }
+  
+  private static void getTaskQueueSizeMapThreadedTest(boolean accurateDistributor) {
+    final Object taskKey = new Object();
+    KeyDistributedExecutor kde = new KeyDistributedExecutor(scheduler, accurateDistributor);
+
+    Map<?, Integer> result = kde.getTaskQueueSizeMap();
+    assertTrue(result.isEmpty());
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    kde.execute(taskKey, btr);
+    
+    // add more tasks while remaining blocked
+    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, new TestRunnable());
+    
+    btr.blockTillStarted();
+    
+    result = kde.getTaskQueueSizeMap();
+    assertEquals(1, result.size());
+    assertEquals((Integer)2, result.get(taskKey));
+    
+    btr.unblock();
+  }
+  
+  @Test
+  public void getTaskQueueSizeMapInaccurateTest() {
+    getTaskQueueSizeMapSimpleTest(false);
+    getTaskQueueSizeMapThreadedTest(false);
+  }
+  
+  @Test
+  public void getTaskQueueSizeMapAccurateTest() {
+    getTaskQueueSizeMapSimpleTest(true);
+    getTaskQueueSizeMapThreadedTest(true);
   }
   
   protected static class TDRunnable extends TestRunnable {
