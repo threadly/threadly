@@ -22,5 +22,12 @@ public enum TaskPriority {
    * 
    * As a generalization low priority tasks should not be dependent on an accurate execution time. 
    */
-  Low;
+  Low,
+  /**
+   * This priority is never guaranteed to run.  It will only run if there is no 
+   * {@link TaskPriority#High} or {@link TaskPriority#Low} available to run.  If there is another 
+   * task ready to be ran, this task will be infinitely delayed until there is truly nothing left 
+   * to run.
+   */
+  Starvable;
 }
