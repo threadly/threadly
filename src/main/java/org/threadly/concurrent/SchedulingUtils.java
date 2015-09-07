@@ -10,8 +10,8 @@ import org.threadly.util.Clock;
  * <p>Class for helping calculate the offset for scheduling tasks.  For example if you want a task 
  * to run at 10 minutes after the hour, every hour, you can use {@link #getDelayTillMinute(int)} 
  * to calculate the initial delay needed when scheduling with 
- * {@link SimpleScheduler#scheduleAtFixedRate(Runnable, long, long)}, and then provide 1 hour in 
- * milliseconds for the "period".</p>
+ * {@link SubmitterScheduler#scheduleAtFixedRate(Runnable, long, long)}, and then provide 1 hour 
+ * in milliseconds for the "period".</p>
  * 
  * @author jent - Mike Jensen
  * @since 3.5.0

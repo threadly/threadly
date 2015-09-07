@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
-import org.threadly.concurrent.SimpleScheduler;
+import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.future.ImmediateResultListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -29,8 +29,9 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
+@SuppressWarnings("deprecation")
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
-  protected final SimpleScheduler scheduler;
+  protected final SimpleSchedulerInterface scheduler;
   protected final double permitsPerSecond;
   protected final Object permitLock;
   private double lastScheduleTime;
@@ -43,7 +44,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param scheduler scheduler to schedule/execute tasks on
    * @param permitsPerSecond how many permits should be allowed per second
    */
-  public RateLimiterExecutor(SimpleScheduler scheduler, double permitsPerSecond) {
+  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     ArgumentVerifier.assertGreaterThanZero(permitsPerSecond, "permitsPerSecond");
     

@@ -19,8 +19,9 @@ import org.threadly.util.ArgumentVerifier;
  * @author jent - Mike Jensen
  * @since 2.5.0 (existed since 1.0.0 as TaskSchedulerDistributor)
  */
+@SuppressWarnings("deprecation")
 public class KeyDistributedScheduler extends KeyDistributedExecutor {
-  protected final SimpleScheduler scheduler;
+  protected final SimpleSchedulerInterface scheduler;
 
   /**
    * Constructor to use a provided scheduler implementation for running tasks.  
@@ -32,7 +33,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    */
-  public KeyDistributedScheduler(SimpleScheduler scheduler) {
+  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler) {
     this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, false);
   }
   
@@ -49,7 +50,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(SimpleScheduler scheduler, boolean accurateQueueSize) {
+  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, boolean accurateQueueSize) {
     this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
   
@@ -70,7 +71,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public KeyDistributedScheduler(SimpleScheduler scheduler, int maxTasksPerCycle) {
+  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, int maxTasksPerCycle) {
     this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, false);
   }
   
@@ -94,7 +95,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(SimpleScheduler scheduler, int maxTasksPerCycle, 
+  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, int maxTasksPerCycle, 
                                  boolean accurateQueueSize) {
     this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, accurateQueueSize);
   }
@@ -109,7 +110,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleScheduler scheduler) {
+  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler) {
     this(expectedParallism, scheduler, Integer.MAX_VALUE, false);
   }
   
@@ -125,7 +126,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleScheduler scheduler, 
+  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
                                  boolean accurateQueueSize) {
     this(expectedParallism, scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
@@ -147,7 +148,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleScheduler scheduler, 
+  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
                                  int maxTasksPerCycle) {
     this(expectedParallism, scheduler, maxTasksPerCycle, false);
   }
@@ -171,7 +172,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleScheduler scheduler, 
+  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
                                  int maxTasksPerCycle, boolean accurateQueueSize) {
     this(scheduler, new StripedLock(expectedParallism), maxTasksPerCycle, accurateQueueSize);
   }
@@ -189,7 +190,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param sLock lock to be used for controlling access to workers
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  protected KeyDistributedScheduler(SimpleScheduler scheduler, StripedLock sLock, 
+  protected KeyDistributedScheduler(SimpleSchedulerInterface scheduler, StripedLock sLock, 
                                     int maxTasksPerCycle, boolean accurateQueueSize) {
     super(scheduler, sLock, maxTasksPerCycle, accurateQueueSize);
     
@@ -203,7 +204,6 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @return scheduler which will only execute based on the provided key
    */
-  @SuppressWarnings("deprecation")
   public SubmitterSchedulerInterface getSubmitterSchedulerForKey(Object threadKey) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     
@@ -507,7 +507,6 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @author jent - Mike Jensen
    * @since 2.5.0
    */
-  @SuppressWarnings("deprecation")
   protected class KeyScheduler extends KeySubmitter 
                                implements SubmitterSchedulerInterface {
     protected KeyScheduler(Object threadKey) {

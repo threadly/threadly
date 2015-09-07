@@ -4,7 +4,8 @@ import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
-import org.threadly.concurrent.SimpleScheduler;
+import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -13,7 +14,7 @@ import org.threadly.util.Clock;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens on a provided 
- * {@link SimpleScheduler}.  This allows the implementor to have one thread pool for all 
+ * {@link SubmitterScheduler}.  This allows the implementor to have one thread pool for all 
  * their code, and if they want certain sections to have less levels of parallelism (possibly 
  * because those those sections would completely consume the global pool), they can wrap the 
  * executor in this class.</p>
@@ -29,27 +30,27 @@ import org.threadly.util.Clock;
  */
 @SuppressWarnings("deprecation")
 public class SimpleSchedulerLimiter extends ExecutorLimiter 
-                                    implements SubmitterSchedulerInterface {
-  protected final SimpleScheduler scheduler;
+                                    implements SubmitterScheduler, SubmitterSchedulerInterface {
+  protected final SimpleSchedulerInterface scheduler;
   
   /**
-   * Constructs a new limiter that implements the {@link SimpleScheduler}.
+   * Constructs a new limiter that implements the {@link SubmitterScheduler}.
    * 
-   * @param scheduler {@link SimpleScheduler} implementation to submit task executions to.
+   * @param scheduler {@link SubmitterScheduler} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
-  public SimpleSchedulerLimiter(SimpleScheduler scheduler, int maxConcurrency) {
+  public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, int maxConcurrency) {
     this(scheduler, maxConcurrency, null);
   }
   
   /**
-   * Constructs a new limiter that implements the {@link SimpleScheduler}.
+   * Constructs a new limiter that implements the {@link SubmitterScheduler}.
    * 
-   * @param scheduler {@link SimpleScheduler} implementation to submit task executions to.
+   * @param scheduler {@link SubmitterScheduler} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
    */
-  public SimpleSchedulerLimiter(SimpleScheduler scheduler, 
+  public SimpleSchedulerLimiter(SimpleSchedulerInterface scheduler, 
                                 int maxConcurrency, String subPoolName) {
     super(scheduler, maxConcurrency, subPoolName);
     
