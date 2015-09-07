@@ -19,10 +19,10 @@ import org.threadly.concurrent.SchedulerServiceInterface;
  * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
  * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
- * <p>This extends the {@link SimpleSchedulerLimiter} to add {@link SchedulerService} 
+ * <p>This extends the {@link SubmitterSchedulerLimiter} to add {@link SchedulerService} 
  * features.  This does not cause any performance hits, but does require a source 
  * {@link SchedulerService} to rely on.  If you have a {@link SchedulerService} 
- * available this implementation should be preferred over the {@link SimpleSchedulerLimiter}.</p>
+ * available this implementation should be preferred over the {@link SubmitterSchedulerLimiter}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0

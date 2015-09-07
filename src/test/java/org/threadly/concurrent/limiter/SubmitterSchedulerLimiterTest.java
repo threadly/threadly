@@ -13,11 +13,11 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
+@SuppressWarnings("javadoc")
+public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
   @Override
-  protected SimpleSchedulerLimiter getLimiter(int parallelCount) {
-    return new SimpleSchedulerLimiter(scheduler, parallelCount);
+  protected SubmitterSchedulerLimiter getLimiter(int parallelCount) {
+    return new SubmitterSchedulerLimiter(scheduler, parallelCount);
   }
   
   @Override
@@ -30,13 +30,13 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
   @SuppressWarnings("unused")
   public void constructorFail() {
     try {
-      new SimpleSchedulerLimiter(null, 100);
+      new SubmitterSchedulerLimiter(null, 100);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new SimpleSchedulerLimiter(scheduler, 0);
+      new SubmitterSchedulerLimiter(scheduler, 0);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -75,9 +75,9 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
       executors.add(executor);
       
       if (addSubPoolName) {
-        return new SimpleSchedulerLimiter(executor, poolSize, "TestSubPool");
+        return new SubmitterSchedulerLimiter(executor, poolSize, "TestSubPool");
       } else {
-        return new SimpleSchedulerLimiter(executor, poolSize);
+        return new SubmitterSchedulerLimiter(executor, poolSize);
       }
     }
   }
