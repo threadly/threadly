@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
@@ -37,6 +38,13 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   
   protected <T> ListenableFutureTask<T> makeFutureTask(Callable<T> task) {
     return new ListenableFutureTask<T>(false, task);
+  }
+  
+  @Test
+  public void getContainedRunnableTest() {
+    TestRunnable tr = new TestRunnable();
+    ListenableFutureTask<Object> f = makeFutureTask(tr, null);
+    assertTrue(tr == ((RunnableContainer)f.getContainedCallable()).getContainedRunnable());
   }
   
   @Test

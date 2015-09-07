@@ -50,14 +50,7 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    ArgumentVerifier.assertNotNull(task, "task");
-    ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
-
-    doSchedule(lft, delayInMs);
-    
-    return lft;
+    return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs);
   }
 
   @Override

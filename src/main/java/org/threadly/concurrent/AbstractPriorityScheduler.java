@@ -135,16 +135,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
                                                  long delayInMs, TaskPriority priority) {
-    ArgumentVerifier.assertNotNull(task, "task");
-    ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
-    if (priority == null) {
-      priority = defaultPriority;
-    }
-
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
-    doSchedule(rf, delayInMs, priority);
-    
-    return rf;
+    return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs, priority);
   }
 
   @Override

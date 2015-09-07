@@ -14,9 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureTask;
-import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
@@ -180,15 +177,14 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @param recurring {{@code true} if the task is a recurring task
    * @return Runnable which is our wrapped implementation
    */
-  private <T> Runnable wrap(Callable<T> task, TaskPriority priority, boolean recurring, 
-                            SettableListenableFuture<T> future) {
+  private <T> Callable<T> wrap(Callable<T> task, TaskPriority priority, boolean recurring) {
     if (priority == null) {
       priority = getDefaultPriority();
     }
     if (task == null) {
       return null;
     } else {
-      return new CallableStatWrapper<T>(statsManager, task, priority, recurring, future);
+      return new CallableStatWrapper<T>(statsManager, task, priority, recurring);
     }
   }
   
@@ -256,12 +252,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
                                                  TaskPriority priority) {
-    ArgumentVerifier.assertNotNull(task, "task");
-    
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
-    super.schedule(wrap(rf, priority, false), delayInMs, priority);
-    
-    return rf;
+    return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs, priority);
   }
 
   @Override
@@ -269,10 +260,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
                                                  TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    SettableListenableFuture<T> future = new SettableListenableFuture<T>();
-    super.schedule(wrap(task, priority, false, future), delayInMs, priority);
-    
-    return future;
+    return super.submitScheduled(wrap(task, priority, false), delayInMs, priority);
   }
 
   @Override
@@ -812,7 +800,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class Wrapper implements Runnable {
+  protected abstract static class Wrapper {
     public final boolean callable;
     public final TaskPriority priority;
     public final boolean recurring;
@@ -835,7 +823,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @since 1.0.0
    */
   protected static class RunnableStatWrapper extends Wrapper 
-                                             implements RunnableContainer {
+                                             implements Runnable, RunnableContainer {
     private final StatsManager statsManager;
     private final Runnable toRun;
     
@@ -870,29 +858,23 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @since 1.0.0
    */
   protected static class CallableStatWrapper<T> extends Wrapper 
-                                                implements CallableContainer<T> {
+                                                implements Callable<T>, CallableContainer<T> {
     private final StatsManager statsManager;
     private final Callable<T> toRun;
-    private final SettableListenableFuture<T> future;
     
     public CallableStatWrapper(StatsManager statsManager, Callable<T> toRun, 
-                               TaskPriority priority, boolean recurring, 
-                               SettableListenableFuture<T> future) {
+                               TaskPriority priority, boolean recurring) {
       super(true, priority, recurring);
       
       this.statsManager = statsManager;
       this.toRun = toRun;
-      this.future = future;
     }
     
     @Override
-    public void run() {
+    public T call() throws Exception {
       statsManager.trackTaskStart(this);
       try {
-        T result = toRun.call();
-        future.setResult(result);
-      } catch (Throwable t) {
-        future.setFailure(t);
+        return toRun.call();
       } finally {
         statsManager.trackTaskFinish(this);
       }

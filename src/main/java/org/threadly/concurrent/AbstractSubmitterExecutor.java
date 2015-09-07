@@ -43,13 +43,7 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutorInte
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    ArgumentVerifier.assertNotNull(task, "task");
-    
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
-    
-    doExecute(lft);
-    
-    return lft;
+    return submit(new RunnableCallableAdapter<T>(task, result));
   }
 
   @Override

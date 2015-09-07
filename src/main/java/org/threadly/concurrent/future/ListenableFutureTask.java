@@ -2,11 +2,10 @@ package org.threadly.concurrent.future;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
-import org.threadly.concurrent.CallableContainerInterface;
-import org.threadly.concurrent.RunnableContainerInterface;
+import org.threadly.concurrent.CallableContainer;
+import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.event.RunnableListenerHelper;
 
 /**
@@ -17,14 +16,11 @@ import org.threadly.concurrent.event.RunnableListenerHelper;
  * @since 1.0.0
  * @param <T> The result object type returned by this future
  */
-@SuppressWarnings("deprecation")
 public class ListenableFutureTask<T> extends FutureTask<T> 
                                      implements ListenableRunnableFuture<T>, 
-                                                CallableContainerInterface<T>, 
-                                                RunnableContainerInterface {
+                                                CallableContainer<T> {
   protected final RunnableListenerHelper listenerHelper;
   protected final boolean recurring;
-  protected final Runnable runnable;
   protected final Callable<T> callable;
   
   /**
@@ -45,12 +41,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    * @param result result to be provide after run has completed
    */
   public ListenableFutureTask(boolean recurring, Runnable task, T result) {
-    super(Executors.callable(task, result));
-
-    this.listenerHelper = new RunnableListenerHelper(true);
-    this.recurring = recurring;
-    this.runnable = task;
-    this.callable = null;
+    this(recurring, new RunnableCallableAdapter<T>(task, result));
   }
 
   /**
@@ -64,7 +55,6 @@ public class ListenableFutureTask<T> extends FutureTask<T>
 
     this.listenerHelper = new RunnableListenerHelper(true);
     this.recurring = recurring;
-    this.runnable = null;
     this.callable = task;
   }
   
@@ -103,11 +93,6 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   @Override
   protected final void done() {
     listenerHelper.callListeners();
-  }
-
-  @Override
-  public Runnable getContainedRunnable() {
-    return runnable;
   }
 
   @Override

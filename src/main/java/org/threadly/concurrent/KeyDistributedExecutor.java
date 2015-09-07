@@ -441,14 +441,7 @@ public class KeyDistributedExecutor {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   public <T> ListenableFuture<T> submit(Object threadKey, Runnable task, T result) {
-    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
-    ArgumentVerifier.assertNotNull(task, "task");
-    
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
-    
-    addTask(threadKey, rf, executor);
-    
-    return rf;
+    return submit(threadKey, new RunnableCallableAdapter<T>(task, result));
   }
   
   /**

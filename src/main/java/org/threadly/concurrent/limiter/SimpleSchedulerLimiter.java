@@ -2,6 +2,7 @@ package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.Callable;
 
+import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SimpleScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterface;
@@ -62,13 +63,7 @@ public class SimpleSchedulerLimiter extends ExecutorLimiter
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    ArgumentVerifier.assertNotNull(task, "task");
-    
-    ListenableFutureTask<T> ft = new ListenableFutureTask<T>(false, task, result);
-    
-    schedule(ft, delayInMs);
-    
-    return ft;
+    return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs);
   }
 
   @Override

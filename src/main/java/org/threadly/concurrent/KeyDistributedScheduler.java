@@ -314,19 +314,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    */
   public <T> ListenableFuture<T> submitScheduled(Object threadKey, Runnable task, 
                                                  T result, long delayInMs) {
-    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
-    ArgumentVerifier.assertNotNull(task, "task");
-    ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
-
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task, result);
-    
-    if (delayInMs == 0) {
-      addTask(threadKey, rf, executor);
-    } else {
-      scheduler.schedule(new AddTask(threadKey, rf), delayInMs);
-    }
-    
-    return rf;
+    return submitScheduled(threadKey, new RunnableCallableAdapter<T>(task, result), delayInMs);
   }
 
   /**
