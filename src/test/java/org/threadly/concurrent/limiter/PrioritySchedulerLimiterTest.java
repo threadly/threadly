@@ -17,7 +17,6 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings({"javadoc", "deprecation"})
