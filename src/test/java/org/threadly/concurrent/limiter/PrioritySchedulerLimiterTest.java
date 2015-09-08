@@ -20,7 +20,7 @@ import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
   @Override
   protected PrioritySchedulerLimiter getLimiter(int parallelCount) {

@@ -42,6 +42,7 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
  */
+@SuppressWarnings("deprecation")
 public class PriorityScheduler extends AbstractPriorityScheduler {
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   
@@ -251,10 +252,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   /**
    * Makes a new {@link PrioritySchedulerLimiter} that uses this pool as it's execution source.
    * 
+   * @deprecated Construct a {@link org.threadly.concurrent.limiter.SubmitterSchedulerLimiter} manually
+   * 
    * @param maxConcurrency maximum number of threads to run in parallel in sub pool
    * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
    */
-  @SuppressWarnings("deprecation")
+  @Deprecated
   public PrioritySchedulerInterface makeSubPool(int maxConcurrency) {
     return makeSubPool(maxConcurrency, null);
   }
@@ -262,11 +265,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   /**  
    * Makes a new {@link PrioritySchedulerLimiter} that uses this pool as it's execution source.
    * 
+   * @deprecated Construct a {@link org.threadly.concurrent.limiter.SubmitterSchedulerLimiter} manually
+   * 
    * @param maxConcurrency maximum number of threads to run in parallel in sub pool
    * @param subPoolName name to describe threads while running under this sub pool
    * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
    */
-  @SuppressWarnings("deprecation")
+  @Deprecated
   public PrioritySchedulerInterface makeSubPool(int maxConcurrency, String subPoolName) {
     if (maxConcurrency > workerPool.getMaxPoolSize()) {
       throw new IllegalArgumentException("A sub pool should be smaller than the parent pool");

@@ -9,11 +9,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
+
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -147,19 +147,20 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void makeSubPoolTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     PriorityScheduler scheduler = factory.makePriorityScheduler(10);
     try {
       PrioritySchedulerService subPool = scheduler.makeSubPool(2);
       assertNotNull(subPool);
-      assertTrue(subPool instanceof PrioritySchedulerLimiter);  // if true, test cases are covered under PrioritySchedulerLimiter unit cases
     } finally {
       factory.shutdown();
     }
   }
   
   @Test (expected = IllegalArgumentException.class)
+  @SuppressWarnings("deprecation")
   public void makeSubPoolFail() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     PriorityScheduler scheduler = factory.makePriorityScheduler(1);

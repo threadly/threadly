@@ -23,10 +23,14 @@ import org.threadly.util.Clock;
  * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
  * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
+ * @deprecated Mixing priorities does not make sense, wrap a priority scheduler with a 
+ *              {@link org.threadly.concurrent.PrioritySchedulerWrapper} and use 
+ *              {@link SubmitterSchedulerLimiter} to limit within a given priority
+ * 
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-@SuppressWarnings("deprecation")
+@Deprecated
 public class PrioritySchedulerLimiter extends SchedulerServiceLimiter 
                                       implements PrioritySchedulerInterface {
   protected final PrioritySchedulerService scheduler;

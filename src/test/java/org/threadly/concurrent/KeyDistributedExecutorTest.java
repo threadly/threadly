@@ -21,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -512,7 +513,7 @@ public class KeyDistributedExecutorTest {
     try {
       final Integer key1 = 1;
       final Integer key2 = 2;
-      Executor singleThreadedExecutor = scheduler.makeSubPool(1);
+      Executor singleThreadedExecutor = new ExecutorLimiter(scheduler, 1);
       final KeyDistributedExecutor distributor = new KeyDistributedExecutor(2, singleThreadedExecutor, 2);
       final AtomicInteger waitingTasks = new AtomicInteger();
       final AtomicReference<TestRunnable> lastTestRunnable = new AtomicReference<TestRunnable>();
