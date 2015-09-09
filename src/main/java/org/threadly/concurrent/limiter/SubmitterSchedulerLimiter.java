@@ -70,9 +70,24 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
     
     ListenableFutureTask<T> ft = new ListenableFutureTask<T>(false, task);
     
-    schedule(ft, delayInMs);
+    doSchedule(ft, delayInMs);
     
     return ft;
+  }
+  
+  /**
+   * Adds a task to either execute (delay zero), or schedule with the provided delay.  No safety 
+   * checks are done at this point, so only provide non-null inputs.
+   * 
+   * @param task Task for execution
+   * @param delayInMs delay in milliseconds, greater than or equal to zero
+   */
+  protected void doSchedule(Runnable task, long delayInMs) {
+    if (delayInMs == 0) {
+      doExecute(task);
+    } else {
+      scheduler.schedule(new DelayedExecutionRunnable(task), delayInMs);
+    }
   }
 
   @Override
@@ -80,11 +95,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
-    if (delayInMs == 0) {
-      execute(task);
-    } else {
-      scheduler.schedule(new DelayedExecutionRunnable(task), delayInMs);
-    }
+    doSchedule(task, delayInMs);
   }
 
   @Override
@@ -94,13 +105,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
-    RecurringDelayWrapper rdw = new RecurringDelayWrapper(task, recurringDelay);
-    
-    if (initialDelay == 0) {
-      executeWrapper(rdw);
-    } else {
-      scheduler.schedule(new DelayedExecutionRunnable(rdw), initialDelay);
-    }
+    doSchedule(new RecurringDelayWrapper(task, recurringDelay), initialDelay);
   }
 
   @Override
@@ -109,13 +114,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertGreaterThanZero(period, "period");
     
-    RecurringRateWrapper rrw = new RecurringRateWrapper(task, initialDelay, period);
-    
-    if (initialDelay == 0) {
-      executeWrapper(rrw);
-    } else {
-      scheduler.schedule(new DelayedExecutionRunnable(rrw), initialDelay);
-    }
+    doSchedule(new RecurringRateWrapper(task, initialDelay, period), initialDelay);
   }
   
   /**
