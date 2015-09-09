@@ -36,9 +36,10 @@ import org.threadly.util.ExceptionUtils;
  * @since 2.5.0 (existed since 1.0.0 as TaskExecutorDistributor)
  */
 public class KeyDistributedExecutor {
-  protected static final int DEFAULT_LOCK_PARALISM = 16;
+  protected static final int DEFAULT_LOCK_PARALISM = 32;
   protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = 0.75f;  // 0.75 is ConcurrentHashMap default
-  protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 32;
+  protected static final int CONCURRENT_HASH_MAP_MIN_SIZE = 8;
+  protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 64;
   protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
   protected static final int ARRAY_DEQUE_INITIAL_SIZE = 8;  // minimum is 8, should be 2^X
   
@@ -230,8 +231,14 @@ public class KeyDistributedExecutor {
     this.maxTasksPerCycle = maxTasksPerCycle;
     int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
                                   CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
-    int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel(), 
+    if (mapInitialSize < CONCURRENT_HASH_MAP_MIN_SIZE) {
+      mapInitialSize = CONCURRENT_HASH_MAP_MIN_SIZE;
+    }
+    int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel() / 2, 
                                        CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL);
+    if (mapConcurrencyLevel < 1) {
+      mapConcurrencyLevel = 1;
+    }
     if (accurateQueueSize) {
       wFactory = new WorkerFactory() {
         @Override
@@ -327,7 +334,7 @@ public class KeyDistributedExecutor {
    * @return Map of task key's to their respective queue size
    */
   public Map<Object, Integer> getTaskQueueSizeMap() {
-    Map<Object, Integer> result = new HashMap<Object, Integer>(taskWorkers.size());
+    Map<Object, Integer> result = new HashMap<Object, Integer>();
     for (Map.Entry<Object, TaskQueueWorker> e : taskWorkers.entrySet()) {
       result.put(e.getKey(), e.getValue().getQueueSize());
     }
