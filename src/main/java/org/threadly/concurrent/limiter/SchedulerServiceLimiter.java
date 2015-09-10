@@ -45,10 +45,14 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
   /**
    * Constructs a new limiter that implements the {@link SchedulerService}.
    * 
+   * @deprecated Rename threads using {@link  org.threadly.concurrent.ThreadRenamingSchedulerService} 
+   *               to rename executions from this limiter
+   * 
    * @param scheduler {@link SchedulerService} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
    */
+  @Deprecated
   public SchedulerServiceLimiter(SchedulerService scheduler, 
                                  int maxConcurrency, String subPoolName) {
     super(scheduler, maxConcurrency, subPoolName);

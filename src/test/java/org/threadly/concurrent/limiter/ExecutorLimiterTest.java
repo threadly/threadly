@@ -100,9 +100,10 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void constructorEmptySubPoolNameTest() {
+    @SuppressWarnings("deprecation")
     ExecutorLimiter limiter = new ExecutorLimiter(scheduler, 1, "");
     
-    assertNull(limiter.subPoolName);
+    assertTrue(limiter.executor == scheduler);
   }
   
   @Test
@@ -224,6 +225,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     }
     
     @Override
+    @SuppressWarnings("deprecation")
     public ExecutorLimiter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
