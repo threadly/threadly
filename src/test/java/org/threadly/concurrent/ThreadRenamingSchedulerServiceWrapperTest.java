@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("javadoc")
-public class ThreadRenamingSubmitterSchedulerTest extends SubmitterSchedulerInterfaceTest {
+public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceInterfaceTest {
   @Override
-  protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
+  protected SchedulerServiceFactory getSchedulerServiceFactory() {
     return new ThreadRenamingPoolWrapperFactory();
   }
-  
-  private static class ThreadRenamingPoolWrapperFactory implements SubmitterSchedulerFactory {
+
+  private static class ThreadRenamingPoolWrapperFactory implements SchedulerServiceFactory {
     private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
 
     @Override
@@ -20,13 +20,18 @@ public class ThreadRenamingSubmitterSchedulerTest extends SubmitterSchedulerInte
     
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
+      return makeSchedulerService(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler ps = new PriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         ps.prestartAllThreads();
       }
       schedulers.add(ps);
-      
-      return new ThreadRenamingSubmitterScheduler(ps, "foo", false);
+
+      return new ThreadRenamingSchedulerServiceWrapper(ps, "foo", false);
     }
 
     @Override

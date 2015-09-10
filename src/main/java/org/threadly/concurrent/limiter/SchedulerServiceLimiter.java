@@ -45,7 +45,7 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
   /**
    * Constructs a new limiter that implements the {@link SchedulerService}.
    * 
-   * @deprecated Rename threads using {@link  org.threadly.concurrent.ThreadRenamingSchedulerService} 
+   * @deprecated Rename threads using {@link org.threadly.concurrent.ThreadRenamingSchedulerServiceWrapper} 
    *               to rename executions from this limiter
    * 
    * @param scheduler {@link SchedulerService} implementation to submit task executions to.

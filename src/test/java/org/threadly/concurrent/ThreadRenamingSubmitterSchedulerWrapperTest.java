@@ -4,24 +4,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("javadoc")
-public class ThreadRenamingExecutorTest extends SubmitterExecutorInterfaceTest {
+public class ThreadRenamingSubmitterSchedulerWrapperTest extends SubmitterSchedulerInterfaceTest {
   @Override
-  protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
+  protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
     return new ThreadRenamingPoolWrapperFactory();
   }
-
-  private static class ThreadRenamingPoolWrapperFactory implements SubmitterExecutorFactory {
+  
+  private static class ThreadRenamingPoolWrapperFactory implements SubmitterSchedulerFactory {
     private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
-    
+
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
+    
+    @Override
+    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler ps = new PriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         ps.prestartAllThreads();
       }
       schedulers.add(ps);
-
-      return new ThreadRenamingExecutor(ps, "foo", false);
+      
+      return new ThreadRenamingSubmitterSchedulerWrapper(ps, "foo", false);
     }
 
     @Override

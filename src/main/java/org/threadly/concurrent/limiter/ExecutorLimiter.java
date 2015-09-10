@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterExecutorInterface;
-import org.threadly.concurrent.ThreadRenamingExecutor;
+import org.threadly.concurrent.ThreadRenamingExecutorWrapper;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.StringUtils;
 
@@ -48,7 +48,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
   /**
    * Construct a new execution limiter that implements the {@link Executor} interface.
    * 
-   * @deprecated Rename threads using {@link ThreadRenamingExecutor} to rename executions from this limiter
+   * @deprecated Rename threads using {@link ThreadRenamingExecutorWrapper} to rename executions from this limiter
    * 
    * @param executor {@link Executor} to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
@@ -62,7 +62,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
     if (StringUtils.isNullOrEmpty(subPoolName)) {
       this.executor = executor;
     } else {
-      this.executor = new ThreadRenamingExecutor(executor, subPoolName, false);
+      this.executor = new ThreadRenamingExecutorWrapper(executor, subPoolName, false);
     }
     this.waitingTasks = new ConcurrentLinkedQueue<LimiterRunnableWrapper>();
     this.maxConcurrency = maxConcurrency;

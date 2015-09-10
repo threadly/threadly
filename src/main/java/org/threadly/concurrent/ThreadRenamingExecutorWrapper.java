@@ -10,13 +10,13 @@ import java.util.concurrent.Executor;
  * @author jent
  * @since 4.3.0
  */
-public class ThreadRenamingExecutor extends AbstractSubmitterExecutor {
+public class ThreadRenamingExecutorWrapper extends AbstractSubmitterExecutor {
   protected final Executor executor;
   protected final String threadName;
   protected final boolean replace;
   
   /**
-   * Constructs a new {@link ThreadRenamingExecutor}, wrapping a supplied {@link Executor}.  If 
+   * Constructs a new {@link ThreadRenamingExecutorWrapper}, wrapping a supplied {@link Executor}.  If 
    * {@code replace} is {@code false} the thread will be named such that 
    * {@code threadName[originalThreadName]}.
    * 
@@ -24,7 +24,7 @@ public class ThreadRenamingExecutor extends AbstractSubmitterExecutor {
    * @param threadName Thread name prefix, or replaced name
    * @param replace If {@code true} the original name wont be included in the thread name
    */
-  public ThreadRenamingExecutor(Executor executor, String threadName, boolean replace) {
+  public ThreadRenamingExecutorWrapper(Executor executor, String threadName, boolean replace) {
     this.executor = executor;
     this.threadName = threadName;
     this.replace = replace;

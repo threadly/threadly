@@ -8,13 +8,13 @@ package org.threadly.concurrent;
  * @author jent
  * @since 4.3.0
  */
-public class ThreadRenamingSubmitterScheduler extends AbstractSubmitterScheduler {
+public class ThreadRenamingSubmitterSchedulerWrapper extends AbstractSubmitterScheduler {
   protected final SubmitterScheduler scheduler;
   protected final String threadName;
   protected final boolean replace;
 
   /**
-   * Constructs a new {@link ThreadRenamingSubmitterScheduler}, wrapping a supplied 
+   * Constructs a new {@link ThreadRenamingSubmitterSchedulerWrapper}, wrapping a supplied 
    * {@link SchedulerService}.  If /{@code replace} is {@code false} the thread will be named such 
    * that {@code threadName[originalThreadName]}.
    * 
@@ -22,7 +22,7 @@ public class ThreadRenamingSubmitterScheduler extends AbstractSubmitterScheduler
    * @param threadName Thread name prefix, or replaced name
    * @param replace If {@code true} the original name wont be included in the thread name
    */
-  public ThreadRenamingSubmitterScheduler(SubmitterScheduler scheduler, String threadName, boolean replace) {
+  public ThreadRenamingSubmitterSchedulerWrapper(SubmitterScheduler scheduler, String threadName, boolean replace) {
     this.scheduler = scheduler;
     this.threadName = threadName;
     this.replace = replace;

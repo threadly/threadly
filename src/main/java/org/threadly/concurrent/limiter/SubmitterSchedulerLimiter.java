@@ -43,7 +43,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
   /**
    * Constructs a new limiter that implements the {@link SubmitterScheduler}.
    * 
-   * @deprecated Rename threads using {@link  org.threadly.concurrent.ThreadRenamingSubmitterScheduler} 
+   * @deprecated Rename threads using {@link org.threadly.concurrent.ThreadRenamingSubmitterSchedulerWrapper} 
    *               to rename executions from this limiter
    * 
    * @param scheduler {@link SubmitterScheduler} implementation to submit task executions to.
