@@ -2,15 +2,12 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.util.concurrent.Callable;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.concurrent.future.FutureUtils;
-import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.PrioritySchedulerDefaultPriorityWrapperTest.TestPriorityScheduler;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerWrapperTest {
   private static PriorityScheduler scheduler;
   
@@ -24,7 +21,6 @@ public class PrioritySchedulerWrapperTest {
     scheduler.shutdown();
     scheduler = null;
   }
-  
   @Test
   public void constructorTest() {
     PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(scheduler, TaskPriority.Low);
@@ -211,171 +207,5 @@ public class PrioritySchedulerWrapperTest {
     psw.remove(new TestCallable());
     
     assertTrue(testScheduler.removeCallableCalled);
-  }
-  
-  // TODO - this may be good to move to something like mockito
-  private static class TestPriorityScheduler implements PrioritySchedulerService {
-    private boolean isShutdownCalled = false;
-    private boolean executeCalled = false;
-    private boolean scheduleCalled = false;
-    private boolean submitRunnableCalled = false;
-    private boolean submitRunnableResultCalled = false;
-    private boolean submitCallableCalled = false;
-    private boolean submitScheduledRunnableCalled = false;
-    private boolean submitScheduledRunnableResultCalled = false;
-    private boolean submitScheduledCallableCalled = false;
-    private boolean scheduleWithFixedDelayCalled = false;
-    private boolean scheduleAtFixedRateCalled = false;
-    private boolean removeRunnableCalled = false;
-    private boolean removeCallableCalled = false;
-
-    @Override
-    public boolean isShutdown() {
-      isShutdownCalled = true;
-      return false;
-    }
-
-    @Override
-    public void execute(Runnable task, TaskPriority priority) {
-      executeCalled = true;
-    }
-
-    @Override
-    public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
-      submitRunnableCalled = true;
-      return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
-      submitRunnableResultCalled = true;
-      return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
-      submitCallableCalled = true;
-      return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
-    }
-
-    @Override
-    public void schedule(Runnable task, long delayInMs, TaskPriority priority) {
-      scheduleCalled = true;
-    }
-
-    @Override
-    public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, TaskPriority priority) {
-      submitScheduledRunnableCalled = true;
-      return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
-                                                   TaskPriority priority) {
-      submitScheduledRunnableResultCalled = true;
-      return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
-                                                   TaskPriority priority) {
-      submitScheduledCallableCalled = true;
-      return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
-    }
-
-    @Override
-    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
-                                       TaskPriority priority) {
-      scheduleWithFixedDelayCalled = true;
-    }
-
-    @Override
-    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
-                                    TaskPriority priority) {
-      scheduleAtFixedRateCalled = true;
-    }
-
-    @Override
-    public boolean remove(Runnable task) {
-      removeRunnableCalled = true;
-      return false;
-    }
-
-    @Override
-    public boolean remove(Callable<?> task) {
-      removeCallableCalled = true;
-      return false;
-    }
-
-    @Override
-    public TaskPriority getDefaultPriority() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public long getMaxWaitForLowPriority() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getCurrentRunningCount() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getScheduledTaskCount() {
-      throw new UnsupportedOperationException();
-    }
-    
-    // NO OPERATIONS WITHOUT PRIORITY SHOULD BE CALLED
-    @Override
-    public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void schedule(Runnable task, long delayInMs) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void execute(Runnable command) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public ListenableFuture<?> submit(Runnable task) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submit(Runnable task, T result) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> ListenableFuture<T> submit(Callable<T> task) {
-      throw new UnsupportedOperationException();
-    }
   }
 }
