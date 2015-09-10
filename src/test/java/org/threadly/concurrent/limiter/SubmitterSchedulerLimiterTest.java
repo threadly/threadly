@@ -67,6 +67,7 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {

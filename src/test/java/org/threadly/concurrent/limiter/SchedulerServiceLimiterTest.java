@@ -138,6 +138,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
       if (prestartIfAvailable) {

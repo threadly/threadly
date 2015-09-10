@@ -7,6 +7,7 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public class ExecutorLimiterNamedTest extends ExecutorLimiterTest {
   @Override
+  @SuppressWarnings("deprecation")
   protected ExecutorLimiter getLimiter(int parallelCount) {
     return new ExecutorLimiter(scheduler, parallelCount, "TestSubPool");
   }

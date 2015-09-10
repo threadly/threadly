@@ -43,10 +43,14 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
   /**
    * Constructs a new limiter that implements the {@link SubmitterScheduler}.
    * 
+   * @deprecated Rename threads using {@link  org.threadly.concurrent.ThreadRenamingSubmitterScheduler} 
+   *               to rename executions from this limiter
+   * 
    * @param scheduler {@link SubmitterScheduler} implementation to submit task executions to.
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
    */
+  @Deprecated
   public SubmitterSchedulerLimiter(SubmitterScheduler scheduler, 
                                    int maxConcurrency, String subPoolName) {
     super(scheduler, maxConcurrency, subPoolName);
