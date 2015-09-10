@@ -10,12 +10,12 @@ import java.util.concurrent.Callable;
  * @author jent
  * @since 4.3.0
  */
-public class ThreadRenamingSchedulerService extends ThreadRenamingSubmitterScheduler 
+public class ThreadRenamingSchedulerServiceWrapper extends ThreadRenamingSubmitterSchedulerWrapper 
                                             implements SchedulerService {
   protected final SchedulerService scheduler;
   
   /**
-   * Constructs a new {@link ThreadRenamingSchedulerService}, wrapping a supplied 
+   * Constructs a new {@link ThreadRenamingSchedulerServiceWrapper}, wrapping a supplied 
    * {@link SchedulerService}.  If /{@code replace} is {@code false} the thread will be named such 
    * that {@code threadName[originalThreadName]}.
    * 
@@ -23,7 +23,7 @@ public class ThreadRenamingSchedulerService extends ThreadRenamingSubmitterSched
    * @param threadName Thread name prefix, or replaced name
    * @param replace If {@code true} the original name wont be included in the thread name
    */
-  public ThreadRenamingSchedulerService(SchedulerService scheduler, String threadName, boolean replace) {
+  public ThreadRenamingSchedulerServiceWrapper(SchedulerService scheduler, String threadName, boolean replace) {
     super(scheduler, threadName, replace);
     
     this.scheduler = scheduler;
