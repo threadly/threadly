@@ -10,7 +10,7 @@ import java.util.List;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.PrioritySchedulerWrapper;
+import org.threadly.concurrent.PrioritySchedulerDefaultPriorityWrapper;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest.SchedulerServiceFactory;
 import org.threadly.concurrent.StrictPriorityScheduler;
@@ -127,7 +127,7 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
       
       if (addPriorityToCalls) {
         // we wrap the limiter so all calls are providing a priority
-        return new PrioritySchedulerWrapper(limiter, TaskPriority.High);
+        return new PrioritySchedulerDefaultPriorityWrapper(limiter, TaskPriority.High);
       } else {
         return limiter;
       }
