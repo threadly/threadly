@@ -766,9 +766,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     @Override
     public void nextTask(TaskWrapper task) {
       // may not be a wrapper for internal tasks like shutdown
-      if (task.task instanceof Wrapper) {
+      if (task.runnable instanceof Wrapper) {
         long taskDelay = task.getRunTime() - Clock.lastKnownForwardProgressingMillis();
-        Wrapper statWrapper = (Wrapper)task.task;
+        Wrapper statWrapper = (Wrapper)task.runnable;
         ConcurrentArrayList<Long> priorityStats;
         switch (statWrapper.priority) {
           case High:

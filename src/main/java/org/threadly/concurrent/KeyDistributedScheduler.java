@@ -419,23 +419,17 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected class AddTask implements Runnable, RunnableContainer {
+  protected class AddTask extends AbstractRunnableContainer implements Runnable {
     protected final Object key;
-    protected final Runnable task;
     
     protected AddTask(Object key, Runnable task) {
+      super(task);
       this.key = key;
-      this.task = task;
     }
 
     @Override
     public void run() {
-      addTask(key, task, SameThreadSubmitterExecutor.instance());
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return task;
+      addTask(key, runnable, SameThreadSubmitterExecutor.instance());
     }
   }
   
@@ -445,29 +439,24 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @author jent - Mike Jensen
    * @since 3.1.0
    */
-  protected class RecrringDelayTask implements Runnable, RunnableContainer {
+  protected class RecrringDelayTask extends AbstractRunnableContainer implements Runnable {
     protected final Object key;
-    protected final Runnable task;
     protected final long recurringDelay;
     
     protected RecrringDelayTask(Object key, Runnable task, long recurringDelay) {
+      super(task);
+      
       this.key = key;
-      this.task = task;
       this.recurringDelay = recurringDelay;
     }
     
     @Override
     public void run() {
       try {
-        task.run();
+        runnable.run();
       } finally {
         scheduler.schedule(new AddTask(key, this), recurringDelay);
       }
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return task;
     }
   }
   
@@ -477,26 +466,21 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @author jent - Mike Jensen
    * @since 3.1.0
    */
-  protected class RecrringRateTask implements Runnable, RunnableContainer {
+  protected class RecrringRateTask extends AbstractRunnableContainer implements Runnable {
     protected final Object key;
-    protected final Runnable task;
     protected final long recurringPeriod;
     
     protected RecrringRateTask(Object key, Runnable task, long recurringPeriod) {
+      super(task);
+      
       this.key = key;
-      this.task = task;
       this.recurringPeriod = recurringPeriod;
     }
     
     @Override
     public void run() {
       scheduler.schedule(new AddTask(key, this), recurringPeriod);
-      task.run();
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return task;
+      runnable.run();
     }
   }
   

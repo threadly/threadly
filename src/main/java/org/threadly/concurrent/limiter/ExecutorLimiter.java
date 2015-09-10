@@ -5,8 +5,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.threadly.concurrent.AbstractRunnableContainer;
 import org.threadly.concurrent.AbstractSubmitterExecutor;
-import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterExecutorInterface;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.StringUtils;
@@ -181,13 +181,13 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected class LimiterRunnableWrapper implements Runnable, RunnableContainer {
+  protected class LimiterRunnableWrapper extends AbstractRunnableContainer implements Runnable {
     protected final Executor executor;
-    protected final Runnable runnable;
     
     protected LimiterRunnableWrapper(Executor executor, Runnable runnable) {
+      super(runnable);
+      
       this.executor = executor;
-      this.runnable = runnable;
     }
     
     /**
@@ -234,11 +234,6 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
           }
         }
       }
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return runnable;
     }
   }
 }

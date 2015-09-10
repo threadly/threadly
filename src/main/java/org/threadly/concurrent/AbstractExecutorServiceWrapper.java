@@ -298,28 +298,24 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @author jent - Mike Jensen
    * @since 2.1.0
    */
-  protected static class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
+  protected static class ThrowableHandlingRecurringRunnable extends AbstractRunnableContainer 
+                                                            implements Runnable {
     private final SchedulerService scheduler;
-    private final Runnable task;
     
     protected ThrowableHandlingRecurringRunnable(SchedulerService scheduler, Runnable task) {
+      super(task);
+      
       this.scheduler = scheduler;
-      this.task = task;
     }
     
     @Override
     public void run() {
       try {
-        task.run();
+        runnable.run();
       } catch (Throwable t) {
         scheduler.remove(this);
         ExceptionUtils.handleException(t);
       }
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return task;
     }
   }
 }

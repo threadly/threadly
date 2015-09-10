@@ -461,7 +461,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     public void runTask() {
       if (! canceled) {
         // Do not use ExceptionUtils to run task, so that exceptions can be handled in .tick()
-        task.run();
+        runnable.run();
       }
     }
   }
@@ -501,7 +501,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
       
       try {
         // Do not use ExceptionUtils to run task, so that exceptions can be handled in .tick()
-        task.run();
+        runnable.run();
       } finally {
         if (! canceled) {
           updateNextRunTime();

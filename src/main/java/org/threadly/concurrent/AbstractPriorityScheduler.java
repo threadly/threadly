@@ -332,7 +332,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         Iterator<? extends TaskWrapper> it = executeQueue.iterator();
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
+          if (ContainerHelper.isContained(tw.runnable, task) && executeQueue.remove(tw)) {
             tw.cancel();
             return true;
           }
@@ -342,7 +342,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task)) {
+          if (ContainerHelper.isContained(tw.runnable, task)) {
             tw.cancel();
             it.remove();
             
@@ -365,7 +365,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         Iterator<? extends TaskWrapper> it = executeQueue.iterator();
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
+          if (ContainerHelper.isContained(tw.runnable, task) && executeQueue.remove(tw)) {
             tw.cancel();
             return true;
           }
@@ -375,7 +375,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         Iterator<? extends TaskWrapper> it = scheduleQueue.iterator();
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
-          if (ContainerHelper.isContained(tw.task, task)) {
+          if (ContainerHelper.isContained(tw.runnable, task)) {
             tw.cancel();
             it.remove();
             
@@ -410,7 +410,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       while (it.hasNext()) {
         TaskWrapper tw = it.next();
         tw.cancel();
-        if (! (tw.task instanceof InternalRunnable)) {
+        if (! (tw.runnable instanceof InternalRunnable)) {
           int index = TaskListUtils.getInsertionEndIndex(resultList, tw.getRunTime());
           resultList.add(index, tw);
         }
@@ -453,12 +453,12 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class TaskWrapper implements DelayedTask, RunnableContainer {
-    protected final Runnable task;
+  protected abstract static class TaskWrapper extends AbstractRunnableContainer 
+                                              implements DelayedTask {
     protected volatile boolean canceled;
     
     public TaskWrapper(Runnable task) {
-      this.task = task;
+      super(task);
       canceled = false;
     }
     
@@ -477,8 +477,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public void cancel() {
       canceled = true;
       
-      if (task instanceof Future<?>) {
-        ((Future<?>)task).cancel(false);
+      if (runnable instanceof Future<?>) {
+        ((Future<?>)runnable).cancel(false);
       }
     }
     
@@ -508,12 +508,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     
     @Override
     public String toString() {
-      return task.toString();
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return task;
+      return runnable.toString();
     }
   }
   
@@ -542,7 +537,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     @Override
     public void runTask() {
       if (! canceled) {
-        ExceptionUtils.runRunnable(task);
+        ExceptionUtils.runRunnable(runnable);
       }
     }
 
@@ -621,7 +616,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       }
       
       // no need for try/finally due to ExceptionUtils usage
-      ExceptionUtils.runRunnable(task);
+      ExceptionUtils.runRunnable(runnable);
       
       if (! canceled) {
         updateNextRunTime();

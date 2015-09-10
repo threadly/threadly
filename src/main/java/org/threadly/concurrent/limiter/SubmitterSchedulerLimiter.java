@@ -2,8 +2,8 @@ package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.Callable;
 
+import org.threadly.concurrent.AbstractRunnableContainer;
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -124,7 +124,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
    * @author jent - Mike Jensen
    * @since 1.1.0
    */
-  protected class DelayedExecutionRunnable implements Runnable, RunnableContainer {
+  protected class DelayedExecutionRunnable extends AbstractRunnableContainer implements Runnable {
     private final LimiterRunnableWrapper lrw;
 
     protected DelayedExecutionRunnable(Runnable runnable) {
@@ -132,6 +132,8 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
     }
 
     protected DelayedExecutionRunnable(LimiterRunnableWrapper lrw) {
+      super(lrw.getContainedRunnable());
+      
       this.lrw = lrw;
     }
     
@@ -142,11 +144,6 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
       } else {
         addToQueue(lrw);
       }
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return lrw.getContainedRunnable();
     }
   }
 

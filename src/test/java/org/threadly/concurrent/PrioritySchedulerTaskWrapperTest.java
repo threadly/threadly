@@ -24,7 +24,7 @@ public class PrioritySchedulerTaskWrapperTest {
     String result = tw.toString();
     assertNotNull(result);
     assertFalse(result.isEmpty());
-    assertEquals(tw.task.toString(), result);
+    assertEquals(tw.runnable.toString(), result);
   }
   
   private class TestWrapper extends TaskWrapper {

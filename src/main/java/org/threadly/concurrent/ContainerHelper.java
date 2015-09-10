@@ -92,7 +92,7 @@ public class ContainerHelper {
 
   /**
    * Checks if the compareTo runnable is contained by the provided 
-   * {@link RunnableContainerInterface}.  If it's not we check to see if we can continue our 
+   * {@link RunnableContainer}.  If it's not we check to see if we can continue our 
    * search by looking for another {@link RunnableContainer}, or a {@link CallableContainer}.
    * 
    * @param rci Container to check contents of
