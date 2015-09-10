@@ -3,7 +3,7 @@ package org.threadly.util;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * <p>An abstract implementation of {@link ServiceInterface}.</p>
+ * <p>An abstract implementation of the {@link Service} interface.</p>
  * 
  * <p>This implementation is flexible, weather the internal service is scheduled on a thread pool 
  * runs on a unique thread, or has other means of running.</p>
@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author jent - Mike Jensen
  * @since 2.6.0
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractService implements ServiceInterface {
   private AtomicInteger state = new AtomicInteger(0); // 0 = new, 1 = started, 2 = stopped
   
