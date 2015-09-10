@@ -117,16 +117,6 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
       }
     }
   }
-  
-  /**
-   * Should be called after every task completes.  This decrements {@code currentlyRunning} in a 
-   * thread safe way, then will run any waiting tasks which exists.
-   */
-  protected void handleTaskFinished() {
-    currentlyRunning.decrementAndGet();
-    
-    consumeAvailable(); // allow any waiting tasks to run
-  }
 
   @Override
   protected void doExecute(Runnable task) {
@@ -234,7 +224,9 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor
           doAfterRunTasks();
         } finally {
           try {
-            handleTaskFinished();
+            currentlyRunning.decrementAndGet();
+            
+            consumeAvailable(); // allow any waiting tasks to run
           } finally {
             if (subPoolName != null) {
               currentThread.setName(originalThreadName);
