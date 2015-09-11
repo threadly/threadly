@@ -417,6 +417,43 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   }
   
   /**
+   * Checks how long till the next task will be ready to execute.  If there are no tasks in this 
+   * scheduler currently then {@link Long#MAX_VALUE} will be returned.  If there is a task ready 
+   * to execute this will return a value less than or equal to zero.  If the task is past its 
+   * desired point of execution the result will be a negative amount of milliseconds past that 
+   * point in time.  
+   * 
+   * Generally this is called from the same thread that would invoke 
+   * {@link #tick(ExceptionHandler)} (but does not have to be).  Since this does not block or lock 
+   * if being invoked in parallel with {@link #tick(ExceptionHandler)}, the results may be no 
+   * longer accurate by the time this invocation has returned.
+   * 
+   * If a recurring task is currently running this will return a very large number.  This will 
+   * remain until the task has rescheduled itself.  To avoid this just ensure this is never 
+   * invoked in parallel with {@link #tick(ExceptionHandler)}.
+   * 
+   * This can be useful if you want to know how long you can block on something, ASSUMING you can 
+   * detect that something has been added to the scheduler, and interrupt that blocking in order 
+   * to handle tasks.
+   * 
+   * @return Milliseconds till the next task is ready to run
+   */
+  public long getDelayTillNextTask() {
+    TaskWrapper tw = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
+                                 maxWaitForLowPriorityInMs);
+    if (tw != null) {
+      return tw.getRunTime() - nowInMillis(true);
+    } else {
+      TaskWrapper stw = starvablePriorityQueueSet.getNextTask();
+      if (stw != null) {
+        return stw.getRunTime() - nowInMillis(true);
+      } else {
+        return Long.MAX_VALUE;
+      }
+    }
+  }
+  
+  /**
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
    * {@link #tick(ExceptionHandler)} is being called.  But will avoid additional tasks from being 
    * run on the current {@link #tick(ExceptionHandler)} call.  
