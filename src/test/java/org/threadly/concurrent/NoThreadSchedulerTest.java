@@ -588,6 +588,52 @@ public class NoThreadSchedulerTest {
   }
   
   @Test
+  public void getDelayTillNextTaskTest() {
+    assertEquals(Long.MAX_VALUE, scheduler.getDelayTillNextTask());
+    
+    // schedule in the future
+    scheduler.schedule(DoNothingRunnable.instance(), 1000 * 15);
+    
+    // still should have nothing ready to run
+    assertTrue(scheduler.getDelayTillNextTask() > 0);
+    
+    scheduler.execute(DoNothingRunnable.instance());
+    
+    // should now have tasks ready to run
+    assertTrue(scheduler.getDelayTillNextTask() <= 0);
+    
+    scheduler.tick(null);
+    
+    // should no longer have anything to run
+    assertTrue(scheduler.getDelayTillNextTask() > 0);
+    
+    scheduler.highPriorityQueueSet
+             .addScheduled(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                  scheduler.highPriorityQueueSet.scheduleQueue, 
+                                                  Clock.lastKnownForwardProgressingMillis()));
+    
+    // now should be true with scheduled task which is ready to run
+    assertTrue(scheduler.getDelayTillNextTask() <= 0);
+  }
+  
+  @Test
+  public void getDelayTillNextTaskRunningTaskTest() {
+    scheduler.execute(new Runnable() {
+      @Override
+      public void run() {
+        assertEquals(Long.MAX_VALUE, scheduler.getDelayTillNextTask());
+        
+        scheduler.execute(DoNothingRunnable.instance());
+        assertTrue(scheduler.getDelayTillNextTask() <= 0);
+        
+        scheduler.remove(this);
+      }
+    });
+    
+    scheduler.tick(null);
+  }
+  
+  @Test
   public void clearTasksTest() {
     scheduler.schedule(DoNothingRunnable.instance(), 1000 * 15);
     scheduler.execute(DoNothingRunnable.instance());

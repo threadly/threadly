@@ -539,6 +539,17 @@ public class TestableSchedulerTest {
   }
   
   @Test
+  public void getDelayTillNextTaskTest() {
+    assertEquals(Long.MAX_VALUE, scheduler.getDelayTillNextTask());
+    
+    scheduler.schedule(DoNothingRunnable.instance(), 1);
+    assertEquals(1, scheduler.getDelayTillNextTask());
+    
+    scheduler.execute(DoNothingRunnable.instance());
+    assertEquals(0, scheduler.getDelayTillNextTask());
+  }
+  
+  @Test
   public void clearTasksTest() {
     assertTrue(scheduler.clearTasks().isEmpty());
     
