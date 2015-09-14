@@ -23,13 +23,6 @@ public class TestUtilTest {
   }
   
   @Test
-  public void loop() {
-    for(int i=0; i<1000; i++) {
-      sleepTest();
-    }
-  }
-  
-  @Test
   public void sleepInterruptedTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     ListenableFuture<?> interruptFuture = null;
