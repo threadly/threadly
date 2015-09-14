@@ -51,7 +51,9 @@ public class TestConstants {
    * Should be at least 10 to 20, anything higher than 100 is basically wasted for most systems.
    */
   public static final int DELAY_TIME;
-  
+  /**
+   * Allowed variance for a specific OS's clock inaccuracy
+   */
   public static final int ALLOWED_VARIANCE;
   
   static {

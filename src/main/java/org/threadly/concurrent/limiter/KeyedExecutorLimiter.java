@@ -2,6 +2,9 @@ package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.Executor;
 
+import org.threadly.concurrent.ThreadRenamingExecutorWrapper;
+import org.threadly.util.StringUtils;
+
 /**
  * <p>This is a cross between the {@link org.threadly.concurrent.KeyDistributedExecutor} and an 
  * {@link ExecutorLimiter}.  This is designed to limit concurrency for a given thread, but permit 
@@ -60,7 +63,9 @@ public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> 
   
   @Override
   protected ExecutorLimiter makeLimiter(String limiterThreadName) {
-    return new ExecutorLimiter(executor, maxConcurrency, limiterThreadName);
+    return new ExecutorLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
+                                 executor : new ThreadRenamingExecutorWrapper(executor, limiterThreadName, false), 
+                               maxConcurrency);
   }
   
   /**********

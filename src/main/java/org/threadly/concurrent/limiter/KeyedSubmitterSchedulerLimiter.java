@@ -1,6 +1,8 @@
 package org.threadly.concurrent.limiter;
 
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.ThreadRenamingSubmitterSchedulerWrapper;
+import org.threadly.util.StringUtils;
 
 /**
  * <p>This is a cross between the {@link org.threadly.concurrent.KeyDistributedScheduler} and a 
@@ -60,7 +62,11 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
   
   @Override
   protected SubmitterSchedulerLimiter makeLimiter(String limiterThreadName) {
-    return new SubmitterSchedulerLimiter(scheduler, maxConcurrency, limiterThreadName);
+    return new SubmitterSchedulerLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
+                                           scheduler : new ThreadRenamingSubmitterSchedulerWrapper(scheduler, 
+                                                                                                   limiterThreadName, 
+                                                                                                   false), 
+                                         maxConcurrency);
   }
   
   /**********
