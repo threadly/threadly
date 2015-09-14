@@ -183,8 +183,8 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     
     long start = Clock.accurateForwardProgressingMillis();
     assertFalse(sts.shutdownAndAwaitTermination(DELAY_TIME));
-    
-    assertTrue(Clock.accurateForwardProgressingMillis() - start >= DELAY_TIME);
+
+    assertTrue(Clock.accurateForwardProgressingMillis() - start >= (DELAY_TIME - ALLOWED_VARIANCE));
   }
   
   @Test

@@ -18,8 +18,8 @@ public class TestUtilTest {
     long start = Clock.accurateForwardProgressingMillis();
     TestUtils.sleep(DELAY_TIME);
     long end = Clock.accurateForwardProgressingMillis();
-    
-    assertTrue(end - start >= DELAY_TIME);
+    //System.out.println(end-start); 
+    assertTrue(end - start >= (DELAY_TIME - ALLOWED_VARIANCE));
   }
   
   @Test
