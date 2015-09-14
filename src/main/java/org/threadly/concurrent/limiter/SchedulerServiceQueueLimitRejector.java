@@ -22,7 +22,7 @@ import org.threadly.concurrent.SchedulerService;
  * @since 4.3.0
  */
 public class SchedulerServiceQueueLimitRejector extends SubmitterSchedulerQueueLimitRejector 
-                                           implements SchedulerService {
+                                                implements SchedulerService {
   protected final SchedulerService parentScheduler;
 
   /**

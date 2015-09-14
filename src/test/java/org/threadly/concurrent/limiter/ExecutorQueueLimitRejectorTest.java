@@ -28,6 +28,32 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
   }
   
   @Test
+  public void getCurrentQueueSizeTest() {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(testableScheduler, TEST_QTY);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(i, queueRejector.getCurrentQueueSize());
+      queueRejector.execute(DoNothingRunnable.instance());
+    }
+    
+    testableScheduler.tick();
+
+    assertEquals(0, queueRejector.getCurrentQueueSize());
+  }
+  
+  @Test
+  public void getSetQueueLimitTest() {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(testableScheduler, TEST_QTY);
+    
+    assertEquals(TEST_QTY, queueRejector.getQueueLimit());
+    
+    queueRejector.setQueueLimit(TEST_QTY * 2);
+    assertEquals(TEST_QTY * 2, queueRejector.getQueueLimit());
+  }
+  
+  @Test
   public void rejectTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(testableScheduler, TEST_QTY);
