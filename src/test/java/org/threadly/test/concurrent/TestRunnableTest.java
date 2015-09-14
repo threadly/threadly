@@ -82,7 +82,7 @@ public class TestRunnableTest {
     }
     long endTime = Clock.accurateForwardProgressingMillis();
     
-    assertTrue(endTime - startTime >= (DELAY_TIME * runCount));
+    assertTrue(endTime - startTime >= ((DELAY_TIME * runCount)- ALLOWED_VARIANCE));
   }
   
   @Test
@@ -105,7 +105,7 @@ public class TestRunnableTest {
     tr.blockTillFinished(1000, 2);
     long endTime = Clock.accurateForwardProgressingMillis();
     
-    assertTrue(endTime - startTime >= DELAY_TIME);
+    assertTrue(endTime - startTime >= (DELAY_TIME - ALLOWED_VARIANCE));
   }
   
   @Test (expected = ConditionTimeoutException.class)

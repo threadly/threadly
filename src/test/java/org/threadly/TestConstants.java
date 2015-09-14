@@ -52,7 +52,14 @@ public class TestConstants {
    */
   public static final int DELAY_TIME;
   
+  public static final int ALLOWED_VARIANCE;
+  
   static {
+    if(System.getProperty("os.name").toLowerCase().contains("win")) {
+      ALLOWED_VARIANCE = 2;
+    } else {
+      ALLOWED_VARIANCE = 0;
+    }
     switch (TEST_PROFILE) {
       case Speedy:
         TEST_QTY = 2;
