@@ -28,6 +28,7 @@ test {
   getReports().getJunitXml().setDestination(file("${buildDir}/reports/tests/xml"))
   getReports().getHtml().setDestination(file("${buildDir}/reports/tests/html"))
   setBinResultsDir(file("${buildDir}/reports/tests/bin"))
+  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 4))
 }
 
 jar {
