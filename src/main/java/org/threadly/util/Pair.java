@@ -22,6 +22,7 @@ public class Pair<L, R> {
    * iterates over a source collection and collects all non-null left references into a new list 
    * that can be manipulated or referenced.
    *  
+   * @param <T> Type of object held as pair's left reference
    * @param source Source collection of pairs
    * @return New list that contains non-null left references
    */
@@ -40,6 +41,7 @@ public class Pair<L, R> {
    * iterates over a source collection and collects all non-null right references into a new list 
    * that can be manipulated or referenced.
    *  
+   * @param <T> Type of object held as pair's right reference
    * @param source Source collection of pairs
    * @return New list that contains non-null right references
    */
@@ -85,7 +87,7 @@ public class Pair<L, R> {
    */
   public static boolean containsRight(Iterable<? extends Pair<?, ?>> search, Object value) {
     for (Pair<?, ?> p : search) {
-      if (p.left == null) {
+      if (p.right == null) {
         if (value == null) {
           return true;
         }
@@ -95,6 +97,58 @@ public class Pair<L, R> {
     }
     
     return false;
+  }
+  
+  /**
+   * Get the right side of a pair by searching for a matching left side.  This iterates over the 
+   * provided source, and once the first pair with a left that matches (via 
+   * {@link Object#equals(Object)}), the right side is returned.  If no match is found, 
+   * {@code null} will be returned.  Although the implementer must be aware that since nulls can 
+   * be kept kept inside pairs, that does not strictly indicate a match failure.
+   * 
+   * @param <T> Type of object held as pair's right reference
+   * @param search Iteratable to search through looking for a match
+   * @param left Object to be looking searching for as a left reference
+   * @return Corresponding right reference or {@code null} if none is found
+   */
+  public static <T> T getRightFromLeft(Iterable<? extends Pair<?, T>> search, Object left) {
+    for (Pair<?, T> p : search) {
+      if (p.left == null) {
+        if (left == null) {
+          return p.right;
+        }
+      } else if (p.left.equals(left)) {
+        return p.right;
+      }
+    }
+    
+    return null;
+  }
+  
+  /**
+   * Get the left side of a pair by searching for a matching right side.  This iterates over the 
+   * provided source, and once the first pair with a right that matches (via 
+   * {@link Object#equals(Object)}), the left side is returned.  If no match is found, 
+   * {@code null} will be returned.  Although the implementer must be aware that since nulls can 
+   * be kept kept inside pairs, that does not strictly indicate a match failure.
+   * 
+   * @param <T> Type of object held as pair's left reference
+   * @param search Iteratable to search through looking for a match
+   * @param right Object to be looking searching for as a left reference
+   * @return Corresponding left reference or {@code null} if none is found
+   */
+  public static <T> T getLeftFromRight(Iterable<? extends Pair<T, ?>> search, Object right) {
+    for (Pair<T, ?> p : search) {
+      if (p.right == null) {
+        if (right == null) {
+          return p.left;
+        }
+      } else if (p.right.equals(right)) {
+        return p.left;
+      }
+    }
+    
+    return null;
   }
   
   // not final so extending classes can mutate

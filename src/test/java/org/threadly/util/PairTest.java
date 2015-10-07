@@ -50,9 +50,17 @@ public class PairTest {
   
   @Test
   public void containsLeftTest() {
-    String searchStr = StringUtils.makeRandomString(10);
+    containsLeftTest(StringUtils.makeRandomString(10));
+  }
+  
+  @Test
+  public void containsLeftNullTest() {
+    containsLeftTest(null);
+  }
+  
+  private void containsLeftTest(String searchStr) {
     String rightStr = StringUtils.makeRandomString(20);
-    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY);
+    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY + 1);
     for (int i = 0; i < TEST_QTY; i++) {
       if (i == TEST_QTY / 2) {
         pairs.add(makePair(searchStr, rightStr));
@@ -66,9 +74,17 @@ public class PairTest {
   
   @Test
   public void containsRightTest() {
-    String searchStr = StringUtils.makeRandomString(10);
+    containsRightTest(StringUtils.makeRandomString(10));
+  }
+  
+  @Test
+  public void containsRightNullTest() {
+    containsRightTest(StringUtils.makeRandomString(10));
+  }
+  
+  private void containsRightTest(String searchStr) {
     String leftStr = StringUtils.makeRandomString(20);
-    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY);
+    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY + 1);
     for (int i = 0; i < TEST_QTY; i++) {
       if (i == TEST_QTY / 2) {
         pairs.add(makePair(leftStr, searchStr));
@@ -78,6 +94,52 @@ public class PairTest {
     
     assertFalse(Pair.containsRight(pairs, leftStr));
     assertTrue(Pair.containsRight(pairs, searchStr));
+  }
+  
+  @Test
+  public void getRightFromLeftTest() {
+    getRightFromLeftTest(StringUtils.makeRandomString(10));
+  }
+  
+  @Test
+  public void getRightFromLeftNullTest() {
+    getRightFromLeftTest(null);
+  }
+  
+  private void getRightFromLeftTest(String searchStr) {
+    String rightStr = StringUtils.makeRandomString(20);
+    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY + 1);
+    for (int i = 0; i < TEST_QTY; i++) {
+      if (i == TEST_QTY / 2) {
+        pairs.add(makePair(searchStr, rightStr));
+      }
+      pairs.add(makePair(StringUtils.makeRandomString(5), StringUtils.makeRandomString(5)));
+    }
+    
+    assertTrue(Pair.getRightFromLeft(pairs, searchStr) == rightStr);
+  }
+  
+  @Test
+  public void getLeftFromRightTest() {
+    getLeftFromRightTest(StringUtils.makeRandomString(10));
+  }
+  
+  @Test
+  public void getLeftFromRightNullTest() {
+    getLeftFromRightTest(null);
+  }
+  
+  private void getLeftFromRightTest(String searchStr) {
+    String leftStr = StringUtils.makeRandomString(20);
+    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY + 1);
+    for (int i = 0; i < TEST_QTY; i++) {
+      if (i == TEST_QTY / 2) {
+        pairs.add(makePair(leftStr, searchStr));
+      }
+      pairs.add(makePair(StringUtils.makeRandomString(5), StringUtils.makeRandomString(5)));
+    }
+    
+    assertTrue(Pair.getLeftFromRight(pairs, searchStr) == leftStr);
   }
   
   @Test
