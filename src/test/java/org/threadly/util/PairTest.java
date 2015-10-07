@@ -15,6 +15,40 @@ public class PairTest {
   }
   
   @Test
+  public void collectLeftTest() {
+    List<String> expectedResult = new ArrayList<String>(TEST_QTY);
+    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY * 2);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = StringUtils.makeRandomString(10);
+      expectedResult.add(str);
+      pairs.add(makePair(str, StringUtils.makeRandomString(5)));
+      pairs.add(makePair(null, StringUtils.makeRandomString(5)));
+    }
+    
+    List<String> result = Pair.collectLeft(pairs);
+    
+    assertEquals(TEST_QTY, result.size());
+    assertTrue(expectedResult.equals(result));
+  }
+  
+  @Test
+  public void collectRightTest() {
+    List<String> expectedResult = new ArrayList<String>(TEST_QTY);
+    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY * 2);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = StringUtils.makeRandomString(10);
+      expectedResult.add(str);
+      pairs.add(makePair(StringUtils.makeRandomString(5), str));
+      pairs.add(makePair(StringUtils.makeRandomString(5), null));
+    }
+    
+    List<String> result = Pair.collectRight(pairs);
+    
+    assertEquals(TEST_QTY, result.size());
+    assertTrue(expectedResult.equals(result));
+  }
+  
+  @Test
   public void containsLeftTest() {
     String searchStr = StringUtils.makeRandomString(10);
     String rightStr = StringUtils.makeRandomString(20);

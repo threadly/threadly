@@ -1,5 +1,9 @@
 package org.threadly.util;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 /**
  * <p>A simple tuple implementation (every library needs one, right?).  This is designed to be a 
  * minimal and light weight pair holder.</p>
@@ -12,6 +16,42 @@ package org.threadly.util;
 public class Pair<L, R> {
   private static final short LEFT_PRIME = 13;
   private static final short RIGHT_PRIME = 31;
+  
+  /**
+   * Collect all the non-null left references into a new List.  A simple implementation which 
+   * iterates over a source collection and collects all non-null left references into a new list 
+   * that can be manipulated or referenced.
+   *  
+   * @param source Source collection of pairs
+   * @return New list that contains non-null left references
+   */
+  public static <T> List<T> collectLeft(Collection<? extends Pair<T, ?>> source) {
+    List<T> result = new ArrayList<T>(source.size());
+    for (Pair<T, ?> p : source) {
+      if (p.left != null) {
+        result.add(p.left);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Collect all the non-null right references into a new List.  A simple implementation which 
+   * iterates over a source collection and collects all non-null right references into a new list 
+   * that can be manipulated or referenced.
+   *  
+   * @param source Source collection of pairs
+   * @return New list that contains non-null right references
+   */
+  public static <T> List<T> collectRight(Collection<? extends Pair<?, T>> source) {
+    List<T> result = new ArrayList<T>(source.size());
+    for (Pair<?, T> p : source) {
+      if (p.right != null) {
+        result.add(p.right);
+      }
+    }
+    return result;
+  }
   
   /**
    * Simple search to see if a collection of pairs contains a given left value.  It is assumed 
