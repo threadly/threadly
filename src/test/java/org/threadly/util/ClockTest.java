@@ -21,9 +21,30 @@ public class ClockTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void systemNanoTimeTest() {
     long baseTime = System.nanoTime();
     assertTrue(Clock.systemNanoTime() >= baseTime);
+  }
+  
+  @Test
+  public void accurateNanoTimeTest() {
+    long baseTime = System.nanoTime();
+    assertTrue(Clock.accurateNanoTime() >= baseTime);
+  }
+  
+  @Test
+  public void lastKnownNanoTimeTest() {
+    // verify clock is not updating
+    long before = Clock.lastKnownNanoTime();
+    
+    TestUtils.blockTillClockAdvances();
+    
+    // update clock
+    long newTime = -1;
+    assertTrue((newTime = Clock.accurateNanoTime()) > before);
+    // verify we get the new time again
+    assertEquals(newTime, Clock.lastKnownNanoTime());
   }
   
   @Test
@@ -111,7 +132,7 @@ public class ClockTest {
     long newTime = -1;
     assertTrue((newTime = Clock.accurateTimeMillis()) > before);
     // verify we get the new time again
-    assertTrue(newTime <= Clock.lastKnownTimeMillis());
+    assertEquals(newTime, Clock.lastKnownTimeMillis());
   }
   
   @Test

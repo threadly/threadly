@@ -95,10 +95,29 @@ public class Clock {
   }
   
   /**
-   * This directly returns the result of {@link System#nanoTime()}.  The only reason to use this 
-   * call over calling {@link System#nanoTime()} directly is that it updates the nano time 
-   * representation, allowing for more accurate time references when calling to 
-   * {@link Clock#lastKnownForwardProgressingMillis()}.
+   * This directly returns the result of {@link System#nanoTime()}.  Using this as an alternative 
+   * to invoking {@link System#nanoTime()} directly is that it updates the nano time 
+   * representation, allowing for more accurate time references when calling 
+   * {@link #lastKnownNanoTime()} and {@link Clock#lastKnownForwardProgressingMillis()}.
+   * 
+   * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
+   * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
+   * start point).
+   * 
+   * @deprecated use {@link #accurateNanoTime()} as a direct replacement
+   * 
+   * @return a long which is a constantly forward moving representation of nano seconds
+   */
+  @Deprecated
+  public static long systemNanoTime() {
+    return accurateNanoTime();
+  }
+  
+  /**
+   * This directly returns the result of {@link System#nanoTime()}.  Using this as an alternative 
+   * to invoking {@link System#nanoTime()} directly is that it updates the nano time 
+   * representation, allowing for more accurate time references when calling 
+   * {@link #lastKnownNanoTime()} and {@link Clock#lastKnownForwardProgressingMillis()}.
    * 
    * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
    * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
@@ -106,8 +125,24 @@ public class Clock {
    * 
    * @return a long which is a constantly forward moving representation of nano seconds
    */
-  public static long systemNanoTime() {
+  public static long accurateNanoTime() {
     return nowNanos = System.nanoTime();
+  }
+  
+  /**
+   * This returns a fuzzy known nano time from invocations to either {@link #accurateNanoTime()} 
+   * or {@link #accurateForwardProgressingMillis()}.  In addition (unless manually stopped via 
+   * {@link #stopClockUpdateThread()}) this time is updated at the frequency of 
+   * {@link #AUTOMATIC_UPDATE_FREQUENCY_IN_MS}.  Thus providing a minimal level of accuracy.
+   * 
+   * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
+   * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
+   * start point).
+   * 
+   * @return a long which is a constantly forward moving representation of nano seconds
+   */
+  public static long lastKnownNanoTime() {
+    return nowNanos;
   }
   
   /**
@@ -118,8 +153,9 @@ public class Clock {
    * This call is guaranteed to only progress forward, regardless of system clock changes it will 
    * move forward at a consistent rate.  
    * 
-   * If the clock updater is running (which is {@code true} by default), this is guaranteed to be 
-   * accurate within 100 milliseconds.
+   * By default (unless manually stopped via {@link #stopClockUpdateThread()}) this time is 
+   * updated automatically at the frequency of {@link #AUTOMATIC_UPDATE_FREQUENCY_IN_MS}.  Thus 
+   * allowing a guarantee of minimal accuracy within the set milliseconds.
    * 
    * @since 3.1.0
    * @return Amount of time in milliseconds since Clock class was loaded
@@ -144,7 +180,7 @@ public class Clock {
    * @return Amount of time in milliseconds since Clock class was loaded
    */
   public static long accurateForwardProgressingMillis() {
-    systemNanoTime();
+    accurateNanoTime();
     
     return lastKnownForwardProgressingMillis();
   }
@@ -157,8 +193,9 @@ public class Clock {
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
    * consider using {@link #lastKnownForwardProgressingMillis()}.  
    * 
-   * If the clock updater is running (which is {@code true} by default), this is guaranteed to be 
-   * accurate within 100 milliseconds.
+   * By default (unless manually stopped via {@link #stopClockUpdateThread()}) this time is 
+   * updated automatically at the frequency of {@link #AUTOMATIC_UPDATE_FREQUENCY_IN_MS}.  Thus 
+   * allowing a guarantee of minimal accuracy within the set milliseconds.
    * 
    * @return last known time in milliseconds
    */
@@ -198,7 +235,7 @@ public class Clock {
           while (clockUpdater == this) {
             try {
               accurateTimeMillis();
-              systemNanoTime();
+              accurateNanoTime();
               
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
             } catch (InterruptedException e) {
