@@ -11,6 +11,7 @@ import java.util.concurrent.Executor;
 import org.junit.Test;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.Pair;
 import org.threadly.util.StringUtils;
 import org.threadly.util.TestExceptionHandler;
 
@@ -61,7 +62,7 @@ public class ListenerHelperTest {
     ch.addListener(ti);
     
     assertEquals(1, ch.registeredListenerCount());
-    assertTrue(ch.listeners.containsKey(ti));
+    assertTrue(Pair.containsLeft(ch.listeners, ti));
   }
   
   @Test
@@ -72,7 +73,7 @@ public class ListenerHelperTest {
     ch.addListener(ti, executor);
 
     assertEquals(1, ch.registeredListenerCount());
-    assertTrue(ch.listeners.get(ti) == executor);
+    assertTrue(Pair.getRightFromLeft(ch.listeners, ti) == executor);
   }
   
   @Test

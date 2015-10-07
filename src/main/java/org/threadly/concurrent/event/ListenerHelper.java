@@ -7,14 +7,13 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.Pair;
 
 /**
  * <p>Class which assist with holding and calling to listeners of any interface.  In parallel 
@@ -45,7 +44,7 @@ public class ListenerHelper<T> {
   
   protected final T proxyInstance;
   protected final Object listenersLock;
-  protected Map<T, Executor> listeners;
+  protected List<Pair<T, Executor>> listeners;
   
   /**
    * Constructs a new {@link ListenerHelper} that will handle listeners with the provided 
@@ -90,7 +89,7 @@ public class ListenerHelper<T> {
       if (listeners == null) {
         return Collections.emptyList();
       } else {
-        return Collections.unmodifiableList(new ArrayList<T>(listeners.keySet()));
+        return Collections.unmodifiableList(Pair.collectLeft(listeners));
       }
     }
   }
@@ -146,16 +145,17 @@ public class ListenerHelper<T> {
       if (addingFromCallingThread) {
         // we must create a new instance of listeners to prevent a ConcurrentModificationException
         // we know at this point that listeners can not be null
-        Map<T, Executor> newListeners = new HashMap<T, Executor>(listeners.size() + 1);
-        newListeners.putAll(listeners);
-        newListeners.put(listener, executor);
+        List<Pair<T, Executor>> newListeners = 
+            new ArrayList<Pair<T, Executor>>(listeners.size() + 1);
+        newListeners.addAll(listeners);
+        newListeners.add(new Pair<T, Executor>(listener, executor));
         
         listeners = newListeners;
       } else {
         if (listeners == null) {
-          listeners = new HashMap<T, Executor>();
+          listeners = new ArrayList<Pair<T, Executor>>(2);
         }
-        listeners.put(listener, executor);
+        listeners.add(new Pair<T, Executor>(listener, executor));
       }
     }
   }
@@ -171,15 +171,20 @@ public class ListenerHelper<T> {
     synchronized (listenersLock) {
       if (listeners == null) {
         return false;
-      } else if (listeners.containsKey(listener)) {
-        if (removingFromCallingThread) {
-          listeners = new HashMap<T, Executor>(listeners);
-        }
-        listeners.remove(listener);
-        return true;
-      } else {
-        return false;
       }
+      
+      if (removingFromCallingThread) {
+        listeners = new ArrayList<Pair<T, Executor>>(listeners);
+      }
+      Iterator<Pair<T, Executor>> it = listeners.iterator();
+      while (it.hasNext()) {
+        if (it.next().getLeft().equals(listener)) {
+          it.remove();
+          return true;
+        }
+      }
+      
+      return false;
     }
   }
   
@@ -241,18 +246,18 @@ public class ListenerHelper<T> {
     protected void callListeners(final Method method, final Object[] args) {
       synchronized (listenersLock) {
         if (listeners != null) {
-          Iterator<Entry<T, Executor>> it = listeners.entrySet().iterator();
+          Iterator<Pair<T, Executor>> it = listeners.iterator();
           while (it.hasNext()) {
-            final Entry<T, Executor> listener = it.next();
-            if (listener.getValue() != null) {
-              listener.getValue().execute(new Runnable() {
+            final Pair<T, Executor> listener = it.next();
+            if (listener.getRight() != null) {
+              listener.getRight().execute(new Runnable() {
                 @Override
                 public void run() {
-                  callListener(listener.getKey(), method, args);
+                  callListener(listener.getLeft(), method, args);
                 }
               });
             } else {
-              callListener(listener.getKey(), method, args);
+              callListener(listener.getLeft(), method, args);
             }
           }
         }
