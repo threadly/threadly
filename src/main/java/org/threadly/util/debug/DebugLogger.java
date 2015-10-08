@@ -40,7 +40,7 @@ public class DebugLogger {
    * @param msg message to be stored into log map
    */
   public static void log(String msg) {
-    long startTime = Clock.accurateNanoTime();
+    long startTime = Clock.accurateTimeNanos();
     long time = startTime;
     String replacement = logMap.putIfAbsent(time, msg);
     while (replacement != null) {

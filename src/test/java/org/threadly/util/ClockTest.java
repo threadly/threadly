@@ -28,23 +28,23 @@ public class ClockTest {
   }
   
   @Test
-  public void accurateNanoTimeTest() {
+  public void accurateTimeNanosTest() {
     long baseTime = System.nanoTime();
-    assertTrue(Clock.accurateNanoTime() >= baseTime);
+    assertTrue(Clock.accurateTimeNanos() >= baseTime);
   }
   
   @Test
-  public void lastKnownNanoTimeTest() {
+  public void lastKnownTimeNanosTest() {
     // verify clock is not updating
-    long before = Clock.lastKnownNanoTime();
+    long before = Clock.lastKnownTimeNanos();
     
     TestUtils.blockTillClockAdvances();
     
     // update clock
     long newTime = -1;
-    assertTrue((newTime = Clock.accurateNanoTime()) > before);
+    assertTrue((newTime = Clock.accurateTimeNanos()) > before);
     // verify we get the new time again
-    assertEquals(newTime, Clock.lastKnownNanoTime());
+    assertEquals(newTime, Clock.lastKnownTimeNanos());
   }
   
   @Test

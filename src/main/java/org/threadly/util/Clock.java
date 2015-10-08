@@ -98,26 +98,26 @@ public class Clock {
    * This directly returns the result of {@link System#nanoTime()}.  Using this as an alternative 
    * to invoking {@link System#nanoTime()} directly is that it updates the nano time 
    * representation, allowing for more accurate time references when calling 
-   * {@link #lastKnownNanoTime()} and {@link Clock#lastKnownForwardProgressingMillis()}.
+   * {@link #lastKnownTimeNanos()} and {@link Clock#lastKnownForwardProgressingMillis()}.
    * 
    * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
    * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
    * start point).
    * 
-   * @deprecated use {@link #accurateNanoTime()} as a direct replacement
+   * @deprecated use {@link #accurateTimeNanos()} as a direct replacement
    * 
    * @return a long which is a constantly forward moving representation of nano seconds
    */
   @Deprecated
   public static long systemNanoTime() {
-    return accurateNanoTime();
+    return accurateTimeNanos();
   }
   
   /**
    * This directly returns the result of {@link System#nanoTime()}.  Using this as an alternative 
    * to invoking {@link System#nanoTime()} directly is that it updates the nano time 
    * representation, allowing for more accurate time references when calling 
-   * {@link #lastKnownNanoTime()} and {@link Clock#lastKnownForwardProgressingMillis()}.
+   * {@link #lastKnownTimeNanos()} and {@link Clock#lastKnownForwardProgressingMillis()}.
    * 
    * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
    * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
@@ -125,12 +125,12 @@ public class Clock {
    * 
    * @return a long which is a constantly forward moving representation of nano seconds
    */
-  public static long accurateNanoTime() {
+  public static long accurateTimeNanos() {
     return nowNanos = System.nanoTime();
   }
   
   /**
-   * This returns a fuzzy known nano time from invocations to either {@link #accurateNanoTime()} 
+   * This returns a fuzzy known nano time from invocations to either {@link #accurateTimeNanos()} 
    * or {@link #accurateForwardProgressingMillis()}.  In addition (unless manually stopped via 
    * {@link #stopClockUpdateThread()}) this time is updated at the frequency of 
    * {@link #AUTOMATIC_UPDATE_FREQUENCY_IN_MS}.  Thus providing a minimal level of accuracy.
@@ -141,7 +141,7 @@ public class Clock {
    * 
    * @return a long which is a constantly forward moving representation of nano seconds
    */
-  public static long lastKnownNanoTime() {
+  public static long lastKnownTimeNanos() {
     return nowNanos;
   }
   
@@ -180,7 +180,7 @@ public class Clock {
    * @return Amount of time in milliseconds since Clock class was loaded
    */
   public static long accurateForwardProgressingMillis() {
-    accurateNanoTime();
+    accurateTimeNanos();
     
     return lastKnownForwardProgressingMillis();
   }
@@ -235,7 +235,7 @@ public class Clock {
           while (clockUpdater == this) {
             try {
               accurateTimeMillis();
-              accurateNanoTime();
+              accurateTimeNanos();
               
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
             } catch (InterruptedException e) {
