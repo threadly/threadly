@@ -11,7 +11,7 @@ import java.util.concurrent.Callable;
  * @since 4.3.0
  */
 public class ThreadRenamingSchedulerServiceWrapper extends ThreadRenamingSubmitterSchedulerWrapper 
-                                            implements SchedulerService {
+                                                   implements SchedulerService {
   protected final SchedulerService scheduler;
   
   /**
