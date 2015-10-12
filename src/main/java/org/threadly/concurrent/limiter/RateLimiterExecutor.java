@@ -1,6 +1,7 @@
 package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -33,8 +34,7 @@ import org.threadly.util.Clock;
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
   protected final double permitsPerSecond;
-  protected final Object permitLock;
-  private double lastScheduleTime;
+  private final AtomicLong lastScheduleTime;  // stored internally as a double
   
   /**
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
@@ -50,8 +50,16 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     
     this.scheduler = scheduler;
     this.permitsPerSecond = permitsPerSecond;
-    this.permitLock = new Object();
-    this.lastScheduleTime = Clock.lastKnownForwardProgressingMillis();
+    this.lastScheduleTime = new AtomicLong(Double.doubleToLongBits(Clock.lastKnownForwardProgressingMillis()));
+  }
+  
+  private double getLastScheduleTime() {
+    return Double.longBitsToDouble(lastScheduleTime.get());
+  }
+  
+  private boolean compareAndSetLastScheduleTime(double expected, double replace) {
+    return lastScheduleTime.compareAndSet(Double.doubleToLongBits(expected), 
+                                          Double.doubleToLongBits(replace));
   }
   
   /**
@@ -62,9 +70,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @return minimum delay in milliseconds for the next task to be provided
    */
   public int getMinimumDelay() {
-    synchronized (permitLock) {
-      return (int)Math.max(0, lastScheduleTime - Clock.lastKnownForwardProgressingMillis());
-    }
+    return (int)Math.max(0, getLastScheduleTime() - Clock.lastKnownForwardProgressingMillis());
   }
   
   /**
@@ -183,18 +189,25 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   protected void doExecute(double permits, Runnable task) {
     double effectiveDelay = (permits / permitsPerSecond) * 1000;
-    synchronized (permitLock) {
-      double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
+    while (true) {
+      double casLastScheduleTime = getLastScheduleTime();
+
+      double scheduleDelay = casLastScheduleTime - Clock.accurateForwardProgressingMillis();
       if (scheduleDelay < 1) {
+        double newScheduleTime;
         if (scheduleDelay < 0) {
-          lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
+          newScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
         } else {
-          lastScheduleTime += effectiveDelay;
+          newScheduleTime = casLastScheduleTime + effectiveDelay;
         }
-        scheduler.execute(task);
-      } else {
-        lastScheduleTime += effectiveDelay;
+        if (compareAndSetLastScheduleTime(casLastScheduleTime, newScheduleTime)) {
+          scheduler.execute(task);
+          break;
+        }
+      } else if (compareAndSetLastScheduleTime(casLastScheduleTime, 
+                                               casLastScheduleTime + effectiveDelay)) {
         scheduler.schedule(task, (long)scheduleDelay);
+        break;
       }
     }
   }
