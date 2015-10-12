@@ -3,7 +3,7 @@ package org.threadly.concurrent;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.future.FutureUtils;
-import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.Promise;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
@@ -14,7 +14,7 @@ import org.threadly.util.ExceptionUtils;
  * {@link ExceptionUtils#handleException(Throwable)} to In the case of just 
  * {@link #execute(Runnable)} thrown exceptions will be provided to 
  * {@link ExceptionUtils#handleException(Throwable)} to be handled.  Otherwise thrown exceptions 
- * will be represented by their returned {@link ListenableFuture}.</p>
+ * will be represented by their returned {@link Promise}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 1.2.0
@@ -45,12 +45,12 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
   }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task) {
+  public Promise<?> submit(Runnable task) {
     return submit(task, null);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+  public <T> Promise<T> submit(Runnable task, T result) {
     ArgumentVerifier.assertNotNull(task, "task");
     
     try {
@@ -63,7 +63,7 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
+  public <T> Promise<T> submit(Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
     try {

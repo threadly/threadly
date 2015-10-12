@@ -18,7 +18,7 @@ import org.threadly.util.Clock;
  * @since 1.2.0
  * @param <T> The result object type returned by this future
  */
-public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureCallback<T> {
+public class SettableListenableFuture<T> implements Promise<T>, FutureCallback<T> {
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
   protected final boolean throwIfAlreadyComplete;

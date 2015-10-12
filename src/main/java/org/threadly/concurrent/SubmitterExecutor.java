@@ -3,7 +3,7 @@ package org.threadly.concurrent;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.Promise;
 
 /**
  * <p>A thread pool for executing tasks with provided futures.  This executor submits 
@@ -18,16 +18,16 @@ public interface SubmitterExecutor extends Executor {
    * {@link #submit(Runnable)} over {@link #execute(Runnable)}.  So this should only be used when 
    * the returned future is necessary.  
    * 
-   * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has 
+   * The {@link Promise#get()} method will return {@code null} once the runnable has 
    * completed.
    * 
    * @param task runnable to be executed
    * @return a future to know when the task has completed
    */
-  public ListenableFuture<?> submit(Runnable task);
+  public Promise<?> submit(Runnable task);
   
   /**
-   * Submit a task to run as soon as possible.  The {@link ListenableFuture#get()} method will 
+   * Submit a task to run as soon as possible.  The {@link Promise#get()} method will 
    * return the provided result once the runnable has completed.
    * 
    * @param <T> type of result for future
@@ -35,7 +35,7 @@ public interface SubmitterExecutor extends Executor {
    * @param result result to be returned from resulting future .get() when runnable completes
    * @return a future to know when the task has completed
    */
-  public <T> ListenableFuture<T> submit(Runnable task, T result);
+  public <T> Promise<T> submit(Runnable task, T result);
 
   /**
    * Submit a {@link Callable} to run as soon as possible.  This is needed when a result needs to 
@@ -45,5 +45,5 @@ public interface SubmitterExecutor extends Executor {
    * @param task callable to be executed
    * @return a future to know when the task has completed and get the result of the callable
    */
-  public <T> ListenableFuture<T> submit(Callable<T> task);
+  public <T> Promise<T> submit(Callable<T> task);
 }

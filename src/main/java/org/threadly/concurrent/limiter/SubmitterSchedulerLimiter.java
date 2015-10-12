@@ -5,8 +5,8 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterScheduler;
-import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.concurrent.future.Promise;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
@@ -59,17 +59,17 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
   }
 
   @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
+  public Promise<?> submitScheduled(Runnable task, long delayInMs) {
     return submitScheduled(task, null, delayInMs);
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
+  public <T> Promise<T> submitScheduled(Runnable task, T result, long delayInMs) {
     return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs);
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> Promise<T> submitScheduled(Callable<T> task, long delayInMs) {
     ArgumentVerifier.assertNotNull(task, "task");
     
     ListenableFutureTask<T> ft = new ListenableFutureTask<T>(false, task);
