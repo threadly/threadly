@@ -86,8 +86,8 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   @Override
   public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
                                        long timeout, TimeUnit unit) throws InterruptedException {
-    long startTime = Clock.accurateForwardProgressingMillis();
     long timeoutInMs = unit.toMillis(timeout);
+    long startTime = timeoutInMs < Long.MAX_VALUE ? Clock.accurateForwardProgressingMillis() : -1;
     List<Future<T>> resultList = new ArrayList<Future<T>>(tasks.size());
     // execute all the tasks provided
     {
@@ -103,11 +103,15 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       }
     }
     // block till all tasks finish, or we reach our timeout
-    long remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
-    try {
-      FutureUtils.blockTillAllComplete(resultList, remainingTime);
-    } catch (TimeoutException e) {
-      FutureUtils.cancelIncompleteFutures(resultList, true);
+    if (timeoutInMs < Long.MAX_VALUE) {
+      long remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
+      try {
+        FutureUtils.blockTillAllComplete(resultList, remainingTime);
+      } catch (TimeoutException e) {
+        FutureUtils.cancelIncompleteFutures(resultList, true);
+      }
+    } else {
+      FutureUtils.blockTillAllComplete(resultList);
     }
     
     return resultList;
@@ -129,10 +133,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                          long timeout, TimeUnit unit) throws InterruptedException,
                                                              ExecutionException, 
                                                              TimeoutException {
-    final long startTime = Clock.accurateForwardProgressingMillis();
     if (tasks.size() < 1) {
       throw new IllegalArgumentException("Empty task list provided");
     }
+    
+    final long startTime = Clock.accurateForwardProgressingMillis();
     final long timeoutInMs = unit.toMillis(timeout);
     int failureCount = 0;
     // going to be optimistic and allocate the initialize size so that at most we have to do one expansion
