@@ -3,15 +3,14 @@ package org.threadly.concurrent.event;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.threadly.concurrent.ContainerHelper;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.Pair;
 
 /**
  * <p>Class which assist with holding and calling to Runnable listeners.  In parallel designs it 
@@ -29,7 +28,7 @@ public class RunnableListenerHelper {
   protected final Object listenersLock;
   protected final boolean callOnce;
   protected final AtomicBoolean done;
-  protected Map<Runnable, Executor> listeners;
+  protected List<Pair<Runnable, Executor>> listeners;
   
   /**
    * Constructs a new {@link RunnableListenerHelper}.  This can call listeners only once, or every 
@@ -55,7 +54,7 @@ public class RunnableListenerHelper {
       if (listeners == null) {
         return Collections.emptyList();
       } else {
-        return Collections.unmodifiableList(new ArrayList<Runnable>(listeners.keySet()));
+        return Collections.unmodifiableList(Pair.collectLeft(listeners));
       }
     }
   }
@@ -103,10 +102,10 @@ public class RunnableListenerHelper {
         return;
       }
       
-      Iterator<Entry<Runnable, Executor>> it = listeners.entrySet().iterator();
+      Iterator<Pair<Runnable, Executor>> it = listeners.iterator();
       while (it.hasNext()) {
-        Entry<Runnable, Executor> listener = it.next();
-        runListener(listener.getKey(), listener.getValue(), false);
+        Pair<Runnable, Executor> listener = it.next();
+        runListener(listener.getLeft(), listener.getRight(), false);
       }
       
       if (callOnce) {
@@ -182,16 +181,17 @@ public class RunnableListenerHelper {
         if (addingFromCallingThread) {
           // we must create a new instance of listeners to prevent a ConcurrentModificationException
           // we know at this point that listeners can not be null
-          Map<Runnable, Executor> newListeners = new HashMap<Runnable, Executor>(listeners.size() + 1);
-          newListeners.putAll(listeners);
-          newListeners.put(listener, executor);
+          List<Pair<Runnable, Executor>> newListeners = 
+              new ArrayList<Pair<Runnable, Executor>>(listeners.size() + 1);
+          newListeners.addAll(listeners);
+          newListeners.add(new Pair<Runnable, Executor>(listener, executor));
           
           listeners = newListeners;
         } else {
           if (listeners == null) {
-            listeners = new HashMap<Runnable, Executor>();
+            listeners = new ArrayList<Pair<Runnable, Executor>>(2);
           }
-          listeners.put(listener, executor);
+          listeners.add(new Pair<Runnable, Executor>(listener, executor));
         }
       }
     }
@@ -211,16 +211,11 @@ public class RunnableListenerHelper {
       }
       
       if (removingFromCallingThread) {
-        listeners = new HashMap<Runnable, Executor>(listeners);
+        listeners = new ArrayList<Pair<Runnable, Executor>>(listeners);
       }
-      /* For large listener counts it would be cheaper to 
-       * check containsKey and call remove, but I would like 
-       * to continue to support the container interfaces 
-       * as much as possible.
-       */
-      Iterator<Runnable> it = listeners.keySet().iterator();
+      Iterator<Pair<Runnable, Executor>> it = listeners.iterator();
       while (it.hasNext()) {
-        if (ContainerHelper.isContained(it.next(), listener)) {
+        if (ContainerHelper.isContained(it.next().getLeft(), listener)) {
           it.remove();
           return true;
         }
