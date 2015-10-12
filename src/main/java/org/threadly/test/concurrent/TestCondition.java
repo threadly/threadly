@@ -60,7 +60,7 @@ public abstract class TestCondition {
     long startTime = Clock.accurateForwardProgressingMillis();
     long now = startTime;
     boolean lastResult;
-    while (! (lastResult = get()) && 
+    while (! (lastResult = get()) && ! Thread.currentThread().isInterrupted() && 
            (now = Clock.accurateForwardProgressingMillis()) - startTime < timeoutInMillis) {
       if (pollIntervalInMillis > SPIN_THRESHOLD) {
         LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * pollIntervalInMillis);
@@ -69,7 +69,8 @@ public abstract class TestCondition {
     
     if (! lastResult) {
       throw new ConditionTimeoutException("Still false after " + 
-                                            (now - startTime) + "ms");
+                                            (now - startTime) + "ms, interrupted: " + 
+                                            Thread.currentThread().isInterrupted());
     }
   }
   
