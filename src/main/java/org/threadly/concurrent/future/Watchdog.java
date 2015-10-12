@@ -180,7 +180,7 @@ public class Watchdog {
     public void run() {
       checkRunnerStatus.set(1);
       
-      Clock.systemNanoTime(); // update for accurate time checking
+      Clock.accurateTimeNanos(); // update for accurate time checking
       Iterator<FutureWrapper> it = futures.iterator();
       FutureWrapper fw = null;
       while (it.hasNext()) {
