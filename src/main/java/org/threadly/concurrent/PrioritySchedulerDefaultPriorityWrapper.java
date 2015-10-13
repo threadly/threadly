@@ -2,7 +2,7 @@ package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
 
-import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.Promise;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -45,32 +45,32 @@ public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedule
   }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task) {
+  public Promise<?> submit(Runnable task) {
     return scheduler.submit(task, defaultPriority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+  public <T> Promise<T> submit(Runnable task, T result) {
     return scheduler.submit(task, result, defaultPriority);
   }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
+  public Promise<?> submit(Runnable task, TaskPriority priority) {
     return scheduler.submit(task, priority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
+  public <T> Promise<T> submit(Runnable task, T result, TaskPriority priority) {
     return scheduler.submit(task, result, priority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
+  public <T> Promise<T> submit(Callable<T> task) {
     return scheduler.submit(task, defaultPriority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
+  public <T> Promise<T> submit(Callable<T> task, TaskPriority priority) {
     return scheduler.submit(task, priority);
   }
   
@@ -85,35 +85,33 @@ public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedule
   }
 
   @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
+  public Promise<?> submitScheduled(Runnable task, long delayInMs) {
     return scheduler.submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
+  public <T> Promise<T> submitScheduled(Runnable task, T result, long delayInMs) {
     return scheduler.submitScheduled(task, result, delayInMs, defaultPriority);
   }
 
   @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs,
-                                             TaskPriority priority) {
+  public Promise<?> submitScheduled(Runnable task, long delayInMs, TaskPriority priority) {
     return scheduler.submitScheduled(task, delayInMs, priority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
-                                                 TaskPriority priority) {
+  public <T> Promise<T> submitScheduled(Runnable task, T result, long delayInMs,
+                                        TaskPriority priority) {
     return scheduler.submitScheduled(task, result, delayInMs, priority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
+  public <T> Promise<T> submitScheduled(Callable<T> task, long delayInMs) {
     return scheduler.submitScheduled(task, delayInMs, defaultPriority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
-                                                 TaskPriority priority) {
+  public <T> Promise<T> submitScheduled(Callable<T> task, long delayInMs, TaskPriority priority) {
     return scheduler.submitScheduled(task, delayInMs, priority);
   }
 

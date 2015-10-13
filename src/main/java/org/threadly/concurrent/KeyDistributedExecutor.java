@@ -10,9 +10,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
+import org.threadly.concurrent.future.Promise;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
@@ -407,7 +407,7 @@ public class KeyDistributedExecutor {
    * @return Future to represent when the execution has occurred
    */
   @Deprecated
-  public ListenableFuture<?> submitTask(Object threadKey, Runnable task) {
+  public Promise<?> submitTask(Object threadKey, Runnable task) {
     return submit(threadKey, task);
   }
   
@@ -418,7 +418,7 @@ public class KeyDistributedExecutor {
    * @param task Task to be executed
    * @return Future to represent when the execution has occurred
    */
-  public ListenableFuture<?> submit(Object threadKey, Runnable task) {
+  public Promise<?> submit(Object threadKey, Runnable task) {
     return submitTask(threadKey, task, null);
   }
   
@@ -434,7 +434,7 @@ public class KeyDistributedExecutor {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   @Deprecated
-  public <T> ListenableFuture<T> submitTask(Object threadKey, Runnable task, T result) {
+  public <T> Promise<T> submitTask(Object threadKey, Runnable task, T result) {
     return submit(threadKey, task, result);
   }
   
@@ -447,7 +447,7 @@ public class KeyDistributedExecutor {
    * @param result Result to be returned from future when task completes
    * @return Future to represent when the execution has occurred and provide the given result
    */
-  public <T> ListenableFuture<T> submit(Object threadKey, Runnable task, T result) {
+  public <T> Promise<T> submit(Object threadKey, Runnable task, T result) {
     return submit(threadKey, new RunnableCallableAdapter<T>(task, result));
   }
   
@@ -462,7 +462,7 @@ public class KeyDistributedExecutor {
    * @return Future to represent when the execution has occurred and provide the result from the callable
    */
   @Deprecated
-  public <T> ListenableFuture<T> submitTask(Object threadKey, Callable<T> task) {
+  public <T> Promise<T> submitTask(Object threadKey, Callable<T> task) {
     return submit(threadKey, task);
   }
   
@@ -474,7 +474,7 @@ public class KeyDistributedExecutor {
    * @param task Callable to be executed
    * @return Future to represent when the execution has occurred and provide the result from the callable
    */
-  public <T> ListenableFuture<T> submit(Object threadKey, Callable<T> task) {
+  public <T> Promise<T> submit(Object threadKey, Callable<T> task) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
@@ -663,17 +663,17 @@ public class KeyDistributedExecutor {
     }
 
     @Override
-    public ListenableFuture<?> submit(Runnable task) {
+    public Promise<?> submit(Runnable task) {
       return KeyDistributedExecutor.this.submit(threadKey, task);
     }
 
     @Override
-    public <T> ListenableFuture<T> submit(Runnable task, T result) {
+    public <T> Promise<T> submit(Runnable task, T result) {
       return KeyDistributedExecutor.this.submit(threadKey, task, result);
     }
 
     @Override
-    public <T> ListenableFuture<T> submit(Callable<T> task) {
+    public <T> Promise<T> submit(Callable<T> task) {
       return KeyDistributedExecutor.this.submit(threadKey, task);
     }
   }

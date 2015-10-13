@@ -8,7 +8,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.concurrent.future.FutureUtils;
-import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.Promise;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerDefaultPriorityWrapperTest {
@@ -255,19 +255,19 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     }
 
     @Override
-    public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
+    public Promise<?> submit(Runnable task, TaskPriority priority) {
       submitRunnableCalled = true;
       return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
     }
 
     @Override
-    public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
+    public <T> Promise<T> submit(Runnable task, T result, TaskPriority priority) {
       submitRunnableResultCalled = true;
       return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
     }
 
     @Override
-    public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
+    public <T> Promise<T> submit(Callable<T> task, TaskPriority priority) {
       submitCallableCalled = true;
       return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
     }
@@ -278,21 +278,21 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     }
 
     @Override
-    public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, TaskPriority priority) {
+    public Promise<?> submitScheduled(Runnable task, long delayInMs, TaskPriority priority) {
       submitScheduledRunnableCalled = true;
       return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
     }
 
     @Override
-    public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
-                                                   TaskPriority priority) {
+    public <T> Promise<T> submitScheduled(Runnable task, T result, long delayInMs,
+                                          TaskPriority priority) {
       submitScheduledRunnableResultCalled = true;
       return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
     }
 
     @Override
-    public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs,
-                                                   TaskPriority priority) {
+    public <T> Promise<T> submitScheduled(Callable<T> task, long delayInMs,
+                                          TaskPriority priority) {
       submitScheduledCallableCalled = true;
       return FutureUtils.immediateFailureFuture(new UnsupportedOperationException());
     }
@@ -343,17 +343,17 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     
     // NO OPERATIONS WITHOUT PRIORITY SHOULD BE CALLED
     @Override
-    public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
+    public Promise<?> submitScheduled(Runnable task, long delayInMs) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
+    public <T> Promise<T> submitScheduled(Runnable task, T result, long delayInMs) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
+    public <T> Promise<T> submitScheduled(Callable<T> task, long delayInMs) {
       throw new UnsupportedOperationException();
     }
 
@@ -378,17 +378,17 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     }
 
     @Override
-    public ListenableFuture<?> submit(Runnable task) {
+    public Promise<?> submit(Runnable task) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> ListenableFuture<T> submit(Runnable task, T result) {
+    public <T> Promise<T> submit(Runnable task, T result) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public <T> ListenableFuture<T> submit(Callable<T> task) {
+    public <T> Promise<T> submit(Callable<T> task) {
       throw new UnsupportedOperationException();
     }
   }

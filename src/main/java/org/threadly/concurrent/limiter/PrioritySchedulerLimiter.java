@@ -5,8 +5,8 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.PrioritySchedulerInterface;
 import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.concurrent.future.Promise;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
@@ -72,31 +72,28 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
+  public Promise<?> submit(Runnable task, TaskPriority priority) {
     return submitScheduled(task, null, 0, priority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result, 
-                                        TaskPriority priority) {
+  public <T> Promise<T> submit(Runnable task, T result, TaskPriority priority) {
     return submitScheduled(task, result, 0, priority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task, 
-                                        TaskPriority priority) {
+  public <T> Promise<T> submit(Callable<T> task, TaskPriority priority) {
     return submitScheduled(task, 0, priority);
   }
 
   @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
-                                             TaskPriority priority) {
+  public Promise<?> submitScheduled(Runnable task, long delayInMs, TaskPriority priority) {
     return submitScheduled(task, null, delayInMs, priority);
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs, 
-                                                 TaskPriority priority) {
+  public <T> Promise<T> submitScheduled(Runnable task, T result, long delayInMs, 
+                                        TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -110,8 +107,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   }
 
   @Override
-  public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs, 
-                                                 TaskPriority priority) {
+  public <T> Promise<T> submitScheduled(Callable<T> task, long delayInMs, TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     if (priority == null) {
       priority = scheduler.getDefaultPriority();
@@ -125,8 +121,7 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
   }
 
   @Override
-  public void schedule(Runnable task, long delayInMs, 
-                       TaskPriority priority) {
+  public void schedule(Runnable task, long delayInMs, TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     if (priority == null) {

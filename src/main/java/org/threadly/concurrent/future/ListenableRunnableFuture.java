@@ -14,6 +14,6 @@ import java.util.concurrent.RunnableFuture;
  * @since 1.0.0
  * @param <T> The result object type returned by this future
  */
-public interface ListenableRunnableFuture<T> extends ListenableFuture<T>, RunnableFuture<T> {
+public interface ListenableRunnableFuture<T> extends Promise<T>, RunnableFuture<T> {
   // nothing added here
 }

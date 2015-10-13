@@ -260,8 +260,8 @@ public class FutureUtils {
    * @param result Result to provide returned future once all futures complete
    * @return ListenableFuture which will be done once all futures provided are done
    */
-  public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
-                                                           final T result) {
+  public static <T> Promise<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
+                                                  final T result) {
     final EmptyFutureCollection efc = new EmptyFutureCollection(futures);
     final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<T>(efc);
     efc.addCallback(new FutureCallback<Object>() {
@@ -298,7 +298,7 @@ public class FutureUtils {
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
-  public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
+  public static <T> Promise<List<ListenableFuture<? extends T>>> 
       makeCompleteListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
     return new AllFutureCollection<T>(futures);
   }
@@ -319,7 +319,7 @@ public class FutureUtils {
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
-  public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
+  public static <T> Promise<List<ListenableFuture<? extends T>>> 
       makeSuccessListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
     return new SuccessFutureCollection<T>(futures);
   }
@@ -340,7 +340,7 @@ public class FutureUtils {
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
-  public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
+  public static <T> Promise<List<ListenableFuture<? extends T>>> 
       makeFailureListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
     return new FailureFutureCollection<T>(futures);
   }
@@ -366,7 +366,7 @@ public class FutureUtils {
    * @param ignoreFailedFutures {@code true} to ignore any future failures
    * @return A {@link ListenableFuture} which will provide a list of the results from the provided futures
    */
-  public static <T> ListenableFuture<List<T>> 
+  public static <T> Promise<List<T>> 
       makeResultListFuture(Iterable<? extends ListenableFuture<? extends T>> futures, 
                            final boolean ignoreFailedFutures) {
     if (futures == null) {
@@ -440,9 +440,9 @@ public class FutureUtils {
    * @return Already satisfied future
    */
   @SuppressWarnings("unchecked")
-  public static <T> ListenableFuture<T> immediateResultFuture(T result) {
+  public static <T> Promise<T> immediateResultFuture(T result) {
     if (result == null) {
-      return (ListenableFuture<T>)ImmediateResultListenableFuture.NULL_RESULT;
+      return (Promise<T>)ImmediateResultListenableFuture.NULL_RESULT;
     } else {
       return new ImmediateResultListenableFuture<T>(result);
     }
@@ -459,7 +459,7 @@ public class FutureUtils {
    * @param failure to provide as cause for ExecutionException thrown from .get() call
    * @return Already satisfied future
    */
-  public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
+  public static <T> Promise<T> immediateFailureFuture(Throwable failure) {
     return new ImmediateFailureListenableFuture<T>(failure);
   }
   

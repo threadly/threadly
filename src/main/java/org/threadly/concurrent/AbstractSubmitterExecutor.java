@@ -2,8 +2,8 @@ package org.threadly.concurrent;
 
 import java.util.concurrent.Callable;
 
-import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.concurrent.future.Promise;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -37,17 +37,17 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutorInte
   }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task) {
+  public Promise<?> submit(Runnable task) {
     return submit(task, null);
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+  public <T> Promise<T> submit(Runnable task, T result) {
     return submit(new RunnableCallableAdapter<T>(task, result));
   }
 
   @Override
-  public <T> ListenableFuture<T> submit(Callable<T> task) {
+  public <T> Promise<T> submit(Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
     ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);

@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
  * @param <T> The result object type returned by this future
  */
 abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
-                                                    implements ListenableFuture<T> {
+                                                    implements Promise<T> {
   @Override
   public boolean isDone() {
     return true;
