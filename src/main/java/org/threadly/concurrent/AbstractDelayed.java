@@ -7,9 +7,12 @@ import java.util.concurrent.TimeUnit;
  * the same for all implementations.  This abstract class provides a way to reduce code 
  * duplication.</p>
  * 
+ * @deprecated No direct replacement
+ * 
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
+@Deprecated
 public abstract class AbstractDelayed implements Delayed {
   @Override
   public int compareTo(Delayed o) {

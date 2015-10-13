@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
@@ -280,7 +281,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @author jent
    * @since 4.2.0
    */
-  protected static class DelayedTaskWrapper extends AbstractDelayed {
+  protected static class DelayedTaskWrapper implements Delayed {
     private final DelayedTask task;
     
     public DelayedTaskWrapper(DelayedTask task) {
@@ -291,6 +292,25 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     public long getDelay(TimeUnit unit) {
       return unit.convert(task.getRunTime() - Clock.accurateForwardProgressingMillis(), 
                           TimeUnit.MILLISECONDS);
+    }
+    
+    @Override
+    public int compareTo(Delayed o) {
+      if (this == o) {
+        return 0;
+      } else if (o instanceof DelayedTaskWrapper) {
+        return (int)(task.getRunTime() - ((DelayedTaskWrapper)o).task.getRunTime());
+      } else {
+        long thisDelay = this.getDelay(TimeUnit.MILLISECONDS);
+        long otherDelay = o.getDelay(TimeUnit.MILLISECONDS);
+        if (thisDelay == otherDelay) {
+          return 0;
+        } else if (thisDelay > otherDelay) {
+          return 1;
+        } else {
+          return -1;
+        }
+      }
     }
   }
   
