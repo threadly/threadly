@@ -60,9 +60,12 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * If a section of code wants a different default priority, or wanting to provide a specific 
    * default priority in for {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.
    * 
+   * @deprecated Manually wrap this implementation with {@link PrioritySchedulerDefaultPriorityWrapper}
+   * 
    * @param priority default priority for {@link PrioritySchedulerService} implementation
    * @return a {@link PrioritySchedulerService} with the default priority specified
    */
+  @Deprecated
   public PrioritySchedulerInterface makeWithDefaultPriority(TaskPriority priority) {
     if (priority == defaultPriority) {
       return this;
