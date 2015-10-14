@@ -57,6 +57,7 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void makeWithDefaultPriorityTest() {
     AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
     TaskPriority originalPriority = TaskPriority.Low;
@@ -487,6 +488,7 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void wrapperSamePriorityTest() {
     AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
     try {
@@ -504,6 +506,7 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void wrapperTest() {
     AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
     try {
