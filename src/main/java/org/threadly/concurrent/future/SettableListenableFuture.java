@@ -139,7 +139,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    */
   public boolean setResult(T result) {
     synchronized (resultLock) {
-      if (! setDone()) {
+      if (! setDone(null)) {
         return false;
       }
       
@@ -168,7 +168,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    */
   public boolean setFailure(Throwable failure) {
     synchronized (resultLock) {
-      if (! setDone()) {
+      if (! setDone(failure)) { // if failure is null, there is no point to have the stack twice
         return false;
       }
 
@@ -219,7 +219,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
           }
         }
         
-        setDone();
+        setDone(null);
       }
     }
     
@@ -258,10 +258,10 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   }
   
   // should be synchronized on resultLock before calling
-  private boolean setDone() {
+  private boolean setDone(Throwable cause) {
     if (done) {
       if (throwIfAlreadyComplete) {
-        throw new IllegalStateException("Future already done");
+        throw new IllegalStateException("Future already done", cause);
       }
       
       return false;
