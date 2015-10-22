@@ -1,5 +1,7 @@
 package org.threadly;
 
+import org.threadly.util.StringUtils;
+
 /**
  * Class which contains constants which impact how long the unit tests run.
  * 
@@ -7,6 +9,11 @@ package org.threadly;
  * constants from one class.  In all cases, lower numbers mean faster tests.
  */
 public class TestConstants {
+  /**
+   * Indicates to unit tests if they should allow extra time allowances for actions to complete.
+   */
+  public static final boolean SLOW_MACHINE;
+  
   /**
    * A profile for the amount of load and verification to be done.
    */
@@ -29,7 +36,7 @@ public class TestConstants {
    * Can easily adjust all constants in this file by changing the load 
    * profile.
    */
-  public static final TestLoad TEST_PROFILE = TestLoad.Normal;
+  public static final TestLoad TEST_PROFILE;
   
   /**
    * Represents the number of iterations, or possibly runnables 
@@ -57,11 +64,32 @@ public class TestConstants {
   public static final int ALLOWED_VARIANCE;
   
   static {
+    SLOW_MACHINE = StringUtils.nullToEmpty(System.getProperty("systemSpeed")).equalsIgnoreCase("slow");
+    System.out.println("Running tests with extra allowed delay: " + SLOW_MACHINE);
+    
     if(System.getProperty("os.name").toLowerCase().contains("win")) {
       ALLOWED_VARIANCE = 2;
     } else {
       ALLOWED_VARIANCE = 0;
     }
+    
+    String testProfileStr = System.getProperty("testProfile");
+    TestLoad testProfile = null;
+    if (testProfileStr != null) {
+      for (TestLoad tl : TestLoad.values()) {
+        if (tl.name().equalsIgnoreCase(testProfileStr)) {
+          testProfile = tl;
+          break;
+        }
+      }
+    }
+    if (testProfile == null) {
+      TEST_PROFILE = TestLoad.Normal;
+    } else {
+      TEST_PROFILE = testProfile;
+    }
+    System.out.println("Running tests with profile: " + TEST_PROFILE);
+    
     switch (TEST_PROFILE) {
       case Speedy:
         TEST_QTY = 2;

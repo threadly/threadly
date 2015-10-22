@@ -314,7 +314,7 @@ public class SettableListenableFutureTest {
         }
       }, DELAY_TIME);
       
-      assertTrue(slf.get(DELAY_TIME * 10, TimeUnit.MILLISECONDS) == testResult);
+      assertTrue(slf.get(DELAY_TIME + (SLOW_MACHINE ? 2000 : 1000), TimeUnit.MILLISECONDS) == testResult);
     } finally {
       scheduler.shutdownNow();
     }

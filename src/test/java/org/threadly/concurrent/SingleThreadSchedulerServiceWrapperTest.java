@@ -39,7 +39,7 @@ public class SingleThreadSchedulerServiceWrapperTest extends ScheduledExecutorSe
       long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
       assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 1000);
+      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + (SLOW_MACHINE ? 2000 : 1000));
     } finally {
       scheduler.shutdownNow();
     }

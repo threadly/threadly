@@ -13,11 +13,11 @@ public class TestConditionTest {
   public void blockTest() {
     DelayCondition dc = new DelayCondition(DELAY_TIME);
     long startTime = Clock.accurateForwardProgressingMillis();
-    dc.blockTillTrue((DELAY_TIME * 10) + 1000);
+    dc.blockTillTrue((DELAY_TIME * 10) + 5000);
     long endTime = Clock.accurateForwardProgressingMillis();
     
     assertTrue(endTime - startTime >= DELAY_TIME);
-    assertTrue(endTime - startTime <= DELAY_TIME + 2000);
+    assertTrue(endTime - startTime <= DELAY_TIME + (SLOW_MACHINE ? 5000 : 1000));
     
     startTime = Clock.accurateForwardProgressingMillis();
     dc.blockTillTrue(); // should return immediately

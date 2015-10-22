@@ -20,6 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
@@ -56,7 +57,7 @@ public abstract class ScheduledExecutorServiceTest {
   
   @Test
   public void isTerminatedShortTest() {
-    ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
+    final ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
     try {
       assertFalse(scheduler.isTerminated());
       
@@ -67,8 +68,12 @@ public abstract class ScheduledExecutorServiceTest {
       scheduler.shutdownNow();
   
       tr.blockTillFinished();
-      TestUtils.sleep(100);
-      assertTrue(scheduler.isTerminated());
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.isTerminated();
+        }
+      }.blockTillTrue(1000);
     } finally {
       scheduler.shutdownNow();
     }
@@ -76,7 +81,7 @@ public abstract class ScheduledExecutorServiceTest {
   
   @Test
   public void isTerminatedLongTest() {
-    ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
+    final ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
     try {
       final int sleepTime = 100;
       
@@ -89,8 +94,12 @@ public abstract class ScheduledExecutorServiceTest {
       scheduler.shutdownNow();
   
       tr.blockTillFinished();
-      TestUtils.sleep(100);
-      assertTrue(scheduler.isTerminated());
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.isTerminated();
+        }
+      }.blockTillTrue(1000);
     } finally {
       scheduler.shutdownNow();
     }
@@ -304,11 +313,11 @@ public abstract class ScheduledExecutorServiceTest {
       // verify runnable
       TestRunnable tr = it.next();
       
-      tr.blockTillFinished((DELAY_TIME * (CYCLE_COUNT - 1)) + 2000, CYCLE_COUNT);
+      tr.blockTillFinished((DELAY_TIME * (CYCLE_COUNT - 1)) + 5000, CYCLE_COUNT);
       long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
       assertTrue(executionDelay >= DELAY_TIME * (CYCLE_COUNT - 1));
       // should be very timely with a core pool size that matches runnable count
-      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + 2000);
+      assertTrue(executionDelay <= (DELAY_TIME * (CYCLE_COUNT - 1)) + (SLOW_MACHINE ? 5000 : 1000));
     }
   }
   
@@ -508,7 +517,7 @@ public abstract class ScheduledExecutorServiceTest {
       assertEquals(toInvoke.size(), result.size());
       
       assertTrue(endTime - startTime >= timeoutTime);
-      assertTrue(endTime - startTime < timeoutTime + 500);
+      assertTrue(endTime - startTime < timeoutTime + (SLOW_MACHINE ? 5000 : 500));
     } finally {
       scheduler.shutdownNow();
     }

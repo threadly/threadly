@@ -185,9 +185,9 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   
   @Test
   public void getTotalExecutionCountTest() {
-    int starvablePriorityCount = 1;
-    int lowPriorityCount = TEST_QTY;
-    int highPriorityCount = TEST_QTY * 2;
+    final int starvablePriorityCount = 1;
+    final int lowPriorityCount = TEST_QTY;
+    final int highPriorityCount = TEST_QTY * 2;
     final PrioritySchedulerStatisticTracker scheduler;
     scheduler = new PrioritySchedulerStatisticTracker(highPriorityCount + lowPriorityCount);
     try {
@@ -216,12 +216,12 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
       new TestCondition() {
         @Override
         public boolean get() {
-          return scheduler.getCurrentRunningCount() == 0;
+          return scheduler.getCurrentRunningCount() == 0 && 
+                 starvablePriorityCount + lowPriorityCount + highPriorityCount ==  
+                   scheduler.getTotalExecutionCount();
         }
       }.blockTillTrue();
       
-      assertEquals(starvablePriorityCount + lowPriorityCount + highPriorityCount, 
-                   scheduler.getTotalExecutionCount());
       assertEquals(starvablePriorityCount, scheduler.getTotalExecutionCount(TaskPriority.Starvable));
       assertEquals(lowPriorityCount, scheduler.getTotalExecutionCount(TaskPriority.Low));
       assertEquals(highPriorityCount, scheduler.getTotalExecutionCount(TaskPriority.High));

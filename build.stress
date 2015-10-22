@@ -1,0 +1,7 @@
+apply from: 'build.gradle'
+apply plugin: 'jacoco'
+
+test {
+  systemProperty 'systemSpeed', 'slow'
+  systemProperty 'testProfile', 'stress'
+}
