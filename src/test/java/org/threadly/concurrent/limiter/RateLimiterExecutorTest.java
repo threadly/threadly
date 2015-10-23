@@ -125,7 +125,7 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
       long endTime = Clock.accurateForwardProgressingMillis();
       double actualLimit = ranPermits.get() / ((endTime - startTime) / 1000);
       
-      assertEquals(rateLimit, actualLimit, 50);
+      assertEquals(rateLimit, actualLimit, SLOW_MACHINE ? 75 : 50);
     } finally {
       pse.shutdownNow();
     }
