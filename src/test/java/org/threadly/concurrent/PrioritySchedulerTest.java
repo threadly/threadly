@@ -115,7 +115,8 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       // all these runnables should be blocked
       List<TestRunnable> executedRunnables = executeTestRunnables(scheduler, 0);
       
-      scheduler.setPoolSize((TEST_QTY / 2) + 1); // this should allow the waiting test runnables to quickly execute
+      // this should allow the waiting test runnables to quickly execute
+      scheduler.setPoolSize(Math.max(2, TEST_QTY / 2));
       
       Iterator<TestRunnable> it = executedRunnables.iterator();
       while (it.hasNext()) {
@@ -197,15 +198,6 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       ListenableFuture<?> future = scheduler.submit(tr);
       
       tr.blockTillStarted();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          synchronized (scheduler.workerPool.workersLock) {
-            return scheduler.workerPool.waitingForWorker;
-          }
-        }
-      }.blockTillTrue();
-      assertEquals(1, scheduler.getCurrentPoolSize());
       
       // should interrupt
       assertTrue(future.cancel(true));
@@ -215,9 +207,7 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       new TestCondition() {
         @Override
         public boolean get() {
-          synchronized (scheduler.workerPool.workersLock) {
-            return ! scheduler.workerPool.waitingForWorker;
-          }
+          return scheduler.workerPool.idleWorker.get() != null;
         }
       }.blockTillTrue();
       // verify pool size is still correct
@@ -407,21 +397,19 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
     
     PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     try {
-      scheduler.addToScheduleQueue(scheduler.taskConsumer.highPriorityQueueSet, 
+      scheduler.addToScheduleQueue(scheduler.taskQueueManager.highPriorityQueueSet, 
                                    new OneTimeTaskWrapper(new TestRunnable(), null, 
                                                           Clock.lastKnownForwardProgressingMillis() + taskDelay));
 
-      assertEquals(1, scheduler.taskConsumer.highPriorityQueueSet.scheduleQueue.size());
-      assertEquals(0, scheduler.taskConsumer.lowPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.taskQueueManager.highPriorityQueueSet.scheduleQueue.size());
+      assertEquals(0, scheduler.taskQueueManager.lowPriorityQueueSet.scheduleQueue.size());
       
-      assertTrue(scheduler.taskConsumer.isRunning());
-      
-      scheduler.addToScheduleQueue(scheduler.taskConsumer.lowPriorityQueueSet, 
+      scheduler.addToScheduleQueue(scheduler.taskQueueManager.lowPriorityQueueSet, 
                                    new OneTimeTaskWrapper(new TestRunnable(), null, 
                                                           Clock.lastKnownForwardProgressingMillis() + taskDelay));
 
-      assertEquals(1, scheduler.taskConsumer.highPriorityQueueSet.scheduleQueue.size());
-      assertEquals(1, scheduler.taskConsumer.lowPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.taskQueueManager.highPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.taskQueueManager.lowPriorityQueueSet.scheduleQueue.size());
     } finally {
       factory.shutdown();
     }

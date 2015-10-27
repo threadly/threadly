@@ -17,6 +17,8 @@ public class Pair<L, R> {
   private static final short LEFT_PRIME = 13;
   private static final short RIGHT_PRIME = 31;
   
+  // TODO - in threadly 5.0.0 make an easy way to apply a functional to either left or right
+  
   /**
    * Collect all the non-null left references into a new List.  A simple implementation which 
    * iterates over a source collection and collects all non-null left references into a new list 

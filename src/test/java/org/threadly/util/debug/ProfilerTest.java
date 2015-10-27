@@ -146,13 +146,11 @@ public class ProfilerTest {
   public void startWitExecutorTest() {
     PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1);
     try {
-      assertEquals(0, e.getCurrentPoolSize());
       assertEquals(0, e.getCurrentRunningCount());
       
       profiler.start(e);
       
       assertTrue(profiler.isRunning());
-      assertEquals(1, e.getCurrentPoolSize());
       assertEquals(1, e.getCurrentRunningCount());
     } finally {
       profiler.stop();

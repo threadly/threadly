@@ -182,7 +182,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     try {
       while ((nextTask = getNextReadyTask()) != null && ! tickCanceled) {
         // call will remove task from queue, or reposition as necessary
-        if (nextTask.canExecute()) {
+        // we can cheat with the execution reference since task de-queue is single threaded
+        if (nextTask.canExecute(nextTask.getExecuteReference())) {
           try {
             nextTask.runTask();
           } catch (Throwable t) {
@@ -543,10 +544,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
         if (! canceled) {
           updateNextRunTime();
           // now that nextRunTime has been set, resort the queue
-          queueSet.reschedule(this);
-          
-          // only set executing to false AFTER rescheduled
-          executing = false;
+          queueSet.reschedule(this);  // this will set executing to false atomically with the resort
         }
       }
     }

@@ -316,6 +316,10 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         } else if (currentIndex == 0) {
           insertionIndex = 0;
         }
+        
+        // we can only update executing AFTER the reposition has finished
+        task.executing = false;
+        task.executeFlipCounter++;  // increment again to indicate execute state change
       }
       
       // need to unpark even if the task is not ready, otherwise we may get stuck on an infinite park
@@ -486,11 +490,21 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     }
     
     /**
-     * Called as the task is being removed from the queue to prepare for execution.
+     * Get an execution reference so that we can ensure thread safe access into 
+     * {@link #canExecute(short)}.
      * 
+     * @return Short to identify execution state 
+     */
+    public abstract short getExecuteReference();
+    
+    /**
+     * Called as the task is being removed from the queue to prepare for execution.  The reference 
+     * provided here should be captured from {@link #getExecuteReference()}.
+     * 
+     * @param executeReference Reference checked to ensure thread safe task execution
      * @return true if the task should be executed
      */
-    public abstract boolean canExecute();
+    public abstract boolean canExecute(short executeReference);
     
     /**
      * Call to see how long the task should be delayed before execution.  While this may return 
@@ -529,12 +543,14 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   protected static class OneTimeTaskWrapper extends TaskWrapper {
     protected final Queue<? extends TaskWrapper> taskQueue;
     protected final long runTime;
+    private volatile boolean executed; // optimization to avoid queue traversal on failure to remove
     
     protected OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task);
       
       this.taskQueue = taskQueue;
       this.runTime = runTime;
+      this.executed = false;
     }
     
     @Override
@@ -548,10 +564,21 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         ExceptionUtils.runRunnable(task);
       }
     }
+    
+    @Override
+    public short getExecuteReference() {
+      // we ignore the reference since one time tasks are deterministically removed from the queue
+      return 0;
+    }
 
     @Override
-    public boolean canExecute() {
-      return taskQueue.remove(this);
+    public boolean canExecute(short ignoredExecuteReference) {
+      if (! executed && taskQueue.remove(this)) {
+        executed = true;
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
@@ -563,8 +590,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    */
   protected abstract static class RecurringTaskWrapper extends TaskWrapper {
     protected final QueueSet queueSet;
-    protected volatile boolean executing;
+    protected volatile boolean executing; // TODO - should this become executeFlipCounter % 2 == 0
     protected long nextRunTime;
+    // executeFlipCounter is used to prevent multiple executions when consumed concurrently
+    // only changed when queue is locked...overflow is fine
+    private volatile short executeFlipCounter;
     
     protected RecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
       super(task);
@@ -572,6 +602,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       this.queueSet = queueSet;
       executing = false;
       this.nextRunTime = firstRunTime;
+      executeFlipCounter = 0;
     }
     
     /**
@@ -591,12 +622,20 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         return nextRunTime;
       }
     }
+    
+    @Override
+    public short getExecuteReference() {
+      return executeFlipCounter;
+    }
 
     @Override
-    public boolean canExecute() {
+    public boolean canExecute(short executeReference) {
+      if (executing || executeFlipCounter != executeReference) {
+        return false;
+      }
       synchronized (queueSet.scheduleQueue.getModificationLock()) {
-        if (queueSet.scheduleQueue.peekFirst() != this) {
-          // must be at front of queue to be able to be ran
+        if (executing || executeFlipCounter != executeReference) {
+          // this task is already running, or not ready to run, so ignore
           return false;
         } else {
           /* we have to reposition to the end atomically so that this task can be removed if 
@@ -606,6 +645,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
            */
           queueSet.scheduleQueue.reposition(0, queueSet.scheduleQueue.size());
           executing = true;
+          executeFlipCounter++;
           return true;
         }
       }
@@ -629,10 +669,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       if (! canceled) {
         updateNextRunTime();
         // now that nextRunTime has been set, resort the queue
-        queueSet.reschedule(this);
-        
-        // only set executing to false AFTER rescheduled
-        executing = false;
+        queueSet.reschedule(this);  // this will set executing to false atomically with the resort
       }
     }
   }

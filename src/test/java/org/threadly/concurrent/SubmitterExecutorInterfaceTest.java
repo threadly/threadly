@@ -43,7 +43,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   public void executeTest() {
     SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
     try {
-      SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
+      SubmitterExecutor executor = factory.makeSubmitterExecutor(2, false);
       
       List<TestRunnable> runnables = executeTestRunnables(executor, 0);
       

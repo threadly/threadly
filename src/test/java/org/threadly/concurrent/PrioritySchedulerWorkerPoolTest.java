@@ -5,17 +5,22 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.PriorityScheduler.QueueManager;
 import org.threadly.concurrent.PriorityScheduler.Worker;
 import org.threadly.concurrent.PriorityScheduler.WorkerPool;
 import org.threadly.test.concurrent.TestCondition;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerWorkerPoolTest {
+  protected QueueManager qm;
   protected WorkerPool workerPool;
   
   @Before
   public void setup() {
     workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1);
+    qm = new QueueManager(workerPool, 1000);
+    
+    workerPool.start(qm);
   }
   
   @After
@@ -79,7 +84,8 @@ public class PrioritySchedulerWorkerPoolTest {
     int corePoolSize = 5;
     workerPool.setPoolSize(corePoolSize);
     
-    assertEquals(0, workerPool.getCurrentPoolSize());
+    // there must always be at least one thread
+    assertEquals(1, workerPool.getCurrentPoolSize());
     
     workerPool.prestartAllThreads();
     
@@ -87,66 +93,30 @@ public class PrioritySchedulerWorkerPoolTest {
   }
   
   @Test
-  public void makeNewWorkerTest() {
-    assertEquals(0, workerPool.getCurrentPoolSize());
-    
-    Worker w = workerPool.makeNewWorker();
-    assertNotNull(w);
-    assertTrue(w.thread.isAlive());
-    assertEquals(1, workerPool.getCurrentPoolSize());
-  }
-  
-  @Test
-  public void getWorkerTest() {
-    synchronized (workerPool.workersLock) {
-      // add an idle worker
-      Worker testWorker = workerPool.makeNewWorker();
-      workerPool.workerDone(testWorker);
-      
-      assertEquals(1, workerPool.availableWorkers.size());
-      
-      try {
-        Worker returnedWorker = workerPool.getWorker();
-        assertTrue(returnedWorker == testWorker);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-    }
-  }
-  
-  @Test
-  public void killWorkerTest() {
-    final Worker w = workerPool.makeNewWorker();
-    workerPool.workerDone(w);
-    
-    workerPool.killWorker(w);
-    assertEquals(0, workerPool.getCurrentPoolSize());
-    assertTrue(workerPool.availableWorkers.isEmpty());
+  public void workerIdleTest() {
+    final Worker w = new Worker(workerPool, workerPool.threadFactory);
+    w.start();
+
+    // wait for worker to become idle
     new TestCondition() {
       @Override
       public boolean get() {
-        return ! w.thread.isAlive();
+        return workerPool.idleWorker.get() == w;
       }
     }.blockTillTrue();
-  }
-  
-  @Test
-  public void workerDoneTest() {
-    workerPool.workerDone(workerPool.makeNewWorker());
-    
-    assertEquals(1, workerPool.availableWorkers.size());
     
     workerPool.startShutdown();
     workerPool.finishShutdown();
-    final Worker w = workerPool.makeNewWorker();
-    workerPool.workerDone(w);
     
-    assertEquals(0, workerPool.availableWorkers.size());
+    // verify idle worker is gone
     new TestCondition() {
       @Override
       public boolean get() {
-        return ! w.thread.isAlive();
+        return workerPool.idleWorker.get() == null;
       }
     }.blockTillTrue();
+    
+    // should return immediately now that we are shut down
+    workerPool.workerIdle(new Worker(workerPool, workerPool.threadFactory));
   }
 }

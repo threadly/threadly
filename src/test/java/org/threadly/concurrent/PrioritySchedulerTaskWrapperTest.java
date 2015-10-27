@@ -61,7 +61,12 @@ public class PrioritySchedulerTaskWrapperTest {
     }
 
     @Override
-    public boolean canExecute() {
+    public short getExecuteReference() {
+      return 0;
+    }
+
+    @Override
+    public boolean canExecute(short executionReference) {
       canExecuteCalled = true;
       return true;
     }

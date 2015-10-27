@@ -735,40 +735,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     }
     
     @Override
-    public Worker makeNewWorker() {
-      Worker w = new StatisticWorker(this, threadFactory, statsManager);
-      currentPoolSize++;
-      w.start();
-      
-      // will be added to available workers when done with first task
-      return w;
-    }
-  }
-  
-  /**
-   * <p>An extending class of {@link Worker} so that we can track how delayed a task was till it 
-   * was provided an idle worker to execute on.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.0.0
-   */
-  protected static class StatisticWorker extends Worker {
-    private final StatsManager statsManager;
-    
-    protected StatisticWorker(WorkerPool workerPool, 
-                              ThreadFactory threadFactory, 
-                              StatsManager statsManager) {
-      super(workerPool, threadFactory);
-      
-      this.statsManager = statsManager;
-    }
-    
-    @Override
-    public void nextTask(TaskWrapper task) {
+    public TaskWrapper workerIdle(Worker worker) {
+      TaskWrapper result = super.workerIdle(worker);
+
       // may not be a wrapper for internal tasks like shutdown
-      if (task.task instanceof Wrapper) {
-        long taskDelay = task.getRunTime() - Clock.lastKnownForwardProgressingMillis();
-        Wrapper statWrapper = (Wrapper)task.task;
+      if (result != null && result.task instanceof Wrapper) {
+        long taskDelay = result.getRunTime() - Clock.lastKnownForwardProgressingMillis();
+        Wrapper statWrapper = (Wrapper)result.task;
         ConcurrentArrayList<Long> priorityStats;
         switch (statWrapper.priority) {
           case High:
@@ -790,7 +763,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
         }
       }
       
-      super.nextTask(task);
+      return result;
     }
   }
   

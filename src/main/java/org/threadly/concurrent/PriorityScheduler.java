@@ -1,21 +1,19 @@
 package org.threadly.concurrent;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.util.AbstractService;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
-import org.threadly.util.ExceptionUtils;
 
 /**
  * <p>Executor to run tasks, schedule tasks.  Unlike 
@@ -47,7 +45,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   
   protected final WorkerPool workerPool;
-  protected final QueueManager taskConsumer;
+  protected final QueueManager taskQueueManager;
 
   /**
    * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
@@ -134,9 +132,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     super(defaultPriority);
     
     this.workerPool = workerPool;
-    taskConsumer = new QueueManager(workerPool, 
-                                    "task consumer for " + this.getClass().getSimpleName(), 
-                                    maxWaitForLowPriorityInMs);
+    taskQueueManager = new QueueManager(workerPool, maxWaitForLowPriorityInMs);
+    
+    workerPool.start(taskQueueManager);
   }
   
   /**
@@ -191,12 +189,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   
   @Override
   public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-    taskConsumer.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
+    taskQueueManager.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
   }
   
   @Override
   public long getMaxWaitForLowPriority() {
-    return taskConsumer.getMaxWaitForLowPriority();
+    return taskQueueManager.getMaxWaitForLowPriority();
   }
   
   /**
@@ -224,8 +222,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public void shutdown() {
     if (workerPool.startShutdown()) {
-      ShutdownRunnable sr = new ShutdownRunnable(workerPool, taskConsumer);
-      QueueSet queueSet = taskConsumer.highPriorityQueueSet;
+      ShutdownRunnable sr = new ShutdownRunnable(workerPool);
+      QueueSet queueSet = taskQueueManager.highPriorityQueueSet;
       queueSet.addExecute(new OneTimeTaskWrapper(sr, queueSet.executeQueue, 
                                                  Clock.lastKnownForwardProgressingMillis()));
     }
@@ -243,7 +241,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public List<Runnable> shutdownNow() {
     workerPool.startShutdown();
-    List<Runnable> awaitingTasks = taskConsumer.stopAndClearQueue();
+    List<Runnable> awaitingTasks = taskQueueManager.clearQueue();
     workerPool.finishShutdown();
     
     return awaitingTasks;
@@ -296,7 +294,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   @Override
   public boolean remove(Runnable task) {
-    return taskConsumer.remove(task);
+    return taskQueueManager.remove(task);
   }
 
   /**
@@ -315,12 +313,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   @Override
   public boolean remove(Callable<?> task) {
-    return taskConsumer.remove(task);
+    return taskQueueManager.remove(task);
   }
 
   @Override
   protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
-    QueueSet queueSet = taskConsumer.getQueueSet(priority);
+    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
     OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
       addToExecuteQueue(queueSet, 
@@ -344,7 +342,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       priority = defaultPriority;
     }
 
-    QueueSet queueSet = taskConsumer.getQueueSet(priority);
+    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
     addToScheduleQueue(queueSet, 
                        new RecurringDelayTaskWrapper(task, queueSet, 
                                                      Clock.accurateForwardProgressingMillis() + initialDelay, 
@@ -361,7 +359,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       priority = defaultPriority;
     }
 
-    QueueSet queueSet = taskConsumer.getQueueSet(priority);
+    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
     addToScheduleQueue(queueSet, 
                        new RecurringRateTaskWrapper(task, queueSet, 
                                                     Clock.accurateForwardProgressingMillis() + initialDelay, 
@@ -408,7 +406,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
 
   @Override
   protected QueueSet getQueueSet(TaskPriority priority) {
-    return taskConsumer.getQueueSet(priority);
+    return taskQueueManager.getQueueSet(priority);
   }
   
   /**
@@ -422,38 +420,19 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * @author jent - Mike Jensen
    * @since 3.4.0
    */
-  protected static class QueueManager extends AbstractService 
-                                      implements QueueSetListener, Runnable {
-    protected final WorkerPool workerPool;
+  protected static class QueueManager {
     protected final QueueSet highPriorityQueueSet;
     protected final QueueSet lowPriorityQueueSet;
     protected final QueueSet starvablePriorityQueueSet;
-    protected volatile Thread runningThread;
     private volatile long maxWaitForLowPriorityInMs;
     
-    public QueueManager(WorkerPool workerPool, String threadName, 
-                        long maxWaitForLowPriorityInMs) {
-      this.workerPool = workerPool;
-      runningThread = workerPool.threadFactory.newThread(this);
-      if (runningThread.isAlive()) {
-        runningThread = null;
-        throw new IllegalThreadStateException();
-      }
-      runningThread.setDaemon(true);
-      runningThread.setName(threadName);
-      this.highPriorityQueueSet = new QueueSet(this);
-      this.lowPriorityQueueSet = new QueueSet(this);
-      this.starvablePriorityQueueSet = new QueueSet(this);
+    public QueueManager(QueueSetListener queueSetListener, long maxWaitForLowPriorityInMs) {
+      this.highPriorityQueueSet = new QueueSet(queueSetListener);
+      this.lowPriorityQueueSet = new QueueSet(queueSetListener);
+      this.starvablePriorityQueueSet = new QueueSet(queueSetListener);
       
       // call to verify and set values
       setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
-      
-      start();
-    }
-
-    @Override
-    public void handleQueueUpdate() {
-      LockSupport.unpark(runningThread);
     }
     
     /**
@@ -480,9 +459,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * 
      * @return List of runnables that were waiting in queue, in an approximate order of execution
      */
-    public List<Runnable> stopAndClearQueue() {
-      stopIfRunning();
-
+    public List<Runnable> clearQueue() {
       List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(highPriorityQueueSet.queueSize() + 
                                                                    lowPriorityQueueSet.queueSize() + 
                                                                    starvablePriorityQueueSet.queueSize());
@@ -492,104 +469,33 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       return ContainerHelper.getContainedRunnables(wrapperList);
     }
-
-    @Override
-    protected void startupService() {
-      runningThread.start();
-    }
-
-    @Override
-    protected void shutdownService() {
-      Thread runningThread = this.runningThread;
-      this.runningThread = null;
-      runningThread.interrupt();
-    }
-
-    @Override
-    public void run() {
-      Worker worker = null;
-      while (runningThread != null) {
-        try {
-          worker = workerPool.getWorker();
-          if (worker != null) {
-            TaskWrapper nextTask = getNextReadyTask();
-            if (nextTask != null) {
-              worker.nextTask(nextTask);
-            } else {
-              workerPool.workerDone(worker);
-            }
-          }
-        } catch (InterruptedException e) {
-          if (worker != null) {
-            workerPool.workerDone(worker);
-          }
-          stopIfRunning();
-          Thread.currentThread().interrupt();
-        } catch (Throwable t) {
-          if (worker != null) {
-            // we kill the worker here because this condition is not expected
-            workerPool.killWorker(worker);
-          }
-          ExceptionUtils.handleException(t);
-        } finally {
-          worker = null;
-        }
-      }
-    }
     
     /**
-     * Gets the next task that is ready to execute immediately.  This call gets the next high and 
-     * low priority task, compares them and determines which one should be executed next.
+     * Gets the next task currently queued for execution.  This task may be ready to execute, or 
+     * just queued.  If a queue update comes in, this must be re-invoked to see what task is now 
+     * next.  If there are no tasks ready to be executed this will simply return {@code null}.
      * 
-     * If there are no tasks ready to be executed this will block until one becomes available 
-     * and ready to execute.
-     * 
-     * @return Task to be executed next, or {@code null} if shutdown while waiting for task
-     * @throws InterruptedException Thrown if calling thread is interrupted while waiting for a task
+     * @return Task to be executed next, or {@code null} if no tasks at all are queued
      */
-    protected TaskWrapper getNextReadyTask() throws InterruptedException {
-      while (runningThread != null) {  // loop till we have something to return
-        TaskWrapper nextTask = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
-                                           maxWaitForLowPriorityInMs);
-        if (nextTask == null) {
+    public TaskWrapper getNextTask() {
+      TaskWrapper nextTask = AbstractPriorityScheduler.getNextTask(highPriorityQueueSet, 
+                                                                   lowPriorityQueueSet, 
+                                                                   maxWaitForLowPriorityInMs);
+      if (nextTask == null) {
+        return starvablePriorityQueueSet.getNextTask();
+      } else {
+        long nextTaskDelay = nextTask.getScheduleDelay();
+        if (nextTaskDelay > 0) {
           TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
-          if (nextStarvableTask == null) {
-            LockSupport.park();
+          if (nextStarvableTask != null && nextTaskDelay > nextStarvableTask.getScheduleDelay()) {
+            return nextStarvableTask;
           } else {
-            long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
-            if (nextStarvableTaskDelay > 0) {
-              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextStarvableTaskDelay);
-            } else if (nextStarvableTask.canExecute()) {
-              return nextStarvableTask;
-            }
-          }
-        } else {
-          long nextTaskDelay = nextTask.getScheduleDelay();
-          if (nextTaskDelay > 0) {
-            TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
-            if (nextStarvableTask == null) {
-              LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
-            } else {
-              long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
-              if (nextStarvableTaskDelay > 0) {
-                LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * 
-                                        (nextTaskDelay > nextStarvableTaskDelay ? 
-                                           nextStarvableTaskDelay : nextTaskDelay));
-              } else if (nextStarvableTask.canExecute()) {
-                return nextStarvableTask;
-              }
-            }
-          } else if (nextTask.canExecute()) {
             return nextTask;
           }
-        }
-        
-        if (Thread.currentThread().isInterrupted()) {
-          throw new InterruptedException();
+        } else {
+          return nextTask;
         }
       }
-      
-      return null;
     }
     
     /**
@@ -658,16 +564,17 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * @author jent - Mike Jensen
    * @since 3.5.0
    */
-  protected static class WorkerPool {
+  protected static class WorkerPool implements QueueSetListener {
     protected final ThreadFactory threadFactory;
     protected final Object poolSizeChangeLock;
-    protected final Object workersLock;
-    protected final Deque<Worker> availableWorkers;        // is locked around workersLock
-    protected boolean waitingForWorker;  // is locked around workersLock
-    protected int currentPoolSize;  // is locked around workersLock
+    protected final AtomicInteger idleWorkerCount;
+    protected final AtomicReference<Worker> idleWorker;
+    protected final AtomicInteger currentPoolSize;
     private final AtomicBoolean shutdownStarted;
     private volatile boolean shutdownFinishing; // once true, never goes to false
     private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
+    private volatile boolean workerTimedPark;
+    private QueueManager queueManager;  // set before any threads started
     
     protected WorkerPool(ThreadFactory threadFactory, int poolSize) {
       ArgumentVerifier.assertGreaterThanZero(poolSize, "poolSize");
@@ -676,15 +583,29 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       }
       
       poolSizeChangeLock = new Object();
-      workersLock = new Object();
-      availableWorkers = new ArrayDeque<Worker>(poolSize);
-      waitingForWorker = false;
-      currentPoolSize = 0;
+      idleWorkerCount = new AtomicInteger(0);
+      idleWorker = new AtomicReference<Worker>(null);
+      currentPoolSize = new AtomicInteger(0);
       
       this.threadFactory = threadFactory;
       this.maxPoolSize = poolSize;
+      this.workerTimedPark = false;
       shutdownStarted = new AtomicBoolean(false);
       shutdownFinishing = false;
+    }
+    
+    /**
+     * Starts the pool, constructing the first thread to start consuming tasks (and starting other 
+     * threads as appropriate).  This should only be called once, and can NOT be called concurrently.
+     * 
+     * @param queueManager QueueManager to source tasks for execution from
+     */
+    public void start(QueueManager queueManager) {
+      if (currentPoolSize.get() != 0) {
+        throw new IllegalStateException();
+      }
+      
+      this.queueManager = queueManager;
     }
 
     /**
@@ -721,17 +642,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      */
     public void finishShutdown() {
       shutdownFinishing = true;
-      
-      synchronized (workersLock) {
-        Iterator<Worker> it = availableWorkers.iterator();
-        while (it.hasNext()) {
-          Worker w = it.next();
-          it.remove();
-          killWorker(w);
-        }
-        
-        // we notify all in case some are waiting for shutdown
-        workersLock.notifyAll();
+
+      /* we only need to wake up the head worker, it will shut itself down.  As the worker 
+       * finishes it will wake up additional idle workers until all idle workers are dead.
+       */
+      Worker w = idleWorker.get();
+      if (w != null) {
+        LockSupport.unpark(w.thread);
       }
     }
 
@@ -762,20 +679,18 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         boolean poolSizeIncrease = newPoolSize > this.maxPoolSize;
         
         this.maxPoolSize = newPoolSize;
-  
-        synchronized (workersLock) {
-          if (poolSizeIncrease) {
-            // now that pool size increased, start any workers we can for the waiting tasks
-            if (waitingForWorker) {
-              availableWorkers.add(makeNewWorker());
-              
-              workersLock.notifyAll();
-            }
-          } else {
-            while (currentPoolSize > newPoolSize && ! availableWorkers.isEmpty()) {
-              Worker w = availableWorkers.removeLast();
-              killWorker(w);
-            }
+        
+        if (poolSizeIncrease) {
+          // now that pool size increased, start a worker so workers we can for the waiting tasks
+          handleQueueUpdate();
+        } else {
+          /* we only need to wake up the head worker, it will shut itself down.  As the worker 
+           * finishes it will wake up additional idle workers, and shut down as needed until 
+           * the desired pool size is reached, or until all idle workers are gone.
+           */
+          Worker w = idleWorker.get();
+          if (w != null) {
+            LockSupport.unpark(w.thread);
           }
         }
       }
@@ -787,9 +702,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return current worker count
      */
     public int getCurrentPoolSize() {
-      synchronized (workersLock) {
-        return currentPoolSize;
-      }
+      return currentPoolSize.get();
     }
 
     /**
@@ -798,12 +711,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return current number of workers executing tasks
      */
     public int getCurrentRunningCount() {
-      synchronized (workersLock) {
-        int workerOutQty = currentPoolSize - availableWorkers.size();
-        if (waitingForWorker || currentPoolSize == 0) {
-          return workerOutQty;
-        } else {
-          return workerOutQty - 1;
+      while (true) {
+        int poolSize = currentPoolSize.get();
+        int result = poolSize - idleWorkerCount.get();
+        if (poolSize == currentPoolSize.get()) {
+          return result;
         }
       }
     }
@@ -812,101 +724,189 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * Ensures all threads have been started.  This will make new idle workers to accept tasks.
      */
     public void prestartAllThreads() {
-      synchronized (workersLock) {
-        boolean startedThreads = false;
-        while (currentPoolSize < maxPoolSize) {
-          availableWorkers.addFirst(makeNewWorker());
-          startedThreads = true;
-        }
-        
-        if (startedThreads) {
-          workersLock.notifyAll();
+      int casPoolSize;
+      while ((casPoolSize = currentPoolSize.get()) < maxPoolSize) {
+        if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize + 1)) {
+          makeNewWorker();
         }
       }
     }
     
     /**
-     * Call to get (or create, if able to) an idle worker.  If there are no idle workers available 
-     * then this call will block until one does become available.
-     * 
-     * @return A worker ready to accept a task or {@code null} if the pool was shutdown
-     * @throws InterruptedException Thrown if this thread is interrupted while waiting to acquire a worker
+     * This call creates and starts a new worker.  It does not modify {@link currentPoolSize} so 
+     * that MUST be updated in a thread safe way before this is invoked.  As soon as the worker 
+     * starts it will attempt to start taking tasks, no further action is needed.
      */
-    public Worker getWorker() throws InterruptedException {
-      synchronized (workersLock) {
-        while (availableWorkers.isEmpty() && ! shutdownFinishing) {
-          if (currentPoolSize < maxPoolSize) {
-            return makeNewWorker();
+    protected void makeNewWorker() {
+      Worker w = new Worker(this, threadFactory);
+      w.start();
+    }
+    
+    /**
+     * Adds a worker to the head of the idle worker chain.
+     * 
+     * @param worker Worker that is ready to become idle
+     */
+    protected void addWorkerToIdleChain(Worker worker) {
+      idleWorkerCount.incrementAndGet();
+      while (true) {
+        Worker casWorker = idleWorker.get();
+        // we can freely set this value until we get into the idle linked queue
+        worker.nextIdleWorker = casWorker;
+        if (idleWorker.compareAndSet(casWorker, worker)) {
+          break;
+        }
+      }
+    }
+
+    /**
+     * Invoked when a worker becomes idle.  This will provide another task for that worker, or 
+     * block until a task is either ready, or the worker should be shutdown (either because pool 
+     * was shut down, or max pool size changed).
+     * 
+     * @param worker Worker which is now idle and ready for a task
+     * @return Task that is ready for immediate execution
+     */
+    public TaskWrapper workerIdle(Worker worker) {
+      boolean interruptedChecked = false;
+      boolean queued = false;
+      try {
+        idle: while (true) {
+          int casPoolSize;
+          if (shutdownFinishing) {
+            currentPoolSize.decrementAndGet();
+            worker.stopIfRunning();
+            return null;
+          } else if ((casPoolSize = currentPoolSize.get()) > maxPoolSize) {
+            if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize - 1)) {
+              worker.stopIfRunning();
+              return null;
+            }
           } else {
-            waitingForWorker = true;
-            try {
-              workersLock.wait();
-            } finally {
-              waitingForWorker = false;
+            // ready to poll task, we loop here to avoid pool state recheck logic unless we have to block
+            while (true) {
+              TaskWrapper nextTask = queueManager.getNextTask();
+              if (nextTask == null) {
+                if (queued) {
+                  // we can only park after we have queued, then checked again for a result
+                  LockSupport.park();
+                  continue idle;
+                } else {
+                  addWorkerToIdleChain(worker);
+                  queued = true;
+                }
+              } else {
+                /* TODO - right now this has a a deficiency where a recurring period task can cut in 
+                 * the queue line.  The condition would be as follows:
+                 * 
+                 * * Thread 1 gets task to run...task is behind execution schedule, likely due to large queue
+                 * * Thread 2 gets same task
+                 * * Thread 1 gets reference, executes, task execution completes
+                 * * Thread 2 now gets the reference, and execution check and time check pass fine
+                 * * End result is that task has executed twice (on expected schedule), the second 
+                 *     execution was unfair since it was done without respects to queue order and 
+                 *     other tasks which are also likely behind execution schedule in this example
+                 *     
+                 * This should be very rare, but is possible.  The only way I see to solve this right 
+                 * now is to introduce locking.
+                 */
+                // must get executeReference before time is checked
+                short executeReference = nextTask.getExecuteReference();
+                long taskDelay = nextTask.getScheduleDelay();
+                if (taskDelay > 0) {
+                  if (taskDelay == Long.MAX_VALUE) {
+                    // TODO - this will cause a spin if there is only one recurring task
+                    // don't sleep forever, this task is just starting to execute, so spin
+                    Thread.yield();
+                  }
+                  if (queued) {
+                    if (! workerTimedPark) {
+                      // we can only park after we have queued, then checked again for a result
+                      workerTimedPark = true;
+                      LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
+                      workerTimedPark = false;
+                      continue idle;
+                    } else {
+                      // there is another worker already doing a timed park, so we can wait till woken up
+                      LockSupport.park();
+                      continue idle;
+                    }
+                  } else {
+                    addWorkerToIdleChain(worker);
+                    queued = true;
+                  }
+                } else if (nextTask.canExecute(executeReference)) {
+                  return nextTask;
+                }
+              }
+              // reset interrupted status if we may block and have not checked
+              if (queued && ! interruptedChecked) {
+                interruptedChecked = true;
+                if (Thread.interrupted()) {
+                  // verify we were not interrupted due to pool shutdown
+                  continue idle;
+                }
+              }
+            } // end pollTask loop
+          }
+        } // end idle loop
+      } finally {
+        // if queued, we must now remove ourselves, since we are either shutdown, or have a task to run
+        if (queued) {
+          idleWorkerCount.decrementAndGet();
+          
+          while (true) {
+            Worker holdingWorker = idleWorker.get();
+            if (holdingWorker == worker) {
+              if (idleWorker.compareAndSet(worker, worker.nextIdleWorker)) {
+                break;
+              } else {
+                continue;
+              }
+            }
+            while (holdingWorker != null && holdingWorker.nextIdleWorker != worker) {
+              holdingWorker = holdingWorker.nextIdleWorker;
+            }
+            
+            if (holdingWorker != null) {
+              // now remove this worker from the chain
+              holdingWorker.nextIdleWorker = worker.nextIdleWorker;
+              break;
             }
           }
+          // now out of the queue, lets clean up our reference
+          worker.nextIdleWorker = null;
         }
         
-        return availableWorkers.poll();
+        // wake up next worker so he can check if tasks are ready to consume
+        handleQueueUpdate();
+        
+        if (! interruptedChecked) {
+          // reset interrupted status
+          Thread.interrupted();
+        }
       }
     }
-    
-    /**
-     * This function REQUIRES that workersLock is synchronized before calling.  This call creates 
-     * a new worker, starts it, but does NOT add it as an available worker (so you can immediately 
-     * use it).  If you want this worker to be available for other tasks, it must be added to the 
-     * {@code availableWorkers} queue.
-     * 
-     * @return Newly created worker, started and ready to accept work
-     */
-    protected Worker makeNewWorker() {
-      Worker w = new Worker(this, threadFactory);
-      currentPoolSize++;
-      w.start();
-      
-      // will be added to available workers when done with first task
-      return w;
-    }
-    
-    /**
-     * Shuts down the worker and ensures this now dead worker wont be used.
-     * 
-     * @param w worker to shutdown
-     */
-    protected void killWorker(Worker w) {
-      // IMPORTANT** if this lock is removed, it is important to read the comment bellow
-      synchronized (workersLock) {
-        /* this will throw an exception if the worker has already stopped, 
-         * we want to ensure the pool size is not decremented more than once for a given worker.
-         * 
-         * We are able to stop first, because we are holding the workers lock.  In the future if we 
-         * try to reduce locking around here, we need to ensure that the worker is removed from the 
-         * available workers BEFORE stopping.
-         */
-        w.stopIfRunning();
-        currentPoolSize--;
-        // it may not always be here, but it sometimes can (for example when a worker is interrupted)
-        availableWorkers.remove(w);
-      }
-    }
-    
-    /**
-     * Called by the worker after it completes a task.  This is so that we can run any after task 
-     * cleanup, and make sure that the worker is now available for future tasks.
-     * 
-     * @param worker worker that is now idle and ready for more tasks
-     */
-    protected void workerDone(Worker worker) {
-      synchronized (workersLock) {
-        if (shutdownFinishing || currentPoolSize > maxPoolSize) {
-          killWorker(worker);
-        } else {
-          // always add to the front so older workers are at the back
-          availableWorkers.addFirst(worker);
-          
-          if (waitingForWorker) {
-            workersLock.notify();
+
+    @Override
+    public void handleQueueUpdate() {
+      while (true) {
+        Worker nextIdleWorker = idleWorker.get();
+        if (nextIdleWorker == null) {
+          int casSize = currentPoolSize.get();
+          if (casSize < maxPoolSize && ! shutdownFinishing) {
+            if (currentPoolSize.compareAndSet(casSize, casSize + 1)) {
+              // start a new worker for the next task
+              makeNewWorker();
+              break;
+            } // else loop and retry logic
+          } else {
+            // pool has all threads started, or is shutting down
+            break;
           }
+        } else {
+          LockSupport.unpark(nextIdleWorker.thread);
+          break;
         }
       }
     }
@@ -919,11 +919,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  // if functions are added here, we need to add them to the overriding wrapper in StrictPriorityScheduler
   protected static class Worker extends AbstractService implements Runnable {
     protected final WorkerPool workerPool;
     protected final Thread thread;
-    protected volatile TaskWrapper nextTask;
+    protected volatile Worker nextIdleWorker;
     
     protected Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;
@@ -931,7 +930,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       if (thread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      nextTask = null;
+      nextIdleWorker = null;
     }
 
     @Override
@@ -944,70 +943,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       LockSupport.unpark(thread);
     }
     
-    /**
-     * Supply the worker with the next task to run.  It is expected that the worker has been 
-     * started before it is provided any tasks.  It must also be complete with it's previous 
-     * task before it can be provided another one to run (there is no queuing within the workers).
-     * 
-     * @param task Task to run on this workers thread
-     */
-    public void nextTask(TaskWrapper task) {
-      nextTask = task;
-
-      LockSupport.unpark(thread);
-    }
-    
-    /**
-     * Used internally by the worker to block it's internal thread until another task is provided 
-     * to it.
-     */
-    private void blockTillNextTask() {
-      boolean checkedInterrupted = false;
-      while (nextTask == null && isRunning()) {
-        LockSupport.park(this);
-
-        checkInterrupted();
-        checkedInterrupted = true;
-      }
-      
-      if (! checkedInterrupted) {
-        // must verify thread is not in interrupted status before it runs a task
-        checkInterrupted();
-      }
-    }
-    
-    /**
-     * Checks the interrupted status of the workers thread.  If it is interrupted the status will 
-     * be cleared (unless the pool is shutting down, in which case we will gracefully shutdown the 
-     * worker).
-     */
-    private void checkInterrupted() {
-      if (Thread.interrupted()) { // check and clear interrupt
-        if (workerPool.isShutdownFinished()) {
-          /* If provided a new task, by the time killWorker returns we will still run that task 
-           * before letting the thread return.
-           */
-          workerPool.killWorker(this);
-        }
-      }
-    }
-    
     @Override
     public void run() {
-      // will break in finally block if shutdown
-      while (true) {
-        blockTillNextTask();
-        
-        if (nextTask != null) {
+      while (isRunning()) {
+        TaskWrapper nextTask = workerPool.workerIdle(this);
+        if (nextTask != null) {  // may be null if we are shutting down
           nextTask.runTask();
-          nextTask = null;
-        }
-        // once done handling task
-        if (isRunning()) {
-          // only check if still running, otherwise worker has already been killed
-          workerPool.workerDone(this);
-        } else {
-          break;
         }
       }
     }
@@ -1024,16 +965,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   protected static class ShutdownRunnable implements InternalRunnable {
     private final WorkerPool wm;
-    private final QueueManager taskConsumer;
     
-    protected ShutdownRunnable(WorkerPool wm, QueueManager taskConsumer) {
+    protected ShutdownRunnable(WorkerPool wm) {
       this.wm = wm;
-      this.taskConsumer = taskConsumer;
     }
     
     @Override
     public void run() {
-      taskConsumer.stopAndClearQueue();
       wm.finishShutdown();
     }
   }
