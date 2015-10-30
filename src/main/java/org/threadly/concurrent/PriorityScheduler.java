@@ -567,6 +567,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   protected static class WorkerPool implements QueueSetListener {
     protected final ThreadFactory threadFactory;
     protected final Object poolSizeChangeLock;
+    protected final Object idleWorkerDequeLock;
     protected final AtomicInteger idleWorkerCount;
     protected final AtomicReference<Worker> idleWorker;
     protected final AtomicInteger currentPoolSize;
@@ -583,6 +584,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       }
       
       poolSizeChangeLock = new Object();
+      idleWorkerDequeLock = new Object();
       idleWorkerCount = new AtomicInteger(0);
       idleWorker = new AtomicReference<Worker>(null);
       currentPoolSize = new AtomicInteger(0);
@@ -749,6 +751,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      */
     protected void addWorkerToIdleChain(Worker worker) {
       idleWorkerCount.incrementAndGet();
+      
       while (true) {
         Worker casWorker = idleWorker.get();
         // we can freely set this value until we get into the idle linked queue
@@ -756,6 +759,45 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         if (idleWorker.compareAndSet(casWorker, worker)) {
           break;
         }
+      }
+    }
+    
+    /**
+     * The counter part to {@link #addWorkerToIdleChain(Worker)}.  This function has no safety 
+     * checks.  The worker provided MUST already be queued in the chain or problems will occur.
+     * 
+     * @param worker Worker reference to remove from the chain (can not be {@code null})
+     */
+    protected void removeWorkerFromIdleChain(Worker worker) {
+      idleWorkerCount.decrementAndGet();
+      
+      /* We must lock here to avoid thread contention when removing from the chain.  This is 
+       * the one place where we set the reference to a workers "nextIdleWorker" from a thread 
+       * outside of the workers thread.  If we don't synchronize here, we may end up 
+       * having workers disappear from the chain when the reference is nulled out.
+       */
+      synchronized (idleWorkerDequeLock) {
+        Worker holdingWorker = idleWorker.get();
+        if (holdingWorker == worker) {
+          if (idleWorker.compareAndSet(worker, worker.nextIdleWorker)) {
+            return;
+          } else {
+            /* because we can only queue in parallel, we know that the conflict was a newly queued 
+             * worker.  In addition since we know that queued workers are added at the start, all 
+             * that should be necessary is updating our holding worker reference
+             */
+            holdingWorker = idleWorker.get();
+          }
+        }
+        
+        // no need for null checks due to locking, we assume the worker is in the chain
+        while (holdingWorker.nextIdleWorker != worker) {
+          holdingWorker = holdingWorker.nextIdleWorker;
+        }
+        // now remove this worker from the chain
+        holdingWorker.nextIdleWorker = worker.nextIdleWorker;
+        // now out of the queue, lets clean up our reference
+        worker.nextIdleWorker = null;
       }
     }
 
@@ -851,31 +893,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
           }
         } // end idle loop
       } finally {
-        // if queued, we must now remove ourselves, since we are either shutdown, or have a task to run
+        // if queued, we must now remove ourselves, since worker is about to either shutdown or become active
         if (queued) {
-          idleWorkerCount.decrementAndGet();
-          
-          while (true) {
-            Worker holdingWorker = idleWorker.get();
-            if (holdingWorker == worker) {
-              if (idleWorker.compareAndSet(worker, worker.nextIdleWorker)) {
-                break;
-              } else {
-                continue;
-              }
-            }
-            while (holdingWorker != null && holdingWorker.nextIdleWorker != worker) {
-              holdingWorker = holdingWorker.nextIdleWorker;
-            }
-            
-            if (holdingWorker != null) {
-              // now remove this worker from the chain
-              holdingWorker.nextIdleWorker = worker.nextIdleWorker;
-              break;
-            }
-          }
-          // now out of the queue, lets clean up our reference
-          worker.nextIdleWorker = null;
+          removeWorkerFromIdleChain(worker);
         }
         
         // wake up next worker so he can check if tasks are ready to consume
