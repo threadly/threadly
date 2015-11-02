@@ -172,28 +172,34 @@ public class RunnableListenerHelper {
       return;
     }
     
-    boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
-    synchronized (listenersLock) {
-      // done should only be set to true if we are only calling listeners once
-      if (done.get()) {
-        runListener(listener, executor, true);
-      } else {
-        if (addingFromCallingThread) {
-          // we must create a new instance of listeners to prevent a ConcurrentModificationException
-          // we know at this point that listeners can not be null
-          List<Pair<Runnable, Executor>> newListeners = 
-              new ArrayList<Pair<Runnable, Executor>>(listeners.size() + 1);
-          newListeners.addAll(listeners);
-          newListeners.add(new Pair<Runnable, Executor>(listener, executor));
-          
-          listeners = newListeners;
-        } else {
-          if (listeners == null) {
-            listeners = new ArrayList<Pair<Runnable, Executor>>(2);
+    boolean runListener = done.get();
+    if (! runListener) {
+      boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
+      synchronized (listenersLock) {
+        // done should only be set to true if we are only calling listeners once
+        if (! (runListener = done.get())) {
+          if (addingFromCallingThread) {
+            // we must create a new instance of listeners to prevent a ConcurrentModificationException
+            // we know at this point that listeners can not be null
+            List<Pair<Runnable, Executor>> newListeners = 
+                new ArrayList<Pair<Runnable, Executor>>(listeners.size() + 1);
+            newListeners.addAll(listeners);
+            newListeners.add(new Pair<Runnable, Executor>(listener, executor));
+            
+            listeners = newListeners;
+          } else {
+            if (listeners == null) {
+              listeners = new ArrayList<Pair<Runnable, Executor>>(2);
+            }
+            listeners.add(new Pair<Runnable, Executor>(listener, executor));
           }
-          listeners.add(new Pair<Runnable, Executor>(listener, executor));
         }
       }
+    }
+    
+    if (runListener) {
+      // run listener outside of lock
+      runListener(listener, executor, true);
     }
   }
   
