@@ -18,6 +18,16 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
   protected final T result;
   
   /**
+   * Constructs a new adapter with a provided runnable to execute.  The returned result from this 
+   * callable will be {@code null}.
+   * 
+   * @param runnable Runnable to be invoked when this adapter is ran
+   */
+  public RunnableCallableAdapter(Runnable runnable) {
+    this(runnable, null);
+  }
+  
+  /**
    * Constructs a new adapter with a provided runnable to execute, and an optional result.
    * 
    * @param runnable Runnable to be invoked when this adapter is ran

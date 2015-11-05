@@ -20,14 +20,14 @@ public class RunnableCallableAdapterTest {
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
-    new RunnableCallableAdapter<Object>(null, null);
+    new RunnableCallableAdapter<Object>(null);
     fail("Exception should have thrown");
   }
   
   @Test
   public void getContainedRunnableTest() {
     TestRunnable tr = new TestRunnable();
-    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<Object>(tr, null);
+    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<Object>(tr);
     
     assertTrue(tr == rca.getContainedRunnable());
   }
