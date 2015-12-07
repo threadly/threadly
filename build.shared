@@ -7,7 +7,7 @@ repositories {
 }
 
 group = 'org.threadly'
-version = '4.4.0'
+version = '4.4.1'
 
 dependencies {
   testCompile group: 'junit', name: 'junit', version: '4.12'

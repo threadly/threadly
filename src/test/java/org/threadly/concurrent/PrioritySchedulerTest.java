@@ -414,6 +414,45 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       factory.shutdown();
     }
   }
+
+  @Test
+  public void scheduleLaterThenSoonerTest() {
+    // This test is focused around the scheduling defect fixed in 4.4.1
+    // The condition hit was where we would park for one scheduled task, then a future task 
+    // would not get executed in time because the first parked thread was not woken up
+
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    final PriorityScheduler scheduler = factory.makePriorityScheduler(2);
+    try {
+      // schedule one task a ways out
+      scheduler.schedule(DoNothingRunnable.instance(), 1000 * 60 * 10);
+      // ensure first thread has blocked
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.workerPool.idleWorker.get() != null;
+        }
+      }.blockTillTrue();
+      
+      // start second thread
+      scheduler.prestartAllThreads();
+      // ensure second thread has blocked
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.workerPool.idleWorker.get().nextIdleWorker != null;
+        }
+      }.blockTillTrue();
+      
+      // schedule soon to run task
+      TestRunnable tr = new TestRunnable();
+      scheduler.schedule(tr, 10);
+      
+      tr.blockTillStarted();
+    } finally {
+      factory.shutdown();
+    }
+  }
   
   public interface PrioritySchedulerFactory extends AbstractPrioritySchedulerFactory {
     public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority, 

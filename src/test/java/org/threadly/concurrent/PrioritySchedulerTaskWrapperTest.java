@@ -51,6 +51,11 @@ public class PrioritySchedulerTaskWrapperTest {
     }
 
     @Override
+    public long getPureRunTime() {
+      return Clock.lastKnownForwardProgressingMillis() + delayInMs;
+    }
+
+    @Override
     public long getRunTime() {
       return Clock.lastKnownForwardProgressingMillis() + delayInMs;
     }

@@ -278,6 +278,17 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     return new PrioritySchedulerLimiter(this, maxConcurrency, subPoolName);
   }
 
+  @Override
+  public int getScheduledTaskCount() {
+    return super.getScheduledTaskCount() - 1;
+  }
+  
+  @Override
+  public int getScheduledTaskCount(TaskPriority priority) {
+    // subtract one from starvable count for hack task for spin issue
+    return super.getScheduledTaskCount(priority) - (priority == TaskPriority.Starvable ? 1 : 0);
+  }
+
   /**
    * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
    * run until this call has returned.
@@ -327,7 +338,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     } else {
       addToScheduleQueue(queueSet, 
                          (result = new OneTimeTaskWrapper(task, queueSet.scheduleQueue, 
-                                                          Clock.accurateForwardProgressingMillis() + delayInMillis)));
+                                                          Clock.accurateForwardProgressingMillis() + 
+                                                            delayInMillis)));
     }
     return result;
   }
@@ -345,7 +357,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     QueueSet queueSet = taskQueueManager.getQueueSet(priority);
     addToScheduleQueue(queueSet, 
                        new RecurringDelayTaskWrapper(task, queueSet, 
-                                                     Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                                     Clock.accurateForwardProgressingMillis() + 
+                                                       initialDelay, 
                                                      recurringDelay));
   }
 
@@ -574,7 +587,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     private final AtomicBoolean shutdownStarted;
     private volatile boolean shutdownFinishing; // once true, never goes to false
     private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
-    private volatile boolean workerTimedPark;
+    private volatile long workerTimedParkRunTime;
     private QueueManager queueManager;  // set before any threads started
     
     protected WorkerPool(ThreadFactory threadFactory, int poolSize) {
@@ -591,7 +604,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       this.threadFactory = threadFactory;
       this.maxPoolSize = poolSize;
-      this.workerTimedPark = false;
+      this.workerTimedParkRunTime = Long.MAX_VALUE;
       shutdownStarted = new AtomicBoolean(false);
       shutdownFinishing = false;
     }
@@ -608,6 +621,26 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       }
       
       this.queueManager = queueManager;
+      
+      // this is to avoid a deficiency in workerIdle that could cause an idle thread to spin.  This 
+      // spin would be only if there is only one recurring task, and WHILE that recurring task is 
+      // running.  We solve this by adding this recurring task which wont run very long, and is 
+      // scheduled to run very infrequently (Using Integer.MAX_VALUE that's every 24 days).
+      // we add this directly into the scheduledQueue structure to avoid having handleQueueUpdated 
+      // invoked, and thus avoid starting any threads at this point.
+      InternalRunnable doNothingRunnable = new InternalRunnable() {
+        @Override
+        public void run() {
+          // nothing added here so that task runs as short as possible
+          // must be InternalRunnable, and not DoNothingRunnable so it's hidden from the task queue
+        }
+      };
+      queueManager.starvablePriorityQueueSet
+                  .scheduleQueue.add(new RecurringRateTaskWrapper(doNothingRunnable, 
+                                                                  queueManager.starvablePriorityQueueSet, 
+                                                                  Clock.lastKnownForwardProgressingMillis() + 
+                                                                    Integer.MAX_VALUE, 
+                                                                  Integer.MAX_VALUE));
     }
 
     /**
@@ -857,16 +890,17 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
                 long taskDelay = nextTask.getScheduleDelay();
                 if (taskDelay > 0) {
                   if (taskDelay == Long.MAX_VALUE) {
-                    // TODO - this will cause a spin if there is only one recurring task
-                    // don't sleep forever, this task is just starting to execute, so spin
-                    Thread.yield();
+                    // the hack at construction/start is to avoid this from causing us to spin here 
+                    // if only one recurring task is scheduled (otherwise we would keep pulling 
+                    // that task while it's running)
+                    continue;
                   }
                   if (queued) {
-                    if (! workerTimedPark) {
+                    if (nextTask.getPureRunTime() < workerTimedParkRunTime) {
                       // we can only park after we have queued, then checked again for a result
-                      workerTimedPark = true;
+                      workerTimedParkRunTime = nextTask.getPureRunTime();
                       LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
-                      workerTimedPark = false;
+                      workerTimedParkRunTime = Long.MAX_VALUE;
                       continue idle;
                     } else {
                       // there is another worker already doing a timed park, so we can wait till woken up

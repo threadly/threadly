@@ -310,7 +310,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       synchronized (scheduleQueue.getModificationLock()) {
         int currentIndex = scheduleQueue.lastIndexOf(task);
         if (currentIndex > 0) {
-          insertionIndex = TaskListUtils.getInsertionEndIndex(scheduleQueue, task.getNextRunTime());
+          insertionIndex = TaskListUtils.getInsertionEndIndex(scheduleQueue, task.getPureRunTime());
           
           scheduleQueue.reposition(currentIndex, insertionIndex);
         } else if (currentIndex == 0) {
@@ -507,6 +507,16 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public abstract boolean canExecute(short executeReference);
     
     /**
+     * Simple getter for the run time, this is expected to do NO operations for calculating the 
+     * run time.  The main reason this is used over {@link #getRunTime()} is to allow the JVM to 
+     * jit the function better.  Because of the nature of this, this can only be used at very 
+     * specific points in the tasks lifecycle, and can not be used for sorting operations.
+     * 
+     * @return An un-molested representation of the stored absolute run time
+     */
+    protected abstract long getPureRunTime();
+    
+    /**
      * Call to see how long the task should be delayed before execution.  While this may return 
      * either positive or negative numbers, only an accurate number is returned if the task must 
      * be delayed for execution.  If the task is ready to execute it may return zero even though 
@@ -551,6 +561,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       this.taskQueue = taskQueue;
       this.runTime = runTime;
       this.executed = false;
+    }
+    
+    @Override
+    protected long getPureRunTime() {
+      return runTime;
     }
     
     @Override
@@ -605,12 +620,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       executeFlipCounter = 0;
     }
     
-    /**
-     * Checks what the delay time is till the next execution.
-     *  
-     * @return time in milliseconds till next execution
-     */
-    public long getNextRunTime() {
+    @Override
+    protected long getPureRunTime() {
       return nextRunTime;
     }
     
@@ -620,6 +631,18 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         return Long.MAX_VALUE;
       } else {
         return nextRunTime;
+      }
+    }
+    
+    @Override
+    public long getScheduleDelay() {
+      if (executing) {
+        // this would only be likely if two threads were trying to run the same task
+        return Long.MAX_VALUE;
+      } else if (nextRunTime > Clock.lastKnownForwardProgressingMillis()) {
+        return nextRunTime - Clock.accurateForwardProgressingMillis();
+      } else {
+        return 0;
       }
     }
     
