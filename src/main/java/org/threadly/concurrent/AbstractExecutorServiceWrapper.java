@@ -29,8 +29,6 @@ import org.threadly.util.ExceptionUtils;
  * @since 2.0.0
  */
 abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorService {
-  private static final int AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS = 1000000 * 100;  // 100ms
-  
   protected final SchedulerService scheduler;
   
   /**
@@ -50,15 +48,17 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   }
 
   @Override
-  public boolean awaitTermination(long timeout, TimeUnit unit) {
+  public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     long startTime = Clock.accurateForwardProgressingMillis();
     long waitTimeInMs = unit.toMillis(timeout);
     Thread currentThread = Thread.currentThread();
     while (! isTerminated() && 
-           Clock.accurateForwardProgressingMillis() - startTime < waitTimeInMs && 
-           ! currentThread.isInterrupted()) {
+           Clock.lastKnownForwardProgressingMillis() - startTime < waitTimeInMs) {
       // just spin till terminated or time expires
-      LockSupport.parkNanos(AWAIT_TERMINATION_POLL_INTERVAL_IN_NANOS);
+      LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * 10);
+      if (currentThread.isInterrupted()) {
+        throw new InterruptedException();
+      }
     }
     
     return isTerminated();

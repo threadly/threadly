@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSet;
@@ -65,6 +66,12 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   public boolean isTerminated() {
     return scheduler.isShutdown() && 
            pScheduler.getCurrentPoolSize() == 0;
+  }
+
+  @Override
+  public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    // override to use better native PriorityScheduler implementation
+    return pScheduler.awaitTermination(unit.toMillis(timeout));
   }
 
   @Override

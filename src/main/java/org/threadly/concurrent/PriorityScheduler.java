@@ -248,6 +248,29 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
   
   /**
+   * Block until the thread pool has shutdown and all threads have been stopped.  If neither 
+   * {@link #shutdown()} or {@link #shutdownNow()} is invoked, then this will block forever.
+   * 
+   * @throws InterruptedException Thrown if blocking thread is interrupted waiting for shutdown
+   */
+  public void awaitTermination() throws InterruptedException {
+    awaitTermination(Long.MAX_VALUE);
+  }
+
+  /**
+   * Block until the thread pool has shutdown and all threads have been stopped.  If neither 
+   * {@link #shutdown()} or {@link #shutdownNow()} is invoked, then this will block until the 
+   * timeout is reached.
+   * 
+   * @param timeoutMillis time to block and wait for thread pool to shutdown
+   * @return {@code true} if the pool has shutdown, false if timeout was reached
+   * @throws InterruptedException Thrown if blocking thread is interrupted waiting for shutdown
+   */
+  public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
+    return workerPool.awaitTermination(timeoutMillis);
+  }
+  
+  /**
    * Makes a new {@link PrioritySchedulerLimiter} that uses this pool as it's execution source.
    * 
    * @deprecated Construct a {@link org.threadly.concurrent.limiter.SubmitterSchedulerLimiter} manually
@@ -584,6 +607,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final AtomicInteger idleWorkerCount;
     protected final AtomicReference<Worker> idleWorker;
     protected final AtomicInteger currentPoolSize;
+    protected final Object workerStopNotifyLock;
     private final AtomicBoolean shutdownStarted;
     private volatile boolean shutdownFinishing; // once true, never goes to false
     private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
@@ -601,6 +625,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       idleWorkerCount = new AtomicInteger(0);
       idleWorker = new AtomicReference<Worker>(null);
       currentPoolSize = new AtomicInteger(0);
+      workerStopNotifyLock = new Object();
       
       this.threadFactory = threadFactory;
       this.maxPoolSize = poolSize;
@@ -608,7 +633,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       shutdownStarted = new AtomicBoolean(false);
       shutdownFinishing = false;
     }
-    
+
     /**
      * Starts the pool, constructing the first thread to start consuming tasks (and starting other 
      * threads as appropriate).  This should only be called once, and can NOT be called concurrently.
@@ -685,6 +710,29 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       if (w != null) {
         LockSupport.unpark(w.thread);
       }
+    }
+
+    /**
+     * Block until the thread pool has shutdown and all threads have been stopped.  If neither 
+     * {@link #shutdown()} or {@link #shutdownNow()} is invoked, then this will block until the 
+     * timeout is reached.
+     * 
+     * @param timeoutMillis time to block and wait for thread pool to shutdown
+     * @return {@code true} if the pool has shutdown, false if timeout was reached
+     * @throws InterruptedException Thrown if blocking thread is interrupted waiting for shutdown
+     */
+    public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
+      long start = timeoutMillis < Long.MAX_VALUE ? 
+        Clock.accurateForwardProgressingMillis() : Clock.lastKnownForwardProgressingMillis();
+      synchronized (workerStopNotifyLock) {
+        long remainingMillis;
+        while ((! shutdownFinishing || currentPoolSize.get() > 0) && 
+               (remainingMillis = timeoutMillis - (Clock.lastKnownForwardProgressingMillis() - start)) > 0) {
+          workerStopNotifyLock.wait(remainingMillis);
+        }
+      }
+      
+      return shutdownFinishing && currentPoolSize.get() == 0;
     }
 
     /**
@@ -1004,6 +1052,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         if (nextTask != null) {  // may be null if we are shutting down
           nextTask.runTask();
         }
+      }
+      
+      synchronized (workerPool.workerStopNotifyLock) {
+        workerPool.workerStopNotifyLock.notifyAll();
       }
     }
   }

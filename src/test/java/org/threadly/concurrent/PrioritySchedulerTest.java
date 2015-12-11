@@ -391,6 +391,71 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  public void awaitTerminationTest() throws InterruptedException {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
+      
+      TestRunnable tr = new TestRunnable(DELAY_TIME * 2);
+      long start = Clock.accurateForwardProgressingMillis();
+      scheduler.execute(tr);
+      
+      tr.blockTillStarted();
+      scheduler.shutdown();
+  
+      scheduler.awaitTermination();
+      long stop = Clock.accurateForwardProgressingMillis();
+      
+      assertTrue(stop - start >= (DELAY_TIME * 2) - 10);
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void awaitTerminationTimeoutTest() throws InterruptedException {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
+      
+      TestRunnable tr = new TestRunnable(DELAY_TIME * 2);
+      long start = Clock.accurateForwardProgressingMillis();
+      scheduler.execute(tr);
+      
+      tr.blockTillStarted();
+      scheduler.shutdown();
+  
+      assertTrue(scheduler.awaitTermination(DELAY_TIME * 10));
+      long stop = Clock.accurateForwardProgressingMillis();
+      
+      assertTrue(stop - start >= (DELAY_TIME * 2) - 10);
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void awaitTerminationTimeoutExcededTest() throws InterruptedException {
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
+      
+      TestRunnable tr = new TestRunnable(DELAY_TIME * 100);
+      scheduler.execute(tr);
+      tr.blockTillStarted();
+      scheduler.shutdown();
+
+      long start = Clock.accurateForwardProgressingMillis();
+      assertFalse(scheduler.awaitTermination(DELAY_TIME));
+      long stop = Clock.accurateForwardProgressingMillis();
+      
+      assertTrue(stop - start >= DELAY_TIME);
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void addToQueueTest() {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     long taskDelay = 1000 * 10; // make it long to prevent it from getting consumed from the queue
