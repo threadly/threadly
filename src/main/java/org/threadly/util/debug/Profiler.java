@@ -43,7 +43,6 @@ import org.threadly.util.StringUtils;
 public class Profiler {
   protected static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
   protected static final short NUMBER_TARGET_LINE_LENGTH = 6;
-  protected static final String THREAD_DELIMITER = "--------------------------------------------------";
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
   private static final short DEFAULT_MAP_INITIAL_SIZE = 16;
@@ -467,7 +466,7 @@ public class Profiler {
         }
 
         if (dumpIndividualThreads) {
-          ps.println(THREAD_DELIMITER);
+          ps.println("--------------------------------------------------");
           ps.println();
         }
       }
@@ -861,17 +860,9 @@ public class Profiler {
         Trace t = (Trace) o;
         if (t.hash != hash) {
           return false;
-        } else if (t.elements.length != elements.length) {
-          return false;
         } else {
-          for (int i = 0; i < elements.length; i++) {
-            if (! t.elements[i].equals(elements[i])) {
-              return false;
-            }
-          }
+          return Arrays.equals(t.elements, elements);
         }
-        
-        return true;
       } else {
         return false;
       }

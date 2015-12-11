@@ -291,9 +291,6 @@ public class ProfilerTest {
   protected static void verifyDumpStr(String resultStr) {
     assertTrue(resultStr.length() > MIN_RESPONSE_LENGTH);
     
-    assertFalse(resultStr.startsWith(Profiler.THREAD_DELIMITER));
-    assertFalse(resultStr.endsWith(Profiler.THREAD_DELIMITER));
-    
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_COUNT_HEADER));
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_NET_HEADER));
   }
