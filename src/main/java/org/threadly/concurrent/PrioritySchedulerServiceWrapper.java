@@ -94,35 +94,37 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
 
   @Override
   protected ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable task,
-                                                                long initialDelay,
-                                                                long delayInMs) {
+                                                                long initialDelay, long delayInMs) {
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<Void>(true, task);
+    ListenableRunnableFuture<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
+                                                                                      true, task);
     QueueSet queueSet = pScheduler.taskQueueManager.getQueueSet(pScheduler.getDefaultPriority());
     RecurringDelayTaskWrapper rdtw = 
-        new RecurringDelayTaskWrapper(taskFuture, queueSet,
-                                      Clock.accurateForwardProgressingMillis() + initialDelay, delayInMs);
+        new RecurringDelayTaskWrapper(lft, queueSet,
+                                      Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                      delayInMs);
     pScheduler.addToScheduleQueue(queueSet, rdtw);
     
-    return new ScheduledFutureDelegate<Void>(taskFuture, new DelayedTaskWrapper(rdtw));
+    return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rdtw));
   }
 
   @Override
   protected ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
-                                                             long initialDelay,
-                                                             long periodInMillis) {
+                                                             long initialDelay, long periodInMillis) {
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(pScheduler, task);
     
-    ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<Void>(true, task);
+    ListenableRunnableFuture<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
+                                                                                      true, task);
     QueueSet queueSet = pScheduler.taskQueueManager.getQueueSet(pScheduler.getDefaultPriority());
     RecurringRateTaskWrapper rrtw = 
-        new RecurringRateTaskWrapper(taskFuture, queueSet,
-                                     Clock.accurateForwardProgressingMillis() + initialDelay, periodInMillis);
+        new RecurringRateTaskWrapper(lft, queueSet,
+                                     Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                     periodInMillis);
     pScheduler.addToScheduleQueue(queueSet, rrtw);
     
-    return new ScheduledFutureDelegate<Void>(taskFuture, new DelayedTaskWrapper(rrtw));
+    return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rrtw));
   }
 }

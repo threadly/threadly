@@ -16,6 +16,7 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
@@ -346,5 +347,39 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     public Runnable getContainedRunnable() {
       return task;
     }
+  }
+  
+  /**
+   * <p>An implementation of {@link ListenableFutureTask} which will remove the task from the 
+   * scheduler when cancel is invoked.  Threadly does not normally have this behavior for a 
+   * couple reasons.  Because we don't return futures on recurring tasks, canceling a future just 
+   * results in a one time task execution that is a quick no-op.  It is cheaper in threadly to 
+   * allow this no-op task on .cancel than to attempt removal.  Because 
+   * {@link ScheduledExecutorService} returns a future that can be canceled for recurring tasks, 
+   * we want to go ahead and remove the task (rather than have recurring no-op executions).</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.4.3
+   */
+  protected static class CancelRemovingListenableFutureTask<T> extends ListenableFutureTask<T> {
+    private final SchedulerService scheduler;
+
+    public CancelRemovingListenableFutureTask(SchedulerService scheduler, 
+                                              boolean recurring, Runnable task) {
+      super(recurring, task);
+      
+      this.scheduler = scheduler;
+    }
+    
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      if (super.cancel(mayInterruptIfRunning)) {
+        scheduler.remove(this.getContainedCallable());
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
   }
 }

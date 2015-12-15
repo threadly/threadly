@@ -78,12 +78,11 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   @Override
   protected ListenableScheduledFuture<?> scheduleWithFixedDelay(Runnable task,
-                                                                long initialDelay,
-                                                                long delayInMillis) {
+                                                                long initialDelay, long delayInMillis) {
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(true, task);
+    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     QueueSet queueSet = nts.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringDelayTaskWrapper rdt = 
@@ -97,18 +96,17 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   @Override
   protected ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
-                                                             long initialDelay,
-                                                             long periodInMillis) {
+                                                             long initialDelay, long periodInMillis) {
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(true, task);
+    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     QueueSet queueSet = nts.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringRateTaskWrapper rt = 
         nts.new NoThreadRecurringRateTaskWrapper(lft, queueSet, 
-                                                  Clock.accurateForwardProgressingMillis() + initialDelay, 
-                                                  periodInMillis);
+                                                 Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                                 periodInMillis);
     queueSet.addScheduled(rt);
     
     return new ScheduledFutureDelegate<Void>(lft, new DelayedTaskWrapper(rt));

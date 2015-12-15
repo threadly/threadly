@@ -417,15 +417,13 @@ public abstract class ScheduledExecutorServiceTest {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       try {
-        scheduler.scheduleAtFixedRate(null, 0, 10, 
-                                      TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(null, 0, 10, TimeUnit.MILLISECONDS);
         fail("Exception should have been thrown");
       } catch (NullPointerException e) {
         // expected
       }
       try {
-        scheduler.scheduleAtFixedRate(new TestRunnable(), 10, 0, 
-                                      TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(new TestRunnable(), 10, 0, TimeUnit.MILLISECONDS);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected
@@ -433,6 +431,28 @@ public abstract class ScheduledExecutorServiceTest {
     } finally {
       scheduler.shutdownNow();
     }
+  }
+  
+  @Test
+  public void scheduleAtFixedRateFutureCancelRemovalTest() {
+    ScheduledExecutorService scheduler = makeScheduler(1);
+    ScheduledFuture<?> sf = scheduler.scheduleAtFixedRate(DoNothingRunnable.instance(), 
+                                                          1000, 1000, TimeUnit.MILLISECONDS);
+    sf.cancel(false);
+
+    // task should no longer be queued with scheduler
+    assertEquals(0, scheduler.shutdownNow().size());
+  }
+  
+  @Test
+  public void scheduleWithFixedDelayFutureCancelRemovalTest() {
+    ScheduledExecutorService scheduler = makeScheduler(1);
+    ScheduledFuture<?> sf = scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), 
+                                                             1000, 1000, TimeUnit.MILLISECONDS);
+    sf.cancel(false);
+    
+    // task should no longer be queued with scheduler
+    assertEquals(0, scheduler.shutdownNow().size());
   }
 
   @Test
