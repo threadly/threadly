@@ -391,6 +391,27 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  public void shutdownNowIgnoreCanceledFuturesTest() {
+
+    PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
+    try {
+      PriorityScheduler scheduler = factory.makePriorityScheduler(1);
+      
+      Runnable nonCanceledRunnable = new TestRunnable();
+      scheduler.submitScheduled(nonCanceledRunnable, 1000 * 60 * 60);
+      ListenableFuture<?> future = scheduler.submitScheduled(DoNothingRunnable.instance(), 
+                                                             1000 * 60 * 60);
+      
+      future.cancel(false);
+      
+      List<Runnable> result = scheduler.shutdownNow();
+      assertEquals(1, result.size()); // only canceled task removed
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
   public void awaitTerminationTest() throws InterruptedException {
     PrioritySchedulerFactory factory = getPrioritySchedulerFactory();
     try {

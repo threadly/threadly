@@ -416,10 +416,14 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       Iterator<? extends TaskWrapper> it = queue.iterator();
       while (it.hasNext()) {
         TaskWrapper tw = it.next();
-        tw.cancel();
-        if (! (tw.task instanceof InternalRunnable)) {
-          int index = TaskListUtils.getInsertionEndIndex(resultList, tw.getRunTime());
-          resultList.add(index, tw);
+        // no need to cancel and return tasks which are already canceled
+        if (! (tw.task instanceof Future) || ! ((Future<?>)tw.task).isCancelled()) {
+          tw.cancel();
+          // don't return tasks which were used only for internal behavior management
+          if (! (tw.task instanceof InternalRunnable)) {
+            int index = TaskListUtils.getInsertionEndIndex(resultList, tw.getRunTime());
+            resultList.add(index, tw);
+          }
         }
       }
       queue.clear();

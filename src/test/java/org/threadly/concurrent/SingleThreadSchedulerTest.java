@@ -10,6 +10,7 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
@@ -145,6 +146,24 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
       }
     } finally {
       btr.unblock();
+    }
+  }
+  
+  @Test
+  public void shutdownNowIgnoreCanceledFuturesTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    try {
+      Runnable nonCanceledRunnable = new TestRunnable();
+      sts.submitScheduled(nonCanceledRunnable, 1000 * 60 * 60);
+      ListenableFuture<?> future = sts.submitScheduled(DoNothingRunnable.instance(), 
+                                                       1000 * 60 * 60);
+      
+      future.cancel(false);
+      
+      List<Runnable> result = sts.shutdownNow();
+      assertEquals(1, result.size()); // only canceled task removed
+    } finally {
+      sts.shutdown();
     }
   }
   
