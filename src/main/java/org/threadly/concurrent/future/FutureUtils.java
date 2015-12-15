@@ -604,7 +604,7 @@ public class FutureUtils {
       if (resultsList == null) {
         return Collections.emptyList();
       } else {
-        buildingResult.set(null);
+        buildingResult.lazySet(null);
         resultsList.trimToSize();
         return Collections.unmodifiableList(resultsList);
       }

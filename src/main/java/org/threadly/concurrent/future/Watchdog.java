@@ -105,8 +105,7 @@ public class Watchdog {
    */
   public boolean isActive() {
     return ! futures.isEmpty() || 
-             checkRunnerStatus.get() == 0 || 
-             checkRunnerStatus.get() == 2;
+             checkRunnerStatus.get() != -1;
   }
   
   /**

@@ -103,9 +103,6 @@ public class WatchdogCache {
   private class CleanRunner implements Runnable {
     @Override
     public void run() {
-      // unset so that we wont have to check cachedDogs twice if there is active Watchdog's
-      cleanerScheduled.set(false);
-      
       Iterator<Watchdog> it = cachedDogs.values().iterator();
       while (it.hasNext()) {
         if (! it.next().isActive()) {
@@ -113,9 +110,9 @@ public class WatchdogCache {
         }
       }
       
-      /* if is empty but added after the first part of this check, we are covered due to 
-       * switching scheduled to false before starting our check.
-       */
+      // must set unscheduled before checking if we need to reschedule
+      cleanerScheduled.set(false);
+      
       if (! cachedDogs.isEmpty()) {
         maybeScheduleCleaner();
       }
