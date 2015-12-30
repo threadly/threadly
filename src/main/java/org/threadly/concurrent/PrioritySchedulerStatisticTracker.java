@@ -829,6 +829,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * 
    * @author jent - Mike Jensen
    * @since 1.0.0
+   * @param <T> The result object type returned by the contained callable
    */
   protected static class CallableStatWrapper<T> extends Wrapper 
                                                 implements Callable<T>, CallableContainer<T> {

@@ -360,6 +360,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * 
    * @author jent - Mike Jensen
    * @since 4.4.3
+   * @param <T> The result object type returned by this future
    */
   protected static class CancelRemovingListenableFutureTask<T> extends ListenableFutureTask<T> {
     private final SchedulerService scheduler;
