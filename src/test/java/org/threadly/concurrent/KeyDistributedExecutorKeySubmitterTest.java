@@ -1,8 +1,6 @@
 package org.threadly.concurrent;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 
 @SuppressWarnings("javadoc")
 public class KeyDistributedExecutorKeySubmitterTest extends SubmitterExecutorInterfaceTest {
@@ -12,31 +10,18 @@ public class KeyDistributedExecutorKeySubmitterTest extends SubmitterExecutorInt
   }
 
   private class KeyBasedSubmitterFactory implements SubmitterExecutorFactory {
-    private final List<PriorityScheduler> executors;
-    
-    private KeyBasedSubmitterFactory() {
-      executors = new LinkedList<PriorityScheduler>();
-    }
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        executor.prestartAllThreads();
-      }
-      executors.add(executor);
+      SubmitterExecutor executor = schedulerFactory.makeSubmitterExecutor(poolSize, prestartIfAvailable);
       
       return new KeyDistributedExecutor(executor).getSubmitterForKey("foo");
     }
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-        it.remove();
-      }
+      schedulerFactory.shutdown();
     }
   }
-  
 }

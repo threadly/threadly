@@ -1,10 +1,7 @@
 package org.threadly.concurrent;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.junit.Test;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 
 @SuppressWarnings("javadoc")
 public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerInterfaceTest {
@@ -38,11 +35,7 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
   }
 
   private class KeyBasedSubmitterSchedulerFactory implements SubmitterSchedulerFactory {
-    private final List<PriorityScheduler> executors;
-    
-    private KeyBasedSubmitterSchedulerFactory() {
-      executors = new LinkedList<PriorityScheduler>();
-    }
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
@@ -51,11 +44,7 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
     
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler scheduler = new StrictPriorityScheduler(poolSize);
-      executors.add(scheduler);
-      if (prestartIfAvailable) {
-        scheduler.prestartAllThreads();
-      }
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
       
       KeyDistributedScheduler distributor = new KeyDistributedScheduler(poolSize, scheduler);
       
@@ -64,11 +53,7 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-      }
-      executors.clear();
+      schedulerFactory.shutdown();
     }
   }
 }

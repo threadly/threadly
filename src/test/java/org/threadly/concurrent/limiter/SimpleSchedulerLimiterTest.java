@@ -2,15 +2,10 @@ package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 
 @SuppressWarnings({"javadoc", "deprecation"})
@@ -44,21 +39,17 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
   }
 
   protected static class SchedulerLimiterFactory implements SubmitterSchedulerFactory {
-    private final List<PriorityScheduler> executors;
+    private final PrioritySchedulerFactory schedulerFactory;
     private final boolean addSubPoolName;
     
     public SchedulerLimiterFactory(boolean addSubPoolName) {
-      executors = new LinkedList<PriorityScheduler>();
+      schedulerFactory = new PrioritySchedulerFactory();
       this.addSubPoolName = addSubPoolName;
     }
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-        it.remove();
-      }
+      schedulerFactory.shutdown();
     }
 
     @Override
@@ -68,16 +59,12 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
 
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        executor.prestartAllThreads();
-      }
-      executors.add(executor);
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize * 2, prestartIfAvailable);
       
       if (addSubPoolName) {
-        return new SimpleSchedulerLimiter(executor, poolSize, "TestSubPool");
+        return new SimpleSchedulerLimiter(scheduler, poolSize, "TestSubPool");
       } else {
-        return new SimpleSchedulerLimiter(executor, poolSize);
+        return new SimpleSchedulerLimiter(scheduler, poolSize);
       }
     }
   }

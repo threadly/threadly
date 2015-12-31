@@ -2,12 +2,10 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Executor;
 
 import org.junit.Test;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -39,30 +37,16 @@ public class ExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
   }
 
   private class ExecutorWrapperFactory implements SubmitterExecutorFactory {
-    private final List<PriorityScheduler> executors;
-    
-    private ExecutorWrapperFactory() {
-      executors = new LinkedList<PriorityScheduler>();
-    }
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        executor.prestartAllThreads();
-      }
-      executors.add(executor);
-      
-      return new ExecutorWrapper(executor);
+      return new ExecutorWrapper(schedulerFactory.makeSubmitterExecutor(poolSize, prestartIfAvailable));
     }
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-        it.remove();
-      }
+      schedulerFactory.shutdown();
     }
   }
   

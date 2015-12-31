@@ -4,17 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.threadly.TestConstants.TEST_QTY;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
-import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
@@ -97,7 +95,7 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
   }
   
   private static class SchedulerServiceQueueRejectorFactory implements SchedulerServiceFactory {
-    private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
@@ -111,20 +109,14 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
 
     @Override
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler ps = new PriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        ps.prestartAllThreads();
-      }
-      schedulers.add(ps);
+      SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize, prestartIfAvailable);
       
-      return new SchedulerServiceQueueLimitRejector(ps, Integer.MAX_VALUE);
+      return new SchedulerServiceQueueLimitRejector(scheduler, Integer.MAX_VALUE);
     }
 
     @Override
     public void shutdown() {
-      for (PriorityScheduler ps : schedulers) {
-        ps.shutdownNow();
-      }
+      schedulerFactory.shutdown();
     }
   }
 }

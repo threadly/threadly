@@ -3,15 +3,13 @@ package org.threadly.concurrent.limiter;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
-import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
@@ -79,24 +77,17 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
   }
   
   private static class ExecutorQueueRejectorFactory implements SubmitterExecutorFactory {
-    private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler ps = new PriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        ps.prestartAllThreads();
-      }
-      schedulers.add(ps);
-      
-      return new ExecutorQueueLimitRejector(ps, Integer.MAX_VALUE);
+      SubmitterExecutor executor = schedulerFactory.makeSubmitterExecutor(poolSize, prestartIfAvailable);
+      return new ExecutorQueueLimitRejector(executor, Integer.MAX_VALUE);
     }
 
     @Override
     public void shutdown() {
-      for (PriorityScheduler ps : schedulers) {
-        ps.shutdownNow();
-      }
+      schedulerFactory.shutdown();
     }
   }
 }

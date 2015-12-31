@@ -2,10 +2,6 @@ package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduler;
@@ -15,6 +11,7 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TestCallable;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -104,7 +101,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
   }
   
   protected static class SchedulerLimiterFactory implements SchedulerServiceFactory {
-    private final List<PriorityScheduler> executors;
+    private final PrioritySchedulerFactory schedulerFactory;
     private final int minLimiterAmount;
     private final boolean addSubPoolName;
     
@@ -113,18 +110,14 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
     }
     
     private SchedulerLimiterFactory(int minLimiterAmount, boolean addSubPoolName) {
-      executors = new LinkedList<PriorityScheduler>();
+      schedulerFactory = new PrioritySchedulerFactory();
       this.minLimiterAmount = minLimiterAmount;
       this.addSubPoolName = addSubPoolName;
     }
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-        it.remove();
-      }
+      schedulerFactory.shutdown();
     }
 
     @Override
@@ -140,18 +133,14 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
     @Override
     @SuppressWarnings("deprecation")
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        executor.prestartAllThreads();
-      }
-      executors.add(executor);
+      SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize, prestartIfAvailable);
       
       int limiterAmount = Math.min(minLimiterAmount, poolSize);
       
       if (addSubPoolName) {
-        return new SchedulerServiceLimiter(executor, limiterAmount, "TestSubPool");
+        return new SchedulerServiceLimiter(scheduler, limiterAmount, "TestSubPool");
       } else {
-        return new SchedulerServiceLimiter(executor, limiterAmount);
+        return new SchedulerServiceLimiter(scheduler, limiterAmount);
       }
     }
   }

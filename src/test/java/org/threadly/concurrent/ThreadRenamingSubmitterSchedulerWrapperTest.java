@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 
 @SuppressWarnings("javadoc")
 public class ThreadRenamingSubmitterSchedulerWrapperTest extends SubmitterSchedulerInterfaceTest {
@@ -11,7 +10,7 @@ public class ThreadRenamingSubmitterSchedulerWrapperTest extends SubmitterSchedu
   }
   
   private static class ThreadRenamingPoolWrapperFactory implements SubmitterSchedulerFactory {
-    private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
@@ -20,20 +19,14 @@ public class ThreadRenamingSubmitterSchedulerWrapperTest extends SubmitterSchedu
     
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler ps = new PriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        ps.prestartAllThreads();
-      }
-      schedulers.add(ps);
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
       
-      return new ThreadRenamingSubmitterSchedulerWrapper(ps, "foo", false);
+      return new ThreadRenamingSubmitterSchedulerWrapper(scheduler, "foo", false);
     }
 
     @Override
     public void shutdown() {
-      for (PriorityScheduler ps : schedulers) {
-        ps.shutdownNow();
-      }
+      schedulerFactory.shutdown();
     }
   }
 }

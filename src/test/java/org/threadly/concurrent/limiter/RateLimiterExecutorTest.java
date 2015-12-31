@@ -3,9 +3,6 @@ package org.threadly.concurrent.limiter;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -19,6 +16,7 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.TestCallable;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.Clock;
@@ -180,27 +178,19 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   }
   
   private static class RateLimiterFactory implements SubmitterExecutorFactory {
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     private final int rateLimit = TEST_PROFILE == TestLoad.Stress ? 50 : 1000; 
-    private final List<PriorityScheduler> executors = new LinkedList<PriorityScheduler>();
 
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        executor.prestartAllThreads();
-      }
-      executors.add(executor);
-      
-      return new RateLimiterExecutor(executor, rateLimit);
+      return new RateLimiterExecutor(schedulerFactory.makeSchedulerService(poolSize, 
+                                                                           prestartIfAvailable), 
+                                     rateLimit);
     }
 
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-        it.remove();
-      }
+      schedulerFactory.shutdown();
     }
   }
 }

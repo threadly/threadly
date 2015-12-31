@@ -5,7 +5,6 @@ import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -20,7 +19,9 @@ import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -216,22 +217,18 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   }
 
   protected static class ExecutorLimiterFactory implements SubmitterExecutorFactory {
-    private final List<PriorityScheduler> executors;
+    private final PrioritySchedulerFactory schedulerFactory;
     private final boolean addSubPoolName;
     
     protected ExecutorLimiterFactory(boolean addSubPoolName) {
-      executors = new LinkedList<PriorityScheduler>();
+      schedulerFactory = new PrioritySchedulerFactory();
       this.addSubPoolName = addSubPoolName;
     }
     
     @Override
     @SuppressWarnings("deprecation")
     public ExecutorLimiter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler executor = new StrictPriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        executor.prestartAllThreads();
-      }
-      executors.add(executor);
+      SubmitterExecutor executor = schedulerFactory.makeSubmitterExecutor(poolSize * 2, prestartIfAvailable);
       
       if (addSubPoolName) {
         return new ExecutorLimiter(executor, poolSize, "TestSubPool");
@@ -242,11 +239,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     
     @Override
     public void shutdown() {
-      Iterator<PriorityScheduler> it = executors.iterator();
-      while (it.hasNext()) {
-        it.next().shutdownNow();
-        it.remove();
-      }
+      schedulerFactory.shutdown();
     }
   }
 }

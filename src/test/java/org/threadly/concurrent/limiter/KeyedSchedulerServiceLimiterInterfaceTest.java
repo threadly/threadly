@@ -1,12 +1,10 @@
 package org.threadly.concurrent.limiter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SchedulerService;
 
 @SuppressWarnings("javadoc")
 public class KeyedSchedulerServiceLimiterInterfaceTest extends SubmitterSchedulerInterfaceTest {
@@ -16,7 +14,7 @@ public class KeyedSchedulerServiceLimiterInterfaceTest extends SubmitterSchedule
   }
   
   private static class KeyedSchedulerServiceLimiterFactory implements SubmitterSchedulerFactory {
-    private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
@@ -29,20 +27,16 @@ public class KeyedSchedulerServiceLimiterInterfaceTest extends SubmitterSchedule
        * task is used for scheduled tasks, execution order may switch if there is more than one 
        * thread.
        */
-      PriorityScheduler ps = new PriorityScheduler(poolSize > 1 ? poolSize * 2 : 1);
-      if (prestartIfAvailable) {
-        ps.prestartAllThreads();
-      }
-      schedulers.add(ps);
+      SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize > 1 ? 
+                                                                           poolSize * 2 : 1, 
+                                                                         prestartIfAvailable);
       
-      return new KeyedSchedulerServiceLimiter(ps, poolSize).getSubmitterSchedulerForKey("foo");
+      return new KeyedSchedulerServiceLimiter(scheduler, poolSize).getSubmitterSchedulerForKey("foo");
     }
 
     @Override
     public void shutdown() {
-      for (PriorityScheduler ps : schedulers) {
-        ps.shutdownNow();
-      }
+      schedulerFactory.shutdown();
     }
   }
 }

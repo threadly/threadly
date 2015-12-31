@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 
 @SuppressWarnings("javadoc")
 public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceInterfaceTest {
@@ -11,7 +10,7 @@ public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceI
   }
 
   private static class ThreadRenamingPoolWrapperFactory implements SchedulerServiceFactory {
-    private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
@@ -25,20 +24,14 @@ public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceI
 
     @Override
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      PriorityScheduler ps = new PriorityScheduler(poolSize);
-      if (prestartIfAvailable) {
-        ps.prestartAllThreads();
-      }
-      schedulers.add(ps);
+      SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize, prestartIfAvailable);
 
-      return new ThreadRenamingSchedulerServiceWrapper(ps, "foo", false);
+      return new ThreadRenamingSchedulerServiceWrapper(scheduler, "foo", false);
     }
 
     @Override
     public void shutdown() {
-      for (PriorityScheduler ps : schedulers) {
-        ps.shutdownNow();
-      }
+      schedulerFactory.shutdown();
     }
   }
 }

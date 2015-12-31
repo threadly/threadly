@@ -18,7 +18,7 @@ import org.threadly.test.concurrent.TestUtils;
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest {
   @Override
-  protected PrioritySchedulerFactory getPrioritySchedulerFactory() {
+  protected PrioritySchedulerServiceFactory getPrioritySchedulerFactory() {
     return new PrioritySchedulerStatisticTrackerTestFactory();
   }
   
@@ -491,7 +491,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     }
   }
   
-  private class PrioritySchedulerStatisticTrackerTestFactory implements PrioritySchedulerFactory {
+  private class PrioritySchedulerStatisticTrackerTestFactory implements PrioritySchedulerServiceFactory {
     private final List<PriorityScheduler> executors;
     
     private PrioritySchedulerStatisticTrackerTestFactory() {
