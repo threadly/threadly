@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
@@ -16,6 +15,7 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
+import org.threadly.util.StatisticsUtils;
 
 /**
  * <p>An implementation of {@link PriorityScheduler} which tracks run and usage statistics.  This 
@@ -273,8 +273,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   @Override
   public void scheduleAtFixedRate(Runnable task, long initialDelay,
                                   long period, TaskPriority priority) {
-    super.scheduleAtFixedRate(wrap(task, priority, true), 
-                              initialDelay, period, priority);
+    super.scheduleAtFixedRate(wrap(task, priority, true), initialDelay, period, priority);
   }
   
   /**
@@ -284,7 +283,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
    * @return average time in milliseconds tasks run
    */
   public long getAverageTaskRunTime() {
-    return getAvgTime(getRunTimes());
+    List<Long> stats = getRunTimes();
+    if (stats.isEmpty()) {
+      return -1;
+    }
+    return Math.round(StatisticsUtils.getAverage(stats));
   }
   
   /**
@@ -315,7 +318,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     resultList.addAll(statsManager.lowPriorityExecutionDelay);
     resultList.addAll(statsManager.starvablePriorityExecutionDelay);
     
-    return getAvgTime(resultList);
+    if (resultList.isEmpty()) {
+      return -1;
+    }
+    return Math.round(StatisticsUtils.getAverage(resultList));
   }
   
   /**
@@ -329,7 +335,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     if (priority == null) {
       return getAvgExecutionDelay();
     }
-    return getAvgTime(getExecutionDelays(priority));
+    List<Long> stats = getExecutionDelays(priority);
+    if (stats.isEmpty()) {
+      return -1;
+    }
+    return Math.round(StatisticsUtils.getAverage(stats));
   }
   
   /**
@@ -455,26 +465,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   @Deprecated
   public List<Long> getLowPriorityExecutionDelays() {
     return getExecutionDelays(TaskPriority.Low);
-  }
-  
-  /**
-   * Calculates the average from a collection of long values.
-   * 
-   * @param list List of longs to average against
-   * @return -1 if the list is empty, otherwise the average of the values inside the list
-   */
-  private static long getAvgTime(Collection<Long> list) {
-    if (list.isEmpty()) {
-      return -1;
-    }
-    
-    double totalTime = 0;
-    Iterator<Long> it = list.iterator();
-    while (it.hasNext()) {
-      totalTime += it.next();
-    }
-      
-    return Math.round(totalTime / list.size());
   }
   
   /**
