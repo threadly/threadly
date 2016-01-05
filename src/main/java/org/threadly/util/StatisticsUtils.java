@@ -42,8 +42,8 @@ public class StatisticsUtils {
    * set is not large or varied enough.  There is no attempt to extrapolate trends, thus only real 
    * samples are returned.  
    * 
-   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over this 
-   * map will iterate in order of the requested percentiles as well.
+   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
+   * returned map will iterate in order of the requested percentiles as well.
    * 
    * @param values A non-empty collection of numbers to examine for percentiles
    * @param percentiles Percentiles requested, any decimal values between 0 and 100 (inclusive)
