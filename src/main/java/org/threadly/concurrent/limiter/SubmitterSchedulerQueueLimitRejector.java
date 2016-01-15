@@ -92,7 +92,12 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
       queuedTaskCount.decrementAndGet();
       throw new RejectedExecutionException();
     } else {
-      parentScheduler.schedule(new DecrementingRunnable(task, queuedTaskCount), delayInMillis);
+      try {
+        parentScheduler.schedule(new DecrementingRunnable(task, queuedTaskCount), delayInMillis);
+      } catch (RejectedExecutionException e) {
+        queuedTaskCount.decrementAndGet();
+        throw e;
+      }
     }
   }
 }

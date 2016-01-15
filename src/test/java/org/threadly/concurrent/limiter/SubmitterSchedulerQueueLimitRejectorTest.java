@@ -7,6 +7,7 @@ import static org.threadly.TestConstants.TEST_QTY;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
+import org.threadly.concurrent.AbstractSubmitterScheduler;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
@@ -30,7 +31,8 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
   @Test
   public void getCurrentQueueSizeTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    SchedulerServiceQueueLimitRejector queueRejector = 
+        new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
 
     for (int i = 0; i < TEST_QTY; i++) {
       assertEquals(i, queueRejector.getCurrentQueueSize());
@@ -45,7 +47,8 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
   @Test
   public void getSetQueueLimitTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    SubmitterSchedulerQueueLimitRejector queueRejector = new SubmitterSchedulerQueueLimitRejector(testableScheduler, TEST_QTY);
+    SubmitterSchedulerQueueLimitRejector queueRejector = 
+        new SubmitterSchedulerQueueLimitRejector(testableScheduler, TEST_QTY);
     
     assertEquals(TEST_QTY, queueRejector.getQueueLimit());
     
@@ -56,7 +59,8 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
   @Test
   public void rejectTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    SubmitterSchedulerQueueLimitRejector queueRejector = new SubmitterSchedulerQueueLimitRejector(testableScheduler, TEST_QTY);
+    SubmitterSchedulerQueueLimitRejector queueRejector = 
+        new SubmitterSchedulerQueueLimitRejector(testableScheduler, TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
       queueRejector.execute(DoNothingRunnable.instance());
@@ -76,6 +80,36 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
     for (int i = 0; i < TEST_QTY; i++) {
       queueRejector.execute(DoNothingRunnable.instance());
     }
+  }
+  
+  @Test
+  public void rejectedExecutionExceptionCountTest() {
+    SubmitterSchedulerQueueLimitRejector queueRejector = 
+        new SubmitterSchedulerQueueLimitRejector(new AbstractSubmitterScheduler() {
+      @Override
+      public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      protected void doSchedule(Runnable task, long delayInMillis) {
+        throw new RejectedExecutionException();
+      }
+    }, TEST_QTY);
+    
+    try {
+      queueRejector.schedule(DoNothingRunnable.instance(), 1000);
+      fail("Exception should have thrown");
+    } catch (RejectedExecutionException e) {
+      // expected
+    }
+    
+    assertEquals(0, queueRejector.getCurrentQueueSize());
   }
   
   private static class SubmitterSchedulerQueueRejectorFactory implements SubmitterSchedulerFactory {

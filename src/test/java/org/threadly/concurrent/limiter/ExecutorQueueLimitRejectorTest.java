@@ -3,6 +3,7 @@ package org.threadly.concurrent.limiter;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
@@ -74,6 +75,25 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
     for (int i = 0; i < TEST_QTY; i++) {
       queueRejector.execute(DoNothingRunnable.instance());
     }
+  }
+  
+  @Test
+  public void rejectedExecutionExceptionCountTest() {
+    ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        throw new RejectedExecutionException();
+      }
+    }, TEST_QTY);
+    
+    try {
+      queueRejector.execute(DoNothingRunnable.instance());
+      fail("Exception should have thrown");
+    } catch (RejectedExecutionException e) {
+      // expected
+    }
+    
+    assertEquals(0, queueRejector.getCurrentQueueSize());
   }
   
   private static class ExecutorQueueRejectorFactory implements SubmitterExecutorFactory {

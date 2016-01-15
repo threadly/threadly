@@ -80,7 +80,12 @@ public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
       queuedTaskCount.decrementAndGet();
       throw new RejectedExecutionException();
     } else {
-      parentExecutor.execute(new DecrementingRunnable(task, queuedTaskCount));
+      try {
+        parentExecutor.execute(new DecrementingRunnable(task, queuedTaskCount));
+      } catch (RejectedExecutionException e) {
+        queuedTaskCount.decrementAndGet();
+        throw e;
+      }
     }
   }
   
