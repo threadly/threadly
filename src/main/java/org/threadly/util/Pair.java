@@ -28,9 +28,9 @@ public class Pair<L, R> {
    * @param source Source collection of pairs
    * @return New list that contains non-null left references
    */
-  public static <T> List<T> collectLeft(Collection<? extends Pair<T, ?>> source) {
+  public static <T> List<T> collectLeft(Collection<? extends Pair<? extends T, ?>> source) {
     List<T> result = new ArrayList<T>(source.size());
-    for (Pair<T, ?> p : source) {
+    for (Pair<? extends T, ?> p : source) {
       if (p.left != null) {
         result.add(p.left);
       }
@@ -47,9 +47,9 @@ public class Pair<L, R> {
    * @param source Source collection of pairs
    * @return New list that contains non-null right references
    */
-  public static <T> List<T> collectRight(Collection<? extends Pair<?, T>> source) {
+  public static <T> List<T> collectRight(Collection<? extends Pair<?, ? extends T>> source) {
     List<T> result = new ArrayList<T>(source.size());
-    for (Pair<?, T> p : source) {
+    for (Pair<?, ? extends T> p : source) {
       if (p.right != null) {
         result.add(p.right);
       }
@@ -113,8 +113,8 @@ public class Pair<L, R> {
    * @param left Object to be looking searching for as a left reference
    * @return Corresponding right reference or {@code null} if none is found
    */
-  public static <T> T getRightFromLeft(Iterable<? extends Pair<?, T>> search, Object left) {
-    for (Pair<?, T> p : search) {
+  public static <T> T getRightFromLeft(Iterable<? extends Pair<?, ? extends T>> search, Object left) {
+    for (Pair<?, ? extends T> p : search) {
       if (p.left == null) {
         if (left == null) {
           return p.right;
@@ -139,8 +139,8 @@ public class Pair<L, R> {
    * @param right Object to be looking searching for as a left reference
    * @return Corresponding left reference or {@code null} if none is found
    */
-  public static <T> T getLeftFromRight(Iterable<? extends Pair<T, ?>> search, Object right) {
-    for (Pair<T, ?> p : search) {
+  public static <T> T getLeftFromRight(Iterable<? extends Pair<? extends T, ?>> search, Object right) {
+    for (Pair<? extends T, ?> p : search) {
       if (p.right == null) {
         if (right == null) {
           return p.left;
