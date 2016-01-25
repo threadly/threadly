@@ -79,8 +79,12 @@ public class Profiler {
    * 
    * This uses a default poll interval of 100 milliseconds.
    * 
+   * @deprecated Dumping to a file on stop will no longer be supported, 
+   *               instead just invoke {@link #dump(OutputStream)} after stopping
+   *               
    * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
    */
+  @Deprecated
   public Profiler(File outputFile) {
     this(outputFile, DEFAULT_POLL_INTERVAL_IN_MILLIS);
   }
@@ -101,9 +105,13 @@ public class Profiler {
    * 
    * If the output file is {@code null}, this will behave the same as the empty constructor.
    * 
+   * @deprecated Dumping to a file on stop will no longer be supported, 
+   *               instead just invoke {@link #dump(OutputStream)} after stopping
+   * 
    * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
    * @param pollIntervalInMs frequency to check running threads
    */
+  @Deprecated
   public Profiler(File outputFile, int pollIntervalInMs) {
     this(outputFile, new ProfileStorage(pollIntervalInMs));
   }
@@ -349,6 +357,7 @@ public class Profiler {
             it.next().setResult(result);
           }
         }
+        // TODO - remove logic in 5.0.0 after deprecation removal
         if (outputFile != null) {
           try {
             OutputStream out = new FileOutputStream(outputFile);

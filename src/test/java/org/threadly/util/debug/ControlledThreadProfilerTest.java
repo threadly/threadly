@@ -29,6 +29,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   
   @Test
   @Override
+  @SuppressWarnings("deprecation")
   public void constructorTest() {
     int testPollInterval = Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS * 10;
     File dumpFile = new File("foo");

@@ -32,8 +32,12 @@ public class ControlledThreadProfiler extends Profiler {
    * 
    * If the output file is null, this will behave the same as the empty constructor.
    * 
+   * @deprecated Dumping to a file on stop will no longer be supported, 
+   *               instead just invoke {@link #dump(java.io.OutputStream)} after stopping
+   * 
    * @param outputFile file to dump results to on stop
    */
+  @Deprecated
   public ControlledThreadProfiler(File outputFile) {
     this(outputFile, DEFAULT_POLL_INTERVAL_IN_MILLIS);
   }
@@ -54,9 +58,13 @@ public class ControlledThreadProfiler extends Profiler {
    * 
    * If the output file is {@code null}, this will behave the same as the empty constructor.
    * 
+   * @deprecated Dumping to a file on stop will no longer be supported, 
+   *               instead just invoke {@link #dump(java.io.OutputStream)} after stopping
+   * 
    * @param outputFile file to dump results to on stop
    * @param pollIntervalInMs frequency to check running threads
    */
+  @Deprecated
   public ControlledThreadProfiler(File outputFile, int pollIntervalInMs) {
     super(outputFile, new ControlledThreadProfileStorage(pollIntervalInMs));
     
