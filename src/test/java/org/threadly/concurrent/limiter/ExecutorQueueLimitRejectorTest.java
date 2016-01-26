@@ -27,6 +27,7 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void getCurrentQueueSizeTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(testableScheduler, TEST_QTY);
@@ -39,6 +40,21 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
     testableScheduler.tick();
 
     assertEquals(0, queueRejector.getCurrentQueueSize());
+  }
+  
+  @Test
+  public void getQueuedTaskCountTest() {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(testableScheduler, TEST_QTY);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(i, queueRejector.getQueuedTaskCount());
+      queueRejector.execute(DoNothingRunnable.instance());
+    }
+    
+    testableScheduler.tick();
+
+    assertEquals(0, queueRejector.getQueuedTaskCount());
   }
   
   @Test
@@ -93,7 +109,7 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
       // expected
     }
     
-    assertEquals(0, queueRejector.getCurrentQueueSize());
+    assertEquals(0, queueRejector.getQueuedTaskCount());
   }
   
   private static class ExecutorQueueRejectorFactory implements SubmitterExecutorFactory {

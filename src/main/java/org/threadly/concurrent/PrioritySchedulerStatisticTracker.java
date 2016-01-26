@@ -612,13 +612,31 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
     
     return result;
   }
+
+  /* Override the implementation in PrioritySchedulerExecutor 
+   * because we have the ability to have a cheaper check.
+   * 
+   * @see org.threadly.concurrent.PriorityScheduler#getActiveTaskCount()
+   */
+  @Override
+  public int getActiveTaskCount() {
+    return statsManager.runningTasks.size();
+  }
   
   /* Override the implementation in PrioritySchedulerExecutor 
    * because we have the ability to have a cheaper check.
    * 
    * @see org.threadly.concurrent.PriorityScheduler#getCurrentRunningCount()
    */
+  /**
+   * Call to check how many tasks are currently being executed in this scheduler.
+   * 
+   * @deprecated Please use the better named {@link #getActiveTaskCount()}
+   * 
+   * @return current number of running tasks
+   */
   @Override
+  @Deprecated
   public int getCurrentRunningCount() {
     return statsManager.runningTasks.size();
   }

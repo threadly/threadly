@@ -92,7 +92,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     new TestCondition() { // block till all are finished
       @Override
       public boolean get() {
-        return scheduler.getCurrentRunningCount() == 0 && 
+        return scheduler.getActiveTaskCount() == 0 && 
                  scheduler.getRunTimes().size() >= expectedSampleSize;
       }
     }.blockTillTrue();
@@ -216,7 +216,7 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
       new TestCondition() {
         @Override
         public boolean get() {
-          return scheduler.getCurrentRunningCount() == 0 && 
+          return scheduler.getActiveTaskCount() == 0 && 
                  starvablePriorityCount + lowPriorityCount + highPriorityCount ==  
                    scheduler.getTotalExecutionCount();
         }

@@ -25,8 +25,8 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     return getSubmitterSchedulerFactory();
   }
   
-  @Override
   @Test
+  @Override
   public void executeInOrderTest() throws InterruptedException, TimeoutException {
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
     try {

@@ -361,6 +361,19 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   }
 
   @Override
+  public int getActiveTaskCount() {
+    return tickRunning ? 1 : 0;
+  }
+
+  /**
+   * Call to check how many tasks are currently being executed in this scheduler.
+   * 
+   * @deprecated Please use the better named {@link #getActiveTaskCount()}
+   * 
+   * @return current number of running tasks
+   */
+  @Override
+  @Deprecated
   public int getCurrentRunningCount() {
     return tickRunning ? 1 : 0;
   }

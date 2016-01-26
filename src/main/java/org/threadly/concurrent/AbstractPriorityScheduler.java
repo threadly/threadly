@@ -208,7 +208,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   protected abstract QueueSet getQueueSet(TaskPriority priority);
   
   @Override
-  public int getScheduledTaskCount() {
+  public int getQueuedTaskCount() {
     int result = 0;
     for (TaskPriority p : TaskPriority.values()) {
       result += getQueueSet(p).queueSize();
@@ -223,12 +223,40 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * @param priority priority for tasks to be counted
    * @return quantity of tasks waiting execution or scheduled to be executed later
    */
-  public int getScheduledTaskCount(TaskPriority priority) {
+  public int getQueuedTaskCount(TaskPriority priority) {
     if (priority == null) {
-      return getScheduledTaskCount();
+      return getQueuedTaskCount();
     }
     
     return getQueueSet(priority).queueSize();
+  }
+
+  /**
+   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
+   * a future point.
+   * 
+   * @deprecated Please use {@link #getQueuedTaskCount()} as a direct replacement.
+   * 
+   * @return quantity of tasks waiting execution or scheduled to be executed later
+   */
+  @Override
+  @Deprecated
+  public int getScheduledTaskCount() {
+    return getQueuedTaskCount();
+  }
+  
+  /**
+   * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
+   * executed at a future point for a specific priority.
+   * 
+   * @deprecated Please use {@link #getQueuedTaskCount(TaskPriority)} as a direct replacement
+   * 
+   * @param priority priority for tasks to be counted
+   * @return quantity of tasks waiting execution or scheduled to be executed later
+   */
+  @Deprecated
+  public int getScheduledTaskCount(TaskPriority priority) {
+    return getQueuedTaskCount(priority);
   }
   
   /**

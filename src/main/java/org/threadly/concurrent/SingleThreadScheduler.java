@@ -246,6 +246,19 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   }
 
   @Override
+  public int getActiveTaskCount() {
+    return sManager.scheduler.getActiveTaskCount();
+  }
+
+  /**
+   * Call to check how many tasks are currently being executed in this scheduler.
+   * 
+   * @deprecated Please use the better named {@link #getActiveTaskCount()}
+   * 
+   * @return current number of running tasks
+   */
+  @Override
+  @Deprecated
   public int getCurrentRunningCount() {
     return sManager.scheduler.getCurrentRunningCount();
   }

@@ -116,10 +116,24 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
   /**
    * Call to check how many tasks are currently being executed in this scheduler.
    * 
-   * See also: {@link SchedulerService#getCurrentRunningCount()}
+   * See also: {@link SchedulerService#getActiveTaskCount()}
    * 
    * @return current number of running tasks
    */
+  public int getActiveTaskCount() {
+    return scheduler.getActiveTaskCount();
+  }
+
+  /**
+   * Call to check how many tasks are currently being executed in this scheduler.
+   * 
+   * See also: {@link SchedulerService#getCurrentRunningCount()}
+   * 
+   * @deprecated Please use {@link #getActiveTaskCount()} as a direct replacement.
+   * 
+   * @return current number of running tasks
+   */
+  @Deprecated
   public int getCurrentRunningCount() {
     return scheduler.getCurrentRunningCount();
   }
@@ -129,16 +143,32 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
    * a future point.  Because this does not lock state can be modified during the calculation of 
    * this result.  Ultimately resulting in an inaccurate number.
    * 
-   * See also: {@link SchedulerService#getScheduledTaskCount()}
+   * See also: {@link SchedulerService#getQueuedTaskCount()}
    * 
    * @return quantity of tasks waiting execution or scheduled to be executed later
    */
-  public int getScheduledTaskCount() {
+  public int getQueuedTaskCount() {
     int result = 0;
     for (LimiterContainer limiter : currentLimiters.values()) {
       result += limiter.limiter.waitingTasks.size();
     }
-    return result + scheduler.getScheduledTaskCount();
+    return result + scheduler.getQueuedTaskCount();
+  }
+
+  /**
+   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
+   * a future point.  Because this does not lock state can be modified during the calculation of 
+   * this result.  Ultimately resulting in an inaccurate number.
+   * 
+   * See also: {@link SchedulerService#getScheduledTaskCount()}
+   * 
+   * @deprecated Please use {@link #getQueuedTaskCount()} as a direct replacement.
+   * 
+   * @return quantity of tasks waiting execution or scheduled to be executed later
+   */
+  @Deprecated
+  public int getScheduledTaskCount() {
+    return getQueuedTaskCount();
   }
 
   /**

@@ -147,12 +147,12 @@ public class ProfilerTest {
   public void startWitExecutorTest() {
     PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1);
     try {
-      assertEquals(0, e.getCurrentRunningCount());
+      assertEquals(0, e.getActiveTaskCount());
       
       profiler.start(e);
       
       assertTrue(profiler.isRunning());
-      assertEquals(1, e.getCurrentRunningCount());
+      assertEquals(1, e.getActiveTaskCount());
     } finally {
       profiler.stop();
       e.shutdownNow();

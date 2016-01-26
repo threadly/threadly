@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -98,6 +99,63 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
     } finally {
       btr1.unblock();
       btr2.unblock();
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void getActiveTaskCountTest() {
+    SchedulerServiceFactory factory = getSchedulerServiceFactory();
+    final SchedulerService scheduler = factory.makeSchedulerService(1, false);
+    try {
+      // verify nothing at the start
+      assertEquals(0, scheduler.getActiveTaskCount());
+      
+      BlockingTestRunnable btr = new BlockingTestRunnable();
+      scheduler.execute(btr);
+      
+      btr.blockTillStarted();
+      
+      assertEquals(1, scheduler.getActiveTaskCount());
+      
+      btr.unblock();
+      
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getActiveTaskCount() == 0;
+        }
+      }.blockTillTrue();
+    } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void getCurrentRunningCountTest() {
+    SchedulerServiceFactory factory = getSchedulerServiceFactory();
+    final SchedulerService scheduler = factory.makeSchedulerService(1, false);
+    try {
+      // verify nothing at the start
+      assertEquals(0, scheduler.getCurrentRunningCount());
+      
+      BlockingTestRunnable btr = new BlockingTestRunnable();
+      scheduler.execute(btr);
+      
+      btr.blockTillStarted();
+      
+      assertEquals(1, scheduler.getCurrentRunningCount());
+      
+      btr.unblock();
+      
+      new TestCondition() {
+        @Override
+        public boolean get() {
+          return scheduler.getCurrentRunningCount() == 0;
+        }
+      }.blockTillTrue();
+    } finally {
       factory.shutdown();
     }
   }

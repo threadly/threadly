@@ -183,8 +183,21 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * @return current number of running tasks
    */
   @Override
+  public int getActiveTaskCount() {
+    return workerPool.getActiveTaskCount();
+  }
+
+  /**
+   * Call to check how many tasks are currently being executed in this scheduler.
+   * 
+   * @deprecated Please use the better named {@link #getActiveTaskCount()}
+   * 
+   * @return current number of running tasks
+   */
+  @Override
+  @Deprecated
   public int getCurrentRunningCount() {
-    return workerPool.getCurrentRunningCount();
+    return workerPool.getActiveTaskCount();
   }
   
   @Override
@@ -302,14 +315,15 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
 
   @Override
-  public int getScheduledTaskCount() {
-    return super.getScheduledTaskCount() - 1;
+  public int getQueuedTaskCount() {
+    // subtract one for hack task for spin issue
+    return super.getQueuedTaskCount() - 1;
   }
   
   @Override
-  public int getScheduledTaskCount(TaskPriority priority) {
+  public int getQueuedTaskCount(TaskPriority priority) {
     // subtract one from starvable count for hack task for spin issue
-    return super.getScheduledTaskCount(priority) - (priority == TaskPriority.Starvable ? 1 : 0);
+    return super.getQueuedTaskCount(priority) - (priority == TaskPriority.Starvable ? 1 : 0);
   }
 
   /**
@@ -793,7 +807,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * 
      * @return current number of workers executing tasks
      */
-    public int getCurrentRunningCount() {
+    public int getActiveTaskCount() {
       while (true) {
         int poolSize = currentPoolSize.get();
         int result = poolSize - idleWorkerCount.get();

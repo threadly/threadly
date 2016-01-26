@@ -35,6 +35,16 @@ public interface SchedulerService extends SubmitterSchedulerInterface {
    * 
    * @return current number of running tasks
    */
+  public int getActiveTaskCount();
+  
+  /**
+   * Call to check how many tasks are currently being executed in this scheduler.
+   * 
+   * @deprecated Please use the better named {@link #getActiveTaskCount()} as a direct replacement.
+   * 
+   * @return current number of running tasks
+   */
+  @Deprecated
   public int getCurrentRunningCount();
   
   /**
@@ -43,6 +53,17 @@ public interface SchedulerService extends SubmitterSchedulerInterface {
    * 
    * @return quantity of tasks waiting execution or scheduled to be executed later
    */
+  public int getQueuedTaskCount();
+  
+  /**
+   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
+   * a future point.
+   * 
+   * @deprecated Please use {@link #getQueuedTaskCount()} as a direct replacement.
+   * 
+   * @return quantity of tasks waiting execution or scheduled to be executed later
+   */
+  @Deprecated
   public int getScheduledTaskCount();
   
   /**

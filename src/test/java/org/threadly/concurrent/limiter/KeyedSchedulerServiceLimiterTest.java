@@ -103,6 +103,25 @@ public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
   }
   
   @Test
+  public void getActiveTaskCountTest() {
+    KeyedSchedulerServiceLimiter limiter = makeLimiter(1);
+    String key = StringUtils.makeRandomString(5);
+    
+    assertEquals(0, limiter.getActiveTaskCount());
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      limiter.execute(key, btr);
+      btr.blockTillStarted();
+      
+      assertEquals(1, limiter.getActiveTaskCount());
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
   public void getCurrentRunningCountTest() {
     KeyedSchedulerServiceLimiter limiter = makeLimiter(1);
     String key = StringUtils.makeRandomString(5);
@@ -121,7 +140,34 @@ public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
   }
   
   @Test
-  public void getScheduledTaskCount() {
+  public void getQueuedTaskCountTest() {
+    // must be single thread scheduler so we can block one on the shceduler
+    KeyedSchedulerServiceLimiter limiter = new KeyedSchedulerServiceLimiter(new SingleThreadScheduler(), 1);
+    String key = StringUtils.makeRandomString(5);
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      assertEquals(0, limiter.getQueuedTaskCount());
+      
+      limiter.execute(key, btr);
+      btr.blockTillStarted();
+      
+      limiter.execute(StringUtils.makeRandomString(2), DoNothingRunnable.instance());
+      // 1 blocked on scheduler due to different key
+      assertEquals(1, limiter.getQueuedTaskCount());
+      
+
+      limiter.execute(key, DoNothingRunnable.instance());
+      // 1 additional blocked in limiter now
+      assertEquals(2, limiter.getQueuedTaskCount());
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void getScheduledTaskCountTest() {
     // must be single thread scheduler so we can block one on the shceduler
     KeyedSchedulerServiceLimiter limiter = new KeyedSchedulerServiceLimiter(new SingleThreadScheduler(), 1);
     String key = StringUtils.makeRandomString(5);
