@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.util.AbstractService;
@@ -36,17 +37,67 @@ import org.threadly.util.ExceptionUtils;
  * @since 4.5.0
  */
 public class UnfairExecutor extends AbstractSubmitterExecutor {
+  /**
+   * Generator which will determine the task stripe by using the runnables hash code and 
+   * {@link Clock#lastKnownTimeNanos()}.  This is the fastest built in option (and thus why it is 
+   * the default).  However submissions of the same task many times without the clock being updated 
+   * can result in a scheduler being unfairly burdened.
+   */
+  public static final TaskStripeGenerator TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME = new TaskStripeGenerator() {
+    @Override
+    public long getStripe(Runnable task) {
+      return task.hashCode() ^ Clock.lastKnownTimeNanos();
+    }
+  };
+  /**
+   * Generator which will round robin distribute tasks to threads.  Internally this uses a 
+   * {@link AtomicLong}, which means if lots of tasks are being submitted in parallel there can be 
+   * a lot of compare and swap overhead compared to {@link #TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME}.
+   */
+  public static final TaskStripeGenerator TASK_STRIPE_ATOMIC_INCREMENTING = new TaskStripeGenerator() {
+    private final AtomicLong stripe = new AtomicLong();
+    
+    @Override
+    public long getStripe(Runnable task) {
+      return stripe.getAndIncrement();
+    }
+  };
+  
   private final Worker[] schedulers;
   private final AtomicBoolean shutdownStarted;
+  private final TaskStripeGenerator stripeGenerator;
+  
+  /**
+   * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to using 
+   * daemon threads.  This also defaults to determining a thread by using the runnable hash code and 
+   * the last known time.
+   * 
+   * @param threadCount Number of threads, recommended to be a prime number
+   */
+  public UnfairExecutor(int threadCount) {
+    this(threadCount, true, TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME);
+  }
   
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to using 
    * daemon threads.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
+   * @param stripeGenerator Generator for figuring out how a task is assigned to a thread
    */
-  public UnfairExecutor(int threadCount) {
-    this(threadCount, true);
+  public UnfairExecutor(int threadCount, TaskStripeGenerator stripeGenerator) {
+    this(threadCount, true, stripeGenerator);
+  }
+
+  /**
+   * Constructs a new {@link UnfairExecutor} with a provided thread count.  This also defaults to 
+   * determining a thread by using the runnable hash code and the last known time.
+   * 
+   * @param threadCount Number of threads, recommended to be a prime number
+   * @param useDaemonThreads {@code true} if created threads should be daemon
+   */
+  public UnfairExecutor(int threadCount, boolean useDaemonThreads) {
+    this(threadCount, useDaemonThreads, TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME);
   }
 
   /**
@@ -54,10 +105,25 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param useDaemonThreads {@code true} if created threads should be daemon
+   * @param stripeGenerator Generator for figuring out how a task is assigned to a thread
    */
-  public UnfairExecutor(int threadCount, boolean useDaemonThreads) {
-    this(threadCount, new ConfigurableThreadFactory(UnfairExecutor.class.getSimpleName() + "-", true, 
-                                                    useDaemonThreads, Thread.NORM_PRIORITY, null, null));
+  public UnfairExecutor(int threadCount, boolean useDaemonThreads, 
+                        TaskStripeGenerator stripeGenerator) {
+    this(threadCount, 
+         new ConfigurableThreadFactory(UnfairExecutor.class.getSimpleName() + "-", true, 
+                                       useDaemonThreads, Thread.NORM_PRIORITY, null, null), 
+         stripeGenerator);
+  }
+
+  /**
+   * Constructs a new {@link UnfairExecutor} with a provided thread count and factory.  This also 
+   * defaults to determining a thread by using the runnable hash code and the last known time.
+   * 
+   * @param threadCount Number of threads, recommended to be a prime number
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public UnfairExecutor(int threadCount, ThreadFactory threadFactory) {
+    this(threadCount, threadFactory, TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME);
   }
 
   /**
@@ -65,12 +131,17 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param threadFactory thread factory for producing new threads within executor
+   * @param stripeGenerator Generator for figuring out how a task is assigned to a thread
    */
-  public UnfairExecutor(int threadCount, ThreadFactory threadFactory) {
+  public UnfairExecutor(int threadCount, ThreadFactory threadFactory, 
+                        TaskStripeGenerator stripeGenerator) {
     ArgumentVerifier.assertGreaterThanZero(threadCount, "threadCount");
+    ArgumentVerifier.assertNotNull(stripeGenerator, "stripeGenerator");
     
-    schedulers = new Worker[threadCount];
-    shutdownStarted = new AtomicBoolean(false);
+    this.schedulers = new Worker[threadCount];
+    this.shutdownStarted = new AtomicBoolean(false);
+    this.stripeGenerator = stripeGenerator;
+    
     for (int i = 0; i < threadCount; i++) {
       schedulers[i] = new Worker(threadFactory);
       schedulers[i].start();
@@ -83,18 +154,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       throw new RejectedExecutionException("Pool is shutdown");
     }
     
-    long seed = Math.abs(task.hashCode() ^ Clock.lastKnownTimeNanos());
-    Worker w1 = schedulers[(int)(seed % schedulers.length)];
-    if (w1.taskQueue.isEmpty()) {
-      w1.addTask(task);
-    } else {
-      Worker w2 = schedulers[(int)((seed + 1) % schedulers.length)];
-      if (w1.taskQueue.size() < w2.taskQueue.size()) {
-        w1.addTask(task);
-      } else {
-        w2.addTask(task);
-      }
-    }
+    schedulers[(int)(Math.abs(stripeGenerator.getStripe(task)) % schedulers.length)].addTask(task);
   }
 
   /**
@@ -266,5 +326,21 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       w.stopIfRunning();
       w.taskQueue.clear();
     }
+  }
+  
+  /**
+   * Strategy for taking in a task and producing a thread identifier to be distributed on.
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.5.0
+   */
+  public interface TaskStripeGenerator {
+    /**
+     * Generate a stripe to distribute the task on to.
+     * 
+     * @param task Task which can be used for referencing in determining the stripe
+     * @return Any positive or negative long value to represent the stripe
+     */
+    public long getStripe(Runnable task);
   }
 }
