@@ -147,12 +147,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * Getter for the current quantity of workers/threads constructed (either running or idle).  
+   * Getter for the current quantity of threads running in this pool (either active or idle).  
    * This is different than the size returned from {@link #getMaxPoolSize()} in that we 
    * lazily create threads.  This represents the amount of threads needed to be created so far, 
    * where {@link #getMaxPoolSize()} represents the amount of threads the pool may grow to.
    * 
-   * @return current worker count
+   * @return current thread count
    */
   public int getCurrentPoolSize() {
     return workerPool.getCurrentPoolSize();
@@ -209,12 +209,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   public long getMaxWaitForLowPriority() {
     return taskQueueManager.getMaxWaitForLowPriority();
   }
-  
+
   /**
    * Ensures all threads have been started, it will create threads till the thread count matches 
-   * the set pool size (checked via {@link #getMaxPoolSize()}).  If this is able to start threads 
-   * (meaning that many threads are not already running), those threads will remain idle till 
-   * there is tasks ready to execute.
+   * the set pool size (checked via {@link #getMaxPoolSize()}).  These new threads will remain 
+   * idle till there is tasks ready to execute.
    */
   public void prestartAllThreads() {
     workerPool.prestartAllThreads();
@@ -794,9 +793,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     }
 
     /**
-     * Getter for the current quantity of workers constructed (either running or idle).
+     * Check for the current quantity of threads running in this pool (either active or idle).
      * 
-     * @return current worker count
+     * @return current thread count
      */
     public int getCurrentPoolSize() {
       return currentPoolSize.get();
