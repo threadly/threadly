@@ -151,8 +151,11 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * that shared memory operations done in tasks of this {@link SingleThreadScheduler} will be 
    * finished and represented in the thread which is making this invocation.
    * 
+   * @deprecated Invoke {@link #shutdown()} followed by {@link #awaitTermination()}
+   * 
    * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
    */
+  @Deprecated
   public void shutdownAndAwaitTermination() throws InterruptedException {
     shutdownAndAwaitTermination(0);
   }
@@ -168,16 +171,17 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * {@link #shutdownNowAndAwaitTermination()}, you can invoke {@link #shutdownNow()} and then invoke 
    * this right after.
    * 
+   * @deprecated Invoke {@link #shutdown()} followed by {@link #awaitTermination(long)}
+   * 
    * @param timeoutMillis Time in milliseconds to wait for executing thread to finish, 0 to wait forever
    * @return {@code true} if the executing thread shutdown within the timeout, {@code false} if timeout occurred
    * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
    */
+  @Deprecated
   public boolean shutdownAndAwaitTermination(long timeoutMillis) throws InterruptedException {
     shutdown(false);
     
-    sManager.execThread.join(timeoutMillis);
-    
-    return ! sManager.execThread.isAlive();
+    return awaitTermination(timeoutMillis);
   }
   
   /**
@@ -187,14 +191,42 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * operations done in tasks of this {@link SingleThreadScheduler} will be finished and 
    * represented in the thread which is making this invocation.
    * 
+   * @deprecated Invoke {@link #shutdownNow()} followed by {@link #awaitTermination()}
+   * 
    * @return returns a list of runnables which were waiting in the queue to be run at time of shutdown
    * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
    */
+  @Deprecated
   public List<Runnable> shutdownNowAndAwaitTermination() throws InterruptedException {
     List<Runnable> result = shutdown(true);
-    sManager.execThread.join();
+    awaitTermination();
     
     return result;
+  }
+
+  /**
+   * Block until the thread pool has shutdown and all threads have been stopped.  If neither 
+   * {@link #shutdown()} or {@link #shutdownNow()} is invoked, then this will block forever.
+   * 
+   * @throws InterruptedException Thrown if blocking thread is interrupted waiting for shutdown
+   */
+  public void awaitTermination() throws InterruptedException {
+    sManager.execThread.join();
+  }
+
+  /**
+   * Block until the thread pool has shutdown and all threads have been stopped.  If neither 
+   * {@link #shutdown()} or {@link #shutdownNow()} is invoked, then this will block until the 
+   * timeout is reached.
+   * 
+   * @param timeoutMillis time to block and wait for thread pool to shutdown
+   * @return {@code true} if the pool has shutdown, false if timeout was reached
+   * @throws InterruptedException Thrown if blocking thread is interrupted waiting for shutdown
+   */
+  public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
+    sManager.execThread.join(timeoutMillis);
+    
+    return ! sManager.execThread.isAlive();
   }
 
   @Override

@@ -53,6 +53,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void isShutdownTest() throws InterruptedException {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     assertFalse(sts.isShutdown());
@@ -168,6 +169,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void shutdownAndAwaitTerminationTest() throws InterruptedException {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     /* adding a run time to have greater chances that runnable 
@@ -182,6 +184,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void shutdownAndAwaitTerminationWithTimeoutTest() throws InterruptedException {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     /* adding a run time to have greater chances that runnable 
@@ -196,6 +199,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void shutdownAndAwaitTerminationWithTimeoutExpireTest() throws InterruptedException {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     executeTestRunnables(sts, 1000 * 10);
@@ -211,6 +215,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     executeTestRunnables(sts, 5);
       
+    @SuppressWarnings("deprecation")
     List<Runnable> canceledRunnables = sts.shutdownNowAndAwaitTermination();
     
     assertNotNull(canceledRunnables);
@@ -219,6 +224,48 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     while (it.hasNext()) {
       assertEquals(0, ((TestRunnable)it.next()).getRunCount());
     }
+  }
+  
+  @Test
+  public void awaitTerminationTest() throws InterruptedException {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    /* adding a run time to have greater chances that runnable 
+     * will be waiting to execute after shutdown call.
+     */
+    TestRunnable lastRunnable = executeTestRunnables(sts, 5).get(TEST_QTY - 1);
+    
+    sts.shutdown();
+    sts.awaitTermination();
+    
+    // runnable should already be done
+    assertTrue(lastRunnable.ranOnce());
+  }
+  
+  @Test
+  public void awaitTerminationWithTimeoutTest() throws InterruptedException {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    /* adding a run time to have greater chances that runnable 
+     * will be waiting to execute after shutdown call.
+     */
+    TestRunnable lastRunnable = executeTestRunnables(sts, 5).get(TEST_QTY - 1);
+
+    sts.shutdown();
+    assertTrue(sts.awaitTermination(1000 * 10));
+    
+    // runnable should already be done
+    assertTrue(lastRunnable.ranOnce());
+  }
+  
+  @Test
+  public void awaitTerminationWithTimeoutExpireTest() throws InterruptedException {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    executeTestRunnables(sts, 1000 * 10);
+    
+    long start = Clock.accurateForwardProgressingMillis();
+    sts.shutdown();
+    assertFalse(sts.awaitTermination(DELAY_TIME));
+
+    assertTrue(Clock.accurateForwardProgressingMillis() - start >= (DELAY_TIME - ALLOWED_VARIANCE));
   }
   
   @Test (expected = RejectedExecutionException.class)
