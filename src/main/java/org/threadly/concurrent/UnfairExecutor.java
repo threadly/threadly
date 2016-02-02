@@ -235,6 +235,9 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       while (isRunning()) {
         Runnable task = taskQueue.poll();
         if (task != null) {
+          if (parked) {
+            parked = false;
+          }
           ExceptionUtils.runRunnable(task);
         } else if (! parked) {
           parked = true;
