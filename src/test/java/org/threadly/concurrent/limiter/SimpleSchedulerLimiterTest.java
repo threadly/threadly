@@ -59,7 +59,7 @@ public class SimpleSchedulerLimiterTest extends ExecutorLimiterTest {
 
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize * 2, prestartIfAvailable);
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
       
       if (addSubPoolName) {
         return new SimpleSchedulerLimiter(scheduler, poolSize, "TestSubPool");

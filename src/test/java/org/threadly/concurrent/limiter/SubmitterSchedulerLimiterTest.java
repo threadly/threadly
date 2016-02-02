@@ -60,7 +60,7 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
     @Override
     @SuppressWarnings("deprecation")
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize * 2, prestartIfAvailable);
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
       
       if (addSubPoolName) {
         return new SubmitterSchedulerLimiter(scheduler, poolSize, "TestSubPool");
