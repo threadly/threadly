@@ -39,9 +39,10 @@ import org.threadly.util.ExceptionUtils;
 public class UnfairExecutor extends AbstractSubmitterExecutor {
   /**
    * Generator which will determine the task stripe by using the runnables hash code and 
-   * {@link Clock#lastKnownTimeNanos()}.  This is the fastest built in option (and thus why it is 
-   * the default).  However submissions of the same task many times without the clock being updated 
-   * can result in a scheduler being unfairly burdened.
+   * {@link Clock#lastKnownTimeNanos()}.  This is the fastest built in option, however submissions 
+   * of the same task many times without the clock being updated can result in a scheduler being 
+   * unfairly burdened.  Because of that it is highly recommended to over-size your pool if you are 
+   * using this distributor.
    */
   public static final TaskStripeGenerator TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME = new TaskStripeGenerator() {
     @Override
@@ -50,7 +51,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     }
   };
   /**
-   * Generator which will round robin distribute tasks to threads.  Internally this uses a 
+   * Stripe generator which will round robin distribute tasks to threads.  Internally this uses a 
    * {@link AtomicLong}, which means if lots of tasks are being submitted in parallel there can be 
    * a lot of compare and swap overhead compared to {@link #TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME}.
    */
@@ -69,13 +70,12 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to using 
-   * daemon threads.  This also defaults to determining a thread by using the runnable hash code and 
-   * the last known time.
+   * daemon threads.  This also defaults to determining the thread stripe in a round robin fashion.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    */
   public UnfairExecutor(int threadCount) {
-    this(threadCount, true, TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME);
+    this(threadCount, true, TASK_STRIPE_ATOMIC_INCREMENTING);
   }
   
   /**
@@ -90,14 +90,14 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   }
 
   /**
-   * Constructs a new {@link UnfairExecutor} with a provided thread count.  This also defaults to 
-   * determining a thread by using the runnable hash code and the last known time.
+   * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to 
+   * determining the thread stripe in a round robin fashion.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param useDaemonThreads {@code true} if created threads should be daemon
    */
   public UnfairExecutor(int threadCount, boolean useDaemonThreads) {
-    this(threadCount, useDaemonThreads, TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME);
+    this(threadCount, useDaemonThreads, TASK_STRIPE_ATOMIC_INCREMENTING);
   }
 
   /**
@@ -117,13 +117,13 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
 
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count and factory.  This also 
-   * defaults to determining a thread by using the runnable hash code and the last known time.
+   * defaults to determining the thread stripe in a round robin fashion.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param threadFactory thread factory for producing new threads within executor
    */
   public UnfairExecutor(int threadCount, ThreadFactory threadFactory) {
-    this(threadCount, threadFactory, TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME);
+    this(threadCount, threadFactory, TASK_STRIPE_ATOMIC_INCREMENTING);
   }
 
   /**
