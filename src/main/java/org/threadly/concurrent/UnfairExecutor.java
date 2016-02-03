@@ -144,8 +144,13 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     
     for (int i = 0; i < threadCount; i++) {
       schedulers[i] = new Worker(threadFactory);
-      schedulers[i].start();
+      if (i > 0) {
+        schedulers[i].setNeighborWorker(schedulers[i - 1]);
+        schedulers[i].start();
+      }
     }
+    schedulers[0].setNeighborWorker(schedulers[schedulers.length - 1]);
+    schedulers[0].start();
   }
   
   @Override
@@ -262,6 +267,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     protected final Thread thread;
     private final Queue<Runnable> taskQueue;
     private volatile boolean parked;
+    private Worker neighborWorker;
     
     public Worker(ThreadFactory threadFactory) {
       thread = threadFactory.newThread(this);
@@ -271,9 +277,21 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       taskQueue = new ConcurrentLinkedQueue<Runnable>();
       parked = false;
     }
+    
+    /**
+     * Must be invoked with a non-null worker before starting.
+     * 
+     * @param w Worker to assist if we are idle
+     */
+    protected void setNeighborWorker(Worker w) {
+      neighborWorker = w;
+    }
 
     @Override
     protected void startupService() {
+      if (neighborWorker == null) {
+        throw new IllegalStateException();
+      }
       thread.start();
     }
 
@@ -302,7 +320,13 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
           }
           ExceptionUtils.runRunnable(task);
         } else if (! parked) {
-          parked = true;
+          // check neighbor worker to see if they need help
+          task = neighborWorker.taskQueue.poll();
+          if (task != null) {
+            ExceptionUtils.runRunnable(task);
+          } else {
+            parked = true;
+          }
         } else {
           LockSupport.park();
         }
