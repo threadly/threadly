@@ -294,6 +294,8 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     public void run() {
       while (isRunning()) {
         Runnable task = taskQueue.poll();
+        // just reset status, we should only shutdown by having the service stopped
+        Thread.interrupted();
         if (task != null) {
           if (parked) {
             parked = false;
