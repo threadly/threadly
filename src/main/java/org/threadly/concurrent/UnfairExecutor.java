@@ -49,8 +49,8 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * This class should not be constructed, instead it should be provided via the static function 
    * {@link TaskHashXorTimeStripeGenerator#instance()}.
    */
-  private static class TaskHashXorTimeStripeGenerator implements TaskStripeGenerator {
-    public static final TaskHashXorTimeStripeGenerator INSTANCE = 
+  public static class TaskHashXorTimeStripeGenerator implements TaskStripeGenerator {
+    private static final TaskHashXorTimeStripeGenerator INSTANCE = 
         new TaskHashXorTimeStripeGenerator();
     
     /**
