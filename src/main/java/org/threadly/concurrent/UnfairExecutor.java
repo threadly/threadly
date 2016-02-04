@@ -40,29 +40,68 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   /**
    * Generator which will determine the task stripe by using the runnables hash code and 
    * {@link Clock#lastKnownTimeNanos()}.  This is the fastest built in option, however submissions 
-   * of the same task many times without the clock being updated can result in a scheduler being 
-   * unfairly burdened.  Because of that it is highly recommended to over-size your pool if you are 
-   * using this distributor.
+   * of the same task many times without the clock being updated can result in a single thread 
+   * being unfairly burdened.  Because of that it is highly recommended to over-size your pool if 
+   * you are using this distributor.
+   * 
+   * A possibly more fair, but slower stripe generator would be {@link AtomicStripeGenerator}.  
+   * 
+   * This class should not be constructed, instead it should be provided via the static function 
+   * {@link TaskHashXorTimeStripeGenerator#instance()}.
    */
-  public static final TaskStripeGenerator TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME = new TaskStripeGenerator() {
+  private static class TaskHashXorTimeStripeGenerator implements TaskStripeGenerator {
+    public static final TaskHashXorTimeStripeGenerator INSTANCE = 
+        new TaskHashXorTimeStripeGenerator();
+    
+    /**
+     * Provides an instance which can be provided into the constructor of {@link UnfairExecutor}.
+     * 
+     * @return TaskHashXorTimeStripeGenerator instance
+     */
+    public static TaskHashXorTimeStripeGenerator instance() {
+      return INSTANCE;
+    }
+    
+    private TaskHashXorTimeStripeGenerator() {
+      // don't allow external construction
+    }
+    
     @Override
     public long getStripe(Runnable task) {
       return task.hashCode() ^ Clock.lastKnownTimeNanos();
     }
-  };
+  }
+
   /**
    * Stripe generator which will round robin distribute tasks to threads.  Internally this uses a 
    * {@link AtomicLong}, which means if lots of tasks are being submitted in parallel there can be 
-   * a lot of compare and swap overhead compared to {@link #TASK_STRIPE_HASH_AND_LAST_KNOWN_TIME}.
+   * a lot of compare and swap overhead compared to {@link TaskHashXorTimeStripeGenerator}.  
+   * 
+   * This class should not be constructed, instead it should be provided via the static function 
+   * {@link AtomicStripeGenerator#instance()}.
    */
-  public static final TaskStripeGenerator TASK_STRIPE_ATOMIC_INCREMENTING = new TaskStripeGenerator() {
-    private final AtomicLong stripe = new AtomicLong();
+  public static class AtomicStripeGenerator implements TaskStripeGenerator {
+    /**
+     * Provides an instance which can be provided into the constructor of {@link UnfairExecutor}.
+     * 
+     * @return A new AtomicStripeGenerator instance
+     */
+    public static AtomicStripeGenerator instance() {
+      return new AtomicStripeGenerator();
+    }
+    
+    private final AtomicLong stripe;
+    
+    private AtomicStripeGenerator() {
+      // don't allow external construction
+      stripe = new AtomicLong();
+    }
     
     @Override
     public long getStripe(Runnable task) {
       return stripe.getAndIncrement();
     }
-  };
+  }
   
   private final Worker[] schedulers;
   private final AtomicBoolean shutdownStarted;
@@ -70,17 +109,20 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to using 
-   * daemon threads.  This also defaults to determining the thread stripe in a round robin fashion.
+   * daemon threads.  This also defaults to using the {@link TaskHashXorTimeStripeGenerator}.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    */
   public UnfairExecutor(int threadCount) {
-    this(threadCount, true, TASK_STRIPE_ATOMIC_INCREMENTING);
+    this(threadCount, true, TaskHashXorTimeStripeGenerator.instance());
   }
   
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to using 
-   * daemon threads.
+   * daemon threads.  
+   * 
+   * Possible built in stripe generators for use would be {@link AtomicStripeGenerator} or 
+   * {@link TaskHashXorTimeStripeGenerator}.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param stripeGenerator Generator for figuring out how a task is assigned to a thread
@@ -90,18 +132,21 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   }
 
   /**
-   * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to 
-   * determining the thread stripe in a round robin fashion.
+   * Constructs a new {@link UnfairExecutor} with a provided thread count.    This also defaults 
+   * to using the {@link TaskHashXorTimeStripeGenerator}.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param useDaemonThreads {@code true} if created threads should be daemon
    */
   public UnfairExecutor(int threadCount, boolean useDaemonThreads) {
-    this(threadCount, useDaemonThreads, TASK_STRIPE_ATOMIC_INCREMENTING);
+    this(threadCount, useDaemonThreads, TaskHashXorTimeStripeGenerator.instance());
   }
 
   /**
-   * Constructs a new {@link UnfairExecutor} with a provided thread count.
+   * Constructs a new {@link UnfairExecutor} with a provided thread count.  
+   * 
+   * Possible built in stripe generators for use would be {@link AtomicStripeGenerator} or 
+   * {@link TaskHashXorTimeStripeGenerator}.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param useDaemonThreads {@code true} if created threads should be daemon
@@ -117,17 +162,20 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
 
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count and factory.  This also 
-   * defaults to determining the thread stripe in a round robin fashion.
+   * defaults to using the {@link TaskHashXorTimeStripeGenerator}.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param threadFactory thread factory for producing new threads within executor
    */
   public UnfairExecutor(int threadCount, ThreadFactory threadFactory) {
-    this(threadCount, threadFactory, TASK_STRIPE_ATOMIC_INCREMENTING);
+    this(threadCount, threadFactory, TaskHashXorTimeStripeGenerator.instance());
   }
 
   /**
-   * Constructs a new {@link UnfairExecutor} with a provided thread count and factory.
+   * Constructs a new {@link UnfairExecutor} with a provided thread count and factory.  
+   * 
+   * Possible built in stripe generators for use would be {@link AtomicStripeGenerator} or 
+   * {@link TaskHashXorTimeStripeGenerator}.
    * 
    * @param threadCount Number of threads, recommended to be a prime number
    * @param threadFactory thread factory for producing new threads within executor
@@ -362,14 +410,17 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   }
   
   /**
-   * Strategy for taking in a task and producing a thread identifier to be distributed on.
+   * <p>Strategy for taking in a task and producing a long which will be translated to which 
+   * thread the task should be distributed on to.  This number is only a guide for the scheduler, 
+   * the scheduler may choose another thread depending on what internal balancing may be 
+   * possible.</p>
    * 
    * @author jent - Mike Jensen
    * @since 4.5.0
    */
   public interface TaskStripeGenerator {
     /**
-     * Generate a stripe to distribute the task on to.
+     * Generate an identifier for the stripe to distribute the task on to.
      * 
      * @param task Task which can be used for referencing in determining the stripe
      * @return Any positive or negative long value to represent the stripe
