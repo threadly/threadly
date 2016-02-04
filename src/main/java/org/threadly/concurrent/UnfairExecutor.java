@@ -338,9 +338,9 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * @author jent - Mike Jensen
    * @since 4.5.0
    */
-  private static class Worker extends AbstractService implements Runnable {
+  protected static class Worker extends AbstractService implements Runnable {
     protected final Thread thread;
-    private final Queue<Runnable> taskQueue;
+    protected final Queue<Runnable> taskQueue;
     private volatile boolean parked;
     private Worker checkNeighborWorker;
     private Worker wakupNeighborWorker;
