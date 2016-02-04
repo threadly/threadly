@@ -38,6 +38,25 @@ import org.threadly.util.ExceptionUtils;
  */
 public class UnfairExecutor extends AbstractSubmitterExecutor {
   /**
+   * <p>Strategy for taking in a task and producing a long which will be translated to which 
+   * thread the task should be distributed on to.  This number is only a guide for the scheduler, 
+   * the scheduler may choose another thread depending on what internal balancing may be 
+   * possible.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.5.0
+   */
+  public interface TaskStripeGenerator {
+    /**
+     * Generate an identifier for the stripe to distribute the task on to.
+     * 
+     * @param task Task which can be used for referencing in determining the stripe
+     * @return Any positive or negative long value to represent the stripe
+     */
+    public long getStripe(Runnable task);
+  }
+  
+  /**
    * Generator which will determine the task stripe by using the runnables hash code and 
    * {@link Clock#lastKnownTimeNanos()}.  This is the fastest built in option, however submissions 
    * of the same task many times without the clock being updated can result in a single thread 
@@ -48,6 +67,9 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * 
    * This class should not be constructed, instead it should be provided via the static function 
    * {@link TaskHashXorTimeStripeGenerator#instance()}.
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.5.0
    */
   public static class TaskHashXorTimeStripeGenerator implements TaskStripeGenerator {
     private static final TaskHashXorTimeStripeGenerator INSTANCE = 
@@ -79,6 +101,9 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * 
    * This class should not be constructed, instead it should be provided via the static function 
    * {@link AtomicStripeGenerator#instance()}.
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.5.0
    */
   public static class AtomicStripeGenerator implements TaskStripeGenerator {
     /**
@@ -407,24 +432,5 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       w.stopIfRunning();
       w.taskQueue.clear();
     }
-  }
-  
-  /**
-   * <p>Strategy for taking in a task and producing a long which will be translated to which 
-   * thread the task should be distributed on to.  This number is only a guide for the scheduler, 
-   * the scheduler may choose another thread depending on what internal balancing may be 
-   * possible.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.5.0
-   */
-  public interface TaskStripeGenerator {
-    /**
-     * Generate an identifier for the stripe to distribute the task on to.
-     * 
-     * @param task Task which can be used for referencing in determining the stripe
-     * @return Any positive or negative long value to represent the stripe
-     */
-    public long getStripe(Runnable task);
   }
 }
