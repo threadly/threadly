@@ -57,7 +57,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   }
   
   /**
-   * Generator which will determine the task stripe by using the runnables hash code and 
+   * Generator which will determine the task stripe by using the identity hash of the runnable and 
    * {@link Clock#lastKnownTimeNanos()}.  This is the fastest built in option, however submissions 
    * of the same task many times without the clock being updated can result in a single thread 
    * being unfairly burdened.  Because of that it is highly recommended to over-size your pool if 
@@ -90,7 +90,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     
     @Override
     public long getStripe(Runnable task) {
-      return task.hashCode() ^ Clock.lastKnownTimeNanos();
+      return System.identityHashCode(task) ^ Clock.lastKnownTimeNanos();
     }
   }
 
