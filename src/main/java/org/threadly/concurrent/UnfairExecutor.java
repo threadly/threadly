@@ -23,15 +23,17 @@ import org.threadly.util.ExceptionUtils;
  * tasks are consumed however is fastest.</p>
  * 
  * <p>This executor has an execution queue per thread.  That way each thread has a many producer, 
- * one consumer safety guarantees.  Vs normal pools which have to deal with a many to many thread 
- * safety issue.  Determining the thread queue may be based on a variety of information, some 
- * examples are the {@link Object#hashCode()} of the provided task, the current time, or other 
- * weak choices to try and distribute work evenly.</p>
+ * one consumer safety guarantees.  Compared to other pools which have to deal with a many to many 
+ * thread safety issue.  Determining the thread queue may be based on a variety of information.  A 
+ * couple built in distrubtion solutions are {@link TaskHashXorTimeStripeGenerator} (default) and 
+ * {@link AtomicStripeGenerator}.</p>
  * 
- * <p>In this it is obviously possible for one long running task to block other tasks needing to 
- * run (even if other threads are idle).  Because of that tasks should be equally sized, having 
- * large tasks mixed in with small ones will make this more problematic.  We also recommend having 
- * thread counts which are prime numbers for a more even hash distribution.</p>
+ * <p>This scheduler will work best when the following conditions are true.  First because a long 
+ * running task can block other tasks from running (even when other threads are idle).  It is best 
+ * that tasks should be equally sized.  We also recommend having thread counts which are prime 
+ * numbers for a more even hash distribution.  It is also important to recognize that it is 
+ * generally a bad idea to block any of these threads waiting for results from processing that is 
+ * expected to happen on the same executor.</p>
  * 
  * @author jent - Mike Jensen
  * @since 4.5.0
@@ -250,7 +252,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * Stops any new tasks from being submitted to the pool.  But allows all tasks which are 
    * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If recurring 
    * tasks are present they will also be unable to reschedule.  This call will not block to wait 
-   * for the shutdown of the scheduler to finish.  If {@code shutdown()} or 
+   * for the shutdown of the scheduler to finish.  If {@link #shutdown()} or 
    * {@link #shutdownNow()} has already been called, this will have no effect.  
    * 
    * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
