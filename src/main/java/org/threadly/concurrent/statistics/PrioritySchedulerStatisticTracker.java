@@ -1,25 +1,19 @@
 package org.threadly.concurrent.statistics;
 
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
-import org.threadly.concurrent.future.ListenableFutureTask;
+import org.threadly.concurrent.statistics.PriorityStatisticManager.TaskStatWrapper;
 import org.threadly.util.Clock;
 import org.threadly.util.Pair;
-import org.threadly.util.StatisticsUtils;
 
 /**
  * <p>An implementation of {@link PriorityScheduler} which tracks run and usage statistics.  This 
@@ -33,8 +27,8 @@ import org.threadly.util.StatisticsUtils;
  * @since 4.5.0 (earlier forms existed since 1.0.0)
  */
 public class PrioritySchedulerStatisticTracker extends PriorityScheduler 
-                                               implements StatisticExecutor {
-  protected final StatsManager statsManager;
+                                               implements StatisticPriorityScheduler {
+  protected final PriorityStatisticManager statsManager;
   
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
@@ -336,7 +330,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
                                            ThreadFactory threadFactory, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
     super(new StatisticWorkerPool(threadFactory, poolSize, 
-                                  new StatsManager(maxStatisticWindowSize, accurateTime)), 
+                                  new PriorityStatisticManager(maxStatisticWindowSize, accurateTime)), 
           maxWaitForLowPriorityInMs, defaultPriority);
     
     this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
@@ -404,439 +398,89 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
 
   @Override
   public List<Long> getExecutionDelaySamples() {
-    List<Long> resultList = new ArrayList<Long>(statsManager.highPriorityExecutionDelay);
-    resultList.addAll(statsManager.lowPriorityExecutionDelay);
-    resultList.addAll(statsManager.starvablePriorityExecutionDelay);
-    
-    return resultList;
+    return statsManager.getExecutionDelaySamples();
   }
   
-  /**
-   * Call to get a list of all currently recorded times for execution delays.  This is the window 
-   * used for the rolling average for {@link #getAverageExecutionDelay(TaskPriority)}.  This call 
-   * allows for more complex statistics (ie looking for outliers, etc).
-   * 
-   * @param priority Task priority to provide samples for
-   * @return list which represents execution delay samples
-   */
+  @Override
   public List<Long> getExecutionDelaySamples(TaskPriority priority) {
-    if (priority == null) {
-      return getExecutionDelaySamples();
-    }
-
-    return new ArrayList<Long>(statsManager.getExecutionDelaySamples(priority));
+    return statsManager.getExecutionDelaySamples(priority);
   }
 
-  /**
-   * This reports the rolling average delay from when a task was expected to run, till when the 
-   * executor actually started the task.    This will return {@code -1} if no samples have been 
-   * collected yet.  This call averages over all priority types, if you want the delay for a 
-   * specific priority use {@link #getAverageExecutionDelay(TaskPriority)}.
-   * 
-   * @return Average delay for tasks to be executed in milliseconds
-   */
   @Override
   public double getAverageExecutionDelay() {
-    List<Long> resultList = getExecutionDelaySamples();
-    
-    if (resultList.isEmpty()) {
-      return -1;
-    }
-    return StatisticsUtils.getAverage(resultList);
-  }
-  
-  /**
-   * Gets the average delay from when the task is ready, to when it is actually executed.  This will 
-   * only inspect the times for a specific priority.
-   * 
-   * @param priority Specific task priority which statistics should be calculated against
-   * @return Average delay for tasks to be executed in milliseconds
-   */
-  public double getAverageExecutionDelay(TaskPriority priority) {
-    if (priority == null) {
-      return getAverageExecutionDelay();
-    }
-    List<Long> stats = getExecutionDelaySamples(priority);
-    if (stats.isEmpty()) {
-      return -1;
-    }
-    return StatisticsUtils.getAverage(stats);
+    return statsManager.getAverageExecutionDelay();
   }
 
-  /**
-   * Gets percentile values for execution delays.  This function accepts any decimal percentile 
-   * between zero and one hundred.
-   * 
-   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
-   * returned map will iterate in order of the requested percentiles as well.  
-   * 
-   * These percentiles are across all priorities combined into the same data set.  If you want 
-   * percentiles for a specific priority use 
-   * {@link #getExecutionDelayPercentiles(TaskPriority, double...)}.
-   * 
-   * @param percentiles Percentiles requested, any decimal values between 0 and 100 (inclusive)
-   * @return Map with keys being the percentiles requested, value being the execution delay in milliseconds
-   */
+  @Override
+  public double getAverageExecutionDelay(TaskPriority priority) {
+    return statsManager.getAverageExecutionDelay(priority);
+  }
+
   @Override
   public Map<Double, Long> getExecutionDelayPercentiles(double... percentiles) {
-    List<Long> samples = getExecutionDelaySamples();
-    if (samples.isEmpty()) {
-      samples.add(0L);
-    }
-    return StatisticsUtils.getPercentiles(samples, percentiles);
+    return statsManager.getExecutionDelayPercentiles(percentiles);
   }
 
-  /**
-   * Gets percentile values for execution delays.  This function accepts any decimal percentile 
-   * between zero and one hundred.
-   * 
-   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
-   * returned map will iterate in order of the requested percentiles as well.
-   * 
-   * @param priority Specific task priority which statistics should be calculated against
-   * @param percentiles Percentiles requested, any decimal values between 0 and 100 (inclusive)
-   * @return Map with keys being the percentiles requested, value being the execution delay in milliseconds
-   */
+  @Override
   public Map<Double, Long> getExecutionDelayPercentiles(TaskPriority priority, 
                                                         double... percentiles) {
-    List<Long> samples = getExecutionDelaySamples(priority);
-    if (samples.isEmpty()) {
-      samples.add(0L);
-    }
-    return StatisticsUtils.getPercentiles(samples, percentiles);
+    return statsManager.getExecutionDelayPercentiles(priority, percentiles);
   }
 
-  /**
-   * Get raw sample data for task run durations.  This raw data can be used for more advanced 
-   * statistics which are not provided in this library.  These can also be fed into utilities in 
-   * {@link org.threadly.util.StatisticsUtils} for additional statistics.
-   * 
-   * These result set includes all priorities.  If you want durations for a specific priority use 
-   * {@link #getExecutionDurationSamples(TaskPriority)}.
-   * 
-   * @return A list of task durations in milliseconds
-   */
   @Override
   public List<Long> getExecutionDurationSamples() {
-    List<Long> resultList = new ArrayList<Long>(statsManager.highPriorityRunDurations);
-    resultList.addAll(statsManager.lowPriorityRunDurations);
-    resultList.addAll(statsManager.starvablePriorityRunDurations);
-    
-    return resultList;
+    return statsManager.getExecutionDurationSamples();
   }
 
-  /**
-   * Get raw sample data for task run durations.  This raw data can be used for more advanced 
-   * statistics which are not provided in this library.  These can also be fed into utilities in 
-   * {@link org.threadly.util.StatisticsUtils} for additional statistics.
-   * 
-   * These result set includes all priorities.  If you want durations for a specific priority use 
-   * {@link #getExecutionDurationSamples(TaskPriority)}.
-   * 
-   * @param priority Task priority to provide samples for
-   * @return A list of task durations in milliseconds
-   */
+  @Override
   public List<Long> getExecutionDurationSamples(TaskPriority priority) {
-    if (priority == null) {
-      return getExecutionDurationSamples();
-    }
-    
-    return new ArrayList<Long>(statsManager.getExecutionDurationSamples(priority));
+    return statsManager.getExecutionDurationSamples(priority);
   }
 
-  /**
-   * Get the average duration that tasks submitted through this executor have spent executing.  
-   * This only reports samples from tasks which have completed (in-progress tasks are not 
-   * considered).  
-   * 
-   * This call averages over all priority types, if you want the duration for a specific priority 
-   * use {@link #getAverageExecutionDuration(TaskPriority)}.
-   * 
-   * @return Average task execution duration in milliseconds
-   */
   @Override
   public double getAverageExecutionDuration() {
-    List<Long> runDurations = getExecutionDurationSamples();
-    if (runDurations.isEmpty()) {
-      return -1;
-    }
-    return StatisticsUtils.getAverage(runDurations);
+    return statsManager.getAverageExecutionDuration();
   }
 
-  /**
-   * Get the average duration that tasks submitted through this executor have spent executing.  
-   * This only reports samples from tasks which have completed (in-progress tasks are not 
-   * considered).
-   * 
-   * @param priority Specific task priority which statistics should be calculated against
-   * @return Average task execution duration in milliseconds
-   */
+  @Override
   public double getAverageExecutionDuration(TaskPriority priority) {
-    List<Long> runDurations = getExecutionDurationSamples(priority);
-    if (runDurations.isEmpty()) {
-      return -1;
-    }
-    return StatisticsUtils.getAverage(runDurations);
+    return statsManager.getAverageExecutionDuration(priority);
   }
 
-  /**
-   * Gets percentile values for execution duration.  This function accepts any decimal percentile 
-   * between zero and one hundred.
-   * 
-   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
-   * returned map will iterate in order of the requested percentiles as well.  
-   * 
-   * These percentiles are across all priorities combined into the same data set.  If you want 
-   * percentiles for a specific priority use 
-   * {@link #getExecutionDurationPercentiles(TaskPriority, double...)}.
-   * 
-   * @param percentiles Percentiles requested, any decimal values between 0 and 100 (inclusive)
-   * @return Map with keys being the percentiles requested, value being the execution duration in milliseconds
-   */
   @Override
   public Map<Double, Long> getExecutionDurationPercentiles(double... percentiles) {
-    List<Long> samples = getExecutionDurationSamples();
-    if (samples.isEmpty()) {
-      samples.add(0L);
-    }
-    return StatisticsUtils.getPercentiles(samples, percentiles);
+    return statsManager.getExecutionDurationPercentiles(percentiles);
   }
 
-  /**
-   * Gets percentile values for execution duration.  This function accepts any decimal percentile 
-   * between zero and one hundred.
-   * 
-   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
-   * returned map will iterate in order of the requested percentiles as well.
-   * 
-   * @param priority Specific task priority which statistics should be calculated against
-   * @param percentiles Percentiles requested, any decimal values between 0 and 100 (inclusive)
-   * @return Map with keys being the percentiles requested, value being the execution duration in milliseconds
-   */
+  @Override
   public Map<Double, Long> getExecutionDurationPercentiles(TaskPriority priority, 
                                                            double... percentiles) {
-    List<Long> samples = getExecutionDurationSamples(priority);
-    if (samples.isEmpty()) {
-      samples.add(0L);
-    }
-    return StatisticsUtils.getPercentiles(samples, percentiles);
+    return statsManager.getExecutionDurationPercentiles(priority, percentiles);
   }
 
   @Override
   public List<Pair<Runnable, StackTraceElement[]>> getLongRunningTasks(long durationLimitMillis) {
-    List<Pair<Runnable, StackTraceElement[]>> result = new ArrayList<Pair<Runnable, StackTraceElement[]>>();
-    if (statsManager.accurateTime) {
-      // ensure clock is updated before loop
-      Clock.accurateForwardProgressingMillis();
-    }
-    for (Map.Entry<Pair<Thread, TaskStatWrapper>, Long> e : statsManager.runningTasks.entrySet()) {
-      if (Clock.lastKnownForwardProgressingMillis() - e.getValue() > durationLimitMillis) {
-        Runnable task = e.getKey().getRight().task;
-        if (task instanceof ListenableFutureTask) {
-          ListenableFutureTask<?> lft = (ListenableFutureTask<?>)task;
-          if (lft.getContainedCallable() instanceof RunnableCallableAdapter) {
-            RunnableCallableAdapter<?> rca = (RunnableCallableAdapter<?>)lft.getContainedCallable();
-            task = rca.getContainedRunnable();
-          }
-        }
-        StackTraceElement[] stack = e.getKey().getLeft().getStackTrace();
-        // verify still in collection after capturing stack
-        if (statsManager.runningTasks.containsKey(e.getKey())) {
-          result.add(new Pair<Runnable, StackTraceElement[]>(task, stack));
-        }
-      }
-    }
-    
-    return result;
+    return statsManager.getLongRunningTasks(durationLimitMillis);
   }
 
   @Override
   public int getLongRunningTasksQty(long durationLimitMillis) {
-    int result = 0;
-    
-    long now = statsManager.accurateTime ? 
-                 Clock.accurateForwardProgressingMillis() : 
-                 Clock.lastKnownForwardProgressingMillis();
-    Iterator<Long> it = statsManager.runningTasks.values().iterator();
-    while (it.hasNext()) {
-      Long startTime = it.next();
-      if (now - startTime >= durationLimitMillis) {
-        result++;
-      }
-    }
-    
-    return result;
+    return statsManager.getLongRunningTasksQty(durationLimitMillis);
   }
   
   @Override
   public void resetCollectedStats() {
-    for (TaskPriority p : TaskPriority.values()) {
-      statsManager.getExecutionDelaySamples(p).clear();
-      statsManager.getExecutionDurationSamples(p).clear();
-    }
+    statsManager.resetCollectedStats();
   }
   
   @Override
   public long getTotalExecutionCount() {
-    long result = 0;
-    for (TaskPriority p : TaskPriority.values()) {
-      result += statsManager.getExecutionCount(p).get();
-    }
-    return result;
+    return statsManager.getTotalExecutionCount();
   }
-  
-  /**
-   * Call to get the total quantity of tasks this executor has handled for a specific priority.
-   * 
-   * @param priority Specific task priority which statistics should be calculated against
-   * @return total quantity of tasks run
-   */
-  public long getTotalExecutionCount(TaskPriority priority) {
-    if (priority == null) {
-      return getTotalExecutionCount();
-    }
-    return statsManager.getExecutionCount(priority).get();
-  }
-  
-  /**
-   * <p>This class primarily holds the structures used to store the statistics.  These can not be 
-   * maintained in the parent class since sub classes need to be able to access them.  This is to 
-   * help facilitate allowing the parent class to be garbage collected freely despite references 
-   * to subclasses from other thread garbage collection roots.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.5.0
-   */
-  protected static class StatsManager {
-    protected final int maxWindowSize;
-    protected final boolean accurateTime;
-    protected final AtomicLong totalHighPriorityExecutions;
-    protected final AtomicLong totalLowPriorityExecutions;
-    protected final AtomicLong totalStarvablePriorityExecutions;
-    protected final ConcurrentHashMap<Pair<Thread, TaskStatWrapper>, Long> runningTasks;
-    protected final ConcurrentArrayList<Long> starvablePriorityRunDurations;
-    protected final ConcurrentArrayList<Long> lowPriorityRunDurations;
-    protected final ConcurrentArrayList<Long> highPriorityRunDurations;
-    protected final ConcurrentArrayList<Long> starvablePriorityExecutionDelay;
-    protected final ConcurrentArrayList<Long> lowPriorityExecutionDelay;
-    protected final ConcurrentArrayList<Long> highPriorityExecutionDelay;
-    
-    protected StatsManager(int maxWindowSize, boolean accurateTime) {
-      this.maxWindowSize = maxWindowSize;
-      this.accurateTime = accurateTime;
-      totalHighPriorityExecutions = new AtomicLong(0);
-      totalLowPriorityExecutions = new AtomicLong(0);
-      totalStarvablePriorityExecutions = new AtomicLong(0);
-      runningTasks = new ConcurrentHashMap<Pair<Thread, TaskStatWrapper>, Long>();
-      starvablePriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
-      lowPriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
-      highPriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
-      starvablePriorityExecutionDelay = new ConcurrentArrayList<Long>(0, maxWindowSize);
-      lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, maxWindowSize);
-      highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, maxWindowSize);
-    }
-    
-    /**
-     * Get raw collection for storing execution durations.
-     * 
-     * @param priority TaskPriority to look up against, can not be {@code null}
-     * @return Collection of execution duration statistics
-     */
-    protected ConcurrentArrayList<Long> getExecutionDurationSamples(TaskPriority priority) {
-      switch (priority) {
-        case High:
-          return highPriorityRunDurations;
-        case Low:
-          return lowPriorityRunDurations;
-        case Starvable:
-          return starvablePriorityRunDurations;
-        default:
-          throw new UnsupportedOperationException();
-      }
-    }
-    
-    /**
-     * Get raw collection for storing execution delays.
-     * 
-     * @param priority TaskPriority to look up against, can not be {@code null}
-     * @return Collection of execution delay statistics
-     */
-    protected ConcurrentArrayList<Long> getExecutionDelaySamples(TaskPriority priority) {
-      switch (priority) {
-        case High:
-          return highPriorityExecutionDelay;
-        case Low:
-          return lowPriorityExecutionDelay;
-        case Starvable:
-          return starvablePriorityExecutionDelay;
-        default:
-          throw new UnsupportedOperationException();
-      }
-    }
-    
-    /**
-     * Get the raw atomic for storing execution counts for a given priority.
-     * 
-     * @param priority TaskPriority to look up against, can not be {@code null}
-     * @return AtomicLong to track executions
-     */
-    protected AtomicLong getExecutionCount(TaskPriority priority) {
-      switch (priority) {
-        case High:
-          return totalHighPriorityExecutions;
-        case Low:
-          return totalLowPriorityExecutions;
-        case Starvable:
-          return totalStarvablePriorityExecutions;
-        default:
-          throw new UnsupportedOperationException();
-      }
-    }
 
-    /**
-     * Called at the start of execution to track statistics around task execution.
-     * 
-     * @param taskPair Wrapper that is about to be executed
-     */
-    protected void trackTaskStart(Pair<Thread, TaskStatWrapper> taskPair) {
-      getExecutionCount(taskPair.getRight().priority).incrementAndGet();
-      
-      runningTasks.put(taskPair, Clock.accurateForwardProgressingMillis());
-    }
-    
-    /**
-     * Used to track how long tasks are tacking to complete.
-     * 
-     * @param taskPair wrapper for task that completed
-     */
-    protected void trackTaskFinish(Pair<Thread, TaskStatWrapper> taskPair) {
-      long finishTime = accurateTime ? 
-                          Clock.accurateForwardProgressingMillis() : 
-                          Clock.lastKnownForwardProgressingMillis();
-      
-      ConcurrentArrayList<Long> runDurations = getExecutionDurationSamples(taskPair.getRight().priority);
-      
-      Long startTime = runningTasks.remove(taskPair);
-      
-      synchronized (runDurations.getModificationLock()) {
-        runDurations.add(finishTime - startTime);
-        trimWindow(runDurations);
-      }
-    }
-    
-    /**
-     * Reduces the list size to be within the max window size.
-     * 
-     * Should have the list synchronized/locked before calling.
-     * 
-     * @param list Collection to check size of and ensure is under max size
-     */
-    @SuppressWarnings("rawtypes")
-    protected void trimWindow(Deque window) {
-      while (window.size() > maxWindowSize) {
-        window.removeFirst();
-      }
-    }
+  @Override
+  public long getTotalExecutionCount(TaskPriority priority) {
+    return statsManager.getTotalExecutionCount(priority);
   }
   
   /**
@@ -849,10 +493,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * @since 4.5.0
    */
   protected static class StatisticWorkerPool extends WorkerPool {
-    protected final StatsManager statsManager;
+    protected final PriorityStatisticManager statsManager;
   
     protected StatisticWorkerPool(ThreadFactory threadFactory, int poolSize, 
-                                  StatsManager statsManager) {
+                                  PriorityStatisticManager statsManager) {
       super(threadFactory, poolSize);
       
       this.statsManager = statsManager;
@@ -867,7 +511,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
         long taskDelay = Clock.lastKnownForwardProgressingMillis() - result.getPureRunTime();
         TaskStatWrapper statWrapper = (TaskStatWrapper)result.getContainedRunnable();
         ConcurrentArrayList<Long> priorityStats = 
-            statsManager.getExecutionDelaySamples(statWrapper.priority);
+            statsManager.getExecutionDelaySamplesInternal(statWrapper.priority);
   
         synchronized (priorityStats.getModificationLock()) {
           priorityStats.add(taskDelay);
@@ -876,41 +520,6 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
       }
       
       return result;
-    }
-  }
-  
-  /**
-   * <p>Wrapper for {@link Runnable} for tracking statistics.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.5.0
-   */
-  protected static class TaskStatWrapper implements Runnable, RunnableContainer {
-    protected final StatsManager statsManager;
-    protected final TaskPriority priority;
-    protected final Runnable task;
-    
-    public TaskStatWrapper(StatsManager statsManager, TaskPriority priority, Runnable toRun) {
-      this.statsManager = statsManager;
-      this.priority = priority;
-      this.task = toRun;
-    }
-    
-    @Override
-    public void run() {
-      Pair<Thread, TaskStatWrapper> taskPair = 
-          new Pair<Thread, TaskStatWrapper>(Thread.currentThread(), this);
-      statsManager.trackTaskStart(taskPair);
-      try {
-        task.run();
-      } finally {
-        statsManager.trackTaskFinish(taskPair);
-      }
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return task;
     }
   }
 }

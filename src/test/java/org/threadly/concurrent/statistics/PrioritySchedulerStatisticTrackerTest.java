@@ -169,14 +169,8 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
       lastHighPriorityRunnable.blockTillFinished();
       
       // should not be very long after waiting above
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getActiveTaskCount() == 0 && 
-                 starvablePriorityCount + lowPriorityCount + highPriorityCount ==  
-                   scheduler.getTotalExecutionCount();
-        }
-      }.blockTillTrue();
+      blockTillSchedulerIdle(scheduler, 
+                             starvablePriorityCount + lowPriorityCount + highPriorityCount);
       
       assertEquals(starvablePriorityCount, scheduler.getTotalExecutionCount(TaskPriority.Starvable));
       assertEquals(lowPriorityCount, scheduler.getTotalExecutionCount(TaskPriority.Low));

@@ -5,7 +5,6 @@ import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerWorkerPoolTest;
 import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker.StatisticWorkerPool;
-import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker.StatsManager;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends PrioritySchedulerWorkerPoolTest {
@@ -16,7 +15,7 @@ public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends Pr
   @Override
   public void setup() {
     workerPool = localWorkerPool = new StatisticWorkerPool(new ConfigurableThreadFactory(), 1, 
-                                                           new StatsManager(100, false));
+                                                           new PriorityStatisticManager(100, false));
     qm = new VisibilityPriorityScheduler.VisibilityQueueManager(workerPool, 1000);
     
     // set the queue manager, but then make sure we kill the worker

@@ -25,7 +25,7 @@ import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
-  private NoThreadScheduler scheduler;
+  protected NoThreadScheduler scheduler;
   
   @Before
   public void setup() {
