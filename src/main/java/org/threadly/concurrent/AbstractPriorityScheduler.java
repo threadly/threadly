@@ -546,7 +546,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * 
      * @return An un-molested representation of the stored absolute run time
      */
-    protected abstract long getPureRunTime();
+    public abstract long getPureRunTime();
     
     /**
      * Call to see how long the task should be delayed before execution.  While this may return 
@@ -596,7 +596,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     }
     
     @Override
-    protected long getPureRunTime() {
+    public long getPureRunTime() {
       return runTime;
     }
     
@@ -653,7 +653,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     }
     
     @Override
-    protected long getPureRunTime() {
+    public long getPureRunTime() {
       return nextRunTime;
     }
     

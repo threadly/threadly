@@ -25,9 +25,13 @@ import org.threadly.util.StatisticsUtils;
  * <p>It helps give insight in how long tasks are running, how well the thread pool is being 
  * utilized, as well as execution frequency.</p>
  * 
+ * @deprecated Switch to the updated version located at 
+ *    {@link org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker}
+ * 
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
+@Deprecated
 public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   protected static final int MAX_WINDOW_SIZE = 1000;
   

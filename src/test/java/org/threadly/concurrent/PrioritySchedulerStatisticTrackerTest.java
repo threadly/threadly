@@ -15,7 +15,7 @@ import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation" })
 public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest {
   @Override
   protected PrioritySchedulerServiceFactory getPrioritySchedulerFactory() {

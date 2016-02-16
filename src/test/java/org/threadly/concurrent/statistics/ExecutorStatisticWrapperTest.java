@@ -10,12 +10,12 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
-import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.util.Clock;
+import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
 public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest {
@@ -46,7 +46,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
 
   @Test
   public void getAverageExecutionDelayTest() {
-    assertEquals(0, statWrapper.getAverageExecutionDelay(), 0);
+    assertEquals(-1, statWrapper.getAverageExecutionDelay(), 0);
     statWrapper.execute(new ClockUpdateRunnable());
     assertEquals(1, statWrapper.getAverageExecutionDelay(), 1);
   }
@@ -72,7 +72,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
 
   @Test
   public void getAverageExecutionDurationTest() {
-    assertEquals(0, statWrapper.getAverageExecutionDuration(), 0);
+    assertEquals(-1, statWrapper.getAverageExecutionDuration(), 0);
     statWrapper.execute(new ClockUpdateRunnable());
     assertEquals(1, statWrapper.getAverageExecutionDuration(), 1);
     statWrapper.execute(new ClockUpdateRunnable(DELAY_TIME));
@@ -105,6 +105,17 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   }
   
   @Test
+  public void getLongRunningTasksWrappedFutureTest() {
+    statWrapper.submit(new ClockUpdateRunnable() {
+      @Override
+      public void handleRunStart() {
+        // even submitted (and thus wrapped in a future), we should get our direct reference
+        assertTrue(statWrapper.getLongRunningTasks(-1).get(0).getLeft() == this);
+      }
+    });
+  }
+  
+  @Test
   public void getLongRunningTasksQtyTest() {
     assertEquals(0, statWrapper.getLongRunningTasksQty(-1));
     statWrapper.execute(new ClockUpdateRunnable() {
@@ -114,6 +125,34 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
         assertEquals(0, statWrapper.getLongRunningTasksQty(10));
       }
     });
+  }
+  
+  @Test
+  public void getQueuedTaskCountTest() {
+    assertEquals(0, statWrapper.getQueuedTaskCount());
+    TestableScheduler scheduler = new TestableScheduler();
+    statWrapper = new ExecutorStatisticWrapper(scheduler);
+    statWrapper.execute(DoNothingRunnable.instance());
+    assertEquals(1, statWrapper.getQueuedTaskCount());
+    scheduler.tick();
+    assertEquals(0, statWrapper.getQueuedTaskCount());
+  }
+  
+  @Test
+  public void getTotalExecutionCountTest() {
+    assertEquals(0, statWrapper.getTotalExecutionCount());
+    statWrapper.execute(DoNothingRunnable.instance());
+    assertEquals(1, statWrapper.getTotalExecutionCount());
+  }
+  
+  @Test
+  public void resetCollectedStatsTest() {
+    statWrapper.execute(DoNothingRunnable.instance());
+    
+    statWrapper.resetCollectedStats();
+    
+    assertTrue(statWrapper.getExecutionDelaySamples().isEmpty());
+    assertTrue(statWrapper.getExecutionDurationSamples().isEmpty());
   }
   
   private static class ExecutorStatisticWrapperFactory implements SubmitterExecutorFactory {
@@ -137,22 +176,6 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
         it.next().shutdownNow();
         it.remove();
       }
-    }
-  }
-  
-  // this class is used because it would be most likely to expose a case where a longer delay than actual is reported
-  private static class ClockUpdateRunnable extends TestRunnable {
-    public ClockUpdateRunnable() {
-      super();
-    }
-    
-    public ClockUpdateRunnable(int runTime) {
-      super(runTime);
-    }
-    
-    @Override
-    public void handleRunFinish() {
-      Clock.accurateTimeNanos();
     }
   }
 }

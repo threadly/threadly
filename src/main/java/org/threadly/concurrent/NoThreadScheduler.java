@@ -44,7 +44,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * Constructs a new {@link NoThreadScheduler} scheduler.
+   * Constructs a new {@link NoThreadScheduler} scheduler with specified default priority behavior.
    * 
    * @param defaultPriority Default priority for tasks which are submitted without any specified priority
    * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run

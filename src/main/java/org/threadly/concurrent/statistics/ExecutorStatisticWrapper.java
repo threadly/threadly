@@ -8,31 +8,68 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
+import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
+import org.threadly.util.Pair;
 import org.threadly.util.StatisticsUtils;
 
 /**
- * <p>Wrap an {@link Executor} to get statistics based off executions through this wrapper.</p>
+ * <p>Wrap an {@link Executor} to get statistics based off executions through this wrapper.  If 
+ * statistics are desired on the {@link org.threadly.concurrent.PriorityScheduler}, 
+ * {@link PrioritySchedulerStatisticTracker} may be a better option, taking advantages by 
+ * extending and replacing logic rather than wrapping and just adding logic.</p>
  *  
  * @author jent - Mike Jensen
  * @since 4.5.0
  */
-public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
+public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor 
+                                      implements StatisticExecutor {
   private final Executor executor;
   private final StatsContainer statsContainer;
+  
+  /**
+   * Constructs a new statistics tracker wrapper for a given executor.  This constructor uses 
+   * a sensible default for the memory usage of collected statistics.  
+   * 
+   * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
+   * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
+   * accurate time consider using {@link #ExecutorStatisticWrapper(Executor, boolean)}.
+   * 
+   * @param executor Executor to defer executions to
+   */
+  public ExecutorStatisticWrapper(Executor executor) {
+    this(executor, false);
+  }
   
   /**
    * Constructs a new statistics tracker wrapper for a given executor.  This constructor uses 
    * a sensible default for the memory usage of collected statistics.
    * 
    * @param executor Executor to defer executions to
+   * @param accurateTime {@code true} to ensure that delays and durations are not under reported
    */
-  public ExecutorStatisticWrapper(Executor executor) {
-    this(executor, 1000);
+  public ExecutorStatisticWrapper(Executor executor, boolean accurateTime) {
+    this(executor, 1000, accurateTime);
+  }
+
+  /**
+   * Constructs a new statistics tracker wrapper for a given executor.  
+   * 
+   * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
+   * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
+   * accurate time consider using {@link #ExecutorStatisticWrapper(Executor, int, boolean)}.
+   * 
+   * @param executor Executor to defer executions to
+   * @param maxStatisticWindowSize maximum number of samples to keep internally
+   */
+  public ExecutorStatisticWrapper(Executor executor, int maxStatisticWindowSize) {
+    this(executor, maxStatisticWindowSize, false);
   }
 
   /**
@@ -40,12 +77,14 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
    * 
    * @param executor Executor to defer executions to
    * @param maxStatisticWindowSize maximum number of samples to keep internally
+   * @param accurateTime {@code true} to ensure that delays and durations are not under reported
    */
-  public ExecutorStatisticWrapper(Executor executor, int maxStatisticWindowSize) {
+  public ExecutorStatisticWrapper(Executor executor, 
+                                  int maxStatisticWindowSize, boolean accurateTime) {
     ArgumentVerifier.assertGreaterThanZero(maxStatisticWindowSize, "maxStatisticWindowSize");
     
     this.executor = executor;
-    this.statsContainer = new StatsContainer(maxStatisticWindowSize);
+    this.statsContainer = new StatsContainer(maxStatisticWindowSize, accurateTime);
   }
   
   @Override
@@ -56,13 +95,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
                                            statsContainer));
   }
   
-  /**
-   * Get raw sample data for task execution delays.  This raw data can be used for more advanced 
-   * statistics which are not provided in this library.  These can also be fed into utilities in 
-   * {@link StatisticsUtils} for additional statistics.
-   * 
-   * @return A list of delay times in milliseconds before a task was executed
-   */
+  @Override
   public List<Long> getExecutionDelaySamples() {
     ArrayList<Long> runDelays;
     synchronized (statsContainer.runDelays) {
@@ -71,25 +104,16 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
     return runDelays;
   }
   
-  /**
-   * Get the average delay from task submission till execution time.
-   * 
-   * @return Average delay till execution in milliseconds
-   */
+  @Override
   public double getAverageExecutionDelay() {
-    return StatisticsUtils.getAverage(getExecutionDelaySamples());
+    List<Long> delaySamples = getExecutionDelaySamples();
+    if (delaySamples.isEmpty()) {
+      return -1;
+    }
+    return StatisticsUtils.getAverage(delaySamples);
   }
 
-  /**
-   * Gets percentile values for execution delays.  This function accepts any decimal percentile 
-   * between zero and one hundred.
-   * 
-   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
-   * returned map will iterate in order of the requested percentiles as well.
-   * 
-   * @param percentiles Percentiles requested, any decimal values between 0 and 100 (inclusive)
-   * @return Map with keys being the percentiles requested, value being the execution delay in milliseconds
-   */
+  @Override
   public Map<Double, Long> getExecutionDelayPercentiles(double ... percentiles) {
     List<Long> samples = getExecutionDelaySamples();
     if (samples.isEmpty()) {
@@ -98,13 +122,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
     return StatisticsUtils.getPercentiles(samples, percentiles);
   }
 
-  /**
-   * Get raw sample data for task run durations.  This raw data can be used for more advanced 
-   * statistics which are not provided in this library.  These can also be fed into utilities in 
-   * {@link StatisticsUtils} for additional statistics.
-   * 
-   * @return A list of task durations in milliseconds
-   */
+  @Override
   public List<Long> getExecutionDurationSamples() {
     ArrayList<Long> runDurations;
     synchronized (statsContainer.runDurations) {
@@ -113,25 +131,16 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
     return runDurations;
   }
 
-  /**
-   * Get the average duration that tasks submitted through this wrapper have spent executing.
-   * 
-   * @return Average duration of task execution in milliseconds
-   */
+  @Override
   public double getAverageExecutionDuration() {
-    return StatisticsUtils.getAverage(getExecutionDurationSamples());
+    List<Long> durationSamples = getExecutionDurationSamples();
+    if (durationSamples.isEmpty()) {
+      return -1;
+    }
+    return StatisticsUtils.getAverage(durationSamples);
   }
 
-  /**
-   * Gets percentile values for execution duration.  This function accepts any decimal percentile 
-   * between zero and one hundred.
-   * 
-   * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
-   * returned map will iterate in order of the requested percentiles as well.
-   * 
-   * @param percentiles Percentiles requested, any decimal values between 0 and 100 (inclusive)
-   * @return Map with keys being the percentiles requested, value being the execution duration in milliseconds
-   */
+  @Override
   public Map<Double, Long> getExecutionDurationPercentiles(double ... percentiles) {
     List<Long> samples = getExecutionDurationSamples();
     if (samples.isEmpty()) {
@@ -140,29 +149,27 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
     return StatisticsUtils.getPercentiles(samples, percentiles);
   }
   
-  /**
-   * Call to get a list of stack traces from tasks which have been actively executing for a longer 
-   * duration than the one provided.  Tasks which may be possibly queued, but have not started 
-   * execution during that time are not considered in this.  Each result in the provided list will 
-   * be a single sample of what that long running tasks stack was.  Because these tasks are running 
-   * concurrently by the time this function returns the provided tasks may have completed.  
-   * 
-   * If only the quantity of long running tasks is needed, please use 
-   * {@link #getLongRunningTasksQty(long)}.  Since it does not need to generate stack traces it is 
-   * a cheaper alternative.
-   * 
-   * @param durationLimitMillis Limit for tasks execution, if task execution time is below this they will be ignored
-   * @return List of stack traces for long running tasks
-   */
-  public List<StackTraceElement[]> getLongRunningTasks(long durationLimitMillis) {
-    List<StackTraceElement[]> result = new ArrayList<StackTraceElement[]>();
-    
-    for (Map.Entry<Thread, Long> e : statsContainer.runningTaskThreads.entrySet()) {
+  @Override
+  public List<Pair<Runnable, StackTraceElement[]>> getLongRunningTasks(long durationLimitMillis) {
+    List<Pair<Runnable, StackTraceElement[]>> result = new ArrayList<Pair<Runnable, StackTraceElement[]>>();
+    if (statsContainer.accurateTime) {
+      // ensure clock is updated before loop
+      Clock.accurateForwardProgressingMillis();
+    }
+    for (Map.Entry<Pair<Thread, Runnable>, Long> e : statsContainer.runningTasks.entrySet()) {
       if (Clock.lastKnownForwardProgressingMillis() - e.getValue() > durationLimitMillis) {
-        StackTraceElement[] stack = e.getKey().getStackTrace();
+        Runnable task = e.getKey().getRight();
+        if (task instanceof ListenableFutureTask) {
+          ListenableFutureTask<?> lft = (ListenableFutureTask<?>)task;
+          if (lft.getContainedCallable() instanceof RunnableCallableAdapter) {
+            RunnableCallableAdapter<?> rca = (RunnableCallableAdapter<?>)lft.getContainedCallable();
+            task = rca.getContainedRunnable();
+          }
+        }
+        StackTraceElement[] stack = e.getKey().getLeft().getStackTrace();
         // verify still in collection after capturing stack
-        if (statsContainer.runningTaskThreads.containsKey(e.getKey())) {
-          result.add(stack);
+        if (statsContainer.runningTasks.containsKey(e.getKey())) {
+          result.add(new Pair<Runnable, StackTraceElement[]>(task, stack));
         }
       }
     }
@@ -170,20 +177,16 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
     return result;
   }
   
-  /**
-   * Call to return the number of tasks which have been running longer than the provided duration 
-   * in milliseconds.  While iterating over running tasks, it may be possible that some previously 
-   * examine tasks have completed before this ran.  There is no attempt to lock tasks from starting 
-   * or stopping during this check.
-   * 
-   * @param durationLimitMillis threshold of time in milliseconds a task must have been executing
-   * @return total quantity of tasks which have or are running longer than the provided time length
-   */
+  @Override
   public int getLongRunningTasksQty(long durationLimitMillis) {
     int result = 0;
-    
-    for (Map.Entry<Thread, Long> e : statsContainer.runningTaskThreads.entrySet()) {
-      if (Clock.lastKnownForwardProgressingMillis() - e.getValue() > durationLimitMillis) {
+
+    if (statsContainer.accurateTime) {
+      // ensure clock is updated before loop
+      Clock.accurateForwardProgressingMillis();
+    }
+    for (Long l : statsContainer.runningTasks.values()) {
+      if (Clock.lastKnownForwardProgressingMillis() - l > durationLimitMillis) {
         result++;
       }
     }
@@ -199,9 +202,24 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
    * 
    * @return Number of tasks still waiting to be executed.
    */
-  // TODO - once we have other stats wrappers update javadoc
+  @Override
   public int getQueuedTaskCount() {
     return statsContainer.queuedTaskCount.get();
+  }
+
+  @Override
+  public long getTotalExecutionCount() {
+    return statsContainer.totalExecutionCount.get();
+  }
+  
+  @Override
+  public void resetCollectedStats() {
+    synchronized (statsContainer.runDelays) {
+      statsContainer.runDelays.clear();
+    }
+    synchronized (statsContainer.runDurations) {
+      statsContainer.runDurations.clear();
+    }
   }
   
   /**
@@ -215,8 +233,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
     private final long expectedRunTime;
     private final StatsContainer statsContainer;
     
-    public StatisticRunnable(Runnable task, long expectedRunTime, 
-                             StatsContainer statsContainer) {
+    public StatisticRunnable(Runnable task, long expectedRunTime, StatsContainer statsContainer) {
       this.task = task;
       this.expectedRunTime = expectedRunTime;
       this.statsContainer = statsContainer;
@@ -224,12 +241,12 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
     
     @Override
     public void run() {
-      Thread t = Thread.currentThread();
-      statsContainer.trackStart(t, expectedRunTime);
+      Pair<Thread, Runnable> taskPair = new Pair<Thread, Runnable>(Thread.currentThread(), task);
+      statsContainer.trackStart(taskPair, expectedRunTime);
       try {
         task.run();
       } finally {
-        statsContainer.trackFinish(t);
+        statsContainer.trackFinish(taskPair);
       }
     }
 
@@ -246,25 +263,30 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
    * @since 4.5.0
    */
   protected static class StatsContainer {
-    private final int maxStatisticWindowSize;
-    private final AtomicInteger queuedTaskCount;
-    private final Map<Thread, Long> runningTaskThreads;
-    private final Deque<Long> runDurations;
-    private final Deque<Long> runDelays;
+    public final int maxStatisticWindowSize;
+    public final boolean accurateTime;
+    protected final AtomicLong totalExecutionCount;
+    protected final AtomicInteger queuedTaskCount;
+    protected final Map<Pair<Thread, Runnable>, Long> runningTasks;
+    protected final Deque<Long> runDurations;
+    protected final Deque<Long> runDelays;
     
-    public StatsContainer(int maxStatisticWindowSize) {
+    public StatsContainer(int maxStatisticWindowSize, boolean accurateTime) {
       this.maxStatisticWindowSize = maxStatisticWindowSize;
+      this.accurateTime = accurateTime;
+      this.totalExecutionCount = new AtomicLong();
       this.queuedTaskCount = new AtomicInteger();
-      this.runningTaskThreads = new ConcurrentHashMap<Thread, Long>();
+      this.runningTasks = new ConcurrentHashMap<Pair<Thread, Runnable>, Long>();
       this.runDurations = new ArrayDeque<Long>();
       this.runDelays = new ArrayDeque<Long>();
     }
     
-    public void trackStart(Thread t, long expectedRunTime) {
+    public void trackStart(Pair<Thread, Runnable> taskPair, long expectedRunTime) {
       // get start time before any operations for hopefully more accurate execution delay
       long startTime = Clock.accurateForwardProgressingMillis();
       
       queuedTaskCount.decrementAndGet();
+      totalExecutionCount.incrementAndGet();
       
       synchronized (runDelays) {
         runDelays.addLast(startTime - expectedRunTime);
@@ -274,12 +296,13 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor {
       }
       
       // get possibly newer time so we don't penalize stats tracking as duration
-      runningTaskThreads.put(t, Clock.lastKnownForwardProgressingMillis());
+      runningTasks.put(taskPair, Clock.lastKnownForwardProgressingMillis());
     }
     
-    public void trackFinish(Thread t) {
-      long runDuration = Clock.lastKnownForwardProgressingMillis() - 
-                           runningTaskThreads.remove(t);
+    public void trackFinish(Pair<Thread, Runnable> taskPair) {
+      long runDuration = (accurateTime ? 
+                           Clock.accurateForwardProgressingMillis() : Clock.lastKnownForwardProgressingMillis()) - 
+                           runningTasks.remove(taskPair);
 
       synchronized (runDurations) {
         runDurations.addLast(runDuration);

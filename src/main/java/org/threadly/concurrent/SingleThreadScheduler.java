@@ -58,8 +58,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * @param daemonThread {@code true} if scheduler thread should be a daemon thread
    */
   public SingleThreadScheduler(TaskPriority defaultPriority, 
-                               long maxWaitForLowPriorityInMs, 
-                               boolean daemonThread) {
+                               long maxWaitForLowPriorityInMs, boolean daemonThread) {
     this(defaultPriority, maxWaitForLowPriorityInMs, 
          new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
                                        true, daemonThread, Thread.NORM_PRIORITY, null, null));
@@ -85,8 +84,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * @param threadFactory factory to make thread for scheduler
    */
   public SingleThreadScheduler(TaskPriority defaultPriority, 
-                               long maxWaitForLowPriorityInMs, 
-                               ThreadFactory threadFactory) {
+                               long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     super(defaultPriority);
     ArgumentVerifier.assertNotNull(threadFactory, "threadFactory");
     
@@ -314,8 +312,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
     protected final Thread execThread;
     
     public SchedulerManager(TaskPriority defaultPriority, 
-                            long maxWaitForLowPriorityInMs, 
-                            ThreadFactory threadFactory) {
+                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
       scheduler = new NoThreadScheduler(defaultPriority, maxWaitForLowPriorityInMs);
       execThread = threadFactory.newThread(this);
       if (execThread.isAlive()) {

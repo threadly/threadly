@@ -96,8 +96,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
-                           long maxWaitForLowPriorityInMs, 
-                           boolean useDaemonThreads) {
+                           long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
     this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
          new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
                                        true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
