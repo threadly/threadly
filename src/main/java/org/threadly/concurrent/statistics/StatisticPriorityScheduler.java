@@ -15,6 +15,19 @@ import org.threadly.concurrent.TaskPriority;
  */
 public interface StatisticPriorityScheduler extends StatisticExecutor, PrioritySchedulerService {
   /**
+   * Get raw sample data for task execution delays.  This raw data can be used for more advanced 
+   * statistics which are not provided in this library.  These can also be fed into utilities in 
+   * {@link org.threadly.util.StatisticsUtils} for additional statistics.  
+   * 
+   * The returned result set includes all priorities.  If you want durations for a specific 
+   * priority use {@link #getExecutionDelaySamples(TaskPriority)}.
+   * 
+   * @return A list of delay times in milliseconds before a task was executed
+   */
+  @Override
+  public List<Long> getExecutionDelaySamples();
+  
+  /**
    * Call to get a list of all currently recorded times for execution delays.  This is the window 
    * used for the rolling average for {@link #getAverageExecutionDelay(TaskPriority)}.  This call 
    * allows for more complex statistics (ie looking for outliers, etc).
@@ -46,7 +59,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
 
   /**
    * Gets percentile values for execution delays.  This function accepts any decimal percentile 
-   * between zero and one hundred.
+   * between zero and one hundred.  
    * 
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.  
@@ -63,7 +76,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
 
   /**
    * Gets percentile values for execution delays.  This function accepts any decimal percentile 
-   * between zero and one hundred.
+   * between zero and one hundred.  
    * 
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.
@@ -78,10 +91,10 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
   /**
    * Get raw sample data for task run durations.  This raw data can be used for more advanced 
    * statistics which are not provided in this library.  These can also be fed into utilities in 
-   * {@link org.threadly.util.StatisticsUtils} for additional statistics.
+   * {@link org.threadly.util.StatisticsUtils} for additional statistics.  
    * 
-   * These result set includes all priorities.  If you want durations for a specific priority use 
-   * {@link #getExecutionDurationSamples(TaskPriority)}.
+   * The returned result set includes all priorities.  If you want durations for a specific 
+   * priority use {@link #getExecutionDurationSamples(TaskPriority)}.
    * 
    * @return A list of task durations in milliseconds
    */
@@ -91,7 +104,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
   /**
    * Get raw sample data for task run durations.  This raw data can be used for more advanced 
    * statistics which are not provided in this library.  These can also be fed into utilities in 
-   * {@link org.threadly.util.StatisticsUtils} for additional statistics.
+   * {@link org.threadly.util.StatisticsUtils} for additional statistics.  
    * 
    * These result set includes all priorities.  If you want durations for a specific priority use 
    * {@link #getExecutionDurationSamples(TaskPriority)}.
@@ -126,7 +139,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
 
   /**
    * Gets percentile values for execution duration.  This function accepts any decimal percentile 
-   * between zero and one hundred.
+   * between zero and one hundred.  
    * 
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.  
@@ -143,7 +156,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
 
   /**
    * Gets percentile values for execution duration.  This function accepts any decimal percentile 
-   * between zero and one hundred.
+   * between zero and one hundred.  
    * 
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.
