@@ -308,12 +308,10 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
 
     @Override
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      SchedulerService result = makeAbstractPriorityScheduler(1);
+      SingleThreadScheduler result = makeAbstractPriorityScheduler(poolSize);
       if (prestartIfAvailable) {
-        try {
-          result.submit(DoNothingRunnable.instance()).get();
-        } catch (Exception e) {
-          throw new RuntimeException(e);
+        if (prestartIfAvailable) {
+          result.prestartExecutionThread(true);
         }
       }
       return result;
@@ -330,7 +328,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     }
 
     @Override
-    public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize) {
+    public SingleThreadScheduler makeAbstractPriorityScheduler(int poolSize) {
       SingleThreadScheduler sts = new SingleThreadScheduler();
       schedulers.add(sts);
       

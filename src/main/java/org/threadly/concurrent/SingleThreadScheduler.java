@@ -6,6 +6,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
@@ -78,17 +79,27 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.
    * 
-   * 
    * @param defaultPriority Default priority for tasks which are submitted without any specified priority
    * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    * @param threadFactory factory to make thread for scheduler
    */
   public SingleThreadScheduler(TaskPriority defaultPriority, 
                                long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
+    this(defaultPriority, 
+         new SchedulerManager(defaultPriority, maxWaitForLowPriorityInMs, threadFactory));
+  }
+  
+  /**
+   * Constructs a new {@link SingleThreadScheduler}.  This is for internal usage where different 
+   * implementations of {@link SchedulerManager} need to be provided.
+   * 
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param SchedulerManager Scheduler manager to run against
+   */
+  protected SingleThreadScheduler(TaskPriority defaultPriority, SchedulerManager schedulerManager) {
     super(defaultPriority);
-    ArgumentVerifier.assertNotNull(threadFactory, "threadFactory");
     
-    sManager = new SchedulerManager(defaultPriority, maxWaitForLowPriorityInMs, threadFactory);
+    this.sManager = schedulerManager;
   }
   
   /**
@@ -231,6 +242,32 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   public boolean isShutdown() {
     return sManager.hasBeenStopped();
   }
+  
+  /**
+   * Start thread for execution if not already started.  This can avoid the minor delay of the 
+   * thread starting later.  This will not block till the thread is running, instead letting it 
+   * start in the background (usually fine).
+   */
+  public void prestartExecutionThread() {
+    prestartExecutionThread(false);
+  }
+
+  /**
+   * Start thread for execution if not already started.  This can avoid the minor delay of the 
+   * thread starting later.
+   * 
+   * @param blockTillStarted If {@code true} this will not return till the scheduler thread has started 
+   */
+  public void prestartExecutionThread(boolean blockTillStarted) {
+    if (sManager.startIfNotRunning()) {
+      sManager.scheduler.execute(DoNothingRunnable.instance());
+      if (blockTillStarted) {
+        while (! sManager.execThread.isAlive() && sManager.state.get() < 1) {
+          Thread.yield();
+        }
+      }
+    }
+  }
 
   @Override
   public boolean remove(Runnable task) {
@@ -313,7 +350,13 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
     
     public SchedulerManager(TaskPriority defaultPriority, 
                             long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-      scheduler = new NoThreadScheduler(defaultPriority, maxWaitForLowPriorityInMs);
+      this(new NoThreadScheduler(defaultPriority, maxWaitForLowPriorityInMs), threadFactory);
+    }
+    
+    public SchedulerManager(NoThreadScheduler scheduler, ThreadFactory threadFactory) {
+      ArgumentVerifier.assertNotNull(threadFactory, "threadFactory");
+      
+      this.scheduler = scheduler;
       execThread = threadFactory.newThread(this);
       if (execThread.isAlive()) {
         throw new IllegalThreadStateException();
@@ -334,11 +377,16 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
     /**
      * Starts the scheduler thread.  If it has already been started this will throw an 
      * {@link IllegalStateException}.
+     * 
+     * @return {@code true} if scheduler was started.
      */
-    public void startIfNotRunning() {
+    public boolean startIfNotRunning() {
       if (state.get() == -1 && state.compareAndSet(-1, 0)) {
         execThread.start();
+        
+        return true;
       }
+      return false;
     }
     
     /**
