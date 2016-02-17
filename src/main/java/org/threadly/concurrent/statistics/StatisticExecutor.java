@@ -3,6 +3,7 @@ package org.threadly.concurrent.statistics;
 import java.util.List;
 import java.util.Map;
 
+import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.util.Pair;
 
 /**
@@ -12,7 +13,7 @@ import org.threadly.util.Pair;
  * @author jent
  * @since 4.5.0
  */
-public interface StatisticExecutor {
+public interface StatisticExecutor extends SubmitterExecutor {
   /**
    * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
    * a future point.

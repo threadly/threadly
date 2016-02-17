@@ -23,7 +23,9 @@ import org.threadly.util.StatisticsUtils;
  * <p>Wrap an {@link Executor} to get statistics based off executions through this wrapper.  If 
  * statistics are desired on the {@link org.threadly.concurrent.PriorityScheduler}, 
  * {@link PrioritySchedulerStatisticTracker} may be a better option, taking advantages by 
- * extending and replacing logic rather than wrapping and just adding logic.</p>
+ * extending and replacing logic rather than wrapping and just adding logic.  Similarly 
+ * {@link SingleThreadSchedulerStatisticTracker} and {@link NoThreadSchedulerStatisticTracker} 
+ * should be used as an alternative for their respective schedulers.</p>
  *  
  * @author jent - Mike Jensen
  * @since 4.5.0

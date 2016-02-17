@@ -27,7 +27,7 @@ import org.threadly.util.StatisticsUtils;
  * @author jent - Mike Jensen
  * @since 4.5.0
  */
-class PriorityStatisticManager implements StatisticPriorityScheduler {
+class PriorityStatisticManager {
   protected final int maxWindowSize;
   protected final boolean accurateTime;
   protected final AtomicLong totalHighPriorityExecutions;
@@ -158,7 +158,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     }
   }
 
-  @Override
   public List<Long> getExecutionDelaySamples() {
     List<Long> resultList = new ArrayList<Long>(highPriorityExecutionDelay);
     resultList.addAll(lowPriorityExecutionDelay);
@@ -167,7 +166,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return resultList;
   }
   
-  @Override
   public List<Long> getExecutionDelaySamples(TaskPriority priority) {
     if (priority == null) {
       return getExecutionDelaySamples();
@@ -176,7 +174,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return new ArrayList<Long>(getExecutionDelaySamplesInternal(priority));
   }
 
-  @Override
   public double getAverageExecutionDelay() {
     List<Long> resultList = getExecutionDelaySamples();
     
@@ -186,7 +183,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getAverage(resultList);
   }
 
-  @Override
   public double getAverageExecutionDelay(TaskPriority priority) {
     if (priority == null) {
       return getAverageExecutionDelay();
@@ -198,7 +194,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getAverage(stats);
   }
 
-  @Override
   public Map<Double, Long> getExecutionDelayPercentiles(double... percentiles) {
     List<Long> samples = getExecutionDelaySamples();
     if (samples.isEmpty()) {
@@ -207,7 +202,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getPercentiles(samples, percentiles);
   }
 
-  @Override
   public Map<Double, Long> getExecutionDelayPercentiles(TaskPriority priority, 
                                                         double... percentiles) {
     List<Long> samples = getExecutionDelaySamples(priority);
@@ -217,7 +211,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getPercentiles(samples, percentiles);
   }
 
-  @Override
   public List<Long> getExecutionDurationSamples() {
     List<Long> resultList = new ArrayList<Long>(highPriorityRunDurations);
     resultList.addAll(lowPriorityRunDurations);
@@ -226,7 +219,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return resultList;
   }
 
-  @Override
   public List<Long> getExecutionDurationSamples(TaskPriority priority) {
     if (priority == null) {
       return getExecutionDurationSamples();
@@ -235,7 +227,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return new ArrayList<Long>(getExecutionDurationSamplesInternal(priority));
   }
 
-  @Override
   public double getAverageExecutionDuration() {
     List<Long> runDurations = getExecutionDurationSamples();
     if (runDurations.isEmpty()) {
@@ -244,7 +235,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getAverage(runDurations);
   }
 
-  @Override
   public double getAverageExecutionDuration(TaskPriority priority) {
     List<Long> runDurations = getExecutionDurationSamples(priority);
     if (runDurations.isEmpty()) {
@@ -253,7 +243,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getAverage(runDurations);
   }
 
-  @Override
   public Map<Double, Long> getExecutionDurationPercentiles(double... percentiles) {
     List<Long> samples = getExecutionDurationSamples();
     if (samples.isEmpty()) {
@@ -262,7 +251,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getPercentiles(samples, percentiles);
   }
 
-  @Override
   public Map<Double, Long> getExecutionDurationPercentiles(TaskPriority priority, 
                                                            double... percentiles) {
     List<Long> samples = getExecutionDurationSamples(priority);
@@ -272,7 +260,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return StatisticsUtils.getPercentiles(samples, percentiles);
   }
 
-  @Override
   public List<Pair<Runnable, StackTraceElement[]>> getLongRunningTasks(long durationLimitMillis) {
     List<Pair<Runnable, StackTraceElement[]>> result = new ArrayList<Pair<Runnable, StackTraceElement[]>>();
     if (accurateTime) {
@@ -300,7 +287,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return result;
   }
 
-  @Override
   public int getLongRunningTasksQty(long durationLimitMillis) {
     int result = 0;
     
@@ -318,7 +304,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return result;
   }
   
-  @Override
   public void resetCollectedStats() {
     for (TaskPriority p : TaskPriority.values()) {
       getExecutionDelaySamplesInternal(p).clear();
@@ -326,7 +311,6 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     }
   }
   
-  @Override
   public long getTotalExecutionCount() {
     long result = 0;
     for (TaskPriority p : TaskPriority.values()) {
@@ -335,17 +319,11 @@ class PriorityStatisticManager implements StatisticPriorityScheduler {
     return result;
   }
 
-  @Override
   public long getTotalExecutionCount(TaskPriority priority) {
     if (priority == null) {
       return getTotalExecutionCount();
     }
     return getExecutionCount(priority).get();
-  }
-
-  @Override
-  public int getQueuedTaskCount() {
-    throw new UnsupportedOperationException("Must be implemented by actual pool");
   }
   
   /**

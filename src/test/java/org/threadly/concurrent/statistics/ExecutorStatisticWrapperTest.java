@@ -15,6 +15,7 @@ import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
+import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
@@ -23,7 +24,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   
   @Before
   public void setup() {
-    statWrapper = new ExecutorStatisticWrapper(SameThreadSubmitterExecutor.instance());
+    statWrapper = new ExecutorStatisticWrapper(SameThreadSubmitterExecutor.instance(), true);
   }
   
   @After
@@ -39,7 +40,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   @Test
   public void getExecutionDelaySamplesTest() {
     assertTrue(statWrapper.getExecutionDelaySamples().isEmpty());
-    statWrapper.execute(new ClockUpdateRunnable());
+    statWrapper.execute(DoNothingRunnable.instance());
     assertEquals(1, statWrapper.getExecutionDelaySamples().size());
     assertTrue(statWrapper.getExecutionDelaySamples().get(0) < 2);
   }
@@ -47,23 +48,23 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   @Test
   public void getAverageExecutionDelayTest() {
     assertEquals(-1, statWrapper.getAverageExecutionDelay(), 0);
-    statWrapper.execute(new ClockUpdateRunnable());
+    statWrapper.execute(DoNothingRunnable.instance());
     assertEquals(1, statWrapper.getAverageExecutionDelay(), 1);
   }
   
   @Test
   public void getExecutionDelayPercentilesTest() {
     assertEquals(0, statWrapper.getExecutionDelayPercentiles(90).get(90.), 0);
-    statWrapper.execute(new ClockUpdateRunnable());
+    statWrapper.execute(DoNothingRunnable.instance());
     assertEquals(1, statWrapper.getExecutionDelayPercentiles(90).get(90.), 1);
   }
   
   @Test
   public void getExecutionDurationSamplesTest() {
     assertTrue(statWrapper.getExecutionDurationSamples().isEmpty());
-    statWrapper.execute(new ClockUpdateRunnable());
+    statWrapper.execute(DoNothingRunnable.instance());
     assertEquals(1, statWrapper.getExecutionDurationSamples().size());
-    statWrapper.execute(new ClockUpdateRunnable(DELAY_TIME));
+    statWrapper.execute(new TestRunnable(DELAY_TIME));
     assertEquals(2, statWrapper.getExecutionDurationSamples().size());
     
     assertTrue(statWrapper.getExecutionDurationSamples().get(0) < 2);
@@ -73,21 +74,21 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   @Test
   public void getAverageExecutionDurationTest() {
     assertEquals(-1, statWrapper.getAverageExecutionDuration(), 0);
-    statWrapper.execute(new ClockUpdateRunnable());
+    statWrapper.execute(DoNothingRunnable.instance());
     assertEquals(1, statWrapper.getAverageExecutionDuration(), 1);
-    statWrapper.execute(new ClockUpdateRunnable(DELAY_TIME));
+    statWrapper.execute(new TestRunnable(DELAY_TIME));
     assertTrue(statWrapper.getAverageExecutionDuration() >= DELAY_TIME / 2);
   }
 
   @Test
   public void getExecutionDurationPercentilesTest() {
     assertEquals(0, statWrapper.getExecutionDurationPercentiles(50).get(50.), 0);
-    statWrapper.execute(new ClockUpdateRunnable());
+    statWrapper.execute(DoNothingRunnable.instance());
     assertEquals(1, statWrapper.getExecutionDurationPercentiles(50).get(50.), 1);
-    statWrapper.execute(new ClockUpdateRunnable());
-    statWrapper.execute(new ClockUpdateRunnable());
-    statWrapper.execute(new ClockUpdateRunnable());
-    statWrapper.execute(new ClockUpdateRunnable(DELAY_TIME));
+    statWrapper.execute(DoNothingRunnable.instance());
+    statWrapper.execute(DoNothingRunnable.instance());
+    statWrapper.execute(DoNothingRunnable.instance());
+    statWrapper.execute(new TestRunnable(DELAY_TIME));
     assertEquals(1, statWrapper.getExecutionDurationPercentiles(75).get(75.), 1);
     assertTrue(statWrapper.getExecutionDurationPercentiles(90).get(90.) >= DELAY_TIME);
   }
@@ -95,7 +96,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   @Test
   public void getLongRunningTasksTest() {
     assertTrue(statWrapper.getLongRunningTasks(-1).isEmpty());
-    statWrapper.execute(new ClockUpdateRunnable() {
+    statWrapper.execute(new TestRunnable() {
       @Override
       public void handleRunStart() {
         assertEquals(1, statWrapper.getLongRunningTasks(-1).size());
@@ -106,7 +107,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   
   @Test
   public void getLongRunningTasksWrappedFutureTest() {
-    statWrapper.submit(new ClockUpdateRunnable() {
+    statWrapper.submit(new TestRunnable() {
       @Override
       public void handleRunStart() {
         // even submitted (and thus wrapped in a future), we should get our direct reference
@@ -118,7 +119,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   @Test
   public void getLongRunningTasksQtyTest() {
     assertEquals(0, statWrapper.getLongRunningTasksQty(-1));
-    statWrapper.execute(new ClockUpdateRunnable() {
+    statWrapper.execute(new TestRunnable() {
       @Override
       public void handleRunStart() {
         assertEquals(1, statWrapper.getLongRunningTasksQty(-1));

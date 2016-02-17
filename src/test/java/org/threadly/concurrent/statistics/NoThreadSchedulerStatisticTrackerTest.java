@@ -127,6 +127,11 @@ public class NoThreadSchedulerStatisticTrackerTest extends NoThreadSchedulerTest
     scheduler.tick(null);
     
     List<Long> samples = scheduler.getExecutionDelaySamples(priority);
+    List<Long> allSamples = scheduler.getExecutionDelaySamples();
+    if (priority != null) {
+      assertTrue(allSamples.size() > samples.size());
+    }
+    assertTrue(allSamples.containsAll(samples));
     
     double total = 0;
     Iterator<Long> it = samples.iterator();

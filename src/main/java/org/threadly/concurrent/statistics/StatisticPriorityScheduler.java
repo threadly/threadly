@@ -2,6 +2,8 @@ package org.threadly.concurrent.statistics;
 
 import java.util.List;
 import java.util.Map;
+
+import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.TaskPriority;
 
 /**
@@ -11,7 +13,7 @@ import org.threadly.concurrent.TaskPriority;
  * @author jent - Mike Jensen
  * @since 4.5.0
  */
-public interface StatisticPriorityScheduler extends StatisticExecutor {
+public interface StatisticPriorityScheduler extends StatisticExecutor, PrioritySchedulerService {
   /**
    * Call to get a list of all currently recorded times for execution delays.  This is the window 
    * used for the rolling average for {@link #getAverageExecutionDelay(TaskPriority)}.  This call 
