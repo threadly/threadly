@@ -4,4 +4,5 @@ apply plugin: 'jacoco'
 test {
   systemProperty 'systemSpeed', 'slow'
   systemProperty 'testProfile', 'stress'
+  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2))
 }

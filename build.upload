@@ -5,6 +5,10 @@ apply plugin: 'signing'
 sourceCompatibility = 1.6
 targetCompatibility = 1.6
 
+test {
+  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2))
+}
+
 compileJava {
   String[] java6Paths = new String[5]
   java6Paths[0] = "/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/rt.jar"
