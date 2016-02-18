@@ -268,7 +268,7 @@ public class NoThreadSchedulerTest {
       // expected
     }
     try {
-      scheduler.submitScheduled(new TestRunnable(), -10);
+      scheduler.submitScheduled(DoNothingRunnable.instance(), -10);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -352,13 +352,13 @@ public class NoThreadSchedulerTest {
       // expected
     }
     try {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), -10, 10);
+      scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), -10, 10);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 10, -10);
+      scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), 10, -10);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -374,13 +374,13 @@ public class NoThreadSchedulerTest {
       // expected
     }
     try {
-      scheduler.scheduleAtFixedRate(new TestRunnable(), -10, 10);
+      scheduler.scheduleAtFixedRate(DoNothingRunnable.instance(), -10, 10);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      scheduler.scheduleAtFixedRate(new TestRunnable(), 10, -10);
+      scheduler.scheduleAtFixedRate(DoNothingRunnable.instance(), 10, -10);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected

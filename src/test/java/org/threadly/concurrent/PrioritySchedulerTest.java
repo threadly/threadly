@@ -300,19 +300,19 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       scheduler.shutdown();
       
       try {
-        scheduler.execute(new TestRunnable());
+        scheduler.execute(DoNothingRunnable.instance());
         fail("Execption should have been thrown");
       } catch (RejectedExecutionException e) {
         // expected
       }
       try {
-        scheduler.schedule(new TestRunnable(), 1000, null);
+        scheduler.schedule(DoNothingRunnable.instance(), 1000, null);
         fail("Execption should have been thrown");
       } catch (RejectedExecutionException e) {
         // expected
       }
       try {
-        scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
+        scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), 100, 100);
         fail("Execption should have been thrown");
       } catch (RejectedExecutionException e) {
         // expected
@@ -367,19 +367,19 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       scheduler.shutdownNow();
       
       try {
-        scheduler.execute(new TestRunnable());
+        scheduler.execute(DoNothingRunnable.instance());
         fail("Execption should have been thrown");
       } catch (RejectedExecutionException e) {
         // expected
       }
       try {
-        scheduler.schedule(new TestRunnable(), 1000, null);
+        scheduler.schedule(DoNothingRunnable.instance(), 1000, null);
         fail("Execption should have been thrown");
       } catch (RejectedExecutionException e) {
         // expected
       }
       try {
-        scheduler.scheduleWithFixedDelay(new TestRunnable(), 100, 100);
+        scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), 100, 100);
         fail("Execption should have been thrown");
       } catch (RejectedExecutionException e) {
         // expected

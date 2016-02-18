@@ -273,7 +273,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     sts.shutdown();
     
-    sts.execute(new TestRunnable());
+    sts.execute(DoNothingRunnable.instance());
   }
   
   @Test (expected = RejectedExecutionException.class)
@@ -281,7 +281,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     sts.shutdownNow();
     
-    sts.execute(new TestRunnable());
+    sts.execute(DoNothingRunnable.instance());
   }
 
   private class SingleThreadSchedulerFactory implements AbstractPrioritySchedulerFactory {

@@ -5,27 +5,27 @@ import static org.junit.Assert.fail;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
+import org.threadly.concurrent.UnfairExecutor;
 
 @SuppressWarnings("javadoc")
 public class KeyedExecutorLimiterTest extends AbstractKeyedLimiterTest {
-  protected PriorityScheduler scheduler;
+  protected UnfairExecutor executor;
   
   @Before
   public void setup() {
-    scheduler = new PriorityScheduler(10);
+    executor = new UnfairExecutor(13);
   }
   
   @After
   public void cleanup() {
-    scheduler.shutdownNow();
-    scheduler = null;
+    executor.shutdownNow();
+    executor = null;
   }
 
   @Override
   protected AbstractKeyedLimiter<?> makeLimiter(int limit) {
-    return new KeyedExecutorLimiter(scheduler, limit, null, true, 1);
+    return new KeyedExecutorLimiter(executor, limit, null, true, 1);
   }
   
   @Test

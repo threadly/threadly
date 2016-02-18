@@ -131,7 +131,7 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     UnfairExecutor ue = new UnfairExecutor(1);
     ue.shutdown();
     
-    ue.execute(new TestRunnable());
+    ue.execute(DoNothingRunnable.instance());
   }
   
   @Test (expected = RejectedExecutionException.class)
@@ -139,7 +139,7 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     UnfairExecutor ue = new UnfairExecutor(1);
     ue.shutdownNow();
     
-    ue.execute(new TestRunnable());
+    ue.execute(DoNothingRunnable.instance());
   }
 
   private static class UnfairExecutorFactory implements SubmitterExecutorFactory {

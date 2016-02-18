@@ -175,7 +175,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
         // expected
       }
       try {
-        scheduler.schedule(new TestRunnable(), -1);
+        scheduler.schedule(DoNothingRunnable.instance(), -1);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected
@@ -262,13 +262,13 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
         // expected
       }
       try {
-        scheduler.scheduleWithFixedDelay(new TestRunnable(), -1, 1000);
+        scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), -1, 1000);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected
       }
       try {
-        scheduler.scheduleWithFixedDelay(new TestRunnable(), 1000, -1);
+        scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), 1000, -1);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected
@@ -410,13 +410,13 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
         // expected
       }
       try {
-        scheduler.submitScheduled(new TestRunnable(), -1);
+        scheduler.submitScheduled(DoNothingRunnable.instance(), -1);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected
       }
       try {
-        scheduler.submitScheduled(new TestRunnable(), null, -1);
+        scheduler.submitScheduled(DoNothingRunnable.instance(), null, -1);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected

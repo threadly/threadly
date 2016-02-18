@@ -45,7 +45,7 @@ public abstract class ScheduledExecutorServiceTest {
       assertTrue(scheduler.isShutdown());
       
       try {
-        scheduler.execute(new TestRunnable());
+        scheduler.execute(DoNothingRunnable.instance());
         fail("Execption should have been thrown");
       } catch (RejectedExecutionException e) {
         // expected
@@ -375,7 +375,7 @@ public abstract class ScheduledExecutorServiceTest {
         // expected
       }
       try {
-        scheduler.scheduleWithFixedDelay(new TestRunnable(), 10, 0, 
+        scheduler.scheduleWithFixedDelay(DoNothingRunnable.instance(), 10, 0, 
                                          TimeUnit.MILLISECONDS);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
@@ -423,7 +423,7 @@ public abstract class ScheduledExecutorServiceTest {
         // expected
       }
       try {
-        scheduler.scheduleAtFixedRate(new TestRunnable(), 10, 0, TimeUnit.MILLISECONDS);
+        scheduler.scheduleAtFixedRate(DoNothingRunnable.instance(), 10, 0, TimeUnit.MILLISECONDS);
         fail("Exception should have been thrown");
       } catch (IllegalArgumentException e) {
         // expected

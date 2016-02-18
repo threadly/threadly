@@ -34,19 +34,19 @@ public class KeyDistributedExecutorTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
-  private static PriorityScheduler scheduler;
+  private static UnfairExecutor executor;
   
   @BeforeClass
   public static void setupClass() {
     ThreadlyTestUtil.setIgnoreExceptionHandler();
     
-    scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL * 2);
+    executor = new UnfairExecutor((PARALLEL_LEVEL * 2) + 1);
   }
   
   @AfterClass
   public static void cleanupClass() {
-    scheduler.shutdownNow();
-    scheduler = null;
+    executor.shutdownNow();
+    executor = null;
   }
   
   private Object agentLock;
@@ -56,7 +56,7 @@ public class KeyDistributedExecutorTest {
   public void setup() {
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
-    distributor = new KeyDistributedExecutor(scheduler, sLock, Integer.MAX_VALUE, false);
+    distributor = new KeyDistributedExecutor(executor, sLock, Integer.MAX_VALUE, false);
   }
   
   @After
@@ -90,16 +90,16 @@ public class KeyDistributedExecutorTest {
   @Test
   public void constructorTest() {
     // none should throw exception
-    new KeyDistributedExecutor(scheduler);
-    new KeyDistributedExecutor(scheduler, true);
-    new KeyDistributedExecutor(scheduler, 1);
-    new KeyDistributedExecutor(scheduler, 1, true);
-    new KeyDistributedExecutor(1, scheduler);
-    new KeyDistributedExecutor(1, scheduler, true);
-    new KeyDistributedExecutor(1, scheduler, 1);
-    new KeyDistributedExecutor(1, scheduler, 1, true);
+    new KeyDistributedExecutor(executor);
+    new KeyDistributedExecutor(executor, true);
+    new KeyDistributedExecutor(executor, 1);
+    new KeyDistributedExecutor(executor, 1, true);
+    new KeyDistributedExecutor(1, executor);
+    new KeyDistributedExecutor(1, executor, true);
+    new KeyDistributedExecutor(1, executor, 1);
+    new KeyDistributedExecutor(1, executor, 1, true);
     StripedLock sLock = new StripedLock(1);
-    new KeyDistributedExecutor(scheduler, sLock, 1, false);
+    new KeyDistributedExecutor(executor, sLock, 1, false);
   }
   
   @SuppressWarnings("unused")
@@ -112,14 +112,14 @@ public class KeyDistributedExecutorTest {
       // expected
     }
     try {
-      new KeyDistributedExecutor(scheduler, null, 
+      new KeyDistributedExecutor(executor, null, 
                                  Integer.MAX_VALUE, false);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new KeyDistributedExecutor(scheduler, new StripedLock(1), -1, false);
+      new KeyDistributedExecutor(executor, new StripedLock(1), -1, false);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -128,7 +128,7 @@ public class KeyDistributedExecutorTest {
   
   @Test
   public void getExecutorTest() {
-    assertTrue(scheduler == distributor.getExecutor());
+    assertTrue(executor == distributor.getExecutor());
   }
   
   @Test
@@ -160,7 +160,7 @@ public class KeyDistributedExecutorTest {
   @SuppressWarnings("deprecation")
   public void addTaskFail() {
     try {
-      distributor.addTask(null, new TestRunnable());
+      distributor.addTask(null, DoNothingRunnable.instance());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -177,7 +177,7 @@ public class KeyDistributedExecutorTest {
   @Test
   public void executeFail() {
     try {
-      distributor.execute(null, new TestRunnable());
+      distributor.execute(null, DoNothingRunnable.instance());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -234,7 +234,7 @@ public class KeyDistributedExecutorTest {
   @SuppressWarnings("deprecation")
   public void submitTaskRunnableFail() {
     try {
-      distributor.submitTask(null, new TestRunnable());
+      distributor.submitTask(null, DoNothingRunnable.instance());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -250,7 +250,7 @@ public class KeyDistributedExecutorTest {
   @Test
   public void submitRunnableFail() {
     try {
-      distributor.submit(null, new TestRunnable());
+      distributor.submit(null, DoNothingRunnable.instance());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -400,7 +400,7 @@ public class KeyDistributedExecutorTest {
     
     // we can't use populate here because we don't want to hold the agentLock
     
-    scheduler.execute(new Runnable() {
+    executor.execute(new Runnable() {
       private final Map<Integer, ThreadContainer> containers = new HashMap<Integer, ThreadContainer>();
       private final Map<Integer, TDRunnable> previousRunnables = new HashMap<Integer, TDRunnable>();
       
@@ -567,12 +567,12 @@ public class KeyDistributedExecutorTest {
     
     assertEquals(0, kde.getTaskQueueSize(taskKey));
     
-    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, DoNothingRunnable.instance());
     
     // should add as first task
     assertEquals(1, kde.getTaskQueueSize(taskKey));
     
-    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, DoNothingRunnable.instance());
     
     // will now add into the queue
     assertEquals(2, kde.getTaskQueueSize(taskKey));
@@ -580,7 +580,7 @@ public class KeyDistributedExecutorTest {
   
   private static void getTaskQueueSizeThreadedTest(boolean accurateDistributor) {
     final Object taskKey = new Object();
-    KeyDistributedExecutor kde = new KeyDistributedExecutor(scheduler, accurateDistributor);
+    KeyDistributedExecutor kde = new KeyDistributedExecutor(executor, accurateDistributor);
     
     assertEquals(0, kde.getTaskQueueSize(taskKey));
     
@@ -588,8 +588,8 @@ public class KeyDistributedExecutorTest {
     kde.execute(taskKey, btr);
     
     // add more tasks while remaining blocked
-    kde.execute(taskKey, new TestRunnable());
-    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, DoNothingRunnable.instance());
+    kde.execute(taskKey, DoNothingRunnable.instance());
     
     btr.blockTillStarted();
     
@@ -622,14 +622,14 @@ public class KeyDistributedExecutorTest {
     Map<?, Integer> result = kde.getTaskQueueSizeMap();
     assertTrue(result.isEmpty());
     
-    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, DoNothingRunnable.instance());
     
     // should add as first task
     result = kde.getTaskQueueSizeMap();
     assertEquals(1, result.size());
     assertEquals((Integer)1, result.get(taskKey));
     
-    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, DoNothingRunnable.instance());
     
     // will now add into the queue
     result = kde.getTaskQueueSizeMap();
@@ -639,7 +639,7 @@ public class KeyDistributedExecutorTest {
   
   private static void getTaskQueueSizeMapThreadedTest(boolean accurateDistributor) {
     final Object taskKey = new Object();
-    KeyDistributedExecutor kde = new KeyDistributedExecutor(scheduler, accurateDistributor);
+    KeyDistributedExecutor kde = new KeyDistributedExecutor(executor, accurateDistributor);
 
     Map<?, Integer> result = kde.getTaskQueueSizeMap();
     assertTrue(result.isEmpty());
@@ -648,8 +648,8 @@ public class KeyDistributedExecutorTest {
     kde.execute(taskKey, btr);
     
     // add more tasks while remaining blocked
-    kde.execute(taskKey, new TestRunnable());
-    kde.execute(taskKey, new TestRunnable());
+    kde.execute(taskKey, DoNothingRunnable.instance());
+    kde.execute(taskKey, DoNothingRunnable.instance());
     
     btr.blockTillStarted();
     
@@ -678,8 +678,7 @@ public class KeyDistributedExecutorTest {
     private volatile boolean previousRanFirst;
     private volatile boolean verifiedPrevious;
     
-    protected TDRunnable(ThreadContainer threadTracker, 
-                         TDRunnable previousRunnable) {
+    protected TDRunnable(ThreadContainer threadTracker, TDRunnable previousRunnable) {
       this.threadTracker = threadTracker;
       this.previousRunnable = previousRunnable;
       previousRanFirst = false;
@@ -712,8 +711,7 @@ public class KeyDistributedExecutorTest {
     private volatile boolean previousRanFirst;
     private volatile boolean verifiedPrevious;
     
-    protected TDCallable(ThreadContainer threadTracker, 
-                         TDCallable previousRunnable) {
+    protected TDCallable(ThreadContainer threadTracker, TDCallable previousRunnable) {
       this.threadTracker = threadTracker;
       this.previousRunnable = previousRunnable;
       previousRanFirst = false;

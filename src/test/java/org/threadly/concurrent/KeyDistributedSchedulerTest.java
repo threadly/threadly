@@ -159,7 +159,7 @@ public class KeyDistributedSchedulerTest {
   @SuppressWarnings("deprecation")
   public void addTaskFail() {
     try {
-      distributor.addTask(null, new TestRunnable());
+      distributor.addTask(null, DoNothingRunnable.instance());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -176,7 +176,7 @@ public class KeyDistributedSchedulerTest {
   @Test
   public void executeFail() {
     try {
-      distributor.execute(null, new TestRunnable());
+      distributor.execute(null, DoNothingRunnable.instance());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -194,7 +194,7 @@ public class KeyDistributedSchedulerTest {
   @SuppressWarnings("deprecation")
   public void submitTaskRunnableFail() {
     try {
-      distributor.submitTask(null, new TestRunnable());
+      distributor.submitTask(null, DoNothingRunnable.instance());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -210,7 +210,7 @@ public class KeyDistributedSchedulerTest {
   @Test
   public void submitRunnableFail() {
     try {
-      distributor.submit(null, new TestRunnable());
+      distributor.submit(null, DoNothingRunnable.instance());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -360,13 +360,13 @@ public class KeyDistributedSchedulerTest {
       // expected
     }
     try {
-      distributor.scheduleTask(new Object(), new TestRunnable(), -1);
+      distributor.scheduleTask(new Object(), DoNothingRunnable.instance(), -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.scheduleTask(null, new TestRunnable(), 100);
+      distributor.scheduleTask(null, DoNothingRunnable.instance(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -382,13 +382,13 @@ public class KeyDistributedSchedulerTest {
       // expected
     }
     try {
-      distributor.schedule(new Object(), new TestRunnable(), -1);
+      distributor.schedule(new Object(), DoNothingRunnable.instance(), -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.schedule(null, new TestRunnable(), 100);
+      distributor.schedule(null, DoNothingRunnable.instance(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -405,13 +405,13 @@ public class KeyDistributedSchedulerTest {
       // expected
     }
     try {
-      distributor.submitScheduledTask(new Object(), new TestRunnable(), -1);
+      distributor.submitScheduledTask(new Object(), DoNothingRunnable.instance(), -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.submitScheduledTask(null, new TestRunnable(), 100);
+      distributor.submitScheduledTask(null, DoNothingRunnable.instance(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -427,13 +427,13 @@ public class KeyDistributedSchedulerTest {
       // expected
     }
     try {
-      distributor.submitScheduled(new Object(), new TestRunnable(), -1);
+      distributor.submitScheduled(new Object(), DoNothingRunnable.instance(), -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.submitScheduled(null, new TestRunnable(), 100);
+      distributor.submitScheduled(null, DoNothingRunnable.instance(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -513,19 +513,19 @@ public class KeyDistributedSchedulerTest {
       // expected
     }
     try {
-      distributor.scheduleTaskWithFixedDelay(new Object(), new TestRunnable(), -1, 100);
+      distributor.scheduleTaskWithFixedDelay(new Object(), DoNothingRunnable.instance(), -1, 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.scheduleTaskWithFixedDelay(new Object(), new TestRunnable(), 100, -1);
+      distributor.scheduleTaskWithFixedDelay(new Object(), DoNothingRunnable.instance(), 100, -1);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      distributor.scheduleTaskWithFixedDelay(null, new TestRunnable(), 100, 100);
+      distributor.scheduleTaskWithFixedDelay(null, DoNothingRunnable.instance(), 100, 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
