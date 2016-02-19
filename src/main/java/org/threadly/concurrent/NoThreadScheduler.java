@@ -510,7 +510,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
 
     @Override
     public void runTask() {
-      if (! canceled) {
+      if (! invalidated) {
         // Do not use ExceptionUtils to run task, so that exceptions can be handled in .tick()
         task.run();
       }
@@ -546,7 +546,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
 
     @Override
     public void runTask() {
-      if (canceled) {
+      if (invalidated) {
         return;
       }
       
@@ -554,7 +554,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
         // Do not use ExceptionUtils to run task, so that exceptions can be handled in .tick()
         task.run();
       } finally {
-        if (! canceled) {
+        if (! invalidated) {
           updateNextRunTime();
           // now that nextRunTime has been set, resort the queue
           queueSet.reschedule(this);  // this will set executing to false atomically with the resort

@@ -368,7 +368,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
           if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
-            tw.cancel();
+            tw.invalidate();
             return true;
           }
         }
@@ -378,7 +378,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
           if (ContainerHelper.isContained(tw.task, task)) {
-            tw.cancel();
+            tw.invalidate();
             it.remove();
             
             return true;
@@ -401,7 +401,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
           if (ContainerHelper.isContained(tw.task, task) && executeQueue.remove(tw)) {
-            tw.cancel();
+            tw.invalidate();
             return true;
           }
         }
@@ -411,7 +411,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         while (it.hasNext()) {
           TaskWrapper tw = it.next();
           if (ContainerHelper.isContained(tw.task, task)) {
-            tw.cancel();
+            tw.invalidate();
             it.remove();
             
             return true;
@@ -446,7 +446,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         TaskWrapper tw = it.next();
         // no need to cancel and return tasks which are already canceled
         if (! (tw.task instanceof Future) || ! ((Future<?>)tw.task).isCancelled()) {
-          tw.cancel();
+          tw.invalidate();
           // don't return tasks which were used only for internal behavior management
           if (! (tw.task instanceof InternalRunnable)) {
             int index = TaskListUtils.getInsertionEndIndex(resultList, tw.getRunTime());
@@ -494,11 +494,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    */
   protected abstract static class TaskWrapper implements DelayedTask, RunnableContainer {
     protected final Runnable task;
-    protected volatile boolean canceled;
+    protected volatile boolean invalidated;
     
     public TaskWrapper(Runnable task) {
       this.task = task;
-      canceled = false;
+      invalidated = false;
     }
     
     /**
@@ -510,15 +510,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public abstract void runTask();
 
     /**
-     * Attempts to cancel the task from running (assuming it has not started yet).  If the task is 
-     * recurring then future executions will also be avoided.
+     * Attempts to invalidate the task from running (assuming it has not started yet).  If the 
+     * task is recurring then future executions will also be avoided.
      */
-    public void cancel() {
-      canceled = true;
-      
-      if (task instanceof Future<?>) {
-        ((Future<?>)task).cancel(false);
-      }
+    public void invalidate() {
+      invalidated = true;
     }
     
     /**
@@ -607,7 +603,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
 
     @Override
     public void runTask() {
-      if (! canceled) {
+      if (! invalidated) {
         ExceptionUtils.runRunnable(task);
       }
     }
@@ -714,14 +710,14 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
 
     @Override
     public void runTask() {
-      if (canceled) {
+      if (invalidated) {
         return;
       }
       
       // no need for try/finally due to ExceptionUtils usage
       ExceptionUtils.runRunnable(task);
       
-      if (! canceled) {
+      if (! invalidated) {
         updateNextRunTime();
         // now that nextRunTime has been set, resort the queue
         queueSet.reschedule(this);  // this will set executing to false atomically with the resort

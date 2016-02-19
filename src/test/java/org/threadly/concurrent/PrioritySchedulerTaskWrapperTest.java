@@ -9,13 +9,13 @@ import org.threadly.util.Clock;
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerTaskWrapperTest {
   @Test
-  public void cancelTest() {
+  public void invalidateTest() {
     TestWrapper tw = new TestWrapper();
-    assertFalse(tw.canceled);
+    assertFalse(tw.invalidated);
     
-    tw.cancel();
+    tw.invalidate();
     
-    assertTrue(tw.canceled);
+    assertTrue(tw.invalidated);
   }
   
   @Test
