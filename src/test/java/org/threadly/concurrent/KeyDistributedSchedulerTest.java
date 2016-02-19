@@ -106,9 +106,15 @@ public class KeyDistributedSchedulerTest {
     new KeyDistributedScheduler(scheduler, sLock, 1, false);
   }
   
+  @SuppressWarnings("deprecation")
   @Test (expected = IllegalArgumentException.class)
   public void getSubmitterSchedulerForKeyFail() {
     distributor.getSubmitterSchedulerForKey(null);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void getSchedulerForKeyFail() {
+    distributor.getSchedulerForKey(null);
   }
   
   @Test

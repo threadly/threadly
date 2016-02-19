@@ -16,7 +16,7 @@ public class KeyDistributedExecutorKeySubmitterTest extends SubmitterExecutorInt
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       SubmitterExecutor executor = schedulerFactory.makeSubmitterExecutor(poolSize, prestartIfAvailable);
       
-      return new KeyDistributedExecutor(executor).getSubmitterForKey("foo");
+      return new KeyDistributedExecutor(executor).getExecutorForKey("foo");
     }
     
     @Override

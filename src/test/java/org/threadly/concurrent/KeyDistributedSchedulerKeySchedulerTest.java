@@ -48,7 +48,7 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
       
       KeyDistributedScheduler distributor = new KeyDistributedScheduler(poolSize, scheduler);
       
-      return distributor.getSubmitterSchedulerForKey(this);
+      return distributor.getSchedulerForKey(this);
     }
     
     @Override

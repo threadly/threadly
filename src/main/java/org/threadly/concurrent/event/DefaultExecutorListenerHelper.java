@@ -69,7 +69,7 @@ public class DefaultExecutorListenerHelper<T> extends ListenerHelper<T> {
       return;
     }
     if (executor == null) {
-      executor = taskDistributor.getSubmitterForKey(listener);
+      executor = taskDistributor.getExecutorForKey(listener);
     }
     
     super.addListener(listener, executor);

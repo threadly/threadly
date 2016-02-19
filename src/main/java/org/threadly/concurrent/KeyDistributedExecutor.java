@@ -272,11 +272,26 @@ public class KeyDistributedExecutor {
    * Returns a {@link SubmitterExecutor} implementation where all tasks submitted on this executor 
    * will run on the provided key.
    * 
+   * @deprecated Please use {@link #getExecutorForKey(Object)} as a direct replacement
+   * 
    * @param threadKey object key where hashCode will be used to determine execution thread
    * @return executor which will only execute based on the provided key
    */
-  @SuppressWarnings("deprecation")
+  @Deprecated
   public SubmitterExecutorInterface getSubmitterForKey(Object threadKey) {
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
+    
+    return new KeySubmitter(threadKey);
+  }
+  
+  /**
+   * Returns a {@link SubmitterExecutor} implementation where all tasks submitted on this executor 
+   * will run on the provided key.
+   * 
+   * @param threadKey object key where hashCode will be used to determine execution thread
+   * @return executor which will only execute based on the provided key
+   */
+  public SubmitterExecutor getExecutorForKey(Object threadKey) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     
     return new KeySubmitter(threadKey);

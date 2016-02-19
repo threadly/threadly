@@ -201,10 +201,26 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * Returns a scheduler implementation where all tasks submitted on this scheduler will run on 
    * the provided key.
    * 
+   * @deprecated please use {@link #getSchedulerForKey(Object)} as a direct replacement
+   * 
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @return scheduler which will only execute based on the provided key
    */
+  @Deprecated
   public SubmitterSchedulerInterface getSubmitterSchedulerForKey(Object threadKey) {
+    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
+    
+    return new KeyScheduler(threadKey);
+  }
+  
+  /**
+   * Returns a scheduler implementation where all tasks submitted on this scheduler will run on 
+   * the provided key.
+   * 
+   * @param threadKey object key where {@code equals()} will be used to determine execution thread
+   * @return scheduler which will only execute based on the provided key
+   */
+  public SubmitterScheduler getSchedulerForKey(Object threadKey) {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     
     return new KeyScheduler(threadKey);

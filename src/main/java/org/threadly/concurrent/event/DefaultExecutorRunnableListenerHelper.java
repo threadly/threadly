@@ -53,7 +53,7 @@ public class DefaultExecutorRunnableListenerHelper extends RunnableListenerHelpe
       return;
     }
     if (executor == null) {
-      executor = taskDistributor.getSubmitterForKey(listener);
+      executor = taskDistributor.getExecutorForKey(listener);
     }
     
     super.addListener(listener, executor);

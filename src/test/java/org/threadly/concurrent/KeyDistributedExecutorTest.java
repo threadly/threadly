@@ -136,7 +136,7 @@ public class KeyDistributedExecutorTest {
     List<TDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, TDRunnable tdr) {
-        SubmitterExecutor keySubmitter = distributor.getSubmitterForKey(key);
+        SubmitterExecutor keySubmitter = distributor.getExecutorForKey(key);
         keySubmitter.submit(tdr);
       }
     });
@@ -151,9 +151,15 @@ public class KeyDistributedExecutorTest {
     }
   }
   
+  @SuppressWarnings("deprecation")
   @Test (expected = IllegalArgumentException.class)
   public void getSubmitterForKeyFail() {
     distributor.getSubmitterForKey(null);
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void getExecutorForKeyFail() {
+    distributor.getExecutorForKey(null);
   }
   
   @Test
