@@ -26,12 +26,8 @@ public class StringUtils {
     NEW_LINE = newLine;
   }
   
-  private static final String RAND_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  private static final Random RANDOM = new Random(Clock.lastKnownTimeMillis());
-  
-  private StringUtils() {
-    // don't construct
-  }
+  protected static final String RAND_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  protected static final Random RANDOM = new Random(Clock.lastKnownTimeMillis());
   
   /**
    * Makes sure a given string is not null.  If it is not {@code null}, the provided string is 

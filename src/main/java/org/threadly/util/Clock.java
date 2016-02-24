@@ -47,10 +47,6 @@ public class Clock {
     startClockUpdateThread();
   }
   
-  private Clock() {
-    // don't construct
-  }
-  
   /** 
    * Starts a thread to regularly updated the clock automatically.
    */

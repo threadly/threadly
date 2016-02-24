@@ -22,10 +22,6 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public class FutureUtils {
-  private FutureUtils() {
-    // don't construct
-  }
-  
   /**
    * This call blocks till all futures in the list have completed.  If the future completed with 
    * an error, the {@link ExecutionException} is swallowed.  Meaning that this does not attempt to 

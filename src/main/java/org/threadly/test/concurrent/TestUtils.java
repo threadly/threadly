@@ -9,10 +9,6 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public class TestUtils {
-  private TestUtils() {
-    // don't construct
-  }
-  
   /**
    * Since sleeps are sometimes necessary, this makes an easy way to ignore InterruptedException's.
    * 

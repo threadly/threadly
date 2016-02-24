@@ -12,11 +12,7 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0.0
  */
 public class ListUtils {
-  private static final int MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
-  
-  private ListUtils() {
-    // don't construct
-  }
+  protected static final int MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
   
   /**
    * This function uses the binary search and adds a small amount of logic such that it determines 

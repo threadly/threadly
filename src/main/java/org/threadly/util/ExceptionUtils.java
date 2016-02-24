@@ -11,19 +11,15 @@ import java.lang.Thread.UncaughtExceptionHandler;
  * @since 1.0.0
  */
 public class ExceptionUtils {
-  private static final short INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE = 16;
-  private static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 64;
-  private static final ThreadLocal<ExceptionHandler> THREAD_LOCAL_EXCEPTION_HANDLER;
-  private static final InheritableThreadLocal<ExceptionHandler> INHERITED_EXCEPTION_HANDLER;
-  private static volatile ExceptionHandler defaultExceptionHandler = null;
+  protected static final short INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE = 16;
+  protected static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 64;
+  protected static final ThreadLocal<ExceptionHandler> THREAD_LOCAL_EXCEPTION_HANDLER;
+  protected static final InheritableThreadLocal<ExceptionHandler> INHERITED_EXCEPTION_HANDLER;
+  protected static volatile ExceptionHandler defaultExceptionHandler = null;
   
   static {
     THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<ExceptionHandler>();
     INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<ExceptionHandler>();
-  }
-  
-  private ExceptionUtils() {
-    // don't construct
   }
   
   /**

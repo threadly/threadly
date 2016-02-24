@@ -25,13 +25,9 @@ import org.threadly.util.StringUtils;
  * @since 1.0.0
  */
 public class DebugLogger {
-  private static final boolean LOG_TIME_DEFAULT = false;
-  private static final String TIME_DELIM = " - ";
-  private static volatile ConcurrentSkipListMap<Long, String> logMap = new ConcurrentSkipListMap<Long, String>();
-  
-  private DebugLogger() {
-    // don't construct
-  }
+  protected static final boolean LOG_TIME_DEFAULT = false;
+  protected static final String TIME_DELIM = " - ";
+  protected static volatile ConcurrentSkipListMap<Long, String> logMap = new ConcurrentSkipListMap<Long, String>();
   
   /**
    * This adds a log message to the stored log.  Keep in mind this will continue to consume more 
