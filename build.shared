@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply plugin: 'checkstyle'
 apply plugin: 'maven'
 
 repositories {
@@ -16,10 +15,6 @@ compileJava {
 
 compileTestJava {
   options.compilerArgs << "-Xlint:all"
-}
-
-plugins.withType(JavaPlugin) {
-  checkstyle.sourceSets = [sourceSets.main]
 }
 
 test {

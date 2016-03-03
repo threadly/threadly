@@ -1,4 +1,5 @@
 apply from: 'build.shared'
+apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
 
 plugins.withType(JavaPlugin) {
