@@ -552,8 +552,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     @Override
     public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
       KeyDistributedScheduler.this.scheduleTaskWithFixedDelay(threadKey, task, 
-                                                              initialDelay, 
-                                                              recurringDelay);
+                                                              initialDelay, recurringDelay);
     }
 
     @Override

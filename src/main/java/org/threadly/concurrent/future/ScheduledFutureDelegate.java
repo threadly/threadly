@@ -62,8 +62,7 @@ public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> 
 
   @Override
   public T get(long timeout, TimeUnit unit) throws InterruptedException, 
-                                                   ExecutionException, 
-                                                   TimeoutException {
+                                                   ExecutionException, TimeoutException {
     return futureImp.get(timeout, unit);
   }
 

@@ -103,8 +103,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
   }
 
   @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay,
-                                     long recurringDelay) {
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");

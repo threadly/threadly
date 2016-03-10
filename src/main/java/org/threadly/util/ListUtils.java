@@ -73,8 +73,7 @@ public class ListUtils {
    * @return the index to insert the key into the list
    */
   public static int getInsertionEndIndex(List<? extends Delayed> list, 
-                                         long insertionValueInMillis, 
-                                         boolean randomAccessList) {
+                                         long insertionValueInMillis, boolean randomAccessList) {
     int searchResult = binarySearch(list, insertionValueInMillis, randomAccessList);
     if (searchResult >= 0) {
       Iterator<? extends Delayed> it = list.listIterator(searchResult);
@@ -129,8 +128,7 @@ public class ListUtils {
    * @return index where found, or -(insertion point) - 1 if not found
    */
   public static int binarySearch(List<? extends Delayed> list, 
-                                 long insertionValueInMillis, 
-                                 boolean randomAccessList) {
+                                 long insertionValueInMillis, boolean randomAccessList) {
     if (list.isEmpty()) {
       return -1;
     }

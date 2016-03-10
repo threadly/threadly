@@ -82,12 +82,14 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, true, task);
+    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
+                                                                                  true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     QueueSet queueSet = nts.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringDelayTaskWrapper rdt = 
         nts.new NoThreadRecurringDelayTaskWrapper(lft, queueSet, 
-                                                  Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                                  Clock.accurateForwardProgressingMillis() + 
+                                                    initialDelay, 
                                                   delayInMillis);
     queueSet.addScheduled(rdt);
     
@@ -100,12 +102,14 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, true, task);
+    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
+                                                                                  true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
     QueueSet queueSet = nts.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringRateTaskWrapper rt = 
         nts.new NoThreadRecurringRateTaskWrapper(lft, queueSet, 
-                                                 Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                                 Clock.accurateForwardProgressingMillis() + 
+                                                   initialDelay, 
                                                  periodInMillis);
     queueSet.addScheduled(rt);
     

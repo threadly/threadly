@@ -67,7 +67,8 @@ public class AsyncVerifier {
    * @throws InterruptedException Thrown if thread is interrupted while waiting
    * @throws TimeoutException Thrown if timeout occurs without signalComplete being called
    */
-  public void waitForTest(long timeoutInMs, int signalCount) throws InterruptedException, TimeoutException {
+  public void waitForTest(long timeoutInMs, int signalCount) throws InterruptedException, 
+                                                                    TimeoutException {
     long startTime = Clock.accurateForwardProgressingMillis();
     long remainingWaitTime = timeoutInMs;
     synchronized (notifyLock) {

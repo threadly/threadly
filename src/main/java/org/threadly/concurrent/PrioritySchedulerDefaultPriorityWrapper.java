@@ -123,9 +123,7 @@ public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedule
   }
 
   @Override
-  public void scheduleWithFixedDelay(Runnable task, 
-                                     long initialDelay, 
-                                     long recurringDelay, 
+  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay, 
                                      TaskPriority priority) {
     scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay, priority);
   }
@@ -136,8 +134,7 @@ public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedule
   }
 
   @Override
-  public void scheduleAtFixedRate(Runnable task, 
-                                  long initialDelay, long period,
+  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
                                   TaskPriority priority) {
     scheduler.scheduleAtFixedRate(task, initialDelay, period, priority);
   }

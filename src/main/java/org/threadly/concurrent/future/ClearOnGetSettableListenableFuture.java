@@ -101,8 +101,7 @@ public class ClearOnGetSettableListenableFuture<T> extends SettableListenableFut
    */
   @Override
   public T get(long timeout, TimeUnit unit) throws InterruptedException, 
-                                                   ExecutionException,
-                                                   TimeoutException {
+                                                   ExecutionException, TimeoutException {
     if (callbackAdded.get()) {
       throw new IllegalStateException("Callback added, can't call .get()");
     }

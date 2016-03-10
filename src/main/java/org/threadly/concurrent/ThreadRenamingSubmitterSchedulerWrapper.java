@@ -22,7 +22,8 @@ public class ThreadRenamingSubmitterSchedulerWrapper extends AbstractSubmitterSc
    * @param threadName Thread name prefix, or replaced name
    * @param replace If {@code true} the original name wont be included in the thread name
    */
-  public ThreadRenamingSubmitterSchedulerWrapper(SubmitterScheduler scheduler, String threadName, boolean replace) {
+  public ThreadRenamingSubmitterSchedulerWrapper(SubmitterScheduler scheduler, 
+                                                 String threadName, boolean replace) {
     this.scheduler = scheduler;
     this.threadName = threadName;
     this.replace = replace;

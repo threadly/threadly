@@ -12,8 +12,7 @@ import org.threadly.concurrent.future.ListenableFuture;
  * @since 4.3.0 (since 1.0.0 as SubmitterSchedulerInterface_
  */
 @SuppressWarnings("deprecation")
-public interface SubmitterScheduler extends SimpleSchedulerInterface, 
-                                            SubmitterExecutorInterface {
+public interface SubmitterScheduler extends SimpleSchedulerInterface, SubmitterExecutorInterface {
   /**
    * Schedule a one time task with a given delay.
    * 

@@ -39,8 +39,7 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
     scheduler.scheduleWithFixedDelay(new ThrowableSuppressingRunnable(task), 
-                                     initialDelay, recurringDelay, 
-                                     TimeUnit.MILLISECONDS);
+                                     initialDelay, recurringDelay, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -50,7 +49,6 @@ public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler 
     ArgumentVerifier.assertNotNegative(period, "period");
     
     scheduler.scheduleAtFixedRate(new ThrowableSuppressingRunnable(task), 
-                                  initialDelay, period, 
-                                  TimeUnit.MILLISECONDS);
+                                  initialDelay, period, TimeUnit.MILLISECONDS);
   }
 }

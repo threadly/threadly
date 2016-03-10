@@ -301,8 +301,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
 
   @Override
   public T get(long timeout, TimeUnit unit) throws InterruptedException, 
-                                                   ExecutionException,
-                                                   TimeoutException {
+                                                   ExecutionException, TimeoutException {
     long startTime = Clock.accurateForwardProgressingMillis();
     long timeoutInMs = unit.toMillis(timeout);
     synchronized (resultLock) {

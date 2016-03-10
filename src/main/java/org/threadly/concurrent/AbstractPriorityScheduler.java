@@ -290,7 +290,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public QueueSet(QueueSetListener queueListener) {
       this.queueListener = queueListener;
       this.executeQueue = new ConcurrentLinkedQueue<OneTimeTaskWrapper>();
-      this.scheduleQueue = new ConcurrentArrayList<TaskWrapper>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
+      this.scheduleQueue = new ConcurrentArrayList<TaskWrapper>(QUEUE_FRONT_PADDING, 
+                                                                QUEUE_REAR_PADDING);
     }
 
     /**
@@ -440,7 +441,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       }
     }
   
-    private static void clearQueue(Collection<? extends TaskWrapper> queue, List<TaskWrapper> resultList) {
+    private static void clearQueue(Collection<? extends TaskWrapper> queue, 
+                                   List<TaskWrapper> resultList) {
       Iterator<? extends TaskWrapper> it = queue.iterator();
       while (it.hasNext()) {
         TaskWrapper tw = it.next();
