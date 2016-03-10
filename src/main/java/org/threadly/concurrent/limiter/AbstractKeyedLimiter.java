@@ -29,11 +29,11 @@ import org.threadly.util.StringUtils;
  * @since 4.3.0
  */
 abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
-  protected static final int DEFAULT_LOCK_PARALISM = 32;
+  protected static final short DEFAULT_LOCK_PARALISM = 32;
   protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = 0.75f;  // 0.75 is ConcurrentHashMap default
-  protected static final int CONCURRENT_HASH_MAP_MIN_SIZE = 8;
-  protected static final int CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 64;
-  protected static final int CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
+  protected static final short CONCURRENT_HASH_MAP_MIN_SIZE = 8;
+  protected static final short CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 64;
+  protected static final short CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
   
   protected final Executor executor;
   protected final int maxConcurrency;

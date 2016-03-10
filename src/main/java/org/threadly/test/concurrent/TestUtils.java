@@ -29,7 +29,7 @@ public class TestUtils {
    */
   public static void blockTillClockAdvances() {
     new TestCondition() {
-      private static final int POLL_INTERVAL_IN_MS = 1;
+      private static final short POLL_INTERVAL_IN_MS = 1;
       
       private final long startTime = Clock.accurateTimeMillis();
       private final long alwaysProgressingStartTime = Clock.accurateForwardProgressingMillis();

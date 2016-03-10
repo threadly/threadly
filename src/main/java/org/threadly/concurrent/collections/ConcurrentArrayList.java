@@ -46,7 +46,7 @@ import org.threadly.util.ArgumentVerifier;
  * @param <T> type of object to retain
  */
 public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
-  private static final int HASH_CODE_PRIME_NUMBER = 31;
+  private static final short HASH_CODE_PRIME_NUMBER = 31;
   private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
   
   protected static <E> DataSet<E> makeEmptyDataSet(int frontPadding, int rearPadding) {

@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * @since 1.0.0
  */
 public class ListUtils {
-  protected static final int MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
+  protected static final short MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
   
   /**
    * This function uses the binary search and adds a small amount of logic such that it determines 
@@ -141,7 +141,7 @@ public class ListUtils {
     long minVal = list.get(absoluteMin).getDelay(TimeUnit.MILLISECONDS);
     long maxVal = list.get(absoluteMax).getDelay(TimeUnit.MILLISECONDS);
     
-    int nPreviousSteps = 1;
+    short nPreviousSteps = 1;
     while (true) {
       if (insertionValueInMillis <= minVal) {
         return insertionValueInMillis == minVal ? min : -1 - min;

@@ -49,7 +49,7 @@ class TaskListUtils {
     long minVal = list.get(absoluteMin).getRunTime();
     long maxVal = list.get(absoluteMax).getRunTime();
     
-    int nPreviousSteps = 0;
+    short nPreviousSteps = 0;
     while (true) {
       if (insertionRunTime <= minVal) {
         return insertionRunTime == minVal ? min : -1 - min;

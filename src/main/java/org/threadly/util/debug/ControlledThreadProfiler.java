@@ -14,7 +14,7 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
  * @since 1.0.0
  */
 public class ControlledThreadProfiler extends Profiler {
-  private static final int TRACKED_THREAD_BUFFER = 10;  // used to make adding/removing tracked threads more efficient
+  private static final short TRACKED_THREAD_BUFFER = 10;  // used to make adding/removing tracked threads more efficient
   
   protected final ControlledThreadProfileStorage controledThreadStore;
   
