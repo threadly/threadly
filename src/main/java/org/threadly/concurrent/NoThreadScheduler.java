@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
+
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
@@ -26,14 +29,13 @@ import org.threadly.util.ExceptionUtils;
  * @since 2.0.0
  */
 public class NoThreadScheduler extends AbstractPriorityScheduler {
-  protected final Object taskNotifyLock;
   protected final QueueSet highPriorityQueueSet;
   protected final QueueSet lowPriorityQueueSet;
   protected final QueueSet starvablePriorityQueueSet;
+  protected final AtomicReference<Thread> blockingThread;
   private final QueueSetListener queueListener;
   private volatile long maxWaitForLowPriorityInMs;
   private volatile boolean tickRunning;
-  private volatile boolean currentlyBlocking;
   private volatile boolean tickCanceled;
   
   /**
@@ -52,23 +54,13 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   public NoThreadScheduler(TaskPriority defaultPriority, long maxWaitForLowPriorityInMs) {
     super(defaultPriority);
     
-    taskNotifyLock = new Object();
+    blockingThread = new AtomicReference<Thread>(null);
     queueListener = new QueueSetListener() {
       @Override
       public void handleQueueUpdate() {
-        /* This is an optimization as we only need to synchronize and notify if there is a blocking 
-         * tick.
-         * 
-         * This works because it is set BEFORE synchronizing in blocking tick, and we are only 
-         * notified here AFTER the queue has already been updated.
-         * 
-         * So if the currentlyBlocking has not been set by the time we check it, but we will block, 
-         * then when it synchronizes it should see the queue update that already occured anyways.
-         */
-        if (currentlyBlocking) {
-          synchronized (taskNotifyLock) {
-            taskNotifyLock.notify();
-          }
+        Thread t = blockingThread.get();
+        if (t != null) {
+          LockSupport.unpark(t);
         }
       }
     };
@@ -76,7 +68,6 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     lowPriorityQueueSet = new QueueSet(queueListener);
     starvablePriorityQueueSet = new QueueSet(queueListener);
     tickRunning = false;
-    currentlyBlocking = false;
     tickCanceled = false;
     
     // call to verify and set values
@@ -240,57 +231,70 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   public int blockingTick(ExceptionHandler exceptionHandler) throws InterruptedException {
     int initialTickResult = tick(exceptionHandler, false);
     if (initialTickResult == 0) {
-      currentlyBlocking = true;
+      Thread currentThread = Thread.currentThread();
+      // we already tried to optimistically run something above, so we now must prepare to park
+      // and park if we still find nothing to execute
+      if (! blockingThread.compareAndSet(null, currentThread)) {
+        throw new IllegalStateException("Another thread is already blocking!!");
+      }
       try {
-        synchronized (taskNotifyLock) {
-          while (true) {
-            /* we must check the cancelTick once we have the lock 
-             * since that is when the .notify() would happen.
-             */
-            if (tickCanceled) {
-              tickCanceled = false;
-              return 0;
+        while (true) {
+          /* we must check the cancelTick once we have the lock 
+           * since that is when the .notify() would happen.
+           */
+          if (tickCanceled) {
+            tickCanceled = false;
+            return 0;
+          } else if (currentThread.isInterrupted()) {
+            throw new InterruptedException();
+          }
+          TaskWrapper nextTask = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
+                                             maxWaitForLowPriorityInMs);
+          if (nextTask == null) {
+            TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
+            if (nextStarvableTask == null) {
+              LockSupport.park();
+            } else {
+              long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
+              if (nextStarvableTaskDelay > 0) {
+                LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextStarvableTaskDelay);
+              } else {
+                // starvable task is ready to run, so break loop
+                break;
+              }
             }
-            TaskWrapper nextTask = getNextTask(highPriorityQueueSet, lowPriorityQueueSet, 
-                                               maxWaitForLowPriorityInMs);
-            if (nextTask == null) {
+          } else {
+            long nextTaskDelay = nextTask.getScheduleDelay();
+            if (nextTaskDelay > 0) {
               TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
               if (nextStarvableTask == null) {
-                taskNotifyLock.wait();
+                LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * nextTaskDelay);
               } else {
                 long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
                 if (nextStarvableTaskDelay > 0) {
-                  taskNotifyLock.wait(nextStarvableTaskDelay);
+                  LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * 
+                                          (nextTaskDelay > nextStarvableTaskDelay ? 
+                                            nextStarvableTaskDelay : nextTaskDelay));
                 } else {
                   // starvable task is ready to run, so break loop
                   break;
                 }
               }
             } else {
-              long nextTaskDelay = nextTask.getScheduleDelay();
-              if (nextTaskDelay > 0) {
-                TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
-                if (nextStarvableTask == null) {
-                  taskNotifyLock.wait(nextTaskDelay);
-                } else {
-                  long nextStarvableTaskDelay = nextStarvableTask.getScheduleDelay();
-                  if (nextStarvableTaskDelay > 0) {
-                    taskNotifyLock.wait(nextTaskDelay > nextStarvableTaskDelay ? 
-                                          nextStarvableTaskDelay : nextTaskDelay);
-                  } else {
-                    // starvable task is ready to run, so break loop
-                    break;
-                  }
-                }
-              } else {
-                // task is ready to run, so break loop
-                break;
-              }
+              // task is ready to run, so break loop
+              break;
             }
           }
         }
       } finally {
-        currentlyBlocking = false;
+        // lazy set should be safe here as a CAS operation (the only read done for this atomic) 
+        // should invoke a volatile write to see the update.  But assuming it does not (since the 
+        // docs are not perfectly clear on it), in theory only one thread should be invoking tick 
+        // anyways, so the worst case would be another thread sees us as still blocking even 
+        // though we have gone into tick (or completed), but that would be an indication of a bad 
+        // design pattern with NoThreadScheduler.  If only one thread is invoking tick (as it 
+        // should).  This would never be seen.
+        blockingThread.lazySet(null);
       }
       
       return tick(exceptionHandler, true);
