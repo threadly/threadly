@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import org.threadly.concurrent.SubmitterScheduler;
 
@@ -21,6 +22,7 @@ public class WatchdogCache {
   protected final SubmitterScheduler scheduler;
   protected final boolean sendInterruptOnFutureCancel;
   protected final ConcurrentMap<Long, Watchdog> cachedDogs;
+  protected final Function<Long, Watchdog> watchdogProducer;
   protected final Runnable cacheCleaner;
   private final AtomicBoolean cleanerScheduled;
   
@@ -51,6 +53,9 @@ public class WatchdogCache {
     this.scheduler = scheduler;
     this.sendInterruptOnFutureCancel = sendInterruptOnFutureCancel;
     cachedDogs = new ConcurrentHashMap<Long, Watchdog>();
+    watchdogProducer = (timeout) -> {
+      return new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
+    };
     cacheCleaner = new CleanRunner();
     cleanerScheduled = new AtomicBoolean(false);
   }
@@ -71,16 +76,8 @@ public class WatchdogCache {
       return;
     }
     
-    Watchdog dog = cachedDogs.get(timeoutInMillis);
-    if (dog == null) {
-      dog = new Watchdog(scheduler, timeoutInMillis, sendInterruptOnFutureCancel);
-      Watchdog exisiting = cachedDogs.putIfAbsent(timeoutInMillis, dog);
-      if (exisiting != null) {
-        dog = exisiting;
-      }
-    }
-    
-    dog.watch(future);
+    cachedDogs.computeIfAbsent(timeoutInMillis, watchdogProducer)
+              .watch(future);
     
     maybeScheduleCleaner();
   }
