@@ -200,6 +200,90 @@ public class ExceptionUtils {
   }
   
   /**
+   * Checks to see if the provided error, or any causes in the provided error matching the 
+   * provided type.  This can be useful when trying to truncate an exception chain to only the 
+   * relevant information.  If the goal is only to determine if it exists or not consider using 
+   * {@link #hasCauseOfTypes(Throwable, Iterable)}.  If you are only comparing against one exception 
+   * type {@link #getCauseOfType(Throwable, Class)} is a better option (and will return without the 
+   * need to cast, type thanks to generics).
+   * 
+   * @param rootError Throwable to start search from
+   * @param types Types of throwable classes looking to match against
+   * @return Throwable that matches one of the provided types, or {@code null} if none was found
+   */
+  public static Throwable getCauseOfTypes(Throwable rootError, 
+                                          Iterable<? extends Class<? extends Throwable>> types) {
+    ArgumentVerifier.assertNotNull(types, "types");
+    
+    Throwable t = rootError;
+    while (t != null) {
+      for (Class<?> c : types) {
+        if (c.isInstance(t)) {
+          return t;
+        }
+      }
+      t = t.getCause();
+    }
+    return null;
+  }
+  
+  /**
+   * Checks to see if the provided error, or any causes in the provided error match the provided 
+   * type.  This can be useful when trying to detect conditions where the actual condition may not 
+   * be the head cause, nor the root cause (but buried somewhere in the chain).  If the actual 
+   * exception is needed consider using {@link #getCauseOfTypes(Throwable, Iterable)}.  If you are 
+   * only comparing against one exception type {@link #hasCauseOfType(Throwable, Class)} is a 
+   * better option.
+   * 
+   * @param rootError Throwable to start search from
+   * @param types Types of throwable classes looking to match against
+   * @return {@code true} if a match was found, false if no exception cause matches any provided types
+   */
+  public static boolean hasCauseOfTypes(Throwable rootError, 
+                                        Iterable<? extends Class<? extends Throwable>> types) {
+    return getCauseOfTypes(rootError, types) != null;
+  }
+  
+  /**
+   * Checks to see if the provided error, or any causes in the provided error matching the 
+   * provided type.  This can be useful when trying to truncate an exception chain to only the 
+   * relevant information.  If the goal is only to determine if it exists or not consider using 
+   * {@link #hasCauseOfType(Throwable, Class)}.
+   * 
+   * @param rootError Throwable to start search from
+   * @param type Type of throwable classes looking to match against
+   * @param <T> Type of throwable to return (must equal or be super type of generic class provided)
+   * @return Throwable that matches one of the provided types, or {@code null} if none was found
+   */
+  @SuppressWarnings("unchecked")  // verified by generics
+  public static <T extends Throwable> T getCauseOfType(Throwable rootError, 
+                                                       Class<? extends T> type) {
+    ArgumentVerifier.assertNotNull(type, "type");
+    Throwable t = rootError;
+    while (t != null) {
+      if (type.isInstance(t)) {
+        return (T)t;
+      }
+      t = t.getCause();
+    }
+    return null;
+  }
+  
+  /**
+   * Checks to see if the provided error, or any causes in the provided error match the provided 
+   * type.  This can be useful when trying to detect conditions where the actual condition may not 
+   * be the head cause, nor the root cause (but buried somewhere in the chain).  If the actual 
+   * exception is needed consider using {@link #getCauseOfType(Throwable, Class)}.
+   * 
+   * @param rootError Throwable to start search from
+   * @param type Type of throwable classes looking to match against
+   * @return {@code true} if a match was found, false if no exception cause matches any provided types
+   */
+  public static boolean hasCauseOfType(Throwable rootError, Class<? extends Throwable> type) {
+    return getCauseOfType(rootError, type) != null;
+  }
+  
+  /**
    * Convert throwable's stack and message into a simple string.
    * 
    * @param t throwable which contains stack

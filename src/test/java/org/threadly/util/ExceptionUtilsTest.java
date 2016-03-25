@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.StringTokenizer;
 
 import org.junit.After;
@@ -77,8 +78,8 @@ public class ExceptionUtilsTest {
     assertTrue(threadExceptionHandler == ExceptionUtils.getExceptionHandler());
   }
   
-  @SuppressWarnings("resource")
   @Test
+  @SuppressWarnings("resource")
   public void handleExceptionWithoutUncaughtExceptionHandler() {
     // make sure no uncaughtExceptionHandler is set
     Thread.setDefaultUncaughtExceptionHandler(null);
@@ -106,8 +107,8 @@ public class ExceptionUtilsTest {
     }
   }
   
-  @SuppressWarnings("resource")
   @Test
+  @SuppressWarnings("resource")
   public void handleExceptionThrowExceptionTest() {
     final RuntimeException thrownException = new RuntimeException();
     // set handler that will throw exception
@@ -142,8 +143,8 @@ public class ExceptionUtilsTest {
     }
   }
   
-  @SuppressWarnings("resource")
   @Test
+  @SuppressWarnings("resource")
   public void handleExceptionWithThreadExceptionHandler() {
     PrintStream originalSystemErr = System.err;
     try {
@@ -176,8 +177,8 @@ public class ExceptionUtilsTest {
     }
   }
   
-  @SuppressWarnings("resource")
   @Test
+  @SuppressWarnings("resource")
   public void handleExceptionWithInheritableThreadExceptionHandler() {
     PrintStream originalSystemErr = System.err;
     try {
@@ -209,8 +210,8 @@ public class ExceptionUtilsTest {
     }
   }
   
-  @SuppressWarnings("resource")
   @Test
+  @SuppressWarnings("resource")
   public void handleExceptionWithDefaultThreadExceptionHandler() {
     PrintStream originalSystemErr = System.err;
     try {
@@ -239,8 +240,8 @@ public class ExceptionUtilsTest {
     }
   }
   
-  @SuppressWarnings("resource")
   @Test
+  @SuppressWarnings("resource")
   public void handleExceptionWithDefaultUncaughtExceptionHandler() {
     PrintStream originalSystemErr = System.err;
     try {
@@ -270,8 +271,8 @@ public class ExceptionUtilsTest {
     }
   }
   
-  @SuppressWarnings("resource")
   @Test
+  @SuppressWarnings("resource")
   public void handleExceptionWithUncaughtExceptionHandler() {
     PrintStream originalSystemErr = System.err;
     try {
@@ -335,6 +336,76 @@ public class ExceptionUtilsTest {
     assertTrue(ExceptionUtils.getRootCause(e3) == rootCause);
     assertTrue(ExceptionUtils.getRootCause(e2) == rootCause);
     assertTrue(ExceptionUtils.getRootCause(e1) == rootCause);
+  }
+  
+  @Test
+  public void getCauseOfTypeNoInputTest() {
+    assertNull(ExceptionUtils.getCauseOfType(null, Exception.class));
+  }
+  
+  @Test
+  public void getCauseOfTypeMissingTest() {
+    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    assertNull(ExceptionUtils.getCauseOfType(e, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void getCauseOfTypeTest() {
+    IllegalArgumentException expected = new IllegalArgumentException(new Exception());
+    Exception e = new Exception(expected);
+    assertTrue(expected == ExceptionUtils.getCauseOfType(e, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void hasCauseOfTypeNoInputTest() {
+    assertFalse(ExceptionUtils.hasCauseOfType(null, Exception.class));
+  }
+  
+  @Test
+  public void hasCauseOfTypeMissingTest() {
+    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    assertFalse(ExceptionUtils.hasCauseOfType(e, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void hasCauseOfTypeTest() {
+    Exception e = new Exception(new IllegalArgumentException(new Exception()));
+    assertTrue(ExceptionUtils.hasCauseOfType(e, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void getCauseOfTypesNoInputTest() {
+    assertNull(ExceptionUtils.getCauseOfTypes(null, Collections.singletonList(Exception.class)));
+  }
+  
+  @Test
+  public void getCauseOfTypesMissingTest() {
+    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    assertNull(ExceptionUtils.getCauseOfTypes(e, Collections.singletonList(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void getCauseOfTypesTest() {
+    IllegalArgumentException expected = new IllegalArgumentException(new Exception());
+    Exception e = new Exception(expected);
+    assertTrue(expected == ExceptionUtils.getCauseOfTypes(e, Collections.singletonList(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void hasCauseOfTypesNoInputTest() {
+    assertFalse(ExceptionUtils.hasCauseOfTypes(null, Collections.singletonList(Exception.class)));
+  }
+  
+  @Test
+  public void hasCauseOfTypesMissingTest() {
+    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    assertFalse(ExceptionUtils.hasCauseOfTypes(e, Collections.singletonList(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void hasCauseOfTypesTest() {
+    Exception e = new Exception(new IllegalArgumentException(new Exception()));
+    assertTrue(ExceptionUtils.hasCauseOfTypes(e, Collections.singletonList(IllegalArgumentException.class)));
   }
   
   @Test
