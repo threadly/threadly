@@ -10,7 +10,7 @@ import java.util.Random;
 import org.junit.Test;
 import org.threadly.concurrent.TestDelayed;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ListUtilsTest {
   private static final int BINARY_SEARCH_RANDOM_SIZE = TEST_QTY * 10;
   private static final int INCREMENTAL_SEARCH_COUNT = TEST_QTY * 10;

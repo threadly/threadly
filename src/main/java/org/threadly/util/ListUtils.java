@@ -9,8 +9,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * <p>A collection of utilities for working with lists.</p>
  * 
+ * @deprecated Will be replaced in 5.0.0 with "SortUtils"
+ * 
  * @since 1.0.0
  */
+@Deprecated
 public class ListUtils {
   protected static final short MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
   
