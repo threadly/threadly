@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -16,6 +17,7 @@ import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.SortUtils;
 
 /**
  * <p>Abstract implementation for implementations of {@link PrioritySchedulerService}.  In 
@@ -258,12 +260,14 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     protected final QueueSetListener queueListener;
     protected final ConcurrentLinkedQueue<OneTimeTaskWrapper> executeQueue;
     protected final ConcurrentArrayList<TaskWrapper> scheduleQueue;
+    protected final Function<Integer, Long> scheduleQueueRunTimeByIndex;
     
     public QueueSet(QueueSetListener queueListener) {
       this.queueListener = queueListener;
       this.executeQueue = new ConcurrentLinkedQueue<OneTimeTaskWrapper>();
       this.scheduleQueue = new ConcurrentArrayList<TaskWrapper>(QUEUE_FRONT_PADDING, 
                                                                 QUEUE_REAR_PADDING);
+      scheduleQueueRunTimeByIndex = (index) -> scheduleQueue.get(index).getRunTime();
     }
 
     /**
@@ -288,7 +292,9 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public void addScheduled(TaskWrapper task) {
       int insertionIndex;
       synchronized (scheduleQueue.getModificationLock()) {
-        insertionIndex = TaskListUtils.getInsertionEndIndex(scheduleQueue, task.getRunTime());
+        insertionIndex = SortUtils.getInsertionEndIndex(scheduleQueueRunTimeByIndex, 
+                                                        scheduleQueue.size() - 1, 
+                                                        task.getRunTime(), true);
         
         scheduleQueue.add(insertionIndex, task);
       }
@@ -311,7 +317,9 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       synchronized (scheduleQueue.getModificationLock()) {
         int currentIndex = scheduleQueue.lastIndexOf(task);
         if (currentIndex > 0) {
-          insertionIndex = TaskListUtils.getInsertionEndIndex(scheduleQueue, task.getPureRunTime());
+          insertionIndex = SortUtils.getInsertionEndIndex(scheduleQueueRunTimeByIndex, 
+                                                          scheduleQueue.size() - 1, 
+                                                          task.getPureRunTime(), true);
           
           scheduleQueue.reposition(currentIndex, insertionIndex);
         } else if (currentIndex == 0) {
@@ -415,6 +423,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   
     private static void clearQueue(Collection<? extends TaskWrapper> queue, 
                                    List<TaskWrapper> resultList) {
+      boolean resultWasEmpty = resultList.isEmpty();
       Iterator<? extends TaskWrapper> it = queue.iterator();
       while (it.hasNext()) {
         TaskWrapper tw = it.next();
@@ -423,8 +432,15 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
           tw.invalidate();
           // don't return tasks which were used only for internal behavior management
           if (! (tw.task instanceof InternalRunnable)) {
-            int index = TaskListUtils.getInsertionEndIndex(resultList, tw.getRunTime());
-            resultList.add(index, tw);
+            if (resultWasEmpty) {
+              resultList.add(tw);
+            } else {
+              resultList.add(SortUtils.getInsertionEndIndex((index) -> 
+                                                              resultList.get(index).getRunTime(), 
+                                                            resultList.size() - 1, 
+                                                            tw.getRunTime(), true), 
+                             tw);
+            }
           }
         }
       }
@@ -611,7 +627,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  protected abstract static class TaskWrapper implements DelayedTask, RunnableContainer {
+  protected abstract static class TaskWrapper implements RunnableContainer {
     protected final Runnable task;
     protected volatile boolean invalidated;
     
@@ -652,6 +668,14 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * @return true if the task should be executed
      */
     public abstract boolean canExecute(short executeReference);
+    
+    /**
+     * Get the absolute time when this should run, in comparison with the time returned from 
+     * {@link org.threadly.util.Clock#accurateForwardProgressingMillis()}.
+     * 
+     * @return Absolute time in millis this task should run
+     */
+    public abstract long getRunTime();
     
     /**
      * Simple getter for the run time, this is expected to do NO operations for calculating the 
