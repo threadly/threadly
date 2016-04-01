@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSet;
 import org.threadly.concurrent.AbstractPriorityScheduler.RecurringDelayTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.RecurringRateTaskWrapper;
+import org.threadly.concurrent.AbstractPriorityScheduler.TaskWrapper;
 import org.threadly.concurrent.NoThreadScheduler.NoThreadRecurringDelayTaskWrapper;
 import org.threadly.concurrent.NoThreadScheduler.NoThreadRecurringRateTaskWrapper;
 import org.threadly.util.Clock;
@@ -138,9 +139,9 @@ public class ThreadlyInternalAccessor {
    * @since 4.6.0
    */
   protected static class DelayedTaskWrapper implements Delayed {
-    private final DelayedTask task;
+    private final TaskWrapper task;
     
-    public DelayedTaskWrapper(DelayedTask task) {
+    public DelayedTaskWrapper(TaskWrapper task) {
       this.task = task;
     }
 
