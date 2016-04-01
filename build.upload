@@ -2,23 +2,26 @@ apply from: 'build.shared'
 apply plugin: 'maven'
 apply plugin: 'signing'
 
-sourceCompatibility = 1.6
-targetCompatibility = 1.6
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 test {
   maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2))
 }
 
 compileJava {
-  String[] java6Paths = new String[5]
-  java6Paths[0] = "/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/rt.jar"
-  java6Paths[1] = "/usr/lib/jvm/java-6-openjdk/jre/lib/rt.jar"
-  java6Paths[2] = "/usr/lib/jvm/java-1.6.0-openjdk-amd64/jre/lib/rt.jar"
-  java6Paths[3] = "/usr/lib/jvm/java-1.6.0-openjdk/jre/lib/rt.jar"
-  java6Paths[4] = "/usr/lib/jvm/java-6-sun/jre/lib/rt.jar"
-  for (String path : java6Paths) {
+  String[] java8Paths = new String[8]
+  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar"
+  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/rt.jar"
+  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/rt.jar"
+  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/rt.jar"
+  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/rt.jar"
+  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/rt.jar"
+  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/rt.jar"
+  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/rt.jar"
+  for (String path : java8Paths) {
     if (new java.io.File(path).exists()) {
-      println 'Using java 6 rt.jar: ' + path
+      println 'Using java 8 rt.jar: ' + path
       options.bootClasspath = path
       break
     }
@@ -32,14 +35,17 @@ compileJava {
 
 compileTestJava {
   options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
-  
-  String[] java6Paths = new String[5]
-  java6Paths[0] = "/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/rt.jar"
-  java6Paths[1] = "/usr/lib/jvm/java-6-openjdk/jre/lib/rt.jar"
-  java6Paths[2] = "/usr/lib/jvm/java-1.6.0-openjdk-amd64/jre/lib/rt.jar"
-  java6Paths[3] = "/usr/lib/jvm/java-1.6.0-openjdk/jre/lib/rt.jar"
-  java6Paths[4] = "/usr/lib/jvm/java-6-sun/jre/lib/rt.jar"
-  for (String path : java6Paths) {
+
+  String[] java8Paths = new String[8]
+  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar"
+  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/rt.jar"
+  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/rt.jar"
+  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/rt.jar"
+  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/rt.jar"
+  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/rt.jar"
+  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/rt.jar"
+  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/rt.jar"
+  for (String path : java8Paths) {
     if (new java.io.File(path).exists()) {
       options.bootClasspath = path
       break
