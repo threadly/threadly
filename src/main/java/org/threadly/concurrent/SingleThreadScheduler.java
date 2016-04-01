@@ -2,7 +2,6 @@ package org.threadly.concurrent;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -270,23 +269,8 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   }
 
   @Override
-  public boolean remove(Runnable task) {
-    return sManager.scheduler.remove(task);
-  }
-
-  @Override
-  public boolean remove(Callable<?> task) {
-    return sManager.scheduler.remove(task);
-  }
-
-  @Override
-  public long getMaxWaitForLowPriority() {
-    return sManager.scheduler.getMaxWaitForLowPriority();
-  }
-
-  @Override
-  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-    sManager.scheduler.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
+  protected QueueManager getQueueManager() {
+    return sManager.scheduler.queueManager;
   }
 
   @Override
@@ -328,11 +312,6 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   @Deprecated
   public int getCurrentRunningCount() {
     return sManager.scheduler.getCurrentRunningCount();
-  }
-
-  @Override
-  protected QueueSet getQueueSet(TaskPriority priority) {
-    return sManager.scheduler.getQueueSet(priority);
   }
   
   /**

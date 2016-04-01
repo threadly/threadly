@@ -1,8 +1,6 @@
 package org.threadly.concurrent;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -198,16 +196,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   public int getCurrentRunningCount() {
     return workerPool.getActiveTaskCount();
   }
-  
-  @Override
-  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-    taskQueueManager.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
-  }
-  
-  @Override
-  public long getMaxWaitForLowPriority() {
-    return taskQueueManager.getMaxWaitForLowPriority();
-  }
 
   /**
    * Ensures all threads have been started, it will create threads till the thread count matches 
@@ -324,44 +312,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     return super.getQueuedTaskCount(priority) - (priority == TaskPriority.Starvable ? 1 : 0);
   }
 
-  /**
-   * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
-   * run until this call has returned.
-   * 
-   * Note that this call has high guarantees on the ability to remove the task (as in a complete 
-   * guarantee).  But while this is being invoked, it will reduce the throughput of execution, so 
-   * should NOT be used extremely frequently.
-   * 
-   * For non-recurring tasks using a future and calling 
-   * {@link java.util.concurrent.Future#cancel(boolean)} can be a better solution.
-   * 
-   * @param task The original runnable provided to the executor
-   * @return {@code true} if the runnable was found and removed
-   */
-  @Override
-  public boolean remove(Runnable task) {
-    return taskQueueManager.remove(task);
-  }
-
-  /**
-   * Removes the callable task from the execution queue.  It is possible for the callable to still 
-   * run until this call has returned.
-   * 
-   * Note that this call has high guarantees on the ability to remove the task (as in a complete 
-   * guarantee).  But while this is being invoked, it will reduce the throughput of execution, so 
-   * should NOT be used extremely frequently.
-   * 
-   * For non-recurring tasks using a future and calling 
-   * {@link java.util.concurrent.Future#cancel(boolean)} can be a better solution.
-   * 
-   * @param task The original callable provided to the executor
-   * @return {@code true} if the callable was found and removed
-   */
-  @Override
-  public boolean remove(Callable<?> task) {
-    return taskQueueManager.remove(task);
-  }
-
   @Override
   protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
     QueueSet queueSet = taskQueueManager.getQueueSet(priority);
@@ -453,155 +403,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
 
   @Override
-  protected QueueSet getQueueSet(TaskPriority priority) {
-    return taskQueueManager.getQueueSet(priority);
-  }
-  
-  /**
-   * <p>A service which manages the execute queues.  It runs a task to consume from the queues and 
-   * execute those tasks as workers become available.  It also manages the queues as tasks are 
-   * added, removed, or rescheduled.</p>
-   * 
-   * <p>Right now this class has a pretty tight dependency on {@link PriorityScheduler}, which is 
-   * why this is an inner class.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 3.4.0
-   */
-  protected static class QueueManager {
-    protected final QueueSet highPriorityQueueSet;
-    protected final QueueSet lowPriorityQueueSet;
-    protected final QueueSet starvablePriorityQueueSet;
-    private volatile long maxWaitForLowPriorityInMs;
-    
-    public QueueManager(QueueSetListener queueSetListener, long maxWaitForLowPriorityInMs) {
-      this.highPriorityQueueSet = new QueueSet(queueSetListener);
-      this.lowPriorityQueueSet = new QueueSet(queueSetListener);
-      this.starvablePriorityQueueSet = new QueueSet(queueSetListener);
-      
-      // call to verify and set values
-      setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
-    }
-    
-    /**
-     * Returns the {@link QueueSet} for a specified priority.
-     * 
-     * @param priority Priority that should match to the given {@link QueueSet}
-     * @return {@link QueueSet} which matches to the priority
-     */
-    public QueueSet getQueueSet(TaskPriority priority) {
-      if (priority == TaskPriority.High) {
-        return highPriorityQueueSet;
-      } else if (priority == TaskPriority.Low) {
-        return lowPriorityQueueSet;
-      } else {
-        return starvablePriorityQueueSet;
-      }
-    }
-
-    /**
-     * Stops the thread which is consuming tasks and providing them to {@link Worker}'s.  If we 
-     * already have an idle worker, that worker will be returned to the WorkerPool.
-     * 
-     * Once stopped, the tasks remaining in queue will be cleared, and returned.
-     * 
-     * @return List of runnables that were waiting in queue, in an approximate order of execution
-     */
-    public List<Runnable> clearQueue() {
-      List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(highPriorityQueueSet.queueSize() + 
-                                                                   lowPriorityQueueSet.queueSize() + 
-                                                                   starvablePriorityQueueSet.queueSize());
-      highPriorityQueueSet.drainQueueInto(wrapperList);
-      lowPriorityQueueSet.drainQueueInto(wrapperList);
-      starvablePriorityQueueSet.drainQueueInto(wrapperList);
-      
-      return ContainerHelper.getContainedRunnables(wrapperList);
-    }
-    
-    /**
-     * Gets the next task currently queued for execution.  This task may be ready to execute, or 
-     * just queued.  If a queue update comes in, this must be re-invoked to see what task is now 
-     * next.  If there are no tasks ready to be executed this will simply return {@code null}.
-     * 
-     * @return Task to be executed next, or {@code null} if no tasks at all are queued
-     */
-    public TaskWrapper getNextTask() {
-      TaskWrapper nextTask = AbstractPriorityScheduler.getNextTask(highPriorityQueueSet, 
-                                                                   lowPriorityQueueSet, 
-                                                                   maxWaitForLowPriorityInMs);
-      if (nextTask == null) {
-        return starvablePriorityQueueSet.getNextTask();
-      } else {
-        long nextTaskDelay = nextTask.getScheduleDelay();
-        if (nextTaskDelay > 0) {
-          TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
-          if (nextStarvableTask != null && nextTaskDelay > nextStarvableTask.getScheduleDelay()) {
-            return nextStarvableTask;
-          } else {
-            return nextTask;
-          }
-        } else {
-          return nextTask;
-        }
-      }
-    }
-    
-    /**
-     * Removes the runnable task from the execution queue.  It is possible for the runnable to 
-     * still run until this call has returned.
-     * 
-     * Note that this call has high guarantees on the ability to remove the task (as in a complete 
-     * guarantee).  But while this is being invoked, it will reduce the throughput of execution, 
-     * so should NOT be used extremely frequently.
-     * 
-     * @param task The original runnable provided to the executor
-     * @return {@code true} if the runnable was found and removed
-     */
-    public boolean remove(Runnable task) {
-      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task) || 
-               starvablePriorityQueueSet.remove(task);
-    }
-    
-    /**
-     * Removes the callable task from the execution queue.  It is possible for the callable to 
-     * still run until this call has returned.
-     * 
-     * Note that this call has high guarantees on the ability to remove the task (as in a complete 
-     * guarantee).  But while this is being invoked, it will reduce the throughput of execution, 
-     * so should NOT be used extremely frequently.
-     * 
-     * @param task The original callable provided to the executor
-     * @return {@code true} if the callable was found and removed
-     */
-    public boolean remove(Callable<?> task) {
-      return highPriorityQueueSet.remove(task) || lowPriorityQueueSet.remove(task) || 
-               starvablePriorityQueueSet.remove(task);
-    }
-    
-    /**
-     * Changes the max wait time for low priority tasks.  This is the amount of time that a low 
-     * priority task will wait if there are ready to execute high priority tasks.  After a low 
-     * priority task has waited this amount of time, it will be executed fairly with high priority 
-     * tasks (meaning it will only execute the high priority task if it has been waiting longer than 
-     * the low priority task).
-     * 
-     * @param maxWaitForLowPriorityInMs new wait time in milliseconds for low priority tasks during thread contention
-     */
-    public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-      ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
-      
-      this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
-    }
-    
-    /**
-     * Getter for the amount of time a low priority task will wait during thread contention before 
-     * it is eligible for execution.
-     * 
-     * @return currently set max wait for low priority task
-     */
-    public long getMaxWaitForLowPriority() {
-      return maxWaitForLowPriorityInMs;
-    }
+  protected QueueManager getQueueManager() {
+    return taskQueueManager;
   }
   
   /**

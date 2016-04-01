@@ -1,8 +1,6 @@
 package org.threadly.test.concurrent;
 
 import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.threadly.concurrent.AbstractPriorityScheduler;
 import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.concurrent.TaskPriority;
@@ -50,28 +48,8 @@ public class TestableScheduler extends AbstractPriorityScheduler {
   }
 
   @Override
-  public boolean remove(Runnable task) {
-    return scheduler.remove(task);
-  }
-
-  @Override
-  public boolean remove(Callable<?> task) {
-    return scheduler.remove(task);
-  }
-
-  @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
-  }
-
-  @Override
-  public long getMaxWaitForLowPriority() {
-    return scheduler.getMaxWaitForLowPriority();
-  }
-
-  @Override
-  public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
-    scheduler.setMaxWaitForLowPriority(maxWaitForLowPriorityInMs);
   }
 
   @Override
@@ -110,8 +88,8 @@ public class TestableScheduler extends AbstractPriorityScheduler {
   }
 
   @Override
-  protected QueueSet getQueueSet(TaskPriority priority) {
-    return scheduler.getQueueSet(priority);
+  protected QueueManager getQueueManager() {
+    return scheduler.getQueueManager();
   }
   
   /**
@@ -317,8 +295,8 @@ public class TestableScheduler extends AbstractPriorityScheduler {
     }
     
     @Override
-    protected QueueSet getQueueSet(TaskPriority priority) {
-      return super.getQueueSet(priority);
+    protected QueueManager getQueueManager() {
+      return super.getQueueManager();
     }
     
     @Override

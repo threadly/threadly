@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.PriorityScheduler.QueueManager;
+import org.threadly.concurrent.AbstractPriorityScheduler.QueueManager;
 import org.threadly.concurrent.PriorityScheduler.Worker;
 import org.threadly.concurrent.PriorityScheduler.WorkerPool;
 import org.threadly.test.concurrent.TestCondition;

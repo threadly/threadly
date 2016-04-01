@@ -85,7 +85,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
                                                                                   true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
-    QueueSet queueSet = nts.getQueueSet(nts.getDefaultPriority());
+    QueueSet queueSet = nts.queueManager.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringDelayTaskWrapper rdt = 
         nts.new NoThreadRecurringDelayTaskWrapper(lft, queueSet, 
                                                   Clock.accurateForwardProgressingMillis() + 
@@ -105,7 +105,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
                                                                                   true, task);
     NoThreadScheduler nts = singleThreadScheduler.getRunningScheduler();
-    QueueSet queueSet = nts.getQueueSet(nts.getDefaultPriority());
+    QueueSet queueSet = nts.queueManager.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringRateTaskWrapper rt = 
         nts.new NoThreadRecurringRateTaskWrapper(lft, queueSet, 
                                                  Clock.accurateForwardProgressingMillis() + 

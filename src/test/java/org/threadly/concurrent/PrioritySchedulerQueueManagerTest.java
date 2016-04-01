@@ -7,10 +7,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
-import org.threadly.concurrent.PriorityScheduler.QueueManager;
+import org.threadly.concurrent.AbstractPriorityScheduler.QueueManager;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSet;
+import org.threadly.concurrent.AbstractPriorityScheduler.QueueSetListener;
 import org.threadly.concurrent.AbstractPriorityScheduler.TaskWrapper;
-import org.threadly.concurrent.PriorityScheduler.WorkerPool;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
@@ -18,21 +18,20 @@ import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerQueueManagerTest {
-  private WorkerPool workerPool;
   private QueueManager queueManager;
   
   @Before
   public void setup() {
-    ConfigurableThreadFactory threadFactory = new ConfigurableThreadFactory();
-    workerPool = new WorkerPool(threadFactory, 1);
-    queueManager = new QueueManager(workerPool,  
-                                    AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
+    queueManager = new QueueManager(new QueueSetListener() {
+      @Override
+      public void handleQueueUpdate() {
+        // ignore event
+      }
+    }, AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
   }
   
   @After
   public void cleanup() {
-    workerPool.startShutdown();
-    workerPool.finishShutdown();
     queueManager = null;
   }
   

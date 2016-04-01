@@ -561,9 +561,9 @@ public class NoThreadSchedulerTest {
     // should no longer have anything to run
     assertFalse(scheduler.hasTaskReadyToRun());
     
-    scheduler.highPriorityQueueSet
+    scheduler.queueManager.highPriorityQueueSet
              .addScheduled(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                  scheduler.highPriorityQueueSet.scheduleQueue, 
+                                                  scheduler.queueManager.highPriorityQueueSet.scheduleQueue, 
                                                   Clock.lastKnownForwardProgressingMillis()));
     
     // now should be true with scheduled task which is ready to run
@@ -607,9 +607,9 @@ public class NoThreadSchedulerTest {
     // should no longer have anything to run
     assertTrue(scheduler.getDelayTillNextTask() > 0);
     
-    scheduler.highPriorityQueueSet
+    scheduler.queueManager.highPriorityQueueSet
              .addScheduled(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                  scheduler.highPriorityQueueSet.scheduleQueue, 
+                                                  scheduler.queueManager.highPriorityQueueSet.scheduleQueue, 
                                                   Clock.lastKnownForwardProgressingMillis()));
     
     // now should be true with scheduled task which is ready to run
@@ -640,7 +640,7 @@ public class NoThreadSchedulerTest {
     
     scheduler.clearTasks();
     
-    assertEquals(0, scheduler.highPriorityQueueSet.queueSize());
-    assertEquals(0, scheduler.lowPriorityQueueSet.queueSize());
+    assertEquals(0, scheduler.queueManager.highPriorityQueueSet.queueSize());
+    assertEquals(0, scheduler.queueManager.lowPriorityQueueSet.queueSize());
   }
 }

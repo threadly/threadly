@@ -16,14 +16,28 @@ public interface SchedulerService extends SubmitterSchedulerInterface {
    * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
    * run until this call has returned.
    * 
-   * @param task The original task provided to the executor
-   * @return {@code true} if the task was found and removed
+   * Note that this call has high guarantees on the ability to remove the task (as in a complete 
+   * guarantee).  But while this is being invoked, it will reduce the throughput of execution, so 
+   * should NOT be used extremely frequently.
+   * 
+   * For non-recurring tasks using a future and calling 
+   * {@link java.util.concurrent.Future#cancel(boolean)} can be a better solution.
+   * 
+   * @param task The original runnable provided to the executor
+   * @return {@code true} if the runnable was found and removed
    */
   public boolean remove(Runnable task);
 
   /**
-   * Removes the runnable task from the execution queue.  It is possible for the callable to still 
+   * Removes the callable task from the execution queue.  It is possible for the callable to still 
    * run until this call has returned.
+   * 
+   * Note that this call has high guarantees on the ability to remove the task (as in a complete 
+   * guarantee).  But while this is being invoked, it will reduce the throughput of execution, so 
+   * should NOT be used extremely frequently.
+   * 
+   * For non-recurring tasks using a future and calling 
+   * {@link java.util.concurrent.Future#cancel(boolean)} can be a better solution.
    * 
    * @param task The original callable provided to the executor
    * @return {@code true} if the callable was found and removed
