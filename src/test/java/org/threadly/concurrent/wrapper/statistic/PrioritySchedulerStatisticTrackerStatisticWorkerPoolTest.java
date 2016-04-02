@@ -24,6 +24,7 @@ public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends Pr
   
   //needed because of visibility issues with protected inner class
   private static class VisibilityPriorityScheduler extends PriorityScheduler {
+    @SuppressWarnings("unused")
     public VisibilityPriorityScheduler(int poolSize) {
       super(poolSize);
     }

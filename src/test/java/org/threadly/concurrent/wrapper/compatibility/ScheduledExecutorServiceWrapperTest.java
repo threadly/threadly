@@ -1,11 +1,15 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper.compatibility;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+import org.threadly.concurrent.SubmitterExecutor;
+import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
+
+@SuppressWarnings("javadoc")
 public class ScheduledExecutorServiceWrapperTest extends SubmitterSchedulerInterfaceTest {
   @Override
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {

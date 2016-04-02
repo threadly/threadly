@@ -89,6 +89,33 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  public void isTerminatedTest() throws InterruptedException {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    assertFalse(sts.isTerminated());
+    sts.shutdown();
+    assertTrue(sts.isTerminated()); // termination should be immediate since no tasks were submitted
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    sts = new SingleThreadScheduler();
+    try {
+      sts.execute(btr);
+      btr.blockTillStarted();
+      sts.shutdown();
+      
+      // not terminated yet
+      assertFalse(sts.isTerminated());
+      
+      btr.unblock();
+      sts.awaitTermination();
+      
+      assertTrue(sts.isTerminated());
+    } finally {
+      btr.unblock();
+      sts.shutdown();
+    }
+  }
+  
+  @Test
   public void shutdownTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     /* adding a run time to have greater chances that runnable 

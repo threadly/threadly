@@ -1,15 +1,17 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper.compatibility;
 
 import static org.junit.Assert.*;
 
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.wrapper.compatibility.ScheduledExecutorServiceTest;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class PrioritySchedulerServiceWrapperTest extends ScheduledExecutorServiceTest {
   @Override
   protected ScheduledExecutorService makeScheduler(int poolSize) {
