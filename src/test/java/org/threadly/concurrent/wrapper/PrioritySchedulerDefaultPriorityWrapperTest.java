@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper;
 
 import static org.junit.Assert.*;
 
@@ -7,10 +7,16 @@ import java.util.concurrent.Callable;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.PrioritySchedulerService;
+import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.TaskPriority;
+import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class PrioritySchedulerDefaultPriorityWrapperTest {
   private static PriorityScheduler scheduler;
   
@@ -25,8 +31,18 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     scheduler = null;
   }
   
-  @SuppressWarnings("unused")
   @Test
+  public void constructorTest() {
+    PrioritySchedulerDefaultPriorityWrapper psw = 
+        new PrioritySchedulerDefaultPriorityWrapper(scheduler, TaskPriority.Low);
+    assertTrue(psw.scheduler == scheduler);
+    assertEquals(TaskPriority.Low, psw.defaultPriority);
+    psw = new PrioritySchedulerDefaultPriorityWrapper(scheduler, TaskPriority.High);
+    assertEquals(TaskPriority.High, psw.defaultPriority);
+  }
+  
+  @Test
+  @SuppressWarnings("unused")
   public void constructorFail() {
     try {
       new PrioritySchedulerDefaultPriorityWrapper(null, TaskPriority.High);
@@ -217,6 +233,8 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     assertTrue(testScheduler.removeCallableCalled);
   }
   
+  // TODO - this may be good to move to something like mockito
+  @SuppressWarnings("deprecation")
   protected static class TestPriorityScheduler implements PrioritySchedulerService {
     protected boolean isShutdownCalled = false;
     protected boolean executeCalled = false;

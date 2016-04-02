@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper;
 
 import static org.junit.Assert.*;
 
@@ -6,9 +6,10 @@ import java.util.concurrent.Executor;
 
 import org.junit.Test;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class ExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
@@ -22,8 +23,8 @@ public class ExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
     fail("Exception should have thrown");
   }
   
-  @Override
   @Test
+  @Override
   public void executeTest() {
     TestExecutor te = new TestExecutor();
     ExecutorWrapper ew = new ExecutorWrapper(te);
@@ -40,7 +41,7 @@ public class ExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     
     @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+    public ExecutorWrapper makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return new ExecutorWrapper(schedulerFactory.makeSubmitterExecutor(poolSize, prestartIfAvailable));
     }
     

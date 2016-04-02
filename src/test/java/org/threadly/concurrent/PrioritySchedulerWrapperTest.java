@@ -21,14 +21,6 @@ public class PrioritySchedulerWrapperTest {
     scheduler.shutdown();
     scheduler = null;
   }
-  @Test
-  public void constructorTest() {
-    PrioritySchedulerWrapper psw = new PrioritySchedulerWrapper(scheduler, TaskPriority.Low);
-    assertTrue(psw.scheduler == scheduler);
-    assertEquals(TaskPriority.Low, psw.defaultPriority);
-    psw = new PrioritySchedulerWrapper(scheduler, TaskPriority.High);
-    assertEquals(TaskPriority.High, psw.defaultPriority);
-  }
   
   @SuppressWarnings("unused")
   @Test

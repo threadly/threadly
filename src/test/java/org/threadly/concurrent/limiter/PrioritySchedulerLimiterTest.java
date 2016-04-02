@@ -7,13 +7,13 @@ import java.util.List;
 
 import org.junit.Test;
 import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.PrioritySchedulerDefaultPriorityWrapper;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest.SchedulerServiceFactory;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
+import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
 
 @SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
