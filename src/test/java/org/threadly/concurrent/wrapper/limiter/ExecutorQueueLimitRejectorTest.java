@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -13,7 +13,7 @@ import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
@@ -24,21 +24,6 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new ExecutorQueueLimitRejector(null, TEST_QTY);
-  }
-  
-  @Test
-  public void getCurrentQueueSizeTest() {
-    TestableScheduler testableScheduler = new TestableScheduler();
-    ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(testableScheduler, TEST_QTY);
-
-    for (int i = 0; i < TEST_QTY; i++) {
-      assertEquals(i, queueRejector.getCurrentQueueSize());
-      queueRejector.execute(DoNothingRunnable.instance());
-    }
-    
-    testableScheduler.tick();
-
-    assertEquals(0, queueRejector.getCurrentQueueSize());
   }
   
   @Test

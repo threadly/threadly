@@ -1,18 +1,19 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SchedulerService;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class KeyedSubmitterSchedulerLimiterInterfaceTest  extends SubmitterSchedulerInterfaceTest {
+@SuppressWarnings("javadoc")
+public class KeyedSchedulerServiceLimiterInterfaceTest extends SubmitterSchedulerInterfaceTest {
   @Override
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
-    return new KeyedSubmitterSchedulerLimiterFactory();
+    return new KeyedSchedulerServiceLimiterFactory();
   }
   
-  private static class KeyedSubmitterSchedulerLimiterFactory implements SubmitterSchedulerFactory {
+  private static class KeyedSchedulerServiceLimiterFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     
     @Override
@@ -26,11 +27,11 @@ public class KeyedSubmitterSchedulerLimiterInterfaceTest  extends SubmitterSched
        * task is used for scheduled tasks, execution order may switch if there is more than one 
        * thread.
        */
-      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize > 1 ? 
-                                                                               poolSize * 2 : 1, 
-                                                                             prestartIfAvailable);
+      SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize > 1 ? 
+                                                                           poolSize * 2 : 1, 
+                                                                         prestartIfAvailable);
       
-      return new KeyedSubmitterSchedulerLimiter(scheduler, poolSize).getSubmitterSchedulerForKey("foo");
+      return new KeyedSchedulerServiceLimiter(scheduler, poolSize).getSubmitterSchedulerForKey("foo");
     }
 
     @Override

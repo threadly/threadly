@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 
@@ -23,14 +23,10 @@ import org.threadly.util.Clock;
  * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
  * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
- * 
  * @author jent - Mike Jensen
  * @since 4.3.0
  */
-@Deprecated
-public class SubmitterSchedulerLimiter extends ExecutorLimiter 
-                                       implements SubmitterScheduler {
+public class SubmitterSchedulerLimiter extends ExecutorLimiter implements SubmitterScheduler {
   protected final SubmitterScheduler scheduler;
   
   /**
@@ -40,23 +36,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public SubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency) {
-    this(scheduler, maxConcurrency, null);
-  }
-  
-  /**
-   * Constructs a new limiter that implements the {@link SubmitterScheduler}.
-   * 
-   * @deprecated Rename threads using {@link org.threadly.concurrent.ThreadRenamingSubmitterSchedulerWrapper} 
-   *               to rename executions from this limiter
-   * 
-   * @param scheduler {@link SubmitterScheduler} implementation to submit task executions to.
-   * @param maxConcurrency maximum quantity of runnables to run in parallel
-   * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
-   */
-  @Deprecated
-  public SubmitterSchedulerLimiter(SubmitterScheduler scheduler, 
-                                   int maxConcurrency, String subPoolName) {
-    super(scheduler, maxConcurrency, subPoolName);
+    super(scheduler, maxConcurrency);
     
     this.scheduler = scheduler;
   }

@@ -1,9 +1,6 @@
 package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
-
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,7 +14,6 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
@@ -56,36 +52,6 @@ public class PrioritySchedulerLimiterTest extends SchedulerServiceLimiterTest {
     
     executor = new StrictPriorityScheduler(1, TaskPriority.High, 100);
     assertTrue(new PrioritySchedulerLimiter(executor, 1).getDefaultPriority() == executor.getDefaultPriority());
-  }
-  
-  @Override
-  @Test
-  public void consumeAvailableTest() {
-    PrioritySchedulerLimiter psl = getLimiter(TEST_QTY);
-    
-    boolean flip = true;
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-    for (int i = 0; i < TEST_QTY; i++) {
-      TestRunnable tr = new TestRunnable();
-      runnables.add(tr);
-      if (flip) {
-        psl.waitingTasks.add(psl.new PriorityWrapper(tr, TaskPriority.High));
-        flip = false;
-      } else {
-        psl.waitingTasks.add(psl.new PriorityWrapper(tr, TaskPriority.High));
-        flip = true;
-      }
-    }
-    
-    psl.consumeAvailable();
-    
-    // should be fully consumed
-    assertEquals(0, psl.waitingTasks.size());
-    
-    Iterator<TestRunnable> it = runnables.iterator();
-    while (it.hasNext()) {
-      it.next().blockTillFinished();  // throws exception if it does not finish
-    }
   }
 
   protected static class PrioritySchedulerLimiterFactory implements SchedulerServiceFactory {

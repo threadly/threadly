@@ -1,38 +1,36 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.threadly.TestConstants.TEST_QTY;
 
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
-import org.threadly.concurrent.AbstractSubmitterScheduler;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.SchedulerService;
+import org.threadly.concurrent.SchedulerServiceInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
-import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterSchedulerInterfaceTest {
+@SuppressWarnings("javadoc")
+public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInterfaceTest {
   @Override
-  protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
-    return new SubmitterSchedulerQueueRejectorFactory();
+  protected SchedulerServiceFactory getSchedulerServiceFactory() {
+    return new SchedulerServiceQueueRejectorFactory();
   }
   
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
-    new SubmitterSchedulerQueueLimitRejector(null, TEST_QTY);
+    new SchedulerServiceQueueLimitRejector(null, TEST_QTY);
   }
   
   @Test
   public void getCurrentQueueSizeTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    SchedulerServiceQueueLimitRejector queueRejector = 
-        new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
 
     for (int i = 0; i < TEST_QTY; i++) {
       assertEquals(i, queueRejector.getCurrentQueueSize());
@@ -47,8 +45,7 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
   @Test
   public void getSetQueueLimitTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    SubmitterSchedulerQueueLimitRejector queueRejector = 
-        new SubmitterSchedulerQueueLimitRejector(testableScheduler, TEST_QTY);
+    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
     
     assertEquals(TEST_QTY, queueRejector.getQueueLimit());
     
@@ -57,10 +54,40 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
   }
   
   @Test
+  public void getQueuedTaskCountTest() {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(i, queueRejector.getQueuedTaskCount());
+      queueRejector.execute(DoNothingRunnable.instance());
+    }
+    
+    testableScheduler.tick();
+
+    assertEquals(0, queueRejector.getQueuedTaskCount());
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void getScheduledTaskCountTest() {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(i, queueRejector.getScheduledTaskCount());
+      queueRejector.execute(DoNothingRunnable.instance());
+    }
+    
+    testableScheduler.tick();
+
+    assertEquals(0, queueRejector.getScheduledTaskCount());
+  }
+  
+  @Test
   public void rejectTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    SubmitterSchedulerQueueLimitRejector queueRejector = 
-        new SubmitterSchedulerQueueLimitRejector(testableScheduler, TEST_QTY);
+    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
       queueRejector.execute(DoNothingRunnable.instance());
@@ -82,37 +109,7 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
     }
   }
   
-  @Test
-  public void rejectedExecutionExceptionCountTest() {
-    SubmitterSchedulerQueueLimitRejector queueRejector = 
-        new SubmitterSchedulerQueueLimitRejector(new AbstractSubmitterScheduler() {
-      @Override
-      public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      protected void doSchedule(Runnable task, long delayInMillis) {
-        throw new RejectedExecutionException();
-      }
-    }, TEST_QTY);
-    
-    try {
-      queueRejector.schedule(DoNothingRunnable.instance(), 1000);
-      fail("Exception should have thrown");
-    } catch (RejectedExecutionException e) {
-      // expected
-    }
-    
-    assertEquals(0, queueRejector.getCurrentQueueSize());
-  }
-  
-  private static class SubmitterSchedulerQueueRejectorFactory implements SubmitterSchedulerFactory {
+  private static class SchedulerServiceQueueRejectorFactory implements SchedulerServiceFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 
     @Override
@@ -122,9 +119,14 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
     
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      return makeSchedulerService(poolSize, prestartIfAvailable);
+    }
+
+    @Override
+    public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
+      SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize, prestartIfAvailable);
       
-      return new SubmitterSchedulerQueueLimitRejector(scheduler, Integer.MAX_VALUE);
+      return new SchedulerServiceQueueLimitRejector(scheduler, Integer.MAX_VALUE);
     }
 
     @Override

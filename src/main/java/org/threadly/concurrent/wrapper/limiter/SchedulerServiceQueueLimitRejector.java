@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 
@@ -17,13 +17,10 @@ import org.threadly.concurrent.SchedulerService;
  * 
  * <p>See {@link ExecutorQueueLimitRejector} and {@link SubmitterSchedulerQueueLimitRejector} as 
  * other possible implementations.</p>
- * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
  *  
- * @author jent
+ * @author jent - Mike Jensen
  * @since 4.3.0
  */
-@Deprecated
 public class SchedulerServiceQueueLimitRejector extends SubmitterSchedulerQueueLimitRejector 
                                                 implements SchedulerService {
   protected final SchedulerService parentScheduler;

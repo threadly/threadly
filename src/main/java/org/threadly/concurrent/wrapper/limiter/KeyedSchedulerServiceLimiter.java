@@ -1,6 +1,10 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
+
+import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.SchedulerService;
+import org.threadly.concurrent.ThreadRenamingSchedulerServiceWrapper;
+import org.threadly.util.StringUtils;
 
 /**
  * <p>This is a cross between the {@link org.threadly.concurrent.KeyDistributedScheduler} and a 
@@ -12,13 +16,12 @@ import org.threadly.concurrent.SchedulerService;
  * <p>The easiest way to use this class would be to have it distribute out schedulers through 
  * {@link #getSubmitterSchedulerForKey(Object)}.</p>
  * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
- * 
  * @author jent - Mike Jensen
  * @since 4.3.0
  */
-@Deprecated
-public class KeyedSchedulerServiceLimiter extends org.threadly.concurrent.wrapper.limiter.KeyedSchedulerServiceLimiter {
+public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<SchedulerServiceLimiter> {
+  protected final SchedulerService scheduler;
+  
   /**
    * Construct a new {@link KeyedSchedulerServiceLimiter} providing only the backing scheduler 
    * and the maximum concurrency per unique key.  By default this will not rename threads for 
@@ -28,7 +31,7 @@ public class KeyedSchedulerServiceLimiter extends org.threadly.concurrent.wrappe
    * @param maxConcurrency Maximum concurrency allowed per task key
    */
   public KeyedSchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency) {
-    super(scheduler, maxConcurrency);
+    this(scheduler, maxConcurrency, null, false);
   }
 
   /**
@@ -42,7 +45,7 @@ public class KeyedSchedulerServiceLimiter extends org.threadly.concurrent.wrappe
    */
   public KeyedSchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency, 
                                       String subPoolName, boolean addKeyToThreadName) {
-    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName);
+    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
   }
 
   /**
@@ -59,20 +62,66 @@ public class KeyedSchedulerServiceLimiter extends org.threadly.concurrent.wrappe
                                       String subPoolName, boolean addKeyToThreadName, 
                                       int expectedTaskAdditionParallism) {
     super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, expectedTaskAdditionParallism);
+    
+    this.scheduler = scheduler;
+  }
+  
+  @Override
+  protected SchedulerServiceLimiter makeLimiter(String limiterThreadName) {
+    return new SchedulerServiceLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
+                                         scheduler : new ThreadRenamingSchedulerServiceWrapper(scheduler, 
+                                                                                               limiterThreadName, 
+                                                                                               false), 
+                                       maxConcurrency);
+  }
+
+  /**
+   * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
+   * run until this call has returned.
+   * 
+   * See also: {@link SchedulerService#remove(Runnable)}
+   * 
+   * @param task The original task provided to the executor
+   * @return {@code true} if the task was found and removed
+   */
+  public boolean remove(Runnable task) {
+    for (LimiterContainer limiter : currentLimiters.values()) {
+      if (limiter.limiter.remove(task)) {
+        limiter.handlingTasks.decrementAndGet();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
+   * run until this call has returned.
+   * 
+   * See also: {@link SchedulerService#remove(Callable)}
+   * 
+   * @param task The original task provided to the executor
+   * @return {@code true} if the task was found and removed
+   */
+  public boolean remove(Callable<?> task) {
+    for (LimiterContainer limiter : currentLimiters.values()) {
+      if (limiter.limiter.remove(task)) {
+        limiter.handlingTasks.decrementAndGet();
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
    * Call to check how many tasks are currently being executed in this scheduler.
    * 
-   * See also: {@link SchedulerService#getCurrentRunningCount()}
-   * 
-   * @deprecated Please use {@link #getActiveTaskCount()} as a direct replacement.
+   * See also: {@link SchedulerService#getActiveTaskCount()}
    * 
    * @return current number of running tasks
    */
-  @Deprecated
-  public int getCurrentRunningCount() {
-    return scheduler.getCurrentRunningCount();
+  public int getActiveTaskCount() {
+    return scheduler.getActiveTaskCount();
   }
 
   /**
@@ -80,14 +129,26 @@ public class KeyedSchedulerServiceLimiter extends org.threadly.concurrent.wrappe
    * a future point.  Because this does not lock state can be modified during the calculation of 
    * this result.  Ultimately resulting in an inaccurate number.
    * 
-   * See also: {@link SchedulerService#getScheduledTaskCount()}
-   * 
-   * @deprecated Please use {@link #getQueuedTaskCount()} as a direct replacement.
+   * See also: {@link SchedulerService#getQueuedTaskCount()}
    * 
    * @return quantity of tasks waiting execution or scheduled to be executed later
    */
-  @Deprecated
-  public int getScheduledTaskCount() {
-    return getQueuedTaskCount();
+  public int getQueuedTaskCount() {
+    int result = 0;
+    for (LimiterContainer limiter : currentLimiters.values()) {
+      result += limiter.limiter.waitingTasks.size();
+    }
+    return result + scheduler.getQueuedTaskCount();
+  }
+
+  /**
+   * Function to check if the thread pool is currently accepting and handling tasks.
+   * 
+   * See also: {@link SchedulerService#isShutdown()}
+   * 
+   * @return {@code true} if thread pool is running
+   */
+  public boolean isShutdown() {
+    return scheduler.isShutdown();
   }
 }

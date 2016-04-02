@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -26,7 +26,7 @@ import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   protected static final int PARALLEL_COUNT = TEST_QTY / 2;
   protected static final int THREAD_COUNT = PARALLEL_COUNT * 2;
@@ -52,7 +52,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
-    return new ExecutorLimiterFactory(false);
+    return new ExecutorLimiterFactory();
   }
   
   @Test
@@ -99,6 +99,27 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   }
   
   @Test
+  public void consumeAvailableTest() {
+    ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT);
+    List<TestRunnable> runnables = new ArrayList<TestRunnable>(PARALLEL_COUNT);
+    for (int i = 0; i < PARALLEL_COUNT; i++) {
+      TestRunnable tr = new TestRunnable();
+      runnables.add(tr);
+      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(limiter.executor, tr));
+    }
+    
+    limiter.consumeAvailable();
+    
+    // should be fully consumed
+    assertEquals(0, limiter.waitingTasks.size());
+    
+    Iterator<TestRunnable> it = runnables.iterator();
+    while (it.hasNext()) {
+      it.next().blockTillFinished();  // throws exception if it does not finish
+    }
+  }
+  
+  @Test
   public void executeLimitTest() throws InterruptedException, TimeoutException {
     Executor limitedExecutor = getLimiter(PARALLEL_COUNT);
     final AtomicInteger running = new AtomicInteger(0);
@@ -139,11 +160,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   @Override
   @Test
   public void submitRunnableTest() throws InterruptedException, ExecutionException {
-    submitRunnableTest(false);
-  }
-  
-  protected void submitRunnableTest(boolean nameSubPool) throws InterruptedException, ExecutionException {
-    ExecutorLimiterFactory elf = new ExecutorLimiterFactory(nameSubPool);
+    ExecutorLimiterFactory elf = new ExecutorLimiterFactory();
     
     try {
       ExecutorLimiter el = elf.makeSubmitterExecutor(TEST_QTY, false);
@@ -188,22 +205,16 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
 
   protected static class ExecutorLimiterFactory implements SubmitterExecutorFactory {
     private final PrioritySchedulerFactory schedulerFactory;
-    private final boolean addSubPoolName;
     
-    protected ExecutorLimiterFactory(boolean addSubPoolName) {
+    protected ExecutorLimiterFactory() {
       schedulerFactory = new PrioritySchedulerFactory();
-      this.addSubPoolName = addSubPoolName;
     }
     
     @Override
     public ExecutorLimiter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       SubmitterExecutor executor = schedulerFactory.makeSubmitterExecutor(poolSize * 2, prestartIfAvailable);
       
-      if (addSubPoolName) {
-        return new ExecutorLimiter(executor, poolSize, "TestSubPool");
-      } else {
-        return new ExecutorLimiter(executor, poolSize);
-      }
+      return new ExecutorLimiter(executor, poolSize);
     }
     
     @Override

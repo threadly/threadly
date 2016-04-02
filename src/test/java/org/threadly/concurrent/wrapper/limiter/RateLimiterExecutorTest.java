@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -21,7 +21,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.Clock;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   private RateLimiterExecutor limiter;
   private TestableScheduler scheduler;

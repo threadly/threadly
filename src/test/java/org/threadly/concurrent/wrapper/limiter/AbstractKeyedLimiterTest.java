@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;

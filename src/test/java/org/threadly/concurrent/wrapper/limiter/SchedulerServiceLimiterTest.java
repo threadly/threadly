@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
 
@@ -14,8 +14,8 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
+@SuppressWarnings("javadoc")
+public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
   @Override
   protected SchedulerServiceLimiter getLimiter(int parallelCount) {
     return new SchedulerServiceLimiter(scheduler, parallelCount);
@@ -23,7 +23,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
   
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
-    return new SchedulerLimiterFactory(false);
+    return new SchedulerLimiterFactory();
   }
   
   @Override
@@ -57,7 +57,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
       
       limiter.submit(tr);
       // verify it is in queue
-      assertTrue(limiter.getQueuedTaskCount() >= 1);
+      assertTrue(limiter.waitingTasks.size() >= 1);
       
       assertTrue(limiter.remove(tr));
     } finally {
@@ -78,7 +78,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
       
       limiter.submit(tc);
       // verify it is in queue
-      assertTrue(limiter.getQueuedTaskCount() >= 1);
+      assertTrue(limiter.waitingTasks.size() >= 1);
       
       assertTrue(limiter.remove(tc));
     } finally {
@@ -103,16 +103,14 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
   protected static class SchedulerLimiterFactory implements SchedulerServiceFactory {
     private final PrioritySchedulerFactory schedulerFactory;
     private final int minLimiterAmount;
-    private final boolean addSubPoolName;
     
-    protected SchedulerLimiterFactory(boolean addSubPoolName) {
-      this(Integer.MAX_VALUE, addSubPoolName);
+    protected SchedulerLimiterFactory() {
+      this(Integer.MAX_VALUE);
     }
     
-    private SchedulerLimiterFactory(int minLimiterAmount, boolean addSubPoolName) {
+    private SchedulerLimiterFactory(int minLimiterAmount) {
       schedulerFactory = new PrioritySchedulerFactory();
       this.minLimiterAmount = minLimiterAmount;
-      this.addSubPoolName = addSubPoolName;
     }
     
     @Override
@@ -136,11 +134,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
       
       int limiterAmount = Math.min(minLimiterAmount, poolSize);
       
-      if (addSubPoolName) {
-        return new SchedulerServiceLimiter(scheduler, limiterAmount, "TestSubPool");
-      } else {
-        return new SchedulerServiceLimiter(scheduler, limiterAmount);
-      }
+      return new SchedulerServiceLimiter(scheduler, limiterAmount);
     }
   }
 }

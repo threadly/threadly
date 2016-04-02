@@ -1,10 +1,10 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class KeyedExecutorLimiterInterfaceTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {

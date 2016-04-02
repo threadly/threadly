@@ -1,61 +1,46 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.threadly.concurrent.AbstractSubmitterScheduler;
+import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableContainer;
-import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A simple way to limit any {@link SubmitterScheduler} so that queues are managed.  In 
- * addition this queue is tracked completely independent of the {@link SubmitterScheduler}'s 
- * actual queue, so these can be distributed in code to limit queues differently to different 
- * parts of the system, while letting them all back the same {@link SubmitterScheduler}.</p>
+ * <p>A simple way to limit any {@link Executor} so that queues are managed.  In addition this 
+ * queue is tracked completely independent of the {@link Executor}'s actual queue, so these can be 
+ * distributed in code to limit queues differently to different parts of the system, while letting 
+ * them all back the same {@link Executor}.</p>
  * 
  * <p>Once the limit has been reached, if additional tasks are supplied a 
  * {@link RejectedExecutionException} will be thrown.  This is the threadly equivalent of 
  * supplying a limited sized blocking queue to a java.util.concurrent thread pool.</p>
  * 
- * <p>See {@link ExecutorQueueLimitRejector} and {@link SchedulerServiceQueueLimitRejector} as 
- * other possible implementations.</p>
- * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
+ * <p>See {@link SubmitterSchedulerQueueLimitRejector} and 
+ * {@link SchedulerServiceQueueLimitRejector} as other possible implementations.</p>
  *  
- * @author jent
+ * @author jent - Mike Jensen
  * @since 4.3.0
  */
-@Deprecated
-public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterScheduler {
-  protected final SubmitterScheduler parentScheduler;
+public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
+  protected final Executor parentExecutor;
   protected final AtomicInteger queuedTaskCount;
   private int queuedTaskLimit;
-
+  
   /**
-   * Constructs a new {@link SubmitterSchedulerQueueLimitRejector} with the provided scheduler and limit.
+   * Constructs a new {@link ExecutorQueueLimitRejector} with the provided scheduler and limit.
    * 
-   * @param parentScheduler Scheduler to execute and schedule tasks on to
+   * @param parentExecutor Executor to execute tasks on to
    * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
    */
-  public SubmitterSchedulerQueueLimitRejector(SubmitterScheduler parentScheduler, int queuedTaskLimit) {
-    ArgumentVerifier.assertNotNull(parentScheduler, "parentExecutor");
+  public ExecutorQueueLimitRejector(Executor parentExecutor, int queuedTaskLimit) {
+    ArgumentVerifier.assertNotNull(parentExecutor, "parentExecutor");
     
-    this.parentScheduler = parentScheduler;
+    this.parentExecutor = parentExecutor;
     this.queuedTaskCount = new AtomicInteger();
     this.queuedTaskLimit = queuedTaskLimit;
-  }
-
-  @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-    // we don't track recurring tasks
-    parentScheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay);
-  }
-
-  @Override
-  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-    // we don't track recurring tasks
-    parentScheduler.scheduleAtFixedRate(task, initialDelay, period);
   }
   
   /**
@@ -63,7 +48,7 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
    * 
    * @return Number of tracked tasks waiting for execution to start
    */
-  public int getCurrentQueueSize() {
+  public int getQueuedTaskCount() {
     return queuedTaskCount.get();
   }
   
@@ -88,7 +73,7 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
   }
 
   @Override
-  protected void doSchedule(Runnable task, long delayInMillis) {
+  protected void doExecute(Runnable task) {
     if (queuedTaskCount.get() >= queuedTaskLimit) {
       throw new RejectedExecutionException();
     } else if (queuedTaskCount.incrementAndGet() > queuedTaskLimit) {
@@ -96,7 +81,7 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
       throw new RejectedExecutionException();
     } else {
       try {
-        parentScheduler.schedule(new DecrementingRunnable(task, queuedTaskCount), delayInMillis);
+        parentExecutor.execute(new DecrementingRunnable(task, queuedTaskCount));
       } catch (RejectedExecutionException e) {
         queuedTaskCount.decrementAndGet();
         throw e;

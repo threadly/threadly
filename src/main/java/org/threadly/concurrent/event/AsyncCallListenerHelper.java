@@ -37,8 +37,8 @@ import org.threadly.util.ArgumentVerifier;
  * twice, those listeners call order is non-deterministic.  If this is important to you, you must 
  * ensure that the Executor provided is single threaded (ie by using the 
  * {@link org.threadly.concurrent.KeyDistributedExecutor} to get an executor from a single key, or 
- * by using the {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit of one, or an 
- * instance of the {@link org.threadly.concurrent.SingleThreadScheduler}).</p>
+ * by using the {@link org.threadly.concurrent.wrapper.limiter.ExecutorLimiter} with a limit of 
+ * one, or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}).</p>
  * 
  * @author jent - Mike Jensen
  * @since 2.2.0
@@ -79,6 +79,7 @@ public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
     this.executor = executor;
   }
   
+  @Override
   @SuppressWarnings("unchecked")
   protected T makeProxyInstance(Class<? super T> listenerInterface) {
     return (T) Proxy.newProxyInstance(listenerInterface.getClassLoader(), 

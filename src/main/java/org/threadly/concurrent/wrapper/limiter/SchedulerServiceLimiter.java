@@ -1,10 +1,9 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.ContainerHelper;
 import org.threadly.concurrent.SchedulerService;
-import org.threadly.concurrent.SchedulerServiceInterface;
 
 /**
  * <p>This class is designed to limit how much parallel execution happens on a provided 
@@ -24,14 +23,11 @@ import org.threadly.concurrent.SchedulerServiceInterface;
  * {@link SchedulerService} to rely on.  If you have a {@link SchedulerService} 
  * available this implementation should be preferred over the {@link SubmitterSchedulerLimiter}.</p>
  * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
- * 
  * @author jent - Mike Jensen
  * @since 2.0.0
  */
-@Deprecated
-public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
-                                     implements SchedulerServiceInterface {
+public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter
+                                     implements SchedulerService {
   protected final SchedulerService scheduler;
   
   /**
@@ -41,23 +37,7 @@ public class SchedulerServiceLimiter extends SimpleSchedulerLimiter
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public SchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency) {
-    this(scheduler, maxConcurrency, null);
-  }
-  
-  /**
-   * Constructs a new limiter that implements the {@link SchedulerService}.
-   * 
-   * @deprecated Rename threads using {@link org.threadly.concurrent.ThreadRenamingSchedulerServiceWrapper} 
-   *               to rename executions from this limiter
-   * 
-   * @param scheduler {@link SchedulerService} implementation to submit task executions to.
-   * @param maxConcurrency maximum quantity of runnables to run in parallel
-   * @param subPoolName name to describe threads while tasks running in pool ({@code null} to not change thread names)
-   */
-  @Deprecated
-  public SchedulerServiceLimiter(SchedulerService scheduler, 
-                                 int maxConcurrency, String subPoolName) {
-    super(scheduler, maxConcurrency, subPoolName);
+    super(scheduler, maxConcurrency);
     
     this.scheduler = scheduler;
   }

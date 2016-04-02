@@ -1,4 +1,4 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
 
@@ -8,7 +8,7 @@ import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
   @Override
   protected SubmitterSchedulerLimiter getLimiter(int parallelCount) {
@@ -17,7 +17,7 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
   
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
-    return new SchedulerLimiterFactory(false);
+    return new SchedulerLimiterFactory();
   }
   
   @Override
@@ -40,11 +40,9 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
 
   protected static class SchedulerLimiterFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory;
-    private final boolean addSubPoolName;
     
-    public SchedulerLimiterFactory(boolean addSubPoolName) {
+    public SchedulerLimiterFactory() {
       schedulerFactory = new PrioritySchedulerFactory();
-      this.addSubPoolName = addSubPoolName;
     }
     
     @Override
@@ -61,11 +59,7 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
       
-      if (addSubPoolName) {
-        return new SubmitterSchedulerLimiter(scheduler, poolSize, "TestSubPool");
-      } else {
-        return new SubmitterSchedulerLimiter(scheduler, poolSize);
-      }
+      return new SubmitterSchedulerLimiter(scheduler, poolSize);
     }
   }
 }

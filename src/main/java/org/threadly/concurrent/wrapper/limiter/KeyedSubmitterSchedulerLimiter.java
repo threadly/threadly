@@ -1,6 +1,8 @@
-package org.threadly.concurrent.limiter;
+package org.threadly.concurrent.wrapper.limiter;
 
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.ThreadRenamingSubmitterSchedulerWrapper;
+import org.threadly.util.StringUtils;
 
 /**
  * <p>This is a cross between the {@link org.threadly.concurrent.KeyDistributedScheduler} and a 
@@ -12,14 +14,10 @@ import org.threadly.concurrent.SubmitterScheduler;
  * <p>The easiest way to use this class would be to have it distribute out schedulers through 
  * {@link #getSubmitterSchedulerForKey(Object)}.</p>
  * 
- * @deprecated moved to {@link org.threadly.concurrent.wrapper.limiter.KeyedSubmitterSchedulerLimiter}
- * 
  * @author jent - Mike Jensen
  * @since 4.3.0
  */
-@Deprecated
-public class KeyedSubmitterSchedulerLimiter 
-                 extends org.threadly.concurrent.wrapper.limiter.KeyedSubmitterSchedulerLimiter {
+public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimiter<SubmitterSchedulerLimiter> {
   /**
    * Construct a new {@link KeyedSubmitterSchedulerLimiter} providing only the backing scheduler 
    * and the maximum concurrency per unique key.  By default this will not rename threads for 
@@ -29,7 +27,7 @@ public class KeyedSubmitterSchedulerLimiter
    * @param maxConcurrency Maximum concurrency allowed per task key
    */
   public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency) {
-    super(scheduler, maxConcurrency);
+    this(scheduler, maxConcurrency, null, false);
   }
 
   /**
@@ -43,7 +41,7 @@ public class KeyedSubmitterSchedulerLimiter
    */
   public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
                                         String subPoolName, boolean addKeyToThreadName) {
-    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName);
+    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
   }
 
   /**
@@ -61,4 +59,19 @@ public class KeyedSubmitterSchedulerLimiter
                                         int expectedTaskAdditionParallism) {
     super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, expectedTaskAdditionParallism);
   }
+  
+  @Override
+  protected SubmitterSchedulerLimiter makeLimiter(String limiterThreadName) {
+    return new SubmitterSchedulerLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
+                                           scheduler : new ThreadRenamingSubmitterSchedulerWrapper(scheduler, 
+                                                                                                   limiterThreadName, 
+                                                                                                   false), 
+                                         maxConcurrency);
+  }
+  
+  /**********
+   * 
+   * NO IMPLEMENTATION SHOULD EXIST HERE, THIS SHOULD ALL BE IN {@link AbstractKeyedSchedulerLimiter}
+   * 
+   **********/
 }
