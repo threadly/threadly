@@ -1,10 +1,10 @@
-package org.threadly.concurrent.statistics;
+package org.threadly.concurrent.wrapper.statistic;
 
 import org.junit.Before;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerWorkerPoolTest;
-import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker.StatisticWorkerPool;
+import org.threadly.concurrent.wrapper.statistic.PrioritySchedulerStatisticTracker.StatisticWorkerPool;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends PrioritySchedulerWorkerPoolTest {

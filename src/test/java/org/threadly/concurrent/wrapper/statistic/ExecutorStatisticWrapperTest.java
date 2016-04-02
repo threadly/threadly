@@ -1,4 +1,4 @@
-package org.threadly.concurrent.statistics;
+package org.threadly.concurrent.wrapper.statistic;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -18,7 +18,7 @@ import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest {
   private ExecutorStatisticWrapper statWrapper;
   

@@ -1,4 +1,4 @@
-package org.threadly.concurrent.statistics;
+package org.threadly.concurrent.wrapper.statistic;
 
 import static org.junit.Assert.*;
 import java.util.Iterator;
@@ -10,58 +10,74 @@ import org.junit.Test;
 import org.threadly.concurrent.AbstractPriorityScheduler;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.PrioritySchedulerTest;
 import org.threadly.concurrent.SchedulerService;
-import org.threadly.concurrent.SingleThreadSchedulerTest;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSchedulerTest {
+@SuppressWarnings("javadoc")
+public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest {
   @Override
-  protected AbstractPrioritySchedulerFactory getAbstractPrioritySchedulerFactory() {
-    return new SingleThreadSchedulerStatisticTrackerTestFactory();
+  protected PrioritySchedulerServiceFactory getPrioritySchedulerFactory() {
+    return new PrioritySchedulerStatisticTrackerTestFactory();
   }
   
   @Test
   @SuppressWarnings("unused")
   public void constructorTest() {
-    new SingleThreadSchedulerStatisticTracker();
-    new SingleThreadSchedulerStatisticTracker(false);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, false);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, 
-                                              new ConfigurableThreadFactory());
-    new SingleThreadSchedulerStatisticTracker(100);
-    new SingleThreadSchedulerStatisticTracker(false, 100);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, 100);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, false, 100);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, 
-                                              new ConfigurableThreadFactory(), 100);
-    new SingleThreadSchedulerStatisticTracker(100, true);
-    new SingleThreadSchedulerStatisticTracker(false, 100, true);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, 100, true);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, false, 100, true);
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, 100, 
-                                              new ConfigurableThreadFactory(), 100, true);
+    new PrioritySchedulerStatisticTracker(1);
+    new PrioritySchedulerStatisticTracker(1, false);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, false);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 
+                                          new ConfigurableThreadFactory());
+    new PrioritySchedulerStatisticTracker(1, 100);
+    new PrioritySchedulerStatisticTracker(1, false, 100);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 100);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, false, 100);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 
+                                          new ConfigurableThreadFactory(), 100);
+    new PrioritySchedulerStatisticTracker(1, 100, true);
+    new PrioritySchedulerStatisticTracker(1, false, 100, true);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 100, true);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, false, 100, true);
+    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 
+                                          new ConfigurableThreadFactory(), 100, true);
   }
   
+  @Test
+  @Override
+  public void constructorNullFactoryTest() {
+    // ignored due to workerPool visibility
+  }
+  
+  @Test
   @Override
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, -1, null);
-    fail("Exception should have thrown");
+    try {
+      new PrioritySchedulerStatisticTracker(0, TaskPriority.High, 1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
+      new PrioritySchedulerStatisticTracker(1, TaskPriority.High, -1, null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
   }
   
   // tests for statistics tracking
   
   @Test
   public void resetCollectedStatsTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       // prestart so reuse percent is not zero
-      scheduler.prestartExecutionThread(true);
+      scheduler.prestartAllThreads();
       
       ThreadedStatisticPrioritySchedulerTests.resetCollectedStatsTest(scheduler);
     } finally {
@@ -71,8 +87,8 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getTotalExecutionCountTest() {
-    final SingleThreadSchedulerStatisticTracker scheduler;
-    scheduler = new SingleThreadSchedulerStatisticTracker();
+    final PrioritySchedulerStatisticTracker scheduler;
+    scheduler = new PrioritySchedulerStatisticTracker(10);
     try {
       ThreadedStatisticPrioritySchedulerTests.getTotalExecutionCountTest(scheduler);
     } finally {
@@ -82,7 +98,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getAverageExecutionDelayNoInputTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getAverageExecutionDurationNoInputTest(scheduler);
     } finally {
@@ -92,7 +108,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getHighPriorityAvgExecutionDelayNoInputTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityAverageExecutionDelayNoInputTest(scheduler, 
                                                                                           TaskPriority.High);
@@ -103,7 +119,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getLowPriorityAvgExecutionDelayNoInputTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityAverageExecutionDelayNoInputTest(scheduler, 
                                                                                           TaskPriority.Low);
@@ -114,7 +130,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
 
   @Test
   public void getPriorityAverageExecutionDelayTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityAverageExecutionDelayTest(scheduler, null);
     } finally {
@@ -124,7 +140,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getHighPriorityAvgExecutionDelayTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityAverageExecutionDelayTest(scheduler, 
                                                                                    TaskPriority.High);
@@ -135,7 +151,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getLowPriorityAvgExecutionDelayTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityAverageExecutionDelayTest(scheduler, 
                                                                                    TaskPriority.Low);
@@ -146,7 +162,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getExecutionDelayPercentilesTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getExecutionDelayPercentilesTest(scheduler);
     } finally {
@@ -156,7 +172,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
 
   @Test
   public void getPriorityExecutionDelayPercentilesTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityExecutionDelayPercentilesTest(scheduler, null);
     } finally {
@@ -166,7 +182,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getHighPriorityExecutionDelayPercentilesTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityExecutionDelayPercentilesTest(scheduler, 
                                                                                        TaskPriority.High);
@@ -177,7 +193,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getLowPriorityExecutionDelayPercentilesTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getPriorityExecutionDelayPercentilesTest(scheduler, 
                                                                                        TaskPriority.Low);
@@ -188,7 +204,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getAverageExecutionDurationNoInputTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getAverageExecutionDurationNoInputTest(scheduler);
     } finally {
@@ -198,7 +214,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
 
   @Test
   public void getAverageExecutionDurationSimpleTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(2);
     try {
       ThreadedStatisticPrioritySchedulerTests.getAverageExecutionDurationSimpleTest(scheduler);
     } finally {
@@ -208,7 +224,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getAverageExecutionDurationTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(10);
     try {
       ThreadedStatisticPrioritySchedulerTests.getAverageExecutionDurationTest(scheduler);
     } finally {
@@ -218,7 +234,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getWithPriorityAverageExecutionDurationNoInputTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getWithPriorityAverageExecutionDurationNoInputTest(scheduler);
     } finally {
@@ -228,9 +244,9 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getWithPriorityAverageExecutionDurationTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(10);
     try {
-      ThreadedStatisticPrioritySchedulerTests.getWithPriorityAverageExecutionDurationNoInputTest(scheduler);
+      ThreadedStatisticPrioritySchedulerTests.getWithPriorityAverageExecutionDurationTest(scheduler);
     } finally {
       scheduler.shutdownNow();
     }
@@ -238,7 +254,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
 
   @Test
   public void getExecutionDurationPercentilesTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(2);
     try {
       ThreadedStatisticPrioritySchedulerTests.getExecutionDurationPercentilesTest(scheduler);
     } finally {
@@ -248,7 +264,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
 
   @Test
   public void getWithPriorityExecutionDurationPercentilesTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(2);
     try {
       ThreadedStatisticPrioritySchedulerTests.getWithPriorityExecutionDurationPercentilesTest(scheduler);
     } finally {
@@ -258,7 +274,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getLongRunningTasksTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker(100, true);
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1, 100, true);
     try {
       ThreadedStatisticPrioritySchedulerTests.getLongRunningTasksTest(scheduler);
     } finally {
@@ -268,7 +284,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getLongRunningTasksWrappedFutureTest() throws InterruptedException, TimeoutException {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getLongRunningTasksWrappedFutureTest(scheduler);
     } finally {
@@ -278,7 +294,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Test
   public void getLongRunningTasksQtyTest() {
-    SingleThreadSchedulerStatisticTracker scheduler = new SingleThreadSchedulerStatisticTracker();
+    PrioritySchedulerStatisticTracker scheduler = new PrioritySchedulerStatisticTracker(1);
     try {
       ThreadedStatisticPrioritySchedulerTests.getLongRunningTasksQtyTest(scheduler);
     } finally {
@@ -286,10 +302,10 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
     }
   }
   
-  private class SingleThreadSchedulerStatisticTrackerTestFactory implements AbstractPrioritySchedulerFactory {
+  private class PrioritySchedulerStatisticTrackerTestFactory implements PrioritySchedulerServiceFactory {
     private final List<PriorityScheduler> executors;
     
-    private SingleThreadSchedulerStatisticTrackerTestFactory() {
+    private PrioritySchedulerStatisticTrackerTestFactory() {
       executors = new LinkedList<PriorityScheduler>();
     }
 
@@ -305,9 +321,9 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
 
     @Override
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      SingleThreadSchedulerStatisticTracker result = makeAbstractPriorityScheduler(poolSize);
+      PriorityScheduler result = makePriorityScheduler(poolSize);
       if (prestartIfAvailable) {
-        result.prestartExecutionThread(true);
+        result.prestartAllThreads();
       }
       
       return result;
@@ -317,12 +333,30 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
     public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize,
                                                                    TaskPriority defaultPriority,
                                                                    long maxWaitForLowPriority) {
-      return new SingleThreadSchedulerStatisticTracker(defaultPriority, maxWaitForLowPriority);
+      return makePriorityScheduler(poolSize, defaultPriority, maxWaitForLowPriority);
     }
 
     @Override
-    public SingleThreadSchedulerStatisticTracker makeAbstractPriorityScheduler(int poolSize) {
-      return new SingleThreadSchedulerStatisticTracker();
+    public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize) {
+      return makePriorityScheduler(poolSize);
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority,
+                                                   long maxWaitForLowPriority) {
+      PriorityScheduler result = new PrioritySchedulerStatisticTracker(poolSize, defaultPriority, 
+                                                                       maxWaitForLowPriority);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize) {
+      PriorityScheduler result = new PrioritySchedulerStatisticTracker(poolSize);
+      executors.add(result);
+      
+      return result;
     }
 
     @Override

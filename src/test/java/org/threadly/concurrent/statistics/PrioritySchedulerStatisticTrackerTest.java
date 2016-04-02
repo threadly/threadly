@@ -16,7 +16,7 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest {
   @Override
   protected PrioritySchedulerServiceFactory getPrioritySchedulerFactory() {

@@ -1,4 +1,4 @@
-package org.threadly.concurrent.statistics;
+package org.threadly.concurrent.wrapper.statistic;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -16,7 +16,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Pair;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class ThreadedStatisticPrioritySchedulerTests {
   public static void blockTillSchedulerIdle(final StatisticPriorityScheduler scheduler, 
                                             final int expectedSampleSize) {

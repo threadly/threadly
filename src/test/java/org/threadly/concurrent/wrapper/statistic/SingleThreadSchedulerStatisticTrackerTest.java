@@ -1,4 +1,4 @@
-package org.threadly.concurrent.statistics;
+package org.threadly.concurrent.wrapper.statistic;
 
 import static org.junit.Assert.*;
 import java.util.Iterator;
@@ -16,7 +16,7 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSchedulerTest {
   @Override
   protected AbstractPrioritySchedulerFactory getAbstractPrioritySchedulerFactory() {
