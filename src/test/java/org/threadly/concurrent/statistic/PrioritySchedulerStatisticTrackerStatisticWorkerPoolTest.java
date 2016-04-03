@@ -1,10 +1,10 @@
-package org.threadly.concurrent.wrapper.statistic;
+package org.threadly.concurrent.statistic;
 
 import org.junit.Before;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerWorkerPoolTest;
-import org.threadly.concurrent.wrapper.statistic.PrioritySchedulerStatisticTracker.StatisticWorkerPool;
+import org.threadly.concurrent.statistic.PrioritySchedulerStatisticTracker.StatisticWorkerPool;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends PrioritySchedulerWorkerPoolTest {
@@ -24,7 +24,6 @@ public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends Pr
   
   //needed because of visibility issues with protected inner class
   private static class VisibilityPriorityScheduler extends PriorityScheduler {
-    @SuppressWarnings("unused")
     public VisibilityPriorityScheduler(int poolSize) {
       super(poolSize);
     }

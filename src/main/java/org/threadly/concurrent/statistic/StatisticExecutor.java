@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.statistic;
+package org.threadly.concurrent.statistic;
 
 import java.util.List;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.statistic;
+package org.threadly.concurrent.statistic;
 
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;

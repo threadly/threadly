@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.statistic;
+package org.threadly.concurrent.statistic;
 
 import static org.junit.Assert.*;
 import java.util.Iterator;

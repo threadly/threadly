@@ -12,14 +12,14 @@ import org.threadly.concurrent.TaskPriority;
  * <p>It helps give insight in how long tasks are running, how well the thread pool is being 
  * utilized, as well as execution frequency.</p>
  * 
- * @deprecated Moved to {@link org.threadly.concurrent.wrapper.statistic.PrioritySchedulerStatisticTracker}
+ * @deprecated Moved to {@link org.threadly.concurrent.statistic.PrioritySchedulerStatisticTracker}
  * 
  * @author jent - Mike Jensen
  * @since 4.5.0 (earlier forms existed since 1.0.0)
  */
 @Deprecated
 public class PrioritySchedulerStatisticTracker 
-                 extends org.threadly.concurrent.wrapper.statistic.PrioritySchedulerStatisticTracker 
+                 extends org.threadly.concurrent.statistic.PrioritySchedulerStatisticTracker 
                  implements StatisticPriorityScheduler {
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 

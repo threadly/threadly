@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.statistic;
+package org.threadly.concurrent.statistic;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,7 +11,7 @@ import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
-import org.threadly.concurrent.wrapper.statistic.PriorityStatisticManager.TaskStatWrapper;
+import org.threadly.concurrent.statistic.PriorityStatisticManager.TaskStatWrapper;
 import org.threadly.util.Clock;
 import org.threadly.util.Pair;
 
