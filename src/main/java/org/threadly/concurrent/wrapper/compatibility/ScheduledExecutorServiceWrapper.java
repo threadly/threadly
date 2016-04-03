@@ -4,7 +4,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.AbstractSubmitterScheduler;
-import org.threadly.concurrent.ThrowableSuppressingRunnable;
+import org.threadly.concurrent.wrapper.ThrowableSuppressingRunnable;
 import org.threadly.util.ArgumentVerifier;
 
 /**
