@@ -1,7 +1,7 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import org.threadly.concurrent.SubmitterScheduler;
-import org.threadly.concurrent.ThreadRenamingSubmitterSchedulerWrapper;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterSchedulerWrapper;
 import org.threadly.util.StringUtils;
 
 /**

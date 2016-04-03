@@ -3,7 +3,7 @@ package org.threadly.concurrent.wrapper.limiter;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.SchedulerService;
-import org.threadly.concurrent.ThreadRenamingSchedulerServiceWrapper;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSchedulerServiceWrapper;
 import org.threadly.util.StringUtils;
 
 /**

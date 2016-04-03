@@ -2,7 +2,7 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.ThreadRenamingExecutorWrapper;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingExecutorWrapper;
 import org.threadly.util.StringUtils;
 
 /**

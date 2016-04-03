@@ -1,12 +1,13 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper.traceability;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingRunnableWrapper;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class ThreadRenamingRunnableWrapperTest {
   @Test
   public void renameReplaceAndResetTest() {

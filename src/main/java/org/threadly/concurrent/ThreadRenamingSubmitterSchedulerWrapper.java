@@ -5,14 +5,14 @@ package org.threadly.concurrent;
  * {@link ThreadRenamingRunnableWrapper}.  This allows you to make a pool where all tasks submitted 
  * inside it have the threads named in an identifiable way.</p>
  * 
+ * @deprecated Moved to {@link org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterSchedulerWrapper}
+ * 
  * @author jent
  * @since 4.3.0
  */
-public class ThreadRenamingSubmitterSchedulerWrapper extends AbstractSubmitterScheduler {
-  protected final SubmitterScheduler scheduler;
-  protected final String threadName;
-  protected final boolean replace;
-
+@Deprecated
+public class ThreadRenamingSubmitterSchedulerWrapper 
+                 extends org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterSchedulerWrapper {
   /**
    * Constructs a new {@link ThreadRenamingSubmitterSchedulerWrapper}, wrapping a supplied 
    * {@link SchedulerService}.  If /{@code replace} is {@code false} the thread will be named such 
@@ -24,25 +24,6 @@ public class ThreadRenamingSubmitterSchedulerWrapper extends AbstractSubmitterSc
    */
   public ThreadRenamingSubmitterSchedulerWrapper(SubmitterScheduler scheduler, 
                                                  String threadName, boolean replace) {
-    this.scheduler = scheduler;
-    this.threadName = threadName;
-    this.replace = replace;
-  }
-
-  @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-    scheduler.scheduleWithFixedDelay(new ThreadRenamingRunnableWrapper(task, threadName, replace), 
-                                     initialDelay, recurringDelay);
-  }
-
-  @Override
-  public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-    scheduler.scheduleAtFixedRate(new ThreadRenamingRunnableWrapper(task, threadName, replace), 
-                                  initialDelay, period);
-  }
-
-  @Override
-  protected void doSchedule(Runnable task, long delayInMillis) {
-    scheduler.schedule(new ThreadRenamingRunnableWrapper(task, threadName, replace), delayInMillis);
+    super(scheduler, threadName, replace);
   }
 }

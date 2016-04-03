@@ -1,18 +1,17 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper.traceability;
 
 import java.util.concurrent.Callable;
+
+import org.threadly.concurrent.SchedulerService;
 
 /**
  * <p>Class which wraps a {@link SchedulerService} and wraps all supplied tasks in a 
  * {@link ThreadRenamingRunnableWrapper}.  This allows you to make a pool where all tasks submitted 
  * inside it have the threads named in an identifiable way.</p>
  * 
- * @deprecated Moved to {@link org.threadly.concurrent.wrapper.traceability.ThreadRenamingSchedulerServiceWrapper}
- * 
  * @author jent
  * @since 4.3.0
  */
-@Deprecated
 public class ThreadRenamingSchedulerServiceWrapper extends ThreadRenamingSubmitterSchedulerWrapper 
                                                    implements SchedulerService {
   protected final SchedulerService scheduler;
