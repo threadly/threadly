@@ -37,11 +37,14 @@ public class DefaultExecutorListenerHelper<T> extends ListenerHelper<T> {
    * {@link DefaultExecutorListenerHelper}.  It is equivalent to the normal constructor, but 
    * requires less code to do that construction.
    * 
+   * @deprecated To be removed in 5.0.0 because construction is less painful with {@code <>} generics
+   * 
    * @param <T> Type representing interface of listeners
    * @param listenerInterface Interface that listeners need to implement
    * @param executor Executor that listeners will be executed on if none is provided
    * @return New instance of the {@link AsyncCallListenerHelper}
    */
+  @Deprecated
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public static <T> DefaultExecutorListenerHelper<T> build(Class<? super T> listenerInterface, Executor executor) {
     return new DefaultExecutorListenerHelper(listenerInterface, executor);

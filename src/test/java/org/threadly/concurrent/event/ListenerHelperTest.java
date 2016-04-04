@@ -18,7 +18,7 @@ import org.threadly.util.TestExceptionHandler;
 @SuppressWarnings("javadoc")
 public class ListenerHelperTest {
   protected <T> ListenerHelper<T> makeListenerHelper(Class<T> listenerInterface) {
-    return ListenerHelper.build(listenerInterface);
+    return new ListenerHelper<T>(listenerInterface);
   }
   
   @Test
