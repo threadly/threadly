@@ -225,9 +225,19 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     }
     schedulers[0].setNeighborWorker(schedulers[schedulers.length - 1]);
     // can only start once full neighbor chain is established
-    for (Worker w : schedulers) {
-      w.start();
-    }
+    final Worker firstWorker = schedulers[0];
+    // let first worker start all the other threads as soon as possible
+    firstWorker.addTask(new Runnable() {
+      @Override
+      public void run() {
+        for (Worker w : schedulers) {
+          if (w != firstWorker) {
+            w.start();
+          }
+        }
+      }
+    });
+    firstWorker.start();
   }
   
   @Override

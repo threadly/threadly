@@ -1,35 +1,26 @@
 package org.threadly.concurrent.statistics;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
-import org.threadly.concurrent.ConfigurableThreadFactory;
-import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.collections.ConcurrentArrayList;
-import org.threadly.concurrent.statistics.PriorityStatisticManager.TaskStatWrapper;
-import org.threadly.util.Clock;
-import org.threadly.util.Pair;
 
 /**
- * <p>An implementation of {@link PriorityScheduler} which tracks run and usage statistics.  This 
- * is designed for testing and troubleshooting.  It has a little more overhead from the normal 
- * {@link PriorityScheduler}.</p>
+ * <p>An implementation of {@link org.threadly.concurrent.PriorityScheduler} which tracks run and 
+ * usage statistics.  This is designed for testing and troubleshooting.  It has a little more 
+ * overhead from the normal {@link org.threadly.concurrent.PriorityScheduler}.</p>
  * 
  * <p>It helps give insight in how long tasks are running, how well the thread pool is being 
  * utilized, as well as execution frequency.</p>
  * 
+ * @deprecated Moved to {@link org.threadly.concurrent.statistic.PrioritySchedulerStatisticTracker}
+ * 
  * @author jent - Mike Jensen
  * @since 4.5.0 (earlier forms existed since 1.0.0)
  */
-public class PrioritySchedulerStatisticTracker extends PriorityScheduler 
-                                               implements StatisticPriorityScheduler {
-  protected final PriorityStatisticManager statsManager;
-  
+@Deprecated
+public class PrioritySchedulerStatisticTracker 
+                 extends org.threadly.concurrent.statistic.PrioritySchedulerStatisticTracker 
+                 implements StatisticPriorityScheduler {
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
@@ -43,8 +34,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * @param poolSize Thread pool size that should be maintained
    */
   public PrioritySchedulerStatisticTracker(int poolSize) {
-    this(poolSize, DEFAULT_PRIORITY, 
-         DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, DEFAULT_NEW_THREADS_DAEMON);
+    super(poolSize);
   }
   
   /**
@@ -60,7 +50,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    */
   public PrioritySchedulerStatisticTracker(int poolSize, boolean useDaemonThreads) {
-    this(poolSize, DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, useDaemonThreads);
+    super(poolSize, useDaemonThreads);
   }
   
   /**
@@ -80,7 +70,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    */
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_NEW_THREADS_DAEMON);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs);
   }
   
   /**
@@ -102,7 +92,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            boolean useDaemonThreads) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads, 1000);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads);
   }
   
   /**
@@ -124,7 +114,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            ThreadFactory threadFactory) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, threadFactory, 1000);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, threadFactory);
   }
   
   /**
@@ -141,8 +131,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * @param maxStatisticWindowSize maximum number of samples to keep internally
    */
   public PrioritySchedulerStatisticTracker(int poolSize, int maxStatisticWindowSize) {
-    this(poolSize, DEFAULT_PRIORITY, 
-         DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, DEFAULT_NEW_THREADS_DAEMON, maxStatisticWindowSize);
+    super(poolSize, maxStatisticWindowSize);
   }
   
   /**
@@ -160,8 +149,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    */
   public PrioritySchedulerStatisticTracker(int poolSize, boolean useDaemonThreads, 
                                            int maxStatisticWindowSize) {
-    this(poolSize, DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
-         useDaemonThreads, maxStatisticWindowSize);
+    super(poolSize, useDaemonThreads, maxStatisticWindowSize);
   }
   
   /**
@@ -183,8 +171,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            int maxStatisticWindowSize) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
-         DEFAULT_NEW_THREADS_DAEMON, maxStatisticWindowSize);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, maxStatisticWindowSize);
   }
   
   /**
@@ -207,8 +194,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            boolean useDaemonThreads, int maxStatisticWindowSize) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads, 
-         maxStatisticWindowSize, false);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads, 
+          maxStatisticWindowSize);
   }
   
   /**
@@ -232,8 +219,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
                                            long maxWaitForLowPriorityInMs, 
                                            ThreadFactory threadFactory, 
                                            int maxStatisticWindowSize) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
-         threadFactory, maxStatisticWindowSize, false);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+          threadFactory, maxStatisticWindowSize);
   }
 
   /**
@@ -248,8 +235,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    */
   public PrioritySchedulerStatisticTracker(int poolSize, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
-    this(poolSize, DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
-         DEFAULT_NEW_THREADS_DAEMON, maxStatisticWindowSize, accurateTime);
+    super(poolSize, maxStatisticWindowSize, accurateTime);
   }
   
   /**
@@ -264,8 +250,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    */
   public PrioritySchedulerStatisticTracker(int poolSize, boolean useDaemonThreads, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
-    this(poolSize, DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
-         useDaemonThreads, maxStatisticWindowSize, accurateTime);
+    super(poolSize, useDaemonThreads, maxStatisticWindowSize, accurateTime);
   }
   
   /**
@@ -284,8 +269,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
-         DEFAULT_NEW_THREADS_DAEMON, maxStatisticWindowSize, accurateTime);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+         maxStatisticWindowSize, accurateTime);
   }
   
   /**
@@ -305,10 +290,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, boolean useDaemonThreads, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
-         new ConfigurableThreadFactory(PrioritySchedulerStatisticTracker.class.getSimpleName() + "-", 
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null), 
-         maxStatisticWindowSize, accurateTime);
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads, 
+          maxStatisticWindowSize, accurateTime);
   }
   
   /**
@@ -329,197 +312,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
                                            long maxWaitForLowPriorityInMs, 
                                            ThreadFactory threadFactory, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
-    super(new StatisticWorkerPool(threadFactory, poolSize, 
-                                  new PriorityStatisticManager(maxStatisticWindowSize, accurateTime)), 
-          maxWaitForLowPriorityInMs, defaultPriority);
-    
-    this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
-  }
-  
-  @Override
-  public List<Runnable> shutdownNow() {
-    // we must unwrap our statistic tracker runnables
-    List<Runnable> wrappedRunnables = super.shutdownNow();
-    List<Runnable> result = new ArrayList<Runnable>(wrappedRunnables.size());
-    
-    Iterator<Runnable> it = wrappedRunnables.iterator();
-    while (it.hasNext()) {
-      Runnable r = it.next();
-      if (r instanceof TaskStatWrapper) {
-        TaskStatWrapper tw = (TaskStatWrapper)r;
-        if (! (tw.task instanceof Future) || ! ((Future<?>)tw.task).isCancelled()) {
-          result.add(tw.task);
-        }
-      } else {
-        // this typically happens in unit tests, but could happen by an extending class
-        result.add(r);
-      }
-    }
-    
-    return result;
-  }
-  
-  /**
-   * Wraps the provided task in our statistic wrapper.  If the task is {@code null}, this will 
-   * return {@code null} so that the parent class can do error checking.
-   * 
-   * @param task Runnable to wrap
-   * @param priority Priority for runnable to execute
-   * @return Runnable which is our wrapped implementation
-   */
-  private Runnable wrap(Runnable task, TaskPriority priority) {
-    if (priority == null) {
-      priority = getDefaultPriority();
-    }
-    if (task == null) {
-      return null;
-    } else {
-      return new TaskStatWrapper(statsManager, priority, task);
-    }
-  }
-
-  @Override
-  protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
-    return super.doSchedule(new TaskStatWrapper(statsManager, priority, task), 
-                            delayInMillis, priority);
-  }
-
-  @Override
-  public void scheduleWithFixedDelay(Runnable task, long initialDelay,
-                                     long recurringDelay, TaskPriority priority) {
-    super.scheduleWithFixedDelay(wrap(task, priority), initialDelay, recurringDelay, priority);
-  }
-
-  @Override
-  public void scheduleAtFixedRate(Runnable task, long initialDelay,
-                                  long period, TaskPriority priority) {
-    super.scheduleAtFixedRate(wrap(task, priority), initialDelay, period, priority);
-  }
-
-  @Override
-  public List<Long> getExecutionDelaySamples() {
-    return statsManager.getExecutionDelaySamples();
-  }
-  
-  @Override
-  public List<Long> getExecutionDelaySamples(TaskPriority priority) {
-    return statsManager.getExecutionDelaySamples(priority);
-  }
-
-  @Override
-  public double getAverageExecutionDelay() {
-    return statsManager.getAverageExecutionDelay();
-  }
-
-  @Override
-  public double getAverageExecutionDelay(TaskPriority priority) {
-    return statsManager.getAverageExecutionDelay(priority);
-  }
-
-  @Override
-  public Map<Double, Long> getExecutionDelayPercentiles(double... percentiles) {
-    return statsManager.getExecutionDelayPercentiles(percentiles);
-  }
-
-  @Override
-  public Map<Double, Long> getExecutionDelayPercentiles(TaskPriority priority, 
-                                                        double... percentiles) {
-    return statsManager.getExecutionDelayPercentiles(priority, percentiles);
-  }
-
-  @Override
-  public List<Long> getExecutionDurationSamples() {
-    return statsManager.getExecutionDurationSamples();
-  }
-
-  @Override
-  public List<Long> getExecutionDurationSamples(TaskPriority priority) {
-    return statsManager.getExecutionDurationSamples(priority);
-  }
-
-  @Override
-  public double getAverageExecutionDuration() {
-    return statsManager.getAverageExecutionDuration();
-  }
-
-  @Override
-  public double getAverageExecutionDuration(TaskPriority priority) {
-    return statsManager.getAverageExecutionDuration(priority);
-  }
-
-  @Override
-  public Map<Double, Long> getExecutionDurationPercentiles(double... percentiles) {
-    return statsManager.getExecutionDurationPercentiles(percentiles);
-  }
-
-  @Override
-  public Map<Double, Long> getExecutionDurationPercentiles(TaskPriority priority, 
-                                                           double... percentiles) {
-    return statsManager.getExecutionDurationPercentiles(priority, percentiles);
-  }
-
-  @Override
-  public List<Pair<Runnable, StackTraceElement[]>> getLongRunningTasks(long durationLimitMillis) {
-    return statsManager.getLongRunningTasks(durationLimitMillis);
-  }
-
-  @Override
-  public int getLongRunningTasksQty(long durationLimitMillis) {
-    return statsManager.getLongRunningTasksQty(durationLimitMillis);
-  }
-  
-  @Override
-  public void resetCollectedStats() {
-    statsManager.resetCollectedStats();
-  }
-  
-  @Override
-  public long getTotalExecutionCount() {
-    return statsManager.getTotalExecutionCount();
-  }
-
-  @Override
-  public long getTotalExecutionCount(TaskPriority priority) {
-    return statsManager.getTotalExecutionCount(priority);
-  }
-  
-  /**
-   * <p>An extending class of {@link WorkerPool}, allowing us to gather statistics about how 
-   * workers are used in the executor.  An example of such statistics are how long tasks are 
-   * delayed from their desired execution.  Another example is how often a worker can be reused vs 
-   * how often they have to be created.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.5.0
-   */
-  protected static class StatisticWorkerPool extends WorkerPool {
-    protected final PriorityStatisticManager statsManager;
-  
-    protected StatisticWorkerPool(ThreadFactory threadFactory, int poolSize, 
-                                  PriorityStatisticManager statsManager) {
-      super(threadFactory, poolSize);
-      
-      this.statsManager = statsManager;
-    }
-    
-    @Override
-    public TaskWrapper workerIdle(Worker worker) {
-      TaskWrapper result = super.workerIdle(worker);
-
-      // may not be a wrapper for internal tasks like shutdown
-      if (result != null && result.getContainedRunnable() instanceof TaskStatWrapper) {
-        long taskDelay = Clock.lastKnownForwardProgressingMillis() - result.getPureRunTime();
-        TaskStatWrapper statWrapper = (TaskStatWrapper)result.getContainedRunnable();
-        ConcurrentArrayList<Long> priorityStats = 
-            statsManager.getExecutionDelaySamplesInternal(statWrapper.priority);
-  
-        synchronized (priorityStats.getModificationLock()) {
-          priorityStats.add(taskDelay);
-          statsManager.trimWindow(priorityStats);
-        }
-      }
-      
-      return result;
-    }
+    super(poolSize, defaultPriority, maxWaitForLowPriorityInMs, threadFactory, 
+          maxStatisticWindowSize, accurateTime);
   }
 }

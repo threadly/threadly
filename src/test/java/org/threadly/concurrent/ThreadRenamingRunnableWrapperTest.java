@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ThreadRenamingRunnableWrapperTest {
   @Test
   public void renameReplaceAndResetTest() {

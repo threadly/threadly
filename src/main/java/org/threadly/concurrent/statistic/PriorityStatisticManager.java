@@ -1,4 +1,4 @@
-package org.threadly.concurrent.statistics;
+package org.threadly.concurrent.statistic;
 
 import java.util.ArrayList;
 import java.util.Deque;

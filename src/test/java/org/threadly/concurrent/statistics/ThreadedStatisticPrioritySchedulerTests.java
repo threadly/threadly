@@ -16,7 +16,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Pair;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ThreadedStatisticPrioritySchedulerTests {
   public static void blockTillSchedulerIdle(final StatisticPriorityScheduler scheduler, 
                                             final int expectedSampleSize) {

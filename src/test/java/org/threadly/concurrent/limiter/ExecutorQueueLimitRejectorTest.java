@@ -13,7 +13,7 @@ import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
@@ -27,7 +27,6 @@ public class ExecutorQueueLimitRejectorTest extends SubmitterExecutorInterfaceTe
   }
   
   @Test
-  @SuppressWarnings("deprecation")
   public void getCurrentQueueSizeTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     ExecutorQueueLimitRejector queueRejector = new ExecutorQueueLimitRejector(testableScheduler, TEST_QTY);

@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerDefaultPriorityWrapperTest {
   private static PriorityScheduler scheduler;
   
@@ -23,16 +23,6 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
   public static void cleanupClass() {
     scheduler.shutdown();
     scheduler = null;
-  }
-  
-  @Test
-  public void constructorTest() {
-    PrioritySchedulerDefaultPriorityWrapper psw = 
-        new PrioritySchedulerDefaultPriorityWrapper(scheduler, TaskPriority.Low);
-    assertTrue(psw.scheduler == scheduler);
-    assertEquals(TaskPriority.Low, psw.defaultPriority);
-    psw = new PrioritySchedulerDefaultPriorityWrapper(scheduler, TaskPriority.High);
-    assertEquals(TaskPriority.High, psw.defaultPriority);
   }
   
   @SuppressWarnings("unused")
@@ -227,8 +217,6 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     assertTrue(testScheduler.removeCallableCalled);
   }
   
-  // TODO - this may be good to move to something like mockito
-  @SuppressWarnings("deprecation")
   protected static class TestPriorityScheduler implements PrioritySchedulerService {
     protected boolean isShutdownCalled = false;
     protected boolean executeCalled = false;

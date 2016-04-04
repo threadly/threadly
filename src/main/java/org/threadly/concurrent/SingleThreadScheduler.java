@@ -243,6 +243,16 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   }
   
   /**
+   * One step beyond {@link #isShutdown()}, a {@code true} here indicates that not only has a 
+   * shutdown on the pool been requested, but that the thread running tasks has completed.
+   * 
+   * @return {@code true} if this scheduler is no longer processing any tasks
+   */
+  public boolean isTerminated() {
+    return sManager.hasBeenStopped() && ! sManager.execThread.isAlive();
+  }
+  
+  /**
    * Start thread for execution if not already started.  This can avoid the minor delay of the 
    * thread starting later.  This will not block till the thread is running, instead letting it 
    * start in the background (usually fine).

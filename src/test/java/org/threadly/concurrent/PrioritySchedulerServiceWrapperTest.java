@@ -6,9 +6,10 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.junit.Test;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.wrapper.compatibility.ScheduledExecutorServiceTest;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerServiceWrapperTest extends ScheduledExecutorServiceTest {
   @Override
   protected ScheduledExecutorService makeScheduler(int poolSize) {

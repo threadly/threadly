@@ -2,9 +2,6 @@ package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.ThreadRenamingExecutorWrapper;
-import org.threadly.util.StringUtils;
-
 /**
  * <p>This is a cross between the {@link org.threadly.concurrent.KeyDistributedExecutor} and an 
  * {@link ExecutorLimiter}.  This is designed to limit concurrency for a given thread, but permit 
@@ -15,10 +12,13 @@ import org.threadly.util.StringUtils;
  * <p>The easiest way to use this class would be to have it distribute out executors through 
  * {@link #getSubmitterExecutorForKey(Object)}.</p>
  * 
+ * @deprecated moved to {@link org.threadly.concurrent.wrapper.limiter.KeyedExecutorLimiter}
+ * 
  * @author jent - Mike Jensen
  * @since 4.3.0
  */
-public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> {
+@Deprecated
+public class KeyedExecutorLimiter extends org.threadly.concurrent.wrapper.limiter.KeyedExecutorLimiter {
   /**
    * Construct a new {@link KeyedExecutorLimiter} providing only the backing executor and the 
    * maximum concurrency per unique key.  By default this will not rename threads for tasks 
@@ -28,7 +28,7 @@ public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> 
    * @param maxConcurrency Maximum concurrency allowed per task key
    */
   public KeyedExecutorLimiter(Executor executor, int maxConcurrency) {
-    this(executor, maxConcurrency, null, false);
+    super(executor, maxConcurrency);
   }
 
   /**
@@ -42,7 +42,7 @@ public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> 
    */
   public KeyedExecutorLimiter(Executor executor, int maxConcurrency, 
                               String subPoolName, boolean addKeyToThreadName) {
-    this(executor, maxConcurrency, subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
+    super(executor, maxConcurrency, subPoolName, addKeyToThreadName);
   }
 
   /**
@@ -60,17 +60,4 @@ public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> 
                               int expectedTaskAdditionParallism) {
     super(executor, maxConcurrency, subPoolName, addKeyToThreadName, expectedTaskAdditionParallism);
   }
-  
-  @Override
-  protected ExecutorLimiter makeLimiter(String limiterThreadName) {
-    return new ExecutorLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
-                                 executor : new ThreadRenamingExecutorWrapper(executor, limiterThreadName, false), 
-                               maxConcurrency);
-  }
-  
-  /**********
-   * 
-   * NO IMPLEMENTATION SHOULD EXIST HERE, THIS SHOULD ALL BE IN {@link AbstractKeyedLimiter}
-   * 
-   **********/
 }

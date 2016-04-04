@@ -129,8 +129,8 @@ public class ListenerHelper<T> {
    * If an {@link Executor} is provided, and that {@link Executor} is NOT single threaded, the 
    * listener may be called concurrently.  You can ensure this wont happen by using the 
    * {@link org.threadly.concurrent.KeyDistributedExecutor} to get an executor from a single key, 
-   * or by using the {@link org.threadly.concurrent.limiter.ExecutorLimiter} with a limit of one, 
-   * or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}.
+   * or by using the {@link org.threadly.concurrent.wrapper.limiter.ExecutorLimiter} with a limit 
+   * of one, or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}.
    * 
    * @param listener Listener to be called when {@link #call()} is invoked
    * @param executor {@link Executor} to call listener on, or {@code null}

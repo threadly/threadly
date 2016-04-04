@@ -1,6 +1,9 @@
 package org.threadly.concurrent.limiter;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.TEST_QTY;
+
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -13,8 +16,8 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 
-@SuppressWarnings("javadoc")
-public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
+@SuppressWarnings({"javadoc", "deprecation"})
+public class KeyedSchedulerServiceLimiterTest {
   protected PriorityScheduler scheduler;
   
   @Before
@@ -28,7 +31,6 @@ public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
     scheduler = null;
   }
 
-  @Override
   protected KeyedSchedulerServiceLimiter makeLimiter(int limit) {
     return new KeyedSchedulerServiceLimiter(scheduler, limit, null, true, 1);
   }
@@ -47,6 +49,63 @@ public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
+    }
+  }
+  
+  @Test
+  public void getMaxConcurrencyPerKeyTest() {
+    assertEquals(1, makeLimiter(1).getMaxConcurrencyPerKey());
+    int val = 10;
+    assertEquals(val, makeLimiter(val).getMaxConcurrencyPerKey());
+  }
+  
+  @Test
+  public void getUnsubmittedTaskCountTest() {
+    KeyedSchedulerServiceLimiter singleConcurrencyLimiter = makeLimiter(1);
+    String key = StringUtils.makeRandomString(5);
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      assertEquals(0, singleConcurrencyLimiter.getUnsubmittedTaskCount(key));
+      singleConcurrencyLimiter.execute(key, btr);
+      btr.blockTillStarted();
+      // should not be queued any more
+      assertEquals(0, singleConcurrencyLimiter.getUnsubmittedTaskCount(key));
+      
+      for (int i = 1; i < TEST_QTY; i++) {
+        singleConcurrencyLimiter.submit(key, DoNothingRunnable.instance());
+        assertEquals(i, singleConcurrencyLimiter.getUnsubmittedTaskCount(key));
+      }
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void getUnsubmittedTaskCountNullFail() {
+    makeLimiter(1).getUnsubmittedTaskCount(null);
+  }
+  
+  @Test
+  public void getUnsubmittedTaskCountMapTest() {
+    KeyedSchedulerServiceLimiter singleConcurrencyLimiter = makeLimiter(1);
+    String key = StringUtils.makeRandomString(5);
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      assertTrue(singleConcurrencyLimiter.getUnsubmittedTaskCountMap().isEmpty());
+      singleConcurrencyLimiter.execute(key, btr);
+      btr.blockTillStarted();
+
+      // should not be queued any more
+      assertTrue(singleConcurrencyLimiter.getUnsubmittedTaskCountMap().isEmpty());
+      
+      for (int i = 1; i < TEST_QTY; i++) {
+        singleConcurrencyLimiter.submit(key, DoNothingRunnable.instance());
+        Map<?, ?> taskCountMap = singleConcurrencyLimiter.getUnsubmittedTaskCountMap();
+        assertEquals(1, taskCountMap.size());
+        assertEquals(i, taskCountMap.get(key));
+      }
+    } finally {
+      btr.unblock();
     }
   }
   
@@ -121,7 +180,6 @@ public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
   }
   
   @Test
-  @SuppressWarnings("deprecation")
   public void getCurrentRunningCountTest() {
     KeyedSchedulerServiceLimiter limiter = makeLimiter(1);
     String key = StringUtils.makeRandomString(5);
@@ -166,7 +224,6 @@ public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
   }
   
   @Test
-  @SuppressWarnings("deprecation")
   public void getScheduledTaskCountTest() {
     // must be single thread scheduler so we can block one on the shceduler
     KeyedSchedulerServiceLimiter limiter = new KeyedSchedulerServiceLimiter(new SingleThreadScheduler(), 1);

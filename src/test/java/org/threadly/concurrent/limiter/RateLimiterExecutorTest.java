@@ -21,7 +21,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.Clock;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   private RateLimiterExecutor limiter;
   private TestableScheduler scheduler;

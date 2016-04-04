@@ -4,8 +4,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.AbstractSubmitterScheduler;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterScheduler;
-import org.threadly.concurrent.limiter.ExecutorQueueLimitRejector.DecrementingRunnable;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -20,10 +20,13 @@ import org.threadly.util.ArgumentVerifier;
  * 
  * <p>See {@link ExecutorQueueLimitRejector} and {@link SchedulerServiceQueueLimitRejector} as 
  * other possible implementations.</p>
+ * 
+ * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
  *  
  * @author jent
  * @since 4.3.0
  */
+@Deprecated
 public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterScheduler {
   protected final SubmitterScheduler parentScheduler;
   protected final AtomicInteger queuedTaskCount;
@@ -98,6 +101,33 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
         queuedTaskCount.decrementAndGet();
         throw e;
       }
+    }
+  }
+  
+  /**
+   * <p>This runnable decrements a provided AtomicInteger at the START of execution.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.3.0
+   */
+  protected static class DecrementingRunnable implements Runnable, RunnableContainer {
+    private final Runnable task;
+    private final AtomicInteger queuedTaskCount;
+    
+    public DecrementingRunnable(Runnable task, AtomicInteger queuedTaskCount) {
+      this.task = task;
+      this.queuedTaskCount = queuedTaskCount;
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
+    }
+
+    @Override
+    public void run() {
+      queuedTaskCount.decrementAndGet();
+      task.run();
     }
   }
 }

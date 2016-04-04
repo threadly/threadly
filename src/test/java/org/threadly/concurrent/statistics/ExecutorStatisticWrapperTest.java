@@ -18,7 +18,7 @@ import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest {
   private ExecutorStatisticWrapper statWrapper;
   

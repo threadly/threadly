@@ -23,11 +23,10 @@ import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
-import org.threadly.concurrent.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   protected static final int PARALLEL_COUNT = TEST_QTY / 2;
   protected static final int THREAD_COUNT = PARALLEL_COUNT * 2;
@@ -96,35 +95,6 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
       }
     } finally {
       btr.unblock();
-    }
-  }
-  
-  @Test
-  public void constructorEmptySubPoolNameTest() {
-    @SuppressWarnings("deprecation")
-    ExecutorLimiter limiter = new ExecutorLimiter(scheduler, 1, "");
-    
-    assertTrue(limiter.executor == scheduler);
-  }
-  
-  @Test
-  public void consumeAvailableTest() {
-    ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT);
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(PARALLEL_COUNT);
-    for (int i = 0; i < PARALLEL_COUNT; i++) {
-      TestRunnable tr = new TestRunnable();
-      runnables.add(tr);
-      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(limiter.executor, tr));
-    }
-    
-    limiter.consumeAvailable();
-    
-    // should be fully consumed
-    assertEquals(0, limiter.waitingTasks.size());
-    
-    Iterator<TestRunnable> it = runnables.iterator();
-    while (it.hasNext()) {
-      it.next().blockTillFinished();  // throws exception if it does not finish
     }
   }
   
@@ -226,7 +196,6 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     }
     
     @Override
-    @SuppressWarnings("deprecation")
     public ExecutorLimiter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       SubmitterExecutor executor = schedulerFactory.makeSubmitterExecutor(poolSize * 2, prestartIfAvailable);
       

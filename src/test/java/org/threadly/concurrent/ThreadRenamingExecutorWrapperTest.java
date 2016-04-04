@@ -2,7 +2,7 @@ package org.threadly.concurrent;
 
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ThreadRenamingExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {

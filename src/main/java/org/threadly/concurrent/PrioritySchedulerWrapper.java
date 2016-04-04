@@ -7,7 +7,7 @@ package org.threadly.concurrent;
  * different default priorities.  (this could be particularly useful when used in combination with 
  * {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.</p>
  * 
- * @deprecated Use {@link PrioritySchedulerDefaultPriorityWrapper} as a direct replacement
+ * @deprecated Moved to {@link org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper}
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0

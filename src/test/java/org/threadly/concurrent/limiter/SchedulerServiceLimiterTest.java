@@ -14,7 +14,7 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
   @Override
   protected SchedulerServiceLimiter getLimiter(int parallelCount) {
@@ -57,7 +57,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
       
       limiter.submit(tr);
       // verify it is in queue
-      assertTrue(limiter.waitingTasks.size() >= 1);
+      assertTrue(limiter.getQueuedTaskCount() >= 1);
       
       assertTrue(limiter.remove(tr));
     } finally {
@@ -78,7 +78,7 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
       
       limiter.submit(tc);
       // verify it is in queue
-      assertTrue(limiter.waitingTasks.size() >= 1);
+      assertTrue(limiter.getQueuedTaskCount() >= 1);
       
       assertTrue(limiter.remove(tc));
     } finally {
@@ -131,7 +131,6 @@ public class SchedulerServiceLimiterTest extends SimpleSchedulerLimiterTest {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize, prestartIfAvailable);
       

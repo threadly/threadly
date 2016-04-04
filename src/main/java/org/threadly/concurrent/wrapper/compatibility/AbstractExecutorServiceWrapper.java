@@ -1,19 +1,18 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper.compatibility;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.LockSupport;
-
+import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -46,23 +45,6 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
-  }
-
-  @Override
-  public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-    long startTime = Clock.accurateForwardProgressingMillis();
-    long waitTimeInMs = unit.toMillis(timeout);
-    Thread currentThread = Thread.currentThread();
-    while (! isTerminated() && 
-           Clock.lastKnownForwardProgressingMillis() - startTime < waitTimeInMs) {
-      // just spin till terminated or time expires
-      LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * 10);
-      if (currentThread.isInterrupted()) {
-        throw new InterruptedException();
-      }
-    }
-    
-    return isTerminated();
   }
 
   @Override
@@ -274,46 +256,6 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   protected abstract ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
                                                                       long initialDelayInMillis,
                                                                       long periodInMillis);
-  
-  /**
-   * <p>Small wrapper to convert from a {@link PriorityScheduler.TaskWrapper} into a Delayed 
-   * interface.</p>
-   * 
-   * @author jent
-   * @since 4.2.0
-   */
-  protected static class DelayedTaskWrapper implements Delayed {
-    private final DelayedTask task;
-    
-    public DelayedTaskWrapper(DelayedTask task) {
-      this.task = task;
-    }
-
-    @Override
-    public long getDelay(TimeUnit unit) {
-      return unit.convert(task.getRunTime() - Clock.accurateForwardProgressingMillis(), 
-                          TimeUnit.MILLISECONDS);
-    }
-    
-    @Override
-    public int compareTo(Delayed o) {
-      if (this == o) {
-        return 0;
-      } else if (o instanceof DelayedTaskWrapper) {
-        return (int)(task.getRunTime() - ((DelayedTaskWrapper)o).task.getRunTime());
-      } else {
-        long thisDelay = this.getDelay(TimeUnit.MILLISECONDS);
-        long otherDelay = o.getDelay(TimeUnit.MILLISECONDS);
-        if (thisDelay == otherDelay) {
-          return 0;
-        } else if (thisDelay > otherDelay) {
-          return 1;
-        } else {
-          return -1;
-        }
-      }
-    }
-  }
   
   /**
    * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 

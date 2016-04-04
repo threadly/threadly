@@ -13,7 +13,7 @@ import org.threadly.concurrent.TaskPriority;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class NoThreadSchedulerStatisticTrackerTest extends NoThreadSchedulerTest {
   @Before
   @Override

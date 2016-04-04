@@ -8,7 +8,7 @@ import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
   @Override
   protected SubmitterSchedulerLimiter getLimiter(int parallelCount) {
@@ -58,7 +58,6 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
       

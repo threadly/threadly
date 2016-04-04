@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper.compatibility;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -20,6 +20,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.TestCallable;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;

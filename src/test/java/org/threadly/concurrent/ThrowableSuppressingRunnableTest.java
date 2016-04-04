@@ -7,7 +7,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.TestExceptionHandler;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ThrowableSuppressingRunnableTest {
   @Test
   public void getContainedRunnableTest() {

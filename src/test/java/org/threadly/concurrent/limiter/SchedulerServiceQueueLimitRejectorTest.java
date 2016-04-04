@@ -15,7 +15,7 @@ import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInterfaceTest {
   @Override
   protected SchedulerServiceFactory getSchedulerServiceFactory() {
@@ -70,7 +70,6 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
   }
   
   @Test
-  @SuppressWarnings("deprecation")
   public void getScheduledTaskCountTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);

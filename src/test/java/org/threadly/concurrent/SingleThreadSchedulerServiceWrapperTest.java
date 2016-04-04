@@ -7,9 +7,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.threadly.concurrent.wrapper.compatibility.ScheduledExecutorServiceTest;
 import org.threadly.test.concurrent.TestRunnable;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class SingleThreadSchedulerServiceWrapperTest extends ScheduledExecutorServiceTest {
   @Override
   protected ScheduledExecutorService makeScheduler(int poolSize) {

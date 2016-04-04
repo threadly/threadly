@@ -7,9 +7,12 @@ import java.util.concurrent.Callable;
  * {@link ThreadRenamingRunnableWrapper}.  This allows you to make a pool where all tasks submitted 
  * inside it have the threads named in an identifiable way.</p>
  * 
+ * @deprecated Moved to {@link org.threadly.concurrent.wrapper.traceability.ThreadRenamingSchedulerServiceWrapper}
+ * 
  * @author jent
  * @since 4.3.0
  */
+@Deprecated
 public class ThreadRenamingSchedulerServiceWrapper extends ThreadRenamingSubmitterSchedulerWrapper 
                                                    implements SchedulerService {
   protected final SchedulerService scheduler;
