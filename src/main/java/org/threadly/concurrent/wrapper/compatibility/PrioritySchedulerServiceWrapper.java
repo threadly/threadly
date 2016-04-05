@@ -5,8 +5,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-import org.threadly.concurrent.InternalAccessor;
 import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.ThreadlyInternalAccessor;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
@@ -74,7 +74,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
     ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<Void>(false, task);
-    Delayed d = PrioritySchedulerAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, delayInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, delayInMillis);
     
     return new ScheduledFutureDelegate<Void>(taskFuture, d);
   }
@@ -82,7 +82,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<V>(false, callable);
-    Delayed d = PrioritySchedulerAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, delayInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, delayInMillis);
     
     return new ScheduledFutureDelegate<V>(taskFuture, d);
   }
@@ -95,7 +95,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     
     ListenableRunnableFuture<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
                                                                                       true, task);
-    Delayed d = PrioritySchedulerAccessor.doScheduleWithFixedDelayAndGetDelayed(pScheduler, lft, 
+    Delayed d = ThreadlyInternalAccessor.doScheduleWithFixedDelayAndGetDelayed(pScheduler, lft, 
                                                                                 initialDelay, delayInMs);
     
     return new ScheduledFutureDelegate<Void>(lft, d);
@@ -109,36 +109,9 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     
     ListenableRunnableFuture<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
                                                                                       true, task);
-    Delayed d = PrioritySchedulerAccessor.doScheduleAtFixedRateAndGetDelayed(pScheduler, lft, 
-                                                                             initialDelay, periodInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAtFixedRateAndGetDelayed(pScheduler, lft, 
+                                                                            initialDelay, periodInMillis);
     
     return new ScheduledFutureDelegate<Void>(lft, d);
-  }
-  
-  /**
-   * <p>Just used to gain visibility through {@link InternalAccessor}.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.6.0
-   */
-  private static class PrioritySchedulerAccessor extends InternalAccessor {
-    public static Delayed doScheduleAndGetDelayed(PriorityScheduler pScheduler, Runnable task, 
-                                                  long delayInMillis) {
-      return InternalAccessor.doScheduleAndGetDelayed(pScheduler, task, delayInMillis);
-    }
-    
-    public static Delayed doScheduleAtFixedRateAndGetDelayed(PriorityScheduler pScheduler, 
-                                                             Runnable task, 
-                                                             long initialDelay, long periodInMillis) {
-      return InternalAccessor.doScheduleAtFixedRateAndGetDelayed(pScheduler, task, 
-                                                                 initialDelay, periodInMillis);
-    }
-    
-    public static Delayed doScheduleWithFixedDelayAndGetDelayed(PriorityScheduler pScheduler, 
-                                                                Runnable task, 
-                                                                long initialDelay, long delayInMs) {
-      return InternalAccessor.doScheduleWithFixedDelayAndGetDelayed(pScheduler, task, 
-                                                                    initialDelay, delayInMs);
-    }
   }
 }

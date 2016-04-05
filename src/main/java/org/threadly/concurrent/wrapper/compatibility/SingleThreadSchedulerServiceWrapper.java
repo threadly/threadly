@@ -5,8 +5,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
-import org.threadly.concurrent.InternalAccessor;
 import org.threadly.concurrent.SingleThreadScheduler;
+import org.threadly.concurrent.ThreadlyInternalAccessor;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.concurrent.future.ScheduledFutureDelegate;
@@ -60,8 +60,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
     ListenableFutureTask<Void> lft = new ListenableFutureTask<Void>(false, task);
-    Delayed d = SingleThreadAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
-                                                             lft, delayInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
+                                                                 lft, delayInMillis);
     
     return new ScheduledFutureDelegate<Void>(lft, d);
   }
@@ -69,8 +69,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableFutureTask<V> lft = new ListenableFutureTask<V>(false, callable);
-    Delayed d = SingleThreadAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
-                                                             lft, delayInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
+                                                                 lft, delayInMillis);
     
     return new ScheduledFutureDelegate<V>(lft, d);
   }
@@ -83,8 +83,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     
     ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
                                                                                   true, task);
-    Delayed d = SingleThreadAccessor.doScheduleWithFixedDelayAndGetDelayed(singleThreadScheduler, lft, 
-                                                                           initialDelay, delayInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleWithFixedDelayAndGetDelayed(singleThreadScheduler, lft, 
+                                                                               initialDelay, delayInMillis);
     
     return new ScheduledFutureDelegate<Void>(lft, d);
   }
@@ -97,36 +97,9 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     
     ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<Void>(scheduler, 
                                                                                   true, task);
-    Delayed d = SingleThreadAccessor.doScheduleAtFixedRateAndGetDelayed(singleThreadScheduler, lft, 
-                                                                        initialDelay, periodInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAtFixedRateAndGetDelayed(singleThreadScheduler, lft, 
+                                                                            initialDelay, periodInMillis);
     
     return new ScheduledFutureDelegate<Void>(lft, d);
-  }
-  
-  /**
-   * <p>Just used to gain visibility through {@link InternalAccessor}.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.6.0
-   */
-  private static class SingleThreadAccessor extends InternalAccessor {
-    public static Delayed doScheduleAndGetDelayed(SingleThreadScheduler scheduler, Runnable task, 
-                                                  long delayInMillis) {
-      return InternalAccessor.doScheduleAndGetDelayed(scheduler, task, delayInMillis);
-    }
-    
-    public static Delayed doScheduleAtFixedRateAndGetDelayed(SingleThreadScheduler scheduler, 
-                                                             Runnable task, 
-                                                             long initialDelay, long periodInMillis) {
-      return InternalAccessor.doScheduleAtFixedRateAndGetDelayed(scheduler, task, 
-                                                                 initialDelay, periodInMillis);
-    }
-    
-    public static Delayed doScheduleWithFixedDelayAndGetDelayed(SingleThreadScheduler scheduler, 
-                                                                Runnable task, 
-                                                                long initialDelay, long delayInMs) {
-      return InternalAccessor.doScheduleWithFixedDelayAndGetDelayed(scheduler, task, 
-                                                                    initialDelay, delayInMs);
-    }
   }
 }

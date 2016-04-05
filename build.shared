@@ -31,6 +31,7 @@ jar {
 
 javadoc {
   source = sourceSets.main.allJava
+  excludes = ['**/ThreadlyInternalAccessor**', '**/ArgumentVerifier**']
   options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC
 }
 

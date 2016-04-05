@@ -22,7 +22,7 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 4.6.0
  */
-public class InternalAccessor {
+public class ThreadlyInternalAccessor {
   /**
    * Used for gaining compatibility with java.util.concurrent when a {@link Delayed} object is 
    * needed.
@@ -32,8 +32,8 @@ public class InternalAccessor {
    * @param delayInMillis Delay for task execution
    * @return Delayed implementation which corresponds to executed task
    */
-  protected static Delayed doScheduleAndGetDelayed(AbstractPriorityScheduler pScheduler, Runnable task, 
-                                                   long delayInMillis) {
+  public static Delayed doScheduleAndGetDelayed(AbstractPriorityScheduler pScheduler, Runnable task, 
+                                                long delayInMillis) {
     return new DelayedTaskWrapper(pScheduler.doSchedule(task, delayInMillis, 
                                                         pScheduler.getDefaultPriority()));
   }
@@ -45,12 +45,12 @@ public class InternalAccessor {
    * @param pScheduler Scheduler to submit task to
    * @param task Task to be submitted
    * @param initialDelay initial delay for task to execute
-   * @param delayInMs recurring delay for task to execute
+   * @param periodInMillis recurring delay for task to execute
    * @return Delayed implementation which corresponds to executed task
    */
-  protected static Delayed doScheduleAtFixedRateAndGetDelayed(PriorityScheduler pScheduler, 
-                                                              Runnable task, 
-                                                              long initialDelay, long periodInMillis) {
+  public static Delayed doScheduleAtFixedRateAndGetDelayed(PriorityScheduler pScheduler, 
+                                                           Runnable task, 
+                                                           long initialDelay, long periodInMillis) {
     QueueSet queueSet = pScheduler.taskQueueManager.getQueueSet(pScheduler.getDefaultPriority());
     RecurringRateTaskWrapper rrtw = 
         new RecurringRateTaskWrapper(task, queueSet,
@@ -67,12 +67,12 @@ public class InternalAccessor {
    * @param pScheduler Scheduler to submit task to
    * @param task Task to be submitted
    * @param initialDelay initial delay for task to execute
-   * @param periodInMillis recurring delay for task to execute
+   * @param delayInMs recurring delay for task to execute
    * @return Delayed implementation which corresponds to executed task
    */
-  protected static Delayed doScheduleWithFixedDelayAndGetDelayed(PriorityScheduler pScheduler, 
-                                                                 Runnable task, 
-                                                                 long initialDelay, long delayInMs) {
+  public static Delayed doScheduleWithFixedDelayAndGetDelayed(PriorityScheduler pScheduler, 
+                                                              Runnable task, 
+                                                              long initialDelay, long delayInMs) {
     QueueSet queueSet = pScheduler.taskQueueManager.getQueueSet(pScheduler.getDefaultPriority());
     RecurringDelayTaskWrapper rdtw = 
         new RecurringDelayTaskWrapper(task, queueSet,
@@ -89,12 +89,12 @@ public class InternalAccessor {
    * @param scheduler Scheduler to submit task to
    * @param task Task to be submitted
    * @param initialDelay initial delay for task to execute
-   * @param delayInMs recurring delay for task to execute
+   * @param periodInMillis recurring delay for task to execute
    * @return Delayed implementation which corresponds to executed task
    */
-  protected static Delayed doScheduleAtFixedRateAndGetDelayed(SingleThreadScheduler scheduler, 
-                                                              Runnable task, 
-                                                              long initialDelay, long periodInMillis) {
+  public static Delayed doScheduleAtFixedRateAndGetDelayed(SingleThreadScheduler scheduler, 
+                                                           Runnable task, 
+                                                           long initialDelay, long periodInMillis) {
     NoThreadScheduler nts = scheduler.getRunningScheduler();
     QueueSet queueSet = nts.queueManager.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringRateTaskWrapper rt = 
@@ -113,12 +113,12 @@ public class InternalAccessor {
    * @param scheduler Scheduler to submit task to
    * @param task Task to be submitted
    * @param initialDelay initial delay for task to execute
-   * @param periodInMillis recurring delay for task to execute
+   * @param delayInMs recurring delay for task to execute
    * @return Delayed implementation which corresponds to executed task
    */
-  protected static Delayed doScheduleWithFixedDelayAndGetDelayed(SingleThreadScheduler scheduler, 
-                                                                 Runnable task, 
-                                                                 long initialDelay, long delayInMs) {
+  public static Delayed doScheduleWithFixedDelayAndGetDelayed(SingleThreadScheduler scheduler, 
+                                                              Runnable task, 
+                                                              long initialDelay, long delayInMs) {
     NoThreadScheduler nts = scheduler.getRunningScheduler();
     QueueSet queueSet = nts.queueManager.getQueueSet(nts.getDefaultPriority());
     NoThreadRecurringDelayTaskWrapper rdt = 
