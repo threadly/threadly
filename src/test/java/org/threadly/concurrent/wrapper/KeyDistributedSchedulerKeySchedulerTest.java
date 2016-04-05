@@ -1,9 +1,11 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper;
 
 import org.junit.Test;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerInterfaceTest {
   @Override
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
@@ -38,7 +40,7 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 
     @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterScheduler makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSubmitterScheduler(poolSize, prestartIfAvailable);
     }
     

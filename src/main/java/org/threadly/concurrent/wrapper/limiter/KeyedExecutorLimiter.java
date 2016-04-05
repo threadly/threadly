@@ -6,11 +6,11 @@ import org.threadly.concurrent.wrapper.traceability.ThreadRenamingExecutorWrappe
 import org.threadly.util.StringUtils;
 
 /**
- * <p>This is a cross between the {@link org.threadly.concurrent.KeyDistributedExecutor} and an 
- * {@link ExecutorLimiter}.  This is designed to limit concurrency for a given thread, but permit 
- * more than one thread to run at a time for a given key.  If the desired effect is to have a 
- * single thread per key, {@link org.threadly.concurrent.KeyDistributedExecutor} is a much better 
- * option.</p>
+ * <p>This is a cross between the {@link org.threadly.concurrent.wrapper.KeyDistributedExecutor} 
+ * and an {@link ExecutorLimiter}.  This is designed to limit concurrency for a given thread, but 
+ * permit more than one thread to run at a time for a given key.  If the desired effect is to have 
+ * a single thread per key, {@link org.threadly.concurrent.wrapper.KeyDistributedExecutor} is a 
+ * much better option.</p>
  * 
  * <p>The easiest way to use this class would be to have it distribute out executors through 
  * {@link #getSubmitterExecutorForKey(Object)}.</p>

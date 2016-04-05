@@ -1,7 +1,11 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper;
 
 import java.util.concurrent.Callable;
 
+import org.threadly.concurrent.RunnableCallableAdapter;
+import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
+import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
@@ -16,14 +20,11 @@ import org.threadly.util.ArgumentVerifier;
  * this class.  Please read the javadoc for {@link KeyDistributedExecutor} to understand more 
  * about how this operates.</p>
  * 
- * @deprecated Moved to {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler}
- * 
  * @author jent - Mike Jensen
  * @since 2.5.0 (existed since 1.0.0 as TaskSchedulerDistributor)
  */
-@Deprecated
 public class KeyDistributedScheduler extends KeyDistributedExecutor {
-  protected final SimpleSchedulerInterface scheduler;
+  protected final SubmitterScheduler scheduler;
 
   /**
    * Constructor to use a provided scheduler implementation for running tasks.  
@@ -35,7 +36,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    */
-  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler) {
+  public KeyDistributedScheduler(SubmitterScheduler scheduler) {
     this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, false);
   }
   
@@ -52,7 +53,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, boolean accurateQueueSize) {
+  public KeyDistributedScheduler(SubmitterScheduler scheduler, boolean accurateQueueSize) {
     this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
   
@@ -73,7 +74,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, int maxTasksPerCycle) {
+  public KeyDistributedScheduler(SubmitterScheduler scheduler, int maxTasksPerCycle) {
     this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, false);
   }
   
@@ -97,7 +98,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(SimpleSchedulerInterface scheduler, int maxTasksPerCycle, 
+  public KeyDistributedScheduler(SubmitterScheduler scheduler, int maxTasksPerCycle, 
                                  boolean accurateQueueSize) {
     this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, accurateQueueSize);
   }
@@ -112,7 +113,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler) {
+  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler) {
     this(expectedParallism, scheduler, Integer.MAX_VALUE, false);
   }
   
@@ -128,7 +129,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
+  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler, 
                                  boolean accurateQueueSize) {
     this(expectedParallism, scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
@@ -150,7 +151,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
+  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler, 
                                  int maxTasksPerCycle) {
     this(expectedParallism, scheduler, maxTasksPerCycle, false);
   }
@@ -174,7 +175,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(int expectedParallism, SimpleSchedulerInterface scheduler, 
+  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler, 
                                  int maxTasksPerCycle, boolean accurateQueueSize) {
     this(scheduler, new StripedLock(expectedParallism), maxTasksPerCycle, accurateQueueSize);
   }
@@ -192,27 +193,11 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param sLock lock to be used for controlling access to workers
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  protected KeyDistributedScheduler(SimpleSchedulerInterface scheduler, StripedLock sLock, 
+  protected KeyDistributedScheduler(SubmitterScheduler scheduler, StripedLock sLock, 
                                     int maxTasksPerCycle, boolean accurateQueueSize) {
     super(scheduler, sLock, maxTasksPerCycle, accurateQueueSize);
     
     this.scheduler = scheduler;
-  }
-  
-  /**
-   * Returns a scheduler implementation where all tasks submitted on this scheduler will run on 
-   * the provided key.
-   * 
-   * @deprecated please use {@link #getSchedulerForKey(Object)} as a direct replacement
-   * 
-   * @param threadKey object key where {@code equals()} will be used to determine execution thread
-   * @return scheduler which will only execute based on the provided key
-   */
-  @Deprecated
-  public SubmitterSchedulerInterface getSubmitterSchedulerForKey(Object threadKey) {
-    ArgumentVerifier.assertNotNull(threadKey, "threadKey");
-    
-    return new KeyScheduler(threadKey);
   }
   
   /**
@@ -226,21 +211,6 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     
     return new KeyScheduler(threadKey);
-  }
-
-  /**
-   * Schedule a one time task with a given delay that will not run concurrently based off the 
-   * thread key.
-   * 
-   * @deprecated Use {@link #schedule(Object, Runnable, long)} as a direct replacement
-   * 
-   * @param threadKey object key where {@code equals()} will be used to determine execution thread
-   * @param task Task to execute
-   * @param delayInMs Time to wait to execute task
-   */
-  @Deprecated
-  public void scheduleTask(Object threadKey, Runnable task, long delayInMs) {
-    schedule(threadKey, task, delayInMs);
   }
 
   /**
@@ -265,28 +235,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
 
   /**
    * Schedule a task with a given delay.  There is a slight increase in load when using 
-   * {@link #submitScheduledTask(Object, Runnable, long)} over 
-   * {@link #scheduleTask(Object, Runnable, long)}.  So this should only be used when the future 
-   * is necessary.
-   * 
-   * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has completed.
-   * 
-   * @deprecated Use {@link #submitScheduled(Object, Runnable, long)} as a directed replacement
-   * 
-   * @param threadKey object key where {@code equals()} will be used to determine execution thread
-   * @param task runnable to execute
-   * @param delayInMs time in milliseconds to wait to execute task
-   * @return a future to know when the task has completed
-   */
-  @Deprecated
-  public ListenableFuture<?> submitScheduledTask(Object threadKey, Runnable task, long delayInMs) {
-    return submitScheduled(threadKey, task, delayInMs);
-  }
-
-  /**
-   * Schedule a task with a given delay.  There is a slight increase in load when using 
-   * {@link #submitScheduledTask(Object, Runnable, long)} over 
-   * {@link #scheduleTask(Object, Runnable, long)}.  So this should only be used when the future 
+   * {@link #submitScheduled(Object, Runnable, long)} over 
+   * {@link #schedule(Object, Runnable, long)}.  So this should only be used when the future 
    * is necessary.
    * 
    * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has completed.
@@ -297,26 +247,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @return a future to know when the task has completed
    */
   public ListenableFuture<?> submitScheduled(Object threadKey, Runnable task, long delayInMs) {
-    return submitScheduledTask(threadKey, task, null, delayInMs);
-  }
-
-  /**
-   * Schedule a task with a given delay.  The future {@link ListenableFuture#get()} method will 
-   * return null once the runnable has completed.
-   * 
-   * @deprecated Use {@link #submitScheduled(Object, Runnable, Object, long)} as a direct replacement
-   * 
-   * @param <T> type of result returned from the future
-   * @param threadKey object key where {@code equals()} will be used to determine execution thread
-   * @param task runnable to execute
-   * @param result result to be returned from resulting {@link ListenableFuture#get()} when runnable completes
-   * @param delayInMs time in milliseconds to wait to execute task
-   * @return a future to know when the task has completed
-   */
-  @Deprecated
-  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, Runnable task, 
-                                                     T result, long delayInMs) {
-    return submitScheduled(threadKey, task, result, delayInMs);
+    return submitScheduled(threadKey, task, null, delayInMs);
   }
 
   /**
@@ -333,24 +264,6 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   public <T> ListenableFuture<T> submitScheduled(Object threadKey, Runnable task, 
                                                  T result, long delayInMs) {
     return submitScheduled(threadKey, new RunnableCallableAdapter<T>(task, result), delayInMs);
-  }
-
-  /**
-   * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 
-   * consumed from the callable.
-   * 
-   * @deprecated Use {@link #submitScheduled(Object, Callable, long)} as a direct replacement
-   * 
-   * @param <T> type of result returned from the future
-   * @param threadKey object key where {@code equals()} will be used to determine execution thread
-   * @param task callable to be executed
-   * @param delayInMs time in milliseconds to wait to execute task
-   * @return a future to know when the task has completed and get the result of the callable
-   */
-  @Deprecated
-  public <T> ListenableFuture<T> submitScheduledTask(Object threadKey, 
-                                                     Callable<T> task, long delayInMs) {
-    return submitScheduled(threadKey, task, delayInMs);
   }
 
   /**
@@ -525,8 +438,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @author jent - Mike Jensen
    * @since 2.5.0
    */
-  protected class KeyScheduler extends KeySubmitter 
-                               implements SubmitterSchedulerInterface {
+  protected class KeyScheduler extends KeySubmitter implements SubmitterScheduler {
     protected KeyScheduler(Object threadKey) {
       super(threadKey);
     }
@@ -559,8 +471,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
 
     @Override
     public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-      KeyDistributedScheduler.this.scheduleTaskAtFixedRate(threadKey, task, 
-                                                           initialDelay, period);
+      KeyDistributedScheduler.this.scheduleTaskAtFixedRate(threadKey, task, initialDelay, period);
     }
   }
 }

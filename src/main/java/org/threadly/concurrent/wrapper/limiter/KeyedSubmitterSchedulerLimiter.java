@@ -5,11 +5,11 @@ import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterSched
 import org.threadly.util.StringUtils;
 
 /**
- * <p>This is a cross between the {@link org.threadly.concurrent.KeyDistributedScheduler} and a 
- * {@link SubmitterSchedulerLimiter}.  This is designed to limit concurrency for a given thread, 
- * but permit more than one thread to run at a time for a given key.  If the desired effect is to 
- * have a single thread per key, {@link org.threadly.concurrent.KeyDistributedScheduler} is a much 
- * better option.</p>
+ * <p>This is a cross between the {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} 
+ * and a {@link SubmitterSchedulerLimiter}.  This is designed to limit concurrency for a given 
+ * thread, but permit more than one thread to run at a time for a given key.  If the desired 
+ * effect is to have a single thread per key, 
+ * {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} is a much better option.</p>
  * 
  * <p>The easiest way to use this class would be to have it distribute out schedulers through 
  * {@link #getSubmitterSchedulerForKey(Object)}.</p>

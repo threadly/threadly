@@ -160,9 +160,10 @@ public class RunnableListenerHelper {
    * 
    * If an {@link Executor} is provided, and that Executor is NOT single threaded, the listener 
    * may be called concurrently.  You can ensure this wont happen by using the 
-   * {@link org.threadly.concurrent.KeyDistributedExecutor} to get an executor from a single key, 
-   * or by using the {@link org.threadly.concurrent.wrapper.limiter.ExecutorLimiter} with a limit 
-   * of one, or an instance of the {@link org.threadly.concurrent.SingleThreadScheduler}.
+   * {@link org.threadly.concurrent.wrapper.KeyDistributedExecutor} to get an executor from a 
+   * single key, or by using the {@link org.threadly.concurrent.wrapper.limiter.ExecutorLimiter} 
+   * with a limit of one, or an instance of the 
+   * {@link org.threadly.concurrent.SingleThreadScheduler}.
    * 
    * @param listener runnable to call when trigger event called
    * @param executor executor listener should run on, or {@code null}

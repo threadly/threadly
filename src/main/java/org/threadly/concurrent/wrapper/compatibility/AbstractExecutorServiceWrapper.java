@@ -260,7 +260,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   /**
    * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
    * recurring task causes the task to stop executing, we have to wrap the task.  That way we can 
-   * remove the recurring task if the error occurs (since {@link SimpleSchedulerInterface} will 
+   * remove the recurring task if the error occurs (since {@link SubmitterScheduler} will 
    * continue to execute the task despite the error.</p>
    * 
    * @author jent - Mike Jensen

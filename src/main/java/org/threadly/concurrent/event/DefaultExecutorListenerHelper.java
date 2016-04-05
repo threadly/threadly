@@ -2,7 +2,7 @@ package org.threadly.concurrent.event;
 
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.KeyDistributedExecutor;
+import org.threadly.concurrent.wrapper.KeyDistributedExecutor;
 
 /**
  * <p>This class ensures that listener execution will never happen on the thread that invokes 

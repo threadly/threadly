@@ -1,9 +1,10 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -14,41 +15,86 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
-import org.threadly.concurrent.lock.StripedLock;
+import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.wrapper.limiter.ExecutorLimiter;
+import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.SubmitterExecutor;
+import org.threadly.concurrent.TestCallable;
+import org.threadly.concurrent.TestRuntimeFailureRunnable;
+import org.threadly.concurrent.UnfairExecutor;
+import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.util.ExceptionUtils;
+import org.threadly.util.TestExceptionHandler;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.KeyDistributedExecutorTest {
+@SuppressWarnings("javadoc")
+public class KeyDistributedExecutorTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
-  private KeyDistributedExecutor localDistributor;
+  protected static UnfairExecutor executor;
+  
+  @BeforeClass
+  public static void setupClass() {
+    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    
+    executor = new UnfairExecutor((PARALLEL_LEVEL * 2) + 1);
+  }
+  
+  @AfterClass
+  public static void cleanupClass() {
+    executor.shutdownNow();
+    executor = null;
+  }
+  
+  protected Object agentLock;
+  protected KeyDistributedExecutor distributor;
   
   @Before
-  @Override
   public void setup() {
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
-    localDistributor = new KeyDistributedExecutor(executor, sLock, Integer.MAX_VALUE, false);
-    super.distributor = localDistributor;
+    distributor = new KeyDistributedExecutor(executor, sLock, Integer.MAX_VALUE, false);
   }
   
   @After
-  @Override
   public void cleanup() {
-    localDistributor = null;
-    super.cleanup();
+    agentLock = null;
+    distributor = null;
   }
   
-  @Test
-  @Override
+  protected List<KDRunnable> populate(AddHandler ah) {
+    final List<KDRunnable> runs = new ArrayList<KDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    
+    // hold agent lock to prevent execution till ready
+    synchronized (agentLock) {
+      for (int i = 0; i < PARALLEL_LEVEL; i++) {
+        ThreadContainer tc = new ThreadContainer();
+        KDRunnable previous = null;
+        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+          KDRunnable tr = new KDRunnable(tc, previous);
+          runs.add(tr);
+          ah.addTDRunnable(tc, tr);
+          
+          previous = tr;
+        }
+      }
+    }
+    
+    return runs;
+  }
+  
   @SuppressWarnings("unused")
+  @Test
   public void constructorTest() {
     // none should throw exception
     new KeyDistributedExecutor(executor);
@@ -63,9 +109,8 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
     new KeyDistributedExecutor(executor, sLock, 1, false);
   }
   
-  @Test
-  @Override
   @SuppressWarnings("unused")
+  @Test
   public void constructorFail() {
     try {
       new KeyDistributedExecutor(1, null);
@@ -88,22 +133,47 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
-  public void getSubmitterForKeyFail() {
-    localDistributor.getSubmitterForKey(null);
+  @Test
+  public void getExecutorTest() {
+    assertTrue(executor == distributor.getExecutor());
   }
   
   @Test
-  public void addTaskFail() {
+  public void keyBasedSubmitterConsistentThreadTest() {
+    List<KDRunnable> runs = populate(new AddHandler() {
+      @Override
+      public void addTDRunnable(Object key, KDRunnable tdr) {
+        SubmitterExecutor keySubmitter = distributor.getExecutorForKey(key);
+        keySubmitter.submit(tdr);
+      }
+    });
+    
+    Iterator<KDRunnable> it = runs.iterator();
+    while (it.hasNext()) {
+      KDRunnable tr = it.next();
+      tr.blockTillFinished(1000 * 20);
+      assertEquals(1, tr.getRunCount()); // verify each only ran once
+      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
+      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
+    }
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void getExecutorForKeyFail() {
+    distributor.getExecutorForKey(null);
+  }
+  
+  @Test
+  public void executeFail() {
     try {
-      localDistributor.addTask(null, DoNothingRunnable.instance());
+      distributor.execute(null, DoNothingRunnable.instance());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
 
     try {
-      localDistributor.addTask(new Object(), null);
+      distributor.execute(new Object(), null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -111,11 +181,11 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
   }
   
   @Test
-  public void addTaskConsistentThreadTest() {
+  public void executeConsistentThreadTest() {
     List<KDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, KDRunnable tdr) {
-        localDistributor.addTask(key, tdr);
+        distributor.execute(key, tdr);
       }
     });
 
@@ -130,15 +200,15 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
   }
   
   @Test
-  public void submitTaskRunnableFail() {
+  public void submitRunnableFail() {
     try {
-      localDistributor.submitTask(null, DoNothingRunnable.instance());
+      distributor.submit(null, DoNothingRunnable.instance());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      localDistributor.submitTask(new Object(), null, null);
+      distributor.submit(new Object(), null, null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -146,11 +216,11 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
   }
   
   @Test
-  public void submitTaskRunnableConsistentThreadTest() {
+  public void submitRunnableConsistentThreadTest() {
     List<KDRunnable> runs = populate(new AddHandler() {
       @Override
       public void addTDRunnable(Object key, KDRunnable tdr) {
-        localDistributor.submitTask(key, tdr);
+        distributor.submit(key, tdr);
       }
     });
     
@@ -165,7 +235,7 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
   }
   
   @Test
-  public void submitTaskCallableConsistentThreadTest() {
+  public void submitCallableConsistentThreadTest() {
     List<KDCallable> runs = new ArrayList<KDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
     
     // hold agent lock to avoid execution till all are submitted
@@ -176,7 +246,7 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
         for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
           KDCallable tr = new KDCallable(tc, previous);
           runs.add(tr);
-          localDistributor.submitTask(tc, tr);
+          distributor.submit(tc, tr);
           
           previous = tr;
         }
@@ -193,23 +263,136 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
   }
   
   @Test
-  public void submitTaskCallableFail() {
+  public void submitCallableFail() {
     try {
-      localDistributor.submitTask(null, new TestCallable());
+      distributor.submit(null, new TestCallable());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      localDistributor.submitTask(new Object(), (Callable<Void>)null);
+      distributor.submit(new Object(), (Callable<Void>)null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
   }
+
+  @Test
+  public void executeStressTest() {
+    final Object testLock = new Object();
+    final int expectedCount = (PARALLEL_LEVEL * 2) * (RUNNABLE_COUNT_PER_LEVEL * 2);
+    final List<KDRunnable> runs = new ArrayList<KDRunnable>(expectedCount);
+    
+    // we can't use populate here because we don't want to hold the agentLock
+    
+    executor.execute(new Runnable() {
+      private final Map<Integer, ThreadContainer> containers = new HashMap<Integer, ThreadContainer>();
+      private final Map<Integer, KDRunnable> previousRunnables = new HashMap<Integer, KDRunnable>();
+      
+      @Override
+      public void run() {
+        synchronized (testLock) {
+          for (int i = 0; i < RUNNABLE_COUNT_PER_LEVEL * 2; i++) {
+            for (int j = 0; j < PARALLEL_LEVEL * 2; j++) {
+              ThreadContainer tc = containers.get(j);
+              if (tc == null) {
+                tc = new ThreadContainer();
+                containers.put(j, tc);
+              }
+              
+              KDRunnable tr = new KDRunnable(tc, previousRunnables.get(j)) {
+                private boolean added = false;
+                
+                @Override
+                public void handleRunFinish() {
+                  if (! added) {
+                    distributor.execute(threadTracker, this);
+                    added = true;
+                  }
+                }
+              };
+              runs.add(tr);
+              distributor.execute(tc, tr);
+              previousRunnables.put(j, tr);
+            }
+          }
+        }
+      }
+    });
+    
+    // block till ready to ensure other thread got testLock lock
+    new TestCondition() {
+      @Override
+      public boolean get() {
+        synchronized (testLock) {
+          return runs.size() == expectedCount;
+        }
+      }
+    }.blockTillTrue(20 * 1000, 100);
+
+    synchronized (testLock) {
+      Iterator<KDRunnable> it = runs.iterator();
+      while (it.hasNext()) {
+        KDRunnable tr = it.next();
+        tr.blockTillFinished(20 * 1000, 2);
+        assertEquals(2, tr.getRunCount()); // verify each only ran twice
+        assertTrue(tr.previousRanFirst);  // verify runnables were run in order
+        assertFalse(tr.ranConcurrently());  // verify that it never run in parallel
+      }
+    }
+  }
   
   @Test
-  @Override
+  public void taskExceptionTest() {
+    Integer key = 1;
+    TestExceptionHandler teh = new TestExceptionHandler();
+    final RuntimeException testException = new RuntimeException();
+    ExceptionUtils.setDefaultExceptionHandler(teh);
+    TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
+    TestRunnable followRunnable = new TestRunnable();
+    distributor.execute(key, exceptionRunnable);
+    distributor.execute(key, followRunnable);
+    exceptionRunnable.blockTillFinished();
+    followRunnable.blockTillStarted();  // verify that it ran despite the exception
+    
+    assertEquals(1, teh.getCallCount());
+    assertEquals(testException, teh.getLastThrowable());
+  }
+  
+  @Test
+  public void limitExecutionPerCycleTest() {
+    final AtomicInteger execCount = new AtomicInteger(0);
+    KeyDistributedExecutor distributor = new KeyDistributedExecutor(1, new Executor() {
+      @Override
+      public void execute(Runnable command) {
+        execCount.incrementAndGet();
+        
+        new Thread(command).start();
+      }
+    }, 1);
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    
+    distributor.execute(this, btr);
+    btr.blockTillStarted();
+    
+    // add second task while we know worker is active
+    TestRunnable secondTask = new TestRunnable();
+    distributor.execute(this, secondTask);
+    
+    assertEquals(1, distributor.taskWorkers.size());
+    assertEquals(1, distributor.taskWorkers.get(this).queue.size());
+    
+    btr.unblock();
+    
+    secondTask.blockTillFinished();
+    
+    // verify worker execed out between task
+    assertEquals(2, execCount.get());
+  }
+  
+  @Test
   public void limitExecutionPerCycleStressTest() {
     PriorityScheduler scheduler = new StrictPriorityScheduler(3);
     final AtomicBoolean testComplete = new AtomicBoolean(false);
@@ -302,14 +485,12 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
   }
   
   @Test
-  @Override
   public void getTaskQueueSizeInaccurateTest() {
     getTaskQueueSizeSimpleTest(false);
     getTaskQueueSizeThreadedTest(false);
   }
   
   @Test
-  @Override
   public void getTaskQueueSizeAccurateTest() {
     getTaskQueueSizeSimpleTest(true);
     getTaskQueueSizeThreadedTest(true);
@@ -366,16 +547,101 @@ public class KeyDistributedExecutorTest extends org.threadly.concurrent.wrapper.
   }
   
   @Test
-  @Override
   public void getTaskQueueSizeMapInaccurateTest() {
     getTaskQueueSizeMapSimpleTest(false);
     getTaskQueueSizeMapThreadedTest(false);
   }
   
   @Test
-  @Override
   public void getTaskQueueSizeMapAccurateTest() {
     getTaskQueueSizeMapSimpleTest(true);
     getTaskQueueSizeMapThreadedTest(true);
+  }
+  
+  public static class KDRunnable extends TestRunnable {
+    public final KDRunnable previousRunnable;
+    public final ThreadContainer threadTracker;
+    private volatile boolean previousRanFirst;
+    private volatile boolean verifiedPrevious;
+    
+    public KDRunnable(ThreadContainer threadTracker, KDRunnable previousRunnable) {
+      this.threadTracker = threadTracker;
+      this.previousRunnable = previousRunnable;
+      previousRanFirst = false;
+      verifiedPrevious = false;
+    }
+    
+    @Override
+    public void handleRunStart() {
+      threadTracker.running();
+      
+      if (! verifiedPrevious) {
+        if (previousRunnable != null) {
+          previousRanFirst = previousRunnable.getRunCount() >= 1;
+        } else {
+          previousRanFirst = true;
+        }
+        
+        verifiedPrevious = true;
+      }
+    }
+    
+    public boolean previousRanFirst() {
+      return previousRanFirst;
+    }
+  }
+  
+  public static class KDCallable extends TestCallable {
+    public final KDCallable previousRunnable;
+    public final ThreadContainer threadTracker;
+    private volatile boolean previousRanFirst;
+    private volatile boolean verifiedPrevious;
+    
+    public KDCallable(ThreadContainer threadTracker, KDCallable previousRunnable) {
+      this.threadTracker = threadTracker;
+      this.previousRunnable = previousRunnable;
+      previousRanFirst = false;
+      verifiedPrevious = false;
+    }
+    
+    @Override
+    public void handleCallStart() {
+      threadTracker.running();
+      
+      if (! verifiedPrevious) {
+        if (previousRunnable != null) {
+          previousRanFirst = previousRunnable.isDone();
+        } else {
+          previousRanFirst = true;
+        }
+        
+        verifiedPrevious = true;
+      }
+    }
+    
+    public boolean previousRanFirst() {
+      return previousRanFirst;
+    }
+  }
+  
+  public static class ThreadContainer {
+    private Thread runningThread = null;
+    private boolean threadConsistent = true;
+
+    public synchronized void running() {
+      if (runningThread == null) {
+        runningThread = Thread.currentThread();
+      } else {
+        threadConsistent = threadConsistent && runningThread == Thread.currentThread();
+      }
+    }
+    
+    public boolean threadConsistent() {
+      return threadConsistent;
+    }
+  }
+  
+  protected interface AddHandler {
+    public void addTDRunnable(Object key, KDRunnable tdr);
   }
 }

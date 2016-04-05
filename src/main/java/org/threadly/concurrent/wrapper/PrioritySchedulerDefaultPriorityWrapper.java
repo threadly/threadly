@@ -12,8 +12,7 @@ import org.threadly.util.ArgumentVerifier;
  * wrapping like this would be to change the default priority from the wrapped instance.  That way 
  * this could be passed into other parts of code and although use the same thread pool, have 
  * different default priorities.  (this could be particularly useful when used in combination with 
- * {@link org.threadly.concurrent.KeyDistributedExecutor}, or 
- * {@link org.threadly.concurrent.KeyDistributedScheduler}.</p>
+ * {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 4.3.0 (since 1.0.0 as PrioritySchedulerWrapper) 

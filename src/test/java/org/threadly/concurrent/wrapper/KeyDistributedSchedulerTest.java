@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -13,14 +13,18 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.wrapper.KeyDistributedExecutorTest.KDCallable;
 import org.threadly.concurrent.wrapper.KeyDistributedExecutorTest.KDRunnable;
 import org.threadly.concurrent.wrapper.KeyDistributedExecutorTest.ThreadContainer;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class KeyDistributedSchedulerTest {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
@@ -107,11 +111,6 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test (expected = IllegalArgumentException.class)
-  public void getSubmitterSchedulerForKeyFail() {
-    distributor.getSubmitterSchedulerForKey(null);
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
   public void getSchedulerForKeyFail() {
     distributor.getSchedulerForKey(null);
   }
@@ -119,25 +118,6 @@ public class KeyDistributedSchedulerTest {
   @Test
   public void getExecutorTest() {
     assertTrue(scheduler == distributor.getExecutor());
-  }
-  
-  @Test
-  public void addTaskTest() {
-    List<KDRunnable> runs = populate(new AddHandler() {
-      @Override
-      public void addTDRunnable(Object key, KDRunnable tdr) {
-        distributor.addTask(key, tdr);
-      }
-    });
-    
-    Iterator<KDRunnable> it = runs.iterator();
-    while (it.hasNext()) {
-      KDRunnable tr = it.next();
-      tr.blockTillFinished(1000);
-      assertEquals(1, tr.getRunCount()); // verify each only ran once
-      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
-      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
-    }
   }
   
   @Test
@@ -160,23 +140,6 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void addTaskFail() {
-    try {
-      distributor.addTask(null, DoNothingRunnable.instance());
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-
-    try {
-      distributor.addTask(new Object(), null);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
   public void executeFail() {
     try {
       distributor.execute(null, DoNothingRunnable.instance());
@@ -187,22 +150,6 @@ public class KeyDistributedSchedulerTest {
 
     try {
       distributor.execute(new Object(), null);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
-  public void submitTaskRunnableFail() {
-    try {
-      distributor.submitTask(null, DoNothingRunnable.instance());
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.submitTask(new Object(), null, null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -222,34 +169,6 @@ public class KeyDistributedSchedulerTest {
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
-    }
-  }
-  
-  @Test
-  public void submitTaskCallableConsistentThreadTest() {
-    List<KDCallable> runs = new ArrayList<KDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-    
-    // hold agent lock to avoid execution till all are submitted
-    synchronized (agentLock) {
-      for (int i = 0; i < PARALLEL_LEVEL; i++) {
-        ThreadContainer tc = new ThreadContainer();
-        KDCallable previous = null;
-        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-          KDCallable tr = new KDCallable(tc, previous);
-          runs.add(tr);
-          distributor.submitTask(tc, tr);
-          
-          previous = tr;
-        }
-      }
-    }
-    
-    Iterator<KDCallable> it = runs.iterator();
-    while (it.hasNext()) {
-      KDCallable tr = it.next();
-      tr.blockTillFinished(20 * 1000);
-      assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
-      assertTrue(tr.previousRanFirst());  // verify runnables were run in order
     }
   }
   
@@ -282,22 +201,6 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void submitTaskCallableFail() {
-    try {
-      distributor.submitTask(null, new TestCallable());
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.submitTask(new Object(), (Callable<Void>)null);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
   public void submitCallableFail() {
     try {
       distributor.submit(null, new TestCallable());
@@ -310,24 +213,6 @@ public class KeyDistributedSchedulerTest {
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
-    }
-  }
-  
-  @Test
-  public void scheduleTaskExecutionTest() {
-    List<KDRunnable> runs = populate(new AddHandler() {
-      @Override
-      public void addTDRunnable(Object key, KDRunnable tdr) {
-        distributor.scheduleTask(key, tdr, DELAY_TIME);
-      }
-    });
-    
-    Iterator<KDRunnable> it = runs.iterator();
-    while (it.hasNext()) {
-      KDRunnable tr = it.next();
-      tr.blockTillFinished(1000);
-      assertEquals(1, tr.getRunCount()); // verify each only ran once
-      assertTrue(tr.getDelayTillFirstRun() >= DELAY_TIME);
     }
   }
   
@@ -346,28 +231,6 @@ public class KeyDistributedSchedulerTest {
       tr.blockTillFinished(1000);
       assertEquals(1, tr.getRunCount()); // verify each only ran once
       assertTrue(tr.getDelayTillFirstRun() >= DELAY_TIME);
-    }
-  }
-  
-  @Test
-  public void scheduleTaskExecutionFail() {
-    try {
-      distributor.scheduleTask(new Object(), null, 1000);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.scheduleTask(new Object(), DoNothingRunnable.instance(), -1);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.scheduleTask(null, DoNothingRunnable.instance(), 100);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
     }
   }
   
@@ -394,28 +257,6 @@ public class KeyDistributedSchedulerTest {
   }
   
   @Test
-  public void submitScheduledTaskRunnableFail() {
-    try {
-      distributor.submitScheduledTask(new Object(), (Runnable)null, 1000);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.submitScheduledTask(new Object(), DoNothingRunnable.instance(), -1);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.submitScheduledTask(null, DoNothingRunnable.instance(), 100);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
   public void submitScheduledRunnableFail() {
     try {
       distributor.submitScheduled(new Object(), (Runnable)null, 1000);
@@ -431,28 +272,6 @@ public class KeyDistributedSchedulerTest {
     }
     try {
       distributor.submitScheduled(null, DoNothingRunnable.instance(), 100);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
-  public void submitScheduledTaskCallableFail() {
-    try {
-      distributor.submitScheduledTask(new Object(), (Callable<?>)null, 1000);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.submitScheduledTask(new Object(), new TestCallable(), -1);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      distributor.submitScheduledTask(null, new TestCallable(), 100);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
