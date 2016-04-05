@@ -39,11 +39,7 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
   }
 
   protected static class SchedulerLimiterFactory implements SubmitterSchedulerFactory {
-    private final PrioritySchedulerFactory schedulerFactory;
-    
-    public SchedulerLimiterFactory() {
-      schedulerFactory = new PrioritySchedulerFactory();
-    }
+    private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     
     @Override
     public void shutdown() {
@@ -57,7 +53,8 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
 
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, 
+                                                                             prestartIfAvailable);
       
       return new SubmitterSchedulerLimiter(scheduler, poolSize);
     }

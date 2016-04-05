@@ -2,9 +2,6 @@ package org.threadly.util.debug;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -56,7 +53,6 @@ public class Profiler {
     FUNCTION_BY_COUNT_HEADER = prefix + "total count: " + columns;
   }
   
-  protected final File outputFile;
   protected final Object startStopLock;
   protected final ProfileStorage pStore;
   protected final List<SettableListenableFuture<String>> stopFutures; // guarded by startStopLock
@@ -68,25 +64,7 @@ public class Profiler {
    * This uses a default poll interval of 100 milliseconds.
    */
   public Profiler() {
-    this(null, DEFAULT_POLL_INTERVAL_IN_MILLIS);
-  }
-  
-  /**
-   * Constructs a new profiler instance which will dump the results to the provided output file 
-   * when {@link #stop()} is called.  
-   * 
-   * If the output file is {@code null}, this will behave the same as the empty constructor.  
-   * 
-   * This uses a default poll interval of 100 milliseconds.
-   * 
-   * @deprecated Dumping to a file on stop will no longer be supported, 
-   *               instead just invoke {@link #dump(OutputStream)} after stopping
-   *               
-   * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
-   */
-  @Deprecated
-  public Profiler(File outputFile) {
-    this(outputFile, DEFAULT_POLL_INTERVAL_IN_MILLIS);
+    this(DEFAULT_POLL_INTERVAL_IN_MILLIS);
   }
   
   /**
@@ -96,24 +74,7 @@ public class Profiler {
    * @param pollIntervalInMs frequency to check running threads
    */
   public Profiler(int pollIntervalInMs) {
-    this(null, pollIntervalInMs);
-  }
-  
-  /**
-   * Constructs a new profiler instance which will dump the results to the provided output file 
-   * when {@link #stop()} is called.
-   * 
-   * If the output file is {@code null}, this will behave the same as the empty constructor.
-   * 
-   * @deprecated Dumping to a file on stop will no longer be supported, 
-   *               instead just invoke {@link #dump(OutputStream)} after stopping
-   * 
-   * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
-   * @param pollIntervalInMs frequency to check running threads
-   */
-  @Deprecated
-  public Profiler(File outputFile, int pollIntervalInMs) {
-    this(outputFile, new ProfileStorage(pollIntervalInMs));
+    this(new ProfileStorage(pollIntervalInMs));
   }
   
   /**
@@ -123,8 +84,7 @@ public class Profiler {
    * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
    * @param pStore Storage to be used for holding profile results and getting the Iterator for threads
    */
-  protected Profiler(File outputFile, ProfileStorage pStore) {
-    this.outputFile = outputFile;
+  protected Profiler(ProfileStorage pStore) {
     this.startStopLock = new Object();
     this.pStore = pStore;
     this.stopFutures = new ArrayList<SettableListenableFuture<String>>(2);
@@ -355,23 +315,6 @@ public class Profiler {
           Iterator<SettableListenableFuture<String>> it = stopFutures.iterator();
           while (it.hasNext()) {
             it.next().setResult(result);
-          }
-        }
-        // TODO - remove logic in 5.0.0 after deprecation removal
-        if (outputFile != null) {
-          try {
-            OutputStream out = new FileOutputStream(outputFile);
-            try {
-              if (result == null) {
-                dump(out);
-              } else {
-                out.write(result.getBytes());
-              }
-            } finally {
-              out.close();
-            }
-          } catch (IOException e) {
-            ExceptionUtils.handleException(e);
           }
         }
       }

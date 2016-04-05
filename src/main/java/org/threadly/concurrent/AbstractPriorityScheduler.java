@@ -28,9 +28,8 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 4.3.0
  */
-@SuppressWarnings("deprecation")
 public abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler 
-                                                implements PrioritySchedulerInterface {
+                                                implements PrioritySchedulerService {
   protected static final TaskPriority DEFAULT_PRIORITY = TaskPriority.High;
   protected static final int DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS = 500;
   // tuned for performance of scheduled tasks
@@ -62,24 +61,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   @Override
   public long getMaxWaitForLowPriority() {
     return getQueueManager().getMaxWaitForLowPriority();
-  }
-  
-  /**
-   * If a section of code wants a different default priority, or wanting to provide a specific 
-   * default priority in for {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.
-   * 
-   * @deprecated Manually wrap this implementation with {@link PrioritySchedulerDefaultPriorityWrapper}
-   * 
-   * @param priority default priority for {@link PrioritySchedulerService} implementation
-   * @return a {@link PrioritySchedulerService} with the default priority specified
-   */
-  @Deprecated
-  public PrioritySchedulerInterface makeWithDefaultPriority(TaskPriority priority) {
-    if (priority == defaultPriority) {
-      return this;
-    } else {
-      return new PrioritySchedulerWrapper(this, priority);
-    }
   }
 
   @Override
@@ -248,34 +229,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     }
     
     return getQueueManager().getQueueSet(priority).queueSize();
-  }
-
-  /**
-   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
-   * a future point.
-   * 
-   * @deprecated Please use {@link #getQueuedTaskCount()} as a direct replacement.
-   * 
-   * @return quantity of tasks waiting execution or scheduled to be executed later
-   */
-  @Override
-  @Deprecated
-  public int getScheduledTaskCount() {
-    return getQueuedTaskCount();
-  }
-  
-  /**
-   * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
-   * executed at a future point for a specific priority.
-   * 
-   * @deprecated Please use {@link #getQueuedTaskCount(TaskPriority)} as a direct replacement
-   * 
-   * @param priority priority for tasks to be counted
-   * @return quantity of tasks waiting execution or scheduled to be executed later
-   */
-  @Deprecated
-  public int getScheduledTaskCount(TaskPriority priority) {
-    return getQueuedTaskCount(priority);
   }
   
   /**

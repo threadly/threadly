@@ -69,22 +69,6 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
   }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void getScheduledTaskCountTest() {
-    TestableScheduler testableScheduler = new TestableScheduler();
-    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
-
-    for (int i = 0; i < TEST_QTY; i++) {
-      assertEquals(i, queueRejector.getScheduledTaskCount());
-      queueRejector.execute(DoNothingRunnable.instance());
-    }
-    
-    testableScheduler.tick();
-
-    assertEquals(0, queueRejector.getScheduledTaskCount());
-  }
-  
-  @Test
   public void rejectTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);

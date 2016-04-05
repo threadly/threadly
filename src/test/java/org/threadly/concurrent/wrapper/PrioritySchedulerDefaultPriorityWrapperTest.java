@@ -234,7 +234,6 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
   }
   
   // TODO - this may be good to move to something like mockito
-  @SuppressWarnings("deprecation")
   protected static class TestPriorityScheduler implements PrioritySchedulerService {
     protected boolean isShutdownCalled = false;
     protected boolean executeCalled = false;
@@ -344,17 +343,7 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     }
 
     @Override
-    public int getCurrentRunningCount() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public int getQueuedTaskCount() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getScheduledTaskCount() {
       throw new UnsupportedOperationException();
     }
     

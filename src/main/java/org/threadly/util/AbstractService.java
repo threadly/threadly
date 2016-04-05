@@ -11,8 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author jent - Mike Jensen
  * @since 2.6.0
  */
-@SuppressWarnings("deprecation")
-public abstract class AbstractService implements ServiceInterface {
+public abstract class AbstractService implements Service {
   private AtomicInteger state = new AtomicInteger(0); // 0 = new, 1 = started, 2 = stopped
   
   @Override

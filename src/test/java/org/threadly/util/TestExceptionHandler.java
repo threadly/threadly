@@ -2,8 +2,8 @@ package org.threadly.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-@SuppressWarnings({ "javadoc", "deprecation" })
-public class TestExceptionHandler implements ExceptionHandlerInterface {
+@SuppressWarnings("javadoc")
+public class TestExceptionHandler implements ExceptionHandler {
   private Thread calledWithThread = null;
   private final AtomicInteger callCount = new AtomicInteger(0);
   private Throwable lastProvidedThrowable = null;

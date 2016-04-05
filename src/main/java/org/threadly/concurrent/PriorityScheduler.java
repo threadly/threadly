@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
-import org.threadly.concurrent.limiter.PrioritySchedulerLimiter;
 import org.threadly.util.AbstractService;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
@@ -38,7 +37,6 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
  */
-@SuppressWarnings("deprecation")
 public class PriorityScheduler extends AbstractPriorityScheduler {
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
   
@@ -185,19 +183,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
 
   /**
-   * Call to check how many tasks are currently being executed in this scheduler.
-   * 
-   * @deprecated Please use the better named {@link #getActiveTaskCount()}
-   * 
-   * @return current number of running tasks
-   */
-  @Override
-  @Deprecated
-  public int getCurrentRunningCount() {
-    return workerPool.getActiveTaskCount();
-  }
-
-  /**
    * Ensures all threads have been started, it will create threads till the thread count matches 
    * the set pool size (checked via {@link #getMaxPoolSize()}).  These new threads will remain 
    * idle till there is tasks ready to execute.
@@ -269,37 +254,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     return workerPool.awaitTermination(timeoutMillis);
   }
   
-  /**
-   * Makes a new {@link PrioritySchedulerLimiter} that uses this pool as it's execution source.
-   * 
-   * @deprecated Construct a {@link org.threadly.concurrent.limiter.SubmitterSchedulerLimiter} manually
-   * 
-   * @param maxConcurrency maximum number of threads to run in parallel in sub pool
-   * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
-   */
-  @Deprecated
-  public PrioritySchedulerInterface makeSubPool(int maxConcurrency) {
-    return makeSubPool(maxConcurrency, null);
-  }
-
-  /**  
-   * Makes a new {@link PrioritySchedulerLimiter} that uses this pool as it's execution source.
-   * 
-   * @deprecated Construct a {@link org.threadly.concurrent.limiter.SubmitterSchedulerLimiter} manually
-   * 
-   * @param maxConcurrency maximum number of threads to run in parallel in sub pool
-   * @param subPoolName name to describe threads while running under this sub pool
-   * @return newly created {@link PrioritySchedulerLimiter} that uses this pool as it's execution source
-   */
-  @Deprecated
-  public PrioritySchedulerInterface makeSubPool(int maxConcurrency, String subPoolName) {
-    if (maxConcurrency > workerPool.getMaxPoolSize()) {
-      throw new IllegalArgumentException("A sub pool should be smaller than the parent pool");
-    }
-    
-    return new PrioritySchedulerLimiter(this, maxConcurrency, subPoolName);
-  }
-
   @Override
   public int getQueuedTaskCount() {
     // subtract one for hack task for spin issue

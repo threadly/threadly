@@ -20,8 +20,7 @@ import org.threadly.util.ArgumentVerifier;
  * @author jent - Mike Jensen
  * @since 1.3.0
  */
-@SuppressWarnings("deprecation")
-public abstract class AbstractSubmitterExecutor implements SubmitterExecutorInterface {
+public abstract class AbstractSubmitterExecutor implements SubmitterExecutor {
   /**
    * Should execute the provided task, or provide the task to a given executor.  All error 
    * checking has completed by this point.

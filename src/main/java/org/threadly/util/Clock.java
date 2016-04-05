@@ -100,25 +100,6 @@ public class Clock {
    * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
    * start point).
    * 
-   * @deprecated use {@link #accurateTimeNanos()} as a direct replacement
-   * 
-   * @return a long which is a constantly forward moving representation of nano seconds
-   */
-  @Deprecated
-  public static long systemNanoTime() {
-    return accurateTimeNanos();
-  }
-  
-  /**
-   * This directly returns the result of {@link System#nanoTime()}.  Using this as an alternative 
-   * to invoking {@link System#nanoTime()} directly is that it updates the nano time 
-   * representation, allowing for more accurate time references when calling 
-   * {@link #lastKnownTimeNanos()} and {@link Clock#lastKnownForwardProgressingMillis()}.
-   * 
-   * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
-   * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
-   * start point).
-   * 
    * @return a long which is a constantly forward moving representation of nano seconds
    */
   public static long accurateTimeNanos() {

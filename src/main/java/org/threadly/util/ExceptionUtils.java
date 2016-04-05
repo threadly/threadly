@@ -77,25 +77,7 @@ public class ExceptionUtils {
    * 
    * @return Handling instance for this thread, or {@code null} if none are available
    */
-  @SuppressWarnings("deprecation")
-  public static ExceptionHandlerInterface getExceptionHandler() {
-    final ExceptionHandler eh = getInternalExceptionHandler();
-    if (eh == null) {
-      return null;
-    } else if (eh instanceof ExceptionHandlerInterface) {
-      return (ExceptionHandlerInterface)eh;
-    } else {
-      return new ExceptionHandlerInterface() {
-        @Override
-        public void handleException(Throwable thrown) {
-          eh.handleException(thrown);
-        }
-      };
-    }
-  }
-  
-  // TODO - remove once ExceptionHandlerInterface is removed
-  private static ExceptionHandler getInternalExceptionHandler() {
+  public static ExceptionHandler getExceptionHandler() {
     ExceptionHandler eh = THREAD_LOCAL_EXCEPTION_HANDLER.get();
     if (eh != null) {
       return eh;

@@ -30,20 +30,6 @@ public class StringUtils {
   protected static final Random RANDOM = new Random(Clock.lastKnownTimeMillis());
   
   /**
-   * Makes sure a given string is not null.  If it is not {@code null}, the provided string is 
-   * immediately returned.  If it IS {@code null}, then an empty string is returned.
-   * 
-   * @deprecated use {@link #nullToEmpty(String)}
-   * 
-   * @param input String which should be returned if not {@code null}
-   * @return The original string if not {@code null}, otherwise an empty string
-   */
-  @Deprecated
-  public static String makeNonNull(String input) {
-    return nullToEmpty(input);
-  }
-
-  /**
    * Makes sure a given string is not {@code null}.  If it is not {@code null}, the provided string 
    * is immediately returned.  If it IS {@code null}, then an empty string is returned.
    * 
@@ -138,21 +124,6 @@ public class StringUtils {
       }
       return sb.toString();
     }
-  }
-  
-  /**
-   * Produces a random string of the provided length.  This can be useful for unit testing, or any 
-   * other time the string content is not important.  The returned string will be comprised of 
-   * only alphanumeric characters.
-   * 
-   * @deprecated Use {@link #makeRandomString(int)}
-   * 
-   * @param length Number of characters the resulting string should be.
-   * @return A string comprised of random characters of the specified length
-   */
-  @Deprecated
-  public static String randomString(int length) {
-    return makeRandomString(length);
   }
   
   /**

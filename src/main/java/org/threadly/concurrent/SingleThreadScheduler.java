@@ -151,66 +151,6 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   public List<Runnable> shutdownNow() {
     return shutdown(true);
   }
-  
-  /**
-   * Performs exactly the same as {@link #shutdown()}, except that this call will block until the 
-   * executing tasks (and tasks submitted before this call) have finished.  This is done by doing 
-   * a {@link Thread#join()} of the executing thread into this thread.  This can be used to ensure 
-   * that shared memory operations done in tasks of this {@link SingleThreadScheduler} will be 
-   * finished and represented in the thread which is making this invocation.
-   * 
-   * @deprecated Invoke {@link #shutdown()} followed by {@link #awaitTermination()}
-   * 
-   * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
-   */
-  @Deprecated
-  public void shutdownAndAwaitTermination() throws InterruptedException {
-    shutdownAndAwaitTermination(0);
-  }
-  
-  /**
-   * Performs exactly the same as {@link #shutdown()}, except that this call will block until the 
-   * executing tasks (and tasks submitted before this call) have finished.  This is done by doing 
-   * a {@link Thread#join()} of the executing thread into this thread.  This can be used to ensure 
-   * that shared memory operations done in tasks of this {@link SingleThreadScheduler} will be 
-   * finished and represented in the thread which is making this invocation.  
-   * 
-   * If you to be able to have a timeout and also want to have behavior more like 
-   * {@link #shutdownNowAndAwaitTermination()}, you can invoke {@link #shutdownNow()} and then invoke 
-   * this right after.
-   * 
-   * @deprecated Invoke {@link #shutdown()} followed by {@link #awaitTermination(long)}
-   * 
-   * @param timeoutMillis Time in milliseconds to wait for executing thread to finish, 0 to wait forever
-   * @return {@code true} if the executing thread shutdown within the timeout, {@code false} if timeout occurred
-   * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
-   */
-  @Deprecated
-  public boolean shutdownAndAwaitTermination(long timeoutMillis) throws InterruptedException {
-    shutdown(false);
-    
-    return awaitTermination(timeoutMillis);
-  }
-  
-  /**
-   * Performs exactly the same as {@link #shutdownNow()}, except that this call will block until 
-   * the currently executing task has finished.  This is done by doing a {@link Thread#join()} of 
-   * the executing thread into this thread.  This can be used to ensure that shared memory 
-   * operations done in tasks of this {@link SingleThreadScheduler} will be finished and 
-   * represented in the thread which is making this invocation.
-   * 
-   * @deprecated Invoke {@link #shutdownNow()} followed by {@link #awaitTermination()}
-   * 
-   * @return returns a list of runnables which were waiting in the queue to be run at time of shutdown
-   * @throws InterruptedException Thrown if this thread is interrupted while blocking for the thread to join
-   */
-  @Deprecated
-  public List<Runnable> shutdownNowAndAwaitTermination() throws InterruptedException {
-    List<Runnable> result = shutdown(true);
-    awaitTermination();
-    
-    return result;
-  }
 
   /**
    * Block until the thread pool has shutdown and all threads have been stopped.  If neither 
@@ -309,19 +249,6 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   @Override
   public int getActiveTaskCount() {
     return sManager.scheduler.getActiveTaskCount();
-  }
-
-  /**
-   * Call to check how many tasks are currently being executed in this scheduler.
-   * 
-   * @deprecated Please use the better named {@link #getActiveTaskCount()}
-   * 
-   * @return current number of running tasks
-   */
-  @Override
-  @Deprecated
-  public int getCurrentRunningCount() {
-    return sManager.scheduler.getCurrentRunningCount();
   }
   
   /**

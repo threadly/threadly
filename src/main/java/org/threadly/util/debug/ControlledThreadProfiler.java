@@ -1,6 +1,5 @@
 package org.threadly.util.debug;
 
-import java.io.File;
 import java.util.Iterator;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
@@ -23,23 +22,7 @@ public class ControlledThreadProfiler extends Profiler {
    * call {@code #dump()} with a provided output stream to get the results to.
    */
   public ControlledThreadProfiler() {
-    this(null, DEFAULT_POLL_INTERVAL_IN_MILLIS);
-  }
-  
-  /**
-   * Constructs a new profiler instance which will dump the results to the provided output file 
-   * when {@code #stop()} is called.
-   * 
-   * If the output file is null, this will behave the same as the empty constructor.
-   * 
-   * @deprecated Dumping to a file on stop will no longer be supported, 
-   *               instead just invoke {@link #dump(java.io.OutputStream)} after stopping
-   * 
-   * @param outputFile file to dump results to on stop
-   */
-  @Deprecated
-  public ControlledThreadProfiler(File outputFile) {
-    this(outputFile, DEFAULT_POLL_INTERVAL_IN_MILLIS);
+    this(DEFAULT_POLL_INTERVAL_IN_MILLIS);
   }
   
   /**
@@ -49,24 +32,7 @@ public class ControlledThreadProfiler extends Profiler {
    * @param pollIntervalInMs frequency to check running threads
    */
   public ControlledThreadProfiler(int pollIntervalInMs) {
-    this(null, pollIntervalInMs);
-  }
-  
-  /**
-   * Constructs a new profiler instance which will dump the results to the provided output file 
-   * when {@code #stop()} is called.
-   * 
-   * If the output file is {@code null}, this will behave the same as the empty constructor.
-   * 
-   * @deprecated Dumping to a file on stop will no longer be supported, 
-   *               instead just invoke {@link #dump(java.io.OutputStream)} after stopping
-   * 
-   * @param outputFile file to dump results to on stop
-   * @param pollIntervalInMs frequency to check running threads
-   */
-  @Deprecated
-  public ControlledThreadProfiler(File outputFile, int pollIntervalInMs) {
-    super(outputFile, new ControlledThreadProfileStorage(pollIntervalInMs));
+    super(new ControlledThreadProfileStorage(pollIntervalInMs));
     
     controledThreadStore = (ControlledThreadProfileStorage)super.pStore;
   }
