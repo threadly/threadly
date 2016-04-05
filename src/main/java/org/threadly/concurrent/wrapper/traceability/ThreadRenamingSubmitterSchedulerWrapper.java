@@ -8,8 +8,7 @@ import org.threadly.concurrent.SubmitterScheduler;
  * {@link ThreadRenamingRunnableWrapper}.  This allows you to make a pool where all tasks submitted 
  * inside it have the threads named in an identifiable way.</p>
  * 
- * traceability 
- * @author jent
+ * @author jent - Mike Jensen
  * @since 4.3.0
  */
 public class ThreadRenamingSubmitterSchedulerWrapper extends AbstractSubmitterScheduler {
