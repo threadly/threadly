@@ -17,7 +17,6 @@ import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
-import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
 

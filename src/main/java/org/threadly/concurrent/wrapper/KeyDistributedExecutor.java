@@ -587,7 +587,7 @@ public class KeyDistributedExecutor {
   }
   
   /**
-   * <p>Simple {@link SubmitterExecutorInterface} implementation that submits for a given key.</p>
+   * <p>Simple {@link SubmitterExecutor} implementation that submits for a given key.</p>
    * 
    * @author jent - Mike Jensen
    * @since 2.5.0

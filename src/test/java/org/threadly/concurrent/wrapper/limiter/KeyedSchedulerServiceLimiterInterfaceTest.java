@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper.limiter;
 
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
+import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
-import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
-import org.threadly.concurrent.SchedulerService;
 
 @SuppressWarnings("javadoc")
 public class KeyedSchedulerServiceLimiterInterfaceTest extends SubmitterSchedulerInterfaceTest {

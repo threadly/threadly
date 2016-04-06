@@ -7,8 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
-import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestCondition.ConditionTimeoutException;
 import org.threadly.util.Clock;
 

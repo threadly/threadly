@@ -1,17 +1,17 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.TEST_QTY;
+import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
-import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")

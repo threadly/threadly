@@ -1,6 +1,7 @@
 package org.threadly.concurrent.wrapper.intercepter;
 
 import java.util.concurrent.Callable;
+
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;

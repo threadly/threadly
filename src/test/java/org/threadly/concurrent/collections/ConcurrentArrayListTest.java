@@ -14,7 +14,6 @@ import java.util.NoSuchElementException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 import org.threadly.util.StringUtils;
 

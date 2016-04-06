@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper.traceability;
 
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
-import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterSchedulerWrapper;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;

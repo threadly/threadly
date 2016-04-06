@@ -11,6 +11,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.future.FutureUtils;
@@ -260,8 +261,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   /**
    * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
    * recurring task causes the task to stop executing, we have to wrap the task.  That way we can 
-   * remove the recurring task if the error occurs (since {@link SubmitterScheduler} will 
-   * continue to execute the task despite the error.</p>
+   * remove the recurring task if the error occurs (since 
+   * {@link org.threadly.concurrent.SubmitterScheduler} will continue to execute the task despite 
+   * the error.</p>
    * 
    * @author jent - Mike Jensen
    * @since 2.1.0
@@ -323,6 +325,5 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
         return false;
       }
     }
-    
   }
 }

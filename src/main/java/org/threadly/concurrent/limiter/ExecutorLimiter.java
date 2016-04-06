@@ -1,8 +1,9 @@
 package org.threadly.concurrent.limiter;
 
 import java.util.concurrent.Executor;
+
 import org.threadly.concurrent.SubmitterExecutorInterface;
-import org.threadly.concurrent.ThreadRenamingExecutorWrapper;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingExecutorWrapper;
 import org.threadly.util.StringUtils;
 
 /**

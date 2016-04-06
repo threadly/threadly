@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
  * {@link SingleThreadSchedulerStatisticTracker} and {@link NoThreadSchedulerStatisticTracker} 
  * should be used as an alternative for their respective schedulers.</p>
  * 
- * @deprecated moved to {@link org.threadly.concurrent.wrapper.statistics.ExecutorStatisticWrapper}
+ * @deprecated Moved to {@link org.threadly.concurrent.wrapper.statistics.ExecutorStatisticWrapper}
  *  
  * @author jent - Mike Jensen
  * @since 4.5.0

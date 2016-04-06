@@ -179,8 +179,8 @@ public class ConfigurableThreadFactory implements ThreadFactory {
   }
   
   /**
-   * Because the {@link ExceptionHandlerInterface} can not be set before the thread is started.  
-   * We must wrap it in this implementation to set the handler before the runnable actually starts.
+   * Because the {@link ExceptionHandler} can not be set before the thread is started.  We must 
+   * wrap it in this implementation to set the handler before the runnable actually starts.
    * 
    * @author jent - Mike Jensen
    * @since 2.4.0

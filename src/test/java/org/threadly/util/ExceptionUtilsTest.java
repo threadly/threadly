@@ -3,8 +3,8 @@ package org.threadly.util;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.StringTokenizer;
 
