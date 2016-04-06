@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.statistic;
+package org.threadly.concurrent.wrapper.statistics;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.future.ListenableFutureTask;
-import org.threadly.concurrent.statistic.StatisticExecutor;
+import org.threadly.concurrent.statistics.StatisticExecutor;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.Pair;
@@ -23,11 +23,11 @@ import org.threadly.util.StatisticsUtils;
 /**
  * <p>Wrap an {@link Executor} to get statistics based off executions through this wrapper.  If 
  * statistics are desired on the {@link org.threadly.concurrent.PriorityScheduler}, 
- * {@link org.threadly.concurrent.statistic.PrioritySchedulerStatisticTracker} may be a better 
+ * {@link org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker} may be a better 
  * option, taking advantages by extending and replacing logic rather than wrapping and just adding 
  * logic.  Similarly 
- * {@link org.threadly.concurrent.statistic.SingleThreadSchedulerStatisticTracker} and 
- * {@link org.threadly.concurrent.statistic.NoThreadSchedulerStatisticTracker} should be used as 
+ * {@link org.threadly.concurrent.statistics.SingleThreadSchedulerStatisticTracker} and 
+ * {@link org.threadly.concurrent.statistics.NoThreadSchedulerStatisticTracker} should be used as 
  * an alternative for their respective schedulers.</p>
  *  
  * @author jent - Mike Jensen

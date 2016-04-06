@@ -16,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.statistic.PrioritySchedulerStatisticTracker;
+import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.util.Clock;
 
