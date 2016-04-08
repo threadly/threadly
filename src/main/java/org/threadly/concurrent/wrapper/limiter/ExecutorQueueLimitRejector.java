@@ -37,6 +37,7 @@ public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
    */
   public ExecutorQueueLimitRejector(Executor parentExecutor, int queuedTaskLimit) {
     ArgumentVerifier.assertNotNull(parentExecutor, "parentExecutor");
+    ArgumentVerifier.assertGreaterThanZero(queuedTaskLimit, "queuedTaskLimit");
     
     this.parentExecutor = parentExecutor;
     this.queuedTaskCount = new AtomicInteger();
