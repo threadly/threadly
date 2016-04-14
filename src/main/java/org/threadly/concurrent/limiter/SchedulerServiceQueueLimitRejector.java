@@ -18,7 +18,7 @@ import org.threadly.concurrent.SchedulerService;
  * <p>See {@link ExecutorQueueLimitRejector} and {@link SubmitterSchedulerQueueLimitRejector} as 
  * other possible implementations.</p>
  * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
+ * @deprecated Replaced by {@link org.threadly.concurrent.wrapper.limiter.SchedulerServiceQueueLimitRejector}
  *  
  * @author jent
  * @since 4.3.0

@@ -18,7 +18,7 @@ import org.threadly.concurrent.SubmitterSchedulerInterface;
  * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
  * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
- * @deprecated Use {@link SubmitterSchedulerLimiter}
+ * @deprecated Use {@link org.threadly.concurrent.wrapper.limiter.SubmitterSchedulerLimiter} as an alternative
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0

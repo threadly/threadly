@@ -12,7 +12,7 @@ import org.threadly.concurrent.SchedulerService;
  * <p>The easiest way to use this class would be to have it distribute out schedulers through 
  * {@link #getSubmitterSchedulerForKey(Object)}.</p>
  * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
+ * @deprecated Replaced by {@link org.threadly.concurrent.wrapper.limiter.KeyedSchedulerServiceLimiter}
  * 
  * @author jent - Mike Jensen
  * @since 4.3.0

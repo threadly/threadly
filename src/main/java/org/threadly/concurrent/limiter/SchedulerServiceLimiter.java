@@ -24,7 +24,7 @@ import org.threadly.concurrent.SchedulerServiceInterface;
  * {@link SchedulerService} to rely on.  If you have a {@link SchedulerService} 
  * available this implementation should be preferred over the {@link SubmitterSchedulerLimiter}.</p>
  * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
+ * @deprecated Replaced by {@link org.threadly.concurrent.wrapper.limiter.SchedulerServiceLimiter}
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0

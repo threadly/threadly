@@ -21,7 +21,7 @@ import org.threadly.util.ArgumentVerifier;
  * <p>See {@link ExecutorQueueLimitRejector} and {@link SchedulerServiceQueueLimitRejector} as 
  * other possible implementations.</p>
  * 
- * @deprecated replaced by version in {@link org.threadly.concurrent.wrapper.limiter}
+ * @deprecated Replaced by {@link org.threadly.concurrent.wrapper.limiter.SubmitterSchedulerQueueLimitRejector}
  *  
  * @author jent
  * @since 4.3.0

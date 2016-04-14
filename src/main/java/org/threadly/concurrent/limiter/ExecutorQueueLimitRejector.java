@@ -15,7 +15,7 @@ import java.util.concurrent.Executor;
  * <p>See {@link SubmitterSchedulerQueueLimitRejector} and 
  * {@link SchedulerServiceQueueLimitRejector} as other possible implementations.</p>
  * 
- * @deprecated moved to {@link org.threadly.concurrent.wrapper.limiter.ExecutorQueueLimitRejector}
+ * @deprecated Moved to {@link org.threadly.concurrent.wrapper.limiter.ExecutorQueueLimitRejector}
  *  
  * @author jent
  * @since 4.3.0

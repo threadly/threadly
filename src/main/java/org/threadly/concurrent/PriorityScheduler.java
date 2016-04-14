@@ -573,6 +573,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public void setPoolSize(int newPoolSize) {
       ArgumentVerifier.assertGreaterThanZero(newPoolSize, "newPoolSize");
       
+      if (newPoolSize == maxPoolSize) {
+        // short cut the lock
+        return;
+      }
+      
       synchronized (poolSizeChangeLock) {
         boolean poolSizeIncrease = newPoolSize > this.maxPoolSize;
         

@@ -18,7 +18,7 @@ import org.threadly.util.StringUtils;
  * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
  * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
- * @deprecated moved to {@link org.threadly.concurrent.wrapper.limiter.ExecutorLimiter}
+ * @deprecated Moved to {@link org.threadly.concurrent.wrapper.limiter.ExecutorLimiter}
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0

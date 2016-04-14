@@ -17,7 +17,7 @@ import org.threadly.concurrent.SimpleSchedulerInterface;
  * further.  This should be used to flatten out possible bursts that could be used in the 
  * application, it is not designed to be a push back mechanism for the application.</p>
  * 
- * @deprecated moved to {@link org.threadly.concurrent.wrapper.limiter.RateLimiterExecutor}
+ * @deprecated Moved to {@link org.threadly.concurrent.wrapper.limiter.RateLimiterExecutor}
  * 
  * @author jent - Mike Jensen
  * @since 2.0.0
