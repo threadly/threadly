@@ -221,8 +221,10 @@ public class Clock {
    * @author jent - Mike Jensen
    * @since 1.0.0
    */
-  private static class ClockUpdater implements Runnable {
-    private volatile boolean runnableFinished = false;
+  protected static class ClockUpdater implements Runnable {
+    protected volatile boolean runnableFinished = false;
+    protected long lastUpdatedMillis = -1;
+    protected long lastUpdatedNanos = -1;
     
     @Override
     public void run() {
@@ -230,8 +232,20 @@ public class Clock {
         synchronized (UPDATE_LOCK) {
           while (clockUpdater == this) {
             try {
-              accurateTimeMillis();
-              accurateTimeNanos();
+              if (nowMillis == lastUpdatedMillis || 
+                  // check if task is not waking up as expected, if not lets update while we have cpu time
+                  nowMillis - lastUpdatedMillis > AUTOMATIC_UPDATE_FREQUENCY_IN_MS) {
+                nowMillis = lastUpdatedMillis = System.currentTimeMillis();
+              } else {
+                lastUpdatedMillis = nowMillis;
+              }
+              if (nowNanos == lastUpdatedNanos || 
+                  // check if task is not waking up as expected, if not lets update while we have cpu time
+                  nowNanos - lastUpdatedNanos > AUTOMATIC_UPDATE_FREQUENCY_IN_MS * NANOS_IN_MILLISECOND) {
+                nowNanos = lastUpdatedNanos = System.nanoTime();
+              } else {
+                lastUpdatedNanos = nowNanos;
+              }
               
               UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
             } catch (InterruptedException e) {
