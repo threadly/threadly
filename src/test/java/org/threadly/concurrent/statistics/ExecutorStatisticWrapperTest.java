@@ -68,7 +68,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
     assertEquals(2, statWrapper.getExecutionDurationSamples().size());
     
     assertTrue(statWrapper.getExecutionDurationSamples().get(0) < 2);
-    assertTrue(statWrapper.getExecutionDurationSamples().get(1) >= DELAY_TIME);
+    assertTrue(statWrapper.getExecutionDurationSamples().get(1) >= (DELAY_TIME-ALLOWED_VARIANCE));
   }
 
   @Test
@@ -90,7 +90,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
     statWrapper.execute(DoNothingRunnable.instance());
     statWrapper.execute(new TestRunnable(DELAY_TIME));
     assertEquals(1, statWrapper.getExecutionDurationPercentiles(75).get(75.), 1);
-    assertTrue(statWrapper.getExecutionDurationPercentiles(90).get(90.) >= DELAY_TIME);
+    assertTrue(statWrapper.getExecutionDurationPercentiles(90).get(90.) >= (DELAY_TIME-ALLOWED_VARIANCE));
   }
   
   @Test
