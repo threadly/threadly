@@ -289,7 +289,7 @@ public class ThreadedStatisticPrioritySchedulerTests {
     scheduler.execute(new ClockUpdateRunnable(DELAY_TIME));
     blockTillSchedulerIdle(scheduler, 5);
     assertEquals(1, scheduler.getExecutionDurationPercentiles(75).get(75.), 1);
-    assertTrue(scheduler.getExecutionDurationPercentiles(90).get(90.) >= DELAY_TIME);
+    assertTrue(scheduler.getExecutionDurationPercentiles(90).get(90.) >= DELAY_TIME-ALLOWED_VARIANCE);
   }
 
   public static void getWithPriorityExecutionDurationPercentilesTest(StatisticPriorityScheduler scheduler) {
@@ -306,7 +306,7 @@ public class ThreadedStatisticPrioritySchedulerTests {
     scheduler.execute(new ClockUpdateRunnable(DELAY_TIME), TaskPriority.High);
     blockTillSchedulerIdle(scheduler, 10);
     assertEquals(1, scheduler.getExecutionDurationPercentiles(TaskPriority.High, 75).get(75.), 1);
-    assertTrue(scheduler.getExecutionDurationPercentiles(TaskPriority.High, 90).get(90.) >= DELAY_TIME);
+    assertTrue(scheduler.getExecutionDurationPercentiles(TaskPriority.High, 90).get(90.) >= (DELAY_TIME-ALLOWED_VARIANCE));
     assertEquals(1, scheduler.getExecutionDurationPercentiles(TaskPriority.Low, 90).get(90.), 1);
   }
   
