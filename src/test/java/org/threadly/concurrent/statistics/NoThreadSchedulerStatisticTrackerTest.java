@@ -291,7 +291,6 @@ public class NoThreadSchedulerStatisticTrackerTest extends NoThreadSchedulerTest
     scheduler.execute(new ClockUpdateRunnable(DELAY_TIME));
     scheduler.tick(null);
     assertEquals(1, scheduler.getExecutionDurationPercentiles(75).get(75.), 1);
-    System.out.println(scheduler.getExecutionDurationPercentiles(90).get(90.));
     assertTrue(scheduler.getExecutionDurationPercentiles(90).get(90.) >= (DELAY_TIME-ALLOWED_VARIANCE));
   }
 
