@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class SchedulerServiceTaskIntercepterTest extends SubmitterSchedulerTaskIntercepterTest {
+public class SchedulerServiceTaskInterceptorTest extends SubmitterSchedulerTaskInterceptorTest {
   @Before
   @Override
   public void setup() {
@@ -21,7 +21,7 @@ public class SchedulerServiceTaskIntercepterTest extends SubmitterSchedulerTaskI
     tr = new TestRunnable();
   }
 
-  private static class TestSchedulerServiceInterceptor extends SchedulerServiceTaskIntercepter 
+  private static class TestSchedulerServiceInterceptor extends SchedulerServiceTaskInterceptor 
                                                        implements TestInterceptor {
     private final List<Runnable> interceptedTasks;
     

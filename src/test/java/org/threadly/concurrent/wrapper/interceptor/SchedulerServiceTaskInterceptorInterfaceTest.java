@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,7 +7,7 @@ import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SchedulerServiceInterfaceTest;
 
 @SuppressWarnings("javadoc")
-public class SchedulerServiceTaskIntercepterInterfaceTest extends SchedulerServiceInterfaceTest {
+public class SchedulerServiceTaskInterceptorInterfaceTest extends SchedulerServiceInterfaceTest {
   @Override
   protected SchedulerServiceFactory getSchedulerServiceFactory() {
     return new SchedulerServiceTaskInterceptorFactory();
@@ -17,24 +17,24 @@ public class SchedulerServiceTaskIntercepterInterfaceTest extends SchedulerServi
     private List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(1);
     
     @Override
-    public SchedulerServiceTaskIntercepter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+    public SchedulerServiceTaskInterceptor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SchedulerServiceTaskIntercepter makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
+    public SchedulerServiceTaskInterceptor makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       return makeSchedulerService(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SchedulerServiceTaskIntercepter makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
+    public SchedulerServiceTaskInterceptor makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler result = new PriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         result.prestartAllThreads();
       }
       schedulers.add(result);
       
-      return new SchedulerServiceTaskIntercepter(result) {
+      return new SchedulerServiceTaskInterceptor(result) {
         @Override
         public Runnable wrapTask(Runnable task, boolean recurring) {
           return task;

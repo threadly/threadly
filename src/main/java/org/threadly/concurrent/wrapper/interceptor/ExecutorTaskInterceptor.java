@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
@@ -15,16 +15,16 @@ import org.threadly.util.ArgumentVerifier;
  * {@link Executor}.  Please see the javadocs of {@link #wrapTask(Runnable)} for more details 
  * about ways a task can be modified or wrapped.</p>
  * 
- * <p>Other variants of task wrappers: {@link SubmitterSchedulerTaskIntercepter}, 
- * {@link SchedulerServiceTaskIntercepter}, {@link PrioritySchedulerTaskIntercepter}.</p>
+ * <p>Other variants of task wrappers: {@link SubmitterSchedulerTaskInterceptor}, 
+ * {@link SchedulerServiceTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 4.6.0
  */
-public abstract class ExecutorTaskIntercepter implements SubmitterExecutor {
+public abstract class ExecutorTaskInterceptor implements SubmitterExecutor {
   protected final Executor parentExecutor;
   
-  protected ExecutorTaskIntercepter(Executor parentExecutor) {
+  protected ExecutorTaskInterceptor(Executor parentExecutor) {
     ArgumentVerifier.assertNotNull(parentExecutor, "parentExecutor");
     
     this.parentExecutor = parentExecutor;

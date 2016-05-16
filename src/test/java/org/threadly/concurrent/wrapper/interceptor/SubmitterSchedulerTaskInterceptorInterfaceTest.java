@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,29 +7,29 @@ import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 
 @SuppressWarnings("javadoc")
-public class SubmitterSchedulerTaskIntercepterInterfaceTest extends SubmitterSchedulerInterfaceTest {
+public class SubmitterSchedulerTaskInterceptorInterfaceTest extends SubmitterSchedulerInterfaceTest {
   @Override
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
-    return new SubmitterSchedulerTaskIntercepterFactory();
+    return new SubmitterSchedulerTaskInterceptorFactory();
   }
 
-  private static class SubmitterSchedulerTaskIntercepterFactory implements SubmitterSchedulerFactory {
+  private static class SubmitterSchedulerTaskInterceptorFactory implements SubmitterSchedulerFactory {
     private List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(1);
     
     @Override
-    public SubmitterSchedulerTaskIntercepter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerTaskInterceptor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       return makeSubmitterScheduler(poolSize, prestartIfAvailable);
     }
 
     @Override
-    public SubmitterSchedulerTaskIntercepter makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
+    public SubmitterSchedulerTaskInterceptor makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler result = new PriorityScheduler(poolSize);
       if (prestartIfAvailable) {
         result.prestartAllThreads();
       }
       schedulers.add(result);
       
-      return new SubmitterSchedulerTaskIntercepter(result) {
+      return new SubmitterSchedulerTaskInterceptor(result) {
         @Override
         public Runnable wrapTask(Runnable task, boolean recurring) {
           return task;

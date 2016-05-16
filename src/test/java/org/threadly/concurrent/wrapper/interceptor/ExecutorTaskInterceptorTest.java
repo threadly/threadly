@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import static org.junit.Assert.*;
 
@@ -18,9 +18,9 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class ExecutorTaskIntercepterTest {
+public class ExecutorTaskInterceptorTest {
   protected TestableScheduler scheduler;
-  protected ExecutorTaskIntercepter executorInterceptor;
+  protected ExecutorTaskInterceptor executorInterceptor;
   protected TestInterceptor testInterceptor;
   protected TestRunnable tr;
   
@@ -88,7 +88,7 @@ public class ExecutorTaskIntercepterTest {
     public List<Runnable> getInterceptedTasks();
   }
 
-  private static class TestExecutorInterceptor extends ExecutorTaskIntercepter 
+  private static class TestExecutorInterceptor extends ExecutorTaskInterceptor 
                                                implements TestInterceptor {
     private final List<Runnable> interceptedTasks;
     

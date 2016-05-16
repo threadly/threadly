@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.concurrent.Callable;
 
@@ -11,17 +11,17 @@ import org.threadly.concurrent.SchedulerService;
  * the {@link SchedulerService}.  Please see the javadocs of {@link #wrapTask(Runnable, boolean)} 
  * for more details about ways a task can be modified or wrapped.</p>
  * 
- * <p>Other variants of task wrappers: {@link ExecutorTaskIntercepter}, 
- * {@link SubmitterSchedulerTaskIntercepter}, {@link PrioritySchedulerTaskIntercepter}.</p>
+ * <p>Other variants of task wrappers: {@link ExecutorTaskInterceptor}, 
+ * {@link SubmitterSchedulerTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.</p>
  * 
  * @author jent - Mike Jensen
  * @since 4.6.0
  */
-public abstract class SchedulerServiceTaskIntercepter extends SubmitterSchedulerTaskIntercepter 
+public abstract class SchedulerServiceTaskInterceptor extends SubmitterSchedulerTaskInterceptor 
                                                       implements SchedulerService {
   protected final SchedulerService parentScheduler;
   
-  protected SchedulerServiceTaskIntercepter(SchedulerService parentScheduler) {
+  protected SchedulerServiceTaskInterceptor(SchedulerService parentScheduler) {
     super(parentScheduler);
     
     this.parentScheduler = parentScheduler;

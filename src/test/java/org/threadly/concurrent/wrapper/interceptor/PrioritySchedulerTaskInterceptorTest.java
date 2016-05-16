@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -22,8 +22,8 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class PrioritySchedulerTaskIntercepterTest extends SchedulerServiceTaskIntercepterTest {
-  protected PrioritySchedulerTaskIntercepter priorityInterceptor;
+public class PrioritySchedulerTaskInterceptorTest extends SchedulerServiceTaskInterceptorTest {
+  protected PrioritySchedulerTaskInterceptor priorityInterceptor;
   @Before
   @Override
   public void setup() {
@@ -149,7 +149,7 @@ public class PrioritySchedulerTaskIntercepterTest extends SchedulerServiceTaskIn
     assertEquals(0, tr.getRunCount());  // should have been replaced and not run
   }
 
-  private static class TestPrioritySchedulerInterceptor extends PrioritySchedulerTaskIntercepter 
+  private static class TestPrioritySchedulerInterceptor extends PrioritySchedulerTaskInterceptor 
                                                         implements TestInterceptor {
     private final List<Runnable> interceptedTasks;
     

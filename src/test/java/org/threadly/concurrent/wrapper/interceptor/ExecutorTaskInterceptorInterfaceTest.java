@@ -1,4 +1,4 @@
-package org.threadly.concurrent.wrapper.intercepter;
+package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -7,22 +7,22 @@ import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.concurrent.UnfairExecutor;
 
 @SuppressWarnings("javadoc")
-public class ExecutorTaskIntercepterInterfaceTest extends SubmitterExecutorInterfaceTest {
+public class ExecutorTaskInterceptorInterfaceTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
-    return new ExecutorTaskIntercepterFactory();
+    return new ExecutorTaskInterceptorFactory();
   }
 
 
-  private static class ExecutorTaskIntercepterFactory implements SubmitterExecutorFactory {
+  private static class ExecutorTaskInterceptorFactory implements SubmitterExecutorFactory {
     private List<UnfairExecutor> executors = new ArrayList<UnfairExecutor>(1);
     
     @Override
-    public ExecutorTaskIntercepter makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+    public ExecutorTaskInterceptor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       UnfairExecutor result = new UnfairExecutor(poolSize);
       executors.add(result);
       
-      return new ExecutorTaskIntercepter(result) {
+      return new ExecutorTaskInterceptor(result) {
         @Override
         public Runnable wrapTask(Runnable task) {
           return task;
