@@ -518,13 +518,33 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public void finishShutdown() {
       shutdownFinishing = true;
 
-      /* we only need to wake up the head worker, it will shut itself down.  As the worker 
-       * finishes it will wake up additional idle workers until all idle workers are dead.
-       */
-      Worker w = idleWorker.get();
-      if (w != null) {
-        LockSupport.unpark(w.thread);
-      }
+      addPoolStateChangeTask(new InternalRunnable() {
+        @Override
+        public void run() {
+          /* as long as we are continuing to run, we need to re-add ourself to ensure 
+           * all threads are able to break out of task poll logic (once shutdown we stay shutdown)
+           */
+          addPoolStateChangeTask(this);
+        }
+      });
+    }
+    
+    /**
+     * When ever pool state is changed that is not checked in the pollTask loop (ie shutdown state, 
+     * pool size), a task must be added that is continually added till the desired state is reached.
+     * 
+     * The purpose of this task is to break worker threads out of the tight loop for polling tasks, 
+     * and instead get them to check the initial logic in {@link #workerIdle(Worker)} again.  This 
+     * is in contrast to putting the logic in the poll task loop, which only incurs a performance 
+     * penalty.
+     */
+    private void addPoolStateChangeTask(InternalRunnable task) {
+      // add to starvable queue, since we only need these tasks to be consumed and ran when there 
+      // is nothing else to run.
+      queueManager.starvablePriorityQueueSet
+                  .addExecute(new OneTimeTaskWrapper(task, 
+                                                     queueManager.starvablePriorityQueueSet.executeQueue, 
+                                                     Clock.lastKnownForwardProgressingMillis()));
     }
 
     /**
@@ -587,14 +607,17 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
           // now that pool size increased, start a worker so workers we can for the waiting tasks
           handleQueueUpdate();
         } else {
-          /* we only need to wake up the head worker, it will shut itself down.  As the worker 
-           * finishes it will wake up additional idle workers, and shut down as needed until 
-           * the desired pool size is reached, or until all idle workers are gone.
-           */
-          Worker w = idleWorker.get();
-          if (w != null) {
-            LockSupport.unpark(w.thread);
-          }
+          addPoolStateChangeTask(new InternalRunnable() {
+            @Override
+            public void run() {
+              /* until the pool has reduced in size, we need to continue to add this task to 
+               * wake threads out of the poll task loop
+               */
+              if (currentPoolSize.get() > maxPoolSize) {
+                addPoolStateChangeTask(this);
+              }
+            }
+          });
         }
       }
     }
@@ -711,89 +734,94 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return Task that is ready for immediate execution
      */
     public TaskWrapper workerIdle(Worker worker) {
+      /* pool state checks, if any of these change we need a dummy task added to the queue to 
+       * break out of the task polling loop below.  This is done as an optimization, to avoid 
+       * needing to check these on every loop (since they rarely change)
+       */
+      while (true) {
+        int casPoolSize;
+        if (shutdownFinishing) {
+          currentPoolSize.decrementAndGet();
+          worker.stopIfRunning();
+          return null;
+        } else if ((casPoolSize = currentPoolSize.get()) > maxPoolSize) {
+          if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize - 1)) {
+            worker.stopIfRunning();
+            return null;
+          }
+        }
+        // pool state is consistent, we should keep running
+        break;
+      }
+      
       boolean interruptedChecked = false;
       boolean queued = false;
       try {
-        idle: while (true) {
-          int casPoolSize;
-          if (shutdownFinishing) {
-            currentPoolSize.decrementAndGet();
-            worker.stopIfRunning();
-            return null;
-          } else if ((casPoolSize = currentPoolSize.get()) > maxPoolSize) {
-            if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize - 1)) {
-              worker.stopIfRunning();
-              return null;
+        while (true) {
+          TaskWrapper nextTask = queueManager.getNextTask();
+          if (nextTask == null) {
+            if (queued) {
+              // we can only park after we have queued, then checked again for a result
+              LockSupport.park();
+              continue;
+            } else {
+              addWorkerToIdleChain(worker);
+              queued = true;
             }
           } else {
-            // ready to poll task, we loop here to avoid pool state recheck logic unless we have to block
-            while (true) {
-              TaskWrapper nextTask = queueManager.getNextTask();
-              if (nextTask == null) {
-                if (queued) {
+            /* TODO - right now this has a a deficiency where a recurring period task can cut in 
+             * the queue line.  The condition would be as follows:
+             * 
+             * * Thread 1 gets task to run...task is behind execution schedule, likely due to large queue
+             * * Thread 2 gets same task
+             * * Thread 1 gets reference, executes, task execution completes
+             * * Thread 2 now gets the reference, and execution check and time check pass fine
+             * * End result is that task has executed twice (on expected schedule), the second 
+             *     execution was unfair since it was done without respects to queue order and 
+             *     other tasks which are also likely behind execution schedule in this example
+             *     
+             * This should be very rare, but is possible.  The only way I see to solve this right 
+             * now is to introduce locking.
+             */
+            // must get executeReference before time is checked
+            short executeReference = nextTask.getExecuteReference();
+            long taskDelay = nextTask.getScheduleDelay();
+            if (taskDelay > 0) {
+              if (taskDelay == Long.MAX_VALUE) {
+                // the hack at construction/start is to avoid this from causing us to spin here 
+                // if only one recurring task is scheduled (otherwise we would keep pulling 
+                // that task while it's running)
+                continue;
+              }
+              if (queued) {
+                if (nextTask.getPureRunTime() < workerTimedParkRunTime) {
                   // we can only park after we have queued, then checked again for a result
-                  LockSupport.park();
-                  continue idle;
+                  workerTimedParkRunTime = nextTask.getPureRunTime();
+                  LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
+                  workerTimedParkRunTime = Long.MAX_VALUE;
+                  continue;
                 } else {
-                  addWorkerToIdleChain(worker);
-                  queued = true;
+                  // there is another worker already doing a timed park, so we can wait till woken up
+                  LockSupport.park();
+                  continue;
                 }
               } else {
-                /* TODO - right now this has a a deficiency where a recurring period task can cut in 
-                 * the queue line.  The condition would be as follows:
-                 * 
-                 * * Thread 1 gets task to run...task is behind execution schedule, likely due to large queue
-                 * * Thread 2 gets same task
-                 * * Thread 1 gets reference, executes, task execution completes
-                 * * Thread 2 now gets the reference, and execution check and time check pass fine
-                 * * End result is that task has executed twice (on expected schedule), the second 
-                 *     execution was unfair since it was done without respects to queue order and 
-                 *     other tasks which are also likely behind execution schedule in this example
-                 *     
-                 * This should be very rare, but is possible.  The only way I see to solve this right 
-                 * now is to introduce locking.
-                 */
-                // must get executeReference before time is checked
-                short executeReference = nextTask.getExecuteReference();
-                long taskDelay = nextTask.getScheduleDelay();
-                if (taskDelay > 0) {
-                  if (taskDelay == Long.MAX_VALUE) {
-                    // the hack at construction/start is to avoid this from causing us to spin here 
-                    // if only one recurring task is scheduled (otherwise we would keep pulling 
-                    // that task while it's running)
-                    continue;
-                  }
-                  if (queued) {
-                    if (nextTask.getPureRunTime() < workerTimedParkRunTime) {
-                      // we can only park after we have queued, then checked again for a result
-                      workerTimedParkRunTime = nextTask.getPureRunTime();
-                      LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
-                      workerTimedParkRunTime = Long.MAX_VALUE;
-                      continue idle;
-                    } else {
-                      // there is another worker already doing a timed park, so we can wait till woken up
-                      LockSupport.park();
-                      continue idle;
-                    }
-                  } else {
-                    addWorkerToIdleChain(worker);
-                    queued = true;
-                  }
-                } else if (nextTask.canExecute(executeReference)) {
-                  return nextTask;
-                }
+                addWorkerToIdleChain(worker);
+                queued = true;
               }
-              // reset interrupted status if we may block and have not checked
-              if (queued && ! interruptedChecked) {
-                interruptedChecked = true;
-                if (Thread.interrupted()) {
-                  // verify we were not interrupted due to pool shutdown
-                  continue idle;
-                }
-              }
-            } // end pollTask loop
+            } else if (nextTask.canExecute(executeReference)) {
+              return nextTask;
+            }
           }
-        } // end idle loop
+          // reset interrupted status if we may block and have not checked
+          if (queued && ! interruptedChecked) {
+            interruptedChecked = true;
+            if (Thread.interrupted()) {
+              // verify we were not interrupted due to pool shutdown
+              continue;
+            }
+          }
+        } // end pollTask loop
       } finally {
         // if queued, we must now remove ourselves, since worker is about to either shutdown or become active
         if (queued) {
