@@ -331,7 +331,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
                                            int maxStatisticWindowSize, boolean accurateTime) {
     super(new StatisticWorkerPool(threadFactory, poolSize, 
                                   new PriorityStatisticManager(maxStatisticWindowSize, accurateTime)), 
-          maxWaitForLowPriorityInMs, defaultPriority);
+          defaultPriority, maxWaitForLowPriorityInMs);
     
     this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
   }

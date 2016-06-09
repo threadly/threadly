@@ -88,7 +88,7 @@ public class StrictPriorityScheduler extends PriorityScheduler {
    */
   public StrictPriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(new WorkerPool(threadFactory, poolSize), maxWaitForLowPriorityInMs, defaultPriority);
+    super(new WorkerPool(threadFactory, poolSize), defaultPriority, maxWaitForLowPriorityInMs);
   }
   
   private static void verifyOneTimeTaskQueueSet(QueueSet queueSet, OneTimeTaskWrapper task) {

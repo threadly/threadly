@@ -113,7 +113,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     this(new WorkerPool(threadFactory, poolSize), 
-         maxWaitForLowPriorityInMs, defaultPriority);
+         defaultPriority, maxWaitForLowPriorityInMs);
   }
   
   /**
@@ -121,11 +121,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * implementation of {@link WorkerPool}.  Ultimately all constructors will defer to this one.
    * 
    * @param workerPool WorkerPool to handle accepting tasks and providing them to a worker for execution
-   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    * @param defaultPriority Default priority to store in case no priority is provided for tasks
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
    */
-  protected PriorityScheduler(WorkerPool workerPool, long maxWaitForLowPriorityInMs, 
-                              TaskPriority defaultPriority) {
+  protected PriorityScheduler(WorkerPool workerPool, TaskPriority defaultPriority, 
+                              long maxWaitForLowPriorityInMs) {
     super(defaultPriority);
     
     this.workerPool = workerPool;

@@ -113,7 +113,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler {
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
     super(new StatisticWorkerPool(threadFactory, poolSize, new StatsManager()), 
-          maxWaitForLowPriorityInMs, defaultPriority);
+          defaultPriority, maxWaitForLowPriorityInMs);
     
     this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
   }
