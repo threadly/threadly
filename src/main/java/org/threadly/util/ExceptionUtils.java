@@ -353,7 +353,11 @@ public class ExceptionUtils {
    * @return String which is the stack in a human readable format
    */
   public static String stackToString(StackTraceElement[] stack) {
-    StringBuilder sb = new StringBuilder(stack == null ? 0 : stack.length * INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE);
+    if (stack == null) {
+      return "";
+    }
+    
+    StringBuilder sb = new StringBuilder(stack.length * INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE);
     writeStackTo(stack, sb);
     
     return sb.toString();
