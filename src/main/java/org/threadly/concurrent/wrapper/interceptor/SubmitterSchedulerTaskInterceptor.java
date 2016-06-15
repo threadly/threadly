@@ -1,7 +1,7 @@
 package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.concurrent.Callable;
-
+import java.util.function.BiFunction;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -9,10 +9,12 @@ import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>Class to wrap {@link SubmitterScheduler} pool so that tasks can be intercepted and either 
- * wrapped, or modified, before being submitted to the pool.  This abstract class needs to have 
- * {@link #wrapTask(Runnable, boolean)} overridden to provide the task which should be submitted to the 
- * {@link SubmitterScheduler}.  Please see the javadocs of {@link #wrapTask(Runnable, boolean)} for 
- * more details about ways a task can be modified or wrapped.</p>
+ * wrapped, or modified, before being submitted to the pool.  This class can be passed a lambda to
+ * {@link #SubmitterSchedulerTaskInterceptor(SubmitterScheduler, BiFunction)}, or 
+ * {@link #wrapTask(Runnable, boolean)} can be overridden to provide the task which should be 
+ * submitted to the {@link SubmitterScheduler}.  Please see the javadocs of 
+ * {@link #wrapTask(Runnable, boolean)} for more details about ways a task can be modified or 
+ * wrapped.</p>
  * 
  * <p>Other variants of task wrappers: {@link ExecutorTaskInterceptor}, 
  * {@link SchedulerServiceTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.</p>
@@ -20,16 +22,38 @@ import org.threadly.util.ArgumentVerifier;
  * @author jent - Mike Jensen
  * @since 4.6.0
  */
-public abstract class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor 
-                                                        implements SubmitterScheduler {
+public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor 
+                                               implements SubmitterScheduler {
   protected final SubmitterScheduler parentScheduler;
-  
+  protected final BiFunction<Runnable, Boolean, Runnable> taskManipulator;
+
+  /**
+   * When using this constructor, {@link #wrapTask(Runnable, boolean)} must be overridden to 
+   * handle the task manipulation before the task is submitted to the provided 
+   * {@link SubmitterScheduler}.  Please see the javadocs of {@link #wrapTask(Runnable, boolean)} 
+   * for more details about ways a task can be modified or wrapped.
+   * 
+   * @param parentExecutor An instance of {@link Executor} to wrap
+   */
   protected SubmitterSchedulerTaskInterceptor(SubmitterScheduler parentScheduler) {
-    super(parentScheduler);
+    this(parentScheduler, null);
+  }
+  
+  /**
+   * Constructs a wrapper for {@link SubmitterScheduler} pool so that tasks can be intercepted 
+   * and modified, before being submitted to the pool.
+   * 
+   * @param parentScheduler An instance of {@link SubmitterScheduler} to wrap
+   * @param taskManipulator A lambda to manipulate a {@link Runnable} that was submitted for execution
+   */
+  public SubmitterSchedulerTaskInterceptor(SubmitterScheduler parentScheduler, 
+                                           BiFunction<Runnable, Boolean, Runnable> taskManipulator) {
+    super(parentScheduler, null);
     
     this.parentScheduler = parentScheduler;
+    this.taskManipulator = taskManipulator;
   }
-
+  
   /**
    * Overridden version which delegates to {@link #wrapTask(Runnable, boolean)}.  There should be 
    * no reason to override this, instead just ensure that {@link #wrapTask(Runnable, boolean)} is 
@@ -60,7 +84,9 @@ public abstract class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInte
    * @param recurring {@code true} if the provided task is a recurring task
    * @return A non-null task that will be provided to the parent executor
    */
-  public abstract Runnable wrapTask(Runnable task, boolean recurring);
+  public Runnable wrapTask(Runnable task, boolean recurring){
+    return this.taskManipulator.apply(task, recurring);
+  }
 
   @Override
   public void schedule(Runnable task, long delayInMs) {

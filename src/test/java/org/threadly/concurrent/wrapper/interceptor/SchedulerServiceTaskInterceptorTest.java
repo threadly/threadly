@@ -18,6 +18,12 @@ public class SchedulerServiceTaskInterceptorTest extends SubmitterSchedulerTaskI
     submitterSchedulerInterceptor = new TestSchedulerServiceInterceptor(scheduler);
     executorInterceptor = submitterSchedulerInterceptor;
     testInterceptor = (TestInterceptor)executorInterceptor;
+    interceptedTasks = new ArrayList<Runnable>(1);
+    submitSchedulerTaskInterceptorLamba = new SchedulerServiceTaskInterceptor(scheduler, (r1, b1) -> { 
+      interceptedTasks.add(r1);
+      
+      return DoNothingRunnable.instance();
+    });  
     tr = new TestRunnable();
   }
 

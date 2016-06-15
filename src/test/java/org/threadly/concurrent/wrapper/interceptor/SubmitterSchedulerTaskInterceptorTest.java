@@ -21,6 +21,8 @@ import org.threadly.test.concurrent.TestableScheduler;
 @SuppressWarnings("javadoc")
 public class SubmitterSchedulerTaskInterceptorTest extends ExecutorTaskInterceptorTest {
   protected SubmitterSchedulerTaskInterceptor submitterSchedulerInterceptor;
+  protected SubmitterSchedulerTaskInterceptor submitSchedulerTaskInterceptorLamba;
+  protected List<Runnable> interceptedTasks;
   
   @Before
   @Override
@@ -29,6 +31,12 @@ public class SubmitterSchedulerTaskInterceptorTest extends ExecutorTaskIntercept
     submitterSchedulerInterceptor = new TestSubmitterSchedulerInterceptor(scheduler);
     executorInterceptor = submitterSchedulerInterceptor;
     testInterceptor = (TestInterceptor)executorInterceptor;
+    interceptedTasks = new ArrayList<Runnable>(1);
+    submitSchedulerTaskInterceptorLamba = new SubmitterSchedulerTaskInterceptor(scheduler, (r1, b1) -> { 
+      interceptedTasks.add(r1);
+      
+      return DoNothingRunnable.instance();
+    });
     tr = new TestRunnable();
   }
   
@@ -45,6 +53,16 @@ public class SubmitterSchedulerTaskInterceptorTest extends ExecutorTaskIntercept
 
     assertEquals(1, testInterceptor.getInterceptedTasks().size());
     assertTrue(tr == testInterceptor.getInterceptedTasks().get(0));
+    assertEquals(1, scheduler.advance(DELAY_TIME));  // replaced task should run
+    assertEquals(0, tr.getRunCount());  // should have been replaced and not run
+  }
+  
+  @Test
+  public void interceptScheduleLambdaTest() {
+    submitSchedulerTaskInterceptorLamba.schedule(tr, DELAY_TIME);
+    
+    assertEquals(1, interceptedTasks.size());
+    assertTrue(tr == interceptedTasks.get(0));
     assertEquals(1, scheduler.advance(DELAY_TIME));  // replaced task should run
     assertEquals(0, tr.getRunCount());  // should have been replaced and not run
   }
