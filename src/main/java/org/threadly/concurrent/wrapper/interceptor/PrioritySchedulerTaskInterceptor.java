@@ -1,6 +1,7 @@
 package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.concurrent.Callable;
+import java.util.function.BiFunction;
 
 import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.TaskPriority;
@@ -10,10 +11,12 @@ import org.threadly.util.ArgumentVerifier;
 
 /**
  * <p>Class to wrap {@link PrioritySchedulerService} pool so that tasks can be intercepted and either 
- * wrapped, or modified, before being submitted to the pool.  This abstract class needs to have 
- * {@link #wrapTask(Runnable, boolean)} overridden to provide the task which should be submitted to the 
- * {@link PrioritySchedulerService}.  Please see the javadocs of {@link #wrapTask(Runnable, boolean)} for 
- * more details about ways a task can be modified or wrapped.</p>
+ * wrapped, or modified, before being submitted to the pool.  This class can be passed a lambda to
+ * {@link #PrioritySchedulerTaskInterceptor(PrioritySchedulerService, BiFunction)}}, or 
+ * {@link #wrapTask(Runnable, boolean)} can be overridden to provide the task which should be submitted 
+ * to the {@link PrioritySchedulerService}.  Please see the javadocs of 
+ * {@link #wrapTask(Runnable, boolean)} for more details about ways a task can be modified or 
+ * wrapped.</p>
  * 
  * <p>Other variants of task wrappers: {@link ExecutorTaskInterceptor}, 
  * {@link SubmitterSchedulerTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.</p>
@@ -21,12 +24,33 @@ import org.threadly.util.ArgumentVerifier;
  * @author jent - Mike Jensen
  * @since 4.6.0
  */
-public abstract class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterceptor 
-                                                       implements PrioritySchedulerService {
+public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterceptor 
+                                              implements PrioritySchedulerService {
   protected final PrioritySchedulerService parentScheduler;
-  
+
+  /**
+   * When using this constructor, {@link #wrapTask(Runnable, boolean)} must be overridden to 
+   * handle the task manipulation before the task is submitted to the provided 
+   * {@link PrioritySchedulerService}.  Please see the javadocs of 
+   * {@link #wrapTask(Runnable, boolean)} for more details about ways a task can be modified or 
+   * wrapped.
+   * 
+   * @param parentExecutor An instance of {@link Executor} to wrap
+   */
   protected PrioritySchedulerTaskInterceptor(PrioritySchedulerService parentScheduler) {
-    super(parentScheduler);
+    this(parentScheduler, null);
+  }
+  
+  /**
+   * Constructs a wrapper for {@link PrioritySchedulerService} pool so that tasks can be intercepted 
+   * and modified, before being submitted to the pool.
+   * 
+   * @param parentScheduler An instance of {@link PrioritySchedulerService} to wrap
+   * @param taskManipulator A lambda to manipulate a {@link Runnable} that was submitted for execution
+   */
+  public PrioritySchedulerTaskInterceptor(PrioritySchedulerService parentScheduler,
+                                          BiFunction<Runnable, Boolean, Runnable> taskManipulator) {
+    super(parentScheduler, taskManipulator);
     
     this.parentScheduler = parentScheduler;
   }

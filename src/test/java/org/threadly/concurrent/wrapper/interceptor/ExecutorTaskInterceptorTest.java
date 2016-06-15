@@ -62,6 +62,23 @@ public class ExecutorTaskInterceptorTest {
   }
   
   @Test
+  public void interceptSubmitRunnableLambdaTest() {
+    List<Runnable> interceptedTasks = new ArrayList<Runnable>(1);
+    
+    ExecutorTaskInterceptor executorInterceptorLambda = new ExecutorTaskInterceptor(scheduler, (r1) -> { 
+      interceptedTasks.add(r1);
+      
+      return DoNothingRunnable.instance();
+    });
+    executorInterceptorLambda.execute(tr);
+    
+    assertEquals(1, interceptedTasks.size());
+    assertTrue(tr == interceptedTasks.get(0));
+    assertEquals(1, scheduler.tick());  // replaced task should run
+    assertEquals(0, tr.getRunCount());  // should have been replaced and not run
+  }
+  
+  @Test
   public void interceptSubmitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     Object result = new Object();
     ListenableFuture<?> f = executorInterceptor.submit(tr, result);
