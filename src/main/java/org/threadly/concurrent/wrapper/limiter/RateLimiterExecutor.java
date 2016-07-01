@@ -184,6 +184,9 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected void doExecute(double permits, Runnable task) {
     double effectiveDelay = (permits / permitsPerSecond) * 1000;
     synchronized (permitLock) {
+      if (permits == 0 && lastScheduleTime < Clock.lastKnownForwardProgressingMillis()) {
+        // shortcut
+      }
       double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
       if (scheduleDelay < 1) {
         if (scheduleDelay < 0) {
