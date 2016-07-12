@@ -508,19 +508,9 @@ public class FutureUtils {
       if (source != null) {
         Iterator<? extends ListenableFuture<? extends T>> it = source.iterator();
         while (it.hasNext()) {
-          final ListenableFuture<? extends T> f = it.next();
+          ListenableFuture<? extends T> f = it.next();
           futures.add(f);
-          f.addListener(new Runnable() {
-            @Override
-            public void run() {
-              handleFutureDone(f);
-              
-              // all futures are now done
-              if (remainingResult.decrementAndGet() == 0) {
-                setResult(getFinalResultList());
-              }
-            }
-          });
+          attachFutureDoneTask(f);
         }
       }
       
@@ -531,12 +521,25 @@ public class FutureUtils {
         setResult(getFinalResultList());
       }
       
-      this.addListener(new Runnable() {
+      addListener(new Runnable() {
         @Override
         public void run() {
           futures = null;
         }
       });
+    }
+    
+    /**
+     * Attach a {@link FutureDoneTask} to the provided future.  This is necessary for tracking as 
+     * futures complete, failing to attach a task could result in this future never completing.  
+     * 
+     * This is provided as a separate function so it can be overriden to provide different 
+     * {@link FutureDoneTask} implementation.
+     * 
+     * @param f Future to attach to
+     */
+    protected void attachFutureDoneTask(ListenableFuture<? extends T> f) {
+      f.addListener(new FutureDoneTask(f));
     }
     
     @Override
@@ -605,6 +608,31 @@ public class FutureUtils {
         return Collections.unmodifiableList(resultsList);
       }
     }
+    
+    /**
+     * <p>Task which is ran after a future completes.  This is used internally to track how many 
+     * outstanding tasks are remaining, as well as used to collect the results if desired.</p>
+     * 
+     * @author jent - Mike Jensen
+     * @since 4.7.0
+     */
+    protected class FutureDoneTask implements Runnable {
+      private final ListenableFuture<? extends T> f;
+      
+      protected FutureDoneTask(ListenableFuture<? extends T> f) {
+        this.f = f;
+      }
+      
+      @Override
+      public void run() {
+        handleFutureDone(f);
+        
+        // all futures are now done
+        if (remainingResult.decrementAndGet() == 0) {
+          setResult(getFinalResultList());
+        }
+      }
+    }
   }
   
   /**
@@ -615,6 +643,8 @@ public class FutureUtils {
    * @since 1.2.0
    */
   protected static class EmptyFutureCollection extends FutureCollection<Object> {
+    private FutureDoneTask doneTaskSingleton = null;
+    
     protected EmptyFutureCollection(Iterable<? extends ListenableFuture<?>> source) {
       super(source);
     }
@@ -627,6 +657,17 @@ public class FutureUtils {
     @Override
     protected List<ListenableFuture<?>> getFinalResultList() {
       return null;
+    }
+    
+    @Override
+    protected void attachFutureDoneTask(ListenableFuture<?> f) {
+      // we don't care about the result of the future
+      // so to save a little memory we reuse the same task with no future provided
+      if (doneTaskSingleton == null) {
+        doneTaskSingleton = new FutureDoneTask(null);
+      }
+      
+      f.addListener(doneTaskSingleton);
     }
   }
   
