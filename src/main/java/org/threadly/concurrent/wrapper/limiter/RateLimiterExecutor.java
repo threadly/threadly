@@ -32,8 +32,8 @@ import org.threadly.util.Clock;
 @SuppressWarnings("deprecation")
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
-  protected final double permitsPerSecond;
   protected final Object permitLock;
+  protected volatile double permitsPerSecond;
   private double lastScheduleTime;
   
   /**
@@ -46,12 +46,28 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
-    ArgumentVerifier.assertGreaterThanZero(permitsPerSecond, "permitsPerSecond");
     
     this.scheduler = scheduler;
-    this.permitsPerSecond = permitsPerSecond;
     this.permitLock = new Object();
     this.lastScheduleTime = Clock.lastKnownForwardProgressingMillis();
+    setPermitsPerSecond(permitsPerSecond);
+  }
+  
+  /**
+   * Sets the allowed permits per second.  When this rate is updated, it only applies to future 
+   * submitted task.  In addition if the rate has already been exceeded (and thus there is a delay 
+   * in scheduling future items), that delay based off the previous permit rate will not be 
+   * adjusted.  For example if the rate was {@code 1/sec} and a 10 permit task was just submitted, 
+   * and thus we have a delay of 10 seconds for a future task.  Adjusting this higher will NOT 
+   * reduce the delay time for the next task, it will only effect schedule rates after currently 
+   * scheduled tasks have been satisfied.
+   *  
+   * @param permitsPerSecond how many permits should be allowed per second
+   */
+  public void setPermitsPerSecond(double permitsPerSecond) {
+    ArgumentVerifier.assertGreaterThanZero(permitsPerSecond, "permitsPerSecond");
+    
+    this.permitsPerSecond = permitsPerSecond;
   }
   
   /**
