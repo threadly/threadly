@@ -14,7 +14,7 @@ import org.threadly.util.ArgumentVerifier;
  * easy way to convert your favorite executor to use ListenableFutures.</p>
  * 
  * @author jent - Mike Jensen
- * @since 1.0.0
+ * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent)
  */
 public class ExecutorWrapper extends AbstractSubmitterExecutor {
   protected final Executor executor;

@@ -31,7 +31,7 @@ import org.threadly.util.StatisticsUtils;
  * an alternative for their respective schedulers.</p>
  *  
  * @author jent - Mike Jensen
- * @since 4.5.0
+ * @since 4.6.0 (since 4.5.0 at org.threadly.concurrent.statistics)
  */
 public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor 
                                       implements StatisticExecutor {

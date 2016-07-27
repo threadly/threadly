@@ -9,7 +9,7 @@ import org.threadly.util.ExceptionUtils;
  * {@link ExceptionUtils#handleException(Throwable)}.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.3.0
+ * @since 4.6.0 (since 2.3.0 at org.threadly.concurrent)
  */
 public class ThrowableSuppressingRunnable implements RunnableContainer, Runnable {
   protected final Runnable task;

@@ -207,7 +207,7 @@ public class Clock {
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
    * consider using {@link #accurateForwardProgressingMillis()}.
    * 
-   * @since 2.0.0 (existed since 1.0.0 as accurateTime)
+   * @since 2.0.0 (since 1.0.0 as accurateTime)
    * @return accurate time in milliseconds
    */
   public static long accurateTimeMillis() {

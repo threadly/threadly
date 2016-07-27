@@ -22,7 +22,7 @@ import org.threadly.util.ArgumentVerifier;
  * {@link SchedulerServiceQueueLimitRejector} as other possible implementations.</p>
  *  
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
   protected final Executor parentExecutor;

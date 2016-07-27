@@ -21,7 +21,7 @@ import org.threadly.concurrent.future.ScheduledFutureDelegate;
  * read the javadocs for if you need).</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutorServiceWrapper)
+ * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.PriorityScheduledExecutorServiceWrapper)
  */
 public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrapper {
   protected final PriorityScheduler pScheduler;

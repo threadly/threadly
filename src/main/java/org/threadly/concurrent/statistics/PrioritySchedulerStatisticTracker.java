@@ -24,7 +24,7 @@ import org.threadly.util.Pair;
  * utilized, as well as execution frequency.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.5.0 (earlier forms existed since 1.0.0)
+ * @since 4.5.0 (since 1.0.0 at org.threadly.concurrent)
  */
 public class PrioritySchedulerStatisticTracker extends PriorityScheduler 
                                                implements StatisticPriorityScheduler {

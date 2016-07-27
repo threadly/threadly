@@ -16,7 +16,7 @@ import org.threadly.util.StringUtils;
  * {@link #getSubmitterExecutorForKey(Object)}.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> {
   /**

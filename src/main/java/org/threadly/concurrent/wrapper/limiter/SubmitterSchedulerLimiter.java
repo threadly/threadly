@@ -24,7 +24,7 @@ import org.threadly.util.Clock;
  * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class SubmitterSchedulerLimiter extends ExecutorLimiter implements SubmitterScheduler {
   protected final SubmitterScheduler scheduler;

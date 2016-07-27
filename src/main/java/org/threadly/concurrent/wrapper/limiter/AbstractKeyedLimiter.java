@@ -26,7 +26,7 @@ import org.threadly.util.StringUtils;
  * 
  * @param <T> Type of limiter stored internally
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   protected static final short DEFAULT_LOCK_PARALISM = 32;

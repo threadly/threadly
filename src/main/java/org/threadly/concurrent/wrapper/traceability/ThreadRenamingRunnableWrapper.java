@@ -8,7 +8,7 @@ import org.threadly.util.ArgumentVerifier;
  * back at the end of execution.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent)
  */
 public class ThreadRenamingRunnableWrapper implements Runnable, RunnableContainer {
   protected final Runnable runnable;

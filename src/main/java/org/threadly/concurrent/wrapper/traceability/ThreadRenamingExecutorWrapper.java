@@ -10,7 +10,7 @@ import org.threadly.concurrent.AbstractSubmitterExecutor;
  * inside it have the threads named in an identifiable way.</p>
  * 
  * @author jent
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent)
  */
 public class ThreadRenamingExecutorWrapper extends AbstractSubmitterExecutor {
   protected final Executor executor;

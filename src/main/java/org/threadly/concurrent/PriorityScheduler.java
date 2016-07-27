@@ -36,7 +36,7 @@ import org.threadly.util.Clock;
  * {@link #setMaxWaitForLowPriority(long)}.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutor)
+ * @since 2.2.0 (since 1.0.0 as PriorityScheduledExecutor)
  */
 @SuppressWarnings("deprecation")
 public class PriorityScheduler extends AbstractPriorityScheduler {

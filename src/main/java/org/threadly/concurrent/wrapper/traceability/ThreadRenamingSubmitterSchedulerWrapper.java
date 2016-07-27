@@ -9,7 +9,7 @@ import org.threadly.concurrent.SubmitterScheduler;
  * inside it have the threads named in an identifiable way.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent)
  */
 public class ThreadRenamingSubmitterSchedulerWrapper extends AbstractSubmitterScheduler {
   protected final SubmitterScheduler scheduler;

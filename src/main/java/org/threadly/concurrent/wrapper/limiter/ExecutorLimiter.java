@@ -23,7 +23,7 @@ import org.threadly.util.ArgumentVerifier;
  * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
  * 
  * @author jent - Mike Jensen
- * @since 1.0.0
+ * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent.limiter)
  */
 public class ExecutorLimiter extends AbstractSubmitterExecutor implements SubmitterExecutor {
   protected final Executor executor;

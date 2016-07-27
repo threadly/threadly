@@ -20,7 +20,7 @@ import org.threadly.concurrent.future.ScheduledFutureDelegate;
  * read the javadocs for if you need).</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.0.0
+ * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent)
  */
 public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorServiceWrapper {
   protected final SingleThreadScheduler singleThreadScheduler;

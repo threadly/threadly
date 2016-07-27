@@ -22,7 +22,7 @@ import org.threadly.util.Pair;
  * call back on.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.2.0 (existed since 1.1.0 as org.threadly.concurrent.ListenerHelper)
+ * @since 2.2.0 (since 1.1.0 as org.threadly.concurrent.ListenerHelper)
  */
 public class RunnableListenerHelper {
   protected final Object listenersLock;

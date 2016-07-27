@@ -25,7 +25,7 @@ import org.threadly.util.ArgumentVerifier;
  * @deprecated Moved to {@link org.threadly.concurrent.wrapper.KeyDistributedExecutor}
  * 
  * @author jent - Mike Jensen
- * @since 2.5.0 (existed since 1.0.0 as TaskExecutorDistributor)
+ * @since 2.5.0 (since 1.0.0 as TaskExecutorDistributor)
  */
 @Deprecated
 public class KeyDistributedExecutor extends org.threadly.concurrent.wrapper.KeyDistributedExecutor {

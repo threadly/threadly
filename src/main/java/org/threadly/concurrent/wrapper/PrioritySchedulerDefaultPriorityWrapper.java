@@ -15,7 +15,7 @@ import org.threadly.util.ArgumentVerifier;
  * {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.3.0 (since 1.0.0 as PrioritySchedulerWrapper) 
+ * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.PrioritySchedulerWrapper)
  */
 public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedulerService {
   protected final PrioritySchedulerService scheduler;

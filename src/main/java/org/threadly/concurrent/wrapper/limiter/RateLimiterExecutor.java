@@ -27,7 +27,7 @@ import org.threadly.util.Clock;
  * application, it is not designed to be a push back mechanism for the application.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.0.0
+ * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent.limiter)
  */
 @SuppressWarnings("deprecation")
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
@@ -62,6 +62,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * reduce the delay time for the next task, it will only effect schedule rates after currently 
    * scheduled tasks have been satisfied.
    *  
+   * @since 4.6.3
    * @param permitsPerSecond how many permits should be allowed per second
    */
   public void setPermitsPerSecond(double permitsPerSecond) {

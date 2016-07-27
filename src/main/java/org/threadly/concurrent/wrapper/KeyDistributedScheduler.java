@@ -21,7 +21,7 @@ import org.threadly.util.ArgumentVerifier;
  * about how this operates.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.5.0 (existed since 1.0.0 as TaskSchedulerDistributor)
+ * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.TaskSchedulerDistributor)
  */
 public class KeyDistributedScheduler extends KeyDistributedExecutor {
   protected final SubmitterScheduler scheduler;

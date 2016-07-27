@@ -19,7 +19,7 @@ import org.threadly.util.ArgumentVerifier;
  * @deprecated Moved to {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler}
  * 
  * @author jent - Mike Jensen
- * @since 2.5.0 (existed since 1.0.0 as TaskSchedulerDistributor)
+ * @since 2.5.0 (since 1.0.0 as TaskSchedulerDistributor)
  */
 @Deprecated
 public class KeyDistributedScheduler extends KeyDistributedExecutor {

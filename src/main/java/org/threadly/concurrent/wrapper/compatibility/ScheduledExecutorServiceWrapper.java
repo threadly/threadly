@@ -12,7 +12,7 @@ import org.threadly.util.ArgumentVerifier;
  * that implementation with the {@link org.threadly.concurrent.SubmitterScheduler}.</p>
  * 
  * @author jent - Mike Jensen
- * @since 1.0.0
+ * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent)
  */
 public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler {
   protected final ScheduledExecutorService scheduler;

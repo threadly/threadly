@@ -35,7 +35,7 @@ import org.threadly.util.ExceptionUtils;
  * volatile.  The {@link KeyDistributedExecutor} will ensure the happens-before relationship.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.5.0 (existed since 1.0.0 as TaskExecutorDistributor)
+ * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.TaskExecutorDistributor)
  */
 public class KeyDistributedExecutor {
   protected static final short DEFAULT_LOCK_PARALISM = 32;

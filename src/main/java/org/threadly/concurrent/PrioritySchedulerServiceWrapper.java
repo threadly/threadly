@@ -11,7 +11,7 @@ package org.threadly.concurrent;
  * @deprecated Moved to {@link org.threadly.concurrent.wrapper.compatibility.PrioritySchedulerServiceWrapper}
  * 
  * @author jent - Mike Jensen
- * @since 2.2.0 (existed since 1.0.0 as PriorityScheduledExecutorServiceWrapper)
+ * @since 2.2.0 (since 1.0.0 as PriorityScheduledExecutorServiceWrapper)
  */
 @Deprecated
 public class PrioritySchedulerServiceWrapper 

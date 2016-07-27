@@ -19,7 +19,7 @@ import org.threadly.concurrent.SchedulerService;
  * other possible implementations.</p>
  *  
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class SchedulerServiceQueueLimitRejector extends SubmitterSchedulerQueueLimitRejector 
                                                 implements SchedulerService {

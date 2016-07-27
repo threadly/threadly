@@ -27,7 +27,7 @@ import org.threadly.util.ExceptionUtils;
  * This allows us to add new wrappers with the minimal amount of duplicated code.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.0.0
+ * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent)
  */
 abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorService {
   protected final SchedulerService scheduler;

@@ -6,7 +6,7 @@ package org.threadly.util;
  * future point stopped.  Once stopped it is expected that this "Service" can no longer be used.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.3.0 (Existed since 3.8.0 as ServiceInterface)
+ * @since 4.3.0 (since 3.8.0 as ServiceInterface)
  */
 public interface Service {
   /**

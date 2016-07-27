@@ -24,7 +24,7 @@ import org.threadly.concurrent.SchedulerService;
  * available this implementation should be preferred over the {@link SubmitterSchedulerLimiter}.</p>
  * 
  * @author jent - Mike Jensen
- * @since 2.0.0
+ * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent.limiter)
  */
 public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter
                                      implements SchedulerService {

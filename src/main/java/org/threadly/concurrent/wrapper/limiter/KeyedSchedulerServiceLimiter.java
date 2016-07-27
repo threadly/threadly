@@ -17,7 +17,7 @@ import org.threadly.util.StringUtils;
  * {@link #getSubmitterSchedulerForKey(Object)}.</p>
  * 
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<SchedulerServiceLimiter> {
   protected final SchedulerService scheduler;

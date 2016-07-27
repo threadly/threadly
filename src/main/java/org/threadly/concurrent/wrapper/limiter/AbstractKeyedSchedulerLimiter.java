@@ -21,7 +21,7 @@ import org.threadly.util.ArgumentVerifier;
  * 
  * @param <T> Type of limiter stored internally
  * @author jent - Mike Jensen
- * @since 4.3.0
+ * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter> extends AbstractKeyedLimiter<T> {
   protected final SubmitterScheduler scheduler;
