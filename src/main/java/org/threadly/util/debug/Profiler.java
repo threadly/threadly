@@ -42,7 +42,7 @@ import org.threadly.util.StringUtils;
  */
 public class Profiler {
   protected static final short DEFAULT_POLL_INTERVAL_IN_MILLIS = 100;
-  protected static final short NUMBER_TARGET_LINE_LENGTH = 6;
+  protected static final short NUMBER_TARGET_LINE_LENGTH = 8;
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
   private static final short DEFAULT_MAP_INITIAL_SIZE = 16;
