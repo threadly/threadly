@@ -27,7 +27,7 @@ import org.threadly.util.ArgumentVerifier;
 public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
   protected final Executor parentExecutor;
   protected final AtomicInteger queuedTaskCount;
-  private int queuedTaskLimit;
+  private volatile int queuedTaskLimit;
   
   /**
    * Constructs a new {@link ExecutorQueueLimitRejector} with the provided scheduler and limit.
