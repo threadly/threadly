@@ -79,9 +79,11 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @return minimum delay in milliseconds for the next task to be provided
    */
   public int getMinimumDelay() {
+    double accurateDelayMillis;
     synchronized (permitLock) {
-      return (int)Math.max(0, lastScheduleTime - Clock.lastKnownForwardProgressingMillis());
+      accurateDelayMillis = lastScheduleTime - Clock.lastKnownForwardProgressingMillis();
     }
+    return (int)Math.max(0, Math.ceil(accurateDelayMillis));
   }
   
   /**

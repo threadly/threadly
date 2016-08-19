@@ -138,6 +138,11 @@ public class KeyDistributedExecutor {
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
    * 
+   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
+   * given period of time.  Depending on task execution duration, and quantity of threads executing 
+   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
+   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
+   * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
    *                 possible threads as keys that will be used in parallel.
@@ -152,6 +157,11 @@ public class KeyDistributedExecutor {
    * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
    * given thread keys.  There is a performance hit associated with this, so this should only be 
    * enabled if {@link #getTaskQueueSize(Object)} calls will be used.
+   * 
+   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
+   * given period of time.  Depending on task execution duration, and quantity of threads executing 
+   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
+   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
@@ -175,6 +185,11 @@ public class KeyDistributedExecutor {
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
    * 
+   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
+   * given period of time.  Depending on task execution duration, and quantity of threads executing 
+   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
+   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
+   * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
    *                 possible threads as keys that will be used in parallel.
@@ -196,6 +211,11 @@ public class KeyDistributedExecutor {
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.
+   * 
+   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
+   * given period of time.  Depending on task execution duration, and quantity of threads executing 
+   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
+   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
    * @param expectedParallism level of expected quantity of threads adding tasks in parallel
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 

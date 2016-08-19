@@ -33,6 +33,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = 0.75f;  // 0.75 is ConcurrentHashMap default
   protected static final short CONCURRENT_HASH_MAP_MIN_SIZE = 8;
   protected static final short CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 64;
+  protected static final short CONCURRENT_HASH_MAP_MIN_CONCURRENCY_LEVEL = 4;
   protected static final short CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
   
   protected final Executor executor;
@@ -59,8 +60,9 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     if (mapInitialSize < CONCURRENT_HASH_MAP_MIN_SIZE) {
       mapInitialSize = CONCURRENT_HASH_MAP_MIN_SIZE;
     }
-    int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel() / 2, 
-                                       CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL);
+    int mapConcurrencyLevel = Math.max(CONCURRENT_HASH_MAP_MIN_CONCURRENCY_LEVEL, 
+                                       Math.min(sLock.getExpectedConcurrencyLevel() / 2, 
+                                                CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL));
     if (mapConcurrencyLevel < 1) {
       mapConcurrencyLevel = 1;
     }
