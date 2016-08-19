@@ -81,6 +81,15 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   }
   
   /**
+   * Check how many keys are currently being restricted or monitored.
+   * 
+   * @return The number of task keys being monitored
+   */
+  public int getTrackedKeyCount() {
+    return currentLimiters.size();
+  }
+  
+  /**
    * Check how many tasks are currently being limited, and not submitted yet for a given key.  
    * This can be useful for knowing how backed up a specific key is.
    * 

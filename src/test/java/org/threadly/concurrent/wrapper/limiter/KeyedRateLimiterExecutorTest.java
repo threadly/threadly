@@ -201,11 +201,13 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
     Object key = new Object();
     limiter.execute(.1, key, DoNothingRunnable.instance());
     assertEquals(2, scheduler.advance(1000));
+    assertEquals(1, limiter.getTrackedKeyCount());
     assertFalse(limiter.currentLimiters.isEmpty()); // should have item for 100 millis
     TestUtils.sleep(100);
     TestUtils.blockTillClockAdvances();
     assertEquals(1, scheduler.advance(1000));
     assertTrue(limiter.currentLimiters.isEmpty());
+    assertEquals(0, limiter.getTrackedKeyCount());
   }
   
   private static class KeyedRateLimiterFactory implements SubmitterExecutorFactory {

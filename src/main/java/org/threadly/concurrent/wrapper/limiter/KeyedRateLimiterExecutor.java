@@ -128,6 +128,18 @@ public class KeyedRateLimiterExecutor {
   }
   
   /**
+   * Check how many keys are currently being restricted or monitored.  This number is particularly 
+   * relevant for when checking the queued tasks of the parent scheduler.  As part of the inner 
+   * workings of this limiter, a task will exist for each key.  Because of that there will be 
+   * queued tasks which are not actual application submitted work units.
+   * 
+   * @return The number of task keys being monitored
+   */
+  public int getTrackedKeyCount() {
+    return currentLimiters.size();
+  }
+  
+  /**
    * This call will check how far out we have already scheduled tasks to be run.  Because it is 
    * the applications responsibility to not provide tasks too fast for the limiter to run them, 
    * this can give an idea of how backed up tasks provided through this limiter actually are.

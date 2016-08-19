@@ -70,4 +70,21 @@ public abstract class AbstractKeyedLimiterTest {
       btr.unblock();
     }
   }
+  
+  @Test
+  public void getTrackedKeyCountTest() {
+    AbstractKeyedLimiter<?> limiter = makeLimiter(1);
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      assertEquals(0, limiter.getTrackedKeyCount());
+      limiter.execute(btr, btr);
+      assertEquals(1, limiter.getTrackedKeyCount());
+      btr.unblock();
+      btr.blockTillFinished();
+      assertEquals(0, limiter.getTrackedKeyCount());
+    } finally {
+      btr.unblock();
+    }
+    
+  }
 }
