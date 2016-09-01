@@ -36,7 +36,8 @@ public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor
    * @param parentExecutor An instance of {@link Executor} to wrap
    */
   protected SubmitterSchedulerTaskInterceptor(SubmitterScheduler parentScheduler) {
-    this(parentScheduler, null);
+    this(parentScheduler, 
+         (r, s) -> { throw new RuntimeException("Must override wrapTask(Runnable, Boolean)"); });
   }
   
   /**
@@ -48,7 +49,8 @@ public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor
    */
   public SubmitterSchedulerTaskInterceptor(SubmitterScheduler parentScheduler, 
                                            BiFunction<Runnable, Boolean, Runnable> taskManipulator) {
-    super(parentScheduler, null);
+    super(parentScheduler);
+    ArgumentVerifier.assertNotNull(taskManipulator, "taskManipulator");
     
     this.parentScheduler = parentScheduler;
     this.taskManipulator = taskManipulator;

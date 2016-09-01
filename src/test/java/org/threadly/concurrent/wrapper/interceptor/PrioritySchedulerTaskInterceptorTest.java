@@ -154,6 +154,20 @@ public class PrioritySchedulerTaskInterceptorTest extends SchedulerServiceTaskIn
     assertEquals(1, scheduler.advance(DELAY_TIME));  // replaced task should run
     assertEquals(0, tr.getRunCount());  // should have been replaced and not run
   }
+  
+  @Override
+  @Test (expected = RuntimeException.class)
+  public void defaultConstructorFail() {
+    PrioritySchedulerTaskInterceptor psti = new PrioritySchedulerTaskInterceptor(scheduler);
+    psti.schedule(DoNothingRunnable.instance(), 10, TaskPriority.Low);
+  }
+
+  @Override
+  @Test (expected = RuntimeException.class)
+  public void nullConstructorFail() {
+    @SuppressWarnings("unused")
+    PrioritySchedulerTaskInterceptor psti = new PrioritySchedulerTaskInterceptor(scheduler, null);
+  }
 
   private static class TestPrioritySchedulerInterceptor extends PrioritySchedulerTaskInterceptor 
                                                         implements TestInterceptor {

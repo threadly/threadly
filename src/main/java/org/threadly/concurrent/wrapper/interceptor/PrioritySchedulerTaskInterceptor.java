@@ -38,7 +38,8 @@ public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterc
    * @param parentExecutor An instance of {@link Executor} to wrap
    */
   protected PrioritySchedulerTaskInterceptor(PrioritySchedulerService parentScheduler) {
-    this(parentScheduler, null);
+    this(parentScheduler, 
+         (r, s) -> { throw new RuntimeException("Must override wrapTask(Runnable, Boolean)"); });
   }
   
   /**

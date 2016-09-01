@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.test.concurrent.TestRunnable;
@@ -25,6 +26,20 @@ public class SchedulerServiceTaskInterceptorTest extends SubmitterSchedulerTaskI
       return DoNothingRunnable.instance();
     });  
     tr = new TestRunnable();
+  }
+  
+  @Override
+  @Test (expected = RuntimeException.class)
+  public void defaultConstructorFail() {
+    SchedulerServiceTaskInterceptor ssti = new SchedulerServiceTaskInterceptor(scheduler);
+    ssti.schedule(DoNothingRunnable.instance(), 10);
+  }
+
+  @Override
+  @Test (expected = RuntimeException.class)
+  public void nullConstructorFail() {
+    @SuppressWarnings("unused")
+    SchedulerServiceTaskInterceptor ssti = new SchedulerServiceTaskInterceptor(scheduler, null);
   }
 
   private static class TestSchedulerServiceInterceptor extends SchedulerServiceTaskInterceptor 
