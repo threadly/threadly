@@ -72,12 +72,7 @@ public abstract class ScheduledExecutorServiceTest {
       scheduler.shutdownNow();
   
       tr.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.isTerminated();
-        }
-      }.blockTillTrue(1000);
+      new TestCondition(() -> scheduler.isTerminated()).blockTillTrue(1000);
     } finally {
       scheduler.shutdownNow();
     }
@@ -98,12 +93,7 @@ public abstract class ScheduledExecutorServiceTest {
       scheduler.shutdownNow();
   
       tr.blockTillFinished();
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.isTerminated();
-        }
-      }.blockTillTrue(1000);
+      new TestCondition(() -> scheduler.isTerminated()).blockTillTrue(1000);
     } finally {
       scheduler.shutdownNow();
     }

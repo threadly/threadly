@@ -424,12 +424,7 @@ public class KeyDistributedExecutorTest {
       });
       
       // block till there is for sure a backup of key1 tasks
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return waitingTasks.get() > 10;
-        }
-      }.blockTillTrue();
+      new TestCondition(() -> waitingTasks.get() > 10).blockTillTrue();
       
       TestRunnable key2Runnable = new TestRunnable();
       distributor.execute(key2, key2Runnable);

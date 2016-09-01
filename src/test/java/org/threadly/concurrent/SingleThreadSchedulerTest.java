@@ -120,12 +120,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     
     sts.shutdown();
     
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ! sts.sManager.execThread.isAlive();
-      }
-    }.blockTillTrue();
+    new TestCondition(() -> ! sts.sManager.execThread.isAlive()).blockTillTrue();
   }
   
   @Test

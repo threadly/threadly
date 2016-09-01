@@ -1,6 +1,7 @@
 package org.threadly.test.concurrent;
 
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 
 import org.threadly.util.Clock;
 
@@ -15,17 +16,45 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 1.0.0
  */
-public abstract class TestCondition {
+public class TestCondition {
   protected static final int DEFAULT_POLL_INTERVAL = 10;
   protected static final int DEFAULT_TIMEOUT = 1000 * 10;
   protected static final int SPIN_THRESHOLD = 10;
   
+  private final Supplier<Boolean> condition;
+  
   /**
-   * Getter for the conditions current state.
-   * 
-   * @return condition state, {@code true} if ready
+   * This constructor is expected to have {@link #get()} overridden, otherwise an exception will be 
+   * thrown when this condition is checked/used.
    */
-  public abstract boolean get();
+  public TestCondition() {
+    this(() -> { 
+      throw new RuntimeException("Must override get() or provide condition supplier");
+    });
+  }
+
+  /**
+   * Construct a new test condition with a provided supplier for when the state changes.  
+   * Alternatively this can be constructed with {@link #TestCondition()} and then the condition can 
+   * be reported by overriding {@link #get()}.
+   * 
+   * @param condition Condition to check
+   * @since 5.0.0
+   */
+  public TestCondition(Supplier<Boolean> condition) {
+    this.condition = condition;
+  }
+  
+  /**
+   * Getter for the conditions current state.  If constructed with {@link #TestCondition()} this 
+   * must be overridden.  Otherwise this will return the result from the provided supplier at 
+   * construction.
+   * 
+   * @return Test condition state, {@code true} if ready
+   */
+  public boolean get() {
+    return condition.get();
+  }
 
   /**
    * Blocks till condition is true, useful for asynchronism operations, waiting for them to 

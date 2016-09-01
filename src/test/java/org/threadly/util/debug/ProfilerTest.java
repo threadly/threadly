@@ -38,12 +38,7 @@ public class ProfilerTest {
   }
   
   protected void blockForProfilerSample() {
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return profiler.getCollectedSampleQty() > 0;
-      }
-    }.blockTillTrue(1000 * 20);
+    new TestCondition(() -> profiler.getCollectedSampleQty() > 0).blockTillTrue(1000 * 20);
   }
   
   @Test
@@ -189,12 +184,7 @@ public class ProfilerTest {
     profiler.stop();
     
     // verify stopped
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ! runningThread.isAlive();
-      }
-    }.blockTillTrue(1000 * 20);
+    new TestCondition(() -> ! runningThread.isAlive()).blockTillTrue(1000 * 20);
     
     profiler.reset();
     
