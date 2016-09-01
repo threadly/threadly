@@ -101,6 +101,18 @@ public class ExecutorTaskInterceptorTest {
     assertFalse(f.isDone());
   }
   
+  @Test (expected = RuntimeException.class)
+  public void defaultConstructorFail() {
+    ExecutorTaskInterceptor eti = new ExecutorTaskInterceptor(scheduler);
+    eti.execute(DoNothingRunnable.instance());
+  }
+
+  @Test (expected = RuntimeException.class)
+  public void nullConstructorFail() {
+    @SuppressWarnings("unused")
+    ExecutorTaskInterceptor eti = new ExecutorTaskInterceptor(scheduler, null);
+  }
+  
   protected interface TestInterceptor {
     public List<Runnable> getInterceptedTasks();
   }

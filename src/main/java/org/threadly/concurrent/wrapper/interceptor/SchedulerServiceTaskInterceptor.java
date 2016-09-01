@@ -32,7 +32,8 @@ public class SchedulerServiceTaskInterceptor extends SubmitterSchedulerTaskInter
    * @param parentExecutor An instance of {@link Executor} to wrap
    */
   protected SchedulerServiceTaskInterceptor(SchedulerService parentScheduler) {
-    this(parentScheduler, null);
+    this(parentScheduler, 
+         (r, s) -> { throw new RuntimeException("Must override wrapTask(Runnable, Boolean)"); });
   }
   
   /**

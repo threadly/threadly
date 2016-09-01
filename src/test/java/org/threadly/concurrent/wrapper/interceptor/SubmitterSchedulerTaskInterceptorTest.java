@@ -120,6 +120,20 @@ public class SubmitterSchedulerTaskInterceptorTest extends ExecutorTaskIntercept
     assertEquals(1, scheduler.advance(DELAY_TIME));  // replaced task should run
     assertEquals(0, tr.getRunCount());  // should have been replaced and not run
   }
+  
+  @Override
+  @Test (expected = RuntimeException.class)
+  public void defaultConstructorFail() {
+    SubmitterSchedulerTaskInterceptor ssti = new SubmitterSchedulerTaskInterceptor(scheduler);
+    ssti.schedule(DoNothingRunnable.instance(), 10);
+  }
+
+  @Override
+  @Test (expected = RuntimeException.class)
+  public void nullConstructorFail() {
+    @SuppressWarnings("unused")
+    SubmitterSchedulerTaskInterceptor ssti = new SubmitterSchedulerTaskInterceptor(scheduler, null);
+  }
 
   private static class TestSubmitterSchedulerInterceptor extends SubmitterSchedulerTaskInterceptor 
                                                          implements TestInterceptor {

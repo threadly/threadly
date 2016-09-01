@@ -41,6 +41,12 @@ public class TestConditionTest {
     tc.get();
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void nullConstructorFail() {
+    @SuppressWarnings("unused")
+    TestCondition tc = new TestCondition(null);
+  }
+  
   private class DelayCondition extends TestCondition {
     private final long delayTime;
     private long firstGetTime;

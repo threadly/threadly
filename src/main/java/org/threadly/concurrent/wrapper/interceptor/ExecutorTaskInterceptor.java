@@ -36,7 +36,7 @@ public class ExecutorTaskInterceptor implements SubmitterExecutor {
    * @param parentExecutor An instance of {@link Executor} to wrap
    */
   protected ExecutorTaskInterceptor(Executor parentExecutor) {
-    this(parentExecutor, null);
+    this(parentExecutor, (r) -> { throw new RuntimeException("Must override wrapTask(Runnable)"); });
   }
   
   /**
@@ -48,6 +48,7 @@ public class ExecutorTaskInterceptor implements SubmitterExecutor {
    */
   public ExecutorTaskInterceptor(Executor parentExecutor, Function<Runnable, Runnable> taskManipulator) {
     ArgumentVerifier.assertNotNull(parentExecutor, "parentExecutor");
+    ArgumentVerifier.assertNotNull(taskManipulator, "taskManipulator");
     
     this.taskManipulator = taskManipulator;
     this.parentExecutor = parentExecutor;

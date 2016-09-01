@@ -3,6 +3,7 @@ package org.threadly.test.concurrent;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Supplier;
 
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
@@ -42,6 +43,8 @@ public class TestCondition {
    * @since 5.0.0
    */
   public TestCondition(Supplier<Boolean> condition) {
+    ArgumentVerifier.assertNotNull(condition, "condition");
+    
     this.condition = condition;
   }
   
