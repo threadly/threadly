@@ -177,12 +177,7 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       interruptSentAV.waitForTest(); // verify thread was interrupted as expected
       
       // verify worker was returned to pool
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.workerPool.idleWorker.get() != null;
-        }
-      }.blockTillTrue();
+      new TestCondition(() -> scheduler.workerPool.idleWorker.get() != null).blockTillTrue();
       // verify pool size is still correct
       assertEquals(1, scheduler.getCurrentPoolSize());
       
@@ -254,12 +249,8 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       
       scheduler.shutdown();
       
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.workerPool.isShutdownFinished() && scheduler.getCurrentPoolSize() == 0;
-        }
-      }.blockTillTrue();
+      new TestCondition(() -> scheduler.workerPool.isShutdownFinished() && 
+                                scheduler.getCurrentPoolSize() == 0).blockTillTrue();
     } finally {
       factory.shutdown();
     }
@@ -486,22 +477,13 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       // schedule one task a ways out
       scheduler.schedule(DoNothingRunnable.instance(), 1000 * 60 * 10);
       // ensure first thread has blocked
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.workerPool.idleWorker.get() != null;
-        }
-      }.blockTillTrue();
+      new TestCondition(() -> scheduler.workerPool.idleWorker.get() != null).blockTillTrue();
       
       // start second thread
       scheduler.prestartAllThreads();
       // ensure second thread has blocked
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.workerPool.idleWorker.get().nextIdleWorker != null;
-        }
-      }.blockTillTrue();
+      new TestCondition(() -> scheduler.workerPool.idleWorker.get().nextIdleWorker != null)
+        .blockTillTrue();
       
       // schedule soon to run task
       TestRunnable tr = new TestRunnable();

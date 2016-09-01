@@ -35,6 +35,12 @@ public class TestConditionTest {
     }
   }
   
+  @Test (expected = RuntimeException.class)
+  public void defaultConstructorFail() {
+    TestCondition tc = new TestCondition();
+    tc.get();
+  }
+  
   private class DelayCondition extends TestCondition {
     private final long delayTime;
     private long firstGetTime;

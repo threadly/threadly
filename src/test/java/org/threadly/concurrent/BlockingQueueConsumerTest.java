@@ -133,12 +133,7 @@ public class BlockingQueueConsumerTest {
       queue.put(item);
       
       // will throw exception if test fails
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return teh.getLastThrowable() == e;
-        }
-      }.blockTillTrue();
+      new TestCondition(() -> teh.getLastThrowable() == e).blockTillTrue();
       
       // verify thread did not die
       assertTrue(queueConsumer.runningThread.isAlive());

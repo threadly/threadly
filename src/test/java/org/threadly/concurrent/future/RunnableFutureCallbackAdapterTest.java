@@ -101,12 +101,7 @@ public class RunnableFutureCallbackAdapterTest {
     });
     
     t.start();
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return t.isAlive();
-      }
-    }.blockTillTrue();
+    new TestCondition(() -> t.isAlive()).blockTillTrue();
     
     t.interrupt();
     

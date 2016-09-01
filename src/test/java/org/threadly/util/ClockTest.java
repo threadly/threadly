@@ -94,24 +94,14 @@ public class ClockTest {
     Clock.startClockUpdateThread();
     final long before = Clock.lastKnownForwardProgressingMillis();
 
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return Clock.lastKnownForwardProgressingMillis() > before;
-      }
-    }.blockTillTrue(1000);
+    new TestCondition(() -> Clock.lastKnownForwardProgressingMillis() > before).blockTillTrue(1000);
   }
   
   @Test
   public void accurateTimeMillisTest() {
     final long startTime = Clock.accurateTimeMillis();
     
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return Clock.accurateTimeMillis() > startTime;
-      }
-    }.blockTillTrue(200);
+    new TestCondition(() -> Clock.accurateTimeMillis() > startTime).blockTillTrue(200);
   }
   
   @Test
@@ -134,11 +124,6 @@ public class ClockTest {
     
     Clock.startClockUpdateThread();
 
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return Clock.lastKnownTimeMillis() > before;
-      }
-    }.blockTillTrue(1000);
+    new TestCondition(() -> Clock.lastKnownTimeMillis() > before).blockTillTrue(1000);
   }
 }
