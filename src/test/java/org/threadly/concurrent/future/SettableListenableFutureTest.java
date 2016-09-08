@@ -253,6 +253,26 @@ public class SettableListenableFutureTest {
   }
   
   @Test
+  public void cancelRunsListenersTest() {
+    TestRunnable tr = new TestRunnable();
+    slf.addListener(tr);
+    
+    slf.cancel(false);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void addListenerAfterCancelTest() {
+    slf.cancel(false);
+    
+    TestRunnable tr = new TestRunnable();
+    slf.addListener(tr);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
   public void cancelWithInterruptTest() {
     BlockingTestRunnable btr = new BlockingTestRunnable();
     Thread runningThread = new Thread(btr);

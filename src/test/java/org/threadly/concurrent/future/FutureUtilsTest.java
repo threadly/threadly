@@ -707,6 +707,71 @@ public class FutureUtilsTest {
   }
   
   @Test
+  public void cancelIncompleteFuturesIfAnyFailTest() throws InterruptedException, ExecutionException {
+    List<SettableListenableFuture<?>> futures = new ArrayList<SettableListenableFuture<?>>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
+      futures.add(slf);
+      if (i % 2 == 0) {
+        slf.setResult(null);
+      }
+    }
+    
+    FutureUtils.cancelIncompleteFuturesIfAnyFail(false, futures, false);
+    
+    // fail one future
+    futures.get(1).setFailure(null);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<?> slf = futures.get(i);
+      assertTrue(slf.isDone());
+      if (i % 2 == 0) {
+        slf.get();
+        // should not throw as was completed normally
+      } else if (i != 1) {  // skip manually failed future
+        assertTrue(slf.isCancelled());
+      }
+    }
+  }
+  
+  @Test
+  public void cancelIncompleteFuturesIfAnyFailCancelTest() {
+    List<SettableListenableFuture<?>> futures = new ArrayList<SettableListenableFuture<?>>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      futures.add(new SettableListenableFuture<Void>());
+    }
+    
+    FutureUtils.cancelIncompleteFuturesIfAnyFail(false, futures, false);
+    
+    // cancel one future
+    assertTrue(futures.get(1).cancel(false));
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertTrue(futures.get(i).isCancelled());
+    }
+  }
+  
+  @Test
+  public void cancelIncompleteFuturesIfAnyFailCopyTest() {
+    List<SettableListenableFuture<?>> futures = new ArrayList<SettableListenableFuture<?>>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      futures.add(new SettableListenableFuture<Void>());
+    }
+    
+    FutureUtils.cancelIncompleteFuturesIfAnyFail(true, futures, false);
+    
+    // copy and clear futures
+    List<SettableListenableFuture<?>> futuresCopy = new ArrayList<SettableListenableFuture<?>>(futures);
+    futures.clear();
+    // cancel one future
+    assertTrue(futuresCopy.get(1).cancel(false));
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertTrue(futuresCopy.get(i).isCancelled());
+    }
+  }
+  
+  @Test
   public void immediateResultFutureNullResultTest() throws InterruptedException, ExecutionException, TimeoutException {
     ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(null);
     

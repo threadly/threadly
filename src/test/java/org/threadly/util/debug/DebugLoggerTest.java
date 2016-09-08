@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.Test;
+import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
@@ -11,6 +12,16 @@ public class DebugLoggerTest {
   @After
   public void cleanup() {
     DebugLogger.getAllStoredMessages(); // should clear state
+  }
+  
+  @Test
+  public void benchmark() {
+    long start = System.nanoTime();
+    for (int i = 0; i < 500000; i++) {
+      DebugLogger.log("foo");
+    }
+    long end = System.nanoTime();
+    System.out.println((end - start) / Clock.NANOS_IN_MILLISECOND);
   }
   
   @Test

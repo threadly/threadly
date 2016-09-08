@@ -93,6 +93,17 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   }
   
   @Test
+  public void cancelRunsListenersTest() {
+    TestRunnable tr = new TestRunnable();
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
+    future.addListener(tr);
+    
+    future.cancel(false);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
   public void listenerExceptionAddBeforeRunTest() {
     TestRunnable listener = new TestRuntimeFailureRunnable();
     

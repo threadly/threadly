@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -269,7 +270,7 @@ public class FutureUtils {
       @Override
       public void handleFailure(Throwable t) {
         if (t instanceof CancellationException) {
-          // should be canceled via CancelDelegateSettableListenableFuture
+          // caused by user canceling returned CancelDelegateSettableListenableFuture
         } else {
           resultFuture.setFailure(t);
         }
@@ -353,13 +354,19 @@ public class FutureUtils {
    * futures finished in error, they will be ignored and just the successful results will be 
    * provided.  If called with {@code false} then if any futures complete in error, then the 
    * returned future will throw a {@link ExecutionException} with the error as the cause when 
-   * {@link Future#get()} is invoked.
+   * {@link Future#get()} is invoked.  In addition if called with {@code false} and any of the 
+   * provided futures are canceled, then the returned future will also be canceled, resulting in a 
+   * {@link CancellationException} being thrown when {@link Future#get()} is invoked.  In the case 
+   * where there is canceled and failed exceptions in the collection, this will prefer to throw the 
+   * failure as an {@link ExecutionException} rather than obscure it with a 
+   * {@link CancellationException}.  In other words {@link CancellationException} will be thrown 
+   * ONLY if there was canceled tasks, but NO tasks which finished in error.
    * 
    * @since 4.0.0
    * 
    * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over and extract results from
-   * @param ignoreFailedFutures {@code true} to ignore any future failures
+   * @param ignoreFailedFutures {@code true} to ignore any failed or canceled futures
    * @return A {@link ListenableFuture} which will provide a list of the results from the provided futures
    */
   public static <T> ListenableFuture<List<T>> 
@@ -376,25 +383,41 @@ public class FutureUtils {
     completeFuture.addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
       @Override
       public void handleResult(List<ListenableFuture<? extends T>> resultFutures) {
+        boolean needToCancel = false;
         ArrayList<T> results = new ArrayList<T>(resultFutures.size());
         Iterator<ListenableFuture<? extends T>> it = resultFutures.iterator();
         while (it.hasNext()) {
-          try {
-            results.add(it.next().get());
-          } catch (Exception e) {
+          ListenableFuture<? extends T> f = it.next();
+          if (f.isCancelled()) {
             if (! ignoreFailedFutures) {
-              result.setFailure(e);
+              needToCancel = true; // mark to cancel, but search for failure before actually canceling
+            }
+            continue;
+          }
+          try {
+            results.add(f.get());
+          } catch (ExecutionException e) {
+            if (! ignoreFailedFutures) {
+              result.setFailure(e.getCause());
               return;
             }
+          } catch (Exception e) {
+            // should not be possible, future is done, cancel checked first, and ExecutionException caught
+            result.setFailure(new Exception(e));
+            return;
           }
         }
-        result.setResult(results);
+        if (needToCancel) {
+          result.cancel(false);
+        } else {
+          result.setResult(results);
+        }
       }
 
       @Override
       public void handleFailure(Throwable t) {
         if (t instanceof CancellationException) {
-          // should be canceled via CancelDelegateSettableListenableFuture
+          // caused by user canceling returned CancelDelegateSettableListenableFuture
         } else {
           result.setFailure(t);
         }
@@ -416,9 +439,48 @@ public class FutureUtils {
     if (futures == null) {
       return;
     }
-    Iterator<? extends Future<?>> it = futures.iterator();
-    while (it.hasNext()) {
-      it.next().cancel(interruptThread);
+    for (Future<?> f : futures) {
+      f.cancel(interruptThread);
+    }
+  }
+  
+  /**
+   * Provide a group of futures and cancel all of them if any of them are canceled or fail.  
+   * 
+   * If {@code false} is provided for {@code copy} parameter, then {@code futures} will be 
+   * iterated over twice, once during this invocation, and again when needing to cancel the 
+   * futures.  Because of that it is critical the {@link Iterable} provided returns the exact same 
+   * future contents at the time of invoking this call.  If that guarantee can not be provided, 
+   * you must specify {@code true} for the {@code copy} parameter.
+   * 
+   * @since 4.7.2
+   * 
+   * @param copy {@code true} to copy provided futures to avoid
+   * @param futures Futures to be monitored and canceled on error
+   * @param interruptThread Valued passed in to interrupt thread when calling {@link Future#cancel(boolean)}
+   */
+  public static void cancelIncompleteFuturesIfAnyFail(boolean copy, 
+                                                      Iterable<? extends ListenableFuture<?>> futures, 
+                                                      final boolean interruptThread) {
+    if (futures == null) {
+      return;
+    }
+    
+    final ArrayList<ListenableFuture<?>> futuresCopy;
+    final Iterable<? extends ListenableFuture<?>> callbackFutures;
+    if (copy) {
+      callbackFutures = futuresCopy = new ArrayList<ListenableFuture<?>>();
+    } else {
+      futuresCopy = null;
+      callbackFutures = futures;
+    }
+    CancelOnErrorFutureCallback cancelingCallback = 
+        new CancelOnErrorFutureCallback(callbackFutures, interruptThread);
+    for (ListenableFuture<?> f : futures) {
+      if (copy) {
+        futuresCopy.add(f);
+      }
+      f.addCallback(cancelingCallback);
     }
   }
   
@@ -547,7 +609,7 @@ public class FutureUtils {
       // we need a copy in case canceling clears out the futures
       ArrayList<ListenableFuture<? extends T>> futures = this.futures;
       if (super.cancel(interrupt)) {
-        FutureUtils.cancelIncompleteFutures(futures, interrupt);
+        cancelIncompleteFutures(futures, interrupt);
         return true;
       } else {
         return false;
@@ -625,11 +687,13 @@ public class FutureUtils {
       
       @Override
       public void run() {
-        handleFutureDone(f);
-        
-        // all futures are now done
-        if (remainingResult.decrementAndGet() == 0) {
-          setResult(getFinalResultList());
+        try {  // exceptions should not be possible, but done for robustness
+          handleFutureDone(f);
+        } finally {
+          // all futures are now done
+          if (remainingResult.decrementAndGet() == 0) {
+            setResult(getFinalResultList());
+          }
         }
       }
     }
@@ -710,6 +774,11 @@ public class FutureUtils {
 
     @Override
     protected void handleFutureDone(ListenableFuture<? extends T> f) {
+      if (f.isCancelled()) {
+        // detect canceled conditions before an exception would have otherwise thrown
+        // canceled futures are ignored
+        return;
+      }
       try {
         f.get();
         
@@ -723,7 +792,8 @@ public class FutureUtils {
       } catch (ExecutionException e) {
         // ignored
       } catch (CancellationException e) {
-        // ignored
+        // should not be possible due check at start on what should be an already done future
+        throw e;
       }
     }
   }
@@ -746,6 +816,11 @@ public class FutureUtils {
 
     @Override
     protected void handleFutureDone(ListenableFuture<? extends T> f) {
+      if (f.isCancelled()) {
+        // detect canceled conditions before an exception would have otherwise thrown 
+        super.handleFutureDone(f);
+        return;
+      }
       try {
         f.get();
       } catch (InterruptedException e) {
@@ -757,8 +832,34 @@ public class FutureUtils {
         // failed so add it
         super.handleFutureDone(f);
       } catch (CancellationException e) {
-        // canceled so add it
-        super.handleFutureDone(f);
+        // should not be possible due check at start on what should be an already done future
+        throw e;
+      }
+    }
+  }
+  
+  /**
+   * <p>Future callback that on error condition will cancel all the provided futures.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.7.2
+   */
+  protected static class CancelOnErrorFutureCallback extends AbstractFutureCallbackFailureHandler {
+    private final Iterable<? extends ListenableFuture<?>> futures;
+    private final boolean interruptThread;
+    private final AtomicBoolean canceled;
+    
+    public CancelOnErrorFutureCallback(Iterable<? extends ListenableFuture<?>> futures, 
+                                       boolean interruptThread) {
+      this.futures = futures;
+      this.interruptThread = interruptThread;
+      this.canceled = new AtomicBoolean(false);
+    }
+
+    @Override
+    public void handleFailure(Throwable t) {
+      if (! canceled.get() && canceled.compareAndSet(false, true)) {
+        cancelIncompleteFutures(futures, interruptThread);
       }
     }
   }
