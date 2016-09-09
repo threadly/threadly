@@ -8,7 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.SubmitterExecutor;
@@ -578,29 +578,30 @@ public class KeyDistributedExecutor {
    * @since 1.2.0
    */
   protected class StatisticWorker extends TaskQueueWorker {
-    private final AtomicInteger queueSize;
+    private final LongAdder queueSize;
     
     protected StatisticWorker(Object mapKey, Object workerLock, Runnable firstTask) {
       super(mapKey, workerLock, firstTask);
       
-      queueSize = new AtomicInteger(1);
+      queueSize = new LongAdder();
+      queueSize.increment();
     }
     
     @Override
     public int getQueueSize() {
-      return queueSize.get();
+      return queueSize.intValue();
     }
     
     @Override
     protected void add(Runnable task) {
-      queueSize.incrementAndGet();
+      queueSize.increment();
       
       super.add(task);
     }
     
     @Override
     protected void runTask(Runnable task) {
-      queueSize.decrementAndGet();
+      queueSize.decrement();
       
       super.runTask(task);
     }

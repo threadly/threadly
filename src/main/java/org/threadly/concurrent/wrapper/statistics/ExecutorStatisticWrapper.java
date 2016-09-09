@@ -7,8 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableCallableAdapter;
@@ -94,7 +93,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   
   @Override
   protected void doExecute(Runnable task) {
-    statsContainer.queuedTaskCount.incrementAndGet();
+    statsContainer.queuedTaskCount.increment();
     
     executor.execute(new StatisticRunnable(task, Clock.accurateForwardProgressingMillis(), 
                                            statsContainer));
@@ -209,12 +208,12 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
    */
   @Override
   public int getQueuedTaskCount() {
-    return statsContainer.queuedTaskCount.get();
+    return statsContainer.queuedTaskCount.intValue();
   }
 
   @Override
   public long getTotalExecutionCount() {
-    return statsContainer.totalExecutionCount.get();
+    return statsContainer.totalExecutionCount.sum();
   }
   
   @Override
@@ -270,8 +269,8 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   protected static class StatsContainer {
     public final int maxStatisticWindowSize;
     public final boolean accurateTime;
-    protected final AtomicLong totalExecutionCount;
-    protected final AtomicInteger queuedTaskCount;
+    protected final LongAdder totalExecutionCount;
+    protected final LongAdder queuedTaskCount;
     protected final Map<Pair<Thread, Runnable>, Long> runningTasks;
     protected final Deque<Long> runDurations;
     protected final Deque<Long> runDelays;
@@ -279,8 +278,8 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
     public StatsContainer(int maxStatisticWindowSize, boolean accurateTime) {
       this.maxStatisticWindowSize = maxStatisticWindowSize;
       this.accurateTime = accurateTime;
-      this.totalExecutionCount = new AtomicLong();
-      this.queuedTaskCount = new AtomicInteger();
+      this.totalExecutionCount = new LongAdder();
+      this.queuedTaskCount = new LongAdder();
       this.runningTasks = new ConcurrentHashMap<Pair<Thread, Runnable>, Long>();
       this.runDurations = new ArrayDeque<Long>();
       this.runDelays = new ArrayDeque<Long>();
@@ -290,8 +289,8 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
       // get start time before any operations for hopefully more accurate execution delay
       long startTime = Clock.accurateForwardProgressingMillis();
       
-      queuedTaskCount.decrementAndGet();
-      totalExecutionCount.incrementAndGet();
+      queuedTaskCount.decrement();
+      totalExecutionCount.increment();
       
       synchronized (runDelays) {
         runDelays.addLast(startTime - expectedRunTime);

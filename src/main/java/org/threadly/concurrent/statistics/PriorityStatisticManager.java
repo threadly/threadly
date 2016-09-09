@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
@@ -30,9 +30,9 @@ import org.threadly.util.StatisticsUtils;
 class PriorityStatisticManager {
   protected final int maxWindowSize;
   protected final boolean accurateTime;
-  protected final AtomicLong totalHighPriorityExecutions;
-  protected final AtomicLong totalLowPriorityExecutions;
-  protected final AtomicLong totalStarvablePriorityExecutions;
+  protected final LongAdder totalHighPriorityExecutions;
+  protected final LongAdder totalLowPriorityExecutions;
+  protected final LongAdder totalStarvablePriorityExecutions;
   protected final ConcurrentHashMap<Pair<Thread, TaskStatWrapper>, Long> runningTasks;
   protected final ConcurrentArrayList<Long> starvablePriorityRunDurations;
   protected final ConcurrentArrayList<Long> lowPriorityRunDurations;
@@ -44,9 +44,9 @@ class PriorityStatisticManager {
   protected PriorityStatisticManager(int maxWindowSize, boolean accurateTime) {
     this.maxWindowSize = maxWindowSize;
     this.accurateTime = accurateTime;
-    totalHighPriorityExecutions = new AtomicLong(0);
-    totalLowPriorityExecutions = new AtomicLong(0);
-    totalStarvablePriorityExecutions = new AtomicLong(0);
+    totalHighPriorityExecutions = new LongAdder();
+    totalLowPriorityExecutions = new LongAdder();
+    totalStarvablePriorityExecutions = new LongAdder();
     runningTasks = new ConcurrentHashMap<Pair<Thread, TaskStatWrapper>, Long>();
     starvablePriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
     lowPriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
@@ -100,7 +100,7 @@ class PriorityStatisticManager {
    * @param priority TaskPriority to look up against, can not be {@code null}
    * @return AtomicLong to track executions
    */
-  protected AtomicLong getExecutionCount(TaskPriority priority) {
+  protected LongAdder getExecutionCount(TaskPriority priority) {
     switch (priority) {
       case High:
         return totalHighPriorityExecutions;
@@ -119,7 +119,7 @@ class PriorityStatisticManager {
    * @param taskPair Wrapper that is about to be executed
    */
   protected void trackTaskStart(Pair<Thread, TaskStatWrapper> taskPair) {
-    getExecutionCount(taskPair.getRight().priority).incrementAndGet();
+    getExecutionCount(taskPair.getRight().priority).increment();
     
     runningTasks.put(taskPair, Clock.accurateForwardProgressingMillis());
   }
@@ -314,7 +314,7 @@ class PriorityStatisticManager {
   public long getTotalExecutionCount() {
     long result = 0;
     for (TaskPriority p : TaskPriority.values()) {
-      result += getExecutionCount(p).get();
+      result += getExecutionCount(p).sum();
     }
     return result;
   }
@@ -323,7 +323,7 @@ class PriorityStatisticManager {
     if (priority == null) {
       return getTotalExecutionCount();
     }
-    return getExecutionCount(priority).get();
+    return getExecutionCount(priority).sum();
   }
   
   /**

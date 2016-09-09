@@ -6,6 +6,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
 import org.threadly.util.AbstractService;
@@ -373,7 +374,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final ThreadFactory threadFactory;
     protected final Object poolSizeChangeLock;
     protected final Object idleWorkerDequeLock;
-    protected final AtomicInteger idleWorkerCount;
+    protected final LongAdder idleWorkerCount;
     protected final AtomicReference<Worker> idleWorker;
     protected final AtomicInteger currentPoolSize;
     protected final Object workerStopNotifyLock;
@@ -391,7 +392,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       poolSizeChangeLock = new Object();
       idleWorkerDequeLock = new Object();
-      idleWorkerCount = new AtomicInteger(0);
+      idleWorkerCount = new LongAdder();
       idleWorker = new AtomicReference<Worker>(null);
       currentPoolSize = new AtomicInteger(0);
       workerStopNotifyLock = new Object();
@@ -593,7 +594,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public int getActiveTaskCount() {
       while (true) {
         int poolSize = currentPoolSize.get();
-        int result = poolSize - idleWorkerCount.get();
+        int result = poolSize - idleWorkerCount.intValue();
         if (poolSize == currentPoolSize.get()) {
           return result;
         }
@@ -628,7 +629,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @param worker Worker that is ready to become idle
      */
     protected void addWorkerToIdleChain(Worker worker) {
-      idleWorkerCount.incrementAndGet();
+      idleWorkerCount.increment();
       
       while (true) {
         Worker casWorker = idleWorker.get();
@@ -647,7 +648,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @param worker Worker reference to remove from the chain (can not be {@code null})
      */
     protected void removeWorkerFromIdleChain(Worker worker) {
-      idleWorkerCount.decrementAndGet();
+      idleWorkerCount.decrement();
       
       /* We must lock here to avoid thread contention when removing from the chain.  This is 
        * the one place where we set the reference to a workers "nextIdleWorker" from a thread 
