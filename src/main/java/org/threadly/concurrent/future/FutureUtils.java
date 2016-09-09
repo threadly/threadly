@@ -145,6 +145,9 @@ public class FutureUtils {
     Iterator<? extends Future<?>> it = futures.iterator();
     while (it.hasNext()) {
       Future<?> f = it.next();
+      if (f.isCancelled()) {
+        continue;
+      }
       try {
         if (comparisonResult == null) {
           if (f.get() == null) {
