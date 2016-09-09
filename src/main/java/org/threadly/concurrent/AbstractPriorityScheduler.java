@@ -299,39 +299,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     }
 
     /**
-     * Call to find and reposition a scheduled task.  It is expected that the task provided has 
-     * already been added to the queue.  This call will use 
-     * {@link RecurringTaskWrapper#getRunTime()} to figure out what the new position within the 
-     * queue should be.
-     * 
-     * @param task Task to find in queue and reposition based off next delay
-     */
-    public void reschedule(RecurringTaskWrapper task) {
-      int insertionIndex = -1;
-      synchronized (scheduleQueue.getModificationLock()) {
-        int currentIndex = scheduleQueue.lastIndexOf(task);
-        if (currentIndex > 0) {
-          insertionIndex = SortUtils.getInsertionEndIndex(scheduleQueueRunTimeByIndex, 
-                                                          scheduleQueue.size() - 1, 
-                                                          task.getPureRunTime(), true);
-          
-          scheduleQueue.reposition(currentIndex, insertionIndex);
-        } else if (currentIndex == 0) {
-          insertionIndex = 0;
-        }
-        
-        // we can only update executing AFTER the reposition has finished
-        task.executing = false;
-        task.executeFlipCounter++;  // increment again to indicate execute state change
-      }
-      
-      // need to unpark even if the task is not ready, otherwise we may get stuck on an infinite park
-      if (insertionIndex == 0) {
-        queueListener.handleQueueUpdate();
-      }
-    }
-
-    /**
      * Removes a given callable from the internal queues (if it exists).
      * 
      * @param task Callable to search for and remove
@@ -718,7 +685,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   protected static class OneTimeTaskWrapper extends TaskWrapper {
     protected final Queue<? extends TaskWrapper> taskQueue;
     protected final long runTime;
-    private volatile boolean executed; // optimization to avoid queue traversal on failure to remove
+    // optimization to avoid queue traversal on failure to remove, cheaper than AtomicBoolean
+    private volatile boolean executed;
     
     protected OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task);
@@ -753,8 +721,9 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
 
     @Override
     public boolean canExecute(short ignoredExecuteReference) {
-      if (! executed && taskQueue.remove(this)) {
-        executed = true;
+      if (! executed && 
+          (executed = true) && // set executed as soon as possible, before removal attempt
+          taskQueue.remove(this)) { // every task is wrapped in a unique wrapper, so we can remove 'this' safely
         return true;
       } else {
         return false;
@@ -846,6 +815,41 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         }
       }
     }
+
+    /**
+     * Call to find and reposition a scheduled task.  It is expected that the task provided has 
+     * already been added to the queue.  This call will use 
+     * {@link RecurringTaskWrapper#getRunTime()} to figure out what the new position within the 
+     * queue should be.
+     */
+    protected void reschedule() {
+      int insertionIndex = -1;
+      synchronized (queueSet.scheduleQueue.getModificationLock()) {
+        int currentIndex = queueSet.scheduleQueue.lastIndexOf(this);
+        if (currentIndex > 0) {
+          insertionIndex = SortUtils.getInsertionEndIndex(queueSet.scheduleQueueRunTimeByIndex, 
+                                                          queueSet.scheduleQueue.size() - 1, 
+                                                          nextRunTime, true);
+          
+          queueSet.scheduleQueue.reposition(currentIndex, insertionIndex);
+        } else if (currentIndex == 0) {
+          insertionIndex = 0;
+        } else {
+          // task removed, no-op, but might as well tidy up the state even though nothing cares
+        }
+        
+        // we can only update executing AFTER the reposition has finished
+        // The synchronization lock must be held during this because changing executing
+        // changes the scheduled delay, and thus we can not have other threads examining the task queue
+        executing = false;
+        executeFlipCounter++;  // increment again to indicate execute state change
+      }
+
+      // kind of awkward we need to know here, but we we need to let the queue set know if the head changed
+      if (insertionIndex == 0) {
+        queueSet.queueListener.handleQueueUpdate();
+      }
+    }
     
     /**
      * Called when the implementing class should update the variable {@code nextRunTime} to be the 
@@ -864,8 +868,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       
       if (! invalidated) {
         updateNextRunTime();
-        // now that nextRunTime has been set, resort the queue
-        queueSet.reschedule(this);  // this will set executing to false atomically with the resort
+        // now that nextRunTime has been set, resort the queue (ask reschedule)
+        reschedule();  // this will set executing to false atomically with the resort
       }
     }
   }
