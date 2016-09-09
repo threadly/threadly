@@ -473,8 +473,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
       } finally {
         if (! invalidated) {
           updateNextRunTime();
-          // now that nextRunTime has been set, resort the queue
-          queueSet.reschedule(this);  // this will set executing to false atomically with the resort
+          // now that nextRunTime has been set, resort the queue (ask reschedule)
+          reschedule();  // this will set executing to false atomically with the resort
         }
       }
     }
