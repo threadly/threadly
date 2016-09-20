@@ -370,6 +370,7 @@ public class ExceptionUtils {
    * @param stack Array of stack elements to build the string off of
    * @param stringBuilder StringBuilder to write the stack out to
    */
+  @SuppressWarnings("deprecation")
   public static void writeStackTo(StackTraceElement[] stack, StringBuilder stringBuilder) {
     if (stack == null) {
       return;

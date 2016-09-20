@@ -73,6 +73,7 @@ public class DebugLogger {
    * @param includeLogTimes boolean to include time in nanoseconds that log message was recorded
    * @return string with all log messages, separated by a new line
    */
+  @SuppressWarnings("deprecation")
   public static String getAllStoredMessages(boolean includeLogTimes) {
     ConcurrentSkipListMap<Long, String> currentLog = logMap;
     logMap = new ConcurrentSkipListMap<Long, String>();
@@ -128,6 +129,7 @@ public class DebugLogger {
    * @param includeLogTimes boolean to include time in nanoseconds that log message was recorded
    * @return string with requested log messages, separated by a new line
    */
+  @SuppressWarnings("deprecation")
   public static String getOldestLogMessages(int qty, boolean includeLogTimes) {
     int collectedQty = 0;
     StringBuilder result = new StringBuilder();
