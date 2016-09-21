@@ -15,8 +15,8 @@ import org.threadly.concurrent.SchedulerService;
  * equivalent of supplying a limited sized blocking queue to a java.util.concurrent thread 
  * pool.</p>
  * 
- * <p>See {@link ExecutorQueueLimitRejector} and {@link SubmitterSchedulerQueueLimitRejector} as 
- * other possible implementations.</p>
+ * <p>See {@link ExecutorQueueLimitRejector}, {@link SubmitterSchedulerQueueLimitRejector} and 
+ * {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.</p>
  *  
  * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)

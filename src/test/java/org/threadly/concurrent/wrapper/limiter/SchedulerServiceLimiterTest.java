@@ -26,8 +26,8 @@ public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
     return new SchedulerLimiterFactory();
   }
   
-  @Override
   @Test
+  @Override
   @SuppressWarnings("unused")
   public void constructorFail() {
     try {
