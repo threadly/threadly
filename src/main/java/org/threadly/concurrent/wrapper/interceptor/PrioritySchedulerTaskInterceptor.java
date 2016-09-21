@@ -109,4 +109,9 @@ public abstract class PrioritySchedulerTaskInterceptor extends SchedulerServiceT
   public long getMaxWaitForLowPriority() {
     return parentScheduler.getMaxWaitForLowPriority();
   }
+
+  @Override
+  public int getQueuedTaskCount(TaskPriority priority) {
+    return parentScheduler.getQueuedTaskCount(priority);
+  }
 }

@@ -191,6 +191,11 @@ public class PrioritySchedulerLimiter extends SchedulerServiceLimiter
     return scheduler.getMaxWaitForLowPriority();
   }
 
+  @Override
+  public int getQueuedTaskCount(TaskPriority priority) {
+    return scheduler.getQueuedTaskCount(priority);
+  }
+
   /**
    * <p>Wrapper for recurring tasks that reschedule with a given delay after completing 
    * execution.</p>

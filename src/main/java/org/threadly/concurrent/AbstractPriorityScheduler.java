@@ -235,13 +235,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     return result;
   }
   
-  /**
-   * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
-   * executed at a future point for a specific priority.
-   * 
-   * @param priority priority for tasks to be counted
-   * @return quantity of tasks waiting execution or scheduled to be executed later
-   */
+  @Override
   public int getQueuedTaskCount(TaskPriority priority) {
     if (priority == null) {
       return getQueuedTaskCount();

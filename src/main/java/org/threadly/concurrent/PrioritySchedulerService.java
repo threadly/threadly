@@ -167,4 +167,13 @@ public interface PrioritySchedulerService extends SchedulerServiceInterface {
    * @return currently set max wait for low priority task
    */
   public long getMaxWaitForLowPriority();
+
+  /**
+   * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
+   * executed at a future point for a specific priority.
+   * 
+   * @param priority priority for tasks to be counted
+   * @return quantity of tasks waiting execution or scheduled to be executed later
+   */
+  public int getQueuedTaskCount(TaskPriority priority);
 }
