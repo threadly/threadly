@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionUtils.TransformedException;
+import org.threadly.util.ExceptionUtils.TransformedSuppressedStackException;
 
 @SuppressWarnings("javadoc")
 public class ExceptionUtilsTest {
@@ -440,6 +441,69 @@ public class ExceptionUtilsTest {
   @Test
   public void makeRuntimeWithNullTest() {
     RuntimeException resultException = ExceptionUtils.makeRuntime(null);
+    assertNotNull(resultException);
+
+    // verify stack trace does not contain Util.makeRuntime inside it for when it created a new exception
+    StackTraceElement[] stack = resultException.getStackTrace();
+    for (StackTraceElement ste : stack) {
+      assertFalse(ste.getClass().getName().equals(ExceptionUtils.class.getName()));
+    }
+
+    // verify that no cause is provided
+    assertNull(resultException.getCause());
+  }
+  
+  @Test
+  public void makeRuntimeBooleanWithRuntimeTest() {
+    RuntimeException testException = new RuntimeException();
+
+    RuntimeException resultException = ExceptionUtils.makeRuntime(testException, false);
+    assertNotNull(resultException);
+
+    // we expect the exact same reference to come out
+    assertTrue(testException == resultException);
+  }
+
+  @Test
+  public void makeRuntimeBooleanWithNonRuntimeTest() {
+    Exception testException = new Exception();
+
+    RuntimeException resultException = ExceptionUtils.makeRuntime(testException, false);
+    assertNotNull(resultException);
+    assertTrue(resultException instanceof TransformedException);
+
+    // verify stack trace does not contain Util.makeRuntime inside it for when it created a new exception
+    StackTraceElement[] stack = resultException.getStackTrace();
+    for (StackTraceElement ste : stack) {
+      assertFalse(ste.getClassName().equals(ExceptionUtils.class.getName()));
+    }
+
+    // verify the cause was our original exception
+    assertTrue(testException == resultException.getCause());
+  }
+
+  @Test
+  public void makeRuntimeStackSuppressedWithNonRuntimeTest() {
+    Exception testException = new Exception();
+
+    RuntimeException resultException = ExceptionUtils.makeRuntime(testException, true);
+    assertNotNull(resultException);
+    assertTrue(resultException instanceof TransformedSuppressedStackException);
+
+    // verify stack trace does not contain Util.makeRuntime inside it for when it created a new exception
+    StackTraceElement[] stack = resultException.getStackTrace();
+    for (StackTraceElement ste : stack) {
+      assertFalse(ste.getClassName().equals(ExceptionUtils.class.getName()));
+      assertFalse(ste.getClassName().equals(ExceptionUtilsTest.class.getName()));
+    }
+
+    // verify the cause was our original exception
+    assertTrue(testException == resultException.getCause());
+  }
+
+  @Test
+  public void makeRuntimeBooleanWithNullTest() {
+    RuntimeException resultException = ExceptionUtils.makeRuntime(null, false);
     assertNotNull(resultException);
 
     // verify stack trace does not contain Util.makeRuntime inside it for when it created a new exception
