@@ -9,6 +9,8 @@ package org.threadly.concurrent.future;
  * some other means to detect it (like ListenableFuture#addListener(Runnable), you may never know 
  * the computation is complete.</p>
  * 
+ * <p>For a simpler construction using a lambda look at {@link FutureCallbackResultHandler}.</p>
+ * 
  * @author jent - Mike Jensen
  * @param <T> Type of result returned
  * @since 4.4.0
