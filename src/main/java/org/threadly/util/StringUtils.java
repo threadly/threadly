@@ -13,7 +13,7 @@ public class StringUtils {
    * Constant to represent the line separator for the system (captured from 
    * System.getProperty("line.separator")).
    * 
-   * @deprecated Use System.lineSeperator() as an alternative (from JDK 1.7+)
+   * @deprecated Use System.lineSeparator() as an alternative (from JDK 1.7+)
    */
   @Deprecated
   public static final String NEW_LINE;
