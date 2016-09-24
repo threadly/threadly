@@ -145,6 +145,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
    * 
    * @author jent - Mike Jensen
    * @since 4.8.0
+   * @param <T> The type for the object returned from the callable
    */
   protected static class DecrementingCallable<T> implements Callable<T>, CallableContainer<T> {
     private final Callable<T> task;
