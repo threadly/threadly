@@ -22,15 +22,15 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class ListenableFutureTaskTest extends RunnableFutureTest {
+public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceTest {
   @BeforeClass
   public static void setupClass() {
     ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
   @Override
-  protected FutureFactory makeFutureFactory() {
-    return new Factory();
+  protected ExecuteOnGetFutureFactory makeFutureFactory() {
+    return new ListenableFutureTaskFactory();
   }
   
   protected <T> ListenableFutureTask<T> makeFutureTask(Runnable runnable, T result) {
@@ -149,30 +149,6 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   }
   
   @Test
-  public void addCallbackAlreadyDoneFutureTest() {
-    TestCallable tc = new TestCallable();
-    ListenableFutureTask<Object> future = makeFutureTask(tc);
-    future.run();
-    TestFutureCallback tfc = new TestFutureCallback();
-    future.addCallback(tfc);
-    
-    assertEquals(1, tfc.getCallCount());
-    assertTrue(tc.getReturnedResult() == tfc.getLastResult());
-  }
-  
-  @Test
-  public void addCallbackExecutionExceptionAlreadyDoneTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
-    ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
-    future.run();
-    TestFutureCallback tfc = new TestFutureCallback();
-    future.addCallback(tfc);
-    
-    assertEquals(1, tfc.getCallCount());
-    assertTrue(failure == tfc.getLastFailure());
-  }
-  
-  @Test
   public void addCallbackExecutionExceptionTest() {
     RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
@@ -207,7 +183,7 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
     future.get(100, TimeUnit.MILLISECONDS);
   }
   
-  private class Factory implements FutureFactory {
+  private class ListenableFutureTaskFactory implements ExecuteOnGetFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
       return new ListenableFutureTask<Object>(false, run);
@@ -221,6 +197,27 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
     @Override
     public <T> RunnableFuture<T> make(Callable<T> callable) {
       return new ListenableFutureTask<T>(false, callable);
+    }
+
+    @Override
+    public ListenableFuture<?> makeCanceled() {
+      ListenableFutureTask<?> lft = new ListenableFutureTask<Object>(false, DoNothingRunnable.instance());
+      lft.cancel(false);
+      return lft;
+    }
+
+    @Override
+    public ListenableFuture<?> makeWithFailure(Exception e) {
+      ListenableFutureTask<?> lft = new ListenableFutureTask<Object>(false, () -> { throw e; });
+      lft.run();
+      return lft;
+    }
+
+    @Override
+    public <T> ListenableFuture<T> makeWithResult(T result) {
+      ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, () -> result);
+      lft.run();
+      return lft;
     }
   }
   

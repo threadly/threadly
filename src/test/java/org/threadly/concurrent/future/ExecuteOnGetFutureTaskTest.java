@@ -7,12 +7,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
 
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
 public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Override
-  protected FutureFactory makeFutureFactory() {
+  protected ExecuteOnGetFutureFactory makeFutureFactory() {
     return new Factory();
   }
 
@@ -27,7 +28,7 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   }
   
   @Test
-  public void executeViaGetTest() throws InterruptedException, ExecutionException {
+  public void executeInvokedByGetTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
     ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Void>(tr);
     
@@ -49,7 +50,7 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
     assertTrue(tr.ranOnce());
   }
   
-  private class Factory implements FutureFactory {
+  private class Factory implements ExecuteOnGetFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
       return new ExecuteOnGetFutureTask<Object>(run);
@@ -63,6 +64,27 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
     @Override
     public <T> RunnableFuture<T> make(Callable<T> callable) {
       return new ExecuteOnGetFutureTask<T>(callable);
+    }
+
+    @Override
+    public ListenableFuture<?> makeCanceled() {
+      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<Object>(DoNothingRunnable.instance());
+      lft.cancel(false);
+      return lft;
+    }
+
+    @Override
+    public ListenableFuture<?> makeWithFailure(Exception t) {
+      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<Object>(() -> { throw t; });
+      lft.run();
+      return lft;
+    }
+
+    @Override
+    public <T> ListenableFuture<T> makeWithResult(T result) {
+      ListenableFutureTask<T> lft = new ExecuteOnGetFutureTask<T>(() -> result);
+      lft.run();
+      return lft;
     }
   }
 }

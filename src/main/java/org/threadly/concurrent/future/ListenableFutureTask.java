@@ -3,6 +3,7 @@ package org.threadly.concurrent.future;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
+import java.util.function.Function;
 
 import org.threadly.concurrent.CallableContainer;
 import org.threadly.concurrent.RunnableCallableAdapter;
@@ -85,6 +86,16 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor) {
     addListener(new RunnableFutureCallbackAdapter<T>(this, callback), executor);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<? super T, R> mapper) {
+    return map(mapper, null);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<? super T, R> mapper, Executor executor) {
+    return FutureUtils.transform(this, mapper, executor);
   }
   
   /**

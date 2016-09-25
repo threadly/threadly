@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 /**
  * <p>Implementation of the {@link ListenableScheduledFuture} interface.  This design delegates 
@@ -84,5 +85,15 @@ public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> 
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor) {
     futureImp.addCallback(callback, executor);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<? super T, R> mapper) {
+    return futureImp.map(mapper);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<? super T, R> mapper, Executor executor) {
+    return futureImp.map(mapper, executor);
   }
 }

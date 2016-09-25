@@ -7,6 +7,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 @SuppressWarnings("javadoc")
 public class TestFutureImp implements ListenableFuture<Object> {
@@ -74,5 +75,15 @@ public class TestFutureImp implements ListenableFuture<Object> {
   @Override
   public void addCallback(FutureCallback<? super Object> callback, Executor executor) {
     addListener(new RunnableFutureCallbackAdapter<Object>(this, callback), executor);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<Object, R> mapper) {
+    return map(mapper, null);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<Object, R> mapper, Executor executor) {
+    return FutureUtils.transform(this, mapper, executor);
   }
 }

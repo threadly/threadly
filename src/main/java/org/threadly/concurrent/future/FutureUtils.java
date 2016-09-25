@@ -6,12 +6,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.Clock;
@@ -638,6 +640,76 @@ public class FutureUtils {
    */
   public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
     return new ImmediateFailureListenableFuture<T>(failure);
+  }
+  
+  /**
+   * Transform a future's result into another future by applying the provided transformation 
+   * function.  If the future completed in error, then the mapper will not be invoked, and instead 
+   * the returned future will be completed in the same error state this future resulted in.  If the 
+   * mapper function itself throws an Exception, then the returned future will result in the error 
+   * thrown from the mapper.  
+   * 
+   * This can be easily used to chain together a series of operations, happening async until the 
+   * final result is actually needed.  Once the future completes the mapper function will be invoked 
+   * on the executor (if provided).  Because of that providing an executor can ensure this will 
+   * never block.  If an executor is not provided then the mapper may be invoked on the calling 
+   * thread (if the future is already complete), or on the same thread which the future completes 
+   * on.  If the mapper function is very fast and cheap to run then {@link #map(Function)} or 
+   * providing {@code null} for the executor can allow more efficient operation.
+   * 
+   * @param <ST> The source type for the object returned from the future and inputed into the mapper
+   * @param <RT> The result type for the object returned from the mapper
+   * @param sourceFuture Future to source input into transformation function
+   * @param transformFunction Function to apply result from future into returned future
+   * @param executor Executor to execute transformation function on, or {@code null}
+   * @return Future with result of transformation function or respective error
+   */
+  protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
+                                                           Function<? super ST, RT> transformFunction, 
+                                                           Executor executor) {
+    if (executor == null && sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+      // optimized path for already complete futures which we can now process in thread
+      try {
+        return FutureUtils.immediateResultFuture(transformFunction.apply(sourceFuture.get()));
+      } catch (InterruptedException e) {
+        // should not be possible
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        // failure in getting result from future, transfer failure
+        return FutureUtils.immediateFailureFuture(e.getCause());
+      } catch (Throwable t) {
+        // failure calculating transformation
+        return FutureUtils.immediateFailureFuture(t);
+      }
+    } else {
+      SettableListenableFuture<RT> slf = new SettableListenableFuture<RT>();
+      if (sourceFuture.isCancelled()) {
+        // shortcut
+        slf.cancel(false);
+        return slf;
+      }
+      // may still process in thread if future completed after check and executor is null
+      sourceFuture.addCallback(new FutureCallback<ST>() {
+        @Override
+        public void handleResult(ST result) {
+          try {
+            slf.setResult(transformFunction.apply(result));
+          } catch (Throwable t) {
+            slf.setFailure(t);
+          }
+        }
+        
+        @Override
+        public void handleFailure(Throwable t) {
+          if (t instanceof CancellationException) {
+            slf.cancel(false);
+          } else {
+            slf.setFailure(t);
+          }
+        }
+      }, executor);
+      return slf;
+    }
   }
   
   /**
