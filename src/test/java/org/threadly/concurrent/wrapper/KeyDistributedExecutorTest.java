@@ -34,6 +34,7 @@ import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.SuppressedStackRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
@@ -347,7 +348,7 @@ public class KeyDistributedExecutorTest {
   public void taskExceptionTest() {
     Integer key = 1;
     TestExceptionHandler teh = new TestExceptionHandler();
-    final RuntimeException testException = new RuntimeException();
+    final RuntimeException testException = new SuppressedStackRuntimeException();
     ExceptionUtils.setDefaultExceptionHandler(teh);
     TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
     TestRunnable followRunnable = new TestRunnable();

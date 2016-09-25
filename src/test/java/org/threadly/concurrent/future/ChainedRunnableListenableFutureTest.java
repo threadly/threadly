@@ -16,6 +16,7 @@ import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class ChainedRunnableListenableFutureTest {
@@ -38,7 +39,7 @@ public class ChainedRunnableListenableFutureTest {
   
   @Test
   public void getCallableFailureTest() throws InterruptedException {
-    final RuntimeException failure = new RuntimeException();
+    final RuntimeException failure = new SuppressedStackRuntimeException();
     RunnableFuture<Void> future;
     future = new ChainedRunnableListenableFuture<Void>(new SettableListenableFuture<Void>(), 
                                                        SameThreadSubmitterExecutor.instance(), 
@@ -148,7 +149,7 @@ public class ChainedRunnableListenableFutureTest {
       @Override
       public Void call() {
         if (failure) {
-          throw new RuntimeException();
+          throw new SuppressedStackRuntimeException();
         } else {
           return null;
         }
@@ -212,7 +213,7 @@ public class ChainedRunnableListenableFutureTest {
   
   @Test
   public void addCallbackExecutionExceptionTest() {
-    final RuntimeException failure = new RuntimeException();
+    final RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableRunnableFuture<String> future;
     future = new ChainedRunnableListenableFuture<String>(SameThreadSubmitterExecutor.instance(), 
                                                          new Callable<String>() {
@@ -235,7 +236,7 @@ public class ChainedRunnableListenableFutureTest {
   
   @Test
   public void addCallbackExecutionExceptionAlreadyDoneTest() {
-    final RuntimeException failure = new RuntimeException();
+    final RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableRunnableFuture<String> future;
     future = new ChainedRunnableListenableFuture<String>(SameThreadSubmitterExecutor.instance(), 
                                                          new Callable<String>() {

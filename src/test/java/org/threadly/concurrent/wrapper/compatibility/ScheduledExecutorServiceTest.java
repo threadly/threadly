@@ -27,6 +27,7 @@ import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public abstract class ScheduledExecutorServiceTest {
@@ -343,7 +344,7 @@ public abstract class ScheduledExecutorServiceTest {
         @Override
         public void handleRunFinish() {
           if (this.getRunCount() >= runCountTillException) {
-            throw new RuntimeException();
+            throw new SuppressedStackRuntimeException();
           }
         }
       };
@@ -493,7 +494,7 @@ public abstract class ScheduledExecutorServiceTest {
           tc = new TestCallable(0) {
             @Override
             protected void handleCallStart() {
-              throw new RuntimeException();
+              throw new SuppressedStackRuntimeException();
             }
           };
         } else {

@@ -105,14 +105,14 @@ public class AbstractServiceTest {
     @Override
     protected void startupService() {
       if (! startCalled.compareAndSet(false, true)) {
-        throw new RuntimeException();
+        throw new SuppressedStackRuntimeException();
       }
     }
 
     @Override
     protected void shutdownService() {
       if (! stopCalled.compareAndSet(false, true)) {
-        throw new RuntimeException();
+        throw new SuppressedStackRuntimeException();
       }
     }
   }

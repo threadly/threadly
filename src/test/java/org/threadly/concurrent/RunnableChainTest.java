@@ -10,6 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class RunnableChainTest {
@@ -80,7 +81,7 @@ public class RunnableChainTest {
     @Override
     public void handleRunStart() {
       if (fail) {
-        throw new RuntimeException("Test failure exception");
+        throw new SuppressedStackRuntimeException("Test failure exception");
       }
     }
   }

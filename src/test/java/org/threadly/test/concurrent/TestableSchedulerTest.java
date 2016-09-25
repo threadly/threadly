@@ -19,6 +19,7 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class TestableSchedulerTest {
@@ -68,7 +69,7 @@ public class TestableSchedulerTest {
   
   @Test
   public void advanceWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -81,7 +82,7 @@ public class TestableSchedulerTest {
   
   @Test
   public void advanceHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
@@ -98,7 +99,7 @@ public class TestableSchedulerTest {
   
   @Test
   public void tickWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -111,7 +112,7 @@ public class TestableSchedulerTest {
   
   @Test
   public void tickHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
@@ -205,8 +206,7 @@ public class TestableSchedulerTest {
   }
   
   @Test
-  public void submitCallableTest() throws InterruptedException, 
-                                          ExecutionException {
+  public void submitCallableTest() throws InterruptedException, ExecutionException {
     List<TestCallable> callables = getCallableList();
     List<Future<Object>> futures = new ArrayList<Future<Object>>(callables.size());
     Iterator<TestCallable> it = callables.iterator();

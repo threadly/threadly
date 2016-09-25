@@ -18,6 +18,7 @@ import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public abstract class SubmitterExecutorInterfaceTest {
@@ -205,7 +206,7 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      RuntimeException failure = new RuntimeException();
+      RuntimeException failure = new SuppressedStackRuntimeException();
       TestRuntimeFailureRunnable tr = new TestRuntimeFailureRunnable(failure);
       ListenableFuture<?> future = executor.submit(tr);
       // no exception should propagate
@@ -279,7 +280,7 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      RuntimeException failure = new RuntimeException();
+      RuntimeException failure = new SuppressedStackRuntimeException();
       TestRuntimeFailureRunnable tr = new TestRuntimeFailureRunnable(failure);
       ListenableFuture<?> future = executor.submit(tr, new Object());
       // no exception should propagate
@@ -342,7 +343,7 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      final RuntimeException failure = new RuntimeException();
+      final RuntimeException failure = new SuppressedStackRuntimeException();
       ListenableFuture<?> future = executor.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {

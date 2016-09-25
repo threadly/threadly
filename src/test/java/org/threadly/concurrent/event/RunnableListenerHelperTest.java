@@ -11,6 +11,7 @@ import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class RunnableListenerHelperTest {
@@ -80,7 +81,7 @@ public class RunnableListenerHelperTest {
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunFinish() {
-        throw new RuntimeException();
+        throw new SuppressedStackRuntimeException();
       }
     };
     onceHelper.runListener(tr, null, false);
@@ -93,7 +94,7 @@ public class RunnableListenerHelperTest {
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunFinish() {
-        throw new RuntimeException();
+        throw new SuppressedStackRuntimeException();
       }
     };
     onceHelper.runListener(tr, null, true);

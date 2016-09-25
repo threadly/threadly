@@ -21,6 +21,7 @@ import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest {
@@ -61,7 +62,7 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void tickWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -74,7 +75,7 @@ public class NoThreadSchedulerTest {
   
   @Test
   public void tickHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     

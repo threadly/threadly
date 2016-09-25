@@ -40,7 +40,7 @@ public class ExceptionUtilsTest {
   public void runRunnableThrownTest() {
     TestExceptionHandler exceptionHandler = new TestExceptionHandler();
     ExceptionUtils.setThreadExceptionHandler(exceptionHandler);
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     TestRuntimeFailureRunnable runnable = new TestRuntimeFailureRunnable(failure);
     
     ExceptionUtils.runRunnable(runnable);
@@ -111,7 +111,7 @@ public class ExceptionUtilsTest {
   @Test
   @SuppressWarnings("resource")
   public void handleExceptionThrowExceptionTest() {
-    final RuntimeException thrownException = new RuntimeException();
+    final RuntimeException thrownException = new SuppressedStackRuntimeException();
     // set handler that will throw exception
     ExceptionUtils.setThreadExceptionHandler(new ExceptionHandler() {
       @Override
@@ -346,7 +346,7 @@ public class ExceptionUtilsTest {
   
   @Test
   public void getCauseOfTypeMissingTest() {
-    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    Exception e = new Exception(new SuppressedStackRuntimeException(new SuppressedStackRuntimeException()));
     assertNull(ExceptionUtils.getCauseOfType(e, IllegalArgumentException.class));
   }
   
@@ -364,7 +364,7 @@ public class ExceptionUtilsTest {
   
   @Test
   public void hasCauseOfTypeMissingTest() {
-    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    Exception e = new Exception(new SuppressedStackRuntimeException(new SuppressedStackRuntimeException()));
     assertFalse(ExceptionUtils.hasCauseOfType(e, IllegalArgumentException.class));
   }
   
@@ -381,7 +381,7 @@ public class ExceptionUtilsTest {
   
   @Test
   public void getCauseOfTypesMissingTest() {
-    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    Exception e = new Exception(new SuppressedStackRuntimeException(new SuppressedStackRuntimeException()));
     assertNull(ExceptionUtils.getCauseOfTypes(e, Collections.singletonList(IllegalArgumentException.class)));
   }
   
@@ -399,7 +399,7 @@ public class ExceptionUtilsTest {
   
   @Test
   public void hasCauseOfTypesMissingTest() {
-    Exception e = new Exception(new RuntimeException(new RuntimeException()));
+    Exception e = new Exception(new SuppressedStackRuntimeException(new SuppressedStackRuntimeException()));
     assertFalse(ExceptionUtils.hasCauseOfTypes(e, Collections.singletonList(IllegalArgumentException.class)));
   }
   
@@ -411,7 +411,7 @@ public class ExceptionUtilsTest {
   
   @Test
   public void makeRuntimeWithRuntimeTest() {
-    RuntimeException testException = new RuntimeException();
+    RuntimeException testException = new SuppressedStackRuntimeException();
 
     RuntimeException resultException = ExceptionUtils.makeRuntime(testException);
     assertNotNull(resultException);
@@ -455,7 +455,7 @@ public class ExceptionUtilsTest {
   
   @Test
   public void makeRuntimeBooleanWithRuntimeTest() {
-    RuntimeException testException = new RuntimeException();
+    RuntimeException testException = new SuppressedStackRuntimeException();
 
     RuntimeException resultException = ExceptionUtils.makeRuntime(testException, false);
     assertNotNull(resultException);

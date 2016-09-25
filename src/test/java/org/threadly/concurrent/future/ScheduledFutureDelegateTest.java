@@ -10,6 +10,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 import org.threadly.concurrent.TestDelayed;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class ScheduledFutureDelegateTest<T> {
@@ -107,7 +108,7 @@ public class ScheduledFutureDelegateTest<T> {
     TestFutureImp future = new TestFutureImp(false) {
       @Override
       public Object get() throws ExecutionException {
-        throw new ExecutionException(new RuntimeException());
+        throw new ExecutionException(new SuppressedStackRuntimeException());
       }
     };
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);

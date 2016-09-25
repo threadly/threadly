@@ -8,6 +8,7 @@ import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class InvocationTeeTest {
@@ -66,7 +67,7 @@ public class InvocationTeeTest {
   
   @Test
   public void invokeWithExceptionThrowingListenerExceptionTest() {
-    RuntimeException thrown = new RuntimeException();
+    RuntimeException thrown = new SuppressedStackRuntimeException();
     TestRunnable tr = new TestRuntimeFailureRunnable(thrown);
     Runnable r = InvocationTee.teeWithExceptionThrowing(Runnable.class, null, tr);
     try {

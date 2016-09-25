@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.SuppressedStackRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings({"javadoc", "deprecation"})
@@ -38,7 +39,7 @@ public class ThrowableSuppressingRunnableTest {
   @Test
   public void runExceptionTest() {
     TestExceptionHandler teh = new TestExceptionHandler();
-    final RuntimeException testException = new RuntimeException();
+    final RuntimeException testException = new SuppressedStackRuntimeException();
     ExceptionUtils.setThreadExceptionHandler(teh);
     TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
     Runnable tsr = new ThrowableSuppressingRunnable(exceptionRunnable);

@@ -19,6 +19,7 @@ import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class ListenableFutureTaskTest extends RunnableFutureTest {
@@ -161,7 +162,7 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   
   @Test
   public void addCallbackExecutionExceptionAlreadyDoneTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
     future.run();
     TestFutureCallback tfc = new TestFutureCallback();
@@ -173,7 +174,7 @@ public class ListenableFutureTaskTest extends RunnableFutureTest {
   
   @Test
   public void addCallbackExecutionExceptionTest() {
-    RuntimeException failure = new RuntimeException();
+    RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
     TestFutureCallback tfc = new TestFutureCallback();
     future.addCallback(tfc);
