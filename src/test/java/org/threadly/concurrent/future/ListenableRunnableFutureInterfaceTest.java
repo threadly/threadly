@@ -16,12 +16,17 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public abstract class RunnableFutureTest {
-  protected abstract FutureFactory makeFutureFactory();
+public abstract class ListenableRunnableFutureInterfaceTest extends ListenableFutureInterfaceTest {
+  protected abstract ExecuteOnGetFutureFactory makeFutureFactory();
+  
+  @Override
+  protected ListenableFutureFactory makeListenableFutureFactory() {
+    return makeFutureFactory();
+  }
   
   @Test
   public void getCallableResultTest() throws InterruptedException, ExecutionException {
-    FutureFactory ff = makeFutureFactory();
+    ExecuteOnGetFutureFactory ff = makeFutureFactory();
     final Object result = new Object();
     RunnableFuture<Object> future = ff.make(new Callable<Object>() {
       @Override
@@ -37,7 +42,7 @@ public abstract class RunnableFutureTest {
 
   @Test
   public void getRunnableResultTest() throws InterruptedException, ExecutionException {
-    FutureFactory ff = makeFutureFactory();
+    ExecuteOnGetFutureFactory ff = makeFutureFactory();
     final Object result = new Object();
     RunnableFuture<Object> future = ff.make(DoNothingRunnable.instance(), result);
     
@@ -48,7 +53,7 @@ public abstract class RunnableFutureTest {
 
   @Test
   public void isDoneTest() {
-    FutureFactory ff = makeFutureFactory();
+    ExecuteOnGetFutureFactory ff = makeFutureFactory();
     TestRunnable r = new TestRunnable();
     RunnableFuture<?> future = ff.make(r);
     future.run();
@@ -58,7 +63,7 @@ public abstract class RunnableFutureTest {
 
   @Test
   public void isDoneFail() {
-    FutureFactory ff = makeFutureFactory();
+    ExecuteOnGetFutureFactory ff = makeFutureFactory();
     TestRunnable r = new TestRuntimeFailureRunnable();
     RunnableFuture<?> future = ff.make(r);
     
@@ -69,7 +74,7 @@ public abstract class RunnableFutureTest {
 
   @Test
   public void getTimeoutFail() throws InterruptedException, ExecutionException {
-    FutureFactory ff = makeFutureFactory();
+    ExecuteOnGetFutureFactory ff = makeFutureFactory();
     TestRunnable tr = new TestRunnable();
     RunnableFuture<?> future = ff.make(tr);
     
@@ -85,7 +90,7 @@ public abstract class RunnableFutureTest {
     }
   }
   
-  protected interface FutureFactory {
+  protected interface ExecuteOnGetFutureFactory extends ListenableFutureFactory {
     public RunnableFuture<?> make(Runnable run);
     public <T> RunnableFuture<T> make(Runnable run, T result);
     public <T> RunnableFuture<T> make(Callable<T> callable);

@@ -122,8 +122,7 @@ public class RunnableListenerHelper {
    * @param executor Executor to run listener on, or null to run on calling thread
    * @param throwException {@code true} throws exceptions from runnable, {@code false} handles exceptions
    */
-  protected void runListener(Runnable listener, Executor executor, 
-                             boolean throwException) {
+  protected void runListener(Runnable listener, Executor executor, boolean throwException) {
     try {
       if (executor != null) {
         executor.execute(listener);

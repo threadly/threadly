@@ -19,7 +19,7 @@ import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
-public class SettableListenableFutureTest {
+public class SettableListenableFutureTest extends ListenableFutureInterfaceTest {
   protected SettableListenableFuture<String> slf;
   
   @Before
@@ -30,6 +30,11 @@ public class SettableListenableFutureTest {
   @After
   public void cleanup() {
     slf = null;
+  }
+
+  @Override
+  protected ListenableFutureFactory makeListenableFutureFactory() {
+    return new SettableListenableFutureFactory();
   }
   
   @Test (expected = IllegalStateException.class)
@@ -181,17 +186,6 @@ public class SettableListenableFutureTest {
   }
   
   @Test
-  public void addCallbackAlreadyDoneFutureTest() {
-    String result = StringUtils.makeRandomString(5);
-    slf.setResult(result);
-    TestFutureCallback tfc = new TestFutureCallback();
-    slf.addCallback(tfc);
-    
-    assertEquals(1, tfc.getCallCount());
-    assertTrue(result == tfc.getLastResult());
-  }
-  
-  @Test
   public void addCallbackExecutionExceptionTest() {
     Throwable failure = new Exception();
     TestFutureCallback tfc = new TestFutureCallback();
@@ -200,17 +194,6 @@ public class SettableListenableFutureTest {
     assertEquals(0, tfc.getCallCount());
     
     slf.setFailure(failure);
-    
-    assertEquals(1, tfc.getCallCount());
-    assertTrue(failure == tfc.getLastFailure());
-  }
-  
-  @Test
-  public void addCallbackExecutionExceptionAlreadyDoneTest() {
-    Throwable failure = new Exception();
-    slf.setFailure(failure);
-    TestFutureCallback tfc = new TestFutureCallback();
-    slf.addCallback(tfc);
     
     assertEquals(1, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
@@ -258,16 +241,6 @@ public class SettableListenableFutureTest {
     slf.addListener(tr);
     
     slf.cancel(false);
-    
-    assertTrue(tr.ranOnce());
-  }
-  
-  @Test
-  public void addListenerAfterCancelTest() {
-    slf.cancel(false);
-    
-    TestRunnable tr = new TestRunnable();
-    slf.addListener(tr);
     
     assertTrue(tr.ranOnce());
   }
@@ -410,6 +383,29 @@ public class SettableListenableFutureTest {
       fail("Exception should have thrown");
     } catch (CancellationException e) {
       // expected
+    }
+  }
+  
+  private static class SettableListenableFutureFactory implements ListenableFutureFactory {
+    @Override
+    public ListenableFuture<?> makeCanceled() {
+      SettableListenableFuture<?> slf = new SettableListenableFuture<Object>();
+      slf.cancel(false);
+      return slf;
+    }
+    
+    @Override
+    public ListenableFuture<?> makeWithFailure(Exception e) {
+      SettableListenableFuture<?> slf = new SettableListenableFuture<Object>();
+      slf.handleFailure(e);
+      return slf;
+    }
+
+    @Override
+    public <T> ListenableFuture<T> makeWithResult(T result) {
+      SettableListenableFuture<T> slf = new SettableListenableFuture<>();
+      slf.handleResult(result);
+      return slf;
     }
   }
 }

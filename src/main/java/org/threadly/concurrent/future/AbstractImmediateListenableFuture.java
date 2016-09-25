@@ -1,6 +1,7 @@
 package org.threadly.concurrent.future;
 
 import java.util.concurrent.Executor;
+import java.util.function.Function;
 
 /**
  * <p>Abstract class for futures that can't be canceled and are already complete.</p>
@@ -28,5 +29,15 @@ abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelabl
     } else {
       listener.run();
     }
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<? super T, R> mapper) {
+    return map(mapper, null);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> map(Function<? super T, R> mapper, Executor executor) {
+    return FutureUtils.transform(this, mapper, executor);
   }
 }
