@@ -5,7 +5,7 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({ "javadoc", "deprecation" })
 public class ThreadRenamingSubmitterSchedulerWrapperTest extends SubmitterSchedulerInterfaceTest {
   @Override
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {

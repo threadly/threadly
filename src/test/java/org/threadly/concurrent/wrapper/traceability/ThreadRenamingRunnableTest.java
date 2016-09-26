@@ -6,8 +6,8 @@ import org.junit.Test;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 
-@SuppressWarnings({ "javadoc", "deprecation" })
-public class ThreadRenamingRunnableWrapperTest {
+@SuppressWarnings("javadoc")
+public class ThreadRenamingRunnableTest {
   @Test
   public void renameReplaceAndResetTest() {
     final String originalName = Thread.currentThread().getName();
@@ -22,7 +22,7 @@ public class ThreadRenamingRunnableWrapperTest {
 
     assertEquals(originalName, Thread.currentThread().getName());
     
-    new ThreadRenamingRunnableWrapper(tr, newName, true).run();
+    new ThreadRenamingRunnable(tr, newName, true).run();
     
     assertTrue(tr.ranOnce());
   }
@@ -42,7 +42,7 @@ public class ThreadRenamingRunnableWrapperTest {
 
     assertEquals(originalName, Thread.currentThread().getName());
     
-    new ThreadRenamingRunnableWrapper(tr, newName, false).run();
+    new ThreadRenamingRunnable(tr, newName, false).run();
     
     assertTrue(tr.ranOnce());
   }
@@ -51,6 +51,6 @@ public class ThreadRenamingRunnableWrapperTest {
   public void getContainedRunnableTest() {
     TestRunnable tr = new TestRunnable();
     
-    assertTrue(tr == new ThreadRenamingRunnableWrapper(tr, "foo", false).getContainedRunnable());
+    assertTrue(tr == new ThreadRenamingRunnable(tr, "foo", false).getContainedRunnable());
   }
 }

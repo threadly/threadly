@@ -3,7 +3,7 @@ package org.threadly.concurrent.wrapper.limiter;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.SchedulerService;
-import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSchedulerServiceWrapper;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSchedulerService;
 import org.threadly.util.StringUtils;
 
 /**
@@ -74,9 +74,9 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
   @Override
   protected SchedulerServiceLimiter makeLimiter(String limiterThreadName) {
     return new SchedulerServiceLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
-                                         scheduler : new ThreadRenamingSchedulerServiceWrapper(scheduler, 
-                                                                                               limiterThreadName, 
-                                                                                               false), 
+                                         scheduler : new ThreadRenamingSchedulerService(scheduler, 
+                                                                                        limiterThreadName, 
+                                                                                        false), 
                                        maxConcurrency);
   }
 

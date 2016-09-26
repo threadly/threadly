@@ -2,7 +2,7 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Executor;
 
-import org.threadly.concurrent.wrapper.traceability.ThreadRenamingExecutorWrapper;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingExecutor;
 import org.threadly.util.StringUtils;
 
 /**
@@ -69,7 +69,7 @@ public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> 
   @Override
   protected ExecutorLimiter makeLimiter(String limiterThreadName) {
     return new ExecutorLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
-                                 executor : new ThreadRenamingExecutorWrapper(executor, limiterThreadName, false), 
+                                 executor : new ThreadRenamingExecutor(executor, limiterThreadName, false), 
                                maxConcurrency);
   }
   

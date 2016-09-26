@@ -4,8 +4,8 @@ import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 
-@SuppressWarnings({ "javadoc", "deprecation" })
-public class ThreadRenamingExecutorWrapperTest extends SubmitterExecutorInterfaceTest {
+@SuppressWarnings("javadoc")
+public class ThreadRenamingExecutorTest extends SubmitterExecutorInterfaceTest {
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
     return new ThreadRenamingPoolWrapperFactory();
@@ -18,7 +18,7 @@ public class ThreadRenamingExecutorWrapperTest extends SubmitterExecutorInterfac
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
       SubmitterExecutor executor = schedulerFactory.makeSubmitterExecutor(poolSize, prestartIfAvailable);
 
-      return new ThreadRenamingExecutorWrapper(executor, "foo", false);
+      return new ThreadRenamingExecutor(executor, "foo", false);
     }
 
     @Override

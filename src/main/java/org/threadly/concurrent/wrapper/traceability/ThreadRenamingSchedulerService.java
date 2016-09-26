@@ -9,18 +9,15 @@ import org.threadly.concurrent.SchedulerService;
  * {@link ThreadRenamingRunnable}.  This allows you to make a pool where all tasks submitted 
  * inside it have the threads named in an identifiable way.</p>
  * 
- * @deprecated Renamed to {@link ThreadRenamingSchedulerService}
- * 
  * @author jent
- * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent)
+ * @since 4.8.0 (since 4.3.0 at org.threadly.concurrent.ThreadRenamingSchedulerServiceWrapper)
  */
-@Deprecated
-public class ThreadRenamingSchedulerServiceWrapper extends ThreadRenamingSubmitterSchedulerWrapper 
-                                                   implements SchedulerService {
+public class ThreadRenamingSchedulerService extends ThreadRenamingSubmitterScheduler 
+                                            implements SchedulerService {
   protected final SchedulerService scheduler;
   
   /**
-   * Constructs a new {@link ThreadRenamingSchedulerServiceWrapper}, wrapping a supplied 
+   * Constructs a new {@link ThreadRenamingSchedulerService}, wrapping a supplied 
    * {@link SchedulerService}.  If /{@code replace} is {@code false} the thread will be named such 
    * that {@code threadName[originalThreadName]}.
    * 
@@ -28,8 +25,8 @@ public class ThreadRenamingSchedulerServiceWrapper extends ThreadRenamingSubmitt
    * @param threadName Thread name prefix, or replaced name
    * @param replace If {@code true} the original name wont be included in the thread name
    */
-  public ThreadRenamingSchedulerServiceWrapper(SchedulerService scheduler, 
-                                               String threadName, boolean replace) {
+  public ThreadRenamingSchedulerService(SchedulerService scheduler, 
+                                        String threadName, boolean replace) {
     super(scheduler, threadName, replace);
     
     this.scheduler = scheduler;

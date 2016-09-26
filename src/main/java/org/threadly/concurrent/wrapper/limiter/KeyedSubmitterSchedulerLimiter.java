@@ -1,7 +1,7 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import org.threadly.concurrent.SubmitterScheduler;
-import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterSchedulerWrapper;
+import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterScheduler;
 import org.threadly.util.StringUtils;
 
 /**
@@ -68,9 +68,9 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
   @Override
   protected SubmitterSchedulerLimiter makeLimiter(String limiterThreadName) {
     return new SubmitterSchedulerLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
-                                           scheduler : new ThreadRenamingSubmitterSchedulerWrapper(scheduler, 
-                                                                                                   limiterThreadName, 
-                                                                                                   false), 
+                                           scheduler : new ThreadRenamingSubmitterScheduler(scheduler, 
+                                                                                            limiterThreadName, 
+                                                                                            false), 
                                          maxConcurrency);
   }
   

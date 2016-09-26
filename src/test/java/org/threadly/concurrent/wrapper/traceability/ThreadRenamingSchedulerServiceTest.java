@@ -6,8 +6,8 @@ import org.threadly.concurrent.SchedulerServiceInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 
-@SuppressWarnings({ "javadoc", "deprecation" })
-public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceInterfaceTest {
+@SuppressWarnings("javadoc")
+public class ThreadRenamingSchedulerServiceTest extends SchedulerServiceInterfaceTest {
   @Override
   protected SchedulerServiceFactory getSchedulerServiceFactory() {
     return new ThreadRenamingPoolWrapperFactory();
@@ -30,7 +30,7 @@ public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceI
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize, prestartIfAvailable);
 
-      return new ThreadRenamingSchedulerServiceWrapper(scheduler, "foo", false);
+      return new ThreadRenamingSchedulerService(scheduler, "foo", false);
     }
 
     @Override

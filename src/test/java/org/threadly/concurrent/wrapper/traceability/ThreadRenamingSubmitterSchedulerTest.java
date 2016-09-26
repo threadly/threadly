@@ -1,19 +1,18 @@
 package org.threadly.concurrent.wrapper.traceability;
 
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
-import org.threadly.concurrent.SchedulerService;
-import org.threadly.concurrent.SchedulerServiceInterfaceTest;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 
-@SuppressWarnings({ "javadoc", "deprecation" })
-public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceInterfaceTest {
+@SuppressWarnings("javadoc")
+public class ThreadRenamingSubmitterSchedulerTest extends SubmitterSchedulerInterfaceTest {
   @Override
-  protected SchedulerServiceFactory getSchedulerServiceFactory() {
+  protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
     return new ThreadRenamingPoolWrapperFactory();
   }
-
-  private static class ThreadRenamingPoolWrapperFactory implements SchedulerServiceFactory {
+  
+  private static class ThreadRenamingPoolWrapperFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 
     @Override
@@ -23,14 +22,9 @@ public class ThreadRenamingSchedulerServiceWrapperTest extends SchedulerServiceI
     
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      return makeSchedulerService(poolSize, prestartIfAvailable);
-    }
-
-    @Override
-    public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
-      SchedulerService scheduler = schedulerFactory.makeSchedulerService(poolSize, prestartIfAvailable);
-
-      return new ThreadRenamingSchedulerServiceWrapper(scheduler, "foo", false);
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      
+      return new ThreadRenamingSubmitterScheduler(scheduler, "foo", false);
     }
 
     @Override
