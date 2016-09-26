@@ -10,7 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.util.StringUtils;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ClearOnGetSettableListenableFutureTest extends SettableListenableFutureTest {
   @Before
   @Override

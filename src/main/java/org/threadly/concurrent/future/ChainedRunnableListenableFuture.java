@@ -39,9 +39,13 @@ import org.threadly.util.ArgumentVerifier;
  * which run for more than a few hundred milliseconds.
  * </ul>
  * 
+ * @deprecated To be removed in 5.0.0 without replacement.  If you use this, please open an issue on github.
+ * 
  * @author jent - Mike Jensen
+ * @since 3.3.0
  * @param <T> The result object type returned by this future
  */
+@Deprecated
 public class ChainedRunnableListenableFuture<T> extends AbstractNoncancelableListenableFuture<T> 
                                                 implements ListenableRunnableFuture<T> {
   protected final Thread creationThread;

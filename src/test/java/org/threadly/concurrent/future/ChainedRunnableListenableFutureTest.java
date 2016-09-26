@@ -18,7 +18,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 import org.threadly.util.SuppressedStackRuntimeException;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class ChainedRunnableListenableFutureTest {
   @Test
   public void getCallableResultTest() throws InterruptedException, ExecutionException {

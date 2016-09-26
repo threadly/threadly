@@ -20,10 +20,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@link #get()}.  That single callback will clear the result (functioning like a {@link #get()} 
  * call).</p>
  * 
+ * @deprecated To be removed in 5.0.0 without replacement.  If you use this, please open an issue on github.
+ * 
  * @author jent - Mike Jensen
  * @since 3.3.0
  * @param <T> The result object type returned by this future
  */
+@Deprecated
 public class ClearOnGetSettableListenableFuture<T> extends SettableListenableFuture<T> {
   private final AtomicBoolean callbackAdded = new AtomicBoolean(false);
 
