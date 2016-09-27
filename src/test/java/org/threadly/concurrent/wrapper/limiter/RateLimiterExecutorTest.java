@@ -5,6 +5,7 @@ import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
@@ -43,8 +44,8 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     return new RateLimiterFactory();
   }
   
-  @SuppressWarnings("unused")
   @Test
+  @SuppressWarnings("unused")
   public void constructorFail() {
     try {
       new RateLimiterExecutor(null, 10);
@@ -175,6 +176,13 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     } catch (IllegalArgumentException e) {
       // expected
     }
+  }
+  
+  @Test (expected = RejectedExecutionException.class)
+  public void rejectDueToScheduleDelay() {
+    limiter = new RateLimiterExecutor(scheduler, 1, 1000);
+    limiter.execute(2000, DoNothingRunnable.instance());
+    limiter.execute(DoNothingRunnable.instance());
   }
   
   private static class RateLimiterFactory implements SubmitterExecutorFactory {

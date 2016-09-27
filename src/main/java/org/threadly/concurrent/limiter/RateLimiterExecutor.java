@@ -27,12 +27,35 @@ public class RateLimiterExecutor extends org.threadly.concurrent.wrapper.limiter
   /**
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
    * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
-   * average permit amount per task, per second.
+   * average permit amount per task, per second.  
+   * 
+   * This will schedule tasks out infinitely far in order to maintain rate.  If you want tasks to 
+   * be rejected at a certain point consider using 
+   * {@link #RateLimiterExecutor(SimpleSchedulerInterface, double, long)}.
    * 
    * @param scheduler scheduler to schedule/execute tasks on
    * @param permitsPerSecond how many permits should be allowed per second
    */
   public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond) {
-    super(scheduler, permitsPerSecond);
+    super(scheduler, permitsPerSecond, Long.MAX_VALUE);
+  }
+  
+  /**
+   * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
+   * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
+   * average permit amount per task, per second.  
+   * 
+   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
+   * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
+   * thrown instead of scheduling the task.
+   * 
+   * @since 4.8.0
+   * @param scheduler scheduler to schedule/execute tasks on
+   * @param permitsPerSecond how many permits should be allowed per second
+   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
+   */
+  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond, 
+                             long maxScheduleDelayMillis) {
+    super(scheduler, permitsPerSecond, maxScheduleDelayMillis);
   }
 }

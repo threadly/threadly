@@ -1,6 +1,7 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -34,23 +35,49 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
   protected final Object permitLock;
   protected volatile double permitsPerSecond;
+  protected volatile long maxScheduleDelayMillis;
   private double lastScheduleTime;
   
   /**
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
    * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
-   * average permit amount per task, per second.
+   * average permit amount per task, per second.  
+   * 
+   * This will schedule tasks out infinitely far in order to maintain rate.  If you want tasks to 
+   * be rejected at a certain point consider using 
+   * {@link #RateLimiterExecutor(SimpleSchedulerInterface, double, long)}.
    * 
    * @param scheduler scheduler to schedule/execute tasks on
    * @param permitsPerSecond how many permits should be allowed per second
    */
+  @SuppressWarnings("javadoc")
   public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond) {
+    this(scheduler, permitsPerSecond, Long.MAX_VALUE);
+  }
+  
+  /**
+   * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
+   * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
+   * average permit amount per task, per second.  
+   * 
+   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
+   * beyond this delay, then a {@link RejectedExecutionException} will be thrown instead of 
+   * scheduling the task.
+   * 
+   * @since 4.8.0
+   * @param scheduler scheduler to schedule/execute tasks on
+   * @param permitsPerSecond how many permits should be allowed per second
+   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
+   */
+  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond, 
+                             long maxScheduleDelayMillis) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     
     this.scheduler = scheduler;
     this.permitLock = new Object();
     this.lastScheduleTime = Clock.lastKnownForwardProgressingMillis();
     setPermitsPerSecond(permitsPerSecond);
+    setMaxScheduleDelayMillis(maxScheduleDelayMillis);
   }
   
   /**
@@ -69,6 +96,19 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     ArgumentVerifier.assertGreaterThanZero(permitsPerSecond, "permitsPerSecond");
     
     this.permitsPerSecond = permitsPerSecond;
+  }
+  
+  /**
+   * At runtime adjust the maximum amount that this rate limiter will be willing to schedule out 
+   * tasks in order to maintain the rate.  This value must be greater than zero.
+   * 
+   * @since 4.8.0
+   * @param maxScheduleDelayMillis Maximum task delay in milliseconds
+   */
+  public void setMaxScheduleDelayMillis(long maxScheduleDelayMillis) {
+    ArgumentVerifier.assertGreaterThanZero(maxScheduleDelayMillis, "maxScheduleDelayMillis");
+    
+    this.maxScheduleDelayMillis = maxScheduleDelayMillis;
   }
   
   /**
@@ -205,18 +245,23 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     synchronized (permitLock) {
       if (permits == 0 && lastScheduleTime < Clock.lastKnownForwardProgressingMillis()) {
         // shortcut
-      }
-      double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
-      if (scheduleDelay < 1) {
-        if (scheduleDelay < 0) {
-          lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
-        } else {
-          lastScheduleTime += effectiveDelay;
-        }
         scheduler.execute(task);
       } else {
-        lastScheduleTime += effectiveDelay;
-        scheduler.schedule(task, (long)scheduleDelay);
+        double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
+        if (scheduleDelay > maxScheduleDelayMillis) {
+          throw new RejectedExecutionException("Would need to schedule out " + scheduleDelay + 
+                                                 " milliseconds to maintain rate");
+        } else if (scheduleDelay < 1) {
+          if (scheduleDelay < 0) {
+            lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
+          } else {
+            lastScheduleTime += effectiveDelay;
+          }
+          scheduler.execute(task);
+        } else {
+          lastScheduleTime += effectiveDelay;
+          scheduler.schedule(task, (long)scheduleDelay);
+        }
       }
     }
   }

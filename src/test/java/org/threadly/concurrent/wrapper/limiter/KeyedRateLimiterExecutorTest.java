@@ -10,6 +10,7 @@ import static org.threadly.TestConstants.TEST_QTY;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
@@ -208,6 +209,13 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
     assertEquals(1, scheduler.advance(1000));
     assertTrue(limiter.currentLimiters.isEmpty());
     assertEquals(0, limiter.getTrackedKeyCount());
+  }
+  
+  @Test (expected = RejectedExecutionException.class)
+  public void rejectDueToScheduleDelay() {
+    limiter = new KeyedRateLimiterExecutor(scheduler, 1, 1000);
+    limiter.execute(2000, "foo", DoNothingRunnable.instance());
+    limiter.execute("foo", DoNothingRunnable.instance());
   }
   
   private static class KeyedRateLimiterFactory implements SubmitterExecutorFactory {
