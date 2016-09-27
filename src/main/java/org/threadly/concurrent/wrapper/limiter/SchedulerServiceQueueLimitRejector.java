@@ -88,12 +88,6 @@ public class SchedulerServiceQueueLimitRejector extends SubmitterSchedulerQueueL
     return parentScheduler.getCurrentRunningCount();
   }
 
-  @Override
-  public int getQueuedTaskCount() {
-    // no reason to defer to a possibly more expensive queue count from the scheduler
-    return queuedTaskCount.get();
-  }
-
   /**
    * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
    * a future point.

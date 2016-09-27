@@ -31,6 +31,7 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void getCurrentQueueSizeTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     PrioritySchedulerServiceQueueLimitRejector queueRejector = new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
