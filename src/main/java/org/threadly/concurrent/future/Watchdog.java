@@ -5,9 +5,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.threadly.concurrent.AbstractSubmitterScheduler;
 import org.threadly.concurrent.ReschedulingOperation;
-import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.Clock;
@@ -21,7 +19,6 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 4.0.0
  */
-@SuppressWarnings("deprecation")
 public class Watchdog {
   private static final AtomicReference<SingleThreadScheduler> STATIC_SCHEDULER;
   
@@ -42,7 +39,7 @@ public class Watchdog {
     return sts;
   }
   
-  protected final SimpleSchedulerInterface scheduler;
+  protected final SubmitterScheduler scheduler;
   protected final long timeoutInMillis;
   protected final boolean sendInterruptToTrackedThreads;
   protected final CheckRunner checkRunner;
@@ -73,7 +70,7 @@ public class Watchdog {
    * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
    *                                      an interrupt will be sent on timeout
    */
-  public Watchdog(SimpleSchedulerInterface scheduler, long timeoutInMillis, 
+  public Watchdog(SubmitterScheduler scheduler, long timeoutInMillis, 
                   boolean sendInterruptOnFutureCancel) {
     this.scheduler = scheduler;
     this.timeoutInMillis = timeoutInMillis;
@@ -158,26 +155,8 @@ public class Watchdog {
    * @since 4.0.0
    */
   private class CheckRunner extends ReschedulingOperation {
-    public CheckRunner(final SimpleSchedulerInterface scheduler, long scheduleDelay) {
-      super(scheduler instanceof SubmitterScheduler ? 
-              (SubmitterScheduler)scheduler : 
-                scheduler == null ? null : 
-                  new AbstractSubmitterScheduler() {
-                    @Override
-                    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-                      scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay);
-                    }
-
-                    @Override
-                    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-                      scheduler.scheduleAtFixedRate(task, initialDelay, period);
-                    }
-
-                    @Override
-                    protected void doSchedule(Runnable task, long delayInMs) {
-                      scheduler.schedule(task, delayInMs);
-                    }
-              }, scheduleDelay);
+    public CheckRunner(SubmitterScheduler scheduler, long scheduleDelay) {
+      super(scheduler, scheduleDelay);
     }
 
     @Override

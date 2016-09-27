@@ -28,22 +28,6 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
   }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void getCurrentQueueSizeTest() {
-    TestableScheduler testableScheduler = new TestableScheduler();
-    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
-
-    for (int i = 0; i < TEST_QTY; i++) {
-      assertEquals(i, queueRejector.getCurrentQueueSize());
-      queueRejector.execute(DoNothingRunnable.instance());
-    }
-    
-    testableScheduler.tick();
-
-    assertEquals(0, queueRejector.getCurrentQueueSize());
-  }
-  
-  @Test
   public void getSetQueueLimitTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
@@ -67,22 +51,6 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
     testableScheduler.tick();
 
     assertEquals(0, queueRejector.getQueuedTaskCount());
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void getScheduledTaskCountTest() {
-    TestableScheduler testableScheduler = new TestableScheduler();
-    SchedulerServiceQueueLimitRejector queueRejector = new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
-
-    for (int i = 0; i < TEST_QTY; i++) {
-      assertEquals(i, queueRejector.getScheduledTaskCount());
-      queueRejector.execute(DoNothingRunnable.instance());
-    }
-    
-    testableScheduler.tick();
-
-    assertEquals(0, queueRejector.getScheduledTaskCount());
   }
   
   @Test

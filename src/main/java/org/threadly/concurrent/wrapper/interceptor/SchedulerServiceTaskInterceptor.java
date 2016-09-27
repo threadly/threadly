@@ -47,33 +47,6 @@ public abstract class SchedulerServiceTaskInterceptor extends SubmitterScheduler
     return parentScheduler.getQueuedTaskCount();
   }
 
-  /**
-   * Call to check how many tasks are currently being executed in this scheduler.
-   * 
-   * @deprecated Please use the better named {@link #getActiveTaskCount()} as a direct replacement.
-   * 
-   * @return current number of running tasks
-   */
-  @Override
-  @Deprecated
-  public int getCurrentRunningCount() {
-    return parentScheduler.getCurrentRunningCount();
-  }
-  
-  /**
-   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
-   * a future point.
-   * 
-   * @deprecated Please use {@link #getQueuedTaskCount()} as a direct replacement.
-   * 
-   * @return quantity of tasks waiting execution or scheduled to be executed later
-   */
-  @Override
-  @Deprecated
-  public int getScheduledTaskCount() {
-    return parentScheduler.getScheduledTaskCount();
-  }
-
   @Override
   public boolean isShutdown() {
     return parentScheduler.isShutdown();

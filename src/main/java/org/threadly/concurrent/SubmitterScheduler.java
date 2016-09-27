@@ -11,15 +11,13 @@ import org.threadly.concurrent.future.ListenableFuture;
  * @author jent - Mike Jensen
  * @since 4.3.0 (since 1.0.0 as SubmitterSchedulerInterface_
  */
-@SuppressWarnings("deprecation")
-public interface SubmitterScheduler extends SimpleSchedulerInterface, SubmitterExecutorInterface {
+public interface SubmitterScheduler extends SubmitterExecutor {
   /**
    * Schedule a one time task with a given delay.
    * 
    * @param task runnable to execute
    * @param delayInMs time in milliseconds to wait to execute task
    */
-  @Override
   public void schedule(Runnable task, long delayInMs);
   
   /**
@@ -36,7 +34,6 @@ public interface SubmitterScheduler extends SimpleSchedulerInterface, SubmitterE
    * @param initialDelay delay in milliseconds until first run
    * @param recurringDelay delay in milliseconds for running task after last finish
    */
-  @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay);
   
   /**
@@ -54,7 +51,6 @@ public interface SubmitterScheduler extends SimpleSchedulerInterface, SubmitterE
    * @param initialDelay delay in milliseconds until first run
    * @param period amount of time in milliseconds between the start of recurring executions
    */
-  @Override
   public void scheduleAtFixedRate(Runnable task, long initialDelay, long period);
   
   /**

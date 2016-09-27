@@ -147,32 +147,6 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void makeSubPoolTest() {
-    PrioritySchedulerServiceFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(10);
-    try {
-      PrioritySchedulerService subPool = scheduler.makeSubPool(2);
-      assertNotNull(subPool);
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @Test (expected = IllegalArgumentException.class)
-  @SuppressWarnings("deprecation")
-  public void makeSubPoolFail() {
-    PrioritySchedulerServiceFactory factory = getPrioritySchedulerFactory();
-    PriorityScheduler scheduler = factory.makePriorityScheduler(1);
-    try {
-      scheduler.makeSubPool(2);
-      fail("Exception should have been thrown");
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @Test
   public void interruptedDuringRunTest() throws InterruptedException, TimeoutException {
     final long taskRunTime = 1000 * 10;
     PrioritySchedulerServiceFactory factory = getPrioritySchedulerFactory();

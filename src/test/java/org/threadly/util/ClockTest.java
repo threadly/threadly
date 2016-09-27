@@ -21,13 +21,6 @@ public class ClockTest {
   }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void systemNanoTimeTest() {
-    long baseTime = System.nanoTime();
-    assertTrue(Clock.systemNanoTime() >= baseTime);
-  }
-  
-  @Test
   public void accurateTimeNanosTest() {
     long baseTime = System.nanoTime();
     assertTrue(Clock.accurateTimeNanos() >= baseTime);

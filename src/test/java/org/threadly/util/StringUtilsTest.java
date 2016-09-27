@@ -7,16 +7,6 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public class StringUtilsTest {
   @Test
-  @SuppressWarnings("deprecation")
-  public void makeNonNullTest() {
-    assertNotNull(StringUtils.makeNonNull(null));
-    assertTrue(StringUtils.makeNonNull(null).isEmpty());
-    
-    String testStr = "foo";
-    assertTrue(StringUtils.makeNonNull(testStr) == testStr);
-  }
-  
-  @Test
   public void nullToEmptyTest() {
     assertNotNull(StringUtils.nullToEmpty(null));
     assertTrue(StringUtils.nullToEmpty(null).isEmpty());
@@ -79,25 +69,6 @@ public class StringUtilsTest {
     assertEquals(10, resultStr.length());
     assertEquals(startStr, resultStr.substring(0, 5));
     assertEquals(StringUtils.padStart(null, 5, '0'), resultStr.substring(5));
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void randomStringTest() {
-    String result = StringUtils.randomString(10);
-    
-    assertFalse(result.isEmpty());
-    
-    assertFalse(StringUtils.randomString(10).equals(result));
-  }
-  
-  @Test
-  public void randomStringEmptyTest() {
-    @SuppressWarnings("deprecation")
-    String result = StringUtils.randomString(0);
-    
-    assertNotNull(result);
-    assertTrue(result.isEmpty());
   }
   
   @Test

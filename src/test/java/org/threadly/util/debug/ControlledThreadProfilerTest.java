@@ -3,7 +3,6 @@ package org.threadly.util.debug;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -29,10 +28,8 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   
   @Test
   @Override
-  @SuppressWarnings("deprecation")
   public void constructorTest() {
     int testPollInterval = Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS * 10;
-    File dumpFile = new File("foo");
     ControlledThreadProfiler p;
     
     p = new ControlledThreadProfiler();
@@ -41,17 +38,6 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.controledThreadStore.pollIntervalInMs);
     assertNull(p.controledThreadStore.collectorThread.get());
     assertNull(p.controledThreadStore.dumpingThread);
-    assertNull(p.outputFile);
-    assertNotNull(p.startStopLock);
-    assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
-    
-    p = new ControlledThreadProfiler(dumpFile);
-    assertNotNull(p.controledThreadStore.threadTraces);
-    assertTrue(p.controledThreadStore.threadTraces.isEmpty());
-    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.controledThreadStore.pollIntervalInMs);
-    assertNull(p.controledThreadStore.collectorThread.get());
-    assertNull(p.controledThreadStore.dumpingThread);
-    assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
     assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
     
@@ -61,17 +47,6 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     assertEquals(testPollInterval, p.controledThreadStore.pollIntervalInMs);
     assertNull(p.controledThreadStore.collectorThread.get());
     assertNull(p.controledThreadStore.dumpingThread);
-    assertNull(p.outputFile);
-    assertNotNull(p.startStopLock);
-    assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
-    
-    p = new ControlledThreadProfiler(dumpFile, testPollInterval);
-    assertNotNull(p.controledThreadStore.threadTraces);
-    assertTrue(p.controledThreadStore.threadTraces.isEmpty());
-    assertEquals(testPollInterval, p.controledThreadStore.pollIntervalInMs);
-    assertNull(p.controledThreadStore.collectorThread.get());
-    assertNull(p.controledThreadStore.dumpingThread);
-    assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
     assertTrue(p.controledThreadStore.profiledThreads.isEmpty());
   }

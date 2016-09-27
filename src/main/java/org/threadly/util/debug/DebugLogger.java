@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.threadly.util.Clock;
-import org.threadly.util.StringUtils;
 
 /**
  * <p>Often times when trying to understand a concurrency issue, adding logging may solve that 
@@ -73,7 +72,6 @@ public class DebugLogger {
    * @param includeLogTimes boolean to include time in nanoseconds that log message was recorded
    * @return string with all log messages, separated by a new line
    */
-  @SuppressWarnings("deprecation")
   public static String getAllStoredMessages(boolean includeLogTimes) {
     ConcurrentSkipListMap<Long, String> currentLog = logMap;
     logMap = new ConcurrentSkipListMap<Long, String>();
@@ -97,7 +95,7 @@ public class DebugLogger {
         result.append(entry.getValue());
       }
       if (it.hasNext()) {
-        result.append(StringUtils.NEW_LINE);
+        result.append(System.lineSeparator());
       }
     }
     
@@ -129,7 +127,6 @@ public class DebugLogger {
    * @param includeLogTimes boolean to include time in nanoseconds that log message was recorded
    * @return string with requested log messages, separated by a new line
    */
-  @SuppressWarnings("deprecation")
   public static String getOldestLogMessages(int qty, boolean includeLogTimes) {
     int collectedQty = 0;
     StringBuilder result = new StringBuilder();
@@ -144,7 +141,7 @@ public class DebugLogger {
         result.append(entry.getValue());
       }
       if (it.hasNext()) {
-        result.append(StringUtils.NEW_LINE);
+        result.append(System.lineSeparator());
       }
       
       collectedQty++;

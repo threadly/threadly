@@ -73,36 +73,9 @@ public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter
     return scheduler.getActiveTaskCount();
   }
 
-  /**
-   * Call to check how many tasks are currently being executed in this scheduler.
-   * 
-   * @deprecated Please use the better named {@link #getActiveTaskCount()}
-   * 
-   * @return current number of running tasks
-   */
-  @Override
-  @Deprecated
-  public int getCurrentRunningCount() {
-    return scheduler.getCurrentRunningCount();
-  }
-
   @Override
   public int getQueuedTaskCount() {
     return scheduler.getQueuedTaskCount() + waitingTasks.size();
-  }
-
-  /**
-   * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
-   * a future point.
-   * 
-   * @deprecated Please use {@link #getQueuedTaskCount()} as a direct replacement.
-   * 
-   * @return quantity of tasks waiting execution or scheduled to be executed later
-   */
-  @Override
-  @Deprecated
-  public int getScheduledTaskCount() {
-    return getQueuedTaskCount();
   }
 
   @Override

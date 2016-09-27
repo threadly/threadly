@@ -29,23 +29,6 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
   }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void getCurrentQueueSizeTest() {
-    TestableScheduler testableScheduler = new TestableScheduler();
-    SchedulerServiceQueueLimitRejector queueRejector = 
-        new SchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
-
-    for (int i = 0; i < TEST_QTY; i++) {
-      assertEquals(i, queueRejector.getCurrentQueueSize());
-      queueRejector.execute(DoNothingRunnable.instance());
-    }
-    
-    testableScheduler.tick();
-
-    assertEquals(0, queueRejector.getCurrentQueueSize());
-  }
-  
-  @Test
   public void getQueuedTaskCountTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     SchedulerServiceQueueLimitRejector queueRejector = 

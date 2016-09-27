@@ -58,19 +58,6 @@ public class TestableScheduler extends AbstractPriorityScheduler {
     return scheduler.getActiveTaskCount();
   }
 
-  /**
-   * Call to check how many tasks are currently being executed in this scheduler.
-   * 
-   * @deprecated Please use the better named {@link #getActiveTaskCount()}
-   * 
-   * @return current number of running tasks
-   */
-  @Override
-  @Deprecated
-  public int getCurrentRunningCount() {
-    return scheduler.getCurrentRunningCount();
-  }
-
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
                                      TaskPriority priority) {

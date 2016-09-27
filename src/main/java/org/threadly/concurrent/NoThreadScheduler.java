@@ -112,7 +112,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
    * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
-   * {@link #getCurrentRunningCount()} non-deterministic and inaccurate.
+   * {@link #getActiveTaskCount()} non-deterministic and inaccurate.
    * 
    * @since 3.2.0
    * 
@@ -188,7 +188,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
    * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
-   * {@link #getCurrentRunningCount()} non-deterministic and inaccurate.
+   * {@link #getActiveTaskCount()} non-deterministic and inaccurate.
    * 
    * @since 4.0.0
    * 
@@ -298,19 +298,6 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
 
   @Override
   public int getActiveTaskCount() {
-    return tickRunning ? 1 : 0;
-  }
-
-  /**
-   * Call to check how many tasks are currently being executed in this scheduler.
-   * 
-   * @deprecated Please use the better named {@link #getActiveTaskCount()}
-   * 
-   * @return current number of running tasks
-   */
-  @Override
-  @Deprecated
-  public int getCurrentRunningCount() {
     return tickRunning ? 1 : 0;
   }
 

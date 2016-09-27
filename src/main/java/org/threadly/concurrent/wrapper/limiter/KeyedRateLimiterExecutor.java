@@ -90,31 +90,6 @@ public class KeyedRateLimiterExecutor {
   }
   
   /**
-   * Constructs a new key rate limiting executor.  This constructor allows you to set both the 
-   * thread naming behavior as well as the level of parallelism expected for task submission.
-   * 
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
-   * 
-   * @deprecated Please use one of the other constructors
-   * 
-   * @param scheduler Scheduler to defer executions to
-   * @param permitsPerSecond how many permits should be allowed per second per key
-   * @param subPoolName Prefix to give threads while executing tasks submitted through this limiter
-   * @param addKeyToThreadName {@code true} to append the task's key to the thread name
-   * @param expectedParallism Expected level of task submission parallelism
-   */
-  @Deprecated
-  public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
-                                  String subPoolName, boolean addKeyToThreadName, 
-                                  int expectedParallism) {
-    this(scheduler, permitsPerSecond, Long.MAX_VALUE, null, 
-         subPoolName, addKeyToThreadName, expectedParallism);
-  }
-  
-  /**
    * Constructs a new key rate limiting executor.  
    * 
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
