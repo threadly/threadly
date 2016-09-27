@@ -14,9 +14,10 @@ import org.threadly.util.ArgumentVerifier;
  * actual queue, so these can be distributed in code to limit queues differently to different 
  * parts of the system, while letting them all back the same {@link SubmitterScheduler}.</p>
  * 
- * <p>Once the limit has been reached, if additional tasks are supplied a 
- * {@link RejectedExecutionException} will be thrown.  This is the threadly equivalent of 
- * supplying a limited sized blocking queue to a java.util.concurrent thread pool.</p>
+ * <p>Once the limit has been reached, if additional tasks are supplied the rejected execution 
+ * handler will be invoked with the rejected tasks (which by default will throw a 
+ * {@link RejectedExecutionException}).  This is the threadly equivalent of supplying a limited 
+ * sized blocking queue to a java.util.concurrent thread pool.</p>
  * 
  * <p>See {@link ExecutorQueueLimitRejector}, {@link SchedulerServiceQueueLimitRejector} and 
  * {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.</p>
@@ -26,6 +27,7 @@ import org.threadly.util.ArgumentVerifier;
  */
 public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterScheduler {
   protected final SubmitterScheduler parentScheduler;
+  protected final RejectedExecutionHandler rejectedExecutionHandler;
   protected final AtomicInteger queuedTaskCount;
   private int queuedTaskLimit;
 
@@ -36,9 +38,26 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
    * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
    */
   public SubmitterSchedulerQueueLimitRejector(SubmitterScheduler parentScheduler, int queuedTaskLimit) {
+    this(parentScheduler, queuedTaskLimit, null);
+  }
+
+  /**
+   * Constructs a new {@link SubmitterSchedulerQueueLimitRejector} with the provided scheduler and limit.
+   * 
+   * @since 4.8.0
+   * @param parentScheduler Scheduler to execute and schedule tasks on to
+   * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed due to queue size
+   */
+  public SubmitterSchedulerQueueLimitRejector(SubmitterScheduler parentScheduler, int queuedTaskLimit, 
+                                              RejectedExecutionHandler rejectedExecutionHandler) {
     ArgumentVerifier.assertNotNull(parentScheduler, "parentExecutor");
     
     this.parentScheduler = parentScheduler;
+    if (rejectedExecutionHandler == null) {
+      rejectedExecutionHandler = RejectedExecutionHandler.THROW_REJECTED_EXECUTION_EXCEPTION;
+    }
+    this.rejectedExecutionHandler = rejectedExecutionHandler;
     this.queuedTaskCount = new AtomicInteger();
     this.queuedTaskLimit = queuedTaskLimit;
   }
@@ -86,18 +105,20 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
 
   @Override
   protected void doSchedule(Runnable task, long delayInMillis) {
-    if (queuedTaskCount.get() >= queuedTaskLimit) {
-      throw new RejectedExecutionException();
-    } else if (queuedTaskCount.incrementAndGet() > queuedTaskLimit) {
-      queuedTaskCount.decrementAndGet();
-      throw new RejectedExecutionException();
-    } else {
-      try {
-        parentScheduler.schedule(new DecrementingRunnable(task, queuedTaskCount), delayInMillis);
-      } catch (RejectedExecutionException e) {
-        queuedTaskCount.decrementAndGet();
-        throw e;
-      }
+    while (true) {
+      int casValue = queuedTaskCount.get();
+      if (casValue >= queuedTaskLimit) {
+        rejectedExecutionHandler.handleRejectedTask(task);
+        return; // in case handler did not throw exception
+      } else if (queuedTaskCount.compareAndSet(casValue, casValue + 1)) {
+        try {
+          parentScheduler.schedule(new DecrementingRunnable(task, queuedTaskCount), delayInMillis);
+        } catch (RejectedExecutionException e) {
+          queuedTaskCount.decrementAndGet();
+          throw e;
+        }
+        break;
+      } // else loop and retry
     }
   }
 }

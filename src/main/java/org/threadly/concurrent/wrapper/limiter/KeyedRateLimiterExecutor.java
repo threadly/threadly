@@ -46,6 +46,7 @@ public class KeyedRateLimiterExecutor {
   protected static final short CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
   
   protected final SubmitterScheduler scheduler;
+  protected final RejectedExecutionHandler rejectedExecutionHandler;
   protected final SubmitterScheduler limiterCheckerScheduler;
   protected final double permitsPerSecond;
   protected final long maxScheduleDelayMillis;
@@ -65,7 +66,7 @@ public class KeyedRateLimiterExecutor {
    * @param permitsPerSecond how many permits should be allowed per second per key
    */
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond) {
-    this(scheduler, permitsPerSecond, Long.MAX_VALUE, "", false, DEFAULT_LOCK_PARALISM);
+    this(scheduler, permitsPerSecond, Long.MAX_VALUE, null, "", false, DEFAULT_LOCK_PARALISM);
   }
   
   /**
@@ -84,7 +85,7 @@ public class KeyedRateLimiterExecutor {
    */
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                                   String subPoolName, boolean addKeyToThreadName) {
-    this(scheduler, permitsPerSecond, Long.MAX_VALUE, 
+    this(scheduler, permitsPerSecond, Long.MAX_VALUE, null, 
          subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
   }
   
@@ -97,7 +98,7 @@ public class KeyedRateLimiterExecutor {
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
    * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @deprecated Please use {@link #KeyedRateLimiterExecutor(SubmitterScheduler, double, long, String, boolean, int)}
+   * @deprecated Please use one of the other constructors
    * 
    * @param scheduler Scheduler to defer executions to
    * @param permitsPerSecond how many permits should be allowed per second per key
@@ -109,7 +110,7 @@ public class KeyedRateLimiterExecutor {
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                                   String subPoolName, boolean addKeyToThreadName, 
                                   int expectedParallism) {
-    this(scheduler, permitsPerSecond, Long.MAX_VALUE, 
+    this(scheduler, permitsPerSecond, Long.MAX_VALUE, null, 
          subPoolName, addKeyToThreadName, expectedParallism);
   }
   
@@ -120,13 +121,34 @@ public class KeyedRateLimiterExecutor {
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
    * 
+   * @since 4.8.0
    * @param scheduler Scheduler to defer executions to
    * @param permitsPerSecond how many permits should be allowed per second per key
    * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
    */
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                                   long maxScheduleDelayMillis) {
-    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, "", false, DEFAULT_LOCK_PARALISM);
+    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, null, "", false, DEFAULT_LOCK_PARALISM);
+  }
+  
+  /**
+   * Constructs a new key rate limiting executor.  
+   * 
+   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
+   * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
+   * thrown instead of scheduling the task.
+   * 
+   * @since 4.8.0
+   * @param scheduler Scheduler to defer executions to
+   * @param permitsPerSecond how many permits should be allowed per second per key
+   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
+   */
+  public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
+                                  long maxScheduleDelayMillis, 
+                                  RejectedExecutionHandler rejectedExecutionHandler) {
+    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, rejectedExecutionHandler, 
+         "", false, DEFAULT_LOCK_PARALISM);
   }
   
   /**
@@ -138,6 +160,7 @@ public class KeyedRateLimiterExecutor {
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
    * 
+   * @since 4.8.0
    * @param scheduler Scheduler to defer executions to
    * @param permitsPerSecond how many permits should be allowed per second per key
    * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
@@ -147,7 +170,32 @@ public class KeyedRateLimiterExecutor {
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                                   long maxScheduleDelayMillis, 
                                   String subPoolName, boolean addKeyToThreadName) {
-    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, 
+    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, null, 
+         subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
+  }
+  
+  /**
+   * Constructs a new key rate limiting executor.  Allowing the specification of thread naming 
+   * behavior.  Providing null or empty for the {@code subPoolName} and {@code false} for appending 
+   * the key to the thread name will result in no thread name adjustments occurring.    
+   * 
+   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
+   * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
+   * thrown instead of scheduling the task.
+   * 
+   * @since 4.8.0
+   * @param scheduler Scheduler to defer executions to
+   * @param permitsPerSecond how many permits should be allowed per second per key
+   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
+   * @param subPoolName Prefix to give threads while executing tasks submitted through this limiter
+   * @param addKeyToThreadName {@code true} to append the task's key to the thread name
+   */
+  public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
+                                  long maxScheduleDelayMillis, 
+                                  RejectedExecutionHandler rejectedExecutionHandler, 
+                                  String subPoolName, boolean addKeyToThreadName) {
+    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, rejectedExecutionHandler, 
          subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
   }
   
@@ -164,15 +212,18 @@ public class KeyedRateLimiterExecutor {
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
    * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
+   * @since 4.8.0
    * @param scheduler Scheduler to defer executions to
    * @param permitsPerSecond how many permits should be allowed per second per key
    * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
    * @param subPoolName Prefix to give threads while executing tasks submitted through this limiter
    * @param addKeyToThreadName {@code true} to append the task's key to the thread name
    * @param expectedParallism Expected level of task submission parallelism
    */
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                                   long maxScheduleDelayMillis, 
+                                  RejectedExecutionHandler rejectedExecutionHandler, 
                                   String subPoolName, boolean addKeyToThreadName, 
                                   int expectedParallism) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
@@ -180,6 +231,7 @@ public class KeyedRateLimiterExecutor {
     ArgumentVerifier.assertGreaterThanZero(maxScheduleDelayMillis, "maxScheduleDelayMillis");
 
     this.scheduler = scheduler;
+    this.rejectedExecutionHandler = rejectedExecutionHandler;
     if (scheduler instanceof PrioritySchedulerService) {
       limiterCheckerScheduler = 
           new PrioritySchedulerDefaultPriorityWrapper((PrioritySchedulerService)scheduler, 
@@ -292,7 +344,7 @@ public class KeyedRateLimiterExecutor {
    * @param permits resource permits for this task
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be executed
-   * @return Time in milliseconds task was delayed to maintain rate
+   * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
    */
   public long execute(double permits, Object taskKey, Runnable task) {
     ArgumentVerifier.assertNotNegative(permits, "permits");
@@ -409,7 +461,7 @@ public class KeyedRateLimiterExecutor {
    * @param permits resource permits for this task
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @param task Runnable to execute when ready
-   * @return Time in milliseconds task was delayed to maintain rate
+   * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
    */
   protected long doExecute(double permits, Object taskKey, Runnable task) {
     RateLimiterExecutor rle;
@@ -424,7 +476,8 @@ public class KeyedRateLimiterExecutor {
         } else {
           threadNamedScheduler = new ThreadRenamingSubmitterScheduler(scheduler, keyedPoolName, false);
         }
-        rle = new RateLimiterExecutor(threadNamedScheduler, permitsPerSecond, maxScheduleDelayMillis);
+        rle = new RateLimiterExecutor(threadNamedScheduler, permitsPerSecond, 
+                                      maxScheduleDelayMillis, rejectedExecutionHandler);
 
         currentLimiters.put(taskKey, rle);
         // schedule task to check for removal later, should only be one task per limiter

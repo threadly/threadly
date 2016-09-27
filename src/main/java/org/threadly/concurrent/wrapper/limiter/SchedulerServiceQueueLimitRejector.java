@@ -32,7 +32,20 @@ public class SchedulerServiceQueueLimitRejector extends SubmitterSchedulerQueueL
    * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
    */
   public SchedulerServiceQueueLimitRejector(SchedulerService parentScheduler, int queuedTaskLimit) {
-    super(parentScheduler, queuedTaskLimit);
+    this(parentScheduler, queuedTaskLimit, null);
+  }
+
+  /**
+   * Constructs a new {@link SchedulerServiceQueueLimitRejector} with the provided scheduler and limit.
+   * 
+   * @since 4.8.0
+   * @param parentScheduler Scheduler to execute and schedule tasks on to
+   * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed due to queue size
+   */
+  public SchedulerServiceQueueLimitRejector(SchedulerService parentScheduler, int queuedTaskLimit, 
+                                            RejectedExecutionHandler rejectedExecutionHandler) {
+    super(parentScheduler, queuedTaskLimit, rejectedExecutionHandler);
     
     this.parentScheduler = parentScheduler;
   }

@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.RejectedExecutionException;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -33,6 +32,7 @@ import org.threadly.util.Clock;
 @SuppressWarnings("deprecation")
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   protected final SimpleSchedulerInterface scheduler;
+  protected final RejectedExecutionHandler rejectedExecutionHandler;
   protected final Object permitLock;
   protected volatile double permitsPerSecond;
   protected volatile long maxScheduleDelayMillis;
@@ -61,8 +61,8 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * average permit amount per task, per second.  
    * 
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
-   * beyond this delay, then a {@link RejectedExecutionException} will be thrown instead of 
-   * scheduling the task.
+   * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
+   * thrown instead of scheduling the task.
    * 
    * @since 4.8.0
    * @param scheduler scheduler to schedule/execute tasks on
@@ -71,9 +71,33 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    */
   public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond, 
                              long maxScheduleDelayMillis) {
+    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, null);
+  }
+  
+  /**
+   * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
+   * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
+   * average permit amount per task, per second.  
+   * 
+   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
+   * beyond this delay, then the provided {@link RejectedExecutionHandler} will be invoked.
+   * 
+   * @since 4.8.0
+   * @param scheduler scheduler to schedule/execute tasks on
+   * @param permitsPerSecond how many permits should be allowed per second
+   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
+   */
+  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond, 
+                             long maxScheduleDelayMillis, 
+                             RejectedExecutionHandler rejectedExecutionHandler) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     
     this.scheduler = scheduler;
+    if (rejectedExecutionHandler == null) {
+      rejectedExecutionHandler = RejectedExecutionHandler.THROW_REJECTED_EXECUTION_EXCEPTION;
+    }
+    this.rejectedExecutionHandler = rejectedExecutionHandler;
     this.permitLock = new Object();
     this.lastScheduleTime = Clock.lastKnownForwardProgressingMillis();
     setPermitsPerSecond(permitsPerSecond);
@@ -164,7 +188,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * 
    * @param permits resource permits for this task
    * @param task Runnable to execute when ready
-   * @return Time in milliseconds task was delayed to maintain rate
+   * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
    */
   public long execute(double permits, Runnable task) {
     ArgumentVerifier.assertNotNull(task, "task");
@@ -240,7 +264,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * 
    * @param permits number of permits for this task
    * @param task Runnable to be executed once rate can be maintained
-   * @return Time in milliseconds task was delayed to maintain rate
+   * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
    */
   protected long doExecute(double permits, Runnable task) {
     double effectiveDelay = (permits / permitsPerSecond) * 1000;
@@ -252,8 +276,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
       } else {
         double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
         if (scheduleDelay > maxScheduleDelayMillis) {
-          throw new RejectedExecutionException("Would need to schedule out " + scheduleDelay + 
-                                                 " milliseconds to maintain rate");
+          // let rejection handler invoke outside of lock
         } else if (scheduleDelay < 1) {
           if (scheduleDelay < 0) {
             lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
@@ -270,5 +293,10 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
         }
       }
     }
+    
+    // if not returned, then task is rejected
+    rejectedExecutionHandler.handleRejectedTask(task);
+    return -1;
   }
+  
 }

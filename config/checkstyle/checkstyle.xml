@@ -63,7 +63,7 @@
     <module name="EmptyForInitializerPad"/>
     <module name="EmptyForIteratorPad"/>
     <module name="RedundantModifier">
-      <property name="tokens" value="VARIABLE_DEF,ANNOTATION_FIELD_DEF,INTERFACE_DEF"/>
+      <property name="tokens" value="ANNOTATION_FIELD_DEF,INTERFACE_DEF"/>
     </module>
     <module name="NeedBraces"/>
     <module name="RightCurly"/>
