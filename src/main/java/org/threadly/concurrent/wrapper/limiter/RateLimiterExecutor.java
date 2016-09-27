@@ -164,12 +164,13 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * 
    * @param permits resource permits for this task
    * @param task Runnable to execute when ready
+   * @return Time in milliseconds task was delayed to maintain rate
    */
-  public void execute(double permits, Runnable task) {
+  public long execute(double permits, Runnable task) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
-    doExecute(permits, task);
+    return doExecute(permits, task);
   }
 
   /**
@@ -239,13 +240,15 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * 
    * @param permits number of permits for this task
    * @param task Runnable to be executed once rate can be maintained
+   * @return Time in milliseconds task was delayed to maintain rate
    */
-  protected void doExecute(double permits, Runnable task) {
+  protected long doExecute(double permits, Runnable task) {
     double effectiveDelay = (permits / permitsPerSecond) * 1000;
     synchronized (permitLock) {
       if (permits == 0 && lastScheduleTime < Clock.lastKnownForwardProgressingMillis()) {
         // shortcut
         scheduler.execute(task);
+        return 0;
       } else {
         double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
         if (scheduleDelay > maxScheduleDelayMillis) {
@@ -258,9 +261,12 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
             lastScheduleTime += effectiveDelay;
           }
           scheduler.execute(task);
+          return 0;
         } else {
           lastScheduleTime += effectiveDelay;
-          scheduler.schedule(task, (long)scheduleDelay);
+          long lScheduleDelay = (long)scheduleDelay;
+          scheduler.schedule(task, lScheduleDelay);
+          return lScheduleDelay;
         }
       }
     }

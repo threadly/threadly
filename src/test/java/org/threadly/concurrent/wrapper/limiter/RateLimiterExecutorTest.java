@@ -90,6 +90,16 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   }
   
   @Test
+  public void executeWithPermitsReturnedDelayTest() {
+    long firstDelay = limiter.execute(10, DoNothingRunnable.instance());
+    assertEquals(0, firstDelay);
+    
+    long secondDelay = limiter.execute(1, DoNothingRunnable.instance());
+    // should be incremented from first delay
+    assertTrue(secondDelay > 8000);
+  }
+  
+  @Test
   public void limitTest() throws InterruptedException, ExecutionException {
     int rateLimit = 100;
     final AtomicInteger ranPermits = new AtomicInteger();

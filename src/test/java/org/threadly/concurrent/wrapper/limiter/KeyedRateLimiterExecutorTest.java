@@ -92,6 +92,16 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
   }
   
   @Test
+  public void executeWithPermitsReturnedDelayTest() {
+    long firstDelay = limiter.execute(10, "foo", DoNothingRunnable.instance());
+    assertEquals(0, firstDelay);
+    
+    long secondDelay = limiter.execute(1, "foo", DoNothingRunnable.instance());
+    // should be incremented from first delay
+    assertTrue(secondDelay > 8000);
+  }
+  
+  @Test
   public void limitTest() throws InterruptedException, ExecutionException {
     Object key = new Object();
     int rateLimit = 100;

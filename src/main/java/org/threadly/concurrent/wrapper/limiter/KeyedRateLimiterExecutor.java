@@ -273,7 +273,8 @@ public class KeyedRateLimiterExecutor {
   /**
    * Provide a task to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#execute(Runnable)}
+   * See also: {@link SubmitterExecutor#execute(Runnable)} and 
+   * {@link RateLimiterExecutor#execute(Runnable)}.
    * 
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be executed
@@ -285,24 +286,27 @@ public class KeyedRateLimiterExecutor {
   /**
    * Provide a task to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#execute(Runnable)}
+   * See also: {@link SubmitterExecutor#execute(Runnable)} and 
+   * {@link RateLimiterExecutor#execute(double, Runnable)}.
    * 
    * @param permits resource permits for this task
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be executed
+   * @return Time in milliseconds task was delayed to maintain rate
    */
-  public void execute(double permits, Object taskKey, Runnable task) {
+  public long execute(double permits, Object taskKey, Runnable task) {
     ArgumentVerifier.assertNotNegative(permits, "permits");
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    doExecute(permits, taskKey, task);
+    return doExecute(permits, taskKey, task);
   }
   
   /**
    * Submit a task to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#submit(Runnable)}
+   * See also: {@link SubmitterExecutor#submit(Runnable)} and 
+   * {@link RateLimiterExecutor#submit(Runnable)}.
    * 
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be executed
@@ -315,7 +319,8 @@ public class KeyedRateLimiterExecutor {
   /**
    * Submit a task to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#submit(Runnable)}
+   * See also: {@link SubmitterExecutor#submit(Runnable)} and 
+   * {@link RateLimiterExecutor#submit(double, Runnable)}.
    * 
    * @param permits resource permits for this task
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
@@ -329,7 +334,8 @@ public class KeyedRateLimiterExecutor {
   /**
    * Submit a task to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#submit(Runnable, Object)}
+   * See also: {@link SubmitterExecutor#submit(Runnable, Object)} and 
+   * {@link RateLimiterExecutor#submit(Runnable, Object)}.
    * 
    * @param <T> type of result returned from the future
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
@@ -344,7 +350,8 @@ public class KeyedRateLimiterExecutor {
   /**
    * Submit a task to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#submit(Runnable, Object)}
+   * See also: {@link SubmitterExecutor#submit(Runnable, Object)} and 
+   * {@link RateLimiterExecutor#submit(double, Runnable, Object)}.
    * 
    * @param <T> type of result returned from the future
    * @param permits resource permits for this task
@@ -360,7 +367,8 @@ public class KeyedRateLimiterExecutor {
   /**
    * Submit a callable to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#submit(Callable)}
+   * See also: {@link SubmitterExecutor#submit(Callable)} and 
+   * {@link RateLimiterExecutor#submit(Callable)}.
    * 
    * @param <T> type of result returned from the future
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
@@ -374,7 +382,8 @@ public class KeyedRateLimiterExecutor {
   /**
    * Submit a callable to be run with a given thread key.
    * 
-   * See also: {@link SubmitterExecutor#submit(Callable)}
+   * See also: {@link SubmitterExecutor#submit(Callable)} and 
+   * {@link RateLimiterExecutor#submit(double, Callable)}.
    * 
    * @param <T> type of result returned from the future
    * @param permits resource permits for this task
@@ -394,7 +403,15 @@ public class KeyedRateLimiterExecutor {
     return rf;
   }
   
-  protected void doExecute(double permits, Object taskKey, Runnable task) {
+  /**
+   * Internal call to actually execute prepared runnable.
+   * 
+   * @param permits resource permits for this task
+   * @param taskKey object key where {@code equals()} will be used to determine execution thread
+   * @param task Runnable to execute when ready
+   * @return Time in milliseconds task was delayed to maintain rate
+   */
+  protected long doExecute(double permits, Object taskKey, Runnable task) {
     RateLimiterExecutor rle;
     Object lock = sLock.getLock(taskKey);
     synchronized (lock) {
@@ -415,7 +432,7 @@ public class KeyedRateLimiterExecutor {
       }
       
       // must execute while in lock to prevent early removal
-      rle.execute(permits, task);
+      return rle.execute(permits, task);
     }
   }
 
