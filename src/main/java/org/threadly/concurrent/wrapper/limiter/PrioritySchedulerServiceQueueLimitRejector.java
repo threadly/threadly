@@ -2,9 +2,6 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.threadly.concurrent.CallableContainer;
 import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.TaskPriority;
@@ -164,33 +161,5 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
   @Override
   public int getQueuedTaskCount(TaskPriority priority) {
     return parentScheduler.getQueuedTaskCount(priority);
-  }
-  
-  /**
-   * <p>This callable decrements a provided AtomicInteger at the START of execution.</p>
-   * 
-   * @author jent - Mike Jensen
-   * @since 4.8.0
-   * @param <T> The type for the object returned from the callable
-   */
-  protected static class DecrementingCallable<T> implements Callable<T>, CallableContainer<T> {
-    private final Callable<T> task;
-    private final AtomicInteger queuedTaskCount;
-    
-    public DecrementingCallable(Callable<T> task, AtomicInteger queuedTaskCount) {
-      this.task = task;
-      this.queuedTaskCount = queuedTaskCount;
-    }
-
-    @Override
-    public Callable<T> getContainedCallable() {
-      return task;
-    }
-
-    @Override
-    public T call() throws Exception {
-      queuedTaskCount.decrementAndGet();
-      return task.call();
-    }
   }
 }
