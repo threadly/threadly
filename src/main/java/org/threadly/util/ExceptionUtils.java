@@ -77,25 +77,7 @@ public class ExceptionUtils {
    * 
    * @return Handling instance for this thread, or {@code null} if none are available
    */
-  @SuppressWarnings("deprecation")
-  public static ExceptionHandlerInterface getExceptionHandler() {
-    final ExceptionHandler eh = getInternalExceptionHandler();
-    if (eh == null) {
-      return null;
-    } else if (eh instanceof ExceptionHandlerInterface) {
-      return (ExceptionHandlerInterface)eh;
-    } else {
-      return new ExceptionHandlerInterface() {
-        @Override
-        public void handleException(Throwable thrown) {
-          eh.handleException(thrown);
-        }
-      };
-    }
-  }
-  
-  // TODO - remove once ExceptionHandlerInterface is removed
-  private static ExceptionHandler getInternalExceptionHandler() {
+  public static ExceptionHandler getExceptionHandler() {
     ExceptionHandler eh = THREAD_LOCAL_EXCEPTION_HANDLER.get();
     if (eh != null) {
       return eh;
@@ -416,7 +398,6 @@ public class ExceptionUtils {
    * @param stack Array of stack elements to build the string off of
    * @param stringBuilder StringBuilder to write the stack out to
    */
-  @SuppressWarnings("deprecation")
   public static void writeStackTo(StackTraceElement[] stack, StringBuilder stringBuilder) {
     if (stack == null) {
       return;
@@ -424,7 +405,7 @@ public class ExceptionUtils {
     ArgumentVerifier.assertNotNull(stringBuilder, "stringBuilder");
     
     for (StackTraceElement ste : stack) {
-      stringBuilder.append("\t at ").append(ste.toString()).append(StringUtils.NEW_LINE);
+      stringBuilder.append("\t at ").append(ste.toString()).append(System.lineSeparator());
     }
   }
   

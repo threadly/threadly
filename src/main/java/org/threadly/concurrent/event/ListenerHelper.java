@@ -29,22 +29,6 @@ import org.threadly.util.Pair;
  * @param <T> Interface for listeners to implement and called into with
  */
 public class ListenerHelper<T> {
-  /**
-   * This static function allows for quick and easy construction of the {@link ListenerHelper}.  
-   * It is equivalent to the normal constructor, but requires less code to do that construction.
-   * 
-   * @deprecated To be removed in 5.0.0 because construction is less painful with {@code <>} generics
-   * 
-   * @param <T> Type representing interface of listeners
-   * @param listenerInterface Interface that listeners need to implement
-   * @return New instance of the {@link ListenerHelper}
-   */
-  @Deprecated
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public static <T> ListenerHelper<T> build(Class<? super T> listenerInterface) {
-    return new ListenerHelper(listenerInterface);
-  }
-  
   protected final T proxyInstance;
   protected final Object listenersLock;
   protected List<Pair<T, Executor>> listeners;

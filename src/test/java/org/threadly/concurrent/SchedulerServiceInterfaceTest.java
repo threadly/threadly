@@ -131,35 +131,6 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
     }
   }
   
-  @Test
-  @SuppressWarnings("deprecation")
-  public void getCurrentRunningCountTest() {
-    SchedulerServiceFactory factory = getSchedulerServiceFactory();
-    final SchedulerService scheduler = factory.makeSchedulerService(1, false);
-    try {
-      // verify nothing at the start
-      assertEquals(0, scheduler.getCurrentRunningCount());
-      
-      BlockingTestRunnable btr = new BlockingTestRunnable();
-      scheduler.execute(btr);
-      
-      btr.blockTillStarted();
-      
-      assertEquals(1, scheduler.getCurrentRunningCount());
-      
-      btr.unblock();
-      
-      new TestCondition() {
-        @Override
-        public boolean get() {
-          return scheduler.getCurrentRunningCount() == 0;
-        }
-      }.blockTillTrue();
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
   public interface SchedulerServiceFactory extends SubmitterSchedulerFactory {
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable);
   }

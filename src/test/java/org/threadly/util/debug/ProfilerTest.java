@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
@@ -48,10 +47,8 @@ public class ProfilerTest {
   }
   
   @Test
-  @SuppressWarnings("deprecation")
   public void constructorTest() {
     int testPollInterval = Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS * 10;
-    File dumpFile = new File("foo");
     Profiler p;
     
     p = new Profiler();
@@ -60,16 +57,6 @@ public class ProfilerTest {
     assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pStore.pollIntervalInMs);
     assertNull(p.pStore.collectorThread.get());
     assertNull(p.pStore.dumpingThread);
-    assertNull(p.outputFile);
-    assertNotNull(p.startStopLock);
-    
-    p = new Profiler(dumpFile);
-    assertNotNull(p.pStore.threadTraces);
-    assertEquals(0, p.pStore.threadTraces.size());
-    assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.pStore.pollIntervalInMs);
-    assertNull(p.pStore.collectorThread.get());
-    assertNull(p.pStore.dumpingThread);
-    assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
     
     p = new Profiler(testPollInterval);
@@ -78,16 +65,6 @@ public class ProfilerTest {
     assertEquals(testPollInterval, p.pStore.pollIntervalInMs);
     assertNull(p.pStore.collectorThread.get());
     assertNull(p.pStore.dumpingThread);
-    assertNull(p.outputFile);
-    assertNotNull(p.startStopLock);
-    
-    p = new Profiler(dumpFile, testPollInterval);
-    assertNotNull(p.pStore.threadTraces);
-    assertEquals(0, p.pStore.threadTraces.size());
-    assertEquals(testPollInterval, p.pStore.pollIntervalInMs);
-    assertNull(p.pStore.collectorThread.get());
-    assertNull(p.pStore.dumpingThread);
-    assertEquals(dumpFile, p.outputFile);
     assertNotNull(p.startStopLock);
   }
   

@@ -45,24 +45,6 @@ import org.threadly.util.ArgumentVerifier;
  * @param <T> Interface for listeners to implement and called into with
  */
 public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
-  /**
-   * This static function allows for quick and easy construction of the 
-   * {@link AsyncCallListenerHelper}.  It is equivalent to the normal constructor, but requires 
-   * less code to do that construction.
-   * 
-   * @deprecated To be removed in 5.0.0 because construction is less painful with {@code <>} generics
-   * 
-   * @param <T> Type representing interface of listeners
-   * @param listenerInterface Interface that listeners need to implement
-   * @param executor Executor that {@link #call()} invocations will occur on
-   * @return New instance of the {@link AsyncCallListenerHelper}
-   */
-  @Deprecated
-  @SuppressWarnings({ "unchecked", "rawtypes" })
-  public static <T> AsyncCallListenerHelper<T> build(Class<? super T> listenerInterface, Executor executor) {
-    return new AsyncCallListenerHelper(listenerInterface, executor);
-  }
-  
   protected final Executor executor;
 
   /**

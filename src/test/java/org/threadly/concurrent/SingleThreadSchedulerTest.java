@@ -53,8 +53,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void isShutdownTest() throws InterruptedException {
+  public void isShutdownTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     assertFalse(sts.isShutdown());
     
@@ -66,24 +65,6 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     sts = new SingleThreadScheduler();
     executeTestRunnables(sts, 0);
     sts.shutdownNow();
-    
-    assertTrue(sts.isShutdown());
-    
-    sts = new SingleThreadScheduler();
-    executeTestRunnables(sts, 0);
-    sts.shutdownAndAwaitTermination();
-    
-    assertTrue(sts.isShutdown());
-    
-    sts = new SingleThreadScheduler();
-    executeTestRunnables(sts, 0);
-    sts.shutdownAndAwaitTermination(100);
-    
-    assertTrue(sts.isShutdown());
-    
-    sts = new SingleThreadScheduler();
-    executeTestRunnables(sts, 0);
-    sts.shutdownNowAndAwaitTermination();
     
     assertTrue(sts.isShutdown());
   }
@@ -192,64 +173,6 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
       assertEquals(1, result.size()); // only canceled task removed
     } finally {
       sts.shutdown();
-    }
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void shutdownAndAwaitTerminationTest() throws InterruptedException {
-    SingleThreadScheduler sts = new SingleThreadScheduler();
-    /* adding a run time to have greater chances that runnable 
-     * will be waiting to execute after shutdown call.
-     */
-    TestRunnable lastRunnable = executeTestRunnables(sts, 5).get(TEST_QTY - 1);
-    
-    sts.shutdownAndAwaitTermination();
-    
-    // runnable should already be done
-    assertTrue(lastRunnable.ranOnce());
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void shutdownAndAwaitTerminationWithTimeoutTest() throws InterruptedException {
-    SingleThreadScheduler sts = new SingleThreadScheduler();
-    /* adding a run time to have greater chances that runnable 
-     * will be waiting to execute after shutdown call.
-     */
-    TestRunnable lastRunnable = executeTestRunnables(sts, 5).get(TEST_QTY - 1);
-    
-    assertTrue(sts.shutdownAndAwaitTermination(1000 * 10));
-    
-    // runnable should already be done
-    assertTrue(lastRunnable.ranOnce());
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void shutdownAndAwaitTerminationWithTimeoutExpireTest() throws InterruptedException {
-    SingleThreadScheduler sts = new SingleThreadScheduler();
-    executeTestRunnables(sts, 1000 * 10);
-    
-    long start = Clock.accurateForwardProgressingMillis();
-    assertFalse(sts.shutdownAndAwaitTermination(DELAY_TIME));
-
-    assertTrue(Clock.accurateForwardProgressingMillis() - start >= (DELAY_TIME - ALLOWED_VARIANCE));
-  }
-  
-  @Test
-  public void shutdownNowAndAwaitTerminationTest() throws InterruptedException {
-    SingleThreadScheduler sts = new SingleThreadScheduler();
-    executeTestRunnables(sts, 5);
-      
-    @SuppressWarnings("deprecation")
-    List<Runnable> canceledRunnables = sts.shutdownNowAndAwaitTermination();
-    
-    assertNotNull(canceledRunnables);
-    
-    Iterator<Runnable> it = canceledRunnables.iterator();
-    while (it.hasNext()) {
-      assertEquals(0, ((TestRunnable)it.next()).getRunCount());
     }
   }
   

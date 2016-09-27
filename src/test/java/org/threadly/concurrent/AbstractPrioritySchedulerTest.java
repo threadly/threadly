@@ -55,22 +55,6 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
   }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void makeWithDefaultPriorityTest() {
-    AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
-    TaskPriority originalPriority = TaskPriority.Low;
-    TaskPriority newPriority = TaskPriority.High;
-    AbstractPriorityScheduler scheduler = factory.makeAbstractPriorityScheduler(1, originalPriority, 1000);
-    assertTrue(scheduler.makeWithDefaultPriority(originalPriority) == scheduler);
-    PrioritySchedulerService newScheduler = scheduler.makeWithDefaultPriority(newPriority);
-    try {
-      assertEquals(newPriority, newScheduler.getDefaultPriority());
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @Test
   public void getAndSetLowPriorityWaitTest() {
     AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
     long lowPriorityWait = 1000;
@@ -218,126 +202,9 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       factory.shutdown();
     }
   }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void getScheduledTaskCountTest() {
-    AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
-    try {
-      AbstractPriorityScheduler result = factory.makeAbstractPriorityScheduler(1);
-      // add directly to avoid starting the consumer
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(2, result.getScheduledTaskCount());
-
-      result.getQueueManager().getQueueSet(TaskPriority.Low)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.Low)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(4, result.getScheduledTaskCount());
-      assertEquals(4, result.getScheduledTaskCount(null));
-    } finally {
-      factory.shutdown();
-    }
-  }
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void getScheduledTaskCountStarvablePriorityTest() {
-    AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
-    try {
-      AbstractPriorityScheduler result = factory.makeAbstractPriorityScheduler(1);
-      // add directly to avoid starting the consumer
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(0, result.getScheduledTaskCount(TaskPriority.Starvable));
-
-      result.getQueueManager().getQueueSet(TaskPriority.Starvable)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.Starvable)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(2, result.getScheduledTaskCount(TaskPriority.Starvable));
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void getScheduledTaskCountLowPriorityTest() {
-    AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
-    try {
-      AbstractPriorityScheduler result = factory.makeAbstractPriorityScheduler(1);
-      // add directly to avoid starting the consumer
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(0, result.getScheduledTaskCount(TaskPriority.Low));
-
-      result.getQueueManager().getQueueSet(TaskPriority.Low)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.Low)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(2, result.getScheduledTaskCount(TaskPriority.Low));
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void getScheduledTaskCountHighPriorityTest() {
-    AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
-    try {
-      AbstractPriorityScheduler result = factory.makeAbstractPriorityScheduler(1);
-      // add directly to avoid starting the consumer
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.High)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(2, result.getScheduledTaskCount(TaskPriority.High));
-
-      result.getQueueManager().getQueueSet(TaskPriority.Low)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      result.getQueueManager().getQueueSet(TaskPriority.Low)
-            .executeQueue.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
-      
-      assertEquals(2, result.getScheduledTaskCount(TaskPriority.High));
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
   @Override
-  @Test
   public void executeTest() {
     AbstractPrioritySchedulerFactory priorityFactory = getAbstractPrioritySchedulerFactory();
     try {
@@ -390,8 +257,8 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
     }
   }
   
-  @Override
   @Test
+  @Override
   public void submitRunnableWithResultTest() throws InterruptedException, ExecutionException {
     AbstractPrioritySchedulerFactory priorityFactory = getAbstractPrioritySchedulerFactory();
     try {
@@ -417,8 +284,8 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
     }
   }
   
-  @Override
   @Test
+  @Override
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     AbstractPrioritySchedulerFactory priorityFactory = getAbstractPrioritySchedulerFactory();
     try {
@@ -569,40 +436,6 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
       assertFalse(scheduler.remove(new TestCallable()));
       
       assertTrue(scheduler.remove(task));
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void wrapperSamePriorityTest() {
-    AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
-    try {
-      AbstractPriorityScheduler highPriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.High, 200);
-      assertTrue(highPriorityScheduler.makeWithDefaultPriority(TaskPriority.High) == highPriorityScheduler);
-      
-      AbstractPriorityScheduler lowPriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.Low, 200);
-      assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.Low) == lowPriorityScheduler);
-      
-      AbstractPriorityScheduler starvablePriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.Starvable, 200);
-      assertTrue(starvablePriorityScheduler.makeWithDefaultPriority(TaskPriority.Starvable) == starvablePriorityScheduler);
-    } finally {
-      factory.shutdown();
-    }
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void wrapperTest() {
-    AbstractPrioritySchedulerFactory factory = getAbstractPrioritySchedulerFactory();
-    try {
-      AbstractPriorityScheduler highPriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.High, 200);
-      assertTrue(highPriorityScheduler.makeWithDefaultPriority(TaskPriority.Low).getDefaultPriority() == TaskPriority.Low);
-      
-      AbstractPriorityScheduler lowPriorityScheduler = factory.makeAbstractPriorityScheduler(1, TaskPriority.Low, 200);
-      assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.High).getDefaultPriority() == TaskPriority.High);
-      assertTrue(lowPriorityScheduler.makeWithDefaultPriority(TaskPriority.Starvable).getDefaultPriority() == TaskPriority.Starvable);
     } finally {
       factory.shutdown();
     }

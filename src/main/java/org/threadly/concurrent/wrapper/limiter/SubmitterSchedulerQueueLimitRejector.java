@@ -77,18 +77,6 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
   /**
    * Invoked to check how many tasks are currently being tracked as queued by this limiter.
    * 
-   * @deprecated Please use {@link #getQueuedTaskCount()}
-   * 
-   * @return Number of tracked tasks waiting for execution to start
-   */
-  @Deprecated
-  public int getCurrentQueueSize() {
-    return queuedTaskCount.get();
-  }
-  
-  /**
-   * Invoked to check how many tasks are currently being tracked as queued by this limiter.
-   * 
    * @return Number of tracked tasks waiting for execution to start
    */
   public int getQueuedTaskCount() {

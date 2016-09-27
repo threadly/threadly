@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
-import org.threadly.concurrent.SimpleSchedulerInterface;
+import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ImmediateResultListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -29,9 +29,8 @@ import org.threadly.util.Clock;
  * @author jent - Mike Jensen
  * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent.limiter)
  */
-@SuppressWarnings("deprecation")
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
-  protected final SimpleSchedulerInterface scheduler;
+  protected final SubmitterScheduler scheduler;
   protected final RejectedExecutionHandler rejectedExecutionHandler;
   protected final Object permitLock;
   protected volatile double permitsPerSecond;
@@ -45,13 +44,12 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * 
    * This will schedule tasks out infinitely far in order to maintain rate.  If you want tasks to 
    * be rejected at a certain point consider using 
-   * {@link #RateLimiterExecutor(SimpleSchedulerInterface, double, long)}.
+   * {@link #RateLimiterExecutor(SubmitterScheduler, double, long)}.
    * 
    * @param scheduler scheduler to schedule/execute tasks on
    * @param permitsPerSecond how many permits should be allowed per second
    */
-  @SuppressWarnings("javadoc")
-  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond) {
+  public RateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond) {
     this(scheduler, permitsPerSecond, Long.MAX_VALUE);
   }
   
@@ -69,7 +67,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param permitsPerSecond how many permits should be allowed per second
    * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
    */
-  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond, 
+  public RateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                              long maxScheduleDelayMillis) {
     this(scheduler, permitsPerSecond, maxScheduleDelayMillis, null);
   }
@@ -88,7 +86,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
    * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
    */
-  public RateLimiterExecutor(SimpleSchedulerInterface scheduler, double permitsPerSecond, 
+  public RateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                              long maxScheduleDelayMillis, 
                              RejectedExecutionHandler rejectedExecutionHandler) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");

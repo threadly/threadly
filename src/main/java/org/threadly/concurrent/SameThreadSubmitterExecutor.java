@@ -19,8 +19,7 @@ import org.threadly.util.ExceptionUtils;
  * @author jent - Mike Jensen
  * @since 1.2.0
  */
-@SuppressWarnings("deprecation")
-public class SameThreadSubmitterExecutor implements SubmitterExecutorInterface {
+public class SameThreadSubmitterExecutor implements SubmitterExecutor {
   private static final SameThreadSubmitterExecutor DEFAULT_INSTANCE;
   
   static {
