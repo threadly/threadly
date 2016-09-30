@@ -19,7 +19,7 @@ import org.threadly.util.TestExceptionHandler;
 @SuppressWarnings("javadoc")
 public class ListenerHelperTest {
   protected <T> ListenerHelper<T> makeListenerHelper(Class<T> listenerInterface) {
-    return new ListenerHelper<T>(listenerInterface);
+    return new ListenerHelper<>(listenerInterface);
   }
   
   @Test
@@ -206,7 +206,7 @@ public class ListenerHelperTest {
   private void callTest(boolean useExecutor) {
     int testInt = 10;
     String testStr = StringUtils.makeRandomString(10);
-    List<TestImp> listeners = new ArrayList<TestImp>(TEST_QTY);
+    List<TestImp> listeners = new ArrayList<>(TEST_QTY);
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     
     for (int i = 0; i < TEST_QTY; i++) {
@@ -233,8 +233,9 @@ public class ListenerHelperTest {
   public void callMultipleFunctionListenersTest() {
     int testInt = 10;
     String testStr = StringUtils.makeRandomString(10);
-    List<TestMultipleFunctionImp> listeners = new ArrayList<TestMultipleFunctionImp>(TEST_QTY);
-    ListenerHelper<TestMultipleFunctionInterface> ch = makeListenerHelper(TestMultipleFunctionInterface.class);
+    List<TestMultipleFunctionImp> listeners = new ArrayList<>(TEST_QTY);
+    ListenerHelper<TestMultipleFunctionInterface> ch = 
+        makeListenerHelper(TestMultipleFunctionInterface.class);
     
     for (int i = 0; i < TEST_QTY; i++) {
       TestMultipleFunctionImp ti = new TestMultipleFunctionImp();

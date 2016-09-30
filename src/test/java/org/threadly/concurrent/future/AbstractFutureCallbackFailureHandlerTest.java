@@ -10,7 +10,7 @@ import org.junit.Test;
 public class AbstractFutureCallbackFailureHandlerTest {
   @Test
   public void resultIgnoredTest() {
-    final AtomicReference<Throwable> failureProvided = new AtomicReference<Throwable>(null);
+    final AtomicReference<Throwable> failureProvided = new AtomicReference<>(null);
     new AbstractFutureCallbackFailureHandler() {
       @Override
       public void handleFailure(Throwable t) {
@@ -25,7 +25,7 @@ public class AbstractFutureCallbackFailureHandlerTest {
   @Test
   public void failureProvidedTest() {
     final Throwable testFailure = new Exception();
-    final AtomicReference<Throwable> failureProvided = new AtomicReference<Throwable>(null);
+    final AtomicReference<Throwable> failureProvided = new AtomicReference<>(null);
     new AbstractFutureCallbackFailureHandler() {
       @Override
       public void handleFailure(Throwable t) {

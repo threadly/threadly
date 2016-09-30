@@ -95,7 +95,7 @@ public class ControlledThreadProfiler extends Profiler {
     public ControlledThreadProfileStorage(int pollIntervalInMs) {
       super(pollIntervalInMs);
       
-      profiledThreads = new ConcurrentArrayList<SelectedThreadSample>(0, TRACKED_THREAD_BUFFER);
+      profiledThreads = new ConcurrentArrayList<>(0, TRACKED_THREAD_BUFFER);
     }
     
     @Override

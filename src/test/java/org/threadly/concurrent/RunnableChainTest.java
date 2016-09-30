@@ -29,7 +29,7 @@ public class RunnableChainTest {
   
   @Test
   public void exceptionStopsChainTest() {
-    List<TestRunnable> list = new ArrayList<TestRunnable>(TEST_QTY);
+    List<TestRunnable> list = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       list.add(new ChainRunnable(i == FAIL_INDEX));
     }
@@ -53,7 +53,7 @@ public class RunnableChainTest {
   
   @Test
   public void runAllProvidedTest() {
-    List<TestRunnable> list = new ArrayList<TestRunnable>(TEST_QTY);
+    List<TestRunnable> list = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       list.add(new ChainRunnable(i == FAIL_INDEX));
     }

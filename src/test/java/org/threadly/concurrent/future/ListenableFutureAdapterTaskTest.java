@@ -13,7 +13,7 @@ public class ListenableFutureAdapterTaskTest {
   public void resultTest() throws InterruptedException, ExecutionException {
     Object result = new Object();
     ListenableFutureAdapterTask<Object> adapter = 
-        new ListenableFutureAdapterTask<Object>(FutureUtils.immediateResultFuture(result));
+        new ListenableFutureAdapterTask<>(FutureUtils.immediateResultFuture(result));
     
     adapter.run();
 
@@ -23,9 +23,9 @@ public class ListenableFutureAdapterTaskTest {
   
   @Test
   public void cancelTest() {
-    SettableListenableFuture<Object> slf = new SettableListenableFuture<Object>();
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
     slf.cancel(false);
-    ListenableFutureAdapterTask<Object> adapter = new ListenableFutureAdapterTask<Object>(slf);
+    ListenableFutureAdapterTask<Object> adapter = new ListenableFutureAdapterTask<>(slf);
     
     adapter.run();
     
@@ -36,7 +36,7 @@ public class ListenableFutureAdapterTaskTest {
   public void exceptionFailureTest() throws InterruptedException {
     Exception failure = new Exception();
     ListenableFutureAdapterTask<Object> adapter = 
-        new ListenableFutureAdapterTask<Object>(FutureUtils.immediateFailureFuture(failure));
+        new ListenableFutureAdapterTask<>(FutureUtils.immediateFailureFuture(failure));
     
     adapter.run();
 
@@ -53,7 +53,7 @@ public class ListenableFutureAdapterTaskTest {
   public void throwableFailureTest() throws InterruptedException {
     Throwable failure = new Throwable();
     ListenableFutureAdapterTask<Object> adapter = 
-        new ListenableFutureAdapterTask<Object>(FutureUtils.immediateFailureFuture(failure));
+        new ListenableFutureAdapterTask<>(FutureUtils.immediateFailureFuture(failure));
     
     adapter.run();
 

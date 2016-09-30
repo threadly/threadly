@@ -157,7 +157,7 @@ public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest
   }
   
   private static class ExecutorStatisticWrapperFactory implements SubmitterExecutorFactory {
-    private final List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(2);
+    private final List<PriorityScheduler> schedulers = new ArrayList<>(2);
     
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {

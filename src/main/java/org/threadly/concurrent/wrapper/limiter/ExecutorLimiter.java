@@ -42,7 +42,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
     ArgumentVerifier.assertNotNull(executor, "executor");
     
     this.executor = executor;
-    this.waitingTasks = new ConcurrentLinkedQueue<LimiterRunnableWrapper>();
+    this.waitingTasks = new ConcurrentLinkedQueue<>();
     this.maxConcurrency = maxConcurrency;
     this.currentlyRunning = new AtomicInteger(0);
   }

@@ -21,11 +21,8 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
    * 
    * @since 4.2.0
    */
-  public static final ImmediateResultListenableFuture<?> NULL_RESULT;
-  
-  static {
-    NULL_RESULT = new ImmediateResultListenableFuture<Object>(null);
-  }
+  public static final ImmediateResultListenableFuture<?> NULL_RESULT = 
+      new ImmediateResultListenableFuture<>(null);
   
   protected final T result;
   

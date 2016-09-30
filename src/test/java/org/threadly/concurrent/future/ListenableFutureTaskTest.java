@@ -2,7 +2,7 @@ package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -34,11 +34,11 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   protected <T> ListenableFutureTask<T> makeFutureTask(Runnable runnable, T result) {
-    return new ListenableFutureTask<T>(false, runnable, result);
+    return new ListenableFutureTask<>(false, runnable, result);
   }
   
   protected <T> ListenableFutureTask<T> makeFutureTask(Callable<T> task) {
-    return new ListenableFutureTask<T>(false, task);
+    return new ListenableFutureTask<>(false, task);
   }
   
   @Test
@@ -186,43 +186,43 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   private class ListenableFutureTaskFactory implements ExecuteOnGetFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
-      return new ListenableFutureTask<Object>(false, run);
+      return new ListenableFutureTask<>(false, run);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Runnable run, T result) {
-      return new ListenableFutureTask<T>(false, run, result);
+      return new ListenableFutureTask<>(false, run, result);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Callable<T> callable) {
-      return new ListenableFutureTask<T>(false, callable);
+      return new ListenableFutureTask<>(false, callable);
     }
 
     @Override
     public ListenableFuture<?> makeCanceled() {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<Object>(false, DoNothingRunnable.instance());
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance());
       lft.cancel(false);
       return lft;
     }
 
     @Override
     public ListenableFuture<?> makeWithFailure(Exception e) {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<Object>(false, () -> { throw e; });
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, () -> { throw e; });
       lft.run();
       return lft;
     }
 
     @Override
     public <T> ListenableFuture<T> makeWithResult(T result) {
-      ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, () -> result);
+      ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, () -> result);
       lft.run();
       return lft;
     }
   }
   
   private class TestExecutor implements Executor {
-    public List<Runnable> providedRunnables = new LinkedList<Runnable>();
+    public List<Runnable> providedRunnables = new ArrayList<>(2);
     
     @Override
     public void execute(Runnable command) {

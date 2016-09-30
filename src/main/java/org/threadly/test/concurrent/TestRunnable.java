@@ -46,7 +46,7 @@ public class TestRunnable implements Runnable {
     this.creationForwardProgressingMillis = Clock.accurateForwardProgressingMillis();
     
     setRunDelayInMillis(runTimeInMillis);
-    this.runTime = new ConcurrentArrayList<Long>(0, 1);
+    this.runTime = new ConcurrentArrayList<>(0, 1);
     this.runCount = new AtomicInteger(0);
     this.currentRunningCount = new AtomicInteger(0);
     this.ranConcurrent = false;

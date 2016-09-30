@@ -340,7 +340,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public List<Runnable> shutdownNow() {
     // we must unwrap our statistic tracker runnables
     List<Runnable> wrappedRunnables = super.shutdownNow();
-    List<Runnable> result = new ArrayList<Runnable>(wrappedRunnables.size());
+    List<Runnable> result = new ArrayList<>(wrappedRunnables.size());
     
     Iterator<Runnable> it = wrappedRunnables.iterator();
     while (it.hasNext()) {

@@ -36,7 +36,7 @@ public class TestableSchedulerTest {
   }
   
   private static List<TestRunnable> getRunnableList() {
-    List<TestRunnable> result = new ArrayList<TestRunnable>(TEST_QTY);
+    List<TestRunnable> result = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       result.add(new TestRunnable());
     }
@@ -45,7 +45,7 @@ public class TestableSchedulerTest {
   }
   
   private static List<TestCallable> getCallableList() {
-    List<TestCallable> result = new ArrayList<TestCallable>(TEST_QTY);
+    List<TestCallable> result = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       result.add(new TestCallable());
     }
@@ -83,7 +83,7 @@ public class TestableSchedulerTest {
   @Test
   public void advanceHandlesRuntimeExceptionTest() {
     RuntimeException failure = new SuppressedStackRuntimeException();
-    final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
+    final AtomicReference<Throwable> handledException = new AtomicReference<>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     int runCount = scheduler.advance(10, new ExceptionHandler() {
@@ -113,7 +113,7 @@ public class TestableSchedulerTest {
   @Test
   public void tickHandlesRuntimeExceptionTest() {
     RuntimeException failure = new SuppressedStackRuntimeException();
-    final AtomicReference<Throwable> handledException = new AtomicReference<Throwable>(null);
+    final AtomicReference<Throwable> handledException = new AtomicReference<>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     int runCount = scheduler.tick(new ExceptionHandler() {
@@ -175,7 +175,7 @@ public class TestableSchedulerTest {
   @Test
   public void submitRunnableTest() {
     List<TestRunnable> runnables = getRunnableList();
-    List<Future<?>> futures = new ArrayList<Future<?>>(runnables.size());
+    List<Future<?>> futures = new ArrayList<>(runnables.size());
     Iterator<TestRunnable> it = runnables.iterator();
     while (it.hasNext()) {
       Future<?> future = scheduler.submit(it.next());
@@ -208,7 +208,7 @@ public class TestableSchedulerTest {
   @Test
   public void submitCallableTest() throws InterruptedException, ExecutionException {
     List<TestCallable> callables = getCallableList();
-    List<Future<Object>> futures = new ArrayList<Future<Object>>(callables.size());
+    List<Future<Object>> futures = new ArrayList<>(callables.size());
     Iterator<TestCallable> it = callables.iterator();
     while (it.hasNext()) {
       Future<Object> future = scheduler.submit(it.next());

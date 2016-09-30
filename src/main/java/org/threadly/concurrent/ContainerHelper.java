@@ -232,7 +232,7 @@ public class ContainerHelper {
    * @since 4.0.0
    */
   public static List<Runnable> getContainedRunnables(List<? extends RunnableContainer> sourceList) {
-    List<Runnable> result = new ArrayList<Runnable>(sourceList.size());
+    List<Runnable> result = new ArrayList<>(sourceList.size());
     Iterator<? extends RunnableContainer> it = sourceList.iterator();
     while (it.hasNext()) {
       result.add(it.next().getContainedRunnable());

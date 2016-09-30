@@ -8,13 +8,13 @@ import org.junit.Test;
 public class MutablePairTest extends PairTest {
   @Override
   protected <T> MutablePair<T, T> makePair(T left, T right) {
-    return new MutablePair<T, T>(left, right);
+    return new MutablePair<>(left, right);
   }
   
   @Test
   public void setAndGetLeftTest() {
     String strValue = StringUtils.makeRandomString(5);
-    MutablePair<String, String> p = new MutablePair<String, String>();
+    MutablePair<String, String> p = new MutablePair<>();
     p.setLeft(strValue);
     assertEquals(strValue, p.getLeft());
   }
@@ -22,7 +22,7 @@ public class MutablePairTest extends PairTest {
   @Test
   public void setAndGetRightTest() {
     String strValue = StringUtils.makeRandomString(5);
-    MutablePair<String, String> p = new MutablePair<String, String>();
+    MutablePair<String, String> p = new MutablePair<>();
     p.setRight(strValue);
     assertEquals(strValue, p.getRight());
   }

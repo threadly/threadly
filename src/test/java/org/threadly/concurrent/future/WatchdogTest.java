@@ -49,7 +49,7 @@ public class WatchdogTest {
     
     assertFalse(watchdog.isActive());
     
-    SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
+    SettableListenableFuture<?> slf = new SettableListenableFuture<>();
     watchdog.watch(slf);
 
     assertTrue(watchdog.isActive());
@@ -70,7 +70,7 @@ public class WatchdogTest {
   
   @Test
   public void futureFinishTest() {
-    SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
+    SettableListenableFuture<?> slf = new SettableListenableFuture<>();
     
     watchdog.watch(slf);
     
@@ -83,7 +83,7 @@ public class WatchdogTest {
   
   @Test
   public void expiredFutureTest() {
-    SettableListenableFuture<?> slf = new SettableListenableFuture<Void>();
+    SettableListenableFuture<?> slf = new SettableListenableFuture<>();
     watchdog.watch(slf);
     
     TestUtils.blockTillClockAdvances();
@@ -97,10 +97,10 @@ public class WatchdogTest {
   @Test
   public void rescheduledFutureCheckTest() throws InterruptedException {
     watchdog = new Watchdog(scheduler, DELAY_TIME * 2, true);
-    SettableListenableFuture<?> slf1 = new SettableListenableFuture<Void>();
+    SettableListenableFuture<?> slf1 = new SettableListenableFuture<>();
     watchdog.watch(slf1);
     TestUtils.sleep(DELAY_TIME);
-    SettableListenableFuture<?> slf2 = new SettableListenableFuture<Void>();
+    SettableListenableFuture<?> slf2 = new SettableListenableFuture<>();
     watchdog.watch(slf2);
     
     assertEquals(1, scheduler.blockingTick(null));

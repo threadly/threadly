@@ -44,7 +44,7 @@ public class WatchdogCacheTest {
   
   @Test
   public void expiredFutureTest() {
-    SettableListenableFuture<Object> slf = new SettableListenableFuture<Object>();
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
     watchdog.watch(slf, TIMEOUT);
     
     TestUtils.blockTillClockAdvances();
@@ -56,7 +56,7 @@ public class WatchdogCacheTest {
   
   @Test
   public void cacheCleanTest() {
-    SettableListenableFuture<Object> slf = new SettableListenableFuture<Object>();
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
     watchdog.watch(slf, TIMEOUT);
     assertFalse(watchdog.cachedDogs.isEmpty());
     

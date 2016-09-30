@@ -22,10 +22,9 @@ public class BlockingQueueConsumerTest {
    
   @Before
   public void setup() {
-    queue = new SynchronousQueue<Object>();
+    queue = new SynchronousQueue<>();
     acceptor = new TestAcceptor();
-    queueConsumer = new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
-                                                      queue, acceptor);
+    queueConsumer = new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), queue, acceptor);
   }
   
   @After
@@ -40,21 +39,19 @@ public class BlockingQueueConsumerTest {
   @Test
   public void constructorFail() {
     try {
-      new BlockingQueueConsumer<Object>(null, new SynchronousQueue<Object>(), new TestAcceptor());
+      new BlockingQueueConsumer<>(null, new SynchronousQueue<>(), new TestAcceptor());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
-                                        new SynchronousQueue<Object>(), null);
+      new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), new SynchronousQueue<>(), null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
-                                        null, new TestAcceptor());
+      new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), null, new TestAcceptor());
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -78,7 +75,7 @@ public class BlockingQueueConsumerTest {
   public void startFail() {
     StartingThreadFactory threadFactory = new StartingThreadFactory();
     try {
-      queueConsumer = new BlockingQueueConsumer<Object>(threadFactory, queue, acceptor);
+      queueConsumer = new BlockingQueueConsumer<>(threadFactory, queue, acceptor);
       queueConsumer.start();
     } finally {
       threadFactory.killThreads();
@@ -119,8 +116,8 @@ public class BlockingQueueConsumerTest {
     final TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setInheritableExceptionHandler(teh);
     final Exception e = new Exception();
-    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<Object>(new ConfigurableThreadFactory(), 
-                                                                                    queue, new ConsumerAcceptor<Object>() {
+    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), 
+                                                                              queue, new ConsumerAcceptor<Object>() {
       @Override
       public void acceptConsumedItem(Object item) throws Exception {
         throw e;
@@ -142,9 +139,8 @@ public class BlockingQueueConsumerTest {
     }
   }
   
-  private static class TestAcceptor extends TestCondition 
-                                    implements ConsumerAcceptor<Object> {
-    private final List<Object> acceptedItems = new LinkedList<Object>();
+  private static class TestAcceptor extends TestCondition implements ConsumerAcceptor<Object> {
+    private final List<Object> acceptedItems = new LinkedList<>();
     
     @Override
     public void acceptConsumedItem(Object item) {

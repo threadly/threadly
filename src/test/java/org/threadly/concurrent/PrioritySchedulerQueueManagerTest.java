@@ -38,7 +38,7 @@ public class PrioritySchedulerQueueManagerTest {
   @Test
   public void removeCallableTest() {
     TestCallable callable = new TestCallable();
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new ListenableFutureTask<Object>(false, callable), 
+    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new ListenableFutureTask<>(false, callable), 
                                                      null, Clock.lastKnownForwardProgressingMillis());
     
     assertFalse(queueManager.remove(callable));

@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -288,7 +289,7 @@ public abstract class ScheduledExecutorServiceTest {
                                     TimeUnit.MILLISECONDS);
     }
     
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+    List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = new TestRunnable(fixedDelay ? 0 : DELAY_TIME);
       if (fixedDelay) {
@@ -453,7 +454,7 @@ public abstract class ScheduledExecutorServiceTest {
   public void invokeAllTest() throws InterruptedException, ExecutionException {
     ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
     try {
-      List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+      List<TestCallable> toInvoke = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         toInvoke.add(new TestCallable(0));
       }
@@ -477,7 +478,7 @@ public abstract class ScheduledExecutorServiceTest {
     try {
       int exceptionCallableIndex = TEST_QTY / 2;
       
-      List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+      List<TestCallable> toInvoke = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestCallable tc;
         if (i == exceptionCallableIndex) {
@@ -519,7 +520,7 @@ public abstract class ScheduledExecutorServiceTest {
       int runTime = 1000 * 10;
       int timeoutTime = 5;
       
-      List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+      List<TestCallable> toInvoke = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         toInvoke.add(new TestCallable(runTime));
       }
@@ -541,7 +542,7 @@ public abstract class ScheduledExecutorServiceTest {
   public void invokeAllFail() throws InterruptedException {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
-      List<TestCallable> toInvoke = new ArrayList<TestCallable>(2);
+      List<TestCallable> toInvoke = new ArrayList<>(2);
       toInvoke.add(new TestCallable(0));
       toInvoke.add(null);
       scheduler.invokeAll(toInvoke);
@@ -554,7 +555,7 @@ public abstract class ScheduledExecutorServiceTest {
   public void invokeAnyTest() throws InterruptedException, ExecutionException {
     ScheduledExecutorService scheduler = makeScheduler(THREAD_COUNT);
     try {
-      List<TestCallable> toInvoke = new ArrayList<TestCallable>(TEST_QTY);
+      List<TestCallable> toInvoke = new ArrayList<>(TEST_QTY);
       Object expectedResult = null;
       for (int i = 0; i < TEST_QTY; i++) {
         TestCallable tc;
@@ -583,7 +584,7 @@ public abstract class ScheduledExecutorServiceTest {
       int runTime = 1000 * 10;
       int timeoutTime = 5;
       
-      List<TestCallable> toInvoke = new ArrayList<TestCallable>(1);
+      List<TestCallable> toInvoke = new ArrayList<>(1);
   
       toInvoke.add(new TestCallable(runTime));
       
@@ -599,7 +600,7 @@ public abstract class ScheduledExecutorServiceTest {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       TestCallable tc = new TestCallable();
-      List<Callable<Object>> toInvoke = new ArrayList<Callable<Object>>(2);
+      List<Callable<Object>> toInvoke = new ArrayList<>(2);
       toInvoke.add(new Callable<Object>() {
         @Override
         public Object call() throws Exception {
@@ -625,7 +626,7 @@ public abstract class ScheduledExecutorServiceTest {
           throw new Exception();
         }
       };
-      List<Callable<Object>> toInvoke = new ArrayList<Callable<Object>>(2);
+      List<Callable<Object>> toInvoke = new ArrayList<>(2);
       toInvoke.add(failureCallable);
       toInvoke.add(failureCallable);
       
@@ -641,7 +642,7 @@ public abstract class ScheduledExecutorServiceTest {
     ScheduledExecutorService scheduler = makeScheduler(1);
     try {
       try {
-        List<TestCallable> toInvoke = new ArrayList<TestCallable>(2);
+        List<TestCallable> toInvoke = new ArrayList<>(2);
         toInvoke.add(new TestCallable(0));
         toInvoke.add(null);
         scheduler.invokeAny(toInvoke);
@@ -656,7 +657,7 @@ public abstract class ScheduledExecutorServiceTest {
         // expected
       }
       try {
-        scheduler.invokeAny(new ArrayList<TestCallable>(0));
+        scheduler.invokeAny(Collections.emptyList());
         fail("Exception should have thrown");
       } catch (IllegalArgumentException e) {
         // expected

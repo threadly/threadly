@@ -48,14 +48,14 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs);
+    return submitScheduled(new RunnableCallableAdapter<>(task, result), delayInMs);
   }
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> ft = new ListenableFutureTask<T>(false, task);
+    ListenableFutureTask<T> ft = new ListenableFutureTask<>(false, task);
     
     doSchedule(ft, delayInMs);
     

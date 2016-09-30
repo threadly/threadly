@@ -19,7 +19,7 @@ public class SchedulerServiceTaskInterceptorTest extends SubmitterSchedulerTaskI
     submitterSchedulerInterceptor = new TestSchedulerServiceInterceptor(scheduler);
     executorInterceptor = submitterSchedulerInterceptor;
     testInterceptor = (TestInterceptor)executorInterceptor;
-    interceptedTasks = new ArrayList<Runnable>(1);
+    interceptedTasks = new ArrayList<>(1);
     submitSchedulerTaskInterceptorLamba = new SchedulerServiceTaskInterceptor(scheduler, (r1, b1) -> { 
       interceptedTasks.add(r1);
       
@@ -49,7 +49,7 @@ public class SchedulerServiceTaskInterceptorTest extends SubmitterSchedulerTaskI
     public TestSchedulerServiceInterceptor(SchedulerService parentScheduler) {
       super(parentScheduler);
       
-      interceptedTasks = new ArrayList<Runnable>(1);
+      interceptedTasks = new ArrayList<>(1);
     }
 
     @Override

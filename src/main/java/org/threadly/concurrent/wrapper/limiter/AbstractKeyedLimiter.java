@@ -66,9 +66,8 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     if (mapConcurrencyLevel < 1) {
       mapConcurrencyLevel = 1;
     }
-    this.currentLimiters = new ConcurrentHashMap<Object, LimiterContainer>(mapInitialSize,  
-                                                                           CONCURRENT_HASH_MAP_LOAD_FACTOR, 
-                                                                           mapConcurrencyLevel);
+    this.currentLimiters = new ConcurrentHashMap<>(mapInitialSize,  
+                                                   CONCURRENT_HASH_MAP_LOAD_FACTOR, mapConcurrencyLevel);
   }
   
   /**
@@ -114,7 +113,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
    * @return Map of task key's to their respective task queue size
    */
   public Map<Object, Integer> getUnsubmittedTaskCountMap() {
-    Map<Object, Integer> result = new HashMap<Object, Integer>();
+    Map<Object, Integer> result = new HashMap<>();
     for (Map.Entry<Object, LimiterContainer> e : currentLimiters.entrySet()) {
       int taskCount = e.getValue().limiter.getUnsubmittedTaskCount();
       if (taskCount > 0) {
@@ -164,7 +163,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   public <TT> ListenableFuture<TT> submit(Object taskKey, Runnable task, TT result) {
-    return submit(taskKey, new RunnableCallableAdapter<TT>(task, result));
+    return submit(taskKey, new RunnableCallableAdapter<>(task, result));
   }
   
   /**
@@ -181,7 +180,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableRunnableFuture<TT> rf = new ListenableFutureTask<TT>(false, task);
+    ListenableRunnableFuture<TT> rf = new ListenableFutureTask<>(false, task);
     
     getLimiterContainer(taskKey).execute(rf);
     

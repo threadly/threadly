@@ -56,7 +56,7 @@ public class KeyDistributedSchedulerTest {
   }
   
   private List<KDRunnable> populate(AddHandler ah) {
-    final List<KDRunnable> runs = new ArrayList<KDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    final List<KDRunnable> runs = new ArrayList<>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
     
     // hold agent lock to prevent execution till ready
     synchronized (agentLock) {
@@ -174,7 +174,7 @@ public class KeyDistributedSchedulerTest {
   
   @Test
   public void submitCallableConsistentThreadTest() {
-    List<KDCallable> runs = new ArrayList<KDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    List<KDCallable> runs = new ArrayList<>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
     
     // hold agent lock to avoid execution till all are submitted
     synchronized (agentLock) {

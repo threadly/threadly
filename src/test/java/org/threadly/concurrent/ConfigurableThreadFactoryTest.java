@@ -122,7 +122,7 @@ public class ConfigurableThreadFactoryTest {
     
     assertEquals(teh, ctf.defaultThreadlyExceptionHandler);
     
-    final AtomicReference<ExceptionHandler> ehi = new AtomicReference<ExceptionHandler>(null);
+    final AtomicReference<ExceptionHandler> ehi = new AtomicReference<>(null);
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunStart() {

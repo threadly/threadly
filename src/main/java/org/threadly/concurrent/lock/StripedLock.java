@@ -33,7 +33,7 @@ public class StripedLock {
     ArgumentVerifier.assertGreaterThanZero(expectedConcurrencyLevel, "expectedConcurrencyLevel");
     
     this.expectedConcurrencyLevel = expectedConcurrencyLevel;
-    this.locks = new ConcurrentHashMap<Integer, Object>();
+    this.locks = new ConcurrentHashMap<>();
   }
   
   /**

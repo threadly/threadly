@@ -74,7 +74,7 @@ public class KeyDistributedExecutorTest {
   }
   
   protected List<KDRunnable> populate(AddHandler ah) {
-    final List<KDRunnable> runs = new ArrayList<KDRunnable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    final List<KDRunnable> runs = new ArrayList<>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
     
     // hold agent lock to prevent execution till ready
     synchronized (agentLock) {
@@ -237,7 +237,7 @@ public class KeyDistributedExecutorTest {
   
   @Test
   public void submitCallableConsistentThreadTest() {
-    List<KDCallable> runs = new ArrayList<KDCallable>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
+    List<KDCallable> runs = new ArrayList<>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
     
     // hold agent lock to avoid execution till all are submitted
     synchronized (agentLock) {
@@ -283,13 +283,13 @@ public class KeyDistributedExecutorTest {
   public void executeStressTest() {
     final Object testLock = new Object();
     final int expectedCount = (PARALLEL_LEVEL * 2) * (RUNNABLE_COUNT_PER_LEVEL * 2);
-    final List<KDRunnable> runs = new ArrayList<KDRunnable>(expectedCount);
+    final List<KDRunnable> runs = new ArrayList<>(expectedCount);
     
     // we can't use populate here because we don't want to hold the agentLock
     
     executor.execute(new Runnable() {
-      private final Map<Integer, ThreadContainer> containers = new HashMap<Integer, ThreadContainer>();
-      private final Map<Integer, KDRunnable> previousRunnables = new HashMap<Integer, KDRunnable>();
+      private final Map<Integer, ThreadContainer> containers = new HashMap<>();
+      private final Map<Integer, KDRunnable> previousRunnables = new HashMap<>();
       
       @Override
       public void run() {
@@ -403,7 +403,7 @@ public class KeyDistributedExecutorTest {
       Executor singleThreadedExecutor = new ExecutorLimiter(scheduler, 1);
       final KeyDistributedExecutor distributor = new KeyDistributedExecutor(2, singleThreadedExecutor, 2);
       final AtomicInteger waitingTasks = new AtomicInteger();
-      final AtomicReference<TestRunnable> lastTestRunnable = new AtomicReference<TestRunnable>();
+      final AtomicReference<TestRunnable> lastTestRunnable = new AtomicReference<>();
       scheduler.execute(new Runnable() {  // execute thread to add for key 1
         @Override
         public void run() {

@@ -63,13 +63,13 @@ public class ExecutorTaskInterceptorTest {
   
   @Test
   public void interceptSubmitRunnableLambdaTest() {
-    List<Runnable> interceptedTasks = new ArrayList<Runnable>(1);
-    
+    List<Runnable> interceptedTasks = new ArrayList<>(1);
     ExecutorTaskInterceptor executorInterceptorLambda = new ExecutorTaskInterceptor(scheduler, (r1) -> { 
       interceptedTasks.add(r1);
       
       return DoNothingRunnable.instance();
     });
+    
     executorInterceptorLambda.execute(tr);
     
     assertEquals(1, interceptedTasks.size());
@@ -124,7 +124,7 @@ public class ExecutorTaskInterceptorTest {
     public TestExecutorInterceptor(Executor parentExecutor) {
       super(parentExecutor);
       
-      interceptedTasks = new ArrayList<Runnable>(1);
+      interceptedTasks = new ArrayList<>(1);
     }
 
     @Override

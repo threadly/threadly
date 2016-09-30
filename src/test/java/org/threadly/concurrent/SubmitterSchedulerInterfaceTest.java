@@ -95,7 +95,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     try {
       SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         scheduler.schedule(tr, DELAY_TIME);
@@ -214,7 +214,7 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     try {
       SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable(fixedDelay ? 0 : DELAY_TIME);
         if (fixedDelay) {
@@ -285,8 +285,8 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     try {
       SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<?> future = scheduler.submitScheduled(tr, DELAY_TIME);
@@ -324,8 +324,8 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     try {
       SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-      List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
+      List<Future<TestRunnable>> futures = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<TestRunnable> future = scheduler.submitScheduled(tr, tr, DELAY_TIME);
@@ -363,8 +363,8 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
     try {
       SubmitterScheduler scheduler = factory.makeSubmitterScheduler(TEST_QTY, true);
       
-      List<TestCallable> callables = new ArrayList<TestCallable>(TEST_QTY);
-      List<Future<Object>> futures = new ArrayList<Future<Object>>(TEST_QTY);
+      List<TestCallable> callables = new ArrayList<>(TEST_QTY);
+      List<Future<Object>> futures = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestCallable tc = new TestCallable(0);
         Future<Object> future = scheduler.submitScheduled(tc, DELAY_TIME);

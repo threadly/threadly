@@ -52,10 +52,8 @@ public class WatchdogCache {
   public WatchdogCache(SubmitterScheduler scheduler, boolean sendInterruptOnFutureCancel) {
     this.scheduler = scheduler;
     this.sendInterruptOnFutureCancel = sendInterruptOnFutureCancel;
-    cachedDogs = new ConcurrentHashMap<Long, Watchdog>();
-    watchdogProducer = (timeout) -> {
-      return new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
-    };
+    cachedDogs = new ConcurrentHashMap<>();
+    watchdogProducer = (timeout) -> new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
     cacheCleaner = new CleanRunner();
     cleanerScheduled = new AtomicBoolean(false);
   }

@@ -181,17 +181,16 @@ public class RunnableListenerHelper {
           if (addingFromCallingThread) {
             // we must create a new instance of listeners to prevent a ConcurrentModificationException
             // we know at this point that listeners can not be null
-            List<Pair<Runnable, Executor>> newListeners = 
-                new ArrayList<Pair<Runnable, Executor>>(listeners.size() + 1);
+            List<Pair<Runnable, Executor>> newListeners = new ArrayList<>(listeners.size() + 1);
             newListeners.addAll(listeners);
-            newListeners.add(new Pair<Runnable, Executor>(listener, executor));
+            newListeners.add(new Pair<>(listener, executor));
             
             listeners = newListeners;
           } else {
             if (listeners == null) {
-              listeners = new ArrayList<Pair<Runnable, Executor>>(2);
+              listeners = new ArrayList<>(2);
             }
-            listeners.add(new Pair<Runnable, Executor>(listener, executor));
+            listeners.add(new Pair<>(listener, executor));
           }
         }
       }

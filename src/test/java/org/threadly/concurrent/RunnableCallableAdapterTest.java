@@ -11,7 +11,7 @@ public class RunnableCallableAdapterTest {
   public void constructorTest() {
     TestRunnable tr = new TestRunnable();
     Object result = new Object();
-    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<Object>(tr, result);
+    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<>(tr, result);
     
     assertTrue(tr == rca.runnable);
     assertTrue(result == rca.result);
@@ -20,14 +20,14 @@ public class RunnableCallableAdapterTest {
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
-    new RunnableCallableAdapter<Object>(null);
+    new RunnableCallableAdapter<>(null);
     fail("Exception should have thrown");
   }
   
   @Test
   public void getContainedRunnableTest() {
     TestRunnable tr = new TestRunnable();
-    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<Object>(tr);
+    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<>(tr);
     
     assertTrue(tr == rca.getContainedRunnable());
   }
@@ -36,7 +36,7 @@ public class RunnableCallableAdapterTest {
   public void callTest() {
     TestRunnable tr = new TestRunnable();
     Object result = new Object();
-    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<Object>(tr, result);
+    RunnableCallableAdapter<?> rca = new RunnableCallableAdapter<>(tr, result);
     
     assertTrue(result == rca.call());
     assertTrue(tr.ranOnce());

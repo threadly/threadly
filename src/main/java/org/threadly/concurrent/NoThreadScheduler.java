@@ -58,7 +58,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
         }
       }
     }, maxWaitForLowPriorityInMs);
-    blockingThread = new AtomicReference<Thread>(null);
+    blockingThread = new AtomicReference<>(null);
     tickRunning = false;
     tickCanceled = false;
     

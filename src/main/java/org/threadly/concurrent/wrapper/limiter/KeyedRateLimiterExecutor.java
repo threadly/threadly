@@ -231,9 +231,9 @@ public class KeyedRateLimiterExecutor {
     if (mapConcurrencyLevel < 1) {
       mapConcurrencyLevel = 1;
     }
-    this.currentLimiters = new ConcurrentHashMap<Object, RateLimiterExecutor>(mapInitialSize,  
-                                                                              CONCURRENT_HASH_MAP_LOAD_FACTOR, 
-                                                                              mapConcurrencyLevel);
+    this.currentLimiters = new ConcurrentHashMap<>(mapInitialSize,  
+                                                   CONCURRENT_HASH_MAP_LOAD_FACTOR, 
+                                                   mapConcurrencyLevel);
   }
   
   /**
@@ -282,7 +282,7 @@ public class KeyedRateLimiterExecutor {
     if (currentMinimumDelay == 0) {
       return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<Void>(false, DoNothingRunnable.instance());
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance());
       
       long futureDelay;
       if (maximumDelay > 0 && currentMinimumDelay > maximumDelay) {
@@ -388,7 +388,7 @@ public class KeyedRateLimiterExecutor {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   public <T> ListenableFuture<T> submit(double permits, Object taskKey, Runnable task, T result) {
-    return submit(permits, taskKey, new RunnableCallableAdapter<T>(task, result));
+    return submit(permits, taskKey, new RunnableCallableAdapter<>(task, result));
   }
   
   /**
@@ -423,7 +423,7 @@ public class KeyedRateLimiterExecutor {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
     
     doExecute(permits, taskKey, rf);
     

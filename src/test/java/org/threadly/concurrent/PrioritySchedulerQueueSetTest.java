@@ -57,12 +57,12 @@ public class PrioritySchedulerQueueSetTest {
   
   @Test
   public void addScheduledOrderTest() {
-    List<TaskWrapper> orderedList = new ArrayList<TaskWrapper>(TEST_QTY);
+    List<TaskWrapper> orderedList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       orderedList.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
                                              Clock.accurateForwardProgressingMillis() + i));
     }
-    List<TaskWrapper> randomList = new ArrayList<TaskWrapper>(orderedList);
+    List<TaskWrapper> randomList = new ArrayList<>(orderedList);
     Collections.shuffle(randomList);
     
     Iterator<TaskWrapper> it = randomList.iterator();
@@ -80,7 +80,7 @@ public class PrioritySchedulerQueueSetTest {
   @Test
   public void removeCallableTest() {
     TestCallable callable = new TestCallable();
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new ListenableFutureTask<Object>(false, callable), 
+    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new ListenableFutureTask<>(false, callable), 
                                                      null, Clock.lastKnownForwardProgressingMillis());
     
     assertFalse(queueSet.remove(callable));
@@ -130,7 +130,7 @@ public class PrioritySchedulerQueueSetTest {
   
   @Test
   public void drainQueueIntoTest() {
-    List<TaskWrapper> depositList = new ArrayList<TaskWrapper>();
+    List<TaskWrapper> depositList = new ArrayList<>(2);
     
     OneTimeTaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
                                                      Clock.lastKnownForwardProgressingMillis());

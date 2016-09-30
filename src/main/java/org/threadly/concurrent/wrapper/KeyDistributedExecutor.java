@@ -276,9 +276,8 @@ public class KeyDistributedExecutor {
         }
       };
     }
-    this.taskWorkers = new ConcurrentHashMap<Object, TaskQueueWorker>(mapInitialSize,  
-                                                                      CONCURRENT_HASH_MAP_LOAD_FACTOR, 
-                                                                      mapConcurrencyLevel);
+    this.taskWorkers = new ConcurrentHashMap<>(mapInitialSize, 
+                                               CONCURRENT_HASH_MAP_LOAD_FACTOR, mapConcurrencyLevel);
   }
   
   /**
@@ -355,7 +354,7 @@ public class KeyDistributedExecutor {
    * @return Map of task key's to their respective queue size
    */
   public Map<Object, Integer> getTaskQueueSizeMap() {
-    Map<Object, Integer> result = new HashMap<Object, Integer>();
+    Map<Object, Integer> result = new HashMap<>();
     for (Map.Entry<Object, TaskQueueWorker> e : taskWorkers.entrySet()) {
       result.put(e.getKey(), e.getValue().getQueueSize());
     }
@@ -426,7 +425,7 @@ public class KeyDistributedExecutor {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   public <T> ListenableFuture<T> submit(Object threadKey, Runnable task, T result) {
-    return submit(threadKey, new RunnableCallableAdapter<T>(task, result));
+    return submit(threadKey, new RunnableCallableAdapter<>(task, result));
   }
   
   /**
@@ -441,7 +440,7 @@ public class KeyDistributedExecutor {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
     
     addTask(threadKey, rf, executor);
     
@@ -500,7 +499,7 @@ public class KeyDistributedExecutor {
      */
     protected void add(Runnable task) {
       if (queue == null) {
-        queue = new ArrayDeque<Runnable>(ARRAY_DEQUE_INITIAL_SIZE);
+        queue = new ArrayDeque<>(ARRAY_DEQUE_INITIAL_SIZE);
       }
       queue.add(task);
     }
@@ -544,7 +543,7 @@ public class KeyDistributedExecutor {
             } else {
               // we need to run a subset of the queue, so copy and remove what we can run
               int nextListSize = maxTasksPerCycle - consumedItems;
-              nextQueue = new ArrayDeque<Runnable>(nextListSize);
+              nextQueue = new ArrayDeque<>(nextListSize);
               Iterator<Runnable> it = queue.iterator();
               do {
                 nextQueue.add(it.next());

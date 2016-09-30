@@ -16,7 +16,7 @@ public class RunnableFutureCallbackAdapterTest {
   public void constructorTest() {
     Future<Object> future = new TestFutureImp(false);
     FutureCallback<Object> callback = new TestFutureCallback();
-    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<Object>(future, callback);
+    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<>(future, callback);
     
     assertTrue(rfca.future == future);
     assertTrue(rfca.callback == callback);
@@ -26,13 +26,13 @@ public class RunnableFutureCallbackAdapterTest {
   @SuppressWarnings("unused")
   public void constructorFail() {
     try {
-      new RunnableFutureCallbackAdapter<Object>(null, new TestFutureCallback());
+      new RunnableFutureCallbackAdapter<>(null, new TestFutureCallback());
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new RunnableFutureCallbackAdapter<Object>(new TestFutureImp(false), null);
+      new RunnableFutureCallbackAdapter<>(new TestFutureImp(false), null);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -41,12 +41,12 @@ public class RunnableFutureCallbackAdapterTest {
   
   @Test
   public void resultTest() {
-    SettableListenableFuture<Object> future = new SettableListenableFuture<Object>();
+    SettableListenableFuture<Object> future = new SettableListenableFuture<>();
     TestFutureCallback callback = new TestFutureCallback();
     Object result = new Object();
     future.setResult(result);
     
-    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<Object>(future, callback);
+    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<>(future, callback);
     rfca.run();
     
     assertTrue(callback.getLastResult() == result);
@@ -55,12 +55,12 @@ public class RunnableFutureCallbackAdapterTest {
   
   @Test
   public void executionExceptionTest() {
-    SettableListenableFuture<Object> future = new SettableListenableFuture<Object>();
+    SettableListenableFuture<Object> future = new SettableListenableFuture<>();
     TestFutureCallback callback = new TestFutureCallback();
     Exception failure = new Exception();
     future.setFailure(failure);
     
-    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<Object>(future, callback);
+    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<>(future, callback);
     rfca.run();
     
     assertTrue(callback.getLastFailure() == failure);
@@ -73,7 +73,7 @@ public class RunnableFutureCallbackAdapterTest {
     TestFutureCallback callback = new TestFutureCallback();
     future.cancel(true);
     
-    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<Object>(future, callback);
+    RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<>(future, callback);
     rfca.run();
     
     assertTrue(callback.getLastFailure() instanceof CancellationException);
@@ -82,11 +82,11 @@ public class RunnableFutureCallbackAdapterTest {
   
   @Test
   public void interruptedExceptionTest() throws InterruptedException, TimeoutException {
-    SettableListenableFuture<Object> future = new SettableListenableFuture<Object>();
+    SettableListenableFuture<Object> future = new SettableListenableFuture<>();
     TestFutureCallback callback = new TestFutureCallback();
     final AsyncVerifier av = new AsyncVerifier();
     
-    final RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<Object>(future, callback);
+    final RunnableFutureCallbackAdapter<?> rfca = new RunnableFutureCallbackAdapter<>(future, callback);
     final Thread t = new Thread(new Runnable() {
       @Override
       public void run() {

@@ -32,8 +32,8 @@ public class Pair<L, R> {
    */
   public static <L, R> Pair<List<L>, List<R>> split(Collection<? extends Pair<? extends L, ? extends R>> source) {
     int estimatedCount = source.size();
-    List<L> left = new ArrayList<L>(estimatedCount);
-    List<R> right = new ArrayList<R>(estimatedCount);
+    List<L> left = new ArrayList<>(estimatedCount);
+    List<R> right = new ArrayList<>(estimatedCount);
     for (Pair<? extends L, ? extends R> p : source) {
       if (p.left != null) {
         left.add(p.left);
@@ -42,7 +42,7 @@ public class Pair<L, R> {
         right.add(p.right);
       }
     }
-    return new Pair<List<L>, List<R>>(left, right);
+    return new Pair<>(left, right);
   }
   
   /**
@@ -55,7 +55,7 @@ public class Pair<L, R> {
    * @return New list that contains non-null left references
    */
   public static <T> List<T> collectLeft(Collection<? extends Pair<? extends T, ?>> source) {
-    List<T> result = new ArrayList<T>(source.size());
+    List<T> result = new ArrayList<>(source.size());
     for (Pair<? extends T, ?> p : source) {
       if (p.left != null) {
         result.add(p.left);
@@ -74,7 +74,7 @@ public class Pair<L, R> {
    * @return New list that contains non-null right references
    */
   public static <T> List<T> collectRight(Collection<? extends Pair<?, ? extends T>> source) {
-    List<T> result = new ArrayList<T>(source.size());
+    List<T> result = new ArrayList<>(source.size());
     for (Pair<?, ? extends T> p : source) {
       if (p.right != null) {
         result.add(p.right);

@@ -75,7 +75,7 @@ public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterc
   public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
 
     parentScheduler.execute(wrapTask(lft, false), priority);
     
@@ -104,7 +104,7 @@ public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterc
                                                  TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
 
     parentScheduler.schedule(wrapTask(lft, false), delayInMs, priority);
     

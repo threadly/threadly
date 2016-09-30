@@ -42,7 +42,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    * @param result result to be provide after run has completed
    */
   public ListenableFutureTask(boolean recurring, Runnable task, T result) {
-    this(recurring, new RunnableCallableAdapter<T>(task, result));
+    this(recurring, new RunnableCallableAdapter<>(task, result));
   }
 
   /**
@@ -85,7 +85,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
 
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor) {
-    addListener(new RunnableFutureCallbackAdapter<T>(this, callback), executor);
+    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor);
   }
 
   @Override

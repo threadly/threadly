@@ -26,7 +26,7 @@ public class AbstractFutureCallbackResultHandlerTest {
   @Test
   public void resultProvidedTest() {
     final Object testResult = new Object();
-    final AtomicReference<Object> resultProvided = new AtomicReference<Object>(null);
+    final AtomicReference<Object> resultProvided = new AtomicReference<>(null);
     new AbstractFutureCallbackResultHandler<Object>() {
       @Override
       public void handleResult(Object result) {

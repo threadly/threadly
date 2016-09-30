@@ -393,7 +393,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       poolSizeChangeLock = new Object();
       idleWorkerDequeLock = new Object();
       idleWorkerCount = new LongAdder();
-      idleWorker = new AtomicReference<Worker>(null);
+      idleWorker = new AtomicReference<>(null);
       currentPoolSize = new AtomicInteger(0);
       workerStopNotifyLock = new Object();
       
