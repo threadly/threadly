@@ -15,6 +15,28 @@ public class PairTest {
   }
   
   @Test
+  public void splitTest() {
+    List<String> expectedLeftResult = new ArrayList<String>(TEST_QTY);
+    List<String> expectedRightResult = new ArrayList<String>(TEST_QTY);
+    List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY * 2);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String leftStr = StringUtils.makeRandomString(10);
+      String rightStr = StringUtils.makeRandomString(5);
+      expectedLeftResult.add(leftStr);
+      expectedRightResult.add(rightStr);
+      pairs.add(makePair(leftStr, null));
+      pairs.add(makePair(null, rightStr));
+    }
+    
+    Pair<List<String>, List<String>> result = Pair.split(pairs);
+    
+    assertEquals(TEST_QTY, result.getLeft().size());
+    assertEquals(TEST_QTY, result.getRight().size());
+    assertTrue(expectedLeftResult.equals(result.getLeft()));
+    assertTrue(expectedRightResult.equals(result.getRight()));
+  }
+  
+  @Test
   public void collectLeftTest() {
     List<String> expectedResult = new ArrayList<String>(TEST_QTY);
     List<Pair<String, String>> pairs = new ArrayList<Pair<String, String>>(TEST_QTY * 2);

@@ -20,6 +20,32 @@ public class Pair<L, R> {
   // TODO - in threadly 5.0.0 make an easy way to apply a functional to either left or right
   
   /**
+   * Split a collection of pair's into a pair of two collections.  This is more efficient than 
+   * invoking {@link #getLeft()} and {@link #getRight()} separately.  Similar to those functions, 
+   * this will only collect non-null entries.  If there is a {@code null} left or right entry then 
+   * the indexes will no longer match each other between the two lists.
+   * 
+   * @param <L> Type of object held as pair's left reference
+   * @param <R> Type of object held as pair's right reference
+   * @param source Source collection of pairs
+   * @return Pair of two collections with the left and right halves
+   */
+  public static <L, R> Pair<List<L>, List<R>> split(Collection<? extends Pair<? extends L, ? extends R>> source) {
+    int estimatedCount = source.size();
+    List<L> left = new ArrayList<L>(estimatedCount);
+    List<R> right = new ArrayList<R>(estimatedCount);
+    for (Pair<? extends L, ? extends R> p : source) {
+      if (p.left != null) {
+        left.add(p.left);
+      }
+      if (p.right != null) {
+        right.add(p.right);
+      }
+    }
+    return new Pair<List<L>, List<R>>(left, right);
+  }
+  
+  /**
    * Collect all the non-null left references into a new List.  A simple implementation which 
    * iterates over a source collection and collects all non-null left references into a new list 
    * that can be manipulated or referenced.
