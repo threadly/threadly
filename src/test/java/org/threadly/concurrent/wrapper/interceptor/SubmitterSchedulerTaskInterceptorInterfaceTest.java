@@ -14,7 +14,7 @@ public class SubmitterSchedulerTaskInterceptorInterfaceTest extends SubmitterSch
   }
 
   private static class SubmitterSchedulerTaskInterceptorFactory implements SubmitterSchedulerFactory {
-    private List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(1);
+    private List<PriorityScheduler> schedulers = new ArrayList<>(1);
     
     @Override
     public SubmitterSchedulerTaskInterceptor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {

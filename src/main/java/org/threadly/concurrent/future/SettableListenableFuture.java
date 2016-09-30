@@ -85,7 +85,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
 
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor) {
-    addListener(new RunnableFutureCallbackAdapter<T>(this, callback), executor);
+    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor);
   }
 
   @Override

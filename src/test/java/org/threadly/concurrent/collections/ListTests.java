@@ -52,7 +52,7 @@ public class ListTests {
   }
   
   public static void addAllTest(List<String> testList) {
-    List<String> toAddList = new ArrayList<String>(TEST_QTY);
+    List<String> toAddList = new ArrayList<>(TEST_QTY);
     
     // verify with empty list first
     assertFalse(testList.addAll(toAddList));
@@ -132,7 +132,7 @@ public class ListTests {
   }
   
   public static void addAllIndexTest(List<String> testList) {
-    List<String> toAddList = new ArrayList<String>(TEST_QTY);
+    List<String> toAddList = new ArrayList<>(TEST_QTY);
     
     // verify with empty list first
     assertFalse(testList.addAll(0, toAddList));
@@ -159,7 +159,7 @@ public class ListTests {
   }
   
   public static void addAllIndexFail(List<String> testList) {
-    List<String> toAdd = new ArrayList<String>(1);
+    List<String> toAdd = new ArrayList<>(1);
     toAdd.add("foo");
     
     try {
@@ -177,7 +177,7 @@ public class ListTests {
   }
   
   public static void getTest(List<String> testList) {
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionList.add(str);
@@ -190,7 +190,7 @@ public class ListTests {
   }
   
   public static void indexOfTest(List<String> testList) {
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY * 2);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY * 2);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionList.add(str);
@@ -207,7 +207,7 @@ public class ListTests {
   }
   
   public static void lastIndexOfTest(List<String> testList) {
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY * 2);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY * 2);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionList.add(str);
@@ -237,7 +237,7 @@ public class ListTests {
   }
   
   public static void containsAllTest(List<String> testList) {
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY + 1);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY + 1);
     assertTrue(testList.containsAll(comparisionList));
     comparisionList.add("bar");
     assertFalse(testList.containsAll(comparisionList));
@@ -314,12 +314,12 @@ public class ListTests {
   }
   
   public static void removeAllTest(List<String> testList) {
-    List<String> toRemoveList = new ArrayList<String>(TEST_QTY);
+    List<String> toRemoveList = new ArrayList<>(TEST_QTY);
     
     // verify returned false on no modification
     assertFalse(testList.removeAll(toRemoveList));
     
-    List<String> comparisonList = new ArrayList<String>(TEST_QTY);
+    List<String> comparisonList = new ArrayList<>(TEST_QTY);
     boolean flip = false;
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
@@ -333,7 +333,7 @@ public class ListTests {
       }
     }
     
-    List<String> noOpList = new ArrayList<String>(2);
+    List<String> noOpList = new ArrayList<>(2);
     noOpList.add("foo");
     noOpList.add("bar");
     
@@ -357,7 +357,7 @@ public class ListTests {
     
     populateIntStrings(testList, testQty);
     
-    List<String> removedItems = new LinkedList<String>();
+    List<String> removedItems = new LinkedList<>();
     String removedItem = testList.remove(testQty - 1);
     assertTrue(removedItem.equals(Integer.toString(testQty - 1)));
     removedItems.add(removedItem);
@@ -404,9 +404,9 @@ public class ListTests {
     populateIntStrings(testList, TEST_QTY);
     
     assertFalse(testList.retainAll(testList));
-    assertFalse(testList.retainAll(new ArrayList<String>(testList)));
+    assertFalse(testList.retainAll(new ArrayList<>(testList)));
     
-    List<String> toRetainList = new ArrayList<String>(TEST_QTY / 2);
+    List<String> toRetainList = new ArrayList<>(TEST_QTY / 2);
     populateIntStrings(toRetainList, TEST_QTY / 2);
     
     assertTrue(testList.retainAll(toRetainList));
@@ -417,7 +417,7 @@ public class ListTests {
   }
   
   public static void iteratorTest(List<String> testList) {
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionList.add(str);
@@ -451,7 +451,7 @@ public class ListTests {
   }
   
   public static void listIteratorTest(List<String> testList) {
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionList.add(str);
@@ -541,7 +541,7 @@ public class ListTests {
   public static void equalsTest(List<String> testList) {
     assertFalse(testList.equals(new Object()));
     
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionList.add(str);

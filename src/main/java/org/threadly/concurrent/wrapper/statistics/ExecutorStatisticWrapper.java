@@ -103,7 +103,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   public List<Long> getExecutionDelaySamples() {
     ArrayList<Long> runDelays;
     synchronized (statsContainer.runDelays) {
-      runDelays = new ArrayList<Long>(statsContainer.runDelays);
+      runDelays = new ArrayList<>(statsContainer.runDelays);
     }
     return runDelays;
   }
@@ -130,7 +130,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   public List<Long> getExecutionDurationSamples() {
     ArrayList<Long> runDurations;
     synchronized (statsContainer.runDurations) {
-      runDurations = new ArrayList<Long>(statsContainer.runDurations);
+      runDurations = new ArrayList<>(statsContainer.runDurations);
     }
     return runDurations;
   }
@@ -155,7 +155,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   
   @Override
   public List<Pair<Runnable, StackTraceElement[]>> getLongRunningTasks(long durationLimitMillis) {
-    List<Pair<Runnable, StackTraceElement[]>> result = new ArrayList<Pair<Runnable, StackTraceElement[]>>();
+    List<Pair<Runnable, StackTraceElement[]>> result = new ArrayList<>();
     if (statsContainer.accurateTime) {
       // ensure clock is updated before loop
       Clock.accurateForwardProgressingMillis();
@@ -173,7 +173,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
         StackTraceElement[] stack = e.getKey().getLeft().getStackTrace();
         // verify still in collection after capturing stack
         if (statsContainer.runningTasks.containsKey(e.getKey())) {
-          result.add(new Pair<Runnable, StackTraceElement[]>(task, stack));
+          result.add(new Pair<>(task, stack));
         }
       }
     }
@@ -245,7 +245,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
     
     @Override
     public void run() {
-      Pair<Thread, Runnable> taskPair = new Pair<Thread, Runnable>(Thread.currentThread(), task);
+      Pair<Thread, Runnable> taskPair = new Pair<>(Thread.currentThread(), task);
       statsContainer.trackStart(taskPair, expectedRunTime);
       try {
         task.run();
@@ -280,9 +280,9 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
       this.accurateTime = accurateTime;
       this.totalExecutionCount = new LongAdder();
       this.queuedTaskCount = new LongAdder();
-      this.runningTasks = new ConcurrentHashMap<Pair<Thread, Runnable>, Long>();
-      this.runDurations = new ArrayDeque<Long>();
-      this.runDelays = new ArrayDeque<Long>();
+      this.runningTasks = new ConcurrentHashMap<>();
+      this.runDurations = new ArrayDeque<>();
+      this.runDelays = new ArrayDeque<>();
     }
     
     public void trackStart(Pair<Thread, Runnable> taskPair, long expectedRunTime) {

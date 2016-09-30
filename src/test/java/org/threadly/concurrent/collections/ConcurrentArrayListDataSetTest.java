@@ -31,7 +31,7 @@ public class ConcurrentArrayListDataSetTest {
   
   private static <T> DataSet<T> makeDataSet(Object[] dataArray, 
                                             int startPosition, int endPosition) {
-    return new DataSet<T>(dataArray, startPosition, endPosition, 0, 0);
+    return new DataSet<>(dataArray, startPosition, endPosition, 0, 0);
   }
   
   // little unit test that was made for a very hard to find failure case
@@ -510,8 +510,8 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void optimizedRepositionToEndTest() {
-    DataSet<Integer> testSet = new DataSet<Integer>(new Integer[]{ null, null, 0, 1, 2, 3, 4, 5, null, null}, 
-                                                    2, 8, 2, 2);
+    DataSet<Integer> testSet = new DataSet<>(new Integer[]{ null, null, 0, 1, 2, 3, 4, 5, null, null}, 
+                                             2, 8, 2, 2);
     DataSet<Integer> result = testSet.reposition(0, testSet.size);
     
     for (int i = 0; i < result.size; i++) {
@@ -532,8 +532,8 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void optimizedRepositionToFrontTest() {
-    DataSet<Integer> testSet = new DataSet<Integer>(new Integer[]{ null, null, 0, 1, 2, 3, 4, 5, null, null}, 
-                                                    2, 8, 2, 2);
+    DataSet<Integer> testSet = new DataSet<>(new Integer[]{ null, null, 0, 1, 2, 3, 4, 5, null, null}, 
+                                             2, 8, 2, 2);
     DataSet<Integer> result = testSet.reposition(testSet.size - 1, 0);
     
     for (int i = 0; i < result.size; i++) {
@@ -866,7 +866,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllNormalTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -879,7 +879,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllFrontRemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -892,7 +892,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllFront2RemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -905,7 +905,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllEndRemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -918,7 +918,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllEnd2RemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -931,7 +931,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllBothRemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -944,7 +944,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllIndexNormalTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -957,7 +957,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllIndexFrontRemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -970,7 +970,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllIndexFront2RemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -983,7 +983,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllIndexEndRemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -996,7 +996,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllIndexEnd2RemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -1009,7 +1009,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllIndexBothRemovedTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -1022,7 +1022,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllFrontSpaceTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -1038,7 +1038,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void addAllEndSpaceTest() {
-    List<Integer> toAddList = new ArrayList<Integer>(5);
+    List<Integer> toAddList = new ArrayList<>(5);
     toAddList.add(100);
     toAddList.add(200);
     toAddList.add(300);
@@ -1097,7 +1097,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void removeAllNormalTest() {
-    List<Integer> toRemove = new ArrayList<Integer>(4);
+    List<Integer> toRemove = new ArrayList<>(4);
     toRemove.add(0);  // front
     toRemove.add(5);  // middle
     toRemove.add(9);  // end
@@ -1110,7 +1110,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void removeAllFrontRemovedTest() {
-    List<Integer> toRemove = new ArrayList<Integer>(4);
+    List<Integer> toRemove = new ArrayList<>(4);
     toRemove.add(1);  // front
     toRemove.add(5);  // middle
     toRemove.add(9);  // end
@@ -1123,7 +1123,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void removeAllFront2RemovedTest() {
-    List<Integer> toRemove = new ArrayList<Integer>(4);
+    List<Integer> toRemove = new ArrayList<>(4);
     toRemove.add(2);  // front
     toRemove.add(5);  // middle
     toRemove.add(9);  // end
@@ -1136,7 +1136,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void removeAllEndRemovedTest() {
-    List<Integer> toRemove = new ArrayList<Integer>(4);
+    List<Integer> toRemove = new ArrayList<>(4);
     toRemove.add(0);  // front
     toRemove.add(5);  // middle
     toRemove.add(8);  // end
@@ -1149,7 +1149,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void removeAllEnd2RemovedTest() {
-    List<Integer> toRemove = new ArrayList<Integer>(4);
+    List<Integer> toRemove = new ArrayList<>(4);
     toRemove.add(0);  // front
     toRemove.add(5);  // middle
     toRemove.add(7);  // end
@@ -1162,7 +1162,7 @@ public class ConcurrentArrayListDataSetTest {
   
   @Test
   public void removeAllBothRemovedTest() {
-    List<Integer> toRemove = new ArrayList<Integer>(4);
+    List<Integer> toRemove = new ArrayList<>(4);
     toRemove.add(1);  // front
     toRemove.add(5);  // middle
     toRemove.add(8);  // end

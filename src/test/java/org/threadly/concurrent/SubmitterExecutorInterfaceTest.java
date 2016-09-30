@@ -30,7 +30,7 @@ public abstract class SubmitterExecutorInterfaceTest {
   }
   
   protected List<TestRunnable> executeTestRunnables(Executor executor, int runnableSleepTime) {
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+    List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable(runnableSleepTime);
         executor.execute(tr);
@@ -112,7 +112,7 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         if (i % 2 == 0) {
           // add a failure runnable
@@ -155,8 +155,8 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<?> future = executor.submit(tr);
@@ -228,8 +228,8 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-      List<Future<TestRunnable>> futures = new ArrayList<Future<TestRunnable>>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
+      List<Future<TestRunnable>> futures = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<TestRunnable> future = executor.submit(tr, tr);
@@ -304,8 +304,8 @@ public abstract class SubmitterExecutorInterfaceTest {
     try {
       SubmitterExecutor executor = factory.makeSubmitterExecutor(TEST_QTY, false);
       
-      List<TestCallable> callables = new ArrayList<TestCallable>(TEST_QTY);
-      List<Future<Object>> futures = new ArrayList<Future<Object>>(TEST_QTY);
+      List<TestCallable> callables = new ArrayList<>(TEST_QTY);
+      List<Future<Object>> futures = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestCallable tc = new TestCallable();
         Future<Object> future = executor.submit(tc);

@@ -1,7 +1,7 @@
 package org.threadly.concurrent;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.ThreadFactory;
  */
 public class StartingThreadFactory implements ThreadFactory {
   private final ConfigurableThreadFactory parentFactory = new ConfigurableThreadFactory();
-  private final List<Thread> toKillThreads = new LinkedList<Thread>();
+  private final List<Thread> toKillThreads = new ArrayList<>(2);
   
   @Override
   public Thread newThread(final Runnable r) {

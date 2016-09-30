@@ -18,8 +18,8 @@ public class ExceptionUtils {
   protected static volatile ExceptionHandler defaultExceptionHandler = null;
   
   static {
-    THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<ExceptionHandler>();
-    INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<ExceptionHandler>();
+    THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<>();
+    INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<>();
   }
   
   /**

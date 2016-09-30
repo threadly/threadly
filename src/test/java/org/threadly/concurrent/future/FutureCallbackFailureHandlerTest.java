@@ -10,7 +10,7 @@ import org.junit.Test;
 public class FutureCallbackFailureHandlerTest {
   @Test
   public void resultIgnoredTest() {
-    AtomicReference<Throwable> failureProvided = new AtomicReference<Throwable>(null);
+    AtomicReference<Throwable> failureProvided = new AtomicReference<>(null);
     new FutureCallbackFailureHandler((t) -> failureProvided.set(t)).handleResult(new Exception());
     // no exception should throw or other weird behavior
     
@@ -20,7 +20,7 @@ public class FutureCallbackFailureHandlerTest {
   @Test
   public void failureProvidedTest() {
     Throwable testFailure = new Exception();
-    AtomicReference<Throwable> failureProvided = new AtomicReference<Throwable>(null);
+    AtomicReference<Throwable> failureProvided = new AtomicReference<>(null);
     new FutureCallbackFailureHandler((t) -> failureProvided.set(t)).handleFailure(testFailure);
     
     assertTrue(testFailure == failureProvided.get());

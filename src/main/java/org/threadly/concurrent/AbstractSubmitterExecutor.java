@@ -43,14 +43,14 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutor {
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submit(new RunnableCallableAdapter<T>(task, result));
+    return submit(new RunnableCallableAdapter<>(task, result));
   }
 
   @Override
   public <T> ListenableFuture<T> submit(Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
     
     doExecute(lft);
     

@@ -143,7 +143,7 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
   }
 
   private static class UnfairExecutorFactory implements SubmitterExecutorFactory {
-    private List<UnfairExecutor> executors = new ArrayList<UnfairExecutor>(1);
+    private List<UnfairExecutor> executors = new ArrayList<>(1);
     
     @Override
     public UnfairExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {

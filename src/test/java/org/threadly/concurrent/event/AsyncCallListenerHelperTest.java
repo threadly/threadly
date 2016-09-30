@@ -11,7 +11,7 @@ import org.threadly.concurrent.SameThreadSubmitterExecutor;
 public class AsyncCallListenerHelperTest extends ListenerHelperTest {
   @Override
   protected <T> ListenerHelper<T> makeListenerHelper(Class<T> listenerInterface) {
-    return new AsyncCallListenerHelper<T>(listenerInterface, SameThreadSubmitterExecutor.instance());
+    return new AsyncCallListenerHelper<>(listenerInterface, SameThreadSubmitterExecutor.instance());
   }
   
   @Test

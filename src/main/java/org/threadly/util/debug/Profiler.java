@@ -87,7 +87,7 @@ public class Profiler {
   protected Profiler(ProfileStorage pStore) {
     this.startStopLock = new Object();
     this.pStore = pStore;
-    this.stopFutures = new ArrayList<SettableListenableFuture<String>>(2);
+    this.stopFutures = new ArrayList<>(2);
   }
   
   /**
@@ -211,7 +211,7 @@ public class Profiler {
    * @return Future that will be completed with the dump string when the profiler is stopped
    */
   public ListenableFuture<String> start(Executor executor, long sampleDurationInMillis) {
-    SettableListenableFuture<String> result = new SettableListenableFuture<String>();
+    SettableListenableFuture<String> result = new SettableListenableFuture<>();
     start(executor, sampleDurationInMillis, result);
     return result;
   }
@@ -250,7 +250,7 @@ public class Profiler {
           thread.start();
         } else {
           final SettableListenableFuture<?> runningThreadFuture;
-          runningThreadFuture = new SettableListenableFuture<Void>();
+          runningThreadFuture = new SettableListenableFuture<>();
           
           executor.execute(new Runnable() {
             @Override
@@ -380,10 +380,9 @@ public class Profiler {
   public void dump(PrintStream ps, boolean dumpIndividualThreads) {
     pStore.dumpingThread = Thread.currentThread();
     try {
-      Map<Trace, Integer> globalTraces = new HashMap<Trace, Integer>();
+      Map<Trace, Integer> globalTraces = new HashMap<>();
       // create a local copy so the stats wont change while we are dumping them
-      Map<ThreadIdentifier, Map<Trace, Trace>> threadTraces = 
-          new HashMap<ThreadIdentifier, Map<Trace, Trace>>(pStore.threadTraces);
+      Map<ThreadIdentifier, Map<Trace, Trace>> threadTraces = new HashMap<>(pStore.threadTraces);
       
       // log out individual thread traces
       Iterator<Entry<ThreadIdentifier, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
@@ -434,9 +433,8 @@ public class Profiler {
    * @param out Output to dump results to
    */
   private static void dumpTraces(Set<Trace> traces, 
-                                 final Map<Trace, Integer> globalCounts, 
-                                 PrintStream out) {
-    Map<Function, Function> methods = new HashMap<Function, Function>();
+                                 final Map<Trace, Integer> globalCounts, PrintStream out) {
+    Map<Function, Function> methods = new HashMap<>();
     Trace[] traceArray = traces.toArray(new Trace[traces.size()]);
     int total = 0;
     int nativeCount = 0;
@@ -448,8 +446,7 @@ public class Profiler {
         total += t.getThreadCount();
       }
       
-      if (t.elements.length > 0 && 
-          t.elements[0].isNativeMethod()) {
+      if (t.elements.length > 0 && t.elements[0].isNativeMethod()) {
         if (globalCounts != null) {
           nativeCount += globalCounts.get(t);
         } else {
@@ -652,10 +649,9 @@ public class Profiler {
     public ProfileStorage(int pollIntervalInMs) {
       ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
       
-      collectorThread = new AtomicReference<Thread>(null);
-      threadTraces = new ConcurrentHashMap<ThreadIdentifier, Map<Trace, Trace>>(DEFAULT_MAP_INITIAL_SIZE, 
-                                                                                DEFAULT_MAP_LOAD_FACTOR, 
-                                                                                DEFAULT_MAP_CONCURRENCY_LEVEL);
+      collectorThread = new AtomicReference<>(null);
+      threadTraces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE, 
+                                             DEFAULT_MAP_LOAD_FACTOR, DEFAULT_MAP_CONCURRENCY_LEVEL);
       collectedSamples = new AtomicInteger(0);
       this.pollIntervalInMs = pollIntervalInMs;
       dumpingThread = null;
@@ -710,11 +706,11 @@ public class Profiler {
               
               Map<Trace, Trace> existingTraces = pStore.threadTraces.get(threadIdentifier);
               if (existingTraces == null) {
-                // must initialize name before identifier can be stored for retreval
+                // must initialize name before identifier can be stored for retrieval
                 threadIdentifier.finishInitialization(threadSample.getThread());
-                existingTraces = new ConcurrentHashMap<Trace, Trace>(DEFAULT_MAP_INITIAL_SIZE, 
-                                                                     DEFAULT_MAP_LOAD_FACTOR, 
-                                                                     DEFAULT_MAP_CONCURRENCY_LEVEL);
+                existingTraces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE, 
+                                                         DEFAULT_MAP_LOAD_FACTOR, 
+                                                         DEFAULT_MAP_CONCURRENCY_LEVEL);
                 pStore.threadTraces.put(threadIdentifier, existingTraces);
   
                 existingTraces.put(t, t);

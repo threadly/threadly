@@ -1,7 +1,7 @@
 package org.threadly.concurrent.wrapper.compatibility;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
@@ -20,7 +20,7 @@ public class ScheduledExecutorServiceWrapperTest extends SubmitterSchedulerInter
     private final List<ScheduledThreadPoolExecutor> executors;
     
     private SchedulerFactory() {
-      executors = new LinkedList<ScheduledThreadPoolExecutor>();
+      executors = new ArrayList<>(1);
     }
 
     @Override

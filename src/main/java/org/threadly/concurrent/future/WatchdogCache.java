@@ -52,7 +52,7 @@ public class WatchdogCache {
   public WatchdogCache(SubmitterScheduler scheduler, boolean sendInterruptOnFutureCancel) {
     this.scheduler = scheduler;
     this.sendInterruptOnFutureCancel = sendInterruptOnFutureCancel;
-    cachedDogs = new ConcurrentHashMap<Long, Watchdog>();
+    cachedDogs = new ConcurrentHashMap<>();
     watchdogProducer = (timeout) -> {
       return new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
     };

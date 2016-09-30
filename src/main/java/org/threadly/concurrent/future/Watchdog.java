@@ -20,11 +20,8 @@ import org.threadly.util.Clock;
  * @since 4.0.0
  */
 public class Watchdog {
-  private static final AtomicReference<SingleThreadScheduler> STATIC_SCHEDULER;
-  
-  static {
-    STATIC_SCHEDULER = new AtomicReference<SingleThreadScheduler>();
-  }
+  private static final AtomicReference<SingleThreadScheduler> STATIC_SCHEDULER = 
+      new AtomicReference<>();
   
   protected static final SubmitterScheduler getStaticScheduler() {
     SingleThreadScheduler sts = STATIC_SCHEDULER.get();
@@ -76,7 +73,7 @@ public class Watchdog {
     this.timeoutInMillis = timeoutInMillis;
     this.sendInterruptToTrackedThreads = sendInterruptOnFutureCancel;
     this.checkRunner = new CheckRunner(scheduler, timeoutInMillis);
-    this.futures = new ConcurrentLinkedQueue<FutureWrapper>();
+    this.futures = new ConcurrentLinkedQueue<>();
   }
   
   /**

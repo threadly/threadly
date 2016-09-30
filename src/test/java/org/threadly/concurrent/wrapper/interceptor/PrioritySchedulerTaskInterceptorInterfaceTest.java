@@ -14,7 +14,7 @@ public class PrioritySchedulerTaskInterceptorInterfaceTest extends SchedulerServ
   }
 
   private static class PrioritySchedulerTaskInterceptorFactory implements SchedulerServiceFactory {
-    private List<PriorityScheduler> schedulers = new ArrayList<PriorityScheduler>(1);
+    private List<PriorityScheduler> schedulers = new ArrayList<>(1);
     
     @Override
     public PrioritySchedulerTaskInterceptor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {

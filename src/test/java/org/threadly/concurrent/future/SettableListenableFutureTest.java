@@ -24,7 +24,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Before
   public void setup() {
-    slf = new SettableListenableFuture<String>();
+    slf = new SettableListenableFuture<>();
   }
   
   @After
@@ -46,7 +46,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void setResultResultTest() {
-    slf = new SettableListenableFuture<String>(false);
+    slf = new SettableListenableFuture<>(false);
     assertTrue(slf.setResult(null));
     assertFalse(slf.setResult(null));
   }
@@ -60,7 +60,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void setFailureResultTest() {
-    slf = new SettableListenableFuture<String>(false);
+    slf = new SettableListenableFuture<>(false);
     assertTrue(slf.setFailure(null));
     assertFalse(slf.setResult(null));
   }
@@ -74,7 +74,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void setResultFailureTest() {
-    slf = new SettableListenableFuture<String>(false);
+    slf = new SettableListenableFuture<>(false);
     assertTrue(slf.setResult(null));
     assertFalse(slf.setFailure(null));
   }
@@ -88,7 +88,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void setFailureFailureTest() {
-    slf = new SettableListenableFuture<String>(false);
+    slf = new SettableListenableFuture<>(false);
     assertTrue(slf.setFailure(null));
     assertFalse(slf.setFailure(null));
   }
@@ -102,7 +102,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void cancelSetResultTest() {
-    slf = new SettableListenableFuture<String>(false);
+    slf = new SettableListenableFuture<>(false);
     assertTrue(slf.cancel(false));
     assertFalse(slf.setResult(null));
   }
@@ -116,7 +116,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void cancelSetFailureTest() {
-    slf = new SettableListenableFuture<String>(false);
+    slf = new SettableListenableFuture<>(false);
     assertTrue(slf.cancel(false));
     assertFalse(slf.setFailure(null));
   }
@@ -202,7 +202,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void addAsCallbackResultTest() throws InterruptedException, ExecutionException {
     String testResult = StringUtils.makeRandomString(5);
-    ListenableFuture<String> resultFuture = new ImmediateResultListenableFuture<String>(testResult);
+    ListenableFuture<String> resultFuture = new ImmediateResultListenableFuture<>(testResult);
     
     resultFuture.addCallback(slf);
     
@@ -213,7 +213,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void addAsCallbackFailureTest() throws InterruptedException {
     Exception e = new Exception();
-    ListenableFuture<String> failureFuture = new ImmediateFailureListenableFuture<String>(e);
+    ListenableFuture<String> failureFuture = new ImmediateFailureListenableFuture<>(e);
     
     failureFuture.addCallback(slf);
     
@@ -389,14 +389,14 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   private static class SettableListenableFutureFactory implements ListenableFutureFactory {
     @Override
     public ListenableFuture<?> makeCanceled() {
-      SettableListenableFuture<?> slf = new SettableListenableFuture<Object>();
+      SettableListenableFuture<?> slf = new SettableListenableFuture<>();
       slf.cancel(false);
       return slf;
     }
     
     @Override
     public ListenableFuture<?> makeWithFailure(Exception e) {
-      SettableListenableFuture<?> slf = new SettableListenableFuture<Object>();
+      SettableListenableFuture<?> slf = new SettableListenableFuture<>();
       slf.handleFailure(e);
       return slf;
     }

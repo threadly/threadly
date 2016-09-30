@@ -19,18 +19,18 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
 
   @Override
   protected <T> ListenableFutureTask<T> makeFutureTask(Runnable runnable, T result) {
-    return new ExecuteOnGetFutureTask<T>(runnable, result);
+    return new ExecuteOnGetFutureTask<>(runnable, result);
   }
 
   @Override
   protected <T> ListenableFutureTask<T> makeFutureTask(Callable<T> task) {
-    return new ExecuteOnGetFutureTask<T>(task);
+    return new ExecuteOnGetFutureTask<>(task);
   }
   
   @Test
   public void executeInvokedByGetTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
-    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Void>(tr);
+    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<>(tr);
     
     geft.get();
     
@@ -40,7 +40,7 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Test
   public void executeOnceTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
-    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<Void>(tr);
+    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<>(tr);
     
     geft.get();
     geft.run();
@@ -53,36 +53,36 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   private class Factory implements ExecuteOnGetFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
-      return new ExecuteOnGetFutureTask<Object>(run);
+      return new ExecuteOnGetFutureTask<>(run);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Runnable run, T result) {
-      return new ExecuteOnGetFutureTask<T>(run, result);
+      return new ExecuteOnGetFutureTask<>(run, result);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Callable<T> callable) {
-      return new ExecuteOnGetFutureTask<T>(callable);
+      return new ExecuteOnGetFutureTask<>(callable);
     }
 
     @Override
     public ListenableFuture<?> makeCanceled() {
-      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<Object>(DoNothingRunnable.instance());
+      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<>(DoNothingRunnable.instance());
       lft.cancel(false);
       return lft;
     }
 
     @Override
     public ListenableFuture<?> makeWithFailure(Exception t) {
-      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<Object>(() -> { throw t; });
+      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<>(() -> { throw t; });
       lft.run();
       return lft;
     }
 
     @Override
     public <T> ListenableFuture<T> makeWithResult(T result) {
-      ListenableFutureTask<T> lft = new ExecuteOnGetFutureTask<T>(() -> result);
+      ListenableFutureTask<T> lft = new ExecuteOnGetFutureTask<>(() -> result);
       lft.run();
       return lft;
     }

@@ -3,8 +3,8 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -230,7 +230,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
 
   private class SingleThreadSchedulerFactory implements AbstractPrioritySchedulerFactory {
-    private final List<SingleThreadScheduler> schedulers = new LinkedList<SingleThreadScheduler>();
+    private final List<SingleThreadScheduler> schedulers = new ArrayList<>(1);
 
     @Override
     public void shutdown() {

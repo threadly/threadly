@@ -164,7 +164,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     if (currentMinimumDelay == 0) {
       return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<Void>(false, DoNothingRunnable.instance());
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance());
       
       long futureDelay;
       if (maximumDelay > 0 && currentMinimumDelay > maximumDelay) {
@@ -223,7 +223,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, result);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result);
     
     doExecute(permits, lft);
     
@@ -244,7 +244,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
     
     doExecute(permits, lft);
     

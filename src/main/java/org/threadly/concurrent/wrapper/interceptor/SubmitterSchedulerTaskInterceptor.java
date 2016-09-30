@@ -110,7 +110,7 @@ public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
 
     parentScheduler.schedule(wrapTask(lft, false), delayInMs);
     

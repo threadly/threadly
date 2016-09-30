@@ -285,7 +285,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   public List<Runnable> shutdownNow() {
     shutdownStarted.set(true);
     
-    List<Runnable> result = new ArrayList<Runnable>();
+    List<Runnable> result = new ArrayList<>();
     for (Worker w : schedulers) {
       w.stopIfRunning();
       Iterator<Runnable> it = w.taskQueue.iterator();
@@ -362,7 +362,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       if (thread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      taskQueue = new ConcurrentLinkedQueue<Runnable>();
+      taskQueue = new ConcurrentLinkedQueue<>();
       parked = false;
     }
     

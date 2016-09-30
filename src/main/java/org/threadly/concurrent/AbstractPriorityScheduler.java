@@ -128,7 +128,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, 
                                                  long delayInMs, TaskPriority priority) {
-    return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs, priority);
+    return submitScheduled(new RunnableCallableAdapter<>(task, result), delayInMs, priority);
   }
 
   @Override
@@ -140,7 +140,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<T>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
     doSchedule(rf, delayInMs, priority);
     
     return rf;
@@ -258,9 +258,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     
     public QueueSet(QueueSetListener queueListener) {
       this.queueListener = queueListener;
-      this.executeQueue = new ConcurrentLinkedQueue<OneTimeTaskWrapper>();
-      this.scheduleQueue = new ConcurrentArrayList<TaskWrapper>(QUEUE_FRONT_PADDING, 
-                                                                QUEUE_REAR_PADDING);
+      this.executeQueue = new ConcurrentLinkedQueue<>();
+      this.scheduleQueue = new ConcurrentArrayList<>(QUEUE_FRONT_PADDING, QUEUE_REAR_PADDING);
       scheduleQueueRunTimeByIndex = (index) -> scheduleQueue.get(index).getRunTime();
     }
 
@@ -486,9 +485,9 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
      */
     public List<Runnable> clearQueue() {
-      List<TaskWrapper> wrapperList = new ArrayList<TaskWrapper>(highPriorityQueueSet.queueSize() + 
-                                                                   lowPriorityQueueSet.queueSize() + 
-                                                                   starvablePriorityQueueSet.queueSize());
+      List<TaskWrapper> wrapperList = new ArrayList<>(highPriorityQueueSet.queueSize() + 
+                                                        lowPriorityQueueSet.queueSize() + 
+                                                        starvablePriorityQueueSet.queueSize());
       highPriorityQueueSet.drainQueueInto(wrapperList);
       lowPriorityQueueSet.drainQueueInto(wrapperList);
       starvablePriorityQueueSet.drainQueueInto(wrapperList);

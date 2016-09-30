@@ -15,7 +15,7 @@ import org.threadly.test.concurrent.TestRunnable;
 public class ContainerHelperTest {
   @Test
   public void removeRunnableFromCollectionTest() {
-    List<TestRunnableContainer> testRunnables = new ArrayList<TestRunnableContainer>(TEST_QTY);
+    List<TestRunnableContainer> testRunnables = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       testRunnables.add(new TestRunnableContainer(new TestRunnable()));
     }
@@ -27,7 +27,7 @@ public class ContainerHelperTest {
   
   @Test
   public void removeCallableFromCollectionTest() {
-    List<TestRunnableContainer> testRunnables = new ArrayList<TestRunnableContainer>(TEST_QTY);
+    List<TestRunnableContainer> testRunnables = new ArrayList<>(TEST_QTY);
     Callable<?> toRemove = null;
     for (int i = 0; i < TEST_QTY; i++) {
       TestCallable tc = new TestCallable();
@@ -72,7 +72,7 @@ public class ContainerHelperTest {
   
   @Test
   public void getContainedRunnablesTest() {
-    List<TestRunnableContainer> containers = new ArrayList<TestRunnableContainer>(TEST_QTY);
+    List<TestRunnableContainer> containers = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       containers.add(new TestRunnableContainer(new TestRunnable()));
     }

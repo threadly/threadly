@@ -23,7 +23,7 @@ public class ConcurrentArrayListTest {
   
   @Before
   public void setup() {
-    testList = new ConcurrentArrayList<String>();
+    testList = new ConcurrentArrayList<>();
   }
   
   @After
@@ -34,7 +34,7 @@ public class ConcurrentArrayListTest {
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
-    new ConcurrentArrayList<String>(null, new Object());
+    new ConcurrentArrayList<>(null, new Object());
     fail("Exception should have thrown");
   }
   
@@ -50,7 +50,7 @@ public class ConcurrentArrayListTest {
   @Test
   public void getModificationLockTest() {
     Object testLock = new Object();
-    ConcurrentArrayList<String> testList = new ConcurrentArrayList<String>(testLock);
+    ConcurrentArrayList<String> testList = new ConcurrentArrayList<>(testLock);
     
     assertTrue(testLock == testList.getModificationLock());
   }
@@ -284,8 +284,8 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void removeFirstOccurrenceTest() {
-    List<String> firstStr = new ArrayList<String>(TEST_QTY);
-    List<String> secondStr = new ArrayList<String>(TEST_QTY);
+    List<String> firstStr = new ArrayList<>(TEST_QTY);
+    List<String> secondStr = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str1 = Integer.toString(i);
       firstStr.add(str1);
@@ -317,8 +317,8 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void removeLastOccurrenceTest() {
-    List<String> firstStr = new ArrayList<String>(TEST_QTY);
-    List<String> secondStr = new ArrayList<String>(TEST_QTY);
+    List<String> firstStr = new ArrayList<>(TEST_QTY);
+    List<String> secondStr = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str1 = Integer.toString(i);
       firstStr.add(str1);
@@ -359,7 +359,7 @@ public class ConcurrentArrayListTest {
   }
   
   public void removeOrPopTest(int removeType) {
-    List<String> compareList = new ArrayList<String>(TEST_QTY);
+    List<String> compareList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       compareList.add(str);
@@ -396,7 +396,7 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void removeLastTest() {
-    LinkedList<String> compareList = new LinkedList<String>();
+    LinkedList<String> compareList = new LinkedList<>();
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       compareList.add(str);
@@ -430,7 +430,7 @@ public class ConcurrentArrayListTest {
   }
   
   public void pollTest(boolean pollFirst) {
-    List<String> compareList = new ArrayList<String>(TEST_QTY);
+    List<String> compareList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       compareList.add(str);
@@ -454,7 +454,7 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void pollLastTest() {
-    LinkedList<String> compareList = new LinkedList<String>();
+    LinkedList<String> compareList = new LinkedList<>();
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       compareList.add(str);
@@ -516,8 +516,8 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void repositionSearchForwardTest() {
-    List<String> firstStr = new ArrayList<String>(TEST_QTY);
-    List<String> secondStr = new ArrayList<String>(TEST_QTY);
+    List<String> firstStr = new ArrayList<>(TEST_QTY);
+    List<String> secondStr = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str1 = Integer.toString(i);
       firstStr.add(str1);
@@ -544,8 +544,8 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void repositionSearchBackwardTest() {
-    List<String> firstStr = new ArrayList<String>(TEST_QTY);
-    List<String> secondStr = new ArrayList<String>(TEST_QTY);
+    List<String> firstStr = new ArrayList<>(TEST_QTY);
+    List<String> secondStr = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str1 = Integer.toString(i);
       firstStr.add(str1);
@@ -682,7 +682,7 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void testListIteratorBackwards() {
-    List<String> comparisionList = new ArrayList<String>(TEST_QTY);
+    List<String> comparisionList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionList.add(str);
@@ -699,7 +699,7 @@ public class ConcurrentArrayListTest {
   
   @Test
   public void descendingIteratorTest() {
-    Deque<String> comparisionDeque = new LinkedList<String>();
+    Deque<String> comparisionDeque = new LinkedList<>();
     for (int i = 0; i < TEST_QTY; i++) {
       String str = Integer.toString(i);
       comparisionDeque.addLast(str);

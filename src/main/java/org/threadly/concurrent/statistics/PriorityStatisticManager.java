@@ -47,13 +47,13 @@ class PriorityStatisticManager {
     totalHighPriorityExecutions = new LongAdder();
     totalLowPriorityExecutions = new LongAdder();
     totalStarvablePriorityExecutions = new LongAdder();
-    runningTasks = new ConcurrentHashMap<Pair<Thread, TaskStatWrapper>, Long>();
-    starvablePriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
-    lowPriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
-    highPriorityRunDurations = new ConcurrentArrayList<Long>(0, maxWindowSize);
-    starvablePriorityExecutionDelay = new ConcurrentArrayList<Long>(0, maxWindowSize);
-    lowPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, maxWindowSize);
-    highPriorityExecutionDelay = new ConcurrentArrayList<Long>(0, maxWindowSize);
+    runningTasks = new ConcurrentHashMap<>();
+    starvablePriorityRunDurations = new ConcurrentArrayList<>(0, maxWindowSize);
+    lowPriorityRunDurations = new ConcurrentArrayList<>(0, maxWindowSize);
+    highPriorityRunDurations = new ConcurrentArrayList<>(0, maxWindowSize);
+    starvablePriorityExecutionDelay = new ConcurrentArrayList<>(0, maxWindowSize);
+    lowPriorityExecutionDelay = new ConcurrentArrayList<>(0, maxWindowSize);
+    highPriorityExecutionDelay = new ConcurrentArrayList<>(0, maxWindowSize);
   }
   
   /**
@@ -159,7 +159,7 @@ class PriorityStatisticManager {
   }
 
   public List<Long> getExecutionDelaySamples() {
-    List<Long> resultList = new ArrayList<Long>(highPriorityExecutionDelay);
+    List<Long> resultList = new ArrayList<>(highPriorityExecutionDelay);
     resultList.addAll(lowPriorityExecutionDelay);
     resultList.addAll(starvablePriorityExecutionDelay);
     
@@ -171,7 +171,7 @@ class PriorityStatisticManager {
       return getExecutionDelaySamples();
     }
 
-    return new ArrayList<Long>(getExecutionDelaySamplesInternal(priority));
+    return new ArrayList<>(getExecutionDelaySamplesInternal(priority));
   }
 
   public double getAverageExecutionDelay() {
@@ -212,7 +212,7 @@ class PriorityStatisticManager {
   }
 
   public List<Long> getExecutionDurationSamples() {
-    List<Long> resultList = new ArrayList<Long>(highPriorityRunDurations);
+    List<Long> resultList = new ArrayList<>(highPriorityRunDurations);
     resultList.addAll(lowPriorityRunDurations);
     resultList.addAll(starvablePriorityRunDurations);
     
@@ -224,7 +224,7 @@ class PriorityStatisticManager {
       return getExecutionDurationSamples();
     }
     
-    return new ArrayList<Long>(getExecutionDurationSamplesInternal(priority));
+    return new ArrayList<>(getExecutionDurationSamplesInternal(priority));
   }
 
   public double getAverageExecutionDuration() {
@@ -261,7 +261,7 @@ class PriorityStatisticManager {
   }
 
   public List<Pair<Runnable, StackTraceElement[]>> getLongRunningTasks(long durationLimitMillis) {
-    List<Pair<Runnable, StackTraceElement[]>> result = new ArrayList<Pair<Runnable, StackTraceElement[]>>();
+    List<Pair<Runnable, StackTraceElement[]>> result = new ArrayList<>();
     if (accurateTime) {
       // ensure clock is updated before loop
       Clock.accurateForwardProgressingMillis();
@@ -279,7 +279,7 @@ class PriorityStatisticManager {
         StackTraceElement[] stack = e.getKey().getLeft().getStackTrace();
         // verify still in collection after capturing stack
         if (runningTasks.containsKey(e.getKey())) {
-          result.add(new Pair<Runnable, StackTraceElement[]>(task, stack));
+          result.add(new Pair<>(task, stack));
         }
       }
     }
@@ -345,8 +345,7 @@ class PriorityStatisticManager {
     
     @Override
     public void run() {
-      Pair<Thread, TaskStatWrapper> taskPair = 
-          new Pair<Thread, TaskStatWrapper>(Thread.currentThread(), this);
+      Pair<Thread, TaskStatWrapper> taskPair = new Pair<>(Thread.currentThread(), this);
       statsManager.trackTaskStart(taskPair);
       try {
         task.run();

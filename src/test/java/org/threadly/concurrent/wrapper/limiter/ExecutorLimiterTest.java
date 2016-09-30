@@ -101,7 +101,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   @Test
   public void consumeAvailableTest() {
     ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT);
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(PARALLEL_COUNT);
+    List<TestRunnable> runnables = new ArrayList<>(PARALLEL_COUNT);
     for (int i = 0; i < PARALLEL_COUNT; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
@@ -124,7 +124,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     Executor limitedExecutor = getLimiter(PARALLEL_COUNT);
     final AtomicInteger running = new AtomicInteger(0);
     final AsyncVerifier verifier = new AsyncVerifier();
-    List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
+    List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
       TestRunnable tr = new TestRunnable(20) {
         @Override
@@ -165,8 +165,8 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     try {
       ExecutorLimiter el = elf.makeSubmitterExecutor(TEST_QTY, false);
       
-      List<TestRunnable> runnables = new ArrayList<TestRunnable>(TEST_QTY);
-      List<Future<?>> futures = new ArrayList<Future<?>>(TEST_QTY);
+      List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
+      List<Future<?>> futures = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         Future<?> future = el.submit(tr);

@@ -26,7 +26,7 @@ import org.threadly.util.Clock;
 public class DebugLogger {
   protected static final boolean LOG_TIME_DEFAULT = false;
   protected static final String TIME_DELIM = " - ";
-  protected static volatile ConcurrentSkipListMap<Long, String> logMap = new ConcurrentSkipListMap<Long, String>();
+  protected static volatile ConcurrentSkipListMap<Long, String> logMap = new ConcurrentSkipListMap<>();
   
   /**
    * This adds a log message to the stored log.  Keep in mind this will continue to consume more 
@@ -74,7 +74,7 @@ public class DebugLogger {
    */
   public static String getAllStoredMessages(boolean includeLogTimes) {
     ConcurrentSkipListMap<Long, String> currentLog = logMap;
-    logMap = new ConcurrentSkipListMap<Long, String>();
+    logMap = new ConcurrentSkipListMap<>();
     
     try {
       Thread.sleep(100);  // wait for any possibly log messages attempting to be currently stored

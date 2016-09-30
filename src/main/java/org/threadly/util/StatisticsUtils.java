@@ -59,7 +59,7 @@ public class StatisticsUtils {
       throw new IllegalArgumentException("No values provided to calculate against");
     }
     
-    List<T> valuesCopy = new ArrayList<T>(values);
+    List<T> valuesCopy = new ArrayList<>(values);
     Collections.sort(valuesCopy, new Comparator<Number>() {
       @Override
       public int compare(Number o1, Number o2) {
@@ -74,7 +74,7 @@ public class StatisticsUtils {
       }
     });
     
-    Map<Double, T> result = new LinkedHashMap<Double, T>();
+    Map<Double, T> result = new LinkedHashMap<>();
     for (double p : percentiles) {
       if (p > 100 || p < 0) {
         throw new IllegalArgumentException("Percentile not in range of 0 to 100: " + p);

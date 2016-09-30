@@ -40,7 +40,7 @@ public class InvocationTee {
    * @return A returned interface which will map all invocations to all provided interfaces
    */
   public static <T> T tee(Class<? super T> teeInterface, T ... instances) {
-    return setupHelper(new ListenerHelper<T>(teeInterface), instances);
+    return setupHelper(new ListenerHelper<>(teeInterface), instances);
   }
   
   /**
@@ -106,7 +106,7 @@ public class InvocationTee {
    */
   public static <T> T teeWithExecutor(Executor executor, 
                                       Class<? super T> teeInterface, T ... instances) {
-    return setupHelper(new DefaultExecutorListenerHelper<T>(teeInterface, executor), instances);
+    return setupHelper(new DefaultExecutorListenerHelper<>(teeInterface, executor), instances);
   }
 
   private static <T> T setupHelper(ListenerHelper<T> lh, T ... instances) {

@@ -13,9 +13,8 @@ public class ExecutorTaskInterceptorInterfaceTest extends SubmitterExecutorInter
     return new ExecutorTaskInterceptorFactory();
   }
 
-
   private static class ExecutorTaskInterceptorFactory implements SubmitterExecutorFactory {
-    private List<UnfairExecutor> executors = new ArrayList<UnfairExecutor>(1);
+    private List<UnfairExecutor> executors = new ArrayList<>(1);
     
     @Override
     public ExecutorTaskInterceptor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {

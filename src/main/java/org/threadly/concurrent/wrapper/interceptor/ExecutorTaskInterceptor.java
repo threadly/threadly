@@ -89,7 +89,7 @@ public class ExecutorTaskInterceptor implements SubmitterExecutor {
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, wrapTask(task), result);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, wrapTask(task), result);
     
     parentExecutor.execute(lft);
     
@@ -100,7 +100,7 @@ public class ExecutorTaskInterceptor implements SubmitterExecutor {
   public <T> ListenableFuture<T> submit(Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
 
     parentExecutor.execute(wrapTask(lft));
     

@@ -20,7 +20,7 @@ public class ScheduledFutureDelegateTest<T> {
     int endVal = TEST_QTY;
     for(int i = startVal; i <= endVal; i++) {
       TestDelayed td = new TestDelayed(i);
-      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Void>(null, td);
+      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(null, td);
       
       assertEquals(td.getDelay(TimeUnit.MILLISECONDS), testItem.getDelay(TimeUnit.MILLISECONDS));
       assertEquals(td.getDelay(TimeUnit.NANOSECONDS), testItem.getDelay(TimeUnit.NANOSECONDS));
@@ -39,7 +39,7 @@ public class ScheduledFutureDelegateTest<T> {
     int endVal = TEST_QTY;
     for(int i = startVal; i <= endVal; i++) {
       TestDelayed td = new TestDelayed(i);
-      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Void>(null, td);
+      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(null, td);
       
       assertEquals(0, testItem.compareTo(td));
       assertEquals(0, testItem.compareTo(new TestDelayed(i)));
@@ -55,7 +55,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void cancelTest() {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     assertEquals(future.cancel(true), testItem.cancel(true));
     assertEquals(future.cancel(false), testItem.cancel(false));
@@ -64,7 +64,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void isCancelledTest() {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     assertEquals(future.isCancelled(), testItem.isCancelled());
     
@@ -73,7 +73,7 @@ public class ScheduledFutureDelegateTest<T> {
     assertTrue(testItem.isCancelled());
     
     future = new TestFutureImp(false);
-    testItem = new ScheduledFutureDelegate<Object>(future, null);
+    testItem = new ScheduledFutureDelegate<>(future, null);
     
     assertEquals(future.isCancelled(), testItem.isCancelled());
     
@@ -86,7 +86,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void isDoneTest() {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     future.cancel(true);
     
@@ -96,7 +96,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void getTest() throws InterruptedException, ExecutionException, TimeoutException {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     assertTrue(future.get() == testItem.get());
     
@@ -111,7 +111,7 @@ public class ScheduledFutureDelegateTest<T> {
         throw new ExecutionException(new SuppressedStackRuntimeException());
       }
     };
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     testItem.get();
     fail("Exception should have thrown");
@@ -125,7 +125,7 @@ public class ScheduledFutureDelegateTest<T> {
         throw new TimeoutException();
       }
     };
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     testItem.get(DELAY_TIME, TimeUnit.MILLISECONDS);
     fail("Exception should have thrown");
@@ -134,7 +134,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void addListenerTest() {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     TestRunnable firstListener = new TestRunnable();
     TestRunnable secondListener = new TestRunnable();
@@ -149,7 +149,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void addListenerExecutorTest() {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     TestRunnable firstListener = new TestRunnable();
     TestRunnable secondListener = new TestRunnable();
@@ -164,7 +164,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void addCallbackTest() {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     testItem.addCallback(new TestFutureCallback());
     
@@ -174,7 +174,7 @@ public class ScheduledFutureDelegateTest<T> {
   @Test
   public void addCallbackExecutorTest() {
     TestFutureImp future = new TestFutureImp(false);
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<Object>(future, null);
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     testItem.addCallback(new TestFutureCallback(), null);
     

@@ -1,6 +1,6 @@
 package org.threadly.concurrent.future;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -13,7 +13,7 @@ import java.util.function.Function;
 public class TestFutureImp implements ListenableFuture<Object> {
   public final Object result = new Object();
   protected boolean canceled = false;
-  protected List<Runnable> listeners = new LinkedList<Runnable>();
+  protected List<Runnable> listeners = new ArrayList<>(1);
   private final boolean runListeners;
   
   public TestFutureImp(boolean runListeners) {
@@ -74,7 +74,7 @@ public class TestFutureImp implements ListenableFuture<Object> {
 
   @Override
   public void addCallback(FutureCallback<? super Object> callback, Executor executor) {
-    addListener(new RunnableFutureCallbackAdapter<Object>(this, callback), executor);
+    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor);
   }
 
   @Override

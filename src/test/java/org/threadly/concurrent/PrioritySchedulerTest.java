@@ -298,7 +298,7 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       scheduler.execute(btr);
       btr.blockTillStarted();
       
-      final List<TestRunnable> expectedRunnables = new ArrayList<TestRunnable>(TEST_QTY);
+      final List<TestRunnable> expectedRunnables = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable();
         expectedRunnables.add(tr);
@@ -506,7 +506,7 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
     private final List<PriorityScheduler> executors;
     
     public PrioritySchedulerFactory() {
-      executors = new ArrayList<PriorityScheduler>(2);
+      executors = new ArrayList<>(2);
     }
 
     @Override

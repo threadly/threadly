@@ -139,7 +139,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     int testThreadCount = 10;
     assertEquals(0, ctProfiler.getProfiledThreadCount());
     
-    List<Thread> addedThreads = new ArrayList<Thread>(testThreadCount);
+    List<Thread> addedThreads = new ArrayList<>(testThreadCount);
     for (int i = 0; i < testThreadCount; i++) {
       Thread t = new Thread();
       addedThreads.add(t);

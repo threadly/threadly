@@ -1,8 +1,9 @@
 package org.threadly.concurrent.statistics;
 
 import static org.junit.Assert.*;
+
+import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -290,7 +291,7 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
     private final List<PriorityScheduler> executors;
     
     private SingleThreadSchedulerStatisticTrackerTestFactory() {
-      executors = new LinkedList<PriorityScheduler>();
+      executors = new ArrayList<>(1);
     }
 
     @Override

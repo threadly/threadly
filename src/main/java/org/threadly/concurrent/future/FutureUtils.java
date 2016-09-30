@@ -265,7 +265,7 @@ public class FutureUtils {
   public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                                            final T result) {
     final EmptyFutureCollection efc = new EmptyFutureCollection(futures);
-    final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<T>(efc);
+    final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<>(efc);
     efc.addCallback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object ignored) {
@@ -302,7 +302,7 @@ public class FutureUtils {
    */
   public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
       makeCompleteListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
-    return new AllFutureCollection<T>(futures);
+    return new AllFutureCollection<>(futures);
   }
   
   /**
@@ -323,7 +323,7 @@ public class FutureUtils {
    */
   public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
       makeSuccessListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
-    return new SuccessFutureCollection<T>(futures);
+    return new SuccessFutureCollection<>(futures);
   }
   
   /**
@@ -344,7 +344,7 @@ public class FutureUtils {
    */
   public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
       makeFailureListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
-    return new FailureFutureCollection<T>(futures);
+    return new FailureFutureCollection<>(futures);
   }
   
   /**
@@ -383,13 +383,13 @@ public class FutureUtils {
     
     ListenableFuture<List<ListenableFuture<? extends T>>> completeFuture = makeCompleteListFuture(futures);
     final SettableListenableFuture<List<T>> result;
-    result = new CancelDelegateSettableListenableFuture<List<T>>(completeFuture);
+    result = new CancelDelegateSettableListenableFuture<>(completeFuture);
     
     completeFuture.addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
       @Override
       public void handleResult(List<ListenableFuture<? extends T>> resultFutures) {
         boolean needToCancel = false;
-        ArrayList<T> results = new ArrayList<T>(resultFutures.size());
+        ArrayList<T> results = new ArrayList<>(resultFutures.size());
         Iterator<ListenableFuture<? extends T>> it = resultFutures.iterator();
         while (it.hasNext()) {
           ListenableFuture<? extends T> f = it.next();
@@ -474,7 +474,7 @@ public class FutureUtils {
     final ArrayList<ListenableFuture<?>> futuresCopy;
     final Iterable<? extends ListenableFuture<?>> callbackFutures;
     if (copy) {
-      callbackFutures = futuresCopy = new ArrayList<ListenableFuture<?>>();
+      callbackFutures = futuresCopy = new ArrayList<>();
     } else {
       futuresCopy = null;
       callbackFutures = futures;
@@ -507,7 +507,7 @@ public class FutureUtils {
     if (result == null) {
       return (ListenableFuture<T>)ImmediateResultListenableFuture.NULL_RESULT;
     } else {
-      return new ImmediateResultListenableFuture<T>(result);
+      return new ImmediateResultListenableFuture<>(result);
     }
   }
   
@@ -523,7 +523,7 @@ public class FutureUtils {
    * @return Already satisfied future
    */
   public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
-    return new ImmediateFailureListenableFuture<T>(failure);
+    return new ImmediateFailureListenableFuture<>(failure);
   }
   
   /**
@@ -566,7 +566,7 @@ public class FutureUtils {
         return FutureUtils.immediateFailureFuture(t);
       }
     } else {
-      SettableListenableFuture<RT> slf = new SettableListenableFuture<RT>();
+      SettableListenableFuture<RT> slf = new SettableListenableFuture<>();
       if (sourceFuture.isCancelled()) {
         // shortcut
         slf.cancel(false);
@@ -639,8 +639,8 @@ public class FutureUtils {
     protected FutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
       super(false);
       remainingResult = new AtomicInteger(0); // may go negative if results finish before all are added
-      buildingResult = new AtomicReference<ConcurrentArrayList<ListenableFuture<? extends T>>>(null);
-      futures = new ArrayList<ListenableFuture<? extends T>>();
+      buildingResult = new AtomicReference<>(null);
+      futures = new ArrayList<>();
       
       if (source != null) {
         Iterator<? extends ListenableFuture<? extends T>> it = source.iterator();
@@ -704,8 +704,8 @@ public class FutureUtils {
           rearPadding *= -1;
         }
         
-        ConcurrentArrayList<ListenableFuture<? extends T>> newList;
-        newList = new ConcurrentArrayList<ListenableFuture<? extends T>>(0, rearPadding);
+        ConcurrentArrayList<ListenableFuture<? extends T>> newList = 
+            new ConcurrentArrayList<>(0, rearPadding);
         
         if (buildingResult.compareAndSet(null, newList)) {
           list = newList;

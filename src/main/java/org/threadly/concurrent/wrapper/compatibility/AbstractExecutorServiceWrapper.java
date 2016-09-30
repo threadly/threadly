@@ -73,7 +73,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                        long timeout, TimeUnit unit) throws InterruptedException {
     long timeoutInMs = unit.toMillis(timeout);
     long startTime = timeoutInMs < Long.MAX_VALUE ? Clock.accurateForwardProgressingMillis() : -1;
-    List<Future<T>> resultList = new ArrayList<Future<T>>(tasks.size());
+    List<Future<T>> resultList = new ArrayList<>(tasks.size());
     // execute all the tasks provided
     {
       Iterator<? extends Callable<T>> it = tasks.iterator();
@@ -126,10 +126,10 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     final long timeoutInMs = unit.toMillis(timeout);
     int failureCount = 0;
     // going to be optimistic and allocate the initialize size so that at most we have to do one expansion
-    List<Future<T>> submittedFutures = new ArrayList<Future<T>>((tasks.size() / 2) + 1);
+    List<Future<T>> submittedFutures = new ArrayList<>((tasks.size() / 2) + 1);
     
     try {
-      ExecutorCompletionService<T> ecs = new ExecutorCompletionService<T>(this);
+      ExecutorCompletionService<T> ecs = new ExecutorCompletionService<>(this);
       ExecutionException lastEE = null;
       Iterator<? extends Callable<T>> it = tasks.iterator();
       // submit first one
