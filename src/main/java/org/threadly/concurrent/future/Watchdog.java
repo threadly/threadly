@@ -3,9 +3,10 @@ package org.threadly.concurrent.future;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.threadly.concurrent.AbstractSubmitterScheduler;
+import org.threadly.concurrent.ReschedulingOperation;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.SubmitterScheduler;
@@ -44,10 +45,8 @@ public class Watchdog {
   protected final SimpleSchedulerInterface scheduler;
   protected final long timeoutInMillis;
   protected final boolean sendInterruptToTrackedThreads;
-  protected final Runnable checkRunner;
+  protected final CheckRunner checkRunner;
   protected final Queue<FutureWrapper> futures;
-  // -1 = not scheduled, 0 = scheduled, 1 = running, 2 = more added while running
-  private final AtomicInteger checkRunnerStatus;
   
   /**
    * Constructs a new {@link Watchdog}.  This constructor will use a default static scheduler 
@@ -79,9 +78,8 @@ public class Watchdog {
     this.scheduler = scheduler;
     this.timeoutInMillis = timeoutInMillis;
     this.sendInterruptToTrackedThreads = sendInterruptOnFutureCancel;
-    this.checkRunner = new CheckRunner();
+    this.checkRunner = new CheckRunner(scheduler, timeoutInMillis);
     this.futures = new ConcurrentLinkedQueue<FutureWrapper>();
-    this.checkRunnerStatus = new AtomicInteger(-1);
   }
   
   /**
@@ -104,7 +102,7 @@ public class Watchdog {
    * @return {@code true} if this watchdog is currently in use
    */
   public boolean isActive() {
-    return ! futures.isEmpty() || checkRunnerStatus.get() != -1;
+    return ! futures.isEmpty() || checkRunner.isActive();
   }
   
   /**
@@ -131,21 +129,7 @@ public class Watchdog {
       }
     });
     
-    while (true) {
-      if (checkRunnerStatus.get() == -1) {
-        if (checkRunnerStatus.compareAndSet(-1, 0)) {
-          scheduler.schedule(checkRunner, timeoutInMillis);
-          return;
-        }
-      } else if (checkRunnerStatus.get() == 1) {
-        if (checkRunnerStatus.compareAndSet(1, 2)) {
-          return;
-        }
-      } else {
-        // either already scheduled, or already marked as more added
-        return;
-      }
-    }
+    checkRunner.signalToRun();
   }
 
   /**
@@ -173,17 +157,37 @@ public class Watchdog {
    * @author jent - Mike Jensen
    * @since 4.0.0
    */
-  private class CheckRunner implements Runnable {
+  private class CheckRunner extends ReschedulingOperation {
+    public CheckRunner(final SimpleSchedulerInterface scheduler, long scheduleDelay) {
+      super(scheduler instanceof SubmitterScheduler ? 
+              (SubmitterScheduler)scheduler : 
+                scheduler == null ? null : 
+                  new AbstractSubmitterScheduler() {
+                    @Override
+                    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+                      scheduler.scheduleWithFixedDelay(task, initialDelay, recurringDelay);
+                    }
+
+                    @Override
+                    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+                      scheduler.scheduleAtFixedRate(task, initialDelay, period);
+                    }
+
+                    @Override
+                    protected void doSchedule(Runnable task, long delayInMs) {
+                      scheduler.schedule(task, delayInMs);
+                    }
+              }, scheduleDelay);
+    }
+
     @Override
-    public void run() {
-      checkRunnerStatus.set(1);
-      
-      Clock.accurateTimeNanos(); // update for accurate time checking
+    protected void run() {
+      long now = Clock.accurateForwardProgressingMillis();
       Iterator<FutureWrapper> it = futures.iterator();
       FutureWrapper fw = null;
       while (it.hasNext()) {
         fw = it.next();
-        if (Clock.lastKnownForwardProgressingMillis() >= fw.expireTime) {
+        if (now >= fw.expireTime) {
           it.remove();
           try {
             fw.future.cancel(sendInterruptToTrackedThreads);
@@ -198,24 +202,12 @@ public class Watchdog {
       }
       
       if (fw != null) {
-        long nextRunDelay = fw.expireTime - Clock.lastKnownForwardProgressingMillis();
-        if (nextRunDelay <= 0) {
-          scheduler.execute(this);
-        } else {
-          scheduler.schedule(this, nextRunDelay);
-        }
+        signalToRun();  // notify we still have work to do
+        // update our execution time to when the next expiration will occur
+        setScheduleDelay(fw.expireTime - now);
       } else {
-        while (true) {
-          if (checkRunnerStatus.get() == 1) {
-            if (checkRunnerStatus.compareAndSet(1, -1)) {
-              return;
-            }
-          } else if (checkRunnerStatus.get() == 2) {
-            // will be set back to 1 when this restarts
-            scheduler.execute(this);
-            return;
-          }
-        }
+        // ensure schedule delay is set correctly
+        setScheduleDelay(timeoutInMillis);
       }
     }
   }
