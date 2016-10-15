@@ -99,12 +99,12 @@ public class TestConstants {
       case Normal:
         TEST_QTY = 5;
         CYCLE_COUNT = 10;
-        DELAY_TIME = 15;
+        DELAY_TIME = 10;
         break;
       case Stress:
         TEST_QTY = 100;
         CYCLE_COUNT = 20;
-        DELAY_TIME = 50;
+        DELAY_TIME = 20;
         break;
       default:
         throw new UnsupportedOperationException("Load not supported: " + TEST_PROFILE);

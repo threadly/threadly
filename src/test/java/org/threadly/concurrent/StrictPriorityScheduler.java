@@ -117,13 +117,81 @@ public class StrictPriorityScheduler extends PriorityScheduler {
     if (task instanceof OneTimeTaskWrapper) {
       verifyOneTimeTaskQueueSet(queueSet, (OneTimeTaskWrapper)task);
     } else if (task instanceof RecurringTaskWrapper) {
-      if (queueSet != ((RecurringTaskWrapper)task).queueSet) {
+      RecurringTaskWrapper recurringTask = (RecurringTaskWrapper)task;
+      if (queueSet != recurringTask.queueSet) {
         throw new IllegalStateException("QueueSet mismatch");
+      }
+      if (task instanceof RecurringDelayTaskWrapper) {
+        task = new StrictRecurringDelayTaskWrapper(task.task, recurringTask.queueSet, 
+                                                   recurringTask.nextRunTime, 
+                                                   ((RecurringDelayTaskWrapper)recurringTask).recurringDelay);
+      } else {
+        task = new StrictRecurringRateTaskWrapper(task.task, recurringTask.queueSet, 
+                                                  recurringTask.nextRunTime, 
+                                                  ((RecurringRateTaskWrapper)recurringTask).period);
       }
     } else {
       throw new UnsupportedOperationException("Unhandled task type");
     }
     
     super.addToScheduleQueue(queueSet, task);
+  }
+
+  protected static class StrictRecurringDelayTaskWrapper extends RecurringDelayTaskWrapper {
+    protected StrictRecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime,
+                                              long recurringDelay) {
+      super(task, queueSet, firstRunTime, recurringDelay);
+    }
+
+    @Override
+    public boolean canExecute(short executeReference) {
+      synchronized (queueSet.scheduleQueue.getModificationLock()) {
+        if (super.canExecute(executeReference)) {
+          int index = queueSet.scheduleQueue.lastIndexOf(this);
+          if (index != queueSet.scheduleQueue.size() - 1) {
+            for (int i = index + 1; i < queueSet.scheduleQueue.size(); i++) {
+              if (queueSet.scheduleQueue.get(i).getRunTime() != Long.MAX_VALUE) {
+                IllegalStateException e = 
+                    new IllegalStateException("Invalid queue state: " + queueSet.scheduleQueue);
+                e.printStackTrace();
+                throw e;
+              }
+            }
+          }
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+  }
+
+  protected static class StrictRecurringRateTaskWrapper extends RecurringRateTaskWrapper {
+    protected StrictRecurringRateTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime,
+                                             long period) {
+      super(task, queueSet, firstRunTime, period);
+    }
+
+    @Override
+    public boolean canExecute(short executeReference) {
+      synchronized (queueSet.scheduleQueue.getModificationLock()) {
+        if (super.canExecute(executeReference)) {
+          int index = queueSet.scheduleQueue.lastIndexOf(this);
+          if (index != queueSet.scheduleQueue.size() - 1) {
+            for (int i = index + 1; i < queueSet.scheduleQueue.size(); i++) {
+              if (queueSet.scheduleQueue.get(i).getRunTime() != Long.MAX_VALUE) {
+                IllegalStateException e = 
+                    new IllegalStateException("Invalid queue state: " + queueSet.scheduleQueue);
+                e.printStackTrace();
+                throw e;
+              }
+            }
+          }
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
   }
 }

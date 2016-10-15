@@ -784,7 +784,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       }
     }
   }
-
+  
   /**
    * <p>Abstract wrapper for any tasks which run repeatedly.</p>
    * 
@@ -854,10 +854,18 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
            * run again till it has finished (which it will be inserted at the correct point in 
            * queue then.
            */
-          queueSet.scheduleQueue.reposition(0, queueSet.scheduleQueue.size());
-          executing = true;
-          executeFlipCounter++;
-          return true;
+          int sourceIndex = queueSet.scheduleQueue.indexOf(this);
+          if (sourceIndex >= 0) {
+            if (sourceIndex < queueSet.scheduleQueue.size() - 1 && 
+                queueSet.scheduleQueue.get(sourceIndex + 1).getRunTime() != Long.MAX_VALUE) {
+              queueSet.scheduleQueue.reposition(sourceIndex, queueSet.scheduleQueue.size());
+            }
+            executing = true;
+            executeFlipCounter++;
+            return true;
+          } else {
+            return false;
+          }
         }
       }
     }

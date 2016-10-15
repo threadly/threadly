@@ -709,7 +709,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public Iterator<T> iterator() {
-    return listIterator();
+    return listIterator(0);
   }
 
   @Override
