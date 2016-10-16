@@ -379,16 +379,6 @@ public class Profiler {
   }
   
   /**
-   * Creates an identifier to represent the thread, a combination of the name, and the id.
-   * 
-   * @param t Thread to build identifier for
-   * @return String to represent this thread uniquely
-   */
-  private static String getThreadIdentifier(Thread t) {
-    return t.toString() + ';' + Long.toHexString(t.getId());
-  }
-  
-  /**
    * Output all the currently collected statistics to the provided output stream.
    * 
    * @return The dumped results as a single String
@@ -449,14 +439,15 @@ public class Profiler {
     try {
       Map<Trace, Integer> globalTraces = new HashMap<Trace, Integer>();
       // create a local copy so the stats wont change while we are dumping them
-      Map<String, Map<Trace, Trace>> threadTraces = new HashMap<String, Map<Trace, Trace>>(pStore.threadTraces);
+      Map<ThreadIdentifier, Map<Trace, Trace>> threadTraces = 
+          new HashMap<ThreadIdentifier, Map<Trace, Trace>>(pStore.threadTraces);
       
       // log out individual thread traces
-      Iterator<Entry<String, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
+      Iterator<Entry<ThreadIdentifier, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
       while (it.hasNext()) {
-        Entry<String, Map<Trace, Trace>> entry = it.next();
+        Entry<ThreadIdentifier, Map<Trace, Trace>> entry = it.next();
         if (dumpIndividualThreads) {
-          ps.println("Profile for thread: " + entry.getKey());
+          ps.println("Profile for thread: " + entry.getKey().toString());
           dumpTraces(entry.getValue().keySet(), null, ps);
         }
         
@@ -709,7 +700,7 @@ public class Profiler {
    */
   protected static class ProfileStorage {
     protected final AtomicReference<Thread> collectorThread;
-    protected final Map<String, Map<Trace, Trace>> threadTraces;
+    protected final Map<ThreadIdentifier, Map<Trace, Trace>> threadTraces;
     protected final AtomicInteger collectedSamples;
     protected volatile int pollIntervalInMs;
     protected volatile Thread dumpingThread;
@@ -719,9 +710,9 @@ public class Profiler {
       ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
       
       collectorThread = new AtomicReference<Thread>(null);
-      threadTraces = new ConcurrentHashMap<String, Map<Trace, Trace>>(DEFAULT_MAP_INITIAL_SIZE, 
-                                                                      DEFAULT_MAP_LOAD_FACTOR, 
-                                                                      DEFAULT_MAP_CONCURRENCY_LEVEL);
+      threadTraces = new ConcurrentHashMap<ThreadIdentifier, Map<Trace, Trace>>(DEFAULT_MAP_INITIAL_SIZE, 
+                                                                                DEFAULT_MAP_LOAD_FACTOR, 
+                                                                                DEFAULT_MAP_CONCURRENCY_LEVEL);
       collectedSamples = new AtomicInteger(0);
       this.pollIntervalInMs = pollIntervalInMs;
       dumpingThread = null;
@@ -771,11 +762,13 @@ public class Profiler {
             StackTraceElement[] threadStack = threadSample.getStackTrace();
             if (threadStack.length > 0) {
               storedSample = true;
-              String threadIdentifier = getThreadIdentifier(threadSample.getThread());
+              ThreadIdentifier threadIdentifier = new ThreadIdentifier(threadSample.getThread());
               Trace t = new Trace(threadStack);
               
               Map<Trace, Trace> existingTraces = pStore.threadTraces.get(threadIdentifier);
               if (existingTraces == null) {
+                // must initialize name before identifier can be stored for retreval
+                threadIdentifier.finishInitialization(threadSample.getThread());
                 existingTraces = new ConcurrentHashMap<Trace, Trace>(DEFAULT_MAP_INITIAL_SIZE, 
                                                                      DEFAULT_MAP_LOAD_FACTOR, 
                                                                      DEFAULT_MAP_CONCURRENCY_LEVEL);
@@ -809,6 +802,69 @@ public class Profiler {
           ExceptionUtils.runRunnable(toRun);
         }
       }
+    }
+  }
+  
+  /**
+   * <p>Small class to store referencing to thread.  This is designed to be more memory efficient 
+   * than just using a string.  It also tries to delay the expensive storage aspect until we know 
+   * we know we will need to store it long term.</p>
+   * 
+   * @author jent - Mike Jensen
+   * @since 4.9.0
+   */
+  protected static class ThreadIdentifier {
+    private final long threadId;
+    private final int hashCode;
+    private byte[] threadName;
+    
+    /**
+     * Construct a new identifier which can be used for hash and equals comparison.  To make this 
+     * fully usable {@link #finishInitialization(Thread)} must be invoked first.  This is separated 
+     * from the constructor in order to make generation efficient if only used for comparison.
+     * 
+     * @param t Thread to be referenced
+     */
+    public ThreadIdentifier(Thread t) {
+      this.threadId = t.getId();
+      this.hashCode = t.hashCode();
+      threadName = null;
+    }
+    
+    /**
+     * Finish initialization of identifier so that this can be used for more than just comparisons.
+     * 
+     * @param t Thread that was provided at time of construction
+     */
+    public void finishInitialization(Thread t) {
+      threadName = t.getName().getBytes();
+    }
+    
+    @Override
+    public String toString() {
+      if (threadName == null) {
+        throw new IllegalStateException();
+      }
+      return new String(threadName) + ';' + threadId;
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      } else {
+        try {
+          ThreadIdentifier t = (ThreadIdentifier)o;
+          return t.threadId == threadId && t.hashCode == hashCode;
+        } catch (ClassCastException e) {
+          return false;
+        }
+      }
+    }
+    
+    @Override
+    public int hashCode() {
+      return hashCode;
     }
   }
   
@@ -865,15 +921,17 @@ public class Profiler {
     public boolean equals(Object o) {
       if (this == o) {
         return true;
-      } else if (o instanceof Trace) {
-        Trace t = (Trace) o;
-        if (t.hash != hash) {
-          return false;
-        } else {
-          return Arrays.equals(t.elements, elements);
-        }
       } else {
-        return false;
+        try {
+          Trace t = (Trace) o;
+          if (t.hash != hash) {
+            return false;
+          } else {
+            return Arrays.equals(t.elements, elements);
+          }
+        } catch (ClassCastException e) {
+          return false;
+        }
       }
     }
     
@@ -945,13 +1003,15 @@ public class Profiler {
     public boolean equals(Object o) {
       if (this == o) {
         return true;
-      } else if (o instanceof Function) {
-        Function m = (Function) o;
-        return m.hashCode == hashCode && 
-                 m.className.equals(className) && 
-                 m.function.equals(function);
       } else {
-        return false;
+        try {
+          Function m = (Function) o;
+          return m.hashCode == hashCode && 
+                   m.className.equals(className) && 
+                   m.function.equals(function);
+        } catch (ClassCastException e) {
+          return false;
+        }
       }
     }
   }
