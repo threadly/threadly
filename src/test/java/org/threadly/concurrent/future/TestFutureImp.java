@@ -78,12 +78,23 @@ public class TestFutureImp implements ListenableFuture<Object> {
   }
 
   @Override
-  public <R> ListenableFuture<R> map(Function<Object, R> mapper) {
+  public <R> ListenableFuture<R> map(Function<Object, ? extends R> mapper) {
     return map(mapper, null);
   }
 
   @Override
-  public <R> ListenableFuture<R> map(Function<Object, R> mapper, Executor executor) {
+  public <R> ListenableFuture<R> map(Function<Object, ? extends R> mapper, Executor executor) {
     return FutureUtils.transform(this, mapper, executor);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> flatMap(Function<? super Object, ListenableFuture<R>> mapper) {
+    return flatMap(mapper, null);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> flatMap(Function<? super Object, ListenableFuture<R>> mapper,
+                                         Executor executor) {
+    return FutureUtils.flatTransform(this, mapper, executor);
   }
 }
