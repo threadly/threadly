@@ -24,11 +24,23 @@ public interface ListenableFuture<T> extends Future<T> {
    * This can be easily used to chain together a series of operations, happening async (or in 
    * calling thread if already complete) until the final result is actually needed.  
    * {@link #map(Function, Executor)} can be used if transformation mapper is expensive and thus 
-   * async execution is absolutely required.
+   * async execution is absolutely required.  
    * 
    * If the future is complete already, the function may be invoked on the invoking thread.  If the 
    * future is not complete then the function will be invoked on the thread which completes 
-   * the future (immediately after it completes).
+   * the future (immediately after it completes).  
+   * 
+   * If your function returns a future, consider using {@link #flatMap(Function)} as an alternative.  
+   * 
+   * Example use:
+   * 
+   * <pre>{@code 
+   *   public Integer countSomething(String value);
+   *   
+   *   public ListenableFuture<String> lookupSomething();
+   *   
+   *   ListenableFuture<Integer> count = lookupSomething().map((s) -> countSomething(s));
+   * }</pre>
    * 
    * @since 5.0.0
    * 
@@ -36,7 +48,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @param mapper Function to invoke in order to transform the futures result
    * @return A new {@link ListenableFuture} with the specified result type
    */
-  public <R> ListenableFuture<R> map(Function<? super T, R> mapper);
+  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper);
   
   /**
    * Transform this future's result into another result by applying the provided mapper function.  
@@ -51,7 +63,10 @@ public interface ListenableFuture<T> extends Future<T> {
    * never block.  If an executor is not provided then the mapper may be invoked on the calling 
    * thread (if the future is already complete), or on the same thread which the future completes 
    * on.  If the mapper function is very fast and cheap to run then {@link #map(Function)} or 
-   * providing {@code null} for the executor can allow more efficient operation.
+   * providing {@code null} for the executor can allow more efficient operation.  
+   * 
+   * If your function returns a future, consider using {@link #flatMap(Function, Executor)} as an 
+   * alternative.
    * 
    * @since 5.0.0
    * 
@@ -61,7 +76,63 @@ public interface ListenableFuture<T> extends Future<T> {
    *          to invoke on this thread or future complete thread (depending on future state)
    * @return A new {@link ListenableFuture} with the specified result type
    */
-  public <R> ListenableFuture<R> map(Function<? super T, R> mapper, Executor executor);
+  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor);
+  
+  /**
+   * Similar to {@link #map(Function)}, in that this will apply a mapper function once the applied 
+   * to future completes.  Once this future resolves it will provide the result into the provided 
+   * function.  Unlike {@link #flatMap(Function)}, this will then unwrap a future provided from the 
+   * function so that instead of having {@code ListenableFuture<ListenableFuture<R>>} you can 
+   * simply extract the final value.  The returned future will only resolve once the future of the 
+   * provided function completes.  
+   * 
+   * If the future is complete already, the function may be invoked on the invoking thread.  If the 
+   * future is not complete then the function will be invoked on the thread which completes 
+   * the future (immediately after it completes).    
+   * 
+   * Example use:
+   * 
+   * <pre>{@code 
+   *   public ListenableFuture<Integer> countSomething(String value);
+   *   
+   *   public ListenableFuture<String> lookupSomething();
+   *   
+   *   ListenableFuture<Integer> count = lookupSomething().flatMap((s) -> countSomething(s));
+   * }</pre>
+   * 
+   * @since 5.0.0
+   * 
+   * @param <R> The type for the object contained in the future which is returned from the mapper
+   * @param mapper Function to invoke in order to transform the futures result
+   * @return A new {@link ListenableFuture} with the specified result type
+   */
+  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper);
+
+  /**
+   * Similar to {@link #map(Function, Executor)}, in that this will apply a mapper function once 
+   * the applied to future completes.  Once this future resolves it will provide the result into 
+   * the provided function.  Unlike {@link #flatMap(Function, Executor)}, this will then unwrap a 
+   * future provided from the function so that instead of having 
+   * {@code ListenableFuture<ListenableFuture<R>>} you can simply extract the final value.  The 
+   * returned future will only resolve once the future of the provided function completes.  
+   * 
+   * Once the future completes the mapper function will be invoked on the executor (if provided).  
+   * Because of that providing an executor can ensure this will never block.  If an executor is 
+   * not provided then the mapper may be invoked on the calling thread (if the future is already 
+   * complete), or on the same thread which the future completes on.  If the mapper function is 
+   * very fast and cheap to run then {@link #flatMap(Function)} or providing {@code null} for the 
+   * executor can allow more efficient operation.  
+   * 
+   * @since 5.0.0
+   * 
+   * @param <R> The type for the object contained in the future which is returned from the mapper
+   * @param mapper Function to invoke in order to transform the futures result
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @return A new {@link ListenableFuture} with the specified result type
+   */
+  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
+                                         Executor executor);
   
   /**
    * Add a listener to be called once the future has completed.  If the future has already 

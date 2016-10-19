@@ -78,13 +78,7 @@ public abstract class ListenableFutureInterfaceTest {
     });
 
     assertTrue(mappedLF.isDone());
-    
-    try {
-      mappedLF.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(failure == e.getCause());
-    }
+    verifyFutureFailure(mappedLF, failure);
   }
   
   @Test
@@ -107,13 +101,7 @@ public abstract class ListenableFutureInterfaceTest {
     ListenableFuture<Void> mappedLF = lf.map((o) -> { throw failure; });
 
     assertTrue(mappedLF.isDone());
-    
-    try {
-      mappedLF.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(failure == e.getCause());
-    }
+    verifyFutureFailure(mappedLF, failure);
   }
   
   @Test
@@ -151,13 +139,7 @@ public abstract class ListenableFutureInterfaceTest {
     assertEquals(1, scheduler.tick());
 
     assertTrue(mappedLF.isDone());
-    
-    try {
-      mappedLF.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(failure == e.getCause());
-    }
+    verifyFutureFailure(mappedLF, failure);
   }
   
   @Test
@@ -186,9 +168,157 @@ public abstract class ListenableFutureInterfaceTest {
     assertEquals(1, scheduler.tick());
 
     assertTrue(mappedLF.isDone());
+    verifyFutureFailure(mappedLF, failure);
+  }
+  
+  @Test
+  public void flatMapAlreadyDoneTest() throws InterruptedException, ExecutionException {
+    String sourceObject = StringUtils.makeRandomString(5);
+    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(sourceObject);
+    String translatedObject = StringUtils.makeRandomString(10);
+    ListenableFuture<String> mappedLF = lf.flatMap((s) -> {
+      if (s == sourceObject) {
+        return FutureUtils.immediateResultFuture(translatedObject);
+      } else {
+        // test failure
+        return FutureUtils.immediateResultFuture(null);
+      }
+    });
     
+    assertTrue(mappedLF.isDone());
+    assertTrue(translatedObject == mappedLF.get());
+  }
+  
+  @Test
+  public void flatMapAlreadyDoneExecutionExceptionTest() throws InterruptedException {
+    Exception failure = new Exception();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
+    AtomicBoolean mapperRan = new AtomicBoolean(false);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> {
+      mapperRan.set(true);
+      return FutureUtils.immediateResultFuture(null);
+    });
+
+    assertTrue(mappedLF.isDone());
+    verifyFutureFailure(mappedLF, failure);
+  }
+  
+  @Test
+  public void flatMapAlreadyCanceledTest() {
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeCanceled();
+    AtomicBoolean mapperRan = new AtomicBoolean(false);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> {
+      mapperRan.set(true);
+      return FutureUtils.immediateResultFuture(null);
+    });
+
+    assertTrue(mappedLF.isDone());
+    assertTrue(mappedLF.isCancelled());
+  }
+  
+  @Test
+  public void flatMapAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> { throw failure; });
+
+    assertTrue(mappedLF.isDone());
+    verifyFutureFailure(mappedLF, failure);
+  }
+  
+  @Test
+  public void flatMapAlreadyDoneMapperReturnFailedFutureTest() throws InterruptedException {
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> FutureUtils.immediateFailureFuture(failure));
+
+    assertTrue(mappedLF.isDone());
+    verifyFutureFailure(mappedLF, failure);
+  }
+  
+  @Test
+  public void flatMapWithExecutorAlreadyDoneTest() throws InterruptedException, ExecutionException {
+    TestableScheduler scheduler = new TestableScheduler();
+    String sourceObject = StringUtils.makeRandomString(5);
+    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(sourceObject);
+    String translatedObject = StringUtils.makeRandomString(10);
+    ListenableFuture<String> mappedLF = lf.flatMap((s) -> {
+      if (s == sourceObject) {
+        return FutureUtils.immediateResultFuture(translatedObject);
+      } else {
+        // test failure
+        return FutureUtils.immediateResultFuture(null);
+      }
+    }, scheduler);
+    
+    assertEquals(1, scheduler.tick());
+    
+    assertTrue(mappedLF.isDone());
+    assertTrue(translatedObject == mappedLF.get());
+  }
+  
+  @Test
+  public void flatMapWithExecutorAlreadyDoneExecutionExceptionTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    Exception failure = new Exception();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
+    AtomicBoolean mapperRan = new AtomicBoolean(false);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> {
+      mapperRan.set(true);
+      return FutureUtils.immediateResultFuture(null);
+    }, scheduler);
+    
+    assertEquals(1, scheduler.tick());
+
+    assertTrue(mappedLF.isDone());
+    verifyFutureFailure(mappedLF, failure);
+  }
+  
+  @Test
+  public void flatMapWithExecutorAlreadyCanceledTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeCanceled();
+    AtomicBoolean mapperRan = new AtomicBoolean(false);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> {
+      mapperRan.set(true);
+      return FutureUtils.immediateResultFuture(null);
+    }, scheduler);
+    
+    assertEquals(0, scheduler.tick());
+
+    assertTrue(mappedLF.isDone());
+    assertTrue(mappedLF.isCancelled());
+  }
+  
+  @Test
+  public void flatMapWithExecutorAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> { throw failure; }, scheduler);
+  
+    assertEquals(1, scheduler.tick());
+
+    assertTrue(mappedLF.isDone());
+    verifyFutureFailure(mappedLF, failure);
+  }
+  
+  @Test
+  public void flatMapWithExecutorAlreadyDoneMapperReturnFailedFutureTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+    ListenableFuture<Void> mappedLF = lf.flatMap((o) -> FutureUtils.immediateFailureFuture(failure), scheduler);
+  
+    assertEquals(1, scheduler.tick());
+
+    assertTrue(mappedLF.isDone());
+    verifyFutureFailure(mappedLF, failure);
+  }
+  
+  private static void verifyFutureFailure(ListenableFuture<?> f, Exception failure) throws InterruptedException {
     try {
-      mappedLF.get();
+      f.get();
       fail("Exception should have thrown");
     } catch (ExecutionException e) {
       assertTrue(failure == e.getCause());

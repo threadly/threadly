@@ -837,17 +837,17 @@ public class FutureUtils {
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
    * @param <RT> The result type for the object returned from the mapper
    * @param sourceFuture Future to source input into transformation function
-   * @param transformFunction Function to apply result from future into returned future
+   * @param transformer Function to apply result from future into returned future
    * @param executor Executor to execute transformation function on, or {@code null}
    * @return Future with result of transformation function or respective error
    */
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
-                                                           Function<? super ST, RT> transformFunction, 
+                                                           Function<? super ST, ? extends RT> transformer, 
                                                            Executor executor) {
     if (executor == null && sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
-        return FutureUtils.immediateResultFuture(transformFunction.apply(sourceFuture.get()));
+        return FutureUtils.immediateResultFuture(transformer.apply(sourceFuture.get()));
       } catch (InterruptedException e) {
         // should not be possible
         throw new RuntimeException(e);
@@ -872,7 +872,68 @@ public class FutureUtils {
         @Override
         public void handleResult(ST result) {
           try {
-            slf.setResult(transformFunction.apply(result));
+            slf.setResult(transformer.apply(result));
+          } catch (Throwable t) {
+            slf.setFailure(t);
+          }
+        }
+      }, executor);
+      return slf;
+    }
+  }
+  
+  /**
+   * Similar to {@link #transform(ListenableFuture, Function, Executor)} except designed to handle 
+   * functions which return futures.  This will take what otherwise would be 
+   * {@code ListenableFuture<ListenableFuture<R>>}, and flattens it into a single future which will 
+   * resolve once the contained future is complete.
+   * 
+   * @since 5.0.0
+   * 
+   * @param <ST> The source type for the object returned from the future and inputed into the mapper
+   * @param <RT> The result type for the object contained in the future returned from the mapper
+   * @param sourceFuture Future to source input into transformation function
+   * @param transformer Function to apply result from future into returned future
+   * @param executor Executor to execute transformation function on, or {@code null}
+   * @return Future with result of transformation function or respective error
+   */
+  protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<ST> sourceFuture, 
+                                                               Function<? super ST, ListenableFuture<RT>> transformer, 
+                                                               Executor executor) {
+    if (executor == null && sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+      // optimized path for already complete futures which we can now process in thread
+      try {
+        return transformer.apply(sourceFuture.get());
+      } catch (InterruptedException e) {
+        // should not be possible
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        // failure in getting result from future, transfer failure
+        return FutureUtils.immediateFailureFuture(e.getCause());
+      } catch (Throwable t) {
+        // failure calculating transformation
+        return FutureUtils.immediateFailureFuture(t);
+      }
+    } else {
+      SettableListenableFuture<RT> slf;
+      if (sourceFuture.isCancelled()) {
+        // shortcut
+        slf = new SettableListenableFuture<>();
+        slf.cancel(false);
+        return slf;
+      }
+      slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
+      sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
+        @Override
+        public void handleResult(ST result) {
+          try {
+            transformer.apply(result)
+                             .addCallback(new FailurePropogatingFutureCallback<RT>(slf) {
+              @Override
+              public void handleResult(RT result) {
+                slf.setResult(result);
+              }
+            });
           } catch (Throwable t) {
             slf.setFailure(t);
           }

@@ -32,12 +32,22 @@ abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelabl
   }
 
   @Override
-  public <R> ListenableFuture<R> map(Function<? super T, R> mapper) {
+  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper) {
     return map(mapper, null);
   }
 
   @Override
-  public <R> ListenableFuture<R> map(Function<? super T, R> mapper, Executor executor) {
+  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
     return FutureUtils.transform(this, mapper, executor);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper) {
+    return flatMap(mapper, null);
+  }
+
+  @Override
+  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, Executor executor) {
+    return FutureUtils.flatTransform(this, mapper, executor);
   }
 }
