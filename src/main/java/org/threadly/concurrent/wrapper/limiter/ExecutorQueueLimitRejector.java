@@ -9,19 +9,18 @@ import org.threadly.concurrent.RunnableContainer;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A simple way to limit any {@link Executor} so that queues are managed.  In addition this 
- * queue is tracked completely independent of the {@link Executor}'s actual queue, so these can be 
+ * A simple way to limit any {@link Executor} so that queues are managed.  In addition this queue 
+ * is tracked completely independent of the {@link Executor}'s actual queue, so these can be 
  * distributed in code to limit queues differently to different parts of the system, while letting 
- * them all back the same {@link Executor}.</p>
- * 
- * <p>Once the limit has been reached, if additional tasks are supplied a 
+ * them all back the same {@link Executor}.
+ * <p>
+ * Once the limit has been reached, if additional tasks are supplied a 
  * {@link RejectedExecutionException} will be thrown.  This is the threadly equivalent of 
- * supplying a limited sized blocking queue to a java.util.concurrent thread pool.</p>
- * 
- * <p>See {@link SubmitterSchedulerQueueLimitRejector}, {@link SchedulerServiceQueueLimitRejector} 
- * and {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.</p>
+ * supplying a limited sized blocking queue to a java.util.concurrent thread pool.
+ * <p>
+ * See {@link SubmitterSchedulerQueueLimitRejector}, {@link SchedulerServiceQueueLimitRejector} 
+ * and {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.
  *  
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
@@ -111,9 +110,8 @@ public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
   }
   
   /**
-   * <p>This runnable decrements a provided AtomicInteger at the START of execution.</p>
+   * This runnable decrements a provided AtomicInteger at the START of execution.
    * 
-   * @author jent - Mike Jensen
    * @since 4.3.0
    */
   protected static class DecrementingRunnable implements Runnable, RunnableContainer {

@@ -10,18 +10,17 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Abstract implementation for scheduled keyed limiters.  Unlike the other limiters we can not 
+ * Abstract implementation for scheduled keyed limiters.  Unlike the other limiters we can not 
  * extend off of each one, and just add extra functionality.  Instead they must extend these 
  * abstract classes.  The reason for that being that these types of limiters use the other 
- * limiters, rather than extend functionality off each other.</p>
+ * limiters, rather than extend functionality off each other.
+ * <p>
+ * This adds scheduling functionality.  It must exist in an abstract form because of the need to 
+ * type the limiter type for specific functionality in the specific limiter type (casting is ugly, 
+ * which would be the alternative).
  * 
- * <p>This adds scheduling functionality.  It must exist in an abstract form because of the need 
- * to type the limiter type for specific functionality in the specific limiter type (casting is 
- * ugly, which would be the alternative).</p>
- * 
- * @param <T> Type of limiter stored internally
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
+ * @param <T> Type of limiter stored internally
  */
 abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter> extends AbstractKeyedLimiter<T> {
   protected final SubmitterScheduler scheduler;
@@ -40,13 +39,13 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
    * {@link #submitScheduled(Object, Runnable, long)} over 
    * {@link #schedule(Object, Runnable, long)}.  So this should only be used when the future is 
    * necessary.
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has 
    * completed.  
-   * 
+   * <p>
    * The key is used to identify this threads execution limit.  Tasks with matching keys will be 
    * limited concurrent execution to the level returned by {@link #getMaxConcurrencyPerKey()}.
-   * 
+   * <p>
    * See also: {@link SubmitterScheduler#submitScheduled(Runnable, long)}
    * 
    * @param taskKey Key to use for identifying execution limit
@@ -61,10 +60,10 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
   /**
    * Schedule a task with a given delay.  The {@link ListenableFuture#get()} method will return 
    * the provided result once the runnable has completed.  
-   * 
+   * <p>
    * The key is used to identify this threads execution limit.  Tasks with matching keys will be 
    * limited concurrent execution to the level returned by {@link #getMaxConcurrencyPerKey()}.
-   * 
+   * <p>
    * See also: {@link SubmitterScheduler#submitScheduled(Runnable, Object, long)}
    * 
    * @param <TT> type of result returned from the future
@@ -81,10 +80,10 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
   /**
    * Schedule a {@link Callable} with a given delay.  This is needed when a result needs to be 
    * consumed from the callable.  
-   * 
+   * <p>
    * The key is used to identify this threads execution limit.  Tasks with matching keys will be 
    * limited concurrent execution to the level returned by {@link #getMaxConcurrencyPerKey()}.
-   * 
+   * <p>
    * See also: {@link SubmitterScheduler#submitScheduled(Callable, long)}
    * 
    * @param <TT> type of result returned from the future
@@ -105,10 +104,10 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
 
   /**
    * Schedule a one time task with a given delay.  
-   * 
+   * <p>
    * The key is used to identify this threads execution limit.  Tasks with matching keys will be 
    * limited concurrent execution to the level returned by {@link #getMaxConcurrencyPerKey()}.
-   * 
+   * <p>
    * See also: {@link SubmitterScheduler#schedule(Runnable, long)}
    * 
    * @param taskKey Key to use for identifying execution limit
@@ -126,15 +125,15 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
    * Schedule a fixed delay recurring task to run.  The recurring delay time will be from the 
    * point where execution has finished.  So the execution frequency is the 
    * {@code recurringDelay + runtime} for the provided task.  
-   * 
+   * <p>
    * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
    * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
    * every run, the task will continue to be executed at the provided recurring delay (possibly 
    * throwing an exception on each execution).  
-   * 
+   * <p>
    * The key is used to identify this threads execution limit.  Tasks with matching keys will be 
    * limited concurrent execution to the level returned by {@link #getMaxConcurrencyPerKey()}.
-   * 
+   * <p>
    * See also: {@link SubmitterScheduler#scheduleWithFixedDelay(Runnable, long, long)}
    * 
    * @param taskKey Key to use for identifying execution limit
@@ -156,15 +155,15 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
    * regardless of how long task execution takes.  A given runnable will not run concurrently 
    * (unless it is submitted to the scheduler multiple times).  Instead of execution takes longer 
    * than the period, the next run will occur immediately (given thread availability in the pool).  
-   * 
+   * <p>
    * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
    * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
    * every run, the task will continue to be executed at the provided recurring delay (possibly 
    * throwing an exception on each execution).  
-   * 
+   * <p>
    * The key is used to identify this threads execution limit.  Tasks with matching keys will be 
    * limited concurrent execution to the level returned by {@link #getMaxConcurrencyPerKey()}.
-   * 
+   * <p>
    * See also: {@link SubmitterScheduler#scheduleAtFixedRate(Runnable, long, long)}
    * 
    * @param taskKey Key to use for identifying execution limit

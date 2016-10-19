@@ -57,8 +57,17 @@ import org.threadly.util.SuppressedStackRuntimeException;
  * <li>{@link #makeResultListFuture(Iterable, boolean)}
  * <li>{@link #makeSuccessListFuture(Iterable)}
  * </ul>
+ * <p>
+ * Retry operation and return final result in future:
+ * <ul>
+ * <li>{@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable)}
+ * <li>{@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable, long)}
+ * <li>{@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)}
+ * <li>{@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long)}
+ * <li>{@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate)}
+ * <li>{@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate, long)}
+ * </ul>
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class FutureUtils {
@@ -67,7 +76,7 @@ public class FutureUtils {
    * an error, the {@link ExecutionException} is swallowed.  Meaning that this does not attempt to 
    * verify that all futures completed successfully.  If you need to know if any failed, please 
    * use {@link #blockTillAllCompleteOrFirstError(Iterable)}.  
-   * 
+   * <p>
    * If you need to specify a timeout to control how long to block, consider using 
    * {@link #blockTillAllComplete(Iterable, long)}.
    * 
@@ -85,7 +94,6 @@ public class FutureUtils {
    * use {@link #blockTillAllCompleteOrFirstError(Iterable, long)}.
    * 
    * @since 4.0.0
-   * 
    * @param futures Structure of futures to iterate over
    * @param timeoutInMillis timeout to wait for futures to complete in milliseconds
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
@@ -101,7 +109,7 @@ public class FutureUtils {
    * an error an {@link ExecutionException} is thrown.  If this exception is thrown, all futures 
    * may or may not be completed, the exception is thrown as soon as it is hit.  There also may be 
    * additional futures that errored (but were not hit yet).  
-   * 
+   * <p>
    * If you need to specify a timeout to control how long to block, consider using 
    * {@link #blockTillAllCompleteOrFirstError(Iterable, long)}.
    * 
@@ -128,7 +136,6 @@ public class FutureUtils {
    * additional futures that errored (but were not hit yet).
    * 
    * @since 4.0.0
-   * 
    * @param futures Structure of futures to iterate over
    * @param timeoutInMillis timeout to wait for futures to complete in milliseconds
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
@@ -159,15 +166,14 @@ public class FutureUtils {
    * {@link ExecutionException}.  For example assume an API return's {@code Future<Boolean>} and a 
    * {@code false} represents a failure, this can be used to look for those types of error 
    * results.  
-   * 
+   * <p>
    * Just like {@link #blockTillAllComplete(Iterable)}, this will block until all futures have 
    * completed (so we can verify if their result matches or not).  
-   * 
+   * <p>
    * If you need to specify a timeout to control how long to block, consider using 
    * {@link #countFuturesWithResult(Iterable, Object, long)}.
    * 
    * @since 4.0.0
-   * 
    * @param <T> type of result futures provide to compare against
    * @param futures Structure of futures to iterate over
    * @param comparisonResult Object to compare future results against to look for match
@@ -211,12 +217,11 @@ public class FutureUtils {
    * {@link ExecutionException}.  For example assume an API return's {@code Future<Boolean>} and a 
    * {@code false} represents a failure, this can be used to look for those types of error 
    * results.  
-   * 
+   * <p>
    * Just like {@link #blockTillAllComplete(Iterable)}, this will block until all futures have 
    * completed (so we can verify if their result matches or not).
    * 
    * @since 4.0.0
-   * 
    * @param <T> type of result futures provide to compare against
    * @param futures Structure of futures to iterate over
    * @param comparisonResult Object to compare future results against to look for match
@@ -266,7 +271,7 @@ public class FutureUtils {
    * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
    * {@link ListenableFuture}'s.  But will return immediately, providing a new 
    * {@link ListenableFuture} that will be called once all the provided futures have finished.  
-   * 
+   * <p>
    * The future returned will provide a {@code null} result, it is the responsibility of the 
    * caller to get the actual results from the provided futures.  This is designed to just be an 
    * indicator as to when they have finished.  If you need the results from the provided futures, 
@@ -275,7 +280,6 @@ public class FutureUtils {
    * except it will put the returned future into an error state if any of the provided futures error.
    * 
    * @since 1.2.0
-   * 
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -289,7 +293,7 @@ public class FutureUtils {
    * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
    * {@link ListenableFuture}'s.  But will return immediately, providing a new 
    * {@link ListenableFuture} that will be called once all the provided futures have finished.  
-   * 
+   * <p>
    * The future returned will provide the result object once all provided futures have completed.  
    * If any failures occured, they will not be represented in the returned future.  If that is 
    * desired you should consider using 
@@ -298,7 +302,6 @@ public class FutureUtils {
    * futures error.
    * 
    * @since 3.3.0
-   * 
    * @param <T> type of result returned from the future
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @param result Result to provide returned future once all futures complete
@@ -408,15 +411,14 @@ public class FutureUtils {
   /**
    * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
    * provide a future that will not be satisfied till all provided futures complete.  
-   * 
+   * <p>
    * This future provides a list of the completed futures as the result.  The order of this list 
    * is NOT deterministic.
-   * 
+   * <p>
    * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
    * futures will attempt to be canceled in the same way.
    * 
    * @since 1.2.0
-   * 
    * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
@@ -429,15 +431,14 @@ public class FutureUtils {
   /**
    * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
    * provide a future that will not be satisfied till all provided futures complete.  
-   * 
+   * <p>
    * This future provides a list of the futures that completed without throwing an exception nor 
    * were canceled.  The order of the resulting list is NOT deterministic.
-   * 
+   * <p>
    * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
    * futures will attempt to be canceled in the same way.
    * 
    * @since 1.2.0
-   * 
    * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
@@ -450,15 +451,14 @@ public class FutureUtils {
   /**
    * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
    * provide a future that will not be satisfied till all provided futures complete.  
-   * 
+   * <p>
    * This future provides a list of the futures that failed by either throwing an exception or 
    * were canceled.  The order of the resulting list is NOT deterministic.
-   * 
+   * <p>
    * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
    * futures will attempt to be canceled in the same way.
    * 
    * @since 1.2.0
-   * 
    * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
@@ -473,9 +473,9 @@ public class FutureUtils {
    * preventing the need to iterate over all the futures and manually extract the results.  This 
    * call does NOT block, instead it will return a future which will not complete until all the 
    * provided futures complete.  
-   * 
+   * <p>
    * The order of the result list is NOT deterministic.
-   * 
+   * <p>
    * If called with {@code true} for {@code ignoreFailedFutures}, even if some of the provided 
    * futures finished in error, they will be ignored and just the successful results will be 
    * provided.  If called with {@code false} then if any futures complete in error, then the 
@@ -489,7 +489,6 @@ public class FutureUtils {
    * ONLY if there was canceled tasks, but NO tasks which finished in error.
    * 
    * @since 4.0.0
-   * 
    * @param <T> The result object type returned from the futures
    * @param futures Structure of futures to iterate over and extract results from
    * @param ignoreFailedFutures {@code true} to ignore any failed or canceled futures
@@ -574,7 +573,7 @@ public class FutureUtils {
   
   /**
    * Provide a group of futures and cancel all of them if any of them are canceled or fail.  
-   * 
+   * <p>
    * If {@code false} is provided for {@code copy} parameter, then {@code futures} will be 
    * iterated over twice, once during this invocation, and again when needing to cancel the 
    * futures.  Because of that it is critical the {@link Iterable} provided returns the exact same 
@@ -582,7 +581,6 @@ public class FutureUtils {
    * you must specify {@code true} for the {@code copy} parameter.
    * 
    * @since 4.7.2
-   * 
    * @param copy {@code true} to copy provided futures to avoid
    * @param futures Futures to be monitored and canceled on error
    * @param interruptThread Valued passed in to interrupt thread when calling {@link Future#cancel(boolean)}
@@ -615,12 +613,11 @@ public class FutureUtils {
   /**
    * Constructs a {@link ListenableFuture} that has already had the provided result given to it.  
    * Thus the resulting future can not error, block, or be canceled.  
-   * 
+   * <p>
    * If {@code null} is provided here the static instance of 
    * {@link ImmediateResultListenableFuture#NULL_RESULT} will be returned to reduce GC overhead.
    * 
    * @since 1.2.0
-   * 
    * @param <T> The result object type returned by the returned future
    * @param result result to be provided in .get() call
    * @return Already satisfied future
@@ -640,7 +637,6 @@ public class FutureUtils {
    * immediately throw an {@link ExecutionException}.
    * 
    * @since 1.2.0
-   * 
    * @param <T> The result object type returned by the returned future
    * @param failure to provide as cause for ExecutionException thrown from .get() call
    * @return Already satisfied future
@@ -653,23 +649,22 @@ public class FutureUtils {
    * Will continue to schedule the provided task as long as the task is returning a {@code null} 
    * result.  This can be a good way to implement retry logic where a result ultimately needs to be 
    * communicated through a future.  
-   * 
-   * The returned future will only complete with a result once the provided task returns a non-null 
-   * result.  Canceling the returned future will prevent future executions from being attempted.  
-   * Canceling with an interrupt will transmit the interrupt to the running task if it is 
-   * currently running.  
-   * 
+   * <p>
+   * The returned future will only complete with a result once the provided task returns a 
+   * non-null result.  Canceling the returned future will prevent future executions from being 
+   * attempted.  Canceling with an interrupt will transmit the interrupt to the running task if it 
+   * is currently running.  
+   * <p>
    * The first execution will either be immediately executed in thread or submitted for immediate 
    * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
    * this execution completes, if the result is {@code null} then the task will be rescheduled for 
    * execution.  If non-null then the result will be able to be retrieved from the returned 
    * {@link ListenableFuture}.  
-   * 
+   * <p>
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable, long)}.
    * 
    * @since 5.0.0
-   * 
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
@@ -688,7 +683,7 @@ public class FutureUtils {
    * Will continue to schedule the provided task as long as the task is returning a {@code null} 
    * result.  This can be a good way to implement retry logic where a result ultimately needs to be 
    * communicated through a future.  
-   * 
+   * <p>
    * The returned future will only complete with a result once the provided task returns a non-null 
    * result, or until the provided timeout is reached.  If the timeout is reached then the task 
    * wont be rescheduled.  Instead the future will be resolved with a {@code null} result.  Even if 
@@ -696,7 +691,7 @@ public class FutureUtils {
    * next attempt's scheduled delay.  Canceling the returned future will prevent future executions 
    * from being attempted.  Canceling with an interrupt will transmit the interrupt to the running 
    * task if it is currently running.  
-   * 
+   * <p>
    * The first execution will either be immediately executed in thread or submitted for immediate 
    * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
    * this execution completes, if the result is {@code null} then the task will be rescheduled for 
@@ -704,7 +699,6 @@ public class FutureUtils {
    * {@link ListenableFuture}.
    * 
    * @since 5.0.0
-   * 
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
@@ -726,21 +720,20 @@ public class FutureUtils {
    * Executes a task, checking the result from the task to see if it needs to reschedule the task 
    * again.  This can be a good way to implement retry logic where a result ultimately needs to be 
    * communicated through a future.  
-   * 
+   * <p>
    * The returned future will only provide a result once the looping of the task has completed.  
    * Canceling the returned future will prevent future executions from being attempted.  Canceling 
    * with an interrupt will transmit the interrupt to the running task if it is currently running.  
-   * 
-   * The first execution will either be immediately executed in thread or submitted for immediate 
-   * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
-   * this execution completes the result will be provided to the {@link Predicate} to determine if 
-   * another schedule should occur to re-run the task.  
-   * 
+   * <p>
+   * The first execution will either be immediately executed in thread or submitted for 
+   * immediate execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  
+   * Once this execution completes the result will be provided to the {@link Predicate} to 
+   * determine if another schedule should occur to re-run the task.  
+   * <p>
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long)}.
    *  
    * @since 5.0.0
-   * 
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -761,7 +754,7 @@ public class FutureUtils {
    * Executes a task, checking the result from the task to see if it needs to reschedule the task 
    * again.  This can be a good way to implement retry logic where a result ultimately needs to be 
    * communicated through a future.  
-   * 
+   * <p>
    * The returned future will only provide a result once the looping of the task has completed, or 
    * until the provided timeout is reached.  If the timeout is reached then the task wont be 
    * rescheduled.  Instead the future will resolve with the last known task result.  Even if only 
@@ -769,14 +762,13 @@ public class FutureUtils {
    * attempt's scheduled delay.  Canceling the returned future will prevent future executions from 
    * being attempted.  Canceling with an interrupt will transmit the interrupt to the running task 
    * if it is currently running.  
-   * 
+   * <p>
    * The first execution will either be immediately executed in thread or submitted for immediate 
    * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
    * this execution completes the result will be provided to the {@link Predicate} to determine if 
    * another schedule should occur to re-run the task.  
    *  
    * @since 5.0.0
-   * 
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -803,18 +795,17 @@ public class FutureUtils {
    * Executes a task, checking the result from the task to see if it needs to reschedule the task 
    * again.  This can be a good way to implement retry logic where a result ultimately needs to be 
    * communicated through a future.  
-   * 
+   * <p>
    * The returned future will only provide a result once the looping of the task has completed.  
    * Canceling the returned future will prevent future executions from being attempted.  Canceling 
    * with an interrupt will transmit the interrupt to the running task if it is currently running.  
-   * 
+   * <p>
    * The first execution will happen as soon as the provided {@code startingFuture} completes.  
-   * 
+   * <p>
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate, long)}.
    *  
    * @since 5.0.0
-   * 
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -835,7 +826,7 @@ public class FutureUtils {
    * Executes a task, checking the result from the task to see if it needs to reschedule the task 
    * again.  This can be a good way to implement retry logic where a result ultimately needs to be 
    * communicated through a future.  
-   * 
+   * <p>
    * The returned future will only provide a result once the looping of the task has completed, or 
    * until the provided timeout is reached.  If the timeout is reached then the task wont be 
    * rescheduled.  Instead the future will resolve with the last known task result.  Even if only 
@@ -843,11 +834,10 @@ public class FutureUtils {
    * attempt's scheduled delay.  Canceling the returned future will prevent future executions from 
    * being attempted.  Canceling with an interrupt will transmit the interrupt to the running task 
    * if it is currently running.  
-   * 
+   * <p>
    * The first execution will happen as soon as the provided {@code startingFuture} completes.  
    *  
    * @since 5.0.0
-   * 
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -940,7 +930,7 @@ public class FutureUtils {
    * the returned future will be completed in the same error state this future resulted in.  If the 
    * mapper function itself throws an Exception, then the returned future will result in the error 
    * thrown from the mapper.  
-   * 
+   * <p>
    * This can be easily used to chain together a series of operations, happening async until the 
    * final result is actually needed.  Once the future completes the mapper function will be invoked 
    * on the executor (if provided).  Because of that providing an executor can ensure this will 
@@ -950,7 +940,6 @@ public class FutureUtils {
    * providing {@code null} for the executor can allow more efficient operation.
    * 
    * @since 5.0.0
-   * 
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
    * @param <RT> The result type for the object returned from the mapper
    * @param sourceFuture Future to source input into transformation function
@@ -1006,7 +995,6 @@ public class FutureUtils {
    * resolve once the contained future is complete.
    * 
    * @since 5.0.0
-   * 
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
    * @param <RT> The result type for the object contained in the future returned from the mapper
    * @param sourceFuture Future to source input into transformation function
@@ -1061,10 +1049,9 @@ public class FutureUtils {
   }
   
   /**
-   * <p>Class which will propagate a failure condition to a {@link SettableListenableFuture} from a 
+   * Class which will propagate a failure condition to a {@link SettableListenableFuture} from a 
    * source future which this is added as a {@link FutureCallback} to.
    * 
-   * @author jent - Mike Jensen
    * @since 5.0.0
    * @param <T> Type of result to be accepted by {@link FutureCallback}
    */
@@ -1094,10 +1081,9 @@ public class FutureUtils {
   }
 
   /**
-   * <p>Implementation of {@link SettableListenableFuture} which delegates it's cancel operation 
-   * to a parent future.</p>
+   * Implementation of {@link SettableListenableFuture} which delegates it's cancel operation to a 
+   * parent future.
    * 
-   * @author jent - Mike Jensen
    * @since 4.1.0
    * @param <T> The result object type returned from the futures
    */
@@ -1126,10 +1112,9 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The future will 
-   * not be satisfied till all provided futures have completed.</p>
+   * A future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.
    * 
-   * @author jent - Mike Jensn
    * @since 1.2.0
    * @param <T> The result object type returned from the futures
    */
@@ -1172,7 +1157,7 @@ public class FutureUtils {
     /**
      * Attach a {@link FutureDoneTask} to the provided future.  This is necessary for tracking as 
      * futures complete, failing to attach a task could result in this future never completing.  
-     * 
+     * <p>
      * This is provided as a separate function so it can be overriden to provide different 
      * {@link FutureDoneTask} implementation.
      * 
@@ -1250,10 +1235,9 @@ public class FutureUtils {
     }
     
     /**
-     * <p>Task which is ran after a future completes.  This is used internally to track how many 
-     * outstanding tasks are remaining, as well as used to collect the results if desired.</p>
+     * Task which is ran after a future completes.  This is used internally to track how many 
+     * outstanding tasks are remaining, as well as used to collect the results if desired.
      * 
-     * @author jent - Mike Jensen
      * @since 4.7.0
      */
     protected class FutureDoneTask implements Runnable {
@@ -1278,10 +1262,8 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will be satisfied till all provided futures have 
-   * completed.</p>
+   * A future implementation that will be satisfied till all provided futures have completed.
    * 
-   * @author jent - Mike Jensn
    * @since 1.2.0
    */
   protected static class EmptyFutureCollection extends FutureCollection<Object> {
@@ -1314,12 +1296,11 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The future will 
-   * not be satisfied till all provided futures have completed.</p>
+   * A future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.
+   * <p>
+   * This implementation will return a result of all the futures that completed.
    * 
-   * <p>This implementation will return a result of all the futures that completed.</p>
-   * 
-   * @author jent - Mike Jensn
    * @since 1.2.0
    * @param <T> The result object type returned from the futures
    */
@@ -1335,13 +1316,12 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The future will 
-   * not be satisfied till all provided futures have completed.</p>
+   * A future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.
+   * <p>
+   * This implementation will return a result of all the futures that completed successfully.  
+   * If the future was canceled or threw an exception it will not be included.
    * 
-   * <p>This implementation will return a result of all the futures that completed successfully.  
-   * If the future was canceled or threw an exception it will not be included.</p>
-   * 
-   * @author jent - Mike Jensn
    * @since 1.2.0
    * @param <T> The result object type returned from the futures
    */
@@ -1377,13 +1357,12 @@ public class FutureUtils {
   }
   
   /**
-   * <p>A future implementation that will return a List of futures as the result.  The future will 
-   * not be satisfied till all provided futures have completed.</p>
+   *  future implementation that will return a List of futures as the result.  The future will 
+   * not be satisfied till all provided futures have completed.
+   * <p>
+   * This implementation will return a result of all the futures that either threw an exception 
+   * during computation, or was canceled.
    * 
-   * <p>This implementation will return a result of all the futures that either threw an exception 
-   * during computation, or was canceled.</p>
-   * 
-   * @author jent - Mike Jensn
    * @since 1.2.0
    * @param <T> The result object type returned from the futures
    */
@@ -1417,9 +1396,8 @@ public class FutureUtils {
   }
   
   /**
-   * <p>Future callback that on error condition will cancel all the provided futures.</p>
+   * Future callback that on error condition will cancel all the provided futures.
    * 
-   * @author jent - Mike Jensen
    * @since 4.7.2
    */
   protected static class CancelOnErrorFutureCallback extends AbstractFutureCallbackFailureHandler {

@@ -5,11 +5,10 @@ import java.util.concurrent.Executor;
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 
 /**
- * <p>Class which wraps a {@link Executor} and wraps all supplied tasks in a 
+ * Class which wraps a {@link Executor} and wraps all supplied tasks in a 
  * {@link ThreadRenamingRunnable}.  This allows you to make a pool where all tasks submitted 
- * inside it have the threads named in an identifiable way.</p>
+ * inside it have the threads named in an identifiable way.
  * 
- * @author jent
  * @since 4.8.0 (since 4.3.0 as org.threadly.concurrent.ThreadRenamingExecutorWrapper)
  */
 public class ThreadRenamingExecutor extends AbstractSubmitterExecutor {

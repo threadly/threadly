@@ -1,9 +1,8 @@
 package org.threadly.concurrent;
 
 /**
- * <p>Runnable implementation which does no action.</p>
+ * Runnable implementation which does no action.
  * 
- * @author jent - Mike Jensen
  * @since 4.1.0
  */
 public class DoNothingRunnable implements Runnable {

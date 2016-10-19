@@ -5,10 +5,9 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.future.ListenableFuture;
 
 /**
- * <p>This interface represents schedulers which can not only execute and schedule tasks, but run 
- * based off a given priority as well.</p>
+ * This interface represents schedulers which can not only execute and schedule tasks, but run 
+ * based off a given priority as well.
  * 
- * @author jent - Mike Jensen
  * @since 4.3.0 (since 1.0.0 as PrioritySchedulerInterface)
  */
 public interface PrioritySchedulerService extends SchedulerService {
@@ -24,7 +23,7 @@ public interface PrioritySchedulerService extends SchedulerService {
    * Submit a task to run as soon as possible for the given priority.  There is a slight increase 
    * in load when using submit over execute.  So this should only be used when the future is 
    * necessary.
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has 
    * completed.
    * 
@@ -38,7 +37,7 @@ public interface PrioritySchedulerService extends SchedulerService {
    * Submit a task to run as soon as possible for the given priority.  There is a slight increase 
    * in load when using submit over execute.  So this should only be used when the future is 
    * necessary.
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return the provided result once the runnable has 
    * completed.
    * 
@@ -75,7 +74,7 @@ public interface PrioritySchedulerService extends SchedulerService {
    * load when using {@link #submitScheduled(Runnable, long, TaskPriority)} over 
    * {@link #schedule(Runnable, long, TaskPriority)}.  So this should only be used when the 
    * future is necessary.
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return null once the runnable has completed.
    * 
    * @param task runnable to execute
@@ -87,7 +86,7 @@ public interface PrioritySchedulerService extends SchedulerService {
   
   /**
    * Schedule a task with a given delay and a specified priority.  
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return the provided result once the runnable 
    * has completed.
    * 
@@ -118,7 +117,7 @@ public interface PrioritySchedulerService extends SchedulerService {
    * Schedule a fixed delay recurring task to run.  The recurring delay time will be from the 
    * point where execution has finished.  So the execution frequency is the 
    * {@code recurringDelay + runtime} for the provided task.  
-   * 
+   * <p>
    * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
    * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
    * every run, the task will continue to be executed at the provided recurring delay (possibly 
@@ -138,7 +137,7 @@ public interface PrioritySchedulerService extends SchedulerService {
    * regardless of how long task execution takes.  A given runnable will not run concurrently 
    * (unless it is submitted to the scheduler multiple times).  Instead of execution takes longer 
    * than the period, the next run will occur immediately (given thread availability in the pool).  
-   * 
+   * <p>
    * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
    * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
    * every run, the task will continue to be executed at the provided recurring delay (possibly 

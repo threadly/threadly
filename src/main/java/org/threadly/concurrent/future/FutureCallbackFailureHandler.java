@@ -5,14 +5,13 @@ import java.util.function.Consumer;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>An implementation of {@link FutureCallback} where the result is ignored and failures are 
+ * An implementation of {@link FutureCallback} where the result is ignored and failures are 
  * delegated to a lambda provided at construction.  This can allow you to easily do an action only 
- * on a failure condition.</p>
+ * on a failure condition.
+ * <p>
+ * See {@link AbstractFutureCallbackFailureHandler} for a similar implementation except using an 
+ * abstract class rather than accepting a lambda.
  * 
- * <p>See {@link AbstractFutureCallbackFailureHandler} for a similar implementation except using an 
- * abstract class rather than accepting a lambda.</p>
- * 
- * @author jent - Mike Jensen
  * @since 5.0.0
  */
 public class FutureCallbackFailureHandler extends AbstractFutureCallbackFailureHandler {

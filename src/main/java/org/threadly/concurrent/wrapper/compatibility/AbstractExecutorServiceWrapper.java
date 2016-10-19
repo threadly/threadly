@@ -23,10 +23,9 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Generic implementation for the wrappers that implement {@link ScheduledExecutorService}.  
- * This allows us to add new wrappers with the minimal amount of duplicated code.</p>
+ * Generic implementation for the wrappers that implement {@link ScheduledExecutorService}.  This 
+ * allows us to add new wrappers with the minimal amount of duplicated code.
  * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent)
  */
 abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorService {
@@ -259,13 +258,12 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                                                                       long periodInMillis);
   
   /**
-   * <p>Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
+   * Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
    * recurring task causes the task to stop executing, we have to wrap the task.  That way we can 
    * remove the recurring task if the error occurs (since 
    * {@link org.threadly.concurrent.SubmitterScheduler} will continue to execute the task despite 
-   * the error.</p>
+   * the error.
    * 
-   * @author jent - Mike Jensen
    * @since 2.1.0
    */
   protected static class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
@@ -294,15 +292,14 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   }
   
   /**
-   * <p>An implementation of {@link ListenableFutureTask} which will remove the task from the 
+   * An implementation of {@link ListenableFutureTask} which will remove the task from the 
    * scheduler when cancel is invoked.  Threadly does not normally have this behavior for a 
    * couple reasons.  Because we don't return futures on recurring tasks, canceling a future just 
    * results in a one time task execution that is a quick no-op.  It is cheaper in threadly to 
    * allow this no-op task on .cancel than to attempt removal.  Because 
    * {@link ScheduledExecutorService} returns a future that can be canceled for recurring tasks, 
-   * we want to go ahead and remove the task (rather than have recurring no-op executions).</p>
+   * we want to go ahead and remove the task (rather than have recurring no-op executions).
    * 
-   * @author jent - Mike Jensen
    * @since 4.4.3
    * @param <T> The result object type returned by this future
    */

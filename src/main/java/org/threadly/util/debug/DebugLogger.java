@@ -7,20 +7,19 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import org.threadly.util.Clock;
 
 /**
- * <p>Often times when trying to understand a concurrency issue, adding logging may solve that 
+ * Often times when trying to understand a concurrency issue, adding logging may solve that 
  * problem.  This class is designed to help work around that problem in some situations.  It works 
- * by not actually outputting the logs collected, but storing them in a concurrent structure.</p>
- * 
- * <p>It will ensure that when your ready to dump all the logs, they will be returned in the order 
+ * by not actually outputting the logs collected, but storing them in a concurrent structure.
+ * <p>
+ * t will ensure that when your ready to dump all the logs, they will be returned in the order 
  * they were provided.  Since these are not outputted to the actual log stream, make sure any 
- * logging relevant to the issue is captured by this utility.</p>
- * 
- * <p>This utility has several deficiencies, the largest of which is using System.nanoTime() for 
- * log ordering.  Since nanosecond time can roll over from positive to negative, in those rare 
+ * logging relevant to the issue is captured by this utility.
+ * <p>
+ * This utility has several deficiencies, the largest of which is using {@link System#nanoTime()} 
+ * for log ordering.  Since nanosecond time can roll over from positive to negative, in those rare 
  * situations log ordering may be incorrect.  It is design only as a debugging aid and should 
- * NEVER be included after debugging is completed.</p>
+ * NEVER be included after debugging is completed.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class DebugLogger {
@@ -55,7 +54,7 @@ public class DebugLogger {
   /**
    * Request to get and clear all currently stored log messages.  This will return all the log 
    * messages formatted into a single string, separated by new line characters.  
-   * 
+   * <p>
    * This calls {@link #getAllStoredMessages(boolean)} with a default of NOT including the time in 
    * nanoseconds.
    * 
@@ -107,7 +106,7 @@ public class DebugLogger {
    * This call retrieves and removes the oldest stored log messages.  It will only return at most 
    * the maximum quantity provided, but may return less if not that many messages are currently 
    * available.  This call is slightly less efficient than {@link #getAllStoredMessages()}.
-   * 
+   * <p>
    * This calls {@link #getOldestLogMessages(int, boolean)} with a default of NOT including the 
    * time in nanoseconds.
    * 

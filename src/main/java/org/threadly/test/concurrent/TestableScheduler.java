@@ -9,19 +9,17 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
 
 /**
- * <p>This differs from {@link org.threadly.concurrent.NoThreadScheduler} in that time is ONLY 
+ * This differs from {@link org.threadly.concurrent.NoThreadScheduler} in that time is ONLY 
  * advanced via the tick calls.  That means that if you schedule a task, it will be scheduled off 
  * of either the creation time, or the last tick time, what ever the most recent point is.  This 
  * allows you to progress time forward faster than it could in real time, having tasks execute 
- * faster, etc, etc.</p>
+ * faster, etc, etc.
+ * <p>
+ * The tasks in this scheduler are only progressed forward with calls to {@link #tick()}.  Since 
+ * it is running on the calling thread, calls to {@code Object.wait()} and {@code Thread.sleep()} 
+ * from sub tasks will block (possibly forever).  The call to {@link #tick()} will not unblock 
+ * till there is no more work for the scheduler to currently handle.
  * 
- * <p>The tasks in this scheduler are only progressed forward with calls to {@link #tick()}.  
- * Since it is running on the calling thread, calls to {@code Object.wait()} and 
- * {@code Thread.sleep()} from sub tasks will block (possibly forever).  The call to 
- * {@link #tick()} will not unblock till there is no more work for the scheduler to currently 
- * handle.</p>
- * 
- * @author jent - Mike Jensen
  * @since 2.0.0
  */
 public class TestableScheduler extends AbstractPriorityScheduler {
@@ -106,7 +104,7 @@ public class TestableScheduler extends AbstractPriorityScheduler {
    * This is to provide a convince when advancing the scheduler forward an explicit amount of time.  
    * Where tick accepts an absolute time, this accepts an amount of time to advance forward.  That 
    * way the user does not have to track the current time.  
-   * 
+   * <p>
    * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
    * an exception, this will be called to inform them of the exception.  This allows you to ensure 
    * that you get a returned task count (meaning if provided, no exceptions except a possible 
@@ -115,7 +113,6 @@ public class TestableScheduler extends AbstractPriorityScheduler {
    * invocation.
    * 
    * @since 3.2.0
-   * 
    * @param timeInMillis amount in milliseconds to advance the scheduler forward
    * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
    *                           exception, or null to have exceptions thrown out of this call
@@ -128,7 +125,7 @@ public class TestableScheduler extends AbstractPriorityScheduler {
   /**
    * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
    * waiting tasks as possible.  This call will NOT block if no task are currently ready to run.
-   * 
+   * <p>
    * If any tasks throw a {@link RuntimeException}, they will be bubbled up to this tick call.  
    * Any tasks past that task will not run till the next call to tick.  So it is important that 
    * the implementor handle those exceptions.  
@@ -142,7 +139,7 @@ public class TestableScheduler extends AbstractPriorityScheduler {
   /**
    * Progresses tasks for the current time.  This will block as it runs as many scheduled or 
    * waiting tasks as possible.  This call will NOT block if no task are currently ready to run.  
-   * 
+   * <p>
    * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
    * an exception, this will be called to inform them of the exception.  This allows you to ensure 
    * that you get a returned task count (meaning if provided, no exceptions except a possible 
@@ -151,7 +148,6 @@ public class TestableScheduler extends AbstractPriorityScheduler {
    * invocation.
    * 
    * @since 3.2.0
-   * 
    * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run during this tick call
@@ -169,11 +165,11 @@ public class TestableScheduler extends AbstractPriorityScheduler {
    * This progresses tasks based off the time provided.  This is primarily used in testing by 
    * providing a possible time in the future (to execute future tasks).  This call will NOT block 
    * if no task are currently ready to run.  
-   * 
+   * <p>
    * If any tasks throw a {@link RuntimeException}, they will be bubbled up to this tick call.  
    * Any tasks past that task will not run till the next call to tick.  So it is important that 
    * the implementor handle those exceptions.
-   * 
+   * <p>
    * This call accepts the absolute time in milliseconds.  If you want to advance the scheduler a 
    * specific amount of time forward, look at the "advance" call.
    * 
@@ -188,19 +184,18 @@ public class TestableScheduler extends AbstractPriorityScheduler {
    * This progresses tasks based off the time provided.  This is primarily used in testing by 
    * providing a possible time in the future (to execute future tasks).  This call will NOT block 
    * if no task are currently ready to run.  
-   * 
+   * <p>
    * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
    * an exception, this will be called to inform them of the exception.  This allows you to ensure 
    * that you get a returned task count (meaning if provided, no exceptions except a possible 
    * {@link InterruptedException} can be thrown).  If {@code null} is provided for the exception 
    * handler, than any tasks which throw a {@link RuntimeException}, will throw out of this 
    * invocation.
-   * 
+   * <p>
    * This call accepts the absolute time in milliseconds.  If you want to advance the scheduler a 
    * specific amount of time forward, look at the "advance" call.
    * 
    * @since 3.2.0
-   * 
    * @param currentTime Absolute time to provide for looking at task run time
    * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
    *                           exception, or null to have exceptions thrown out of this call
@@ -236,12 +231,12 @@ public class TestableScheduler extends AbstractPriorityScheduler {
    * to execute this will return a value less than or equal to zero.  If the task is past its 
    * desired point of execution the result will be a negative amount of milliseconds past that 
    * point in time.  
-   * 
+   * <p>
    * Generally this is called from the same thread that would invoke 
    * {@link #tick(ExceptionHandler)} (but does not have to be).  Since this does not block or lock 
    * if being invoked in parallel with {@link #tick(ExceptionHandler)}, the results may be no 
    * longer accurate by the time this invocation has returned.
-   * 
+   * <p>
    * This can be useful if you want to know how long you can block on something, ASSUMING you can 
    * detect that something has been added to the scheduler, and interrupt that blocking in order 
    * to handle tasks.
@@ -256,7 +251,7 @@ public class TestableScheduler extends AbstractPriorityScheduler {
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
    * {@link #tick(ExceptionHandler)} is being called.  But will avoid additional tasks from being 
    * run on the current {@link #tick(ExceptionHandler)} call.  
-   * 
+   * <p>
    * If tasks are added concurrently during this invocation they may or may not be removed.
    * 
    * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
@@ -266,10 +261,9 @@ public class TestableScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>Small internal wrapper class so that we can control what from the "NoThreadScheduler" 
-   * api's we want to expose from this implementation.</p>
+   * Small internal wrapper class so that we can control what from the "NoThreadScheduler" api's 
+   * we want to expose from this implementation.
    * 
-   * @author jent - Mike Jensen
    * @since 2.4.0
    */
   private class InternalScheduler extends NoThreadScheduler {

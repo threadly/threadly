@@ -3,9 +3,8 @@ package org.threadly.util;
 import java.io.Writer;
 
 /**
- * <p>Class to wrap a {@link StringBuilder} to implement the {@link Writer} interface.</p>
+ * Class to wrap a {@link StringBuilder} to implement the {@link Writer} interface.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class StringBuilderWriter extends Writer implements CharSequence {

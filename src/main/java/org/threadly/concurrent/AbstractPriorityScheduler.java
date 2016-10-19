@@ -20,14 +20,13 @@ import org.threadly.util.ExceptionUtils;
 import org.threadly.util.SortUtils;
 
 /**
- * <p>Abstract implementation for implementations of {@link PrioritySchedulerService}.  In 
- * general this wont be useful outside of Threadly developers, but must be a public interface 
- * since it is used in sub-packages.</p>
+ * Abstract implementation for implementations of {@link PrioritySchedulerService}.  In general 
+ * this wont be useful outside of Threadly developers, but must be a public interface since it is 
+ * used in sub-packages.
+ * <p>
+ * If you do find yourself using this class, please post an issue on github to tell us why.  If 
+ * there is something you want our schedulers to provide, we are happy to hear about it.
  * 
- * <p>If you do find yourself using this class, please post an issue on github to tell us why.  If 
- * there is something you want our schedulers to provide, we are happy to hear about it.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.3.0
  */
 public abstract class AbstractPriorityScheduler extends AbstractSubmitterScheduler 
@@ -228,7 +227,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>Interface to be notified when relevant changes happen to the queue set.</p>
+   * Interface to be notified when relevant changes happen to the queue set.
    * 
    * @since 4.3.0
    */
@@ -241,13 +240,12 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
 
   /**
-   * <p>Class to contain structures for both execution and scheduling.  It also contains logic for 
-   * how we get and add tasks to this queue.</p>
+   * Class to contain structures for both execution and scheduling.  It also contains logic for 
+   * how we get and add tasks to this queue.
+   * <p>
+   * This allows us to have one structure for each priority.  Each structure determines what is 
+   * the next task for a given priority.
    * 
-   * <p>This allows us to have one structure for each priority.  Each structure determines what is  
-   * the next task for a given priority</p>
-   * 
-   * @author jent - Mike Jensen
    * @since 4.0.0
    */
   protected static class QueueSet {
@@ -411,7 +409,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * Gets the next task from this {@link QueueSet}.  This inspects both the execute queue and 
      * against scheduled tasks to determine which task in this {@link QueueSet} should be executed 
      * next.
-     * 
+     * <p>
      * The task returned from this may not be ready to executed, but at the time of calling it 
      * will be the next one to execute.
      * 
@@ -437,11 +435,10 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>A service which manages the execute queues.  It runs a task to consume from the queues and 
+   * A service which manages the execute queues.  It runs a task to consume from the queues and 
    * execute those tasks as workers become available.  It also manages the queues as tasks are 
-   * added, removed, or rescheduled.</p>
+   * added, removed, or rescheduled.
    * 
-   * @author jent - Mike Jensen
    * @since 3.4.0
    */
   protected static class QueueManager {
@@ -479,7 +476,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running.  But 
      * will avoid additional tasks from being run (unless they are allowed to be added during or 
      * after this call).  
-     * 
+     * <p>
      * If tasks are added concurrently during this invocation they may or may not be removed.
      * 
      * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
@@ -526,7 +523,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     /**
      * Removes the runnable task from the execution queue.  It is possible for the runnable to 
      * still run until this call has returned.
-     * 
+     * <p>
      * Note that this call has high guarantees on the ability to remove the task (as in a complete 
      * guarantee).  But while this is being invoked, it will reduce the throughput of execution, 
      * so should NOT be used extremely frequently.
@@ -542,7 +539,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     /**
      * Removes the callable task from the execution queue.  It is possible for the callable to 
      * still run until this call has returned.
-     * 
+     * <p>
      * Note that this call has high guarantees on the ability to remove the task (as in a complete 
      * guarantee).  But while this is being invoked, it will reduce the throughput of execution, 
      * so should NOT be used extremely frequently.
@@ -582,9 +579,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>Abstract implementation for all tasks handled by this pool.</p>
+   * Abstract implementation for all tasks handled by this pool.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected abstract static class TaskWrapper implements RunnableContainer {
@@ -676,9 +672,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>Wrapper for tasks which only executes once.</p>
+   * Wrapper for tasks which only executes once.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected static class OneTimeTaskWrapper extends TaskWrapper {
@@ -731,9 +726,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>Abstract wrapper for any tasks which run repeatedly.</p>
+   * Abstract wrapper for any tasks which run repeatedly.
    * 
-   * @author jent - Mike Jensen
    * @since 3.1.0
    */
   protected abstract static class RecurringTaskWrapper extends TaskWrapper {
@@ -874,9 +868,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>Container for tasks which run with a fixed delay after the previous run.</p>
+   * Container for tasks which run with a fixed delay after the previous run.
    * 
-   * @author jent - Mike Jensen
    * @since 3.1.0
    */
   protected static class RecurringDelayTaskWrapper extends RecurringTaskWrapper {
@@ -896,9 +889,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>Wrapper for tasks which run at a fixed period (regardless of execution time).</p>
+   * Wrapper for tasks which run at a fixed period (regardless of execution time).
    * 
-   * @author jent - Mike Jensen
    * @since 3.1.0
    */
   protected static class RecurringRateTaskWrapper extends RecurringTaskWrapper {
@@ -918,10 +910,9 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * <p>Small interface so we can determine internal tasks which were not submitted by users.  
-   * That way they can be filtered out (for example in draining the queue).</p>
+   * Small interface so we can determine internal tasks which were not submitted by users.  That 
+   * way they can be filtered out (for example in draining the queue).
    * 
-   * @author jent - Mike Jensen
    * @since 4.3.0
    */
   protected interface InternalRunnable extends Runnable {

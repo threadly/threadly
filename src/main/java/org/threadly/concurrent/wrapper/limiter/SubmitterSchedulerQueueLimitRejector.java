@@ -9,20 +9,19 @@ import org.threadly.concurrent.wrapper.limiter.ExecutorQueueLimitRejector.Decrem
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A simple way to limit any {@link SubmitterScheduler} so that queues are managed.  In 
- * addition this queue is tracked completely independent of the {@link SubmitterScheduler}'s 
- * actual queue, so these can be distributed in code to limit queues differently to different 
- * parts of the system, while letting them all back the same {@link SubmitterScheduler}.</p>
- * 
- * <p>Once the limit has been reached, if additional tasks are supplied the rejected execution 
+ * A simple way to limit any {@link SubmitterScheduler} so that queues are managed.  In addition 
+ * this queue is tracked completely independent of the {@link SubmitterScheduler}'s actual queue, 
+ * so these can be distributed in code to limit queues differently to different parts of the 
+ * system, while letting them all back the same {@link SubmitterScheduler}.
+ * <p>
+ * Once the limit has been reached, if additional tasks are supplied the rejected execution 
  * handler will be invoked with the rejected tasks (which by default will throw a 
  * {@link RejectedExecutionException}).  This is the threadly equivalent of supplying a limited 
- * sized blocking queue to a java.util.concurrent thread pool.</p>
+ * sized blocking queue to a java.util.concurrent thread pool.
  * 
- * <p>See {@link ExecutorQueueLimitRejector}, {@link SchedulerServiceQueueLimitRejector} and 
- * {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.</p>
+ * See {@link ExecutorQueueLimitRejector}, {@link SchedulerServiceQueueLimitRejector} and 
+ * {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.
  *  
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterScheduler {

@@ -3,19 +3,19 @@ package org.threadly.util;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * <p>This is a utility class for low-resolution timing which avoids frequent 
- * System.currentTimeMillis() calls (which perform poorly because they require system calls).</p>
- *
- * <p>Each call to {@link Clock#lastKnownTimeMillis()} will return the value of 
- * System.currentTimeMillis() as of the last call to {@link Clock#accurateTimeMillis()}.  This 
- * means {@link #lastKnownTimeMillis()} will only be as accurate as the frequency with which 
- * {@link #accurateTimeMillis()} is called.</p>
- * 
- * <p>In order to ensure a minimum level of accuracy, by default a thread is started to call 
+ * This is a utility class for low-resolution timing which avoids frequent 
+ * {@link System#currentTimeMillis()} calls (which perform poorly because they require system 
+ * calls).
+ * <p>
+ * Each call to {@link Clock#lastKnownTimeMillis()} will return the value of 
+ * {@link System#currentTimeMillis()} as of the last call to {@link Clock#accurateTimeMillis()}.  
+ * This means {@link #lastKnownTimeMillis()} will only be as accurate as the frequency with which 
+ * {@link #accurateTimeMillis()} is called.
+ * <p>
+ * In order to ensure a minimum level of accuracy, by default a thread is started to call 
  * {@link #accurateTimeMillis()} every 100 milliseconds.  This can be disabled by calling 
- * {@link #stopClockUpdateThread()}.</p>
+ * {@link #stopClockUpdateThread()}.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class Clock {
@@ -95,7 +95,7 @@ public class Clock {
    * to invoking {@link System#nanoTime()} directly is that it updates the nano time 
    * representation, allowing for more accurate time references when calling 
    * {@link #lastKnownTimeNanos()} and {@link Clock#lastKnownForwardProgressingMillis()}.
-   * 
+   * <p>
    * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
    * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
    * start point).
@@ -111,7 +111,7 @@ public class Clock {
    * or {@link #accurateForwardProgressingMillis()}.  In addition (unless manually stopped via 
    * {@link #stopClockUpdateThread()}) this time is updated at the frequency of 
    * {@link #AUTOMATIC_UPDATE_FREQUENCY_IN_MS}.  Thus providing a minimal level of accuracy.
-   * 
+   * <p>
    * Please read the java documentation about {@link System#nanoTime()} to understand the nature 
    * of this value (it may be positive, negative, overflow, and is completely arbitrary from its 
    * start point).
@@ -126,10 +126,10 @@ public class Clock {
    * Returns a fuzzy time for how much time in milliseconds since this class has loaded (starting 
    * at {@code 0}).  If {@link Clock} was loaded at the start of the application, this can provide 
    * the amount of time the application has been running.  
-   * 
+   * <p>
    * This call is guaranteed to only progress forward, regardless of system clock changes it will 
    * move forward at a consistent rate.  
-   * 
+   * <p>
    * By default (unless manually stopped via {@link #stopClockUpdateThread()}) this time is 
    * updated automatically at the frequency of {@link #AUTOMATIC_UPDATE_FREQUENCY_IN_MS}.  Thus 
    * allowing a guarantee of minimal accuracy within the set milliseconds.
@@ -149,7 +149,7 @@ public class Clock {
    * {@code 0}).  If {@link Clock} was loaded at the start of the application, this can provide 
    * the amount of time the application has been running.  Calls to this will NOT update the time 
    * in {@link #accurateTimeMillis()}.  
-   * 
+   * <p>
    * This call is guaranteed to only progress forward, regardless of system clock changes it will 
    * move forward at a consistent rate.
    * 
@@ -166,10 +166,10 @@ public class Clock {
    * Getter for the last known time in milliseconds.  This time is considered semi-accurate, based 
    * off the last time accurate time has been requested, or this class has automatically updated 
    * the time (unless requested to stop automatically updating).  
-   * 
+   * <p>
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
    * consider using {@link #lastKnownForwardProgressingMillis()}.  
-   * 
+   * <p>
    * By default (unless manually stopped via {@link #stopClockUpdateThread()}) this time is 
    * updated automatically at the frequency of {@link #AUTOMATIC_UPDATE_FREQUENCY_IN_MS}.  Thus 
    * allowing a guarantee of minimal accuracy within the set milliseconds.
@@ -184,7 +184,7 @@ public class Clock {
    * Updates the clock so that future calls to {@link #lastKnownTimeMillis()} can benefit, and 
    * returns the accurate time in milliseconds.  This will NOT update the time for calls to 
    * {@link #lastKnownForwardProgressingMillis()}.
-   * 
+   * <p>
    * If the system clock goes backwards this too can go backwards.  If that is not desirable 
    * consider using {@link #accurateForwardProgressingMillis()}.
    * 
@@ -196,10 +196,9 @@ public class Clock {
   }
   
   /**
-   * <p>Runnable which will regularly update the stored clock time.  This runnable is designed to 
-   * run in its own dedicated thread.</p>
+   * Runnable which will regularly update the stored clock time.  This runnable is designed to run 
+   * in its own dedicated thread.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected static class ClockUpdater implements Runnable {

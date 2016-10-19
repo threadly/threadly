@@ -10,17 +10,15 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Class to wrap {@link Executor} pool so that tasks can be intercepted and either wrapped, or 
+ * Class to wrap {@link Executor} pool so that tasks can be intercepted and either wrapped, or 
  * modified, before being submitted to the pool. This class can be passed a lamba in the 
  * constructor, or you can extend this class and override the function {@link #wrapTask(Runnable)}
  * to provide the task which should be submitted to the {@link Executor}.  Please see the javadocs
  * of {@link #wrapTask(Runnable)} for more details about ways a task can be modified or wrapped.
- * </p>
+ * <p>
+ * Other variants of task wrappers: {@link SubmitterSchedulerTaskInterceptor}, 
+ * {@link SchedulerServiceTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.
  * 
- * <p>Other variants of task wrappers: {@link SubmitterSchedulerTaskInterceptor}, 
- * {@link SchedulerServiceTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0
  */
 public class ExecutorTaskInterceptor implements SubmitterExecutor {

@@ -1,11 +1,10 @@
 package org.threadly.util;
 
 /**
- * <p>A service is defined as something which is constructed in a stopped state (unless the 
+ * A service is defined as something which is constructed in a stopped state (unless the 
  * constructor starts the service automatically).  It is then at some point started, and at some 
- * future point stopped.  Once stopped it is expected that this "Service" can no longer be used.</p>
+ * future point stopped.  Once stopped it is expected that this "Service" can no longer be used.
  * 
- * @author jent - Mike Jensen
  * @since 4.3.0 (since 3.8.0 as ServiceInterface)
  */
 public interface Service {

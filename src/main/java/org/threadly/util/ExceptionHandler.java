@@ -1,12 +1,11 @@
 package org.threadly.util;
 
 /**
- * <p>Interface for implementation to handle exceptions which occur.  This is similar to 
+ * Interface for implementation to handle exceptions which occur.  This is similar to 
  * {@link java.lang.Thread.UncaughtExceptionHandler}, except that exceptions provided to this 
  * interface are handled on the same thread that threw the exception, and the thread that threw it 
- * likely WONT die.</p>
+ * likely WONT die.
  * 
- * @author jent - Mike Jensen
  * @since 4.3.0 (since 2.4.0 as ExceptionHandlerInterface)
  */
 public interface ExceptionHandler {

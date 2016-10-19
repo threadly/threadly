@@ -3,13 +3,12 @@ package org.threadly.concurrent.future;
 import java.util.concurrent.ScheduledFuture;
 
 /**
- * <p>Interface which includes the {@link ScheduledFuture} interface as well as the 
- * {@link ListenableFuture} interface.</p>
+ * Interface which includes the {@link ScheduledFuture} interface as well as the 
+ * {@link ListenableFuture} interface.
+ * <p>
+ * This is almost identically to {@link java.util.concurrent.ScheduledFuture} except it provides 
+ * the additional functionality of the {@link ListenableFuture}.
  * 
- * <p>This is almost identically to {@link java.util.concurrent.ScheduledFuture} except it 
- * provides the additional functionality of the {@link ListenableFuture}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  * @param <T> The result object type returned by this future
  */

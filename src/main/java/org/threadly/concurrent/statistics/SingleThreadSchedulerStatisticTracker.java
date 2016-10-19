@@ -14,14 +14,13 @@ import org.threadly.concurrent.statistics.PriorityStatisticManager.TaskStatWrapp
 import org.threadly.util.Pair;
 
 /**
- * <p>An implementation of {@link SingleThreadScheduler} which tracks run and usage statistics.  
- * This is designed for testing and troubleshooting.  It has a little more overhead from the normal 
- * {@link SingleThreadScheduler}.</p>
+ * An implementation of {@link SingleThreadScheduler} which tracks run and usage statistics.  This 
+ * is designed for testing and troubleshooting.  It has a little more overhead from the normal 
+ * {@link SingleThreadScheduler}.
+ * <p>
+ * It helps give insight in how long tasks are running, how well the thread pool is being 
+ * utilized, as well as execution frequency.
  * 
- * <p>It helps give insight in how long tasks are running, how well the thread pool is being 
- * utilized, as well as execution frequency.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.5.0 (earlier forms existed since 1.0.0)
  */
 public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler 
@@ -31,7 +30,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  This defaults to using a daemon thread for the scheduler.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -43,7 +42,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  This defaults to using a daemon thread for the scheduler.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -59,7 +58,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -73,7 +72,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -91,7 +90,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -105,7 +104,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -123,7 +122,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  This defaults to using a daemon thread for the scheduler.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -137,7 +136,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  This defaults to using a daemon thread for the scheduler.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -155,7 +154,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -170,7 +169,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -189,7 +188,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -205,7 +204,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   /**
    * Constructs a new {@link SingleThreadScheduler}.  No threads will start until the first task 
    * is provided.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -427,11 +426,10 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
   }
   
   /**
-   * <p>Implementation of {@link SchedulerManager} which uses a 
+   * Implementation of {@link SchedulerManager} which uses a 
    * {@link NoThreadSchedulerStatisticTracker} internally, and can be queried for a reference of 
-   * this tracker.  Allowing easy access to the internal statistics.</p>
+   * this tracker.  Allowing easy access to the internal statistics.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   protected static class StatisticTrackerSchedulerManager extends SchedulerManager {

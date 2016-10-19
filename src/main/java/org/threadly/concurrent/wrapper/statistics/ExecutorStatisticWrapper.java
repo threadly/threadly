@@ -20,16 +20,15 @@ import org.threadly.util.Pair;
 import org.threadly.util.StatisticsUtils;
 
 /**
- * <p>Wrap an {@link Executor} to get statistics based off executions through this wrapper.  If 
+ * Wrap an {@link Executor} to get statistics based off executions through this wrapper.  If 
  * statistics are desired on the {@link org.threadly.concurrent.PriorityScheduler}, 
  * {@link org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker} may be a better 
  * option, taking advantages by extending and replacing logic rather than wrapping and just adding 
  * logic.  Similarly 
  * {@link org.threadly.concurrent.statistics.SingleThreadSchedulerStatisticTracker} and 
  * {@link org.threadly.concurrent.statistics.NoThreadSchedulerStatisticTracker} should be used as 
- * an alternative for their respective schedulers.</p>
- *  
- * @author jent - Mike Jensen
+ * an alternative for their respective schedulers.
+ * 
  * @since 4.6.0 (since 4.5.0 at org.threadly.concurrent.statistics)
  */
 public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor 
@@ -40,7 +39,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   /**
    * Constructs a new statistics tracker wrapper for a given executor.  This constructor uses 
    * a sensible default for the memory usage of collected statistics.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using {@link #ExecutorStatisticWrapper(Executor, boolean)}.
@@ -64,7 +63,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
 
   /**
    * Constructs a new statistics tracker wrapper for a given executor.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using {@link #ExecutorStatisticWrapper(Executor, int, boolean)}.
@@ -227,9 +226,8 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   }
   
   /**
-   * <p>Runnable wrapper that will track task execution statistics.</p>
+   * Runnable wrapper that will track task execution statistics.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   protected static class StatisticRunnable implements RunnableContainer, Runnable {
@@ -261,9 +259,8 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
   }
   
   /**
-   * <p>Class which contains and maintains the statistics collected by a statistic tracker.</p>
+   * Class which contains and maintains the statistics collected by a statistic tracker.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   protected static class StatsContainer {

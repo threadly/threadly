@@ -3,11 +3,10 @@ package org.threadly.concurrent.wrapper.limiter;
 import java.util.concurrent.RejectedExecutionException;
 
 /**
- * <p>Interface to be invoked when a limiter can not accept a task for any reason.  Since in 
- * threadly pools will only reject tasks if the pool is shutdown, this is currently specific to 
- * our limiting wrappers.</p>
+ * Interface to be invoked when a limiter can not accept a task for any reason.  Since in threadly 
+ * pools will only reject tasks if the pool is shutdown, this is currently specific to our 
+ * limiting wrappers.
  * 
- * @author jent - Mike Jensen
  * @since 4.8.0
  */
 public interface RejectedExecutionHandler {

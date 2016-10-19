@@ -19,14 +19,13 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.StringUtils;
 
 /**
- * <p>Abstract implementation for keyed limiters.  Unlike the other limiters we can not extend off 
- * of each one, and just add extra functionality.  Instead they must extend these abstract classes.  
+ * Abstract implementation for keyed limiters.  Unlike the other limiters we can not extend off of 
+ * each one, and just add extra functionality.  Instead they must extend these abstract classes.  
  * The reason for that being that these types of limiters use the other limiters, rather than 
- * extend functionality off each other.</p>
+ * extend functionality off each other.
  * 
- * @param <T> Type of limiter stored internally
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
+ * @param <T> Type of limiter stored internally
  */
 abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   protected static final short DEFAULT_LOCK_PARALISM = 32;
@@ -106,7 +105,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
    * Get a map of all the keys and how many tasks are held back (queued) in each limiter per key.  
    * This map is generated without locking.  Due to that, this may be inaccurate as task queue 
    * sizes changed while iterating all key's limiters.
-   * 
+   * <p>
    * Because this requires an iteration of all limiters, if only a single limiters unsubmitted 
    * count is needed, use {@link #getUnsubmittedTaskCount(Object)} as a cheaper alternative.
    * 
@@ -125,7 +124,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   
   /**
    * Provide a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#execute(Runnable)}
    * 
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
@@ -140,7 +139,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   
   /**
    * Submit a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Runnable)}
    * 
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
@@ -153,7 +152,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   
   /**
    * Submit a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Runnable, Object)}
    * 
    * @param <TT> type of result returned from the future
@@ -168,7 +167,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   
   /**
    * Submit a callable to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Callable)}
    * 
    * @param <TT> type of result returned from the future
@@ -254,9 +253,8 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   }
   
   /**
-   * <p>Small class to hold the limiter and state associated with the limiter.</p>
+   * Small class to hold the limiter and state associated with the limiter.
    * 
-   * @author jent - Mike Jensen
    * @since 4.3.0
    */
   protected class LimiterContainer {
@@ -279,10 +277,9 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     }
     
     /**
-     * <p>Small class to handle tracking as tasks finish.  Once the last task of a limiter finishes 
-     * the limiter is removed for GC.  This wraps the runnable to handle that cleanup if needed.</p>
+     * Small class to handle tracking as tasks finish.  Once the last task of a limiter finishes 
+     * the limiter is removed for GC.  This wraps the runnable to handle that cleanup if needed.
      * 
-     * @author jent - Mike Jensen
      * @since 4.3.0
      */
     private class LimiterCleaner implements Runnable, RunnableContainer {

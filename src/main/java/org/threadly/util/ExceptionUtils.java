@@ -5,9 +5,8 @@ import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
 
 /**
- * <p>Utilities for doing basic operations with exceptions.</p>
+ * Utilities for doing basic operations with exceptions.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class ExceptionUtils {
@@ -139,7 +138,7 @@ public class ExceptionUtils {
   
   /**
    * Remove the top functions from the stack of the provided throwable.  
-   * 
+   * <p>
    * If you invoke this with the quantity of methods to remove being greater than or equal to the 
    * length of the stack of the provided throwable then an IllegalStateException will be thrown.
    * 
@@ -162,7 +161,7 @@ public class ExceptionUtils {
    * Makes a r{@link RuntimeException} if necessary.  If provided exception is already a 
    * {@link RuntimeException} then it is just directly returned.  If it has to produce a new 
    * exception the stack is updated to omit this call.
-   * 
+   * <p>
    * If the point of wrapping the stack is not useful in debugging consider providing a 
    * {@code true} into. {@link #makeRuntime(Throwable, boolean)}.
    * 
@@ -410,10 +409,9 @@ public class ExceptionUtils {
   }
   
   /**
-   * <p>Exception which is constructed from {@link #makeRuntime(Throwable)} when the exception was 
-   * not a runtime exception.</p>
+   * Exception which is constructed from {@link #makeRuntime(Throwable)} when the exception was 
+   * not a runtime exception.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   public static class TransformedException extends RuntimeException {
@@ -431,10 +429,9 @@ public class ExceptionUtils {
   }
   
   /**
-   * <p>Exception which is constructed from {@link #makeRuntime(Throwable, boolean)} when the 
-   * exception was not a runtime exception, and stack is being suppressed.</p>
+   * Exception which is constructed from {@link #makeRuntime(Throwable, boolean)} when the 
+   * exception was not a runtime exception, and stack is being suppressed.
    * 
-   * @author jent - Mike Jensen
    * @since 4.8.0
    */
   public static class TransformedSuppressedStackException extends SuppressedStackRuntimeException {

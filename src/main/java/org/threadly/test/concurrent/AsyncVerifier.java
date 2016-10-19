@@ -5,14 +5,13 @@ import java.util.concurrent.TimeoutException;
 import org.threadly.util.Clock;
 
 /**
- * <p>A simple class for verifying multi-threaded unit tests.  If any thread has a failed a failed 
+ * A simple class for verifying multi-threaded unit tests.  If any thread has a failed a failed 
  * {@code assert} or call to {@link #fail()} the main threads call to {@link #waitForTest()} will 
- * throw an exception to indicate the test as a failure.</p>
+ * throw an exception to indicate the test as a failure.
+ * <p>
+ * This class also provides a way to control the flow of a unit test by blocking main test thread 
+ * until {@link #signalComplete()} is called from the other thread.
  * 
- * <p>This class also provides a way to control the flow of a unit test by blocking main test 
- * thread until {@link #signalComplete()} is called from the other thread</p>
- * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class AsyncVerifier {
@@ -57,7 +56,7 @@ public class AsyncVerifier {
   /**
    * Waits a specified amount of time, or until signalComplete has been called a specified amount 
    * of times, or until a failure occurs.
-   * 
+   * <p>
    * If {@link #waitForTest()} is being called multiple times on the same instance, the 
    * signalComplete count is NOT reset.  So you must either create new instances, or pass in a 
    * larger value for the expected signalComplete count.
@@ -237,9 +236,8 @@ public class AsyncVerifier {
   }
   
   /**
-   * <p>Small exception to represent when a test failure occurs.</p>
+   * Small exception to represent when a test failure occurs.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected static class TestFailure extends RuntimeException {

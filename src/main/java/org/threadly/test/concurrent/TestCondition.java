@@ -7,14 +7,13 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
- * <p>{@link TestCondition} in unit test, designed to check a condition for something that is 
+ * {@link TestCondition} in unit test, designed to check a condition for something that is 
  * happening in a different thread.  Allowing a test to efficiently block till the testable 
- * action has finished.</p>
+ * action has finished.
+ * <p>
+ * This tool is used often within threadly's own unit tests.  Please use those as examples using 
+ * this class.
  * 
- * <p>This tool is used often within threadly's own unit tests.  Please use those as examples 
- * using this class.</p>
- * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class TestCondition {
@@ -39,8 +38,8 @@ public class TestCondition {
    * Alternatively this can be constructed with {@link #TestCondition()} and then the condition can 
    * be reported by overriding {@link #get()}.
    * 
-   * @param condition Condition to check
    * @since 5.0.0
+   * @param condition Condition to check
    */
   public TestCondition(Supplier<Boolean> condition) {
     ArgumentVerifier.assertNotNull(condition, "condition");
@@ -62,7 +61,7 @@ public class TestCondition {
   /**
    * Blocks till condition is true, useful for asynchronism operations, waiting for them to 
    * complete in other threads during unit tests.  
-   * 
+   * <p>
    * This uses a default timeout of 10 seconds, and a poll interval of 10ms
    */
   public void blockTillTrue() {
@@ -72,7 +71,7 @@ public class TestCondition {
   /**
    * Blocks till condition is true, useful for asynchronism operations, waiting for them to 
    * complete in other threads during unit tests.
-   * 
+   * <p>
    * This uses the default poll interval of 10ms
    * 
    * @param timeoutInMillis time to wait for value to become true
@@ -107,12 +106,10 @@ public class TestCondition {
   }
   
   /**
-   * <p>Thrown if condition is still false after a given timeout.</p>
-   * 
-   * <p>The reason this exception is public is to allow test implementors to catch this exception 
-   * specifically and handle it if necessary.</p>
-   * 
-   * @author jent - Mike Jensen
+   * Thrown if condition is still false after a given timeout.
+   * <p>
+   * The reason this exception is public is to allow test implementors to catch this exception 
+   * specifically and handle it if necessary.
    */
   public static class ConditionTimeoutException extends RuntimeException {
     private static final long serialVersionUID = 7445447193772617274L;

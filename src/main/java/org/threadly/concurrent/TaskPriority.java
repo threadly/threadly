@@ -1,13 +1,12 @@
 package org.threadly.concurrent;
 
 /**
- * <p>Priority to go with tasks when being submitted into implementations of 
- * {@link PrioritySchedulerService}.</p>
+ * Priority to go with tasks when being submitted into implementations of 
+ * {@link PrioritySchedulerService}.
+ * <p>
+ * This priority has nothing to do with the system level thread priority.  Instead this only 
+ * represents a priority within the thread pool start a task.
  * 
- * <p>This priority has nothing to do with the system level thread priority.  Instead this only 
- * represents a priority within the thread pool start a task.</p>
- * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public enum TaskPriority { 
@@ -19,8 +18,9 @@ public enum TaskPriority {
    * Low priority tasks are as the name indicates lower priority compared to high priority task.  
    * It is up to the implementer of the {@link PrioritySchedulerService} as to how this priority 
    * is enforced.  
-   * 
-   * As a generalization low priority tasks should not be dependent on an accurate execution time. 
+   * <p>
+   * A generalization for low priority tasks is that they should not be dependent on an accurate 
+   * execution time. 
    */
   Low,
   /**

@@ -6,24 +6,23 @@ import org.threadly.concurrent.ContainerHelper;
 import org.threadly.concurrent.SchedulerService;
 
 /**
- * <p>This class is designed to limit how much parallel execution happens on a provided 
+ * This class is designed to limit how much parallel execution happens on a provided 
  * {@link SchedulerService}.  This allows the implementor to have one thread pool for all 
  * their code, and if they want certain sections to have less levels of parallelism (possibly 
  * because those those sections would completely consume the global pool), they can wrap the 
- * executor in this class.</p>
+ * executor in this class.
+ * <p>
+ * Thus providing you better control on the absolute thread count and how much parallelism can 
+ * occur in different sections of the program.
+ * <p>
+ * This is an alternative from having to create multiple thread pools.  By using this you also are 
+ * able to accomplish more efficiently thread use than multiple thread pools would.
+ * <p>
+ * This extends the {@link SubmitterSchedulerLimiter} to add {@link SchedulerService} features.  
+ * This does not cause any performance hits, but does require a source {@link SchedulerService} to 
+ * rely on.  If you have a {@link SchedulerService} available this implementation should be 
+ * preferred over the {@link SubmitterSchedulerLimiter}.
  * 
- * <p>Thus providing you better control on the absolute thread count and how much parallelism can 
- * occur in different sections of the program.</p>
- * 
- * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
- * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
- * 
- * <p>This extends the {@link SubmitterSchedulerLimiter} to add {@link SchedulerService} 
- * features.  This does not cause any performance hits, but does require a source 
- * {@link SchedulerService} to rely on.  If you have a {@link SchedulerService} 
- * available this implementation should be preferred over the {@link SubmitterSchedulerLimiter}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent.limiter)
  */
 public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter

@@ -12,15 +12,14 @@ import org.threadly.concurrent.NoThreadScheduler.NoThreadRecurringRateTaskWrappe
 import org.threadly.util.Clock;
 
 /**
- * <p>PLEASE IGNORE THIS CLASS, DO NOT USE</p>
- * 
- * <p>This internal class is only used for threadly out of package wrappers to be able to directly 
+ * PLEASE IGNORE THIS CLASS, DO NOT USE
+ * <p>
+ * This internal class is only used for threadly out of package wrappers to be able to directly 
  * access protected functionality.  This is primarily done to avoid excessive checking, or short 
- * cut logic in order to get performance gains.</p>
+ * cut logic in order to get performance gains.
+ * <p>
+ * Because of that, this is highly specialized and not likely to be useful to anyone else.
  * 
- * <p>Because of that, this is highly specialized and not likely to be useful to anyone else.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0
  */
 public class ThreadlyInternalAccessor {
@@ -132,10 +131,9 @@ public class ThreadlyInternalAccessor {
   }
   
   /**
-   * <p>Small wrapper to convert from a {@link PriorityScheduler.TaskWrapper} into a Delayed 
-   * interface.</p>
+   * Small wrapper to convert from a {@link PriorityScheduler.TaskWrapper} into a Delayed 
+   * interface.
    * 
-   * @author jent
    * @since 4.6.0
    */
   protected static class DelayedTaskWrapper implements Delayed {

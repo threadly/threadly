@@ -14,28 +14,27 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
- * <p>Executor to run tasks, schedule tasks.  Unlike 
+ * Executor to run tasks, schedule tasks.  Unlike 
  * {@link java.util.concurrent.ScheduledThreadPoolExecutor} this scheduled executor's pool size 
  * can shrink if set with a lower value via {@link #setPoolSize(int)}.  It also has the benefit 
- * that you can provide "low priority" tasks.</p>
- * 
- * <p>These low priority tasks will delay their execution if there are other high priority tasks 
+ * that you can provide "low priority" tasks.
+ * <p>
+ * These low priority tasks will delay their execution if there are other high priority tasks 
  * ready to run, as long as they have not exceeded their maximum wait time.  If they have exceeded 
  * their maximum wait time, and high priority tasks delay time is less than the low priority delay 
  * time, then those low priority tasks will be executed.  What this results in is a task which has 
- * lower priority, but which wont be starved from execution.</p>
- * 
- * <p>Most tasks provided into this pool will likely want to be "high priority", to more closely 
+ * lower priority, but which wont be starved from execution.
+ * <p>
+ * Most tasks provided into this pool will likely want to be "high priority", to more closely 
  * match the behavior of other thread pools.  That is why unless specified by the constructor, the 
- * default {@link TaskPriority} is High.</p>
+ * default {@link TaskPriority} is High.
+ * <p>
+ * In all conditions, "low priority" tasks will never be starved.  This makes "low priority" tasks 
+ * ideal which do regular cleanup, or in general anything that must run, but cares little if there 
+ * is a 1, or 10 second gap in the execution time.  That amount of tolerance is adjustable by 
+ * setting the {@code maxWaitForLowPriorityInMs} either in the constructor, or at runtime via 
+ * {@link #setMaxWaitForLowPriority(long)}.
  * 
- * <p>In all conditions, "low priority" tasks will never be starved.  This makes "low priority" 
- * tasks ideal which do regular leanup, or in general anything that must run, but cares little if 
- * there is a 1, or 10 second gap in the execution time.  That amount of tolerance is adjustable 
- * by setting the {@code maxWaitForLowPriorityInMs} either in the constructor, or at runtime via 
- * {@link #setMaxWaitForLowPriority(long)}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 2.2.0 (since 1.0.0 as PriorityScheduledExecutor)
  */
 public class PriorityScheduler extends AbstractPriorityScheduler {
@@ -156,11 +155,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   
   /**
    * Change the set thread pool size.
-   * 
+   * <p>
    * If the value is less than the current running threads, as threads finish they will exit 
    * rather than accept new tasks.  No currently running tasks will be interrupted, rather we 
    * will just wait for them to finish before killing the thread.
-   * 
+   * <p>
    * If this is an increase in the pool size, threads will be lazily started as needed till the 
    * new size is reached.  If there are tasks waiting for threads to run on, they immediately 
    * will be started.
@@ -202,7 +201,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * submitted to execute, or scheduled (and have elapsed their delay time) to run.  If recurring 
    * tasks are present they will also be unable to reschedule.  If {@code shutdown()} or 
    * {@link #shutdownNow()} has already been called, this will have no effect.  
-   * 
+   * <p>
    * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
    */
   public void shutdown() {
@@ -216,7 +215,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
 
   /**
    * Stops any new tasks from being able to be executed and removes workers from the pool.
-   * 
+   * <p>
    * This implementation refuses new submissions after this call.  And will NOT interrupt any 
    * tasks which are currently running.  However any tasks which are waiting in queue to be run 
    * (but have not started yet), will not be run.  Those waiting tasks will be removed, and as 
@@ -322,7 +321,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   /**
    * Adds the ready TaskWrapper to the correct execute queue.  Using the priority specified in the 
    * task, we pick the correct queue and add it.
-   * 
+   * <p>
    * If this is a scheduled or recurring task use {@link #addToScheduleQueue(TaskWrapper)}.
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
@@ -338,7 +337,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   /**
    * Adds the ready TaskWrapper to the correct schedule queue.  Using the priority specified in the 
    * task, we pick the correct queue and add it.
-   * 
+   * <p>
    * If this is just a single execution with no delay use {@link #addToExecuteQueue(OneTimeTaskWrapper)}.
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
@@ -363,11 +362,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>Class to manage the pool of worker threads.  This class handles creating workers, storing 
+   * Class to manage the pool of worker threads.  This class handles creating workers, storing 
    * them, and killing them once they are ready to expire.  It also handles finding the 
-   * appropriate worker when a task is ready to be executed.</p>
+   * appropriate worker when a task is ready to be executed.
    * 
-   * @author jent - Mike Jensen
    * @since 3.5.0
    */
   protected static class WorkerPool implements QueueSetListener {
@@ -487,7 +485,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     /**
      * When ever pool state is changed that is not checked in the pollTask loop (ie shutdown state, 
      * pool size), a task must be added that is continually added till the desired state is reached.
-     * 
+     * <p>
      * The purpose of this task is to break worker threads out of the tight loop for polling tasks, 
      * and instead get them to check the initial logic in {@link #workerIdle(Worker)} again.  This 
      * is in contrast to putting the logic in the poll task loop, which only incurs a performance 
@@ -537,7 +535,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     /**
      * Change the set core pool size.  If the value is less than the current max pool size, the max 
      * pool size will also be updated to this value.
-     * 
+     * <p>
      * If this was a reduction from the previous value, this call will examine idle workers to see 
      * if they should be expired.  If this call reduced the max pool size, and the current running 
      * thread count is higher than the new max size, this call will NOT block till the pool is 
@@ -818,10 +816,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>Runnable which will run on pool threads.  It accepts runnables to run, and tracks 
-   * usage.</p>
+   * Runnable which will run on pool threads.  It accepts runnables to run, and tracks usage.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected static class Worker extends AbstractService implements Runnable {
@@ -864,12 +860,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>Runnable to be run after tasks already ready to execute.  That way this can be submitted 
-   * with a {@link #execute(Runnable)} to ensure that the shutdown is fair for tasks that were 
-   * already ready to be run/executed.  Once this runs the shutdown sequence will be finished, and 
-   * no remaining asks in the queue can be executed.</p>
+   * Runnable to be run after tasks already ready to execute.  That way this can be submitted with 
+   * a {@link #execute(Runnable)} to ensure that the shutdown is fair for tasks that were already 
+   * ready to be run/executed.  Once this runs the shutdown sequence will be finished, and no 
+   * remaining asks in the queue can be executed.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected static class ShutdownRunnable implements InternalRunnable {

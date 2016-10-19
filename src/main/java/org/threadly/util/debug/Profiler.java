@@ -27,14 +27,13 @@ import org.threadly.util.ExceptionUtils;
 import org.threadly.util.StringUtils;
 
 /**
- * <p>Tool for profiling a running java application to get an idea of where the slow points 
- * (either because of lock contention, or because of high computational demand).</p>
- * 
- * <p>This tool definitely incurs some load within the system, so it should only be used while 
+ * Tool for profiling a running java application to get an idea of where the slow points 
+ * (either because of lock contention, or because of high computational demand).
+ * <p>
+ * This tool definitely incurs some load within the system, so it should only be used while 
  * debugging, and not as general use.  In addition if it is left running without being reset, it 
- * will continue to consume more and more memory.</p>
+ * will continue to consume more and more memory.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class Profiler {
@@ -60,7 +59,7 @@ public class Profiler {
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
    * call {@link #dump()} with a provided output stream to get the results to.  
-   * 
+   * <p>
    * This uses a default poll interval of 100 milliseconds.
    */
   public Profiler() {
@@ -143,7 +142,7 @@ public class Profiler {
   
   /**
    * Starts the profiler running in a new thread.  
-   * 
+   * <p>
    * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
    * statistics from the previous run will still be included in this run.  If you wish to clear 
    * out previous runs you must call {@link #reset()} first.
@@ -154,11 +153,11 @@ public class Profiler {
   
   /**
    * Starts the profiler running in a new thread.  
-   * 
+   * <p>
    * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
    * statistics from the previous run will still be included in this run.  If you wish to clear 
    * out previous runs you must call {@link #reset()} first.
-   * 
+   * <p>
    * If an executor is provided, this call will block until the the profiler has been started on 
    * the provided executor.
    * 
@@ -170,14 +169,14 @@ public class Profiler {
   
   /**
    * Starts the profiler running in a new thread.  
-   * 
+   * <p>
    * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
    * statistics from the previous run will still be included in this run.  If you wish to clear 
    * out previous runs you must call {@link #reset()} first.  
-   * 
+   * <p>
    * If {@code sampleDurationInMillis} is greater than zero the Profiler will invoke 
    * {@link #stop()} in that many milliseconds.  
-   * 
+   * <p>
    * The returned {@link ListenableFuture} will be provided the dump when {@link #stop()} is 
    * invoked next.  Either from a timeout provided to this call, or a manual invocation of 
    * {@link #stop()}.
@@ -191,17 +190,17 @@ public class Profiler {
   
   /**
    * Starts the profiler running in a new thread.  
-   * 
+   * <p>
    * If this profiler had previously ran, and is now sitting in a stopped state again.  The 
    * statistics from the previous run will still be included in this run.  If you wish to clear 
    * out previous runs you must call {@link #reset()} first.  
-   * 
+   * <p>
    * If an executor is provided, this call will block until the the profiler has been started on 
    * the provided executor.
-   * 
+   * <p>
    * If {@code sampleDurationInMillis} is greater than zero the Profiler will invoke 
    * {@link #stop()} in that many milliseconds.
-   * 
+   * <p>
    * The returned {@link ListenableFuture} will be provided the dump when {@link #stop()} is 
    * invoked next.  Either from a timeout provided to this call, or a manual invocation of 
    * {@link #stop()}.
@@ -564,9 +563,8 @@ public class Profiler {
   }
   
   /**
-   * <p>A small interface to represent and provide access to details for a sampled thread.</p>
+   * A small interface to represent and provide access to details for a sampled thread.
    * 
-   * @author jent - Mike Jensen
    * @since 3.8.0
    */
   protected interface ThreadSample {
@@ -589,11 +587,10 @@ public class Profiler {
   }
   
   /**
-   * <p>An iterator which will enumerate all the running threads within the VM.  It is expected 
-   * that this iterator is NOT called in parallel.  This is also a single use object, once 
-   * iteration is complete it should be allowed to be garabage collected.</p>
+   * An iterator which will enumerate all the running threads within the VM.  It is expected that 
+   * this iterator is NOT called in parallel.  This is also a single use object, once iteration is 
+   * complete it should be allowed to be garbage collected.
    * 
-   * @author jent - Mike Jensen
    * @since 3.4.0
    */
   protected static class ThreadIterator implements Iterator<ThreadSample> {
@@ -631,11 +628,10 @@ public class Profiler {
   }
   
   /**
-   * <p>Collection of classes and data structures for data used in profiling threads.  This 
+   * Collection of classes and data structures for data used in profiling threads.  This 
    * represents the shared memory between the collection thread and the threads which 
-   * start/stop/dump the profiler statistics.</p>
+   * start/stop/dump the profiler statistics.
    * 
-   * @author jent - Mike Jensen
    * @since 3.5.0
    */
   protected static class ProfileStorage {
@@ -660,10 +656,10 @@ public class Profiler {
     
     /**
      * A small call to get an iterator of threads that should be examined for this profiler cycle.  
-     * 
+     * <p>
      * This is a protected call, so it can be overridden to implement other profilers that want to 
      * control which threads are being profiled.
-     * 
+     * <p>
      * It is guaranteed that this will be called in a single threaded manner.
      * 
      * @return an {@link Iterator} of {@link ThreadSample} to examine and add data for our profile
@@ -674,9 +670,8 @@ public class Profiler {
   }
   
   /**
-   * <p>Class which runs, collecting statistics for the profiler to later analyze.</p>
+   * Class which runs, collecting statistics for the profiler to later analyze.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   private static class ProfilerRunner implements Runnable {
@@ -745,11 +740,10 @@ public class Profiler {
   }
   
   /**
-   * <p>Small class to store referencing to thread.  This is designed to be more memory efficient 
+   * Small class to store referencing to thread.  This is designed to be more memory efficient 
    * than just using a string.  It also tries to delay the expensive storage aspect until we know 
-   * we know we will need to store it long term.</p>
+   * we know we will need to store it long term.
    * 
-   * @author jent - Mike Jensen
    * @since 4.9.0
    */
   protected static class ThreadIdentifier {
@@ -808,12 +802,11 @@ public class Profiler {
   }
   
   /**
-   * <p>Class which represents a stack trace.  The is used so we can track how many times a given 
-   * stack is seen.</p>
+   * Class which represents a stack trace.  The is used so we can track how many times a given 
+   * stack is seen.
+   * <p>
+   * This stack trace reference will be specific to a single thread.
    * 
-   * <p>This stack trace reference will be specific to a single thread.</p>
-   * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected static class Trace implements Comparable<Trace> {
@@ -881,10 +874,9 @@ public class Profiler {
   }
   
   /**
-   * <p>Class to represent a specific function call.  This is used so we can track how many times 
-   * we see a given function.</p>
+   * Class to represent a specific function call.  This is used so we can track how many times we 
+   * see a given function.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected static class Function {

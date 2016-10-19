@@ -12,36 +12,35 @@ import java.util.RandomAccess;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A thread safe list implementation with an array back end.  Make sure to read the javadocs 
- * carefully, as several functions behave subtly different from the java.util.List definition.</p>
- * 
- * <p>The design of this implementation is NOT to completely avoid synchronization.  We have a 
- * hybrid implementation of volatile and synchronized to allow for cheaper reading, but keeping 
- * high consistency.  It works with the idea that the internal data is immutable.  Each read has 
- * an immutable version of the data.  Thus making writes more expensive (almost like a 
- * CopyOnWriteArrayList).</p>
- * 
- * <p>There are several differences between this and a CopyOnWriteArrayList.  The first being that 
- * we don't have to copy the structure on every write operation.  By setting the front and/or rear 
+ * A thread safe list implementation with an array back end.  Make sure to read the javadocs 
+ * carefully, as several functions behave subtly different from the java.util.List definition.
+ * <p>
+ * The design of this implementation is NOT to completely avoid synchronization.  We have a hybrid 
+ * implementation of volatile and synchronized to allow for cheaper reading, but keeping high 
+ * consistency.  It works with the idea that the internal data is immutable.  Each read has an 
+ * immutable version of the data.  Thus making writes more expensive (almost like a 
+ * {@link java.util.concurrent.CopyOnWriteArrayList}).
+ * <p>
+ * There are several differences between this and a CopyOnWriteArrayList.  The first being that we 
+ * don't have to copy the structure on every write operation.  By setting the front and/or rear 
  * padding, we can add items to the front or end of the list while avoiding a copy operation.  In 
  * addition removals also do not require a copy operation.  Furthermore, this implementation 
  * differs from  a CopyOnWriteArrayList is that it does allow some synchronization.  Which can 
  * give higher consistency guarantees for some operations by allowing you to synchronize on the 
- * modification lock to perform multiple atomic operations.</p>
+ * modification lock to perform multiple atomic operations.
+ * <p>
+ * The main motivation in implementing this was to avoid array copies as much as possible (which 
+ * for large lists can be costly).  But also the implementation to cheaply reposition an item in 
+ * the list was necessary for other performance benefits.
+ * <p>
+ * A couple notable points is that subList calls are very cheap, but modifications to sublist are 
+ * completely independent from their source list.
+ * <p>
+ * Unlike CopyOnWriteArrayList, Iterators can attempt to modify the state of the backing structure 
+ * (assuming it still makes sense to do so).  Although unlike CopyOnWriteArrayList iterators, once 
+ * an Iterator is created it will never see updates to the structure.  For that reason it is 
+ * impossible to have a {@code ConcurrentModificationExcception}.
  * 
- * <p>The main motivation in implementing this was to avoid array copies as much as possible 
- * (which for large lists can be costly).  But also the implementation to cheaply reposition an 
- * item in the list was necessary for other performance benefits.</p>
- * 
- * <p>A couple notable points is that subList calls are very cheap, but modifications to sublist 
- * are completely independent from their source list.</p>
- * 
- * <p>Unlike CopyOnWriteArrayList, Iterators can attempt to modify the state of the backing 
- * structure (assuming it still makes sense to do so).  Although unlike CopyOnWriteArrayList 
- * iterators, once an Iterator is created it will never see updates to the structure.  For that 
- * reason it is impossible to have a ConcurrentModificationExcception.</p>
- * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  * @param <T> type of object to retain
  */
@@ -123,7 +122,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   /**
    * If you want to chain multiple calls together and ensure that no threads modify the structure 
    * during that time you can get the lock to prevent additional modifications.  
-   * 
+   * <p>
    * This lock should be synchronized on to prevent modifications.
    * 
    * @return lock used internally
@@ -629,8 +628,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * Move a stored item to a new index.  By default 
-   * a forward search will happen to find the item.
+   * Move a stored item to a new index.  By default a forward search will happen to find the item.
    * 
    * @param item item to be moved
    * @param newIndex new index for placement
@@ -640,9 +638,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * Move a stored item to a new index.  If you have
-   * an idea if it is closer to the start or end of the list
-   * you can specify which end to start the search on.
+   * Move a stored item to a new index.  If you have an idea if it is closer to the start or end of 
+   * the list you can specify which end to start the search on.
    * 
    * @param item item to be moved
    * @param newIndex new index for placement
@@ -676,9 +673,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * Move a stored item located at an index to a new index.  Provide 
-   * the size for newIndex to move the item to the end of the list.  
-   * Otherwise all items after the new index will be shifted right.
+   * Move a stored item located at an index to a new index.  Provide the size for newIndex to move 
+   * the item to the end of the list.  Otherwise all items after the new index will be shifted 
+   * right.
    * 
    * @param originalIndex index for item to be moved to.
    * @param newIndex new index location for item.
@@ -744,14 +741,12 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
-   * This returns a sub list from the current list.  The initial call
-   * is very cheap because it uses the current data backing to produce 
-   * (no copying necessary).
-   * 
-   * But any modifications to this list will be treated as a completely 
-   * new list, and wont ever reflect on the source list.  This is very 
-   * different from other java.util.List implementations, and should be 
-   * noted carefully.
+   * This returns a sub list from the current list.  The initial call is very cheap because it 
+   * uses the current data backing to produce (no copying necessary).
+   * <p>
+   * This differers from other subList implementations in that any modifications to this list 
+   * will be treated as a completely new list, and wont ever reflect on the source list.  This is 
+   * very different from other java.util.List implementations, and should be noted carefully.
    * 
    * @param fromIndex start index (inclusive) for new list to include
    * @param toIndex end index (exclusive) to be included in new list
@@ -820,11 +815,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * This is an iterator implementation that is designed to
-   * iterate over a given dataSet.  Modifiable actions will attempt
-   * to make changes to the parent class.
+   * This is an iterator implementation that is designed to iterate over a given dataSet.  
+   * Modifiable actions will attempt to make changes to the parent class.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected class DataSetListIterator implements ListIterator<T> {
@@ -931,14 +924,11 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
   
   /**
-   * This is designed to be an immutable version of the list.  
-   * Modifiable actions will return a new instance that is based 
-   * off this one.  Because the array may change in areas outside
-   * of the scope of this dataArray, it is expected that the
-   * modificationLock is held while any modifiable operations 
-   * are happening.
+   * This is designed to be an immutable version of the list.  Modifiable actions will return a 
+   * new instance that is based off this one.  Because the array may change in areas outside of 
+   * the scope of this dataArray, it is expected that the modificationLock is held while any 
+   * modifiable operations are happening.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    * @param <T> type of object that is held
    */
@@ -1089,10 +1079,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
     
     /**
-     * Used to get a newly sized array which copies the beginning items till 
-     * the new size is reached (or all items if the newSize is larger).  The 
-     * newly created array will also respect the front and rear padding, which 
-     * is NOT included in the newSize provided.
+     * Used to get a newly sized array which copies the beginning items till the new size is 
+     * reached (or all items if the newSize is larger).  The newly created array will also respect 
+     * the front and rear padding, which is NOT included in the {@code newSize} provided.
      * 
      * @param newSize size for data within the new array
      * @return a new array
@@ -1107,8 +1096,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     /**
-     * Returns the item at a given index, this function 
-     * handles the front padding for you.
+     * Returns the item at a given index, this function handles the front padding for you.
      * 
      * @param index index of item
      * @return stored item
@@ -1119,9 +1107,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     /**
-     * Call to check for the index of a given item.  The 
-     * return index has already had the front padding removed 
-     * from the actual index.
+     * Call to check for the index of a given item.  The return index has already had the front 
+     * padding removed from the actual index.
      * 
      * @param o Object to search for
      * @return index of item, or -1 if not found
@@ -1137,9 +1124,8 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
 
     /**
-     * Call to check for the last index of a given item.  The 
-     * return index has already had the front padding removed 
-     * from the actual index.
+     * Call to check for the last index of a given item.  The return index has already had the 
+     * front padding removed from the actual index.
      * 
      * @param o Object to search for
      * @return index of item, or -1 if not found
@@ -1424,11 +1410,10 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
     
     /**
-     * Call to see if the lists are equivalently equal, meaning that 
-     * they have the same items in the same order.  This is what most 
-     * equals operations for lists expect.
+     * Call to see if the lists are equivalently equal, meaning that they have the same items in 
+     * the same order.  This is what most equals operations for lists expect.
      * 
-     * @param ds Other DataSet to compare against (can't be null)
+     * @param ds Other DataSet to compare against (can't be {@code null})
      * @return {@code true} if they are equal
      */
     @SuppressWarnings("rawtypes")
@@ -1449,10 +1434,9 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     }
     
     /**
-     * This is a call to check if the DataSet is exactly equal.  This is 
-     * unique for the design of this collection.  This can be a quicker 
-     * check, but may result in saying DataSet's are not equal, when they 
-     * basically are equal.
+     * This is a call to check if the DataSet is exactly equal.  This is unique for the design of 
+     * this collection.  This can be a quicker check, but may result in saying DataSet's are not 
+     * equal, when they basically are equal.
      * 
      * @param ds Other DataSet to compare against (can't be null)
      * @return {@code true} if they are equal

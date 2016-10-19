@@ -11,11 +11,10 @@ import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.Clock;
 
 /**
- * <p>This class is designed to be a helper when returning a single result asynchronously.  This 
- * is particularly useful if this result is produced over multiple threads (and thus the scheduler 
- * returned future is not useful).</p>
+ * This class is designed to be a helper when returning a single result asynchronously.  This is 
+ * particularly useful if this result is produced over multiple threads (and thus the scheduler 
+ * returned future is not useful).
  * 
- * @author jent - Mike Jensen
  * @since 1.2.0
  * @param <T> The result object type returned by this future
  */
@@ -33,7 +32,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   /**
    * Constructs a new {@link SettableListenableFuture}.  You can return this immediately and 
    * provide a result to the object later when it is ready.  
-   * 
+   * <p>
    * This defaults in the behavior since version 1.2.0 where if the future has completed (either 
    * by {@link #cancel(boolean)}, {@link #setResult(Object)}, or {@link #setFailure(Throwable)}), 
    * any additional attempts to {@link #setResult(Object)} or {@link #setFailure(Throwable)} will 
@@ -46,14 +45,14 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   /**
    * Constructs a new {@link SettableListenableFuture}.  You can return this immediately and 
    * provide a result to the object later when it is ready.  
-   * 
+   * <p>
    * This constructor allows you to control the behavior when results are attempt to be set after 
    * the future has already completed (either by 
    * {@link #cancel(boolean)}, {@link #setResult(Object)}, or {@link #setFailure(Throwable)}).  
-   * 
+   * <p>
    * If {@code true}, any additional attempts to {@link #setResult(Object)} or 
    * {@link #setFailure(Throwable)} will result in a {@link IllegalStateException} being thrown.  
-   * 
+   * <p>
    * If {@code false}, additional attempts to set a result will just be silently ignored.
    * 
    * @param throwIfAlreadyComplete Defines the behavior when result or failure is set on a completed future
@@ -112,10 +111,10 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * This call defers to {@link #setResult(Object)}.  It is implemented so that you can construct 
    * this, return it immediately, but only later provide this as a callback to another 
    * {@link ListenableFuture} implementation.  
-   * 
+   * <p>
    * This should never be invoked by the implementor, this should only be invoked by other 
    * {@link ListenableFuture}'s.  
-   * 
+   * <p>
    * If this is being used to chain together {@link ListenableFuture}'s, 
    * {@link #setResult(Object)}/{@link #setFailure(Throwable)} should never be called manually (or 
    * an exception will occur).
@@ -131,10 +130,10 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * This call defers to {@link #setFailure(Throwable)}.  It is implemented so that you can 
    * construct this, return it immediately, but only later provide this as a callback to another 
    * {@link ListenableFuture} implementation.  
-   * 
+   * <p>
    * This should never be invoked by the implementor, this should only be invoked by other 
    * {@link ListenableFuture}'s.  
-   * 
+   * <p>
    * If this is being used to chain together {@link ListenableFuture}'s, 
    * {@link #setResult(Object)}/{@link #setFailure(Throwable)} should never be called manually (or 
    * an exception will occur).
@@ -149,7 +148,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   /**
    * Call to indicate this future is done, and provide the given result.  It is expected that only 
    * this or {@link #setFailure(Throwable)} are called.
-   * 
+   * <p>
    * If future has already completed and constructed with {@link #SettableListenableFuture()} or 
    * {@code true} provided to {@link #SettableListenableFuture(boolean)} this will throw an 
    * {@link IllegalStateException}.  If complete but constructed with a {@code false} this result 
@@ -178,7 +177,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * only this or {@link #setResult(Object)} are called, and only called once.  If the provided 
    * failure is {@code null}, a new {@link Exception} will be created so that something is always 
    * provided in the {@link ExecutionException} on calls to {@link #get()}.
-   * 
+   * <p>
    * If future has already completed and constructed with {@link #SettableListenableFuture()} or 
    * {@code true} provided to {@link #SettableListenableFuture(boolean)} this will throw an 
    * {@link IllegalStateException}.  If complete but constructed with a {@code false} this failure 
@@ -209,7 +208,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * Optional call to set the thread internally that will be generating the result for this 
    * future.  Setting this thread allows it so that if a {@link #cancel(boolean)} call is invoked 
    * with {@code true}, we can send an interrupt to this thread.  
-   * 
+   * <p>
    * The reference to this thread will be cleared after this future has completed (thus allowing 
    * it to be garbage collected).
    * 
@@ -262,7 +261,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * garbage collection.  After this call, future calls to {@link #get()} will throw an 
    * {@link IllegalStateException}.  So it is critical that this is only called after you are sure 
    * no future calls to get the result on this future will be attempted.
-   * 
+   * <p>
    * The design of this is so that if you want to chain {@link ListenableFuture}'s together, you 
    * can clear the results of old ones after their result has been consumed.  This is really only 
    * useful in very specific instances.

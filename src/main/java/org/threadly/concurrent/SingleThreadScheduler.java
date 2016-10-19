@@ -10,11 +10,10 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A simple and light weight implementation of the {@link SchedulerService}.  This is designed 
- * to be a lighter weight option to the {@link PriorityScheduler}, for when multiple threads are 
- * either not needed, or not desired.<p>
+ * A simple and light weight implementation of the {@link SchedulerService}.  This is designed to 
+ * be a lighter weight option to the {@link PriorityScheduler}, for when multiple threads are 
+ * either not needed, or not desired.
  * 
- * @author jent - Mike Jensen
  * @since 2.0.0
  */
 public class SingleThreadScheduler extends AbstractPriorityScheduler {
@@ -134,7 +133,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * tasks are present they will also be unable to reschedule.  This call will not block to wait 
    * for the shutdown of the scheduler to finish.  If {@code shutdown()} or 
    * {@link #shutdownNow()} has already been called, this will have no effect.  
-   * 
+   * <p>
    * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
    */
   public void shutdown() {
@@ -256,11 +255,10 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>This class contains the thread and instance of {@link NoThreadScheduler} that is used to 
+   * This class contains the thread and instance of {@link NoThreadScheduler} that is used to 
    * provide single threaded scheduler implementation.  The only implementation here is to contain 
-   * those objects, and know how to start and stop the scheduler.</p>
+   * those objects, and know how to start and stop the scheduler.
    * 
-   * @author jent - Mike Jensen
    * @since 2.0.0
    */
   protected static class SchedulerManager implements Runnable {

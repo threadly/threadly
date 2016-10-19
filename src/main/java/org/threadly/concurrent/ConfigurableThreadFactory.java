@@ -7,14 +7,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 /**
- * <p>Implementation of {@link ThreadFactory} which is configurable for the most common use cases.  
+ * Implementation of {@link ThreadFactory} which is configurable for the most common use cases.  
  * Specifically, it allows you several options for how to prefix the name of threads, if returned 
  * threads should be daemon or not, what their priority should be, and if an 
  * {@link UncaughtExceptionHandler} should be provided to new threads.  You can construct this 
  * with no arguments, and it's behavior will match that of 
- * {@code Executors.defaultThreadFactory()}.</p>
- *  
- * @author jent - Mike Jensen
+ * {@code Executors.defaultThreadFactory()}.
+ * 
  * @since 2.3.0
  */
 public class ConfigurableThreadFactory implements ThreadFactory {
@@ -42,7 +41,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
   /**
    * Constructs a new {@link ConfigurableThreadFactory} specifying the prefix for the name of 
    * newly created threads.  
-   * 
+   * <p>
    * If specified with {@code true} for {@code appendPoolIdToPrefix} it will append a unique 
    * "pool" id to the prefix, giving it the format of 
    * {@code threadNamePrefix + UNIQUE_POOL_ID + "-thread-"}.  If {@code appendPoolIdToPrefix} is 
@@ -71,7 +70,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
   /**
    * Constructs a new {@link ConfigurableThreadFactory} specifying the priority for produced 
    * threads.  
-   * 
+   * <p>
    * If the priority is below or above the max available thread priority, this will be adjusted to 
    * the limit of the system.
    * 
@@ -107,14 +106,14 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * Constructs a new {@link ConfigurableThreadFactory} allowing you to provide specific values 
    * for everything which this class allows to be configured.  You must use this constructor if 
    * you need to adjust two or more values.  
-   * 
+   * <p>
    * If specified with {@code true} for {@code appendPoolIdToPrefix} it will append a unique 
    * "pool" id to the prefix, giving it the format of 
    * {@code threadNamePrefix + UNIQUE_POOL_ID + "-thread-"}.  If {@code appendPoolIdToPrefix} is 
    * specified as {@code false}, only a unique thread id will be appended to the prefix.  In 
    * either case, the produced threads name will be appended with a unique thread id for the 
    * factory instance.
-   * 
+   * <p>
    * If the priority is below or above the max available thread priority, this will be adjusted to 
    * the limit of the system.
    * 
@@ -182,7 +181,6 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * Because the {@link ExceptionHandler} can not be set before the thread is started.  We must 
    * wrap it in this implementation to set the handler before the runnable actually starts.
    * 
-   * @author jent - Mike Jensen
    * @since 2.4.0
    */
   protected class ExceptionHandlerSettingRunnable implements Runnable {

@@ -3,9 +3,8 @@ package org.threadly.test.concurrent;
 import org.threadly.util.Clock;
 
 /**
- * <p>Generic tools to be used in unit testing.</p>
+ * Generic tools to be used in unit testing.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class TestUtils {

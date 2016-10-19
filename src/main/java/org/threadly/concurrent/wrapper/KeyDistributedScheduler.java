@@ -13,14 +13,13 @@ import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This is a class which is more full featured than {@link KeyDistributedExecutor}, but it does 
- * require a scheduler implementation in order to be able to perform scheduling.</p>
+ * This is a class which is more full featured than {@link KeyDistributedExecutor}, but it does 
+ * require a scheduler implementation in order to be able to perform scheduling.
+ * <p>
+ * The same guarantees and restrictions for the {@link KeyDistributedExecutor} also exist for this 
+ * class.  Please read the javadoc for {@link KeyDistributedExecutor} to understand more about how 
+ * this operates.
  * 
- * <p>The same guarantees and restrictions for the {@link KeyDistributedExecutor} also exist for 
- * this class.  Please read the javadoc for {@link KeyDistributedExecutor} to understand more 
- * about how this operates.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.TaskSchedulerDistributor)
  */
 public class KeyDistributedScheduler extends KeyDistributedExecutor {
@@ -28,7 +27,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
 
   /**
    * Constructor to use a provided scheduler implementation for running tasks.  
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16.  This also does not 
    * attempt to have an accurate queue size for the {@link #getTaskQueueSize(Object)} call (thus 
    * preferring high performance).
@@ -42,11 +41,11 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.  
-   * 
+   * <p>
    * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
    * given thread keys.  There is a performance hit associated with this, so this should only be 
    * enabled if {@link #getTaskQueueSize(Object)} calls will be used.  
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16.
    * 
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
@@ -59,13 +58,13 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.  
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16.  This also does not 
    * attempt to have an accurate queue size for the {@link #getTaskQueueSize(Object)} call (thus 
    * preferring high performance).
@@ -80,17 +79,17 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.  
-   * 
+   * <p>
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16. 
    * 
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
@@ -105,10 +104,10 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
-   * 
+   * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -124,11 +123,11 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
    * given thread keys.  There is a performance hit associated with this, so this should only be 
    * enabled if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -146,16 +145,16 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.
-   * 
+   * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -173,17 +172,17 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided scheduler implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.
-   * 
+   * <p>
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -202,7 +201,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   
   /**
    * Constructor to be used in unit tests.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
@@ -258,7 +257,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * {@link #submitScheduled(Object, Runnable, long)} over 
    * {@link #schedule(Object, Runnable, long)}.  So this should only be used when the future 
    * is necessary.
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has completed.
    * 
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
@@ -365,9 +364,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * <p>Task which will run delayed to add a task into the queue when ready.</p>
+   * Task which will run delayed to add a task into the queue when ready.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected class AddTask implements Runnable, RunnableContainer {
@@ -391,9 +389,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * <p>Container for runnables which run with a fixed delay after the previous run.</p>
+   * Container for runnables which run with a fixed delay after the previous run.
    * 
-   * @author jent - Mike Jensen
    * @since 3.1.0
    */
   protected class RecrringDelayTask implements Runnable, RunnableContainer {
@@ -423,9 +420,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * <p>Container for runnables which run with a fixed rate, regardless of execution time.</p>
+   * Container for runnables which run with a fixed rate, regardless of execution time.
    * 
-   * @author jent - Mike Jensen
    * @since 3.1.0
    */
   protected class RecrringRateTask implements Runnable, RunnableContainer {
@@ -452,10 +448,8 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * <p>Simple simple scheduler implementation that submits `xecutions and scheduling on a given 
-   * key.</p>
+   * Simple simple scheduler implementation that submits executions and scheduling on a given key.
    * 
-   * @author jent - Mike Jensen
    * @since 2.5.0
    */
   protected class KeyScheduler extends KeySubmitter implements SubmitterScheduler {

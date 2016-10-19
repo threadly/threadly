@@ -6,9 +6,8 @@ import java.util.Iterator;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A class to chain multiple runnables to later be run together, within the same thread.</p>
+ * A class to chain multiple runnables to later be run together, within the same thread.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class RunnableChain implements Runnable {

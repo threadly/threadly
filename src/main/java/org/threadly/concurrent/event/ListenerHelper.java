@@ -16,15 +16,14 @@ import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
 
 /**
- * <p>Class which assist with holding and calling to listeners of any interface.  In parallel 
- * designs it is common to have things subscribe for actions to occur (to later be alerted once an 
- * action occurs).  This class makes it easy to allow things to register as a listener.</p>
+ * Class which assist with holding and calling to listeners of any interface.  In parallel designs 
+ * it is common to have things subscribe for actions to occur (to later be alerted once an action 
+ * occurs).  This class makes it easy to allow things to register as a listener.
+ * <p>
+ * For listener designs which do NOT need to provide arguments for their listeners, look at using 
+ * {@link RunnableListenerHelper}.  {@link RunnableListenerHelper} is more efficient and flexible 
+ * for listeners of that type.  It also has a cleaner and easier to use interface.
  * 
- * <p>For listener designs which do NOT need to provide arguments for their listeners, look at 
- * using {@link RunnableListenerHelper}.  {@link RunnableListenerHelper} is more efficient and 
- * flexible for listeners of that type.  It also has a cleaner and easier to use interface.</p>
- * 
- * @author jent - Mike Jensen
  * @since 2.2.0
  * @param <T> Interface for listeners to implement and called into with
  */
@@ -85,7 +84,7 @@ public class ListenerHelper<T> {
    * Calls to notify the subscribed listeners with the given call.  This returns an implementation 
    * of the listener interface, you can then call to the function you wish to have called on the 
    * listeners (of course providing the arguments you want the listeners to be called with).
-   * 
+   * <p>
    * Any calls off the returned instance will execute on all subscribed listeners.  If those 
    * listeners were provided with an executor the execution for calling that listener will happen 
    * on the provided executor.  If no executor was provided, the execution of the listener will 
@@ -112,7 +111,7 @@ public class ListenerHelper<T> {
    * is provided, on the next {@link #call()} a task will be put on the executor to call this 
    * listener.  If none is provided, the listener will be executed on the thread that is invoking 
    * the {@link #call()}.
-   * 
+   * <p>
    * If an {@link Executor} is provided, and that {@link Executor} is NOT single threaded, the 
    * listener may be called concurrently.  You can ensure this wont happen by using the 
    * {@link org.threadly.concurrent.wrapper.KeyDistributedExecutor} to get an executor from a 
@@ -196,10 +195,9 @@ public class ListenerHelper<T> {
   }
   
   /**
-   * <p>Implementation of {@link InvocationHandler} that calls the provided listeners when the 
-   * invocation occurs.</p>
+   * Implementation of {@link InvocationHandler} that calls the provided listeners when the 
+   * invocation occurs.
    * 
-   * @author jent - Mike Jensen
    * @since 2.2.0
    */
   protected class ListenerCaller implements InvocationHandler {

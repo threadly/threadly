@@ -5,23 +5,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Abstract implementation for more complicated recurring behavior.  Unlike submitting a task 
- * to {@link SubmitterScheduler#scheduleWithFixedDelay(Runnable, long, long)}, this can provide 
- * the ability to only have the task scheduled if there is work to do.  In addition it provides the 
- * ability to change the frequency of execution without needing to remove and re-add the task.</p>
- * 
- * <p>This task will only schedule or reschedule itself if it has been notified there is work to 
- * do.  It is assumed that after execution all work is complete.  If there is additional work to 
+ * Abstract implementation for more complicated recurring behavior.  Unlike submitting a task to 
+ * {@link SubmitterScheduler#scheduleWithFixedDelay(Runnable, long, long)}, this can provide the 
+ * ability to only have the task scheduled if there is work to do.  In addition it provides the 
+ * ability to change the frequency of execution without needing to remove and re-add the task.
+ * <p>
+ * This task will only schedule or reschedule itself if it has been notified there is work to do.  
+ * It is assumed that after execution all work is complete.  If there is additional work to 
  * perform, then the task should invoke {@link #signalToRun()} before it completes to ensure that 
  * it is rescheduled at the current set delay.  Because of that behavior there is no way to remove 
  * this task from the scheduler, instead you must just ensure that {@link #signalToRun()} is not 
- * invoked to prevent the task from rescheduling itself.</p>
+ * invoked to prevent the task from rescheduling itself.
+ * <p>
+ * An additional advantage to using this over scheduling a recurring task is that you don't have 
+ * to worry about removing the task before garbage collection occurs (ie no cleanup, just stop 
+ * invoking {@link #signalToRun()}).
  * 
- * <p>An additional advantage to using this over scheduling a recurring task is that you don't 
- * have to worry about removing the task before garbage collection occurs (ie no cleanup, just 
- * stop invoking {@link #signalToRun()}).</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.9.0
  */
 public abstract class ReschedulingOperation {
@@ -99,17 +98,16 @@ public abstract class ReschedulingOperation {
    * Abstract function which must be implemented to handle actual operation.  It is expected that 
    * when this runs all outstanding work is handled.  If it can not be fully handled then invoke 
    * {@link #signalToRun()} before returning.
-   * 
+   * <p>
    * If this throws an exception it will not impact the state of future executions (ie if 
    * {@link #signalToRun()} was invoked, the task will be rescheduled despite a thrown exception).
    */
   protected abstract void run();
   
   /**
-   * <p>Class to in a thread safe way update the execution state, and reschedule the task on 
-   * completion if necessary.</p>
+   * Class to in a thread safe way update the execution state, and reschedule the task on 
+   * completion if necessary.
    * 
-   * @author jent - Mike Jensen
    * @since 4.9.0
    */
   protected class CheckRunner implements Runnable {

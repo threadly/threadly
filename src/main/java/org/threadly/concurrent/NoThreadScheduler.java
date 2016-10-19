@@ -11,19 +11,18 @@ import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Executor which has no threads itself.  This allows you to have the same scheduler abilities 
+ * Executor which has no threads itself.  This allows you to have the same scheduler abilities 
  * (schedule tasks, recurring tasks, etc, etc), without having to deal with multiple threads, 
  * memory barriers, or other similar concerns.  This class can be very useful in GUI development 
  * (if you want it to run on the GUI thread).  It also can be useful in android development in a 
- * very similar way.</p>
- * 
- * <p>The tasks in this scheduler are only progressed forward with calls to 
+ * very similar way.
+ * <p>
+ * The tasks in this scheduler are only progressed forward with calls to 
  * {@link #tick(ExceptionHandler)}.  Since it is running on the calling thread, calls to 
  * {@code Object.wait()} and {@code Thread.sleep()} from sub tasks will block (possibly forever).  
  * The call to {@link #tick(ExceptionHandler)} will not unblock till there is no more work for the 
- * scheduler to currently handle.</p>
+ * scheduler to currently handle.
  * 
- * @author jent - Mike Jensen
  * @since 2.0.0
  */
 public class NoThreadScheduler extends AbstractPriorityScheduler {
@@ -102,20 +101,19 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * this class is in general thread safe, if multiple threads invoke either function at the same 
    * time, it is possible a given task may run more than once.  In order to maintain high 
    * performance, threadly does not guard against this condition.
-   * 
+   * <p>
    * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
    * an exception, this will be called to communicate the exception.  This allows you to ensure 
    * that you get a returned task count (meaning if provided, no exceptions will be thrown from 
    * this invocation).  If {@code null} is provided for the exception handler, than any tasks 
    * which throw a {@link RuntimeException}, will throw out of this invocation.
-   * 
+   * <p>
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
    * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
    * {@link #getActiveTaskCount()} non-deterministic and inaccurate.
    * 
    * @since 3.2.0
-   * 
    * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run during this tick invocation
@@ -172,26 +170,25 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   /**
    * This is similar to {@link #tick(ExceptionHandler)}, except that it will block until there are 
    * tasks ready to run, or until {@link #cancelTick()} is invoked.  
-   * 
+   * <p>
    * Once there are tasks ready to run, this will continue to block as it runs as many tasks that 
    * are ready to run.  
-   * 
+   * <p>
    * It is CRITICAL that only one thread at a time calls the {@link #tick(ExceptionHandler)} OR 
    * {@link #blockingTick(ExceptionHandler)}.  
-   * 
+   * <p>
    * This call allows you to specify an {@link ExceptionHandler}.  If provided, if any tasks throw 
    * an exception, this will be called to communicate the exception.  This allows you to ensure 
    * that you get a returned task count (meaning if provided, no exceptions will be thrown from 
    * this invocation).  If {@code null} is provided for the exception handler, than any tasks 
    * which throw a {@link RuntimeException}, will throw out of this invocation.
-   * 
+   * <p>
    * This call is NOT thread safe, calling {@link #tick(ExceptionHandler)} or 
    * {@link #blockingTick(ExceptionHandler)} in parallel could cause the same task to be 
    * run multiple times in parallel.  Invoking in parallel will also make the behavior of 
    * {@link #getActiveTaskCount()} non-deterministic and inaccurate.
    * 
    * @since 4.0.0
-   * 
    * @param exceptionHandler Exception handler implementation to call if any tasks throw an 
    *                           exception, or null to have exceptions thrown out of this call
    * @return quantity of tasks run during this tick invocation
@@ -309,7 +306,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   /**
    * Call to get the next ready task that is ready to be run.  If there are no tasks, or the next 
    * task still has a remaining delay, this will return {@code null}.
-   * 
+   * <p>
    * If this is being called in parallel with a {@link #tick(ExecutionHandlerInterface)} call, the 
    * returned task may already be running.  You must check the {@code TaskContainer.running} 
    * boolean if this condition is important to you.
@@ -361,16 +358,16 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * to execute this will return a value less than or equal to zero.  If the task is past its 
    * desired point of execution the result will be a negative amount of milliseconds past that 
    * point in time.  
-   * 
+   * <p>
    * Generally this is called from the same thread that would invoke 
    * {@link #tick(ExceptionHandler)} (but does not have to be).  Since this does not block or lock 
    * if being invoked in parallel with {@link #tick(ExceptionHandler)}, the results may be no 
    * longer accurate by the time this invocation has returned.
-   * 
+   * <p>
    * If a recurring task is currently running this will return a very large number.  This will 
    * remain until the task has rescheduled itself.  To avoid this just ensure this is never 
    * invoked in parallel with {@link #tick(ExceptionHandler)}.
-   * 
+   * <p>
    * This can be useful if you want to know how long you can block on something, ASSUMING you can 
    * detect that something has been added to the scheduler, and interrupt that blocking in order 
    * to handle tasks.
@@ -390,7 +387,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * Removes any tasks waiting to be run.  Will not interrupt any tasks currently running if 
    * {@link #tick(ExceptionHandler)} is being called.  But will avoid additional tasks from being 
    * run on the current {@link #tick(ExceptionHandler)} call.  
-   * 
+   * <p>
    * If tasks are added concurrently during this invocation they may or may not be removed.
    * 
    * @return List of runnables which were waiting in the task queue to be executed (and were now removed)
@@ -405,9 +402,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>Wrapper for tasks which only executes once.</p>
+   * Wrapper for tasks which only executes once.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected class NoThreadOneTimeTaskWrapper extends OneTimeTaskWrapper {
@@ -435,9 +431,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   }
 
   /**
-   * <p>Abstract wrapper for any tasks which run repeatedly.</p>
+   * Abstract wrapper for any tasks which run repeatedly.
    * 
-   * @author jent - Mike Jensen
    * @since 4.3.0
    */
   protected abstract class NoThreadRecurringTaskWrapper extends RecurringTaskWrapper {
@@ -481,9 +476,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>Container for tasks which run with a fixed delay after the previous run.</p>
+   * Container for tasks which run with a fixed delay after the previous run.
    * 
-   * @author jent - Mike Jensen
    * @since 4.3.0
    */
   protected class NoThreadRecurringDelayTaskWrapper extends NoThreadRecurringTaskWrapper {
@@ -503,9 +497,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
   }
   
   /**
-   * <p>Wrapper for tasks which run at a fixed period (regardless of execution time).</p>
+   * Wrapper for tasks which run at a fixed period (regardless of execution time).
    * 
-   * @author jent - Mike Jensen
    * @since 4.3.0
    */
   protected class NoThreadRecurringRateTaskWrapper extends NoThreadRecurringTaskWrapper {

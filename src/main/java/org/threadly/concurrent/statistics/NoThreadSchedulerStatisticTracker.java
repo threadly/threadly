@@ -11,14 +11,13 @@ import org.threadly.util.Clock;
 import org.threadly.util.Pair;
 
 /**
- * <p>An implementation of {@link NoThreadScheduler} which tracks run and usage statistics.  This 
- * is designed for testing and troubleshooting.  It has a little more overhead from the normal 
- * {@link NoThreadScheduler}.</p>
+ * An implementation of {@link NoThreadScheduler} which tracks run and usage statistics.  This is 
+ * designed for testing and troubleshooting.  It has a little more overhead from the normal 
+ * {@link NoThreadScheduler}.
  * 
- * <p>It helps give insight in how long tasks are running, how well the thread pool is being 
- * utilized, as well as execution frequency.</p>
+ * It helps give insight in how long tasks are running, how well the thread pool is being 
+ * utilized, as well as execution frequency.
  * 
- * @author jent - Mike Jensen
  * @since 4.5.0
  */
 public class NoThreadSchedulerStatisticTracker extends NoThreadScheduler 
@@ -27,7 +26,7 @@ public class NoThreadSchedulerStatisticTracker extends NoThreadScheduler
   
   /**
    * Constructs a new {@link NoThreadSchedulerStatisticTracker} scheduler.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -39,7 +38,7 @@ public class NoThreadSchedulerStatisticTracker extends NoThreadScheduler
   /**
    * Constructs a new {@link NoThreadSchedulerStatisticTracker} scheduler with specified default 
    * priority behavior.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -54,7 +53,7 @@ public class NoThreadSchedulerStatisticTracker extends NoThreadScheduler
   
   /**
    * Constructs a new {@link NoThreadSchedulerStatisticTracker} scheduler.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.

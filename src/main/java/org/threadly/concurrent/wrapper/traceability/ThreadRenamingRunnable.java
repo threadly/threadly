@@ -4,10 +4,9 @@ import org.threadly.concurrent.RunnableContainer;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A simple runnable wrapper which will rename the thread during execution, and set the name 
- * back at the end of execution.</p>
+ * A simple runnable wrapper which will rename the thread during execution, and set the name back 
+ * at the end of execution.
  * 
- * @author jent - Mike Jensen
  * @since 4.8.0 (since 4.3.0 as org.threadly.concurrent.ThreadRenamingRunnableWrapper)
  */
 public class ThreadRenamingRunnable implements Runnable, RunnableContainer {

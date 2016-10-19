@@ -5,20 +5,19 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.SchedulerService;
 
 /**
- * <p>A simple way to limit any {@link SchedulerService} so that queues are managed.  In 
- * addition this queue is tracked completely independent of the {@link SchedulerService}'s actual 
- * queue, so these can be distributed in code to limit queues differently to different parts of the 
- * system, while letting them all back the same {@link SchedulerService}.</p>
- * 
- * <p>Once the limit has been reached, if additional tasks are supplied a 
+ * A simple way to limit any {@link SchedulerService} so that queues are managed.  In addition 
+ * this queue is tracked completely independent of the {@link SchedulerService}'s actual queue, so 
+ * these can be distributed in code to limit queues differently to different parts of the system, 
+ * while letting them all back the same {@link SchedulerService}.
+ * <p>
+ * Once the limit has been reached, if additional tasks are supplied a 
  * {@link java.util.concurrent.RejectedExecutionException} will be thrown.  This is the threadly 
  * equivalent of supplying a limited sized blocking queue to a java.util.concurrent thread 
- * pool.</p>
- * 
- * <p>See {@link ExecutorQueueLimitRejector}, {@link SubmitterSchedulerQueueLimitRejector} and 
- * {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.</p>
+ * pool.
+ * <p>
+ * See {@link ExecutorQueueLimitRejector}, {@link SubmitterSchedulerQueueLimitRejector} and 
+ * {@link PrioritySchedulerServiceQueueLimitRejector} as other possible implementations.
  *  
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class SchedulerServiceQueueLimitRejector extends SubmitterSchedulerQueueLimitRejector 

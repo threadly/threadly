@@ -10,18 +10,17 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Class to wrap {@link PrioritySchedulerService} pool so that tasks can be intercepted and either 
+ * Class to wrap {@link PrioritySchedulerService} pool so that tasks can be intercepted and either 
  * wrapped, or modified, before being submitted to the pool.  This class can be passed a lambda to
  * {@link #PrioritySchedulerTaskInterceptor(PrioritySchedulerService, BiFunction)}}, or 
  * {@link #wrapTask(Runnable, boolean)} can be overridden to provide the task which should be submitted 
  * to the {@link PrioritySchedulerService}.  Please see the javadocs of 
  * {@link #wrapTask(Runnable, boolean)} for more details about ways a task can be modified or 
- * wrapped.</p>
+ * wrapped.
+ * <p>
+ * Other variants of task wrappers: {@link ExecutorTaskInterceptor}, 
+ * {@link SubmitterSchedulerTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.
  * 
- * <p>Other variants of task wrappers: {@link ExecutorTaskInterceptor}, 
- * {@link SubmitterSchedulerTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0
  */
 public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterceptor 

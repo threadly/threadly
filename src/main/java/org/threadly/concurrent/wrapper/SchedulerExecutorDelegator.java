@@ -6,13 +6,12 @@ import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Class which takes in both an executor and a scheduler.  Delegating executions to the executor 
+ * Class which takes in both an executor and a scheduler.  Delegating executions to the executor 
  * when possible, and otherwise submitting to the provided scheduler.  This can be used to provide 
  * different behavior/implementations between scheduled and executed tasks (for example you could 
  * use {@link PrioritySchedulerDefaultPriorityWrapper} to have a different default priority for 
- * scheduled tasks vs executed).</p>
+ * scheduled tasks vs executed).
  * 
- * @author jent - Mike Jensen
  * @since 4.7.0
  */
 public class SchedulerExecutorDelegator extends AbstractSubmitterScheduler {

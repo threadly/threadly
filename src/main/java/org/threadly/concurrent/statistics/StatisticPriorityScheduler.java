@@ -7,10 +7,9 @@ import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.TaskPriority;
 
 /**
- * <p>An extension of {@link StatisticExecutor}, defining specific behavior when the statistic 
- * tracker is implementing for a scheduler which has a concept of task priorities.</p>
+ * An extension of {@link StatisticExecutor}, defining specific behavior when the statistic 
+ * tracker is implementing for a scheduler which has a concept of task priorities.
  * 
- * @author jent - Mike Jensen
  * @since 4.5.0
  */
 public interface StatisticPriorityScheduler extends StatisticExecutor, PrioritySchedulerService {
@@ -18,7 +17,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
    * Get raw sample data for task execution delays.  This raw data can be used for more advanced 
    * statistics which are not provided in this library.  These can also be fed into utilities in 
    * {@link org.threadly.util.StatisticsUtils} for additional statistics.  
-   * 
+   * <p>
    * The returned result set includes all priorities.  If you want durations for a specific 
    * priority use {@link #getExecutionDelaySamples(TaskPriority)}.
    * 
@@ -60,10 +59,10 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
   /**
    * Gets percentile values for execution delays.  This function accepts any decimal percentile 
    * between zero and one hundred.  
-   * 
+   * <p>
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.  
-   * 
+   * <p>
    * These percentiles are across all priorities combined into the same data set.  If you want 
    * percentiles for a specific priority use 
    * {@link #getExecutionDelayPercentiles(TaskPriority, double...)}.
@@ -77,7 +76,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
   /**
    * Gets percentile values for execution delays.  This function accepts any decimal percentile 
    * between zero and one hundred.  
-   * 
+   * <p>
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.
    * 
@@ -92,7 +91,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
    * Get raw sample data for task run durations.  This raw data can be used for more advanced 
    * statistics which are not provided in this library.  These can also be fed into utilities in 
    * {@link org.threadly.util.StatisticsUtils} for additional statistics.  
-   * 
+   * <p>
    * The returned result set includes all priorities.  If you want durations for a specific 
    * priority use {@link #getExecutionDurationSamples(TaskPriority)}.
    * 
@@ -105,7 +104,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
    * Get raw sample data for task run durations.  This raw data can be used for more advanced 
    * statistics which are not provided in this library.  These can also be fed into utilities in 
    * {@link org.threadly.util.StatisticsUtils} for additional statistics.  
-   * 
+   * <p>
    * These result set includes all priorities.  If you want durations for a specific priority use 
    * {@link #getExecutionDurationSamples(TaskPriority)}.
    * 
@@ -118,7 +117,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
    * Get the average duration that tasks submitted through this executor have spent executing.  
    * This only reports samples from tasks which have completed (in-progress tasks are not 
    * considered).  
-   * 
+   * <p>
    * This call averages over all priority types, if you want the duration for a specific priority 
    * use {@link #getAverageExecutionDuration(TaskPriority)}.
    * 
@@ -140,10 +139,10 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
   /**
    * Gets percentile values for execution duration.  This function accepts any decimal percentile 
    * between zero and one hundred.  
-   * 
+   * <p>
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.  
-   * 
+   * <p>
    * These percentiles are across all priorities combined into the same data set.  If you want 
    * percentiles for a specific priority use 
    * {@link #getExecutionDurationPercentiles(TaskPriority, double...)}.
@@ -157,7 +156,7 @@ public interface StatisticPriorityScheduler extends StatisticExecutor, PriorityS
   /**
    * Gets percentile values for execution duration.  This function accepts any decimal percentile 
    * between zero and one hundred.  
-   * 
+   * <p>
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.
    * 

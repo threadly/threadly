@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * <p>A collection of utilities for searching and sorting against collections and other data 
- * providers.</p>
+ * A collection of utilities for searching and sorting against collections and other data 
+ * providers.
  * 
  * @since 5.0.0
  */

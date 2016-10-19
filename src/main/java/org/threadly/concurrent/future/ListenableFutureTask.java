@@ -10,10 +10,9 @@ import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.event.RunnableListenerHelper;
 
 /**
- * <p>This is a future which can be executed.  Allowing you to construct the future with the 
- * interior work, submit it to an {@link Executor}, and then return this future.</p>
+ * This is a future which can be executed.  Allowing you to construct the future with the interior 
+ * work, submit it to an {@link Executor}, and then return this future.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  * @param <T> The result object type returned by this future
  */

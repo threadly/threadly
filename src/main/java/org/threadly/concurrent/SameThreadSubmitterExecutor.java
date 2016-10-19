@@ -8,15 +8,14 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A {@link SubmitterExecutor} that will run all provided tasks immediately in the same thread 
+ * A {@link SubmitterExecutor} that will run all provided tasks immediately in the same thread 
  * that is calling into it.  This is different from calling the runnable directly only in that no 
  * exceptions will propagate out.  If an exception is thrown it will be provided to 
  * {@link ExceptionUtils#handleException(Throwable)} to In the case of just 
  * {@link #execute(Runnable)} thrown exceptions will be provided to 
  * {@link ExceptionUtils#handleException(Throwable)} to be handled.  Otherwise thrown exceptions 
- * will be represented by their returned {@link ListenableFuture}.</p>
+ * will be represented by their returned {@link ListenableFuture}.
  * 
- * @author jent - Mike Jensen
  * @since 1.2.0
  */
 public class SameThreadSubmitterExecutor implements SubmitterExecutor {

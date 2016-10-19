@@ -7,10 +7,9 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * <p>Class which is designed to help with determining if a Runnable or Callable is contained at some 
- * point within a chain of {@link CallableContainer} or {@link RunnableContainer}.</p>
+ * Class which is designed to help with determining if a Runnable or Callable is contained at some 
+ * point within a chain of {@link CallableContainer} or {@link RunnableContainer}.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class ContainerHelper {
@@ -19,7 +18,6 @@ public class ContainerHelper {
    * {@link Collection#remove(Object)} function to remove the container if it is found.
    * 
    * @since 2.0.0
-   * 
    * @param source source collection to search over
    * @param compareTo Runnable to compare against in search
    * @return {@code true} if collection was modified
@@ -43,7 +41,6 @@ public class ContainerHelper {
    * {@link Collection#remove(Object)} function to remove the container if it is found.
    * 
    * @since 2.0.0
-   * 
    * @param source source collection to search over
    * @param compareTo Callable to compare against in search
    * @return {@code true} if collection was modified
@@ -227,9 +224,9 @@ public class ContainerHelper {
    * Takes in a list of runnable containers, and instead makes a list of the runnables which are 
    * contained in each item of the list.
    * 
+   * @since 4.0.0
    * @param sourceList List of runnable containers to get interior runnable from
    * @return A list of runnables which were contained in the source list
-   * @since 4.0.0
    */
   public static List<Runnable> getContainedRunnables(List<? extends RunnableContainer> sourceList) {
     List<Runnable> result = new ArrayList<>(sourceList.size());

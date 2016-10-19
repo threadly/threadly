@@ -9,21 +9,20 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Producer consumer problems are very frequent within multi-threaded code.  This class is 
+ * Producer consumer problems are very frequent within multi-threaded code.  This class is 
  * designed to be a throttle for both sides of the problem.  It takes in a {@link BlockingQueue} 
  * so that items are only consumed as they become available.  At the same time it has a 
  * {@link ConsumerAcceptor} that will only accept items as it is ready.  By accepting on the same 
  * thread as the consumer it will only try to take more items after the 
- * {@link ConsumerAcceptor#acceptConsumedItem(Object)} call returns.</p>
- * 
- * <p>Another way to look at it, this class provides the thread to handle blocking when consuming 
- * from a {@link BlockingQueue}.</p>
- * 
- * <p>Keep in mind that this class in no way attempts to solve the problem if the program is 
+ * {@link ConsumerAcceptor#acceptConsumedItem(Object)} call returns.
+ * <p>
+ * Another way to look at it, this class provides the thread to handle blocking when consuming 
+ * from a {@link BlockingQueue}.
+ * <p>
+ * Keep in mind that this class in no way attempts to solve the problem if the program is 
  * producing faster than the consumer accepts.  In those conditions the queue will still continue 
- * to grow, and consume memory.</p>
+ * to grow, and consume memory.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  * @param <T> Type of items contained in the queue to be consumed
  */
@@ -112,9 +111,8 @@ public class BlockingQueueConsumer<T> extends AbstractService {
   }
   
   /**
-   * <p>Class which represents our runnable actions for the consumer.</p>
+   * Class which represents our runnable actions for the consumer.
    *  
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   private class ConsumerRunnable implements Runnable {
@@ -137,10 +135,9 @@ public class BlockingQueueConsumer<T> extends AbstractService {
   }
   
   /**
-   * <p>Interface for an implementation which can accept consumed tasks.  You must provide an 
-   * implementation of this interface on construction of the {@link BlockingQueueConsumer}.</p>
+   * Interface for an implementation which can accept consumed tasks.  You must provide an 
+   * implementation of this interface on construction of the {@link BlockingQueueConsumer}.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    * @param <T> Type of item this acceptor will receive
    */

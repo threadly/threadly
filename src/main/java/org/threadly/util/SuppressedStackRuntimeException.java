@@ -1,13 +1,12 @@
 package org.threadly.util;
 
 /**
- * <p>Type of {@link RuntimeException} which does not generate a stack at it's point of creation.  
+ * Type of {@link RuntimeException} which does not generate a stack at it's point of creation.  
  * Generating a stack trace in java is very expensive, and does not always further the understanding 
  * of the type of error (particularly when the exception is wrapping another exception, or is a 
  * communication of state).  In those select conditions using or extending this type of exception 
- * can provide a significant performance gain.</p>
+ * can provide a significant performance gain.
  * 
- * @author jent - Mike Jensen
  * @since 4.8.0
  */
 public class SuppressedStackRuntimeException extends RuntimeException {
@@ -62,7 +61,7 @@ public class SuppressedStackRuntimeException extends RuntimeException {
    * Checked at construction if a true stack should be provided or not.  This can overridden to
    * provide {@code false} result so that the real stack trace can be reported.  Otherwise this will
    * default to doing what this class is designed to do (avoid stack generation).  
-   * 
+   * <p>
    * If overriding be aware that this is checked very early on, before any dynamic class values can 
    * be set, and thus should be referencing a constant (static) value.
    *

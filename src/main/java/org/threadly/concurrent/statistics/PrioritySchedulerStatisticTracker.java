@@ -16,14 +16,13 @@ import org.threadly.util.Clock;
 import org.threadly.util.Pair;
 
 /**
- * <p>An implementation of {@link PriorityScheduler} which tracks run and usage statistics.  This 
- * is designed for testing and troubleshooting.  It has a little more overhead from the normal 
- * {@link PriorityScheduler}.</p>
+ * An implementation of {@link PriorityScheduler} which tracks run and usage statistics.  This is 
+ * designed for testing and troubleshooting.  It has a little more overhead from the normal 
+ * {@link PriorityScheduler}.
+ * <p>
+ * It helps give insight in how long tasks are running, how well the thread pool is being 
+ * utilized, as well as execution frequency.
  * 
- * <p>It helps give insight in how long tasks are running, how well the thread pool is being 
- * utilized, as well as execution frequency.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.5.0 (since 1.0.0 at org.threadly.concurrent)
  */
 public class PrioritySchedulerStatisticTracker extends PriorityScheduler 
@@ -35,7 +34,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
    * threads being daemon threads.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -51,7 +50,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -69,7 +68,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -89,7 +88,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -111,7 +110,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -132,7 +131,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.  It also  defaults to all newly created 
    * threads being daemon threads.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -149,7 +148,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
    * It also defaults low priority worker wait as 500ms.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -170,7 +169,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -193,7 +192,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -217,7 +216,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
    * also makes low priority tasks execution time less predictable.  
-   * 
+   * <p>
    * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
@@ -484,12 +483,11 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   }
   
   /**
-   * <p>An extending class of {@link WorkerPool}, allowing us to gather statistics about how 
-   * workers are used in the executor.  An example of such statistics are how long tasks are 
-   * delayed from their desired execution.  Another example is how often a worker can be reused vs 
-   * how often they have to be created.</p>
+   * An extending class of {@link WorkerPool}, allowing us to gather statistics about how workers 
+   * are used in the executor.  An example of such statistics are how long tasks are delayed from 
+   * their desired execution.  Another example is how often a worker can be reused vs how often 
+   * they have to be created.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   protected static class StatisticWorkerPool extends WorkerPool {

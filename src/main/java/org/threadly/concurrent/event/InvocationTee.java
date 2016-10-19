@@ -8,9 +8,8 @@ import java.util.concurrent.Executor;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Simple utility for multiplying invocations across multiple instances of a given interface.</p>
+ * Simple utility for multiplying invocations across multiple instances of a given interface.
  * 
- * @author jent - Mike Jensen
  * @since 4.3.0
  */
 @SuppressWarnings("unchecked")
@@ -21,14 +20,14 @@ public class InvocationTee {
    * provided arguments are mutable, and an instance mutates that argument, future invoked 
    * instances may see that modification.  It is not deterministic which order the instances will 
    * be invoked in.  
-   * 
+   * <p>
    * If any listeners throw an exception it will be delegated to 
    * {@link org.threadly.util.ExceptionUtils#handleException(Throwable)}.  So a listener throwing 
    * an exception will NOT interrupt other listeners from being invoked.  If you want you can 
    * handle thrown exceptions by setting an {@link org.threadly.util.ExceptionHandler} into 
    * {@link org.threadly.util.ExceptionUtils}.  Make sure the handler is set it in a way that makes 
    * sense based off what thread will be invoking the returned interface.  
-   * 
+   * <p>
    * Under the hood this depends on {@link ListenerHelper}, and thus has the same limitations.  
    * Most specifically the provided {@code teeInterface} must in fact be an interface, and not a 
    * an abstract class, or other non-interface types.  In addition any invocations called to this 
@@ -46,7 +45,7 @@ public class InvocationTee {
   /**
    * This implementation is variation from {@link #tee(Class, Object...)}, read that documentation 
    * first.  
-   * 
+   * <p>
    * The behavior modifies from that implementation is in how exceptions are handled.  Rather than 
    * handling them and ensuring that all instances are invoked, this will throw the exception.  
    * More specifically when an instance throws an exception it will prevent further instances from 
@@ -88,14 +87,14 @@ public class InvocationTee {
   /**
    * This implementation is variation from {@link #tee(Class, Object...)}, read that documentation 
    * first.  
-   * 
+   * <p>
    * The behavior modifies from that implementation is that all instances will be called by a 
    * executor.  This means that invocations into the returned instance will return immediately, 
    * but instance invocation will happen async.  It is guaranteed that any single instance will NOT 
    * be invoked in parallel.  Thus meaning that if you invoke into the proxy two times before 
    * a give instance finishes processing the first invocation, the second invocation will queue and 
    * only be invoked after the first finishes.  
-   * 
+   * <p>
    * Under the hood {@link DefaultExecutorListenerHelper} is used to provide this behavior.
    * 
    * @param <T> Type representing interface to multiple invocations of

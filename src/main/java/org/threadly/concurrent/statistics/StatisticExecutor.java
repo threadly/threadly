@@ -7,10 +7,9 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.util.Pair;
 
 /**
- * <p>Interface for some basic statistic elements provided by any statistic executor/scheduler or 
- * any executor/scheduler wrappers.</p>
+ * Interface for some basic statistic elements provided by any statistic executor/scheduler or any 
+ * executor/scheduler wrappers.
  * 
- * @author jent
  * @since 4.5.0
  */
 public interface StatisticExecutor extends SubmitterExecutor {
@@ -43,7 +42,7 @@ public interface StatisticExecutor extends SubmitterExecutor {
   /**
    * Gets percentile values for execution delays.  This function accepts any decimal percentile 
    * between zero and one hundred.
-   * 
+   * <p>
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.
    * 
@@ -73,7 +72,7 @@ public interface StatisticExecutor extends SubmitterExecutor {
   /**
    * Gets percentile values for execution duration.  This function accepts any decimal percentile 
    * between zero and one hundred.
-   * 
+   * <p>
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.
    * 
@@ -86,17 +85,17 @@ public interface StatisticExecutor extends SubmitterExecutor {
    * Call to get a list of runnables and stack traces from tasks which have been actively 
    * executing for a longer duration than the one provided.  Time in queue waiting for execution is 
    * not considered as part of the execution duration.  
-   * 
+   * <p>
    * If only the quantity of long running tasks is needed, please use 
    * {@link #getLongRunningTasksQty(long)}.  Since it does not need to generate stack traces it is 
    * a cheaper alternative.
-   * 
+   * <p>
    * The left side of the {@link Pair} is the runnable task submitted.  If the task was submitted 
    * as a {@link java.util.concurrent.Callable} the Runnable will be of type: 
    * {@link org.threadly.concurrent.future.ListenableFutureTask}.  Casting and invoking 
    * {@link org.threadly.concurrent.future.ListenableFutureTask#getContainedCallable()} will allow 
    * you to get to your original {@link java.util.concurrent.Callable}. 
-   * 
+   * <p>
    * The right side of the {@link Pair} is a single sample of what that long running tasks stack 
    * was.  Because these tasks are running concurrently by the time this function returns the 
    * provided tasks may have completed.  
@@ -127,7 +126,7 @@ public interface StatisticExecutor extends SubmitterExecutor {
   /**
    * Clears all collected rolling statistics.  These are the statistics used for averages and are 
    * limited by window sizes.  
-   * 
+   * <p>
    * This does NOT reset the total execution counts.
    */
   public void resetCollectedStats();

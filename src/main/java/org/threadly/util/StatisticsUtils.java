@@ -10,9 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <p>Utilities for getting some basic statistics out of numerical data collections.</p>
+ * Utilities for getting some basic statistics out of numerical data collections.
  * 
- * @author jent - Mike Jensen
  * @since 4.5.0
  */
 public class StatisticsUtils {
@@ -42,7 +41,7 @@ public class StatisticsUtils {
    * zero and one hundred, but requests for 99.9 and 99.99 may return the same result if the sample 
    * set is not large or varied enough.  There is no attempt to extrapolate trends, thus only real 
    * samples are returned.  
-   * 
+   * <p>
    * The returned map's keys correspond exactly to the percentiles provided.  Iterating over the 
    * returned map will iterate in order of the requested percentiles as well.
    * 

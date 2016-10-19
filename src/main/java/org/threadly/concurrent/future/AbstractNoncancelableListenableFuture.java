@@ -1,9 +1,8 @@
 package org.threadly.concurrent.future;
 
 /**
- * <p>Abstract class for futures that can't be canceled.</p>
+ * Abstract class for futures that can't be canceled.
  * 
- * @author jent - Mike Jensen
  * @since 2.1.0
  * @param <T> The result object type returned by this future
  */

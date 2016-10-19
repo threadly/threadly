@@ -13,15 +13,14 @@ import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
 
 /**
- * <p>Class which assist with holding and calling to Runnable listeners.  In parallel designs it 
- * is common to have things subscribe for actions to occur (to later be alerted once an action 
- * occurs).  This class makes it easy to allow things to register as a listener.</p>
- * 
- * <p>For listener designs which are not using runnables, look at {@link ListenerHelper}.  
+ * Class which assist with holding and calling to Runnable listeners.  In parallel designs it is 
+ * common to have things subscribe for actions to occur (to later be alerted once an action 
+ * occurs).  This class makes it easy to allow things to register as a listener.
+ * <p>
+ * For listener designs which are not using runnables, look at {@link ListenerHelper}.  
  * {@link ListenerHelper} allows you to create similar designs while using any any interface to 
- * call back on.</p>
+ * call back on.
  * 
- * @author jent - Mike Jensen
  * @since 2.2.0 (since 1.1.0 as org.threadly.concurrent.ListenerHelper)
  */
 public class RunnableListenerHelper {
@@ -63,7 +62,7 @@ public class RunnableListenerHelper {
    * Will call all listeners that are registered with this helper.  If any listeners were provided 
    * without an executor, they will execute in the calling thread.  No exceptions will be thrown 
    * in this calling thread if any exceptions occur from the listeners.
-   * 
+   * <p>
    * If calling multiple times, this will only have an effect if constructed with a {@code false}, 
    * indicating that listeners can expect to be called multiple times.  In which case all 
    * listeners that have registered will be called again.  If this was constructed with the 
@@ -80,7 +79,7 @@ public class RunnableListenerHelper {
    * Checks to see if listeners can be called (without the need of synchronization).  This will 
    * throw an exception if we were expected to only call once, and that call has already been 
    * invoked.
-   * 
+   * <p>
    * Assuming this was constructed to only call listeners once, this call sets done to true so 
    * that newly added listeners will be executed immediately.
    */
@@ -156,7 +155,7 @@ public class RunnableListenerHelper {
    * {@code true} (listeners can only be called once) then this listener will be called 
    * immediately.  If the executor is null it will be called either on this thread or the thread 
    * calling {@link #callListeners()} (depending on the previous condition).
-   * 
+   * <p>
    * If an {@link Executor} is provided, and that Executor is NOT single threaded, the listener 
    * may be called concurrently.  You can ensure this wont happen by using the 
    * {@link org.threadly.concurrent.wrapper.KeyDistributedExecutor} to get an executor from a 

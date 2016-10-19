@@ -1,11 +1,10 @@
 package org.threadly.util;
 
 /**
- * <p>Simple class to do some argument verifying which is common within threadly.  This is 
- * designed to primarily reduce bulk/repeated code throughout the base, as well as to ensure that 
- * thrown exceptions have a common format for the exception message.</p>
+ * Simple class to do some argument verifying which is common within threadly.  This is designed 
+ * to primarily reduce bulk/repeated code throughout the base, as well as to ensure that thrown 
+ * exceptions have a common format for the exception message.
  * 
- * @author jent - Mike Jensen
  * @since 2.4.0
  */
 public class ArgumentVerifier {

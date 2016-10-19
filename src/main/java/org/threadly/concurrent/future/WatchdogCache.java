@@ -9,11 +9,10 @@ import java.util.function.Function;
 import org.threadly.concurrent.SubmitterScheduler;
 
 /**
- * <p>A class which handles a collection of  {@link Watchdog} instances.  Because the timeout for 
+ * A class which handles a collection of  {@link Watchdog} instances.  Because the timeout for 
  * {@link Watchdog} is set in the constructor {@link Watchdog#Watchdog(long, boolean)}, you can 
- * use this class to be more flexible and set the timeout at the time of watching the future.</p>
+ * use this class to be more flexible and set the timeout at the time of watching the future.
  * 
- * @author jent - Mike Jensen
  * @since 4.0.0
  */
 public class WatchdogCache {
@@ -87,11 +86,10 @@ public class WatchdogCache {
   }
   
   /**
-   * <p>Runnable which looks over all cached {@link Watchdog} instances to see if any are no 
-   * longer active.  Removing the inactive ones as they are found.  This also handles rescheduling 
-   * itself if future inspection may be needed.</p>
+   * Runnable which looks over all cached {@link Watchdog} instances to see if any are no longer 
+   * active.  Removing the inactive ones as they are found.  This also handles rescheduling itself 
+   * if future inspection may be needed.
    * 
-   * @author jent - Mike Jensen
    * @since 4.0.0
    */
   private class CleanRunner implements Runnable {

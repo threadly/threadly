@@ -11,19 +11,18 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
- * <p>This class is designed to limit how much parallel execution happens on a provided 
+ * This class is designed to limit how much parallel execution happens on a provided 
  * {@link SubmitterScheduler}.  This allows the implementor to have one thread pool for all 
  * their code, and if they want certain sections to have less levels of parallelism (possibly 
  * because those those sections would completely consume the global pool), they can wrap the 
- * executor in this class.</p>
+ * executor in this class.
+ * <p>
+ * Thus providing you better control on the absolute thread count and how much parallelism can 
+ * occur in different sections of the program.
+ * <p>
+ * This is an alternative from having to create multiple thread pools.  By using this you also are 
+ * able to accomplish more efficiently thread use than multiple thread pools would.
  * 
- * <p>Thus providing you better control on the absolute thread count and how much parallelism can 
- * occur in different sections of the program.</p>
- * 
- * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
- * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class SubmitterSchedulerLimiter extends ExecutorLimiter implements SubmitterScheduler {
@@ -104,10 +103,9 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
   }
   
   /**
-   * <p>Small runnable that allows scheduled tasks to pass through the same execution queue that 
-   * immediate execution has to.</p>
+   * Small runnable that allows scheduled tasks to pass through the same execution queue that 
+   * immediate execution has to.
    * 
-   * @author jent - Mike Jensen
    * @since 1.1.0
    */
   protected class DelayedExecutionRunnable implements Runnable, RunnableContainer {
@@ -137,10 +135,8 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
   }
 
   /**
-   * <p>Wrapper for recurring tasks that reschedule with a given delay after completing 
-   * execution.</p>
+   * Wrapper for recurring tasks that reschedule with a given delay after completing execution.
    * 
-   * @author jent - Mike Jensen
    * @since 3.1.0
    */
   protected class RecurringDelayWrapper extends LimiterRunnableWrapper {
@@ -161,9 +157,8 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
   }
 
   /**
-   * <p>Wrapper for recurring tasks that reschedule at a fixed rate after completing execution.</p>
+   * Wrapper for recurring tasks that reschedule at a fixed rate after completing execution.
    * 
-   * @author jent - Mike Jensen
    * @since 3.1.0
    */
   protected class RecurringRateWrapper extends LimiterRunnableWrapper {

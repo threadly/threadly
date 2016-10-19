@@ -5,12 +5,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <p>Completed implementation of {@link ListenableFuture} that will immediately provide a failure 
+ * Completed implementation of {@link ListenableFuture} that will immediately provide a failure 
  * condition.  Meaning listeners added will immediately be ran/executed, {@link FutureCallback}'s 
  * will immediately get called with the throwable provided, and {@link #get()} will immediately 
- * throw an {@link ExecutionException}.</p>
+ * throw an {@link ExecutionException}.
  * 
- * @author jent - Mike Jensen
  * @since 1.3.0
  * @param <T> The result object type returned by this future
  */

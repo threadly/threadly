@@ -1,13 +1,12 @@
 package org.threadly.concurrent.future;
 
 /**
- * <p>An abstract implementation of {@link FutureCallback} where the result is ignored.  This can 
+ * An abstract implementation of {@link FutureCallback} where the result is ignored.  This can 
  * allow you to easily do an action only on a failure condition (with the failure provided by 
- * {@link FutureCallback#handleFailure(Throwable)}).</p>
+ * {@link FutureCallback#handleFailure(Throwable)}).
+ * <p>
+ * For simpler construction using a lambda look at {@link FutureCallbackFailureHandler}.
  * 
- * <p>For simpler construction using a lambda look at {@link FutureCallbackFailureHandler}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.4.0
  */
 public abstract class AbstractFutureCallbackFailureHandler implements FutureCallback<Object> {

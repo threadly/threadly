@@ -8,10 +8,9 @@ import org.threadly.concurrent.wrapper.ThrowableSuppressingRunnable;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor} to use 
- * that implementation with the {@link org.threadly.concurrent.SubmitterScheduler}.</p>
+ * This is a wrapper for the {@link java.util.concurrent.ScheduledThreadPoolExecutor} to use that 
+ * implementation with the {@link org.threadly.concurrent.SubmitterScheduler}.
  * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent)
  */
 public class ScheduledExecutorServiceWrapper extends AbstractSubmitterScheduler {

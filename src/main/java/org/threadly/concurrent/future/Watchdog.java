@@ -12,12 +12,11 @@ import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.Clock;
 
 /**
- * <p>This class is to guarantee that a given {@link ListenableFuture} is completed within a 
+ * This class is to guarantee that a given {@link ListenableFuture} is completed within a 
  * timeout.  Once the timeout is reached, if the future has not already completed this will 
  * attempt to invoke {@link ListenableFuture#cancel(boolean)}.  The future should then throw a 
- * {@link java.util.concurrent.CancellationException} on a {@link ListenableFuture#get()} call.</p>
+ * {@link java.util.concurrent.CancellationException} on a {@link ListenableFuture#get()} call.
  * 
- * @author jent - Mike Jensen
  * @since 4.0.0
  */
 public class Watchdog {
@@ -102,8 +101,8 @@ public class Watchdog {
   
   /**
    * Watch a given {@link ListenableFuture} to ensure that it completes within the constructed 
-   * time limit.  If the future is not marked as done by the time limit then it will be 
-   * completed by invoking {@link ListenableFuture#cancel(boolean)}.  Weather a {@code true} or 
+   * time limit.  If the future is not marked as done by the time limit then it will be completed 
+   * by invoking {@link ListenableFuture#cancel(boolean)}.  Weather a {@code true} or 
    * {@code false} will be provided to interrupt the running thread is dependent on how this 
    * {@link Watchdog} was constructed.
    * 
@@ -128,10 +127,9 @@ public class Watchdog {
   }
 
   /**
-   * <p>Just a simple wrapper class so we can hold not just the future, but what time the future 
-   * will expire at.</p>
+   * Just a simple wrapper class so we can hold not just the future, but what time the future will 
+   * expire at.
    * 
-   * @author jent - Mike Jensen
    * @since 4.0.0
    */
   private class FutureWrapper {
@@ -145,11 +143,10 @@ public class Watchdog {
   }
 
   /**
-   * <p>This runnable inspects over the queue looking for futures which have expired and need to 
-   * be canceled.  It may reschedule itself if it is not able to fully examine the queue (because 
-   * not all items are currently ready for inspection).</p>
+   * This runnable inspects over the queue looking for futures which have expired and need to be 
+   * canceled.  It may reschedule itself if it is not able to fully examine the queue (because not 
+   * all items are currently ready for inspection).
    * 
-   * @author jent - Mike Jensen
    * @since 4.0.0
    */
   private class CheckRunner extends ReschedulingOperation {

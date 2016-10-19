@@ -5,10 +5,9 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * <p>A simple tuple implementation (every library needs one, right?).  This is designed to be a 
- * minimal and light weight pair holder.</p>
+ * A simple tuple implementation (every library needs one, right?).  This is designed to be a 
+ * minimal and light weight pair holder.
  * 
- * @author jent - Mike Jensen
  * @since 4.4.0
  * @param <L> Type of 'left' object to be held
  * @param <R> Type of 'right' object to be held

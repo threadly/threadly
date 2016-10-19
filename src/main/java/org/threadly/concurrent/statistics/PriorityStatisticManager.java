@@ -18,13 +18,12 @@ import org.threadly.util.Pair;
 import org.threadly.util.StatisticsUtils;
 
 /**
- * <p>This class primarily holds the structures used to store the statistics.  These can not be 
+ * This class primarily holds the structures used to store the statistics.  These can not be 
  * maintained in the parent class since sub classes need to be able to access them.  This exists 
  * primarily to reduce code duplication between priority stats trackers (since java can only 
  * extend one class).  But it also is important as we don't want our the holding class to prevent 
- * garbage collection due to held references.</p>
+ * garbage collection due to held references.
  * 
- * @author jent - Mike Jensen
  * @since 4.5.0
  */
 class PriorityStatisticManager {
@@ -146,7 +145,7 @@ class PriorityStatisticManager {
   
   /**
    * Reduces the list size to be within the max window size.
-   * 
+   * <p>
    * Should have the list synchronized/locked before calling.
    * 
    * @param list Collection to check size of and ensure is under max size
@@ -327,9 +326,8 @@ class PriorityStatisticManager {
   }
   
   /**
-   * <p>Wrapper for {@link Runnable} for tracking statistics.</p>
+   * Wrapper for {@link Runnable} for tracking statistics.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   protected static class TaskStatWrapper implements Runnable, RunnableContainer {

@@ -4,11 +4,10 @@ import org.threadly.concurrent.RunnableContainer;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>Class that is designed to wrap a runnable, and prevent any throwables from propagating out 
- * of the run function.  If a throwable is thrown, it will be provided to 
- * {@link ExceptionUtils#handleException(Throwable)}.</p>
+ * Class that is designed to wrap a runnable, and prevent any throwables from propagating out of 
+ * the run function.  If a throwable is thrown, it will be provided to 
+ * {@link ExceptionUtils#handleException(Throwable)}.
  * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 2.3.0 at org.threadly.concurrent)
  */
 public class ThrowableSuppressingRunnable implements RunnableContainer, Runnable {

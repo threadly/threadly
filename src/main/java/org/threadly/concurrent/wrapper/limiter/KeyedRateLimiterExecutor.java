@@ -21,20 +21,19 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.StringUtils;
 
 /**
- * <p>Similar to {@link RateLimiterExecutor} except that the rate is applied on a per key basis.  
+ * Similar to {@link RateLimiterExecutor} except that the rate is applied on a per key basis.  
  * Tasks submitted to this executor must all be associated to a key.  The key is compared by using 
  * {@link Object#hashCode()} and {@link Object#equals(Object)}.  For any given key, a rate is 
- * applied, but keys which don't match with the above checks will not impact each other.</p>
- * 
- * <p>Because different keys don't interact, this is not capable of providing a global rate limit 
- * (unless the key quantity is known and restricted).</p>
- * 
- * <p>This differs from {@link KeyedExecutorLimiter} in that while that limits concurrency, this 
+ * applied, but keys which don't match with the above checks will not impact each other.
+ * <p>
+ * Because different keys don't interact, this is not capable of providing a global rate limit 
+ * (unless the key quantity is known and restricted).
+ * <p>
+ * This differs from {@link KeyedExecutorLimiter} in that while that limits concurrency, this 
  * limits by rate (thus there may be periods where nothing is execution, or if executions are long 
  * things may run concurrently).  Please see {@link RateLimiterExecutor} for more details about how 
- * rate is limited.</p>
+ * rate is limited.
  * 
- * @author jent - Mike Jensen
  * @since 4.7.0
  */
 public class KeyedRateLimiterExecutor {
@@ -57,7 +56,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Constructs a new key rate limiting executor.  Using sensible default options.
-   * 
+   * <p>
    * This will schedule tasks out infinitely far in order to maintain rate.  If you want tasks to 
    * be rejected at a certain point consider using 
    * {@link #KeyedRateLimiterExecutor(SubmitterScheduler, double, long)}.
@@ -73,7 +72,7 @@ public class KeyedRateLimiterExecutor {
    * Constructs a new key rate limiting executor.  Allowing the specification of thread naming 
    * behavior.  Providing null or empty for the {@code subPoolName} and {@code false} for appending 
    * the key to the thread name will result in no thread name adjustments occurring.
-   * 
+   * <p>
    * This will schedule tasks out infinitely far in order to maintain rate.  If you want tasks to 
    * be rejected at a certain point consider using 
    * {@link #KeyedRateLimiterExecutor(SubmitterScheduler, double, long, String, boolean)}.
@@ -91,7 +90,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Constructs a new key rate limiting executor.  
-   * 
+   * <p>
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
@@ -108,7 +107,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Constructs a new key rate limiting executor.  
-   * 
+   * <p>
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
@@ -130,7 +129,7 @@ public class KeyedRateLimiterExecutor {
    * Constructs a new key rate limiting executor.  Allowing the specification of thread naming 
    * behavior.  Providing null or empty for the {@code subPoolName} and {@code false} for appending 
    * the key to the thread name will result in no thread name adjustments occurring.    
-   * 
+   * <p>
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
@@ -153,7 +152,7 @@ public class KeyedRateLimiterExecutor {
    * Constructs a new key rate limiting executor.  Allowing the specification of thread naming 
    * behavior.  Providing null or empty for the {@code subPoolName} and {@code false} for appending 
    * the key to the thread name will result in no thread name adjustments occurring.    
-   * 
+   * <p>
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
@@ -177,11 +176,11 @@ public class KeyedRateLimiterExecutor {
   /**
    * Constructs a new key rate limiting executor.  This constructor allows you to set both the 
    * thread naming behavior as well as the level of parallelism expected for task submission.  
-   * 
+   * <p>
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -299,7 +298,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Provide a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#execute(Runnable)} and 
    * {@link RateLimiterExecutor#execute(Runnable)}.
    * 
@@ -312,7 +311,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Provide a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#execute(Runnable)} and 
    * {@link RateLimiterExecutor#execute(double, Runnable)}.
    * 
@@ -331,7 +330,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Submit a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Runnable)} and 
    * {@link RateLimiterExecutor#submit(Runnable)}.
    * 
@@ -345,7 +344,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Submit a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Runnable)} and 
    * {@link RateLimiterExecutor#submit(double, Runnable)}.
    * 
@@ -360,7 +359,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Submit a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Runnable, Object)} and 
    * {@link RateLimiterExecutor#submit(Runnable, Object)}.
    * 
@@ -376,7 +375,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Submit a task to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Runnable, Object)} and 
    * {@link RateLimiterExecutor#submit(double, Runnable, Object)}.
    * 
@@ -393,7 +392,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Submit a callable to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Callable)} and 
    * {@link RateLimiterExecutor#submit(Callable)}.
    * 
@@ -408,7 +407,7 @@ public class KeyedRateLimiterExecutor {
   
   /**
    * Submit a callable to be run with a given thread key.
-   * 
+   * <p>
    * See also: {@link SubmitterExecutor#submit(Callable)} and 
    * {@link RateLimiterExecutor#submit(double, Callable)}.
    * 
@@ -512,11 +511,10 @@ public class KeyedRateLimiterExecutor {
   }
   
   /**
-   * <p>Task which checks to see if a limiter has become idle.  If so it removes the limiter in a 
+   * Task which checks to see if a limiter has become idle.  If so it removes the limiter in a 
    * thread safe way.  If the limiter is still active then it will schedule itself to check again 
-   * later.</p>
+   * later.
    * 
-   * @author jent - Mike Jensen
    * @since 4.7.0
    */
   protected class LimiterChecker implements Runnable {

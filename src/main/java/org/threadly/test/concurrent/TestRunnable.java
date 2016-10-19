@@ -7,13 +7,11 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.Clock;
 
 /**
- * <p>Generic runnable implementation that can be used in unit tests for verifying execution 
- * occurred.</p>
+ * Generic runnable implementation that can be used in unit tests for verifying execution occurred.
+ * <p>
+ * This structure is used extensively within threadly's own unit tests.  Please use those as 
+ * examples using this class.
  * 
- * <p>This structure is used extensively within threadly's own unit tests.  Please use those as 
- * examples using this class.</p>
- * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class TestRunnable implements Runnable {
@@ -36,7 +34,7 @@ public class TestRunnable implements Runnable {
 
   /**
    * Constructs a new runnable for unit testing.  
-   * 
+   * <p>
    * This constructor allows the parameter for the runnable to sleep after {@link #handleRunStart()} 
    * was called and before {@link #handleRunFinish()} is called.
    * 
@@ -252,7 +250,7 @@ public class TestRunnable implements Runnable {
   /**
    * Function to be overloaded by extending classes if more data or operations need to happen at 
    * the run point.  
-   * 
+   * <p>
    * This is also the first call to be made in the runnable, but all necessary 
    * {@link TestRunnable} actions are in a finally block so it is safe to throw any exceptions 
    * necessary here.
@@ -267,7 +265,7 @@ public class TestRunnable implements Runnable {
   /**
    * Function to be overloaded by extending classes if more data or operations need to happen at 
    * the run point.  
-   * 
+   * <p>
    * This is the last call to be made in the runnable.  If you want a {@link RuntimeException} to 
    * get thrown to the caller, it must be thrown from here.
    */

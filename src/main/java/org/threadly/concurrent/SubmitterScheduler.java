@@ -5,10 +5,9 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.future.ListenableFuture;
 
 /**
- * <p>A thread pool for scheduling tasks with provided futures.  This scheduler submits 
- * runnables/callables and returns futures for when they will be completed.</p>
+ * A thread pool for scheduling tasks with provided futures.  This scheduler submits 
+ * runnables/callables and returns futures for when they will be completed.
  * 
- * @author jent - Mike Jensen
  * @since 4.3.0 (since 1.0.0 as SubmitterSchedulerInterface_
  */
 public interface SubmitterScheduler extends SubmitterExecutor {
@@ -24,7 +23,7 @@ public interface SubmitterScheduler extends SubmitterExecutor {
    * Schedule a fixed delay recurring task to run.  The recurring delay time will be from the 
    * point where execution has finished.  So the execution frequency is the 
    * {@code recurringDelay + runtime} for the provided task.  
-   * 
+   * <p>
    * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
    * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
    * every run, the task will continue to be executed at the provided recurring delay (possibly 
@@ -41,7 +40,7 @@ public interface SubmitterScheduler extends SubmitterExecutor {
    * regardless of how long task execution takes.  A given runnable will not run concurrently 
    * (unless it is submitted to the scheduler multiple times).  Instead of execution takes longer 
    * than the period, the next run will occur immediately (given thread availability in the pool).  
-   * 
+   * <p>
    * Unlike {@link java.util.concurrent.ScheduledExecutorService} if the task throws an exception, 
    * subsequent executions are NOT suppressed or prevented.  So if the task throws an exception on 
    * every run, the task will continue to be executed at the provided recurring delay (possibly 
@@ -57,7 +56,7 @@ public interface SubmitterScheduler extends SubmitterExecutor {
    * Schedule a task with a given delay.  There is a slight increase in load when using 
    * {@link #submitScheduled(Runnable, long)} over {@link #schedule(Runnable, long)}.  So this 
    * should only be used when the future is necessary.
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has 
    * completed.
    * 

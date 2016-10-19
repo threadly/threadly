@@ -7,13 +7,12 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
- * <p>Class for helping calculate the offset for scheduling tasks.  For example if you want a task 
- * to run at 10 minutes after the hour, every hour, you can use {@link #getDelayTillMinute(int)} 
- * to calculate the initial delay needed when scheduling with 
+ * Class for helping calculate the offset for scheduling tasks.  For example if you want a task to 
+ * run at 10 minutes after the hour, every hour, you can use {@link #getDelayTillMinute(int)} to 
+ * calculate the initial delay needed when scheduling with 
  * {@link SubmitterScheduler#scheduleAtFixedRate(Runnable, long, long)}, and then provide 1 hour 
- * in milliseconds for the "period".</p>
+ * in milliseconds for the "period".
  * 
- * @author jent - Mike Jensen
  * @since 3.5.0
  */
 public class SchedulingUtils {
@@ -22,7 +21,7 @@ public class SchedulingUtils {
   /**
    * Call to calculate how many milliseconds until the provided minute.  If we are past the 
    * provided minute, it will be the milliseconds until we reach that minute with the NEXT hour.  
-   * 
+   * <p>
    * Because of use of {@link Clock#lastKnownTimeMillis()}, this calculation will only be accurate 
    * within about 100 milliseconds.  Of course if provided to a scheduler, depending on it's work 
    * load that variation may be greater.
@@ -40,7 +39,7 @@ public class SchedulingUtils {
   /**
    * Call to calculate how many milliseconds until the provided minute,  If we are past the 
    * provided minute, it will be the milliseconds until we reach that minute with the NEXT hour.  
-   * 
+   * <p>
    * Because of use of {@link Clock#lastKnownTimeMillis()}, this calculation will only be accurate 
    * within about 100 milliseconds.  Of course if provided to a scheduler, depending on it's work 
    * load that variation may be greater.
@@ -67,11 +66,11 @@ public class SchedulingUtils {
   /**
    * Call to calculate how many milliseconds until the provided time.  If we are past the 
    * provided hour/minute, it will be the milliseconds until we reach that time with the NEXT day.  
-   * 
+   * <p>
    * It is important to note that the time zone for this hour is UTC.  If you want to use this for 
    * local time, just pass the hour through {@link #shiftLocalHourToUTC(int)}.  This will convert 
    * a local time's hour to UTC so that it can be used in this invocation.  
-   * 
+   * <p>
    * Because of use of {@link Clock#lastKnownTimeMillis()}, this calculation will only be accurate 
    * within about 100 milliseconds.  Of course if provided to a scheduler, depending on it's work 
    * load that variation may be greater.
@@ -92,11 +91,11 @@ public class SchedulingUtils {
   /**
    * Call to calculate how many milliseconds until the provided time.  If we are past the 
    * provided hour/minute, it will be the milliseconds until we reach that time with the NEXT day.  
-   * 
+   * <p>
    * It is important to note that the time zone for this hour is UTC.  If you want to use this for 
    * local time, just pass the hour through {@link #shiftLocalHourToUTC(int)}.  This will convert 
    * a local time's hour to UTC so that it can be used in this invocation.  
-   * 
+   * <p>
    * Because of use of {@link Clock#lastKnownTimeMillis()}, this calculation will only be accurate 
    * within about 100 milliseconds.  Of course if provided to a scheduler, depending on it's work 
    * load that variation may be greater.

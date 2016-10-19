@@ -5,17 +5,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This structure allows for more controlled levels of parallelism.  It helps in allowing 
- * threads to only lock when their interest are the same.  It is guaranteed that every key 
- * provided will return the same lock.  But it is not guaranteed that two different keys will not 
- * have the same lock.</p>
- * 
- * <p>Currently this class only provides objects that should be synchronized on.  Compared to 
+ * This structure allows for more controlled levels of parallelism.  It helps in allowing threads 
+ * to only lock when their interest are the same.  It is guaranteed that every key provided will 
+ * return the same lock.  But it is not guaranteed that two different keys will not have the same 
+ * lock.
+ * <p>
+ * Currently this class only provides objects that should be synchronized on.  Compared to 
  * {@link java.util.concurrent.locks.Lock} objects which have {@code lock()}, {@code tryLock()}, 
  * and {@code unlock()} functionality.  This choice was primarily because of the way the internals 
- * of threadly work.</p>
+ * of threadly work.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class StripedLock {

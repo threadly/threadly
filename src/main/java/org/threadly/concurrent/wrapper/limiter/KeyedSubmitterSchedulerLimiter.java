@@ -5,16 +5,15 @@ import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterSched
 import org.threadly.util.StringUtils;
 
 /**
- * <p>This is a cross between the {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} 
- * and a {@link SubmitterSchedulerLimiter}.  This is designed to limit concurrency for a given 
+ * This is a cross between the {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} and 
+ * a {@link SubmitterSchedulerLimiter}.  This is designed to limit concurrency for a given 
  * thread, but permit more than one thread to run at a time for a given key.  If the desired 
  * effect is to have a single thread per key, 
- * {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} is a much better option.</p>
+ * {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} is a much better option.
+ * <p>
+ * The easiest way to use this class would be to have it distribute out schedulers through 
+ * {@link #getSubmitterSchedulerForKey(Object)}.
  * 
- * <p>The easiest way to use this class would be to have it distribute out schedulers through 
- * {@link #getSubmitterSchedulerForKey(Object)}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimiter<SubmitterSchedulerLimiter> {
@@ -47,7 +46,7 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
   /**
    * Construct a new {@link KeyedSubmitterSchedulerLimiter} providing the backing scheduler, the 
    * maximum concurrency per unique key, and how keyed limiter threads should be named.
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 

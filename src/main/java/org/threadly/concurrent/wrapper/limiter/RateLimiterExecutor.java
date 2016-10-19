@@ -12,21 +12,20 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
- * <p>Another way to limit executions on a scheduler.  Unlike the {@link ExecutorLimiter} this 
- * does not attempt to limit concurrency.  Instead it schedules tasks on a scheduler so that given 
+ * Another way to limit executions on a scheduler.  Unlike the {@link ExecutorLimiter} this does 
+ * not attempt to limit concurrency.  Instead it schedules tasks on a scheduler so that given 
  * permits are only used at a rate per second.  This can be used for limiting the rate of data 
- * that you want to put on hardware resource (in a non-blocking way).</p>
- * 
- * <p>It is important to note that if something is executed and it exceeds the rate, it will be 
- * future tasks which are delayed longer.</p>
- * 
- * <p>It is also important to note that it is the responsibility of the application to not be 
+ * that you want to put on hardware resource (in a non-blocking way).
+ * <p>
+ * It is important to note that if something is executed and it exceeds the rate, it will be 
+ * future tasks which are delayed longer.
+ * <p>
+ * It is also important to note that it is the responsibility of the application to not be 
  * providing more tasks into this limiter than can be consumed at the rate.  Since this limiter 
  * will not block, if provided tasks too fast they could continue to be scheduled out further and 
  * further.  This should be used to flatten out possible bursts that could be used in the 
- * application, it is not designed to be a push back mechanism for the application.</p>
+ * application, it is not designed to be a push back mechanism for the application.
  * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent.limiter)
  */
 public class RateLimiterExecutor extends AbstractSubmitterExecutor {
@@ -41,7 +40,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
    * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
    * average permit amount per task, per second.  
-   * 
+   * <p>
    * This will schedule tasks out infinitely far in order to maintain rate.  If you want tasks to 
    * be rejected at a certain point consider using 
    * {@link #RateLimiterExecutor(SubmitterScheduler, double, long)}.
@@ -57,7 +56,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
    * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
    * average permit amount per task, per second.  
-   * 
+   * <p>
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
    * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
    * thrown instead of scheduling the task.
@@ -76,7 +75,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
    * scheduler, so it is assumed that the scheduler will have enough threads to handle the 
    * average permit amount per task, per second.  
-   * 
+   * <p>
    * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
    * beyond this delay, then the provided {@link RejectedExecutionHandler} will be invoked.
    * 

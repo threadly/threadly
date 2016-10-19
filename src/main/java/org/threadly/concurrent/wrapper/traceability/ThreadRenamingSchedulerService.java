@@ -5,11 +5,10 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.SchedulerService;
 
 /**
- * <p>Class which wraps a {@link SchedulerService} and wraps all supplied tasks in a 
+ * Class which wraps a {@link SchedulerService} and wraps all supplied tasks in a 
  * {@link ThreadRenamingRunnable}.  This allows you to make a pool where all tasks submitted 
- * inside it have the threads named in an identifiable way.</p>
+ * inside it have the threads named in an identifiable way.
  * 
- * @author jent
  * @since 4.8.0 (since 4.3.0 at org.threadly.concurrent.ThreadRenamingSchedulerServiceWrapper)
  */
 public class ThreadRenamingSchedulerService extends ThreadRenamingSubmitterScheduler 

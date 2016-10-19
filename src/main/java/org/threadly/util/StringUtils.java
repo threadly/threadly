@@ -3,9 +3,8 @@ package org.threadly.util;
 import java.util.Random;
 
 /**
- * <p>Some small utilities and constants around handling strings.</p>
+ * Some small utilities and constants around handling strings.
  * 
- * @author jent - Mike Jensen
  * @since 2.1.0
  */
 public class StringUtils {

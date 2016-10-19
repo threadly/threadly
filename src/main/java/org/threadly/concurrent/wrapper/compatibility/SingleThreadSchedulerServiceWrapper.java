@@ -12,14 +12,13 @@ import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.concurrent.future.ScheduledFutureDelegate;
 
 /**
- * <p>This is a wrapper for {@link SingleThreadScheduler} to be a drop in replacement for any 
+ * This is a wrapper for {@link SingleThreadScheduler} to be a drop in replacement for any 
  * {@link java.util.concurrent.ScheduledExecutorService} (AKA the 
  * {@link java.util.concurrent.ScheduledThreadPoolExecutor} 
  * interface). It does make some performance sacrifices to adhere to this interface, but those are 
  * pretty minimal.  The largest compromise in here is easily scheduleAtFixedRate (which you should 
- * read the javadocs for if you need).</p>
+ * read the javadocs for if you need).
  * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent)
  */
 public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorServiceWrapper {

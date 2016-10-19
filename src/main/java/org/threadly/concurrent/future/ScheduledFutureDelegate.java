@@ -8,10 +8,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 /**
- * <p>Implementation of the {@link ListenableScheduledFuture} interface.  This design delegates 
- * between a {@link Delayed} instance and {@link ListenableFuture} instance..</p>
+ * Implementation of the {@link ListenableScheduledFuture} interface.  This design delegates 
+ * between a {@link Delayed} instance and {@link ListenableFuture} instance.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  * @param <T> The result object type returned by this future
  */

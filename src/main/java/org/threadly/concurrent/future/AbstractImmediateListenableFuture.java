@@ -4,9 +4,8 @@ import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 /**
- * <p>Abstract class for futures that can't be canceled and are already complete.</p>
+ * Abstract class for futures that can't be canceled and are already complete.
  * 
- * @author jent - Mike Jensen
  * @since 1.3.0
  * @param <T> The result object type returned by this future
  */

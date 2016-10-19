@@ -1,11 +1,10 @@
 package org.threadly.util;
 
 /**
- * <p>A special type of {@link Pair} which allows the stored references to be updated after 
+ * A special type of {@link Pair} which allows the stored references to be updated after 
  * creation.  Note that stored references are not {@code volatile} or {@code synchronized}, so 
- * thread access must be guarded in synchronization.</p>
+ * thread access must be guarded in synchronization.
  * 
- * @author jent - Mike Jensen
  * @since 4.4.0
  * @param <L> Type of 'left' object to be held
  * @param <R> Type of 'right' object to be held

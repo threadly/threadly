@@ -6,10 +6,9 @@ import java.util.concurrent.Executor;
 import org.threadly.concurrent.future.ListenableFuture;
 
 /**
- * <p>A thread pool for executing tasks with provided futures.  This executor submits 
- * runnables/callables and returns futures for when they will be completed.</p>
+ * A thread pool for executing tasks with provided futures.  This executor submits 
+ * runnables/callables and returns futures for when they will be completed.
  * 
- * @author jent - Mike Jensen
  * @since 4.3.0 (since 1.0.0 as SubmitterExecutorInterface)
  */
 public interface SubmitterExecutor extends Executor {
@@ -17,7 +16,7 @@ public interface SubmitterExecutor extends Executor {
    * Submit a task to run as soon as possible.  There is a slight increase in load when using 
    * {@link #submit(Runnable)} over {@link #execute(Runnable)}.  So this should only be used when 
    * the returned future is necessary.  
-   * 
+   * <p>
    * The {@link ListenableFuture#get()} method will return {@code null} once the runnable has 
    * completed.
    * 

@@ -4,11 +4,10 @@ import org.threadly.concurrent.AbstractSubmitterScheduler;
 import org.threadly.concurrent.SubmitterScheduler;
 
 /**
- * <p>Class which wraps a {@link SubmitterScheduler} and wraps all supplied tasks in a 
+ * Class which wraps a {@link SubmitterScheduler} and wraps all supplied tasks in a 
  * {@link ThreadRenamingRunnable}.  This allows you to make a pool where all tasks submitted 
- * inside it have the threads named in an identifiable way.</p>
+ * inside it have the threads named in an identifiable way.
  * 
- * @author jent - Mike Jensen
  * @since 4.8.0 (since 4.3.0 as org.threadly.concurrent.ThreadRenamingSubmitterSchedulerWrapper)
  */
 public class ThreadRenamingSubmitterScheduler extends AbstractSubmitterScheduler {

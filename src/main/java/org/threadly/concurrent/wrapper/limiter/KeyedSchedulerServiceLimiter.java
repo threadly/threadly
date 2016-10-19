@@ -7,16 +7,15 @@ import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSchedulerServi
 import org.threadly.util.StringUtils;
 
 /**
- * <p>This is a cross between the {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} 
- * and a {@link SchedulerServiceLimiter}.  This is designed to limit concurrency for a given 
- * thread, but permit more than one thread to run at a time for a given key.  If the desired 
- * effect is to have a single thread per key, 
- * {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} is a much better option.</p>
+ * This is a cross between the {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} and 
+ * a {@link SchedulerServiceLimiter}.  This is designed to limit concurrency for a given thread, 
+ * but permit more than one thread to run at a time for a given key.  If the desired effect is to 
+ * have a single thread per key, {@link org.threadly.concurrent.wrapper.KeyDistributedScheduler} 
+ * is a much better option.
+ * <p>
+ * The easiest way to use this class would be to have it distribute out schedulers through 
+ * {@link #getSubmitterSchedulerForKey(Object)}.
  * 
- * <p>The easiest way to use this class would be to have it distribute out schedulers through 
- * {@link #getSubmitterSchedulerForKey(Object)}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */
 public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<SchedulerServiceLimiter> {
@@ -51,7 +50,7 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
   /**
    * Construct a new {@link KeyedSchedulerServiceLimiter} providing the backing scheduler, the 
    * maximum concurrency per unique key, and how keyed limiter threads should be named.
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -83,7 +82,7 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
   /**
    * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
    * run until this call has returned.
-   * 
+   * <p>
    * See also: {@link SchedulerService#remove(Runnable)}
    * 
    * @param task The original task provided to the executor
@@ -102,7 +101,7 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
   /**
    * Removes the runnable task from the execution queue.  It is possible for the runnable to still 
    * run until this call has returned.
-   * 
+   * <p>
    * See also: {@link SchedulerService#remove(Callable)}
    * 
    * @param task The original task provided to the executor
@@ -120,7 +119,7 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
 
   /**
    * Call to check how many tasks are currently being executed in this scheduler.
-   * 
+   * <p>
    * See also: {@link SchedulerService#getActiveTaskCount()}
    * 
    * @return current number of running tasks
@@ -133,7 +132,7 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
    * Returns how many tasks are either waiting to be executed, or are scheduled to be executed at 
    * a future point.  Because this does not lock state can be modified during the calculation of 
    * this result.  Ultimately resulting in an inaccurate number.
-   * 
+   * <p>
    * See also: {@link SchedulerService#getQueuedTaskCount()}
    * 
    * @return quantity of tasks waiting execution or scheduled to be executed later
@@ -148,7 +147,7 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
 
   /**
    * Function to check if the thread pool is currently accepting and handling tasks.
-   * 
+   * <p>
    * See also: {@link SchedulerService#isShutdown()}
    * 
    * @return {@code true} if thread pool is running

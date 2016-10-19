@@ -11,18 +11,17 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>This class is designed to limit how much parallel execution happens on a provided 
+ * This class is designed to limit how much parallel execution happens on a provided 
  * {@link Executor}.  This allows the user to have one thread pool for all their code, and if they 
  * want certain sections to have less levels of parallelism (possibly because those those sections 
- * would completely consume the global pool), they can wrap the executor in this class.</p>
+ * would completely consume the global pool), they can wrap the executor in this class.
+ * <p>
+ * Thus providing you better control on the absolute thread count and how much parallelism can 
+ * occur in different sections of the program.
+ * <p>
+ * This is an alternative from having to create multiple thread pools.  By using this you also 
+ * are able to accomplish more efficiently thread use than multiple thread pools would.
  * 
- * <p>Thus providing you better control on the absolute thread count and how much parallelism can 
- * occur in different sections of the program.</p>
- * 
- * <p>This is an alternative from having to create multiple thread pools.  By using this you also 
- * are able to accomplish more efficiently thread use than multiple thread pools would.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent.limiter)
  */
 public class ExecutorLimiter extends AbstractSubmitterExecutor implements SubmitterExecutor {
@@ -68,7 +67,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
   
   /**
    * Thread safe verification that the pool has space remaining to accept additional tasks.
-   * 
+   * <p>
    * If this returns {@code true} {@code currentlyRunning} has been incremented and it expects the 
    * task to run will invoke {@link #handleTaskFinished()} when completed.
    * 
@@ -136,7 +135,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
   /**
    * Adds the wrapper to the queue.  After adding to the queue it will be verified that there is 
    * not available slots in the limiter to consume (it or others) from the queue.
-   * 
+   * <p>
    * It is expected that you already attempted to run the task (by calling {@link #canRunTask()} 
    * before deferring to this.
    * 
@@ -148,10 +147,9 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
   }
   
   /**
-   * <p>Generic wrapper for runnables which are used within the limiters.  This wrapper ensures 
-   * that {@link #handleTaskFinished()} will be called after the task completes.</p>
+   * Generic wrapper for runnables which are used within the limiters.  This wrapper ensures that 
+   * {@link #handleTaskFinished()} will be called after the task completes.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected class LimiterRunnableWrapper implements Runnable, RunnableContainer {

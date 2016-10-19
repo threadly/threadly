@@ -11,20 +11,19 @@ import org.threadly.concurrent.wrapper.limiter.ExecutorQueueLimitRejector.Decrem
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A simple way to limit any {@link PrioritySchedulerService} so that queues are managed.  In 
+ * A simple way to limit any {@link PrioritySchedulerService} so that queues are managed.  In 
  * addition this queue is tracked completely independent of the {@link PrioritySchedulerService}'s 
  * actual queue, so these can be distributed in code to limit queues differently to different parts 
- * of the system, while letting them all back the same {@link PrioritySchedulerService}.</p>
- * 
- * <p>Once the limit has been reached, if additional tasks are supplied a 
+ * of the system, while letting them all back the same {@link PrioritySchedulerService}.
+ * <p>
+ * Once the limit has been reached, if additional tasks are supplied a 
  * {@link java.util.concurrent.RejectedExecutionException} will be thrown.  This is the threadly 
  * equivalent of supplying a limited sized blocking queue to a java.util.concurrent thread 
- * pool.</p>
- * 
- * <p>See {@link ExecutorQueueLimitRejector}, {@link SubmitterSchedulerQueueLimitRejector} and 
- * {@link SchedulerServiceQueueLimitRejector} as other possible implementations.</p>
+ * pool.
+ * <p>
+ * See {@link ExecutorQueueLimitRejector}, {@link SubmitterSchedulerQueueLimitRejector} and 
+ * {@link SchedulerServiceQueueLimitRejector} as other possible implementations.
  *  
- * @author jent - Mike Jensen
  * @since 4.8.0
  */
 public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerServiceQueueLimitRejector 

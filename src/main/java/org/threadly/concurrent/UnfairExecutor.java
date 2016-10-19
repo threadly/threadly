@@ -17,35 +17,32 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>A very high performance {@link SubmitterExecutor} implementation.  Though to get those 
+ * A very high performance {@link SubmitterExecutor} implementation.  Though to get those 
  * performance gains, some guarantees are reduced.  Most prominently is execution order, this 
  * scheduler does not ensure that tasks are executed in the order they are submitted, but rather 
- * tasks are consumed however is fastest.</p>
- * 
- * <p>This executor has an execution queue per thread.  That way each thread has a many producer, 
- * one consumer safety guarantees.  Compared to other pools which have to deal with a many to many 
+ * tasks are consumed however is fastest.
+ * <p>
+ * This executor has an execution queue per thread.  That way each thread has a many producer, one 
+ * consumer safety guarantees.  Compared to other pools which have to deal with a many to many 
  * thread safety issue.  Determining the thread queue may be based on a variety of information.  A 
- * couple built in distrubtion solutions are {@link TaskHashXorTimeStripeGenerator} (default) and 
- * {@link AtomicStripeGenerator}.</p>
- * 
- * <p>This scheduler will work best when the following conditions are true.  First because a long 
+ * couple built in distribution solutions are {@link TaskHashXorTimeStripeGenerator} (default) and 
+ * {@link AtomicStripeGenerator}.
+ * <p>
+ * This scheduler will work best when the following conditions are true.  First because a long 
  * running task can block other tasks from running (even when other threads are idle).  It is best 
  * that tasks should be equally sized.  We also recommend having thread counts which are prime 
  * numbers for a more even hash distribution.  It is also important to recognize that it is 
  * generally a bad idea to block any of these threads waiting for results from processing that is 
- * expected to happen on the same executor.</p>
+ * expected to happen on the same executor.
  * 
- * @author jent - Mike Jensen
  * @since 4.5.0
  */
 public class UnfairExecutor extends AbstractSubmitterExecutor {
   /**
-   * <p>Strategy for taking in a task and producing a long which will be translated to which 
-   * thread the task should be distributed on to.  This number is only a guide for the scheduler, 
-   * the scheduler may choose another thread depending on what internal balancing may be 
-   * possible.</p>
+   * Strategy for taking in a task and producing a long which will be translated to which thread 
+   * the task should be distributed on to.  This number is only a guide for the scheduler, the 
+   * scheduler may choose another thread depending on what internal balancing may be possible.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   public interface TaskStripeGenerator {
@@ -64,13 +61,12 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * of the same task many times without the clock being updated can result in a single thread 
    * being unfairly burdened.  Because of that it is highly recommended to over-size your pool if 
    * you are using this distributor.
-   * 
+   * <p>
    * A possibly more fair, but slower stripe generator would be {@link AtomicStripeGenerator}.  
-   * 
+   * <p>
    * This class should not be constructed, instead it should be provided via the static function 
    * {@link TaskHashXorTimeStripeGenerator#instance()}.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   public static class TaskHashXorTimeStripeGenerator implements TaskStripeGenerator {
@@ -100,11 +96,10 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * Stripe generator which will round robin distribute tasks to threads.  Internally this uses a 
    * {@link AtomicLong}, which means if lots of tasks are being submitted in parallel there can be 
    * a lot of compare and swap overhead compared to {@link TaskHashXorTimeStripeGenerator}.  
-   * 
+   * <p>
    * This class should not be constructed, instead it should be provided via the static function 
    * {@link AtomicStripeGenerator#instance()}.
    * 
-   * @author jent - Mike Jensen
    * @since 4.5.0
    */
   public static class AtomicStripeGenerator implements TaskStripeGenerator {
@@ -147,7 +142,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count.  This defaults to using 
    * daemon threads.  
-   * 
+   * <p>
    * Possible built in stripe generators for use would be {@link AtomicStripeGenerator} or 
    * {@link TaskHashXorTimeStripeGenerator}.
    * 
@@ -171,7 +166,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
 
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count.  
-   * 
+   * <p>
    * Possible built in stripe generators for use would be {@link AtomicStripeGenerator} or 
    * {@link TaskHashXorTimeStripeGenerator}.
    * 
@@ -200,7 +195,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
 
   /**
    * Constructs a new {@link UnfairExecutor} with a provided thread count and factory.  
-   * 
+   * <p>
    * Possible built in stripe generators for use would be {@link AtomicStripeGenerator} or 
    * {@link TaskHashXorTimeStripeGenerator}.
    * 
@@ -264,7 +259,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
    * tasks are present they will also be unable to reschedule.  This call will not block to wait 
    * for the shutdown of the scheduler to finish.  If {@link #shutdown()} or 
    * {@link #shutdownNow()} has already been called, this will have no effect.  
-   * 
+   * <p>
    * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
    */
   public void shutdown() {
@@ -342,11 +337,10 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   }
   
   /**
-   * <p>Worker task for executing tasks on the provided thread.  This worker maintains an internal 
+   * Worker task for executing tasks on the provided thread.  This worker maintains an internal 
    * queue for which tasks can be added on.  It will park itself once idle, and resume if tasks 
-   * are later then added.</p>
-   *  
-   * @author jent - Mike Jensen
+   * are later then added.
+   * 
    * @since 4.5.0
    */
   protected static class Worker extends AbstractService implements Runnable {
@@ -426,9 +420,8 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   }
   
   /**
-   * <p>Task for shutting down worker thread.  Used in {@link #shutdown()}.</p>
+   * Task for shutting down worker thread.  Used in {@link #shutdown()}.
    * 
-   * @author jent
    * @since 4.5.0
    */
   private static class ShutdownTask implements Runnable {

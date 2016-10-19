@@ -5,11 +5,10 @@ import java.util.Iterator;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 
 /**
- * <p>This class functions very similar to the {@link Profiler}.  The difference between the two 
- * is while the {@link Profiler} profiles all running threads on the VM.  This implementation only 
- * profiles threads which you explicitly add to be profiled.</p>
+ * This class functions very similar to the {@link Profiler}.  The difference between the two is 
+ * while the {@link Profiler} profiles all running threads on the VM.  This implementation only 
+ * profiles threads which you explicitly add to be profiled.
  * 
- * @author jent - Mike Jensen
  * @since 1.0.0
  */
 public class ControlledThreadProfiler extends Profiler {
@@ -39,7 +38,7 @@ public class ControlledThreadProfiler extends Profiler {
   
   /**
    * Adds a thread to be checked by the running profiler.  
-   * 
+   * <p>
    * If the thread is already included, or if the thread is {@code null}, this is a no-op.
    * 
    * @param t Thread to add to the list of tracked threads
@@ -81,12 +80,10 @@ public class ControlledThreadProfiler extends Profiler {
   }
   
   /**
-   * <p>Extending class of {@link ProfileStorage} this overrides 
+   * Extending class of {@link ProfileStorage} this overrides 
    * {@link #getProfileThreadsIterator()}.  It controls it so that not all VM threads are returned 
-   * in the iterator, and instead it only iterates over the threads which are stored 
-   * internally.</p>
+   * in the iterator, and instead it only iterates over the threads which are stored internally.
    * 
-   * @author jent
    * @since 3.5.0
    */
   protected static class ControlledThreadProfileStorage extends ProfileStorage {
@@ -105,11 +102,10 @@ public class ControlledThreadProfiler extends Profiler {
   }
   
   /**
-   * <p>A wrapper for a thread to implement {@link ThreadSample}.  This wrapper allows us to just 
-   * use a simple collection for storing threads (and thus to iterate over), and then lazily 
-   * generate the stack trace when {@link ThreadSample#getStackTrace()} is invoked.</p>
+   * A wrapper for a thread to implement {@link ThreadSample}.  This wrapper allows us to just use 
+   * a simple collection for storing threads (and thus to iterate over), and then lazily 
+   * generate the stack trace when {@link ThreadSample#getStackTrace()} is invoked.
    * 
-   * @author jent - Mike Jensen
    * @since 3.8.0
    */
   protected static class SelectedThreadSample implements ThreadSample {

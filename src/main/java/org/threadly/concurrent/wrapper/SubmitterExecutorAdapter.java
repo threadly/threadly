@@ -6,14 +6,13 @@ import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>A simple wrapper class for {@link Executor} implementations to provide 
- * {@link org.threadly.concurrent.SubmitterExecutor} capabilities.</p>
+ * A simple wrapper class for {@link Executor} implementations to provide 
+ * {@link org.threadly.concurrent.SubmitterExecutor} capabilities.
+ * <p>
+ * In addition this implementation returns {@link org.threadly.concurrent.future.ListenableFuture} 
+ * future implementations, making it an easy way to convert your favorite executor to use 
+ * ListenableFutures.
  * 
- * <p>In addition this implementation returns 
- * {@link org.threadly.concurrent.future.ListenableFuture} future implementations, making it an 
- * easy way to convert your favorite executor to use ListenableFutures.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.8.0 (since 1.0.0 as org.threadly.concurrent.ExecutorWrapper)
  */
 public class SubmitterExecutorAdapter extends AbstractSubmitterExecutor {

@@ -8,18 +8,17 @@ import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Class to wrap {@link SubmitterScheduler} pool so that tasks can be intercepted and either 
+ * Class to wrap {@link SubmitterScheduler} pool so that tasks can be intercepted and either 
  * wrapped, or modified, before being submitted to the pool.  This class can be passed a lambda to
  * {@link #SubmitterSchedulerTaskInterceptor(SubmitterScheduler, BiFunction)}, or 
  * {@link #wrapTask(Runnable, boolean)} can be overridden to provide the task which should be 
  * submitted to the {@link SubmitterScheduler}.  Please see the javadocs of 
  * {@link #wrapTask(Runnable, boolean)} for more details about ways a task can be modified or 
- * wrapped.</p>
+ * wrapped.
+ * <p>
+ * Other variants of task wrappers: {@link ExecutorTaskInterceptor}, 
+ * {@link SchedulerServiceTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.
  * 
- * <p>Other variants of task wrappers: {@link ExecutorTaskInterceptor}, 
- * {@link SchedulerServiceTaskInterceptor}, {@link PrioritySchedulerTaskInterceptor}.</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.6.0
  */
 public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor 
@@ -79,7 +78,7 @@ public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor
    * So if you are doing conditional checks for {@link ListenableFutureTask} and may not 
    * execute/return the provided task, then you should be careful to ensure 
    * {@link ListenableFutureTask#cancel(boolean)} is invoked.
-   * 
+   * <p>
    * Public visibility for javadoc visibility.
    * 
    * @param task A runnable that was submitted for execution

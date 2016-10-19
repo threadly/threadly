@@ -5,13 +5,12 @@ import java.util.concurrent.Callable;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Converts a {@link Runnable} with a result into a {@link Callable}.  This is similar to 
+ * Converts a {@link Runnable} with a result into a {@link Callable}.  This is similar to 
  * {@link java.util.concurrent.Executors#callable(Runnable, Object)}, except this implementation 
- * also implements the {@link RunnableContainer} interface.</p>
+ * also implements the {@link RunnableContainer} interface.
  * 
- * @author jent - Mike Jensen
- * @param <T> Type of result returned
  * @since 4.3.0
+ * @param <T> Type of result returned
  */
 public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContainer {
   protected final Runnable runnable;

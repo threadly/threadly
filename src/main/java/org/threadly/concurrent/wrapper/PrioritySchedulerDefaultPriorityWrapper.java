@@ -8,13 +8,12 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Class to wrap any implementation of {@link PrioritySchedulerService}.  The purpose of 
- * wrapping like this would be to change the default priority from the wrapped instance.  That way 
- * this could be passed into other parts of code and although use the same thread pool, have 
- * different default priorities.  (this could be particularly useful when used in combination with 
- * {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.</p>
+ * Class to wrap any implementation of {@link PrioritySchedulerService}.  The purpose of wrapping 
+ * like this would be to change the default priority from the wrapped instance.  That way this 
+ * could be passed into other parts of code and although use the same thread pool, have different 
+ * default priorities.  (this could be particularly useful when used in combination with 
+ * {@link KeyDistributedExecutor}, or {@link KeyDistributedScheduler}.
  * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.PrioritySchedulerWrapper)
  */
 public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedulerService {

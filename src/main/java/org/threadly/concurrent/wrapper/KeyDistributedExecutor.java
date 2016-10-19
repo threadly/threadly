@@ -20,21 +20,20 @@ import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * <p>TaskDistributor is designed such that tasks executed on it for a given key will run in a 
- * single threaded manner.  It needs a multi-threaded pool supplied to it, to then execute those 
- * tasks on.  While the thread which runs those tasks may be different between multiple 
- * executions, no two tasks for the same key will ever be run in parallel.</p>
- * 
- * <p>Because of that, it is recommended that the executor provided has as many possible threads 
- * as possible keys that could be provided to be run in parallel.  If this class is starved for 
- * threads some keys may continue to process new tasks, while other keys could be starved.</p>
- * 
- * <p>Assuming that the shared memory (any objects, primitives, etc) are only accessed through the 
+ * TaskDistributor is designed such that tasks executed on it for a given key will run in a single 
+ * threaded manner.  It needs a multi-threaded pool supplied to it, to then execute those tasks 
+ * on.  While the thread which runs those tasks may be different between multiple executions, no 
+ * two tasks for the same key will ever be run in parallel.
+ * <p>
+ * Because of that, it is recommended that the executor provided has as many possible threads as 
+ * possible keys that could be provided to be run in parallel.  If this class is starved for 
+ * threads some keys may continue to process new tasks, while other keys could be starved.
+ * <p>
+ * Assuming that the shared memory (any objects, primitives, etc) are only accessed through the 
  * same instance of {@link KeyDistributedExecutor}, and assuming that those variables are only 
  * accessed via the same key.  Then the programmer does not need to worry about synchronization, or 
- * volatile.  The {@link KeyDistributedExecutor} will ensure the happens-before relationship.</p>
+ * volatile.  The {@link KeyDistributedExecutor} will ensure the happens-before relationship.
  * 
- * @author jent - Mike Jensen
  * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.TaskExecutorDistributor)
  */
 public class KeyDistributedExecutor {
@@ -53,7 +52,7 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.  
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16.  This also does not 
    * attempt to have an accurate queue size for the {@link #getTaskQueueSize(Object)} call (thus 
    * preferring high performance).
@@ -67,11 +66,11 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.  
-   * 
+   * <p>
    * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
    * given thread keys.  There is a performance hit associated with this, so this should only be 
    * enabled if {@link #getTaskQueueSize(Object)} calls will be used.  
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16.
    * 
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
@@ -84,17 +83,17 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.  
-   * 
+   * <p>
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.  
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16.  This also does not 
    * attempt to have an accurate queue size for the "getTaskQueueSize" call (thus preferring 
    * high performance).
@@ -109,17 +108,17 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.  
-   * 
+   * <p>
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
+   * <p>
    * This constructs with a default expected level of concurrency of 16. 
    * 
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
@@ -134,10 +133,10 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -153,11 +152,11 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
    * given thread keys.  There is a performance hit associated with this, so this should only be 
    * enabled if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -175,16 +174,16 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.
-   * 
+   * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -201,17 +200,17 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to use a provided executor implementation for running tasks.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
    * because it has to give up the thread and get it again, but also because it must copy the 
    * subset of the task queue which it can run.
-   * 
+   * <p>
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
+   * <p>
    * The parallelism value should be a factor of how many keys are submitted to the pool during any 
    * given period of time.  Depending on task execution duration, and quantity of threads executing 
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
@@ -230,7 +229,7 @@ public class KeyDistributedExecutor {
   
   /**
    * Constructor to be used in unit tests.
-   * 
+   * <p>
    * This constructor allows you to provide a maximum number of tasks for a key before it yields 
    * to another key.  This can make it more fair, and make it so no single key can starve other 
    * keys from running.  The lower this is set however, the less efficient it becomes in part 
@@ -306,20 +305,19 @@ public class KeyDistributedExecutor {
    * Call to check how many tasks have been queued up for a given key.  Depending on what 
    * constructor was used, and if a {@code true} was passed in for {@code accurateQueueSize}, the 
    * accuracy of this call varies dramatically.
-   * 
+   * <p>
    * If {@code true} was not supplied in the constructor for {@code accurateQueueSize}, this will 
    * only report how many tasks have not been accepted by the worker yet.  The accepting of those 
    * tasks occur in batches, so this number will vary dramatically (and probably be unusable).
-   * 
+   * <p>
    * So it is highly recommended that if your interested in this functionality you supply a 
    * {@code true} into the constructor.
-   * 
+   * <p>
    * Supplying a {@code true} for {@code accurateQueueSize} in the constructor does involve some 
    * performance cost, but that overhead should be minimal (just no reason to accept any loss if 
    * not interested in this feature).
    * 
    * @since 1.2.0
-   * 
    * @param threadKey key for task queue to examine
    * @return the number of tasks queued for the key
    */
@@ -336,17 +334,17 @@ public class KeyDistributedExecutor {
    * Get a map of all the keys and how many tasks are queued per key.  This map is generated 
    * without locking.  Due to that, this may be inaccurate as task queue sizes changed while 
    * iterating all key's active workers.
-   * 
+   * <p>
    * Because this requires an iteration of all task workers, if only a single key's queue size is 
    * needed, use {@link #getTaskQueueSize(Object)} as a cheaper alternative.
-   * 
+   * <p>
    * If {@code true} was not supplied in the constructor for {@code accurateQueueSize}, this will 
    * only report how many tasks have not been accepted by the worker yet.  The accepting of those 
    * tasks occur in batches, so this number will vary dramatically (and probably be unusable).
-   * 
+   * <p>
    * So it is highly recommended that if your interested in this functionality you supply a 
    * {@code true} into the constructor.
-   * 
+   * <p>
    * Supplying a {@code true} for {@code accurateQueueSize} in the constructor does involve some 
    * performance cost, but that overhead should be minimal (just no reason to accept any loss if 
    * not interested in this feature).
@@ -377,7 +375,7 @@ public class KeyDistributedExecutor {
   /**
    * This is a protected implementation to add the task to a worker.  No safety checks are done at 
    * this point, so only provide non-null inputs.
-   * 
+   * <p>
    * You can supply the executor in case extending classes want to use different executors than 
    * the class was constructed with.
    * 
@@ -448,10 +446,9 @@ public class KeyDistributedExecutor {
   }
   
   /**
-   * <p>Simple factory interface so we can build the most efficient {@link TaskQueueWorker} 
-   * implementation for the settings provided at construction.</p>
+   * Simple factory interface so we can build the most efficient {@link TaskQueueWorker} 
+   * implementation for the settings provided at construction.
    * 
-   * @author jent - Mike Jensen
    * @since 1.2.0
    */
   private interface WorkerFactory {
@@ -459,10 +456,9 @@ public class KeyDistributedExecutor {
   }
   
   /**
-   * <p>Worker which will consume through a given queue of tasks.  Each key is represented by one 
-   * worker at any given time.</p>
+   * Worker which will consume through a given queue of tasks.  Each key is represented by one 
+   * worker at any given time.
    * 
-   * @author jent - Mike Jensen
    * @since 1.0.0
    */
   protected class TaskQueueWorker implements Runnable {
@@ -570,10 +566,9 @@ public class KeyDistributedExecutor {
   }
   
   /**
-   * <p>Extending class that will accurately track how many tasks have been added, and how many 
-   * have been run.  Thus providing an accurate queue size statistic.</p>
+   * Extending class that will accurately track how many tasks have been added, and how many 
+   * have been run.  Thus providing an accurate queue size statistic.
    * 
-   * @author jent - Mike Jensen
    * @since 1.2.0
    */
   protected class StatisticWorker extends TaskQueueWorker {
@@ -607,9 +602,8 @@ public class KeyDistributedExecutor {
   }
   
   /**
-   * <p>Simple {@link SubmitterExecutor} implementation that submits for a given key.</p>
+   * Simple {@link SubmitterExecutor} implementation that submits for a given key.
    * 
-   * @author jent - Mike Jensen
    * @since 2.5.0
    */
   protected class KeySubmitter implements SubmitterExecutor {
