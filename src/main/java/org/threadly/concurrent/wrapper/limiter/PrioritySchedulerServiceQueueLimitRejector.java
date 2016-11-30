@@ -30,9 +30,11 @@ import org.threadly.util.ArgumentVerifier;
 public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerServiceQueueLimitRejector 
                                                         implements PrioritySchedulerService {
   protected final PrioritySchedulerService parentScheduler;
+  protected final boolean dontLimitStarvable;
 
   /**
-   * Constructs a new {@link PrioritySchedulerServiceQueueLimitRejector} with the provided scheduler and limit.
+   * Constructs a new {@link PrioritySchedulerServiceQueueLimitRejector} with the provided 
+   * scheduler and limit.
    * 
    * @param parentScheduler Scheduler to execute and schedule tasks on to
    * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
@@ -42,7 +44,8 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
   }
 
   /**
-   * Constructs a new {@link PrioritySchedulerServiceQueueLimitRejector} with the provided scheduler and limit.
+   * Constructs a new {@link PrioritySchedulerServiceQueueLimitRejector} with the provided 
+   * scheduler, limit, and handler for when task can not be submitted to the pool.
    * 
    * @param parentScheduler Scheduler to execute and schedule tasks on to
    * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
@@ -50,12 +53,51 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
    */
   public PrioritySchedulerServiceQueueLimitRejector(PrioritySchedulerService parentScheduler, int queuedTaskLimit, 
                                                     RejectedExecutionHandler rejectedExecutionHandler) {
+    this(parentScheduler, queuedTaskLimit, false, rejectedExecutionHandler);
+  }
+
+  /**
+   * Constructs a new {@link PrioritySchedulerServiceQueueLimitRejector} with the provided 
+   * scheduler and limit.  This constructor additionally allows you to specify if starvable tasks 
+   * should be included in the queue limit.  Because starvable tasks have less impact on the pool, 
+   * the need to limit them may be reduced.
+   * 
+   * @param parentScheduler Scheduler to execute and schedule tasks on to
+   * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
+   * @param dontLimitStarvable Provide {@code true} to don't include starvable tasks against queue limit
+   */
+  public PrioritySchedulerServiceQueueLimitRejector(PrioritySchedulerService parentScheduler, 
+                                                    int queuedTaskLimit, boolean dontLimitStarvable) {
+    this(parentScheduler, queuedTaskLimit, dontLimitStarvable, null);
+  }
+
+  /**
+   * Constructs a new {@link PrioritySchedulerServiceQueueLimitRejector} with the provided 
+   * scheduler, limit, and handler for when task can not be submitted to the pool.  This 
+   * constructor additionally allows you to specify if starvable tasks should be included in the 
+   * queue limit.  Because starvable tasks have less impact on the pool, the need to limit them 
+   * may be reduced.
+   * 
+   * @param parentScheduler Scheduler to execute and schedule tasks on to
+   * @param queuedTaskLimit Maximum number of queued tasks before executions should be rejected
+   * @param dontLimitStarvable Provide {@code true} to don't include starvable tasks against queue limit
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed due to queue size
+   */
+  public PrioritySchedulerServiceQueueLimitRejector(PrioritySchedulerService parentScheduler, 
+                                                    int queuedTaskLimit, boolean dontLimitStarvable, 
+                                                    RejectedExecutionHandler rejectedExecutionHandler) {
     super(parentScheduler, queuedTaskLimit, rejectedExecutionHandler);
     
     this.parentScheduler = parentScheduler;
+    this.dontLimitStarvable = dontLimitStarvable;
   }
   
   protected void doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
+    if (dontLimitStarvable && priority == TaskPriority.Starvable) {
+      parentScheduler.schedule(task, delayInMillis, priority);
+      return;
+    }
+    
     while (true) {
       int casValue = queuedTaskCount.get();
       if (casValue >= getQueueLimit()) {

@@ -49,7 +49,8 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
   @Test
   public void getSetQueueLimitTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    PrioritySchedulerServiceQueueLimitRejector queueRejector = new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
     
     assertEquals(TEST_QTY, queueRejector.getQueueLimit());
     
@@ -60,14 +61,15 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
   @Test
   public void getQueuedTaskCountTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    PrioritySchedulerServiceQueueLimitRejector queueRejector = new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
 
     for (int i = 0; i < TEST_QTY; i++) {
       assertEquals(i, queueRejector.getQueuedTaskCount());
       queueRejector.execute(DoNothingRunnable.instance());
     }
-    
-    testableScheduler.tick();
+
+    assertEquals(TEST_QTY, testableScheduler.tick());
 
     assertEquals(0, queueRejector.getQueuedTaskCount());
   }
@@ -81,7 +83,8 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
 
   private static void getQueuedTaskByPriorityCountTest(TaskPriority submitPriority) {
     TestableScheduler testableScheduler = new TestableScheduler();
-    PrioritySchedulerServiceQueueLimitRejector queueRejector = new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
 
     for (int i = 0; i < TEST_QTY; i++) {
       assertEquals(TaskPriority.High == submitPriority ? i : 0, queueRejector.getQueuedTaskCount(TaskPriority.High));
@@ -89,8 +92,8 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
       assertEquals(TaskPriority.Starvable == submitPriority ? i : 0, queueRejector.getQueuedTaskCount(TaskPriority.Starvable));
       queueRejector.execute(DoNothingRunnable.instance(), submitPriority);
     }
-    
-    testableScheduler.tick();
+
+    assertEquals(TEST_QTY, testableScheduler.tick());
 
     assertEquals(0, queueRejector.getQueuedTaskCount(submitPriority));
   }
@@ -114,7 +117,8 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
   @Test
   public void rejectRunnableTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    PrioritySchedulerServiceQueueLimitRejector queueRejector = new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
       queueRejector.execute(DoNothingRunnable.instance());
@@ -139,7 +143,8 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
   @Test
   public void rejectCallableTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
-    PrioritySchedulerServiceQueueLimitRejector queueRejector = new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
     
     for (int i = 0; i < TEST_QTY; i++) {
       queueRejector.submit(new TestCallable());
@@ -159,6 +164,29 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
     for (int i = 0; i < TEST_QTY; i++) {
       queueRejector.submit(new TestCallable());
     }
+  }
+  
+  @Test
+  public void starvablePriorityNotIgnoredTest() {
+    starvablePriorityIgnoredTest(false);
+  }
+  
+  @Test
+  public void starvablePriorityIgnoredTest() {
+    starvablePriorityIgnoredTest(true);
+  }
+  
+  private static void starvablePriorityIgnoredTest(boolean ignored) {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY, ignored);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(ignored ? 0 : i, queueRejector.getQueuedTaskCount());
+      queueRejector.execute(DoNothingRunnable.instance(), TaskPriority.Starvable);
+    }
+    
+    assertEquals(TEST_QTY, testableScheduler.tick());
   }
   
   private static class PrioritySchedulerServiceQueueRejectorFactory implements SchedulerServiceFactory {
