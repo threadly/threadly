@@ -17,7 +17,38 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.Clock;
 
 /**
- * <p>A collection of small utilities for handling futures.</p>
+ * A collection of small utilities for handling futures.  This class has lots of tools for dealing 
+ * with collections of futures, either blocking, extracting results, and more.
+ * <p>
+ * Generating already done futures:
+ * <ul>
+ * <li>{@link #immediateResultFuture(Object)}
+ * <li>{@link #immediateFailureFuture(Throwable)}
+ * </ul>
+ * <p>
+ * Tools for blocking:
+ * <ul>
+ * <li>{@link #blockTillAllComplete(Iterable)}
+ * <li>{@link #blockTillAllComplete(Iterable, long)}
+ * <li>{@link #blockTillAllCompleteOrFirstError(Iterable)}
+ * <li>{@link #blockTillAllCompleteOrFirstError(Iterable, long)}
+ * </ul>
+ * <p>
+ * Tools for manipulating collections of futures:
+ * <ul>
+ * <li>{@link #cancelIncompleteFutures(Iterable, boolean)}
+ * <li>{@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)}
+ * <li>{@link #countFuturesWithResult(Iterable, Object)}
+ * <li>{@link #countFuturesWithResult(Iterable, Object, long)}
+ * <li>{@link #makeCompleteFuture(Iterable)}
+ * <li>{@link #makeCompleteFuture(Iterable, Object)}
+ * <li>{@link #makeFailurePropagatingCompleteFuture(Iterable)}
+ * <li>{@link #makeFailurePropagatingCompleteFuture(Iterable, Object)}
+ * <li>{@link #makeCompleteListFuture(Iterable)}
+ * <li>{@link #makeFailureListFuture(Iterable)}
+ * <li>{@link #makeResultListFuture(Iterable, boolean)}
+ * <li>{@link #makeSuccessListFuture(Iterable)}
+ * </ul>
  * 
  * @author jent - Mike Jensen
  * @since 1.0.0
@@ -228,7 +259,9 @@ public class FutureUtils {
    * The future returned will provide a {@code null} result, it is the responsibility of the 
    * caller to get the actual results from the provided futures.  This is designed to just be an 
    * indicator as to when they have finished.  If you need the results from the provided futures, 
-   * consider using {@link #makeCompleteListFuture(Iterable)}.
+   * consider using {@link #makeCompleteListFuture(Iterable)}.  You should also consider using 
+   * {@link #makeFailurePropagatingCompleteFuture(Iterable)}, it has the same semantics as this one 
+   * except it will put the returned future into an error state if any of the provided futures error.
    * 
    * @since 1.2.0
    * 
@@ -247,8 +280,11 @@ public class FutureUtils {
    * {@link ListenableFuture} that will be called once all the provided futures have finished.  
    * 
    * The future returned will provide the result object once all provided futures have completed.  
-   * This call does nothing to provide the actual results from {@link ListenableFuture}'s which 
-   * were passed in.  If that is needed consider using {@link #makeCompleteListFuture(Iterable)}.
+   * If any failures occured, they will not be represented in the returned future.  If that is 
+   * desired you should consider using 
+   * {@link #makeFailurePropagatingCompleteFuture(Iterable, Object)}, it has the same semantics as 
+   * this one except it will put the returned future into an error state if any of the provided 
+   * futures error.
    * 
    * @since 3.3.0
    * 
@@ -259,12 +295,90 @@ public class FutureUtils {
    */
   public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                                            final T result) {
+    // TODO - evaluate changing to return new EmptyFutureCollection(futures).map((ignored) -> result);
     final EmptyFutureCollection efc = new EmptyFutureCollection(futures);
     final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<T>(efc);
     efc.addCallback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object ignored) {
         resultFuture.setResult(result);
+      }
+
+      @Override
+      public void handleFailure(Throwable t) {
+        if (t instanceof CancellationException) {
+          // caused by user canceling returned CancelDelegateSettableListenableFuture
+        } else {
+          resultFuture.setFailure(t);
+        }
+      }
+    });
+    return resultFuture;
+  }
+  
+  /**
+   * Similar to {@link #makeCompleteFuture(Iterable)} in that the returned future wont complete 
+   * until all the provided futures complete.  However this implementation will check if any 
+   * futures failed or were canceled once all have completed.  If any did not complete normally 
+   * then the returned futures state will match the state of one of the futures that did not 
+   * normally (randomly chosen).
+   * <p>
+   * Since the returned future wont complete until all futures complete, you may want to consider 
+   * using {@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)} in addition to 
+   * this so that the future will resolve as soon as any failures occur. 
+   * 
+   * @since 5.0.0
+   * @param futures Collection of futures that must finish before returned future is satisfied
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static ListenableFuture<?> 
+      makeFailurePropagatingCompleteFuture(Iterable<? extends ListenableFuture<?>> futures) {
+    return makeFailurePropagatingCompleteFuture(futures, null);
+  }
+
+  /**
+   * Similar to {@link #makeCompleteFuture(Iterable, Object)} in that the returned future wont 
+   * complete until all the provided futures complete.  However this implementation will check if 
+   * any futures failed or were canceled once all have completed.  If any did not complete normally 
+   * then the returned futures state will match the state of one of the futures that did not 
+   * normally (randomly chosen).
+   * <p>
+   * Since the returned future wont complete until all futures complete, you may want to consider 
+   * using {@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)} in addition to 
+   * this so that the future will resolve as soon as any failures occur.
+   * 
+   * @since 5.0.0
+   * @param <T> type of result returned from the future
+   * @param futures Collection of futures that must finish before returned future is satisfied
+   * @param result Result to provide returned future once all futures complete
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static <T> ListenableFuture<T> 
+      makeFailurePropagatingCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
+                                           final T result) {
+    FailureFutureCollection<Object> ffc = new FailureFutureCollection<Object>(futures);
+    final CancelDelegateSettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<T>(ffc);
+    ffc.addCallback(new FutureCallback<List<ListenableFuture<?>>>() {
+      @Override
+      public void handleResult(List<ListenableFuture<?>> failedFutures) {
+        if (failedFutures.isEmpty()) {
+          resultFuture.setResult(result);
+        } else {
+          // propagate error
+          ListenableFuture<?> f = failedFutures.get(0);
+          if (f.isCancelled()) {
+            resultFuture.cancelRegardlessOfDelegateFutureState();
+          } else {
+            try {
+              f.get();
+            } catch (ExecutionException e) {
+              resultFuture.setFailure(e.getCause());
+            } catch (InterruptedException e) {
+              // should not be possible
+              throw new RuntimeException(e);
+            }
+          }
+        }
       }
 
       @Override
@@ -408,7 +522,9 @@ public class FutureUtils {
           }
         }
         if (needToCancel) {
-          result.cancel(false);
+          if (! result.cancel(false)) {
+            throw new IllegalStateException();
+          }
         } else {
           result.setResult(results);
         }
@@ -537,6 +653,12 @@ public class FutureUtils {
       cancelDelegateFuture = lf;
     }
     
+    protected void cancelRegardlessOfDelegateFutureState() {
+      if (super.cancel(false)) {
+        cancelDelegateFuture.cancel(false);
+      }
+    }
+
     @Override
     public boolean cancel(boolean interruptThread) {
       if (cancelDelegateFuture.cancel(interruptThread)) {
