@@ -510,15 +510,30 @@ public class KeyedRateLimiterExecutor {
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @return Executor which will only execute with reference to the provided key
    */
-  public SubmitterExecutor getSubmitterExecutorForKey(final double permits, final Object taskKey) {
+  public SubmitterExecutor getSubmitterExecutorForKey(double permits, Object taskKey) {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     
-    return new AbstractSubmitterExecutor() {
-      @Override
-      protected void doExecute(Runnable task) {
-        KeyedRateLimiterExecutor.this.doExecute(permits, taskKey, task);
-      }
-    };
+    return new KeyedSubmitterExecutor(permits, taskKey);
+  }
+  
+  /**
+   * Submitter executor which delegates to this instance with a constructed permits and task key.
+   * 
+   * @since 4.9.0
+   */
+  protected class KeyedSubmitterExecutor extends AbstractSubmitterExecutor {
+    protected final double permits;
+    protected final Object taskKey;
+    
+    protected KeyedSubmitterExecutor(double permits, Object taskKey) {
+      this.permits = permits;
+      this.taskKey = taskKey;
+    }
+    
+    @Override
+    protected void doExecute(Runnable task) {
+      KeyedRateLimiterExecutor.this.doExecute(permits, taskKey, task);
+    }
   }
   
   /**

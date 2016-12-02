@@ -44,14 +44,9 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   }
 
   @Override
-  public void addCallback(final FutureCallback<? super T> callback, Executor executor) {
+  public void addCallback(FutureCallback<? super T> callback, Executor executor) {
     if (executor != null) {
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          callback.handleResult(result);
-        }
-      });
+      executor.execute(new CallbackInvokingTask(callback));
     } else {
       callback.handleResult(result);
     }
@@ -65,5 +60,23 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   @Override
   public T get(long timeout, TimeUnit unit) {
     return result;
+  }
+  
+  /**
+   * Small class to invoke callback with stored result.
+   *
+   * @since 4.9.0
+   */
+  protected class CallbackInvokingTask implements Runnable {
+    protected final FutureCallback<? super T> callback;
+    
+    public CallbackInvokingTask(FutureCallback<? super T> callback) {
+      this.callback = callback;
+    }
+    
+    @Override
+    public void run() {
+      callback.handleResult(result);
+    }
   }
 }

@@ -37,6 +37,7 @@ import org.threadly.util.ArgumentVerifier;
  */
 public class AsyncCallRunnableListenerHelper extends RunnableListenerHelper {
   protected final Executor executor;
+  protected final CallListenersTask callListenersTask = new CallListenersTask();
 
   /**
    * Constructs a new {@link AsyncCallRunnableListenerHelper}.  This can call listeners one time, 
@@ -54,14 +55,19 @@ public class AsyncCallRunnableListenerHelper extends RunnableListenerHelper {
   }
   
   @Override
-  public void callListeners() {
-    verifyCanCallListeners();
-      
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        AsyncCallRunnableListenerHelper.super.doCallListeners();
-      }
-    });
+  protected void doCallListeners() {
+    executor.execute(callListenersTask);
+  }
+  
+  /**
+   * Task to call listeners in super class.
+   * 
+   * @since 4.9.0
+   */
+  protected class CallListenersTask implements Runnable {
+    @Override
+    public void run() {
+      AsyncCallRunnableListenerHelper.super.doCallListeners();
+    }
   }
 }

@@ -188,25 +188,38 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @return scheduler which will only execute with reference to the provided key
    */
-  public SubmitterScheduler getSubmitterSchedulerForKey(final Object taskKey) {
+  public SubmitterScheduler getSubmitterSchedulerForKey(Object taskKey) {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     
-    return new AbstractSubmitterScheduler() {
-      @Override
-      public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
-        AbstractKeyedSchedulerLimiter.this.scheduleWithFixedDelay(taskKey, task, 
-                                                                  initialDelay, recurringDelay);
-      }
+    return new KeyedSubmitterScheduler(taskKey);
+  }
 
-      @Override
-      public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
-        AbstractKeyedSchedulerLimiter.this.scheduleAtFixedRate(taskKey, task, initialDelay, period);
-      }
+  /**
+   * Submitter scheduler which delegates to this instance with a constructed permits and task key.
+   * 
+   * @since 4.9.0
+   */
+  protected class KeyedSubmitterScheduler extends AbstractSubmitterScheduler {
+    protected final Object taskKey;
+    
+    protected KeyedSubmitterScheduler(Object taskKey) {
+      this.taskKey = taskKey;
+    }
+    
+    @Override
+    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
+      AbstractKeyedSchedulerLimiter.this.scheduleWithFixedDelay(taskKey, task, 
+                                                                initialDelay, recurringDelay);
+    }
 
-      @Override
-      protected void doSchedule(Runnable task, long delayInMs) {
-        AbstractKeyedSchedulerLimiter.this.schedule(taskKey, task, delayInMs);
-      }
-    };
+    @Override
+    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
+      AbstractKeyedSchedulerLimiter.this.scheduleAtFixedRate(taskKey, task, initialDelay, period);
+    }
+
+    @Override
+    protected void doSchedule(Runnable task, long delayInMs) {
+      AbstractKeyedSchedulerLimiter.this.schedule(taskKey, task, delayInMs);
+    }
   }
 }

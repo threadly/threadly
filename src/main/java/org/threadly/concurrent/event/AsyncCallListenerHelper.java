@@ -100,18 +100,34 @@ public class AsyncCallListenerHelper<T> extends ListenerHelper<T> {
    */
   protected class AsyncListenerCaller extends ListenerCaller {
     @Override
-    public Object invoke(Object proxy, final Method method, final Object[] args) {
+    public Object invoke(Object proxy, Method method, Object[] args) {
       verifyValidMethod(method);
       
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          callListeners(method, args);
-        }
-      });
+      executor.execute(new CallListenersTask(method, args));
       
       // always returns null
       return null;
+    }
+    
+    /**
+     * Small class to provide task to executor which invokes 
+     * {@link #callListeners(Method, Object[])}.
+     * 
+     * @since 4.9.0
+     */
+    protected class CallListenersTask implements Runnable {
+      private final Method method;
+      private final Object[] args;
+      
+      public CallListenersTask(Method method, Object[] args) {
+        this.method = method;
+        this.args = args;
+      }
+      
+      @Override
+      public void run() {
+        callListeners(method, args);
+      }
     }
   }
 }
