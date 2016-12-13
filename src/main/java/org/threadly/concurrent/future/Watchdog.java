@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.concurrent.AbstractSubmitterScheduler;
+import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.ReschedulingOperation;
 import org.threadly.concurrent.SimpleSchedulerInterface;
 import org.threadly.concurrent.SingleThreadScheduler;
@@ -32,7 +33,7 @@ public class Watchdog {
   protected static final SubmitterScheduler getStaticScheduler() {
     SingleThreadScheduler sts = STATIC_SCHEDULER.get();
     if (sts == null) {
-      sts = new SingleThreadScheduler();
+      sts = new SingleThreadScheduler(new ConfigurableThreadFactory("WatchdogDefaultScheduler-", false));
       if (! STATIC_SCHEDULER.compareAndSet(null, sts)) {
         sts.shutdownNow();
         sts = STATIC_SCHEDULER.get();
