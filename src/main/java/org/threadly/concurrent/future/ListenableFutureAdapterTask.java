@@ -26,7 +26,7 @@ public class ListenableFutureAdapterTask<T> extends ListenableFutureTask<T> {
   protected final Future<? extends T> f;
   
   /**
-   * Constructs a new {@link ListenableFutureAdapterTaskTest}.
+   * Constructs a new {@link ListenableFutureAdapterTask}.
    * 
    * @param f Future to get result and source final state from
    */
