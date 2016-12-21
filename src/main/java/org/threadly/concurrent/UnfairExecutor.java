@@ -325,10 +325,9 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     long startTime = Clock.accurateForwardProgressingMillis();
     for (Worker w : schedulers) {
       long remainingWait = timeoutMillis - (Clock.lastKnownForwardProgressingMillis() - startTime);
-      if (remainingWait <= 0) {
-        return false;
+      if (remainingWait > 0) {
+        w.thread.join(remainingWait);
       }
-      w.thread.join(remainingWait);
       if (w.thread.isAlive()) {
         return false;
       }

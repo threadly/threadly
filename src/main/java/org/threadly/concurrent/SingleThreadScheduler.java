@@ -232,7 +232,9 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * @throws InterruptedException Thrown if blocking thread is interrupted waiting for shutdown
    */
   public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
-    sManager.execThread.join(timeoutMillis);
+    if (timeoutMillis > 0) {
+      sManager.execThread.join(timeoutMillis);
+    }
     
     return ! sManager.execThread.isAlive();
   }

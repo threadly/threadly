@@ -171,8 +171,7 @@ public class ExceptionUtils {
     }
     StackTraceElement[] newStack = new StackTraceElement[originalstack.length - methodsToRemove];
     
-    System.arraycopy(originalstack, methodsToRemove, 
-                     newStack, 0, newStack.length);
+    System.arraycopy(originalstack, methodsToRemove, newStack, 0, newStack.length);
     
     t.setStackTrace(newStack);
   }
