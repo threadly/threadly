@@ -165,7 +165,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    */
   @Deprecated
   public void shutdownAndAwaitTermination() throws InterruptedException {
-    shutdownAndAwaitTermination(0);
+    shutdownAndAwaitTermination(Long.MAX_VALUE);
   }
   
   /**
@@ -234,6 +234,8 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   public boolean awaitTermination(long timeoutMillis) throws InterruptedException {
     if (timeoutMillis > 0) {
       sManager.execThread.join(timeoutMillis);
+    } else if (timeoutMillis == Long.MAX_VALUE) {
+      sManager.execThread.join();
     }
     
     return ! sManager.execThread.isAlive();
