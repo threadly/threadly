@@ -85,7 +85,7 @@ public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor
    * @param recurring {@code true} if the provided task is a recurring task
    * @return A non-null task that will be provided to the parent executor
    */
-  public Runnable wrapTask(Runnable task, boolean recurring){
+  public Runnable wrapTask(Runnable task, boolean recurring) {
     return this.taskManipulator.apply(task, recurring);
   }
 
