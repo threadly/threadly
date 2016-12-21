@@ -138,5 +138,10 @@ public abstract class ReschedulingOperation {
         }
       }
     }
+    
+    @Override
+    public String toString() {
+      return "CheckRunner for: " + ReschedulingOperation.this.toString();
+    }
   }
 }
