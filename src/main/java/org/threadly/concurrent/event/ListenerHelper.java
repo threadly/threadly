@@ -217,7 +217,7 @@ public class ListenerHelper<T> {
      * @param method Method to check against for invocation
      */
     protected void verifyValidMethod(Method method) {
-      if (! method.getReturnType().equals(Void.TYPE)) {
+      if (! method.isDefault() && ! method.getReturnType().equals(Void.TYPE)) {
         throw new RuntimeException("Can only call listeners with a void return type");
       }
     }
