@@ -6,11 +6,13 @@ import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
 import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.ThreadlyInternalAccessor;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.concurrent.future.ScheduledFutureDelegate;
+import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
 
 /**
  * This is a wrapper for {@link PriorityScheduler} to be a drop in replacement for any 
@@ -24,6 +26,7 @@ import org.threadly.concurrent.future.ScheduledFutureDelegate;
  */
 public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrapper {
   protected final PriorityScheduler pScheduler;
+  protected final TaskPriority taskPriority;
   
   /**
    * Constructs a new wrapper to adhere to the 
@@ -32,9 +35,22 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
    * @param scheduler {@link PriorityScheduler} implementation to rely on
    */
   public PrioritySchedulerServiceWrapper(PriorityScheduler scheduler) {
-    super(scheduler);
+    this(scheduler, null);
+  }
+  
+  /**
+   * Constructs a new wrapper to adhere to the 
+   * {@link java.util.concurrent.ScheduledExecutorService} interface.
+   * 
+   * @param scheduler {@link PriorityScheduler} implementation to rely on
+   * @param taskPriority Priority for all tasks submitted to the parent scheduler
+   */
+  public PrioritySchedulerServiceWrapper(PriorityScheduler scheduler, TaskPriority taskPriority) {
+    super(taskPriority == null || taskPriority == scheduler.getDefaultPriority() ? 
+            scheduler : new PrioritySchedulerDefaultPriorityWrapper(scheduler, taskPriority));
     
     this.pScheduler = scheduler;
+    this.taskPriority = taskPriority == null ? scheduler.getDefaultPriority() : taskPriority;
   }
 
   @Override
@@ -73,7 +89,8 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
     ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<>(false, task);
-    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, delayInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, 
+                                                                 taskPriority, delayInMillis);
     
     return new ScheduledFutureDelegate<>(taskFuture, d);
   }
@@ -81,7 +98,8 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
     ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<>(false, callable);
-    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, delayInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, 
+                                                                 taskPriority, delayInMillis);
     
     return new ScheduledFutureDelegate<>(taskFuture, d);
   }
@@ -93,8 +111,10 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
     ListenableRunnableFuture<Void> lft = new CancelRemovingListenableFutureTask<>(scheduler, true, task);
-    Delayed d = ThreadlyInternalAccessor.doScheduleWithFixedDelayAndGetDelayed(pScheduler, lft, 
-                                                                                initialDelay, delayInMs);
+    Delayed d = ThreadlyInternalAccessor.doScheduleWithFixedDelayAndGetDelayed(pScheduler, 
+                                                                               lft, taskPriority, 
+                                                                               initialDelay, 
+                                                                               delayInMs);
     
     return new ScheduledFutureDelegate<>(lft, d);
   }
@@ -106,8 +126,10 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
     task = new ThrowableHandlingRecurringRunnable(pScheduler, task);
     
     ListenableRunnableFuture<Void> lft = new CancelRemovingListenableFutureTask<>(scheduler, true, task);
-    Delayed d = ThreadlyInternalAccessor.doScheduleAtFixedRateAndGetDelayed(pScheduler, lft, 
-                                                                            initialDelay, periodInMillis);
+    Delayed d = ThreadlyInternalAccessor.doScheduleAtFixedRateAndGetDelayed(pScheduler, 
+                                                                            lft, taskPriority, 
+                                                                            initialDelay, 
+                                                                            periodInMillis);
     
     return new ScheduledFutureDelegate<>(lft, d);
   }
