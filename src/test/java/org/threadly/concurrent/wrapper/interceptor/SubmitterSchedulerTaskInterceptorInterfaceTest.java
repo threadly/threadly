@@ -12,6 +12,11 @@ public class SubmitterSchedulerTaskInterceptorInterfaceTest extends SubmitterSch
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
     return new SubmitterSchedulerTaskInterceptorFactory();
   }
+  
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
 
   private static class SubmitterSchedulerTaskInterceptorFactory implements SubmitterSchedulerFactory {
     private List<PriorityScheduler> schedulers = new ArrayList<>(1);

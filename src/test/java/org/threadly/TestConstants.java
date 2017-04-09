@@ -10,6 +10,11 @@ import org.threadly.util.StringUtils;
  */
 public class TestConstants {
   /**
+   * Profile to use when no specific profile is specified. 
+   */
+  private static final TestLoad DEFAULT_PROFILE = TestLoad.Normal;
+  
+  /**
    * Indicates to unit tests if they should allow extra time allowances for actions to complete.
    */
   public static final boolean SLOW_MACHINE;
@@ -84,7 +89,7 @@ public class TestConstants {
       }
     }
     if (testProfile == null) {
-      TEST_PROFILE = TestLoad.Normal;
+      TEST_PROFILE = DEFAULT_PROFILE;
     } else {
       TEST_PROFILE = testProfile;
     }

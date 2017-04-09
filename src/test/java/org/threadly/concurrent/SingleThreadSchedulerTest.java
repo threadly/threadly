@@ -22,34 +22,15 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     return new SingleThreadSchedulerFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return true;
+  }
+  
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
     new SingleThreadScheduler(null);
-  }
-  
-  @Test
-  @Override
-  public void scheduleWithFixedDelayTest() {
-    recurringExecutionTest(false, true, true);
-  }
-  
-  @Test
-  @Override
-  public void scheduleWithFixedDelayInitialDelayTest() {
-    recurringExecutionTest(true, true, true);
-  }
-  
-  @Test
-  @Override
-  public void scheduleAtFixedRateTest() {
-    recurringExecutionTest(false, false, true);
-  }
-  
-  @Test
-  @Override
-  public void scheduleAtFixedRateInitialDelayTest() {
-    recurringExecutionTest(true, false, true);
   }
   
   @Test

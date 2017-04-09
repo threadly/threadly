@@ -12,6 +12,11 @@ public class SchedulerServiceTaskInterceptorInterfaceTest extends SchedulerServi
   protected SchedulerServiceFactory getSchedulerServiceFactory() {
     return new SchedulerServiceTaskInterceptorFactory();
   }
+  
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
 
   private static class SchedulerServiceTaskInterceptorFactory implements SchedulerServiceFactory {
     private List<PriorityScheduler> schedulers = new ArrayList<>(1);

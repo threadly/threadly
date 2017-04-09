@@ -21,6 +21,11 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
     return new SchedulerServiceQueueRejectorFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
+  
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {

@@ -12,6 +12,11 @@ public class KeyedSubmitterSchedulerLimiterInterfaceTest  extends SubmitterSched
     return new KeyedSubmitterSchedulerLimiterFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return true;
+  }
+  
   private static class KeyedSubmitterSchedulerLimiterFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
     

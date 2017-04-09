@@ -12,6 +12,11 @@ public class ThreadRenamingSchedulerServiceTest extends SchedulerServiceInterfac
   protected SchedulerServiceFactory getSchedulerServiceFactory() {
     return new ThreadRenamingPoolWrapperFactory();
   }
+  
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
 
   private static class ThreadRenamingPoolWrapperFactory implements SchedulerServiceFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();

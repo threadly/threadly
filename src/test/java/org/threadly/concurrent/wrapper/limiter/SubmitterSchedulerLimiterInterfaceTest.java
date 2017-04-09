@@ -9,4 +9,9 @@ public class SubmitterSchedulerLimiterInterfaceTest extends SubmitterSchedulerIn
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
     return new SchedulerLimiterFactory();
   }
+  
+  @Override
+  protected boolean isSingleThreaded() {
+    return true;  // not single threaded, but limit might cause execution delay
+  }
 }

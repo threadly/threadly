@@ -15,6 +15,11 @@ public class ScheduledExecutorServiceWrapperTest extends SubmitterSchedulerInter
   protected SubmitterSchedulerFactory getSubmitterSchedulerFactory() {
     return new SchedulerFactory();
   }
+  
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
 
   private class SchedulerFactory implements SubmitterSchedulerFactory {
     private final List<ScheduledThreadPoolExecutor> executors;

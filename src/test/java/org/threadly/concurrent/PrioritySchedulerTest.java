@@ -29,6 +29,11 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
     return new PrioritySchedulerFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
+  
   @Test
   @SuppressWarnings("unused")
   public void constructorFail() {

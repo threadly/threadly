@@ -12,6 +12,11 @@ public class ThreadRenamingSubmitterSchedulerTest extends SubmitterSchedulerInte
     return new ThreadRenamingPoolWrapperFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
+  
   private static class ThreadRenamingPoolWrapperFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 

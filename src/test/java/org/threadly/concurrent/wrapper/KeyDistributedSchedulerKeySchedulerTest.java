@@ -1,6 +1,5 @@
 package org.threadly.concurrent.wrapper;
 
-import org.junit.Test;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
@@ -12,28 +11,9 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
     return new KeyBasedSubmitterSchedulerFactory();
   }
   
-  @Test
   @Override
-  public void scheduleWithFixedDelayTest() {
-    recurringExecutionTest(false, true, true);
-  }
-  
-  @Test
-  @Override
-  public void scheduleWithFixedDelayInitialDelayTest() {
-    recurringExecutionTest(true, true, true);
-  }
-  
-  @Test
-  @Override
-  public void scheduleAtFixedRateTest() {
-    recurringExecutionTest(false, false, true);
-  }
-  
-  @Test
-  @Override
-  public void scheduleAtFixedRateInitialDelayTest() {
-    recurringExecutionTest(true, false, true);
+  protected boolean isSingleThreaded() {
+    return true;
   }
 
   private class KeyBasedSubmitterSchedulerFactory implements SubmitterSchedulerFactory {

@@ -26,8 +26,8 @@ import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
 public class KeyDistributedSchedulerTest {
-  private static final int PARALLEL_LEVEL = TEST_QTY;
-  private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
+  private static final int PARALLEL_LEVEL = Runtime.getRuntime().availableProcessors();
+  private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY;
   
   @BeforeClass
   public static void setupClass() {
@@ -43,8 +43,7 @@ public class KeyDistributedSchedulerTest {
     scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL * 2);
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
-    distributor = new KeyDistributedScheduler(scheduler, sLock, 
-                                              Integer.MAX_VALUE, false);
+    distributor = new KeyDistributedScheduler(scheduler, sLock, Integer.MAX_VALUE, false);
   }
   
   @After
@@ -194,7 +193,7 @@ public class KeyDistributedSchedulerTest {
     Iterator<KDCallable> it = runs.iterator();
     while (it.hasNext()) {
       KDCallable tr = it.next();
-      tr.blockTillFinished(20 * 1000);
+      tr.blockTillFinished(10_000);
       assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
       assertTrue(tr.previousRanFirst());  // verify runnables were run in order
     }
@@ -313,8 +312,8 @@ public class KeyDistributedSchedulerTest {
     Iterator<KDRunnable> it = runs.iterator();
     while (it.hasNext()) {
       KDRunnable tr = it.next();
-      assertTrue(tr.getDelayTillRun(2) >= DELAY_TIME);
-      tr.blockTillFinished(10 * 1000, 3);
+      assertTrue(tr.getDelayTillRun(2) - tr.getDelayTillRun(1) >= DELAY_TIME);
+      tr.blockTillFinished(10_000, 4);
       assertFalse(tr.ranConcurrently());  // verify that it never run in parallel
     }
   }

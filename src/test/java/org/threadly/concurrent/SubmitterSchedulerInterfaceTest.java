@@ -20,6 +20,8 @@ import org.threadly.test.concurrent.TestRunnable;
 @SuppressWarnings("javadoc")
 public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorInterfaceTest {
   protected abstract SubmitterSchedulerFactory getSubmitterSchedulerFactory();
+  
+  protected abstract boolean isSingleThreaded();
 
   @Override
   protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
@@ -188,26 +190,25 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   
   @Test
   public void scheduleWithFixedDelayTest() {
-    recurringExecutionTest(false, true, false);
+    recurringExecutionTest(false, true);
   }
   
   @Test
   public void scheduleWithFixedDelayInitialDelayTest() {
-    recurringExecutionTest(true, true, false);
+    recurringExecutionTest(true, true);
   }
   
   @Test
   public void scheduleAtFixedRateTest() {
-    recurringExecutionTest(false, false, false);
+    recurringExecutionTest(false, false);
   }
   
   @Test
   public void scheduleAtFixedRateInitialDelayTest() {
-    recurringExecutionTest(true, false, false);
+    recurringExecutionTest(true, false);
   }
   
-  protected void recurringExecutionTest(boolean initialDelay, boolean fixedDelay, 
-                                        boolean singleThreaded) {
+  protected void recurringExecutionTest(boolean initialDelay, boolean fixedDelay) {
     final int initialDelayInMillis = initialDelay ? DELAY_TIME : 0;
     final int expectedMinimumDelay = DELAY_TIME * (CYCLE_COUNT - (initialDelay ? 0 : 1));
     SubmitterSchedulerFactory factory = getSubmitterSchedulerFactory();
@@ -233,17 +234,17 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
         if (initialDelay) {
           long executionDelay = tr.getDelayTillFirstRun();
           assertTrue(executionDelay >= DELAY_TIME);
-          if (! singleThreaded) {
+          if (! isSingleThreaded()) {
             // should be very timely with a core pool size that matches runnable count
-            assertTrue(executionDelay <= DELAY_TIME + (SLOW_MACHINE ? 5000 : 1000));
+            assertTrue(executionDelay <= DELAY_TIME + (SLOW_MACHINE ? 10_000 : 2_000));
           }
         }
         
         long executionDelay = tr.getDelayTillRun(CYCLE_COUNT);
         assertTrue(executionDelay >= expectedMinimumDelay);
         // should be very timely with a core pool size that matches runnable count
-        if (! singleThreaded) {
-          assertTrue(executionDelay <= expectedMinimumDelay + (SLOW_MACHINE ? 5000 : 1000));
+        if (! isSingleThreaded()) {
+          assertTrue(executionDelay <= expectedMinimumDelay + (SLOW_MACHINE ? 10_000 : 2_000));
         }
       }
     } finally {

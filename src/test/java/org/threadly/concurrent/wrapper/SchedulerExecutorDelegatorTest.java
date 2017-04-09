@@ -37,6 +37,11 @@ public class SchedulerExecutorDelegatorTest extends SubmitterSchedulerInterfaceT
     return new DelegatorFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
+  
   @Test
   public void executeDelegateTest() {
     delegator.execute(DoNothingRunnable.instance());

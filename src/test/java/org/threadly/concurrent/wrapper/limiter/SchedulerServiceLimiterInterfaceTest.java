@@ -9,4 +9,9 @@ public class SchedulerServiceLimiterInterfaceTest extends SchedulerServiceInterf
   protected SchedulerServiceFactory getSchedulerServiceFactory() {
     return new SchedulerLimiterFactory();
   }
+  
+  @Override
+  protected boolean isSingleThreaded() {
+    return true;  // not single threaded, but limit might cause execution delay
+  }
 }

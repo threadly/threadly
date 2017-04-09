@@ -22,6 +22,11 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
     return new SubmitterSchedulerQueueRejectorFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return true;  // not single threaded, but limit might cause execution delay
+  }
+  
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {

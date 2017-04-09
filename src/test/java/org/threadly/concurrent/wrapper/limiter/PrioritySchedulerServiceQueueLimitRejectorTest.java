@@ -24,6 +24,11 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
     return new PrioritySchedulerServiceQueueRejectorFactory();
   }
   
+  @Override
+  protected boolean isSingleThreaded() {
+    return false;
+  }
+  
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
