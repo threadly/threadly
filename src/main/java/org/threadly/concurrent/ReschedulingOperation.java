@@ -76,11 +76,7 @@ public abstract class ReschedulingOperation {
     while (true) {
       if (taskState.get() == -1) {
         if (taskState.compareAndSet(-1, 0)) {
-          if (scheduleDelay == 0) {
-            scheduler.execute(runner);
-          } else {
-            scheduler.schedule(runner, scheduleDelay);
-          }
+          scheduler.schedule(runner, scheduleDelay);
           return;
         }
       } else if (taskState.get() == 1) {
@@ -124,13 +120,8 @@ public abstract class ReschedulingOperation {
               // nothing to run, just return
               break;
             }
-          } else if (taskState.get() == 2) {
-            // will be set back to 1 when this restarts
-            if (scheduleDelay == 0) {
-              scheduler.execute(this);
-            } else {
-              scheduler.schedule(this, scheduleDelay);
-            }
+          } else if (taskState.get() == 2) { // will be set back to 1 when this restarts
+            scheduler.schedule(this, scheduleDelay);
             break;
           }
         }
