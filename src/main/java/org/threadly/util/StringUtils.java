@@ -1,6 +1,6 @@
 package org.threadly.util;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Some small utilities and constants around handling strings.
@@ -9,7 +9,6 @@ import java.util.Random;
  */
 public class StringUtils {
   protected static final String RAND_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  protected static final Random RANDOM = new Random(Clock.lastKnownTimeMillis());
   
   /**
    * Makes sure a given string is not {@code null}.  If it is not {@code null}, the provided string 
@@ -120,7 +119,7 @@ public class StringUtils {
      StringBuilder sb = new StringBuilder(length);
      
      for(int i = 0; i < length; i++) {
-       int randIndex = RANDOM.nextInt(RAND_CHARS.length());
+       int randIndex = ThreadLocalRandom.current().nextInt(RAND_CHARS.length());
        char randChar = RAND_CHARS.charAt(randIndex);
        sb.append(randChar);
      }
