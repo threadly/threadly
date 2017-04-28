@@ -11,19 +11,19 @@ test {
 
 compileJava {
   String[] java8Paths = new String[9]
-  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar"
-  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/rt.jar"
-  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/rt.jar"
-  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/rt.jar"
-  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/rt.jar"
-  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_122/jre/lib/rt.jar"
-  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/rt.jar"
-  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/rt.jar"
-  java8Paths[8] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/rt.jar"
+  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/"
+  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/"
+  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/"
+  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/"
+  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/"
+  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_122/jre/lib/"
+  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/"
+  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/"
+  java8Paths[8] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/"
   for (String path : java8Paths) {
     if (new java.io.File(path).exists()) {
-      println 'Using java 8 rt.jar: ' + path
-      options.bootClasspath = path
+      println 'Using java 8: ' + path
+      options.bootClasspath = fileTree(include: ['*.jar'], dir: path).join(File.pathSeparator)
       break
     }
   }
@@ -38,18 +38,18 @@ compileTestJava {
   options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
 
   String[] java8Paths = new String[9]
-  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar"
-  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/rt.jar"
-  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/rt.jar"
-  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/rt.jar"
-  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/rt.jar"
-  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_122/jre/lib/rt.jar"
-  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/rt.jar"
-  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/rt.jar"
-  java8Paths[8] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/rt.jar"
+  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/"
+  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/"
+  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/"
+  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/"
+  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/"
+  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_122/jre/lib/"
+  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/"
+  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/"
+  java8Paths[8] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/"
   for (String path : java8Paths) {
     if (new java.io.File(path).exists()) {
-      options.bootClasspath = path
+      options.bootClasspath = fileTree(include: ['*.jar'], dir: path).join(File.pathSeparator)
       break
     }
   }
