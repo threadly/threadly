@@ -1466,8 +1466,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
     public int hashCode() {
       int hashCode = 1;
       for (int i = dataStartIndex; i < dataEndIndex; i++) {
-        Object obj = dataArray[i];
-        hashCode = HASH_CODE_PRIME_NUMBER * hashCode + (obj == null ? 0 : obj.hashCode());
+        hashCode = HASH_CODE_PRIME_NUMBER * hashCode + dataArray[i].hashCode();
       }
       
       return hashCode;

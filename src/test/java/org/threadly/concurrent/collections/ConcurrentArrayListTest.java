@@ -681,6 +681,11 @@ public class ConcurrentArrayListTest {
   }
   
   @Test
+  public void hashCodeTest() {
+    ListTests.hashCodeTest(testList);
+  }
+  
+  @Test
   public void testListIteratorBackwards() {
     List<String> comparisionList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {

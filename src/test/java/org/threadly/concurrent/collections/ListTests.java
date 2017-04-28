@@ -560,6 +560,28 @@ public class ListTests {
     
     testList.add(foo);
     assertFalse(testList.equals(comparisionList));
+  }
+  
+  public static void hashCodeTest(List<String> testList) {
+    List<String> comparisionList = new ArrayList<>(TEST_QTY);
+    assertEquals(testList.hashCode(), comparisionList.hashCode());
+    
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = Integer.toString(i);
+      comparisionList.add(str);
+      testList.add(str);
+      assertEquals(testList.hashCode(), comparisionList.hashCode());
+    }
+    
+    String foo = "foo";
+    comparisionList.add(foo);
+    assertNotEquals(testList.hashCode(), comparisionList.hashCode());
+    
+    testList.add(foo);
+    assertEquals(testList.hashCode(), comparisionList.hashCode());
+    
+    testList.add(foo);
+    assertNotEquals(testList.hashCode(), comparisionList.hashCode());
     
     assertEquals(testList.hashCode(), testList.subList(0, testList.size()).hashCode());
   }
