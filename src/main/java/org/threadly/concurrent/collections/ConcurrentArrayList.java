@@ -282,18 +282,15 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
 
   @Override
   public boolean addAll(Collection<? extends T> c) {
-    if (c == null) {
+    if (c == null || c.isEmpty()) {
       return false;
     }
     
     Iterator<? extends T> it = c.iterator();
     while (it.hasNext()) {
       if (it.next() == null) {
-        it.remove();
+        throw new IllegalArgumentException("Can not store null values");
       }
-    }
-    if (c.isEmpty()) {
-      return false;
     }
 
     synchronized (modificationLock) {
@@ -656,12 +653,7 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
                                               currentData.size);
       }
       
-      int index;
-      if (searchBackwards) {
-        index = lastIndexOf(item);
-      } else {
-        index = indexOf(item);
-      }
+      int index = searchBackwards ? lastIndexOf(item) : indexOf(item);
       if (index < 0) {
         throw new NoSuchElementException("Could not find item: " + item);
       } else if (index == newIndex) {
