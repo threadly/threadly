@@ -380,6 +380,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     private volatile boolean shutdownFinishing; // once true, never goes to false
     private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
     private volatile long workerTimedParkRunTime;
+    private volatile boolean waitingForUnpark;
     private QueueManager queueManager;  // set before any threads started
     
     protected WorkerPool(ThreadFactory threadFactory, int poolSize) {
@@ -398,6 +399,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       this.threadFactory = threadFactory;
       this.maxPoolSize = poolSize;
       this.workerTimedParkRunTime = Long.MAX_VALUE;
+      waitingForUnpark = false;
       shutdownStarted = new AtomicBoolean(false);
       shutdownFinishing = false;
     }
@@ -716,6 +718,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
             if (queued) {
               // we can only park after we have queued, then checked again for a result
               LockSupport.park();
+              waitingForUnpark = false;
               continue;
             } else {
               addWorkerToIdleChain(worker);
@@ -751,11 +754,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
                   // we can only park after we have queued, then checked again for a result
                   workerTimedParkRunTime = nextTask.getPureRunTime();
                   LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
+                  waitingForUnpark = false;
                   workerTimedParkRunTime = Long.MAX_VALUE;
                   continue;
                 } else {
                   // there is another worker already doing a timed park, so we can wait till woken up
                   LockSupport.park();
+                  waitingForUnpark = false;
                   continue;
                 }
               } else {
@@ -808,7 +813,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
             break;
           }
         } else {
-          LockSupport.unpark(nextIdleWorker.thread);
+          if (! waitingForUnpark) {
+            waitingForUnpark = true;
+            LockSupport.unpark(nextIdleWorker.thread);
+          }
           break;
         }
       }
