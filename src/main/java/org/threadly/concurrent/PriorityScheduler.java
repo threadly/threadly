@@ -380,7 +380,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     private volatile boolean shutdownFinishing; // once true, never goes to false
     private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
     private volatile long workerTimedParkRunTime;
-    private volatile boolean waitingForUnpark;
     private QueueManager queueManager;  // set before any threads started
     
     protected WorkerPool(ThreadFactory threadFactory, int poolSize) {
@@ -399,7 +398,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       this.threadFactory = threadFactory;
       this.maxPoolSize = poolSize;
       this.workerTimedParkRunTime = Long.MAX_VALUE;
-      waitingForUnpark = false;
       shutdownStarted = new AtomicBoolean(false);
       shutdownFinishing = false;
     }
@@ -711,17 +709,14 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       boolean interruptedChecked = false;
       boolean queued = false;
-      boolean parked = false;
       try {
         while (true) {
-          parked = false;
           TaskWrapper nextTask = queueManager.getNextTask();
           if (nextTask == null) {
             if (queued) {
               // we can only park after we have queued, then checked again for a result
-              parked = true;
               LockSupport.park();
-              waitingForUnpark = false;
+              worker.waitingForUnpark = false;
               continue;
             } else {
               addWorkerToIdleChain(worker);
@@ -756,16 +751,14 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
                 if (nextTask.getPureRunTime() < workerTimedParkRunTime) {
                   // we can only park after we have queued, then checked again for a result
                   workerTimedParkRunTime = nextTask.getPureRunTime();
-                  parked = true;
                   LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
-                  waitingForUnpark = false;
+                  worker.waitingForUnpark = false;
                   workerTimedParkRunTime = Long.MAX_VALUE;
                   continue;
                 } else {
                   // there is another worker already doing a timed park, so we can wait till woken up
-                  parked = true;
                   LockSupport.park();
-                  waitingForUnpark = false;
+                  worker.waitingForUnpark = false;
                   continue;
                 }
               } else {
@@ -788,9 +781,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       } finally {
         // if queued, we must now remove ourselves, since worker is about to either shutdown or become active
         if (queued) {
-          if (! parked) { // we did not park on last run, so make sure we don't leave this state set
-            waitingForUnpark = false;
-          }
+          worker.waitingForUnpark = false;
           removeWorkerFromIdleChain(worker);
         }
         
@@ -821,8 +812,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
             break;
           }
         } else {
-          if (! waitingForUnpark) {
-            waitingForUnpark = true;
+          if (! nextIdleWorker.waitingForUnpark) {
+            nextIdleWorker.waitingForUnpark = true;
             LockSupport.unpark(nextIdleWorker.thread);
           }
           break;
@@ -840,6 +831,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final WorkerPool workerPool;
     protected final Thread thread;
     protected volatile Worker nextIdleWorker;
+    protected volatile boolean waitingForUnpark;
     
     protected Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;
@@ -848,6 +840,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         throw new IllegalThreadStateException();
       }
       nextIdleWorker = null;
+      waitingForUnpark = false;
     }
 
     @Override
