@@ -716,6 +716,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
             if (queued) {
               // we can only park after we have queued, then checked again for a result
               LockSupport.park();
+              worker.waitingForUnpark = false;
               continue;
             } else {
               addWorkerToIdleChain(worker);
@@ -751,11 +752,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
                   // we can only park after we have queued, then checked again for a result
                   workerTimedParkRunTime = nextTask.getPureRunTime();
                   LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
+                  worker.waitingForUnpark = false;
                   workerTimedParkRunTime = Long.MAX_VALUE;
                   continue;
                 } else {
                   // there is another worker already doing a timed park, so we can wait till woken up
                   LockSupport.park();
+                  worker.waitingForUnpark = false;
                   continue;
                 }
               } else {
@@ -808,7 +811,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
             break;
           }
         } else {
-          LockSupport.unpark(nextIdleWorker.thread);
+          if (! nextIdleWorker.waitingForUnpark) {
+            nextIdleWorker.waitingForUnpark = true;
+            LockSupport.unpark(nextIdleWorker.thread);
+          }
           break;
         }
       }
@@ -824,6 +830,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final WorkerPool workerPool;
     protected final Thread thread;
     protected volatile Worker nextIdleWorker;
+    protected volatile boolean waitingForUnpark;
     
     protected Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;
@@ -832,6 +839,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         throw new IllegalThreadStateException();
       }
       nextIdleWorker = null;
+      waitingForUnpark = false;
     }
 
     @Override
