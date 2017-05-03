@@ -781,7 +781,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       } finally {
         // if queued, we must now remove ourselves, since worker is about to either shutdown or become active
         if (queued) {
-          worker.waitingForUnpark = false;
           removeWorkerFromIdleChain(worker);
         }
         
