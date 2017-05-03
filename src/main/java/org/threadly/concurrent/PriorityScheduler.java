@@ -711,12 +711,15 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       boolean interruptedChecked = false;
       boolean queued = false;
+      boolean parked = false;
       try {
         while (true) {
+          parked = false;
           TaskWrapper nextTask = queueManager.getNextTask();
           if (nextTask == null) {
             if (queued) {
               // we can only park after we have queued, then checked again for a result
+              parked = true;
               LockSupport.park();
               waitingForUnpark = false;
               continue;
@@ -753,12 +756,14 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
                 if (nextTask.getPureRunTime() < workerTimedParkRunTime) {
                   // we can only park after we have queued, then checked again for a result
                   workerTimedParkRunTime = nextTask.getPureRunTime();
+                  parked = true;
                   LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * taskDelay);
                   waitingForUnpark = false;
                   workerTimedParkRunTime = Long.MAX_VALUE;
                   continue;
                 } else {
                   // there is another worker already doing a timed park, so we can wait till woken up
+                  parked = true;
                   LockSupport.park();
                   waitingForUnpark = false;
                   continue;
@@ -783,6 +788,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       } finally {
         // if queued, we must now remove ourselves, since worker is about to either shutdown or become active
         if (queued) {
+          if (! parked) { // we did not park on last run, so make sure we don't leave this state set
+            waitingForUnpark = false;
+          }
           removeWorkerFromIdleChain(worker);
         }
         
