@@ -74,12 +74,13 @@ public abstract class ReschedulingOperation {
    */
   public void signalToRun() {
     while (true) {
-      if (taskState.get() == -1) {
+      int casState = taskState.get();
+      if (casState == -1) {
         if (taskState.compareAndSet(-1, 0)) {
           scheduler.schedule(runner, scheduleDelay);
           return;
         }
-      } else if (taskState.get() == 1) {
+      } else if (casState == 1) {
         if (taskState.compareAndSet(1, 2)) {
           return;
         }
