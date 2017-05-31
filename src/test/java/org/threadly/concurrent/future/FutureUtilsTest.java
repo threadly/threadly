@@ -16,8 +16,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StringUtils;
 import org.threadly.util.SuppressedStackRuntimeException;
@@ -1175,14 +1177,34 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void scheduleWhileTimeoutTest() throws Exception {
+  public void scheduleWhileTimeoutWithResultTest() throws Exception {
     SingleThreadScheduler scheduler = new SingleThreadScheduler();
     try {
       ListenableFuture<Optional<?>> f = 
           FutureUtils.scheduleWhile(scheduler, 2, true, () -> Optional.empty(), 
-                                    (o) -> ! o.isPresent(), DELAY_TIME);
+                                    (o) -> ! o.isPresent(), DELAY_TIME, true);
       
       assertFalse(f.get(DELAY_TIME + 1_000, TimeUnit.MILLISECONDS).isPresent());
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void scheduleWhileTimeoutWithExceptionTest() throws Exception {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      ListenableFuture<Optional<?>> f = 
+          FutureUtils.scheduleWhile(scheduler, 2, true, () -> Optional.empty(), 
+                                    (o) -> ! o.isPresent(), DELAY_TIME, false);
+      
+      try {
+        f.get(DELAY_TIME + 1_000, TimeUnit.MILLISECONDS);
+        fail("Exception should have thrown");
+      } catch (ExecutionException e) {
+        // expected
+        assertTrue(e.getCause() instanceof TimeoutException);
+      }
     } finally {
       scheduler.shutdownNow();
     }
@@ -1280,5 +1302,123 @@ public class FutureUtilsTest {
     // verify task did not run
     assertEquals(startCount, runCount.get());
     assertEquals(0, scheduler.advance(100));  // should never run again
+  }
+  
+  @Test
+  public void runnableScheduleWhileFirstRunInThreadTest() throws Exception {
+    int scheduleDelayMillis = 10;
+    TestableScheduler scheduler = new TestableScheduler();
+    TestRunnable tr = new TestRunnable();
+    ListenableFuture<?> f = FutureUtils.scheduleWhile(scheduler, scheduleDelayMillis, false, 
+                                                      tr, () -> tr.getRunCount() < 2);
+
+    assertFalse(f.isDone());
+    assertEquals(1, scheduler.advance(scheduleDelayMillis));
+    assertTrue(f.isDone());
+    assertNull(f.get());  // verify no error state
+  }
+  
+  @Test
+  public void runnableScheduleWhileFirstRunOnSchedulerTest() throws Exception {
+    int scheduleDelayMillis = 10;
+    TestableScheduler scheduler = new TestableScheduler();
+    TestRunnable tr = new TestRunnable();
+    ListenableFuture<?> f = FutureUtils.scheduleWhile(scheduler, scheduleDelayMillis, true, 
+                                                      tr, () -> tr.getRunCount() < 2);
+
+    assertFalse(f.isDone());
+    assertEquals(1, scheduler.tick());  // first run async
+    assertFalse(f.isDone());
+    assertEquals(1, scheduler.advance(scheduleDelayMillis));
+    assertTrue(f.isDone());
+    assertNull(f.get());  // verify no error state
+  }
+  
+  @Test
+  public void runnableScheduleWhileTaskFailureInThreadTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> f = 
+        FutureUtils.scheduleWhile(scheduler, 10, false, () -> { throw failure; }, () -> false);
+    
+    assertTrue(f.isDone());
+    try {
+      f.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
+  }
+  
+  @Test
+  public void runnableScheduleWhileTaskFailureOnSchedulerTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> f = 
+        FutureUtils.scheduleWhile(scheduler, 10, true, () -> { throw failure; }, () -> false);
+
+    assertFalse(f.isDone());
+    assertEquals(1, scheduler.tick());  // first run async
+    assertTrue(f.isDone());
+    try {
+      f.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
+  }
+  
+  @Test
+  public void runnableScheduleWhileTimeoutTest() throws Exception {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      ListenableFuture<?> f = 
+          FutureUtils.scheduleWhile(scheduler, 2, true, DoNothingRunnable.instance(), 
+                                    () -> true, DELAY_TIME);
+      
+      try {
+        f.get(DELAY_TIME + 1_000, TimeUnit.MILLISECONDS);
+        fail("Exception should have thrown");
+      } catch (ExecutionException e) {
+        // expected
+        assertTrue(e.getCause() instanceof TimeoutException);
+      }
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void runnableScheduleWhilePredicateThrowsInThreadTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> f = 
+        FutureUtils.scheduleWhile(scheduler, 2, false, DoNothingRunnable.instance(), () -> { throw failure; });
+    
+    assertTrue(f.isDone());
+    try {
+      f.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
+  }
+  
+  @Test
+  public void runnableScheduleWhilePredicateThrowsOnSchedulerTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> f = 
+        FutureUtils.scheduleWhile(scheduler, 2, true, DoNothingRunnable.instance(), () -> { throw failure; });
+
+    assertFalse(f.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(f.isDone());
+    try {
+      f.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
   }
 }
