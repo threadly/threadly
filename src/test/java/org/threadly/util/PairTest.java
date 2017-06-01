@@ -4,7 +4,9 @@ import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -12,6 +14,85 @@ import org.junit.Test;
 public class PairTest {
   protected <T> Pair<T, T> makePair(T left, T right) {
     return new Pair<>(left, right);
+  }
+  
+  protected List<Pair<String, String>> makeRandomPairs() {
+    List<Pair<String, String>> pairs = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      pairs.add(makePair(StringUtils.makeRandomString(8), StringUtils.makeRandomString(8)));
+    }
+    return pairs;
+  }
+  
+  @Test
+  public void transformLeftTest() {
+    final String transformedString = "foo";
+    List<Pair<String, String>> pairs = makeRandomPairs();
+    
+    for (Pair<String, String> p : Pair.transformLeft(pairs, (s) -> transformedString)) {
+      assertTrue(p.getLeft().equals(transformedString));
+      assertFalse(p.getRight().equals(transformedString));
+    }
+  }
+  
+  @Test
+  public void transformRightTest() {
+    final String transformedString = "foo";
+    List<Pair<String, String>> pairs = makeRandomPairs();
+    
+    for (Pair<String, String> p : Pair.transformRight(pairs, (s) -> transformedString)) {
+      assertTrue(p.getRight().equals(transformedString));
+      assertFalse(p.getLeft().equals(transformedString));
+    }
+  }
+  
+  @Test
+  public void transformTest() {
+    final String transformedString = "foo";
+    List<Pair<String, String>> pairs = makeRandomPairs();
+    
+    for (Pair<String, String> p : Pair.transform(pairs, (s) -> transformedString, (s) -> transformedString)) {
+      assertTrue(p.getRight().equals(transformedString));
+      assertTrue(p.getLeft().equals(transformedString));
+    }
+  }
+  
+  @Test
+  public void applyToLeftTest() {
+    List<Pair<String, String>> pairs = makeRandomPairs();
+    List<String> leftCollected = new ArrayList<>(pairs.size());
+    
+    Pair.applyToLeft(pairs, (s) -> leftCollected.add(s));
+    
+    assertEquals(Pair.collectLeft(pairs), leftCollected);
+  }
+  
+  @Test
+  public void applyToRightTest() {
+    List<Pair<String, String>> pairs = makeRandomPairs();
+    List<String> rightCollected = new ArrayList<>(pairs.size());
+    
+    Pair.applyToRight(pairs, (s) -> rightCollected.add(s));
+    
+    assertEquals(Pair.collectRight(pairs), rightCollected);
+  }
+  
+  @Test
+  public void convertMapTest() {
+    Map<String, String> values = new HashMap<>();
+    for (int i = 0; i < TEST_QTY; i++) {
+      values.put(StringUtils.makeRandomString(8), StringUtils.makeRandomString(8));
+    }
+    
+    List<Pair<String, String>> pairs = Pair.convertMap(values);
+    
+    assertEquals(values.size(), pairs.size());
+    List<String> leftSide = Pair.collectLeft(pairs);
+    List<String> rightSide = Pair.collectRight(pairs);
+    for (Map.Entry<String, String> e : values.entrySet()) {
+      assertTrue(leftSide.contains(e.getKey()));
+      assertTrue(rightSide.contains(e.getValue()));
+    }
   }
   
   @Test

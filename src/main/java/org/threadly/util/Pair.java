@@ -2,7 +2,11 @@ package org.threadly.util;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A simple tuple implementation (every library needs one, right?).  This is designed to be a 
@@ -16,7 +20,126 @@ public class Pair<L, R> {
   private static final short LEFT_PRIME = 13;
   private static final short RIGHT_PRIME = 31;
   
-  // TODO - in threadly 5.0.0 make an easy way to apply a functional to either left or right
+  /**
+   * Function to assist in transforming the left side of pairs from one form to another.  This will 
+   * iterate through the source, applying the provided transformer function to each left side entry.  
+   * The resulting list will contain new pair instances with the transformed left entries and the 
+   * original right side entries.
+   * <p>
+   * If both the left and right sides must be transformed please see 
+   * {@link #transform(Collection, Function, Function)}.
+   * 
+   * @param <OL> Original left side type for input source
+   * @param <NL> Transformed left side type for resulting list
+   * @param <R> Type of object held as pair's right reference
+   * @param source Source collection to be iterating over
+   * @param transformer Function to apply to the left side entries
+   * @return New list of transformed pairs
+   */
+  public static <OL, NL, R> List<Pair<NL, R>> transformLeft(Collection<? extends Pair<? extends OL, 
+                                                                                      ? extends R>> source, 
+                                                            Function<? super OL, ? extends NL> transformer) {
+    return transform(source, transformer, (r) -> r);
+  }
+
+  /**
+   * Function to assist in transforming the right side of pairs from one form to another.  This will 
+   * iterate through the source, applying the provided transformer function to each right side entry.  
+   * The resulting list will contain new pair instances with the transformed right entries and the 
+   * original left side entries.
+   * <p>
+   * If both the left and right sides must be transformed please see 
+   * {@link #transform(Collection, Function, Function)}.
+   * 
+   * @param <OR> Original right side type for input source
+   * @param <NR> Transformed right side type for resulting list
+   * @param <L> Type of object held as pair's left reference
+   * @param source Source collection to be iterating over
+   * @param transformer Function to apply to the right side entries
+   * @return New list of transformed pairs
+   */
+  public static <L, OR, NR> List<Pair<L, NR>> transformRight(Collection<? extends Pair<? extends L, 
+                                                                                       ? extends OR>> source, 
+                                                             Function<? super OR, ? extends NR> transformer) {
+    return transform(source, (l) -> l, transformer);
+  }
+  
+  /**
+   * Function to assist in transforming a collection of pairs into a new resulting list.  This 
+   * simply iterates over the provided collection and applies the left and right transformers to 
+   * each pair.  Returning a new list with the resulting transformed values contained in the pairs.
+   * 
+   * @param <OL> Original left side type for input source
+   * @param <OR> Original right side type for input source
+   * @param <NL> Transformed left side type for resulting list
+   * @param <NR> Transformed right side type for resulting list
+   * @param source Source collection to be iterating over
+   * @param leftTransformer Function to apply to the left side entries
+   * @param rightTransformer Function to apply to the right side entries
+   * @return New list of transformed pairs
+   */
+  public static <OL, NL, OR, NR> List<Pair<NL, NR>> transform(Collection<? extends Pair<? extends OL, 
+                                                                                        ? extends OR>> source, 
+                                                              Function<? super OL, ? extends NL> leftTransformer,
+                                                              Function<? super OR, ? extends NR> rightTransformer) {
+    if (source.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Pair<NL, NR>> result = new ArrayList<>(source.size());
+    for (Pair<? extends OL, ? extends OR> p : source) {
+      result.add(new Pair<>(leftTransformer.apply(p.left), 
+                            rightTransformer.apply(p.right)));
+    }
+    return result;
+  }
+  
+  /**
+   * Goes through source {@link Iterable} and provides all left entries to a given consumer.
+   * 
+   * @param <L> Type of object held as pair's left reference
+   * @param source Source to iterate through
+   * @param consumer Consumer to provide left entries to
+   */
+  public static <L> void applyToLeft(Iterable<? extends Pair<? extends L, ?>> source, 
+                                     Consumer<? super L> consumer) {
+    for (Pair<? extends L, ?> p : source) {
+      consumer.accept(p.left);
+    }
+  }
+
+  /**
+   * Goes through source {@link Iterable} and provides all right entries to a given consumer.
+   * 
+   * @param <R> Type of object held as pair's right reference
+   * @param source Source to iterate through
+   * @param consumer Consumer to provide right entries to
+   */
+  public static <R> void applyToRight(Iterable<? extends Pair<?, ? extends R>> source, 
+                                      Consumer<? super R> consumer) {
+    for (Pair<?, ? extends R> p : source) {
+      consumer.accept(p.right);
+    }
+  }
+
+  /**
+   * Convert a map into a list of Pair's where the left side of the pair contains the value and 
+   * the right side is the corresponding value.
+   * 
+   * @param <L> Type of object held as pair's left reference
+   * @param <R> Type of object held as pair's right reference
+   * @param map Map to source entries from
+   * @return A list of pairs sourced from the map's entries
+   */
+  public static <L, R> List<Pair<L, R>> convertMap(Map<? extends L, ? extends R> map) {
+    if (map.isEmpty()) {
+      return Collections.emptyList();
+    }
+    List<Pair<L, R>> result = new ArrayList<>(map.size());
+    for (Map.Entry<? extends L, ? extends R> e : map.entrySet()) {
+      result.add(new Pair<>(e.getKey(), e.getValue()));
+    }
+    return result;
+  }
   
   /**
    * Split a collection of pair's into a pair of two collections.  This is more efficient than 
@@ -54,6 +177,9 @@ public class Pair<L, R> {
    * @return New list that contains non-null left references
    */
   public static <T> List<T> collectLeft(Collection<? extends Pair<? extends T, ?>> source) {
+    if (source.isEmpty()) {
+      return Collections.emptyList();
+    }
     List<T> result = new ArrayList<>(source.size());
     for (Pair<? extends T, ?> p : source) {
       if (p.left != null) {
@@ -73,6 +199,9 @@ public class Pair<L, R> {
    * @return New list that contains non-null right references
    */
   public static <T> List<T> collectRight(Collection<? extends Pair<?, ? extends T>> source) {
+    if (source.isEmpty()) {
+      return Collections.emptyList();
+    }
     List<T> result = new ArrayList<>(source.size());
     for (Pair<?, ? extends T> p : source) {
       if (p.right != null) {
