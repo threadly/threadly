@@ -72,4 +72,12 @@ public abstract class AbstractService implements Service {
   public boolean hasStopped() {
     return state.get() == 2;
   }
+  
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
+    if (isRunning()) {
+      ExceptionUtils.handleException(new IllegalStateException(getClass() + " was not stopped before GC"));
+    }
+  }
 }
