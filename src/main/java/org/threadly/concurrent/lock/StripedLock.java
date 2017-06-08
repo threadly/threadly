@@ -19,7 +19,6 @@ import org.threadly.util.ArgumentVerifier;
  */
 public class StripedLock {
   private final int expectedConcurrencyLevel;
-  //private final ConcurrentHashMap<Integer, Object> locks;
   private final AtomicReferenceArray<Object> locks;
   
   /**
@@ -33,7 +32,6 @@ public class StripedLock {
     ArgumentVerifier.assertGreaterThanZero(expectedConcurrencyLevel, "expectedConcurrencyLevel");
     
     this.expectedConcurrencyLevel = expectedConcurrencyLevel;
-    //this.locks = new ConcurrentHashMap<>();
     locks = new AtomicReferenceArray<>(expectedConcurrencyLevel);
   }
   
