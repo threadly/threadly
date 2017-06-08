@@ -1,6 +1,6 @@
 package org.threadly.concurrent.lock;
 
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import org.threadly.util.ArgumentVerifier;
 
@@ -19,7 +19,8 @@ import org.threadly.util.ArgumentVerifier;
  */
 public class StripedLock {
   private final int expectedConcurrencyLevel;
-  private final ConcurrentHashMap<Integer, Object> locks;
+  //private final ConcurrentHashMap<Integer, Object> locks;
+  private final AtomicReferenceArray<Object> locks;
   
   /**
    * Constructs a new {@link StripedLock} with a given expected concurrency level.  The higher the 
@@ -32,7 +33,8 @@ public class StripedLock {
     ArgumentVerifier.assertGreaterThanZero(expectedConcurrencyLevel, "expectedConcurrencyLevel");
     
     this.expectedConcurrencyLevel = expectedConcurrencyLevel;
-    this.locks = new ConcurrentHashMap<>();
+    //this.locks = new ConcurrentHashMap<>();
+    locks = new AtomicReferenceArray<>(expectedConcurrencyLevel);
   }
   
   /**
@@ -69,9 +71,8 @@ public class StripedLock {
     Object result = locks.get(lockIndex);
     if (result == null) {
       result = new Object();
-      Object putIfAbsentResult = locks.putIfAbsent(lockIndex, result);
-      if (putIfAbsentResult != null) {
-        result = putIfAbsentResult;
+      if(!locks.compareAndSet(lockIndex, null, result)) {
+        result = locks.get(lockIndex);
       }
     }
     
