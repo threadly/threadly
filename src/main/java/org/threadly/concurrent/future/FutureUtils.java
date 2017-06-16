@@ -319,7 +319,6 @@ public class FutureUtils {
    */
   public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                                            final T result) {
-    // TODO - evaluate changing to return new EmptyFutureCollection(futures).map((ignored) -> result);
     final EmptyFutureCollection efc = new EmptyFutureCollection(futures);
     final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<>(efc);
     efc.addCallback(new FutureCallback<Object>() {
