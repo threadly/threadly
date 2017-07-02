@@ -628,6 +628,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      */
     protected void addWorkerToIdleChain(Worker worker) {
       idleWorkerCount.increment();
+      worker.waitingForUnpark = false;  // reset state before we park, avoid external interactions
       
       while (true) {
         Worker casWorker = idleWorker.get();
@@ -713,8 +714,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         while (true) {
           TaskWrapper nextTask = queueManager.getNextTask();
           if (nextTask == null) {
-            if (queued) {
-              // we can only park after we have queued, then checked again for a result
+            if (queued) { // we can only park after we have queued, then checked again for a result
               LockSupport.park();
               worker.waitingForUnpark = false;
               continue;
@@ -784,7 +784,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
           removeWorkerFromIdleChain(worker);
         }
         
-        // wake up next worker so he can check if tasks are ready to consume
+        // wake up next worker so it can check if tasks are ready to consume
         handleQueueUpdate();
         
         if (! interruptedChecked) {
