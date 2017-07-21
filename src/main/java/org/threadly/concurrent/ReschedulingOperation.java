@@ -24,7 +24,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 4.9.0
  */
 public abstract class ReschedulingOperation {
-  private final SubmitterScheduler scheduler;
+  protected final SubmitterScheduler scheduler;
   // -1 = not scheduled, 0 = scheduled, 1 = running, 2 = updated while running
   private final AtomicInteger taskState;
   private final CheckRunner runner;

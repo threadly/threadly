@@ -37,8 +37,8 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency) {
-    ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
     ArgumentVerifier.assertNotNull(executor, "executor");
+    ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
     
     this.executor = executor;
     this.waitingTasks = new ConcurrentLinkedQueue<>();
@@ -87,10 +87,12 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
   }
   
   protected void consumeAvailable() {
-    /* must synchronize in queue consumer to avoid 
-     * multiple threads from consuming tasks in parallel 
-     * and possibly emptying after .isEmpty() check but 
-     * before .poll()
+    if (currentlyRunning.get() >= maxConcurrency || waitingTasks.isEmpty()) {
+      // shortcut before we lock
+      return;
+    }
+    /* must synchronize in queue consumer to avoid multiple threads from consuming tasks in 
+     * parallel and possibly emptying after .isEmpty() check but before .poll()
      */
     synchronized (this) {
       while (! waitingTasks.isEmpty() && canSubmitTasksToPool()) {
