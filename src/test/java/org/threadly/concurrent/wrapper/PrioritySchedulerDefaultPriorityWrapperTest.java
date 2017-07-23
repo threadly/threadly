@@ -351,6 +351,16 @@ public class PrioritySchedulerDefaultPriorityWrapperTest {
     public int getQueuedTaskCount(TaskPriority priority) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public int getWaitingForExecutionTaskCount() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int getWaitingForExecutionTaskCount(TaskPriority priority) {
+      throw new UnsupportedOperationException();
+    }
     
     // NO OPERATIONS WITHOUT PRIORITY SHOULD BE CALLED
     @Override

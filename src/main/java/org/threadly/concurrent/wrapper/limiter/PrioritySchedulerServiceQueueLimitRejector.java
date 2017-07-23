@@ -203,4 +203,9 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
   public int getQueuedTaskCount(TaskPriority priority) {
     return parentScheduler.getQueuedTaskCount(priority);
   }
+
+  @Override
+  public int getWaitingForExecutionTaskCount(TaskPriority priority) {
+    return parentScheduler.getWaitingForExecutionTaskCount(priority);
+  }
 }

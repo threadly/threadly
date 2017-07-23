@@ -70,6 +70,11 @@ public class SchedulerServiceTaskInterceptor extends SubmitterSchedulerTaskInter
   }
 
   @Override
+  public int getWaitingForExecutionTaskCount() {
+    return parentScheduler.getWaitingForExecutionTaskCount();
+  }
+
+  @Override
   public boolean isShutdown() {
     return parentScheduler.isShutdown();
   }

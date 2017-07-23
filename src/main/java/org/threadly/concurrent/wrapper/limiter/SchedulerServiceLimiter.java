@@ -78,6 +78,11 @@ public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter
   }
 
   @Override
+  public int getWaitingForExecutionTaskCount() {
+    return scheduler.getWaitingForExecutionTaskCount() + waitingTasks.size();
+  }
+
+  @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
   }

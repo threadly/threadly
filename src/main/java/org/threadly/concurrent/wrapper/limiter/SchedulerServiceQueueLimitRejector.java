@@ -50,6 +50,11 @@ public class SchedulerServiceQueueLimitRejector extends SubmitterSchedulerQueueL
   }
 
   @Override
+  public int getWaitingForExecutionTaskCount() {
+    return parentScheduler.getWaitingForExecutionTaskCount();
+  }
+
+  @Override
   public boolean remove(Runnable task) {
     if (parentScheduler.remove(task)) {
       queuedTaskCount.decrementAndGet();

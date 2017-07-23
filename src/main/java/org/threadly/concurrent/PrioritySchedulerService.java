@@ -168,10 +168,21 @@ public interface PrioritySchedulerService extends SchedulerService {
 
   /**
    * Returns a count of how many tasks are either waiting to be executed, or are scheduled to be 
-   * executed at a future point for a specific priority.
+   * executed at a future point for a specific priority.  This can indicate pool back pressure, 
+   * but it can also just indicate generally scheduled tasks.  It's computationally cheaper than 
+   * {@link #getWaitingForExecutionTaskCount(TaskPriority)}.
    * 
    * @param priority priority for tasks to be counted
    * @return quantity of tasks waiting execution or scheduled to be executed later
    */
   public int getQueuedTaskCount(TaskPriority priority);
+
+  /**
+   * Returns a count of how many tasks are either waiting to be executed for a specific priority.  
+   * A value here can indicate the pool is being starved for threads.
+   * 
+   * @param priority priority for tasks to be counted
+   * @return quantity of tasks waiting execution
+   */
+  public int getWaitingForExecutionTaskCount(TaskPriority priority);
 }

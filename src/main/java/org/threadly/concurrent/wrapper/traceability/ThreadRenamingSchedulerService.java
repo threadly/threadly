@@ -52,6 +52,11 @@ public class ThreadRenamingSchedulerService extends ThreadRenamingSubmitterSched
   }
 
   @Override
+  public int getWaitingForExecutionTaskCount() {
+    return scheduler.getWaitingForExecutionTaskCount();
+  }
+
+  @Override
   public boolean isShutdown() {
     return scheduler.isShutdown();
   }

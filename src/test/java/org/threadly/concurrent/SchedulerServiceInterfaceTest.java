@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerInterfaceTest {
@@ -113,7 +114,6 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
       
       BlockingTestRunnable btr = new BlockingTestRunnable();
       scheduler.execute(btr);
-      
       btr.blockTillStarted();
       
       assertEquals(1, scheduler.getActiveTaskCount());
@@ -122,6 +122,55 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
       
       new TestCondition(() -> scheduler.getActiveTaskCount() == 0).blockTillTrue();
     } finally {
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void getQueuedTaskCountTest() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    SchedulerServiceFactory factory = getSchedulerServiceFactory();
+    final SchedulerService scheduler = factory.makeSchedulerService(1, false);
+    try {
+      // verify nothing at the start
+      assertEquals(0, scheduler.getQueuedTaskCount());
+      
+      scheduler.execute(btr);
+      btr.blockTillStarted();
+      
+      assertEquals(0, scheduler.getQueuedTaskCount());
+      
+      scheduler.execute(DoNothingRunnable.instance());
+      assertEquals(1, scheduler.getQueuedTaskCount());
+    } finally {
+      btr.unblock();
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  public void getWaitingForExecutionTaskCountTest() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    SchedulerServiceFactory factory = getSchedulerServiceFactory();
+    final SchedulerService scheduler = factory.makeSchedulerService(1, false);
+    try {
+      // verify nothing at the start
+      assertEquals(0, scheduler.getWaitingForExecutionTaskCount());
+      
+      scheduler.execute(btr);
+      btr.blockTillStarted();
+      
+      assertEquals(0, scheduler.getWaitingForExecutionTaskCount());
+      
+      scheduler.execute(DoNothingRunnable.instance());
+      assertEquals(1, scheduler.getWaitingForExecutionTaskCount());
+      scheduler.schedule(DoNothingRunnable.instance(), 1);
+      TestUtils.blockTillClockAdvances();
+      assertEquals(2, scheduler.getWaitingForExecutionTaskCount());
+      scheduler.schedule(DoNothingRunnable.instance(), 600_000);
+      assertEquals(2, scheduler.getWaitingForExecutionTaskCount());
+    } finally {
+      btr.unblock();
       factory.shutdown();
     }
   }

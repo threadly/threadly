@@ -226,6 +226,37 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     return getQueueManager().getQueueSet(priority).queueSize();
   }
   
+  @Override
+  public int getWaitingForExecutionTaskCount() {
+    int result = 0;
+    for (TaskPriority p : TaskPriority.values()) {
+      result += getWaitingForExecutionTaskCount(p);
+    }
+    return result;
+  }
+  
+  @Override
+  public int getWaitingForExecutionTaskCount(TaskPriority priority) {
+    if (priority == null) {
+      return getWaitingForExecutionTaskCount();
+    }
+    
+    QueueSet qs = getQueueManager().getQueueSet(priority);
+    int result = qs.executeQueue.size();
+    for (int i = 0; i < qs.scheduleQueue.size(); i++) {
+      try {
+        if (qs.scheduleQueue.get(i).getScheduleDelay() > 0) {
+          break;
+        } else {
+          result++;
+        }
+      } catch (IndexOutOfBoundsException e) {
+        break;
+      }
+    }
+    return result;
+  }
+  
   /**
    * Interface to be notified when relevant changes happen to the queue set.
    * 

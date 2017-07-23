@@ -179,4 +179,14 @@ public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedule
   public int getQueuedTaskCount(TaskPriority priority) {
     return scheduler.getQueuedTaskCount(priority);
   }
+
+  @Override
+  public int getWaitingForExecutionTaskCount() {
+    return scheduler.getWaitingForExecutionTaskCount();
+  }
+
+  @Override
+  public int getWaitingForExecutionTaskCount(TaskPriority priority) {
+    return scheduler.getWaitingForExecutionTaskCount(priority);
+  }
 }
