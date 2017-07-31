@@ -7,7 +7,7 @@ import java.util.function.Function;
  * A collection of utilities for searching and sorting against collections and other data 
  * providers.
  * 
- * @since 5.0.0
+ * @since 5.0
  */
 public class SortUtils {
   protected static final short MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;

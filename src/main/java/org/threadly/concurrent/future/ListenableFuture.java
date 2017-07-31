@@ -40,8 +40,7 @@ public interface ListenableFuture<T> extends Future<T> {
    *   ListenableFuture<Integer> count = lookupSomething().map((s) -> countSomething(s));
    * }</pre>
    * 
-   * @since 5.0.0
-   * 
+   * @since 5.0
    * @param <R> The type for the object returned from the mapper
    * @param mapper Function to invoke in order to transform the futures result
    * @return A new {@link ListenableFuture} with the specified result type
@@ -66,7 +65,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * If your function returns a future, consider using {@link #flatMap(Function, Executor)} as an 
    * alternative.
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <R> The type for the object returned from the mapper
    * @param mapper Function to invoke in order to transform the futures result
    * @param executor Executor to invoke mapper function on, or {@code null} 
@@ -96,7 +95,7 @@ public interface ListenableFuture<T> extends Future<T> {
    *   ListenableFuture<Integer> count = lookupSomething().flatMap((s) -> countSomething(s));
    * }</pre>
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <R> The type for the object contained in the future which is returned from the mapper
    * @param mapper Function to invoke in order to transform the futures result
    * @return A new {@link ListenableFuture} with the specified result type
@@ -118,7 +117,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * very fast and cheap to run then {@link #flatMap(Function)} or providing {@code null} for the 
    * executor can allow more efficient operation.  
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <R> The type for the object contained in the future which is returned from the mapper
    * @param mapper Function to invoke in order to transform the futures result
    * @param executor Executor to invoke mapper function on, or {@code null} 

@@ -12,7 +12,7 @@ import org.threadly.util.ArgumentVerifier;
  * abstract class rather than accepting a lambda.
  * 
  * @param <T> Type of result returned
- * @since 5.0.0
+ * @since 5.0
  */
 public class FutureCallbackResultHandler<T> extends AbstractFutureCallbackResultHandler<T> {
   private final Consumer<T> resultHandler;

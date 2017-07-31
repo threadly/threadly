@@ -38,7 +38,7 @@ public class TestCondition {
    * Alternatively this can be constructed with {@link #TestCondition()} and then the condition can 
    * be reported by overriding {@link #get()}.
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param condition Condition to check
    */
   public TestCondition(Supplier<Boolean> condition) {

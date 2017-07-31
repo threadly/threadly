@@ -378,7 +378,7 @@ public class FutureUtils {
    * using {@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)} in addition to 
    * this so that the future will resolve as soon as any failures occur. 
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -397,8 +397,8 @@ public class FutureUtils {
    * Since the returned future wont complete until all futures complete, you may want to consider 
    * using {@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)} in addition to 
    * this so that the future will resolve as soon as any failures occur.
-   * 
-   * @since 5.0.0
+   *
+   * @since 5.0
    * @param <T> type of result returned from the future
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @param result Result to provide returned future once all futures complete
@@ -701,7 +701,7 @@ public class FutureUtils {
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable, long)}.
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
@@ -735,7 +735,7 @@ public class FutureUtils {
    * execution.  If non-null then the result will be able to be retrieved from the returned 
    * {@link ListenableFuture}.
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
@@ -770,7 +770,7 @@ public class FutureUtils {
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)}.
    *  
-   * @since 5.0.0
+   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -807,7 +807,7 @@ public class FutureUtils {
    * this execution completes the result will be provided to the {@link Predicate} to determine if 
    * another schedule should occur to re-run the task.  
    *  
-   * @since 5.0.0
+   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -847,7 +847,7 @@ public class FutureUtils {
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate, long, boolean)}.
    *  
-   * @since 5.0.0
+   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -881,7 +881,7 @@ public class FutureUtils {
    * <p>
    * The first execution will happen as soon as the provided {@code startingFuture} completes.  
    *  
-   * @since 5.0.0
+   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
@@ -994,7 +994,7 @@ public class FutureUtils {
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhile(SubmitterScheduler, long, boolean, Runnable, Supplier, long)}.
    *  
-   * @since 5.0.0
+   * @since 5.0
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
    * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
@@ -1030,7 +1030,7 @@ public class FutureUtils {
    * this execution completes the result will be provided to the {@link Supplier} to determine if 
    * another schedule should occur to re-run the task.  
    *  
-   * @since 5.0.0
+   * @since 5.0
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
    * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
@@ -1068,7 +1068,7 @@ public class FutureUtils {
    * on.  If the mapper function is very fast and cheap to run then {@link #map(Function)} or 
    * providing {@code null} for the executor can allow more efficient operation.
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
    * @param <RT> The result type for the object returned from the mapper
    * @param sourceFuture Future to source input into transformation function
@@ -1123,7 +1123,7 @@ public class FutureUtils {
    * {@code ListenableFuture<ListenableFuture<R>>}, and flattens it into a single future which will 
    * resolve once the contained future is complete.
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
    * @param <RT> The result type for the object contained in the future returned from the mapper
    * @param sourceFuture Future to source input into transformation function
@@ -1181,7 +1181,7 @@ public class FutureUtils {
    * Class which will propagate a failure condition to a {@link SettableListenableFuture} from a 
    * source future which this is added as a {@link FutureCallback} to.
    * 
-   * @since 5.0.0
+   * @since 5.0
    * @param <T> Type of result to be accepted by {@link FutureCallback}
    */
   protected abstract static class FailurePropogatingFutureCallback<T> implements FutureCallback<T> {

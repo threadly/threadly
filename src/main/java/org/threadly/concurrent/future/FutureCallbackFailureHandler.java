@@ -12,7 +12,7 @@ import org.threadly.util.ArgumentVerifier;
  * See {@link AbstractFutureCallbackFailureHandler} for a similar implementation except using an 
  * abstract class rather than accepting a lambda.
  * 
- * @since 5.0.0
+ * @since 5.0
  */
 public class FutureCallbackFailureHandler extends AbstractFutureCallbackFailureHandler {
   private final Consumer<Throwable> failureHandler;
