@@ -161,8 +161,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
     if (defaultThreadlyExceptionHandler != null) {
       r = new ExceptionHandlerSettingRunnable(r);
     }
-    Thread t = new Thread(group, r, 
-                          threadNamePrefix + nextThreadNumber.getAndIncrement());
+    Thread t = new Thread(group, r, threadNamePrefix + nextThreadNumber.getAndIncrement());
     
     if (t.isDaemon() != useDaemonThreads) {
       t.setDaemon(useDaemonThreads);

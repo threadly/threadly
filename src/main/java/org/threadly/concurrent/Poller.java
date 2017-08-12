@@ -31,7 +31,9 @@ import org.threadly.util.Pair;
  * as the {@link Supplier}'s are quick/fast ({@link Future} conversions are always quick/fast), 
  * it's most efficient to reuse the {@link Poller} instance.  But if you need dynamic 
  * timeout's/max wait time you could construct a {@link Poller} and toss it away once you get the 
- * returned {@link ListenableFuture} from it. 
+ * returned {@link ListenableFuture} from it.
+ * 
+ * @since 5.0
  */
 public class Poller {
   private final Watchdog futureWatchdog;

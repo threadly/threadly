@@ -1094,14 +1094,13 @@ public class FutureUtils {
         return FutureUtils.immediateFailureFuture(t);
       }
     } else {
-      SettableListenableFuture<RT> slf;
       if (sourceFuture.isCancelled()) {
         // shortcut
-        slf = new SettableListenableFuture<>();
+        SettableListenableFuture<RT> slf = new SettableListenableFuture<>();
         slf.cancel(false);
         return slf;
       }
-      slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
+      SettableListenableFuture<RT> slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
       // may still process in thread if future completed after check and executor is null
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
