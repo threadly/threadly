@@ -27,23 +27,23 @@ import org.threadly.util.ArgumentVerifier;
 public class ExecutorLimiter extends AbstractSubmitterExecutor implements SubmitterExecutor {
   protected final Executor executor;
   protected final Queue<LimiterRunnableWrapper> waitingTasks;
-  protected final int maxConcurrency;
   private final AtomicInteger currentlyRunning;
+  private volatile int maxConcurrency;
   
   /**
    * Construct a new execution limiter that implements the {@link Executor} interface.
    * 
    * @param executor {@link Executor} to submit task executions to.
-   * @param maxConcurrency maximum quantity of runnables to run in parallel
+   * @param maxConcurrency maximum quantity of tasks to run in parallel
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency) {
     ArgumentVerifier.assertNotNull(executor, "executor");
     ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
-    
+
     this.executor = executor;
     this.waitingTasks = new ConcurrentLinkedQueue<>();
-    this.maxConcurrency = maxConcurrency;
     this.currentlyRunning = new AtomicInteger(0);
+    this.maxConcurrency = maxConcurrency;
   }
   
   /**
@@ -53,6 +53,24 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
    */
   public int getMaxConcurrency() {
     return maxConcurrency;
+  }
+  
+  /**
+   * Updates the concurrency limit for this wrapper.  If reducing the the limit, there will be no 
+   * attempt or impact on tasks already limiting.  Instead new tasks just wont be submitted to the 
+   * parent pool until existing tasks complete and go below the new limit.
+   * 
+   * @since 5.4
+   * @param maxConcurrency maximum quantity of tasks to run in parallel
+   */
+  public void setMaxConcurrency(int maxConcurrency) {
+    ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
+    
+    boolean increasing = this.maxConcurrency < maxConcurrency; 
+    this.maxConcurrency = maxConcurrency;
+    if (increasing) {
+      consumeAvailable();
+    }
   }
   
   /**
@@ -73,7 +91,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
    * 
    * @return {@code true} if the task can be submitted to the pool
    */
-  private boolean canSubmitTasksToPool() {
+  protected boolean canSubmitTasksToPool() {
     while (true) {  // loop till we have a result
       int currentValue = currentlyRunning.get();
       if (currentValue < maxConcurrency) {

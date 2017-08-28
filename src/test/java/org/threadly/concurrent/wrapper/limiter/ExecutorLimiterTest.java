@@ -73,8 +73,32 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   }
   
   @Test
-  public void getMaxConcurrencyTest() {
-    assertEquals(PARALLEL_COUNT, getLimiter(PARALLEL_COUNT).getMaxConcurrency());
+  public void getAndSetMaxConcurrencyTest() {
+    ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT);
+    assertEquals(PARALLEL_COUNT, limiter.getMaxConcurrency());
+    limiter.setMaxConcurrency(1);
+    assertEquals(1, limiter.getMaxConcurrency());
+  }
+  
+  @Test
+  public void increaseMaxConcurrencyTest() {
+    ExecutorLimiter limiter = getLimiter(1);
+
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      limiter.execute(btr);
+      // block till started so that our entire limit is used up
+      btr.blockTillStarted();
+      
+      TestRunnable tr = new TestRunnable();
+      limiter.execute(tr);  // wont be able to run
+      
+      limiter.setMaxConcurrency(2);
+      
+      tr.blockTillFinished();  // should be able to complete now that limit was increased
+    } finally {
+      btr.unblock();
+    }
   }
   
   @Test
