@@ -36,11 +36,11 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   protected static final short CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
   
   protected final Executor executor;
-  protected final int maxConcurrency;
   protected final String subPoolName;
   protected final boolean addKeyToThreadName;
   protected final StripedLock sLock;
   protected final ConcurrentHashMap<Object, LimiterContainer> currentLimiters;
+  private volatile int maxConcurrency;
   
   protected AbstractKeyedLimiter(Executor executor, int maxConcurrency, 
                                  String subPoolName, boolean addKeyToThreadName, 
@@ -49,7 +49,6 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     ArgumentVerifier.assertNotNull(executor, "executor");
 
     this.executor = executor;
-    this.maxConcurrency = maxConcurrency;
     // make sure this is non-null so that it 'null' wont appear
     this.subPoolName = StringUtils.nullToEmpty(subPoolName);
     this.addKeyToThreadName = addKeyToThreadName;
@@ -67,15 +66,33 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     }
     this.currentLimiters = new ConcurrentHashMap<>(mapInitialSize,  
                                                    CONCURRENT_HASH_MAP_LOAD_FACTOR, mapConcurrencyLevel);
+    this.maxConcurrency = maxConcurrency;
   }
   
   /**
    * Check how many threads may run in parallel for a single unique key.
    * 
-   * @return maximum concurrent tasks to be run
+   * @return maximum concurrent tasks to be run per key
    */
   public int getMaxConcurrencyPerKey() {
     return maxConcurrency;
+  }
+  
+  /**
+   * Updates the concurrency limit for each key.  If reducing the the limit, there will be no 
+   * attempt or impact on tasks already limiting.  Instead new tasks just wont be submitted to the 
+   * parent pool until existing tasks complete and go below the new limit.
+   * 
+   * @since 5.4
+   * @param maxConcurrency maximum quantity of tasks to run in parallel per key
+   */
+  public void setMaxConcurrencyPerKey(int maxConcurrency) {
+    ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
+    
+    this.maxConcurrency= maxConcurrency;
+    for (LimiterContainer lc : currentLimiters.values()) {
+      lc.limiter.setMaxConcurrency(maxConcurrency);
+    }
   }
   
   /**

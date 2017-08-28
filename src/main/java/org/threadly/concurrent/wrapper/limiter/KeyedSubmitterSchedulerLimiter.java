@@ -70,7 +70,7 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
                                            scheduler : new ThreadRenamingSubmitterScheduler(scheduler, 
                                                                                             limiterThreadName, 
                                                                                             false), 
-                                         maxConcurrency);
+                                         getMaxConcurrencyPerKey());
   }
   
   /**********

@@ -76,7 +76,7 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
                                          scheduler : new ThreadRenamingSchedulerService(scheduler, 
                                                                                         limiterThreadName, 
                                                                                         false), 
-                                       maxConcurrency);
+                                       getMaxConcurrencyPerKey());
   }
 
   /**

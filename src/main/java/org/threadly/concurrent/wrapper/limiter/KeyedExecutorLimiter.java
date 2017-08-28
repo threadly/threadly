@@ -69,7 +69,7 @@ public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> 
   protected ExecutorLimiter makeLimiter(String limiterThreadName) {
     return new ExecutorLimiter(StringUtils.isNullOrEmpty(limiterThreadName) ? 
                                  executor : new ThreadRenamingExecutor(executor, limiterThreadName, false), 
-                               maxConcurrency);
+                               getMaxConcurrencyPerKey());
   }
   
   /**********

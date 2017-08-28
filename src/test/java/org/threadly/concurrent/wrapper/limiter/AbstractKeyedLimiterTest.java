@@ -8,6 +8,7 @@ import java.util.Map;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
@@ -15,10 +16,34 @@ public abstract class AbstractKeyedLimiterTest {
   protected abstract AbstractKeyedLimiter<?> makeLimiter(int limit);
   
   @Test
-  public void getMaxConcurrencyPerKeyTest() {
-    assertEquals(1, makeLimiter(1).getMaxConcurrencyPerKey());
+  public void getAndSetMaxConcurrencyPerKeyTest() {
     int val = 10;
-    assertEquals(val, makeLimiter(val).getMaxConcurrencyPerKey());
+    AbstractKeyedLimiter<?> limiter = makeLimiter(val);
+    assertEquals(val, limiter.getMaxConcurrencyPerKey());
+    limiter.setMaxConcurrencyPerKey(1);
+    assertEquals(1, limiter.getMaxConcurrencyPerKey());
+  }
+  
+  @Test
+  public void increaseMaxConcurrencyTest() {
+    AbstractKeyedLimiter<?> limiter = makeLimiter(1);
+    String key = StringUtils.makeRandomString(5);
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      limiter.execute(key, btr);
+      // block till started so that our entire limit is used up
+      btr.blockTillStarted();
+      
+      TestRunnable tr = new TestRunnable();
+      limiter.execute(key, tr);  // wont be able to run
+      
+      limiter.setMaxConcurrencyPerKey(2);
+      
+      tr.blockTillFinished();  // should be able to complete now that limit was increased
+    } finally {
+      btr.unblock();
+    }
   }
   
   @Test
