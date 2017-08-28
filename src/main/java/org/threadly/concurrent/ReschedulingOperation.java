@@ -66,28 +66,52 @@ public abstract class ReschedulingOperation {
     this.scheduleDelay = scheduleDelay;
   }
   
+  private boolean firstSignal() {
+    while (true) {
+      int casState = taskState.get();
+      if (casState == -1) {
+        if (taskState.compareAndSet(-1, 0)) {
+          return true;
+        }
+      } else if (casState == 1) {
+        if (taskState.compareAndSet(1, 2)) {
+          return false;
+        }
+      } else {
+        // either already scheduled, or already marked as more added
+        return false;
+      }
+    }
+  }
+  
+  /**
+   * Similar to {@link #signalToRun()} except that any configured schedule / delay will be ignored 
+   * and instead the task will try to run ASAP.
+   * 
+   * @param runOnCallingThreadIfPossible {@code true} to run the task on the invoking thread if possible
+   */
+  public void signalToRunImmediately(boolean runOnCallingThreadIfPossible) {
+    if (firstSignal()) {
+      if (runOnCallingThreadIfPossible) {
+        runner.run();
+      } else {
+        scheduler.execute(runner);
+      }
+    }
+  }
+  
   /**
    * Invoke to indicate that this operation has stuff to do.  If necessary the task will be 
    * scheduled for execution.  If the task is already running then it will ensure the task 
    * re-executes itself when done (at the set delay).  This re-execution can help ensure that any 
    * thread state changes can be witnessed on the next execution.
+   * <p>
+   * If you want to signal the task to run immediately (ignore the schedule delay) please see 
+   * {@link #signalToRunImmediately(boolean)}.
    */
   public void signalToRun() {
-    while (true) {
-      int casState = taskState.get();
-      if (casState == -1) {
-        if (taskState.compareAndSet(-1, 0)) {
-          scheduler.schedule(runner, scheduleDelay);
-          return;
-        }
-      } else if (casState == 1) {
-        if (taskState.compareAndSet(1, 2)) {
-          return;
-        }
-      } else {
-        // either already scheduled, or already marked as more added
-        return;
-      }
+    if (firstSignal()) {
+      scheduler.schedule(runner, scheduleDelay);
     }
   }
   

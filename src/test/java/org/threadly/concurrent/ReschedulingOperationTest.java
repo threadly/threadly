@@ -88,6 +88,26 @@ public class ReschedulingOperationTest {
     assertEquals(1, testOp.tr.getRunCount());
   }
   
+  @Test
+  public void signalToRunImmediatelyTest() {
+    TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, SCHEDULE_DELAY, false);
+
+    testOp.signalToRunImmediately(false);
+
+    assertEquals(1, scheduler.advance(1));
+    assertEquals(1, testOp.tr.getRunCount());
+  }
+  
+  @Test
+  public void signalToRunImmediatelyOnCallingThreadTest() {
+    TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, SCHEDULE_DELAY, false);
+
+    testOp.signalToRunImmediately(true);
+    
+    assertEquals(1, testOp.tr.getRunCount());
+    assertEquals(0, scheduler.advance(SCHEDULE_DELAY)); // should have run in-thread not on scheduler
+  }
+  
   private static class TestReschedulingOperation extends ReschedulingOperation {
     public final TestRunnable tr = new TestRunnable();
     private final boolean alwaysReschedule;
