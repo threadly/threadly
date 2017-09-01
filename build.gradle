@@ -21,11 +21,11 @@ jacocoTestReport {
     sourceDirectories = fileTree(dir: 'scr/main/java', include: 'org/threadly/**')
   }
   reports {
-    csv.enabled false
-    xml.enabled true
-    xml.destination "${buildDir}/reports/jacoco/jacoco.xml"
-    html.enabled true
-    html.destination "${buildDir}/reports/jacoco/html"
+    csv.enabled = false
+    xml.enabled = true
+    xml.destination = file("${buildDir}/reports/jacoco/jacoco.xml")
+    html.enabled = true
+    html.destination = file("${buildDir}/reports/jacoco/html")
   }
   doLast {
     println "Test results available at:"
