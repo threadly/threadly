@@ -702,10 +702,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
           if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize - 1)) {
             worker.stopIfRunning();
             return null;
-          }
+          } // else, retry, see if we need to shutdown
+        } else {
+          // pool state is consistent, we should keep running
+          break;
         }
-        // pool state is consistent, we should keep running
-        break;
       }
       
       boolean interruptedChecked = false;
@@ -770,7 +771,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
             }
           }
           // reset interrupted status if we may block and have not checked
-          if (queued && ! interruptedChecked) {
+          if (queued & ! interruptedChecked) {
             interruptedChecked = true;
             if (Thread.interrupted()) {
               // verify we were not interrupted due to pool shutdown
@@ -800,7 +801,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         Worker nextIdleWorker = idleWorker.get();
         if (nextIdleWorker == null) {
           int casSize = currentPoolSize.get();
-          if (casSize < maxPoolSize && ! shutdownFinishing) {
+          if (casSize < maxPoolSize & ! shutdownFinishing) {
             if (currentPoolSize.compareAndSet(casSize, casSize + 1)) {
               // start a new worker for the next task
               makeNewWorker();
@@ -852,14 +853,18 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       LockSupport.unpark(thread);
     }
     
-    @Override
-    public void run() {
+    protected void executeTasksWhileRunning() {
       while (isRunning()) {
         TaskWrapper nextTask = workerPool.workerIdle(this);
         if (nextTask != null) {  // may be null if we are shutting down
           nextTask.runTask();
         }
       }
+    }
+    
+    @Override
+    public void run() {
+      executeTasksWhileRunning();
       
       synchronized (workerPool.workerStopNotifyLock) {
         workerPool.workerStopNotifyLock.notifyAll();

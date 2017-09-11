@@ -317,7 +317,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         insertionIndex = SortUtils.getInsertionEndIndex(scheduleQueueRunTimeByIndex, 
                                                         scheduleQueue.size() - 1, 
                                                         task.getRunTime(), true);
-        
         scheduleQueue.add(insertionIndex, task);
       }
       
@@ -747,7 +746,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     @Override
     public boolean canExecute(short ignoredExecuteReference) {
       if (! executed && 
-          (executed = true) && // set executed as soon as possible, before removal attempt
+          (executed = true) & // set executed as soon as possible, before removal attempt
           taskQueue.remove(this)) { // every task is wrapped in a unique wrapper, so we can remove 'this' safely
         return true;
       } else {
@@ -811,11 +810,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
 
     @Override
     public boolean canExecute(short executeReference) {
-      if (executing || executeFlipCounter != executeReference) {
+      if (executing | executeFlipCounter != executeReference) {
         return false;
       }
       synchronized (queueSet.scheduleQueue.getModificationLock()) {
-        if (executing || executeFlipCounter != executeReference) {
+        if (executing | executeFlipCounter != executeReference) {
           // this task is already running, or not ready to run, so ignore
           return false;
         } else {
