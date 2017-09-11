@@ -773,10 +773,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
           // reset interrupted status if we may block and have not checked
           if (queued & ! interruptedChecked) {
             interruptedChecked = true;
-            if (Thread.interrupted()) {
-              // verify we were not interrupted due to pool shutdown
-              continue;
-            }
+            Thread.interrupted();  // reset interrupted status if set
           }
         } // end pollTask loop
       } finally {
@@ -789,8 +786,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         handleQueueUpdate();
         
         if (! interruptedChecked) {
-          // reset interrupted status
-          Thread.interrupted();
+          Thread.interrupted();  // reset interrupted status if set
         }
       }
     }
