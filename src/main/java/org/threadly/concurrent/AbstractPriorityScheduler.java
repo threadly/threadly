@@ -165,39 +165,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     return getQueueManager().remove(task);
   }
 
-  protected static TaskWrapper getNextTask(QueueSet highPriorityQueueSet, QueueSet lowPriorityQueueSet, 
-                                           long maxWaitForLowPriorityInMs) {
-    TaskWrapper nextHighPriorityTask = highPriorityQueueSet.getNextTask();
-    TaskWrapper nextLowPriorityTask = lowPriorityQueueSet.getNextTask();
-    if (nextLowPriorityTask == null) {
-      return nextHighPriorityTask;
-    } else if (nextHighPriorityTask == null) {
-      return nextLowPriorityTask;
-    } else if (nextHighPriorityTask.getRunTime() <= nextLowPriorityTask.getRunTime()) {
-      return nextHighPriorityTask;
-    } else if (nextHighPriorityTask.getScheduleDelay() > 0 || 
-        // before the above check we know the low priority has been waiting longer than the high 
-        // priority, but since the high priority is not ready to run, we can just return the low 
-        // priority a clock call was invoked IF the high priority task was not already known to 
-        // be ready to run
-        //
-        // OR
-        //
-        // at this point we know the high task is ready to run
-        // but the low priority task has been waiting LONGER (and thus also ready to run)
-        // So we will return the low priority task IF it has been waiting over the max wait time
-        // At this point there may or may not have been a single clock invocation to check if the 
-        // high priority task was ready (if it was known ready, none was invoked)
-        // because of that we _may_ have to invoke the clock here
-        Clock.lastKnownForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs || 
-        Clock.accurateForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs) {
-      return nextLowPriorityTask;
-    } else {
-      // task is ready to run, low priority is also ready, but has not been waiting long enough
-      return nextHighPriorityTask;
-    }
-  }
-
   /**
    * Call to get reference to {@link QueueManager}.  This reference can be used to get access to 
    * queues directly, or perform operations which are distributed to multiple queues.  This 
@@ -449,12 +416,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       TaskWrapper scheduledTask = scheduleQueue.peekFirst();
       TaskWrapper executeTask = executeQueue.peek();
       if (executeTask != null) {
-        if (scheduledTask != null) {
-          if (scheduledTask.getRunTime() < executeTask.getRunTime()) {
-            return scheduledTask;
-          } else {
-            return executeTask;
-          }
+        if (scheduledTask != null && scheduledTask.getRunTime() < executeTask.getRunTime()) {
+          return scheduledTask;
         } else {
           return executeTask;
         }
@@ -530,12 +493,43 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * @return Task to be executed next, or {@code null} if no tasks at all are queued
      */
     public TaskWrapper getNextTask() {
-      TaskWrapper nextTask = AbstractPriorityScheduler.getNextTask(highPriorityQueueSet, 
-                                                                   lowPriorityQueueSet, 
-                                                                   maxWaitForLowPriorityInMs);
+      // First compare between high and low priority task queues
+      // then depending on that state, we may check starvable
+      TaskWrapper nextTask;
+      TaskWrapper nextHighPriorityTask = highPriorityQueueSet.getNextTask();
+      TaskWrapper nextLowPriorityTask = lowPriorityQueueSet.getNextTask();
+      if (nextLowPriorityTask == null) {
+        nextTask = nextHighPriorityTask;
+      } else if (nextHighPriorityTask == null) {
+        nextTask = nextLowPriorityTask;
+      } else if (nextHighPriorityTask.getRunTime() <= nextLowPriorityTask.getRunTime()) {
+        nextTask = nextHighPriorityTask;
+      } else if (nextHighPriorityTask.getScheduleDelay() > 0 || 
+          // before the above check we know the low priority has been waiting longer than the high 
+          // priority, but since the high priority is not ready to run, we can just return the low 
+          // priority a clock call was invoked IF the high priority task was not already known to 
+          // be ready to run
+          //
+          // OR
+          //
+          // at this point we know the high task is ready to run
+          // but the low priority task has been waiting LONGER (and thus also ready to run)
+          // So we will return the low priority task IF it has been waiting over the max wait time
+          // At this point there may or may not have been a single clock invocation to check if the 
+          // high priority task was ready (if it was known ready, none was invoked)
+          // because of that we _may_ have to invoke the clock here
+          Clock.lastKnownForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs || 
+          Clock.accurateForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs) {
+        nextTask = nextLowPriorityTask;
+      } else {
+        // task is ready to run, low priority is also ready, but has not been waiting long enough
+        nextTask = nextHighPriorityTask;
+      }
+      
       if (nextTask == null) {
         return starvablePriorityQueueSet.getNextTask();
       } else {
+        // TODO - does it make sense to reduce the logic in the below conditionals
         long nextTaskDelay = nextTask.getScheduleDelay();
         if (nextTaskDelay > 0) {
           TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
