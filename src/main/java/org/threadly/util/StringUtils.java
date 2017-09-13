@@ -1,5 +1,6 @@
 package org.threadly.util;
 
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -51,6 +52,23 @@ public class StringUtils {
    */
   public static boolean isNullOrEmpty(String input) {
     return input == null || input.isEmpty();
+  }
+  
+  /**
+   * Simple utility function for returning an {@link Optional} that if contents present are 
+   * guaranteed to not be empty.  Basically taking the empty case into consideration in addition 
+   * to {@link Optional#ofNullable(Object)}'s normal {@code null} check.
+   * 
+   * @since 5.4
+   * @param input String to be contained in returned {@link Optional} if not null or empty
+   * @return Optional which if present contains a non-empty String
+   */
+  public static Optional<String> nonEmptyOptional(String input) {
+    if (isNullOrEmpty(input)) {
+      return Optional.empty();
+    } else {
+      return Optional.of(input);
+    }
   }
   
   /**

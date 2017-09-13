@@ -32,6 +32,14 @@ public class StringUtilsTest {
   }
   
   @Test
+  public void nonEmptyOptionalTest() {
+    assertFalse(StringUtils.nonEmptyOptional(null).isPresent());
+    assertFalse(StringUtils.nonEmptyOptional("").isPresent());
+    String s = StringUtils.makeRandomString(5);
+    assertEquals(s, StringUtils.nonEmptyOptional(s).get());
+  }
+  
+  @Test
   public void padStartNullTest() {
     assertEquals("00", StringUtils.padStart(null, 2, '0'));
   }
