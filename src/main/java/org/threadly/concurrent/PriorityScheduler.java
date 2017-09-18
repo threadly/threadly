@@ -169,6 +169,16 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   public void setPoolSize(int newPoolSize) {
     workerPool.setPoolSize(newPoolSize);
   }
+
+  /**
+   * Adjust the pools size by a given delta.  If the provided delta would result in a pool size 
+   * of zero or less, then a {@link IllegalStateException} will be thrown.
+   * 
+   * @param delta Delta to adjust the max pool size by
+   */
+  public void adjustPoolSize(int delta) {
+    workerPool.adjustPoolSize(delta);
+  }
   
   /**
    * Call to check how many tasks are currently being executed in this thread pool.  Unlike 
@@ -556,24 +566,51 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         
         this.maxPoolSize = newPoolSize;
         
-        if (poolSizeIncrease) {
-          // now that pool size increased, start a worker so workers we can for the waiting tasks
-          handleQueueUpdate();
-        } else {
-          addPoolStateChangeTask(new InternalRunnable() {
-            @Override
-            public void run() {
-              /* until the pool has reduced in size, we need to continue to add this task to 
-               * wake threads out of the poll task loop
-               */
-              if (currentPoolSize.get() > maxPoolSize) {
-                addPoolStateChangeTask(this);
-              }
-            }
-          });
-        }
+        handleMaxPoolSizeChange(poolSizeIncrease);
       }
     }
+    
+    /**
+     * Adjust the pools size by a given delta.  If the provided delta would result in a pool size 
+     * of zero or less, then a {@link IllegalStateException} will be thrown.
+     * 
+     * @param delta Delta to adjust the max pool size by
+     */
+    public void adjustPoolSize(int delta) {
+      if (delta == 0) {
+        return;
+      }
+      
+      synchronized (poolSizeChangeLock) {
+        if (maxPoolSize + delta < 1) {
+          throw new IllegalStateException(maxPoolSize + "" + delta + " must be at least 1");
+        }
+        this.maxPoolSize += delta;
+        
+        handleMaxPoolSizeChange(delta > 0);
+      }
+    }
+    
+    protected void handleMaxPoolSizeChange(boolean poolSizeIncrease) {
+      if (poolSizeIncrease) {
+        // now that pool size increased, start a worker so workers we can for the waiting tasks
+        handleQueueUpdate();
+      } else {
+        addPoolStateChangeTask(new InternalRunnable() {
+          @Override
+          public void run() {
+            /* until the pool has reduced in size, we need to continue to add this task to 
+             * wake threads out of the poll task loop
+             */
+            if (currentPoolSize.get() > maxPoolSize) {
+              addPoolStateChangeTask(this);
+            }
+          }
+        });
+      }
+    }
+    
+    
 
     /**
      * Check for the current quantity of threads running in this pool (either active or idle).
