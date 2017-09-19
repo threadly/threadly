@@ -135,7 +135,8 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       submittedFutures.add(ecs.submit(it.next()));
 
       long remainingTime;
-      while (it.hasNext() && (remainingTime = timeoutInMs - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
+      while (it.hasNext() && 
+             (remainingTime = timeoutInMs - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
         Future<T> completedFuture = ecs.poll();
         if (completedFuture == null) {
           // submit another
