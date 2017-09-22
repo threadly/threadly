@@ -137,8 +137,7 @@ public class StringUtils {
      StringBuilder sb = new StringBuilder(length);
      
      for(int i = 0; i < length; i++) {
-       int randIndex = ThreadLocalRandom.current().nextInt(RAND_CHARS.length());
-       char randChar = RAND_CHARS.charAt(randIndex);
+       char randChar = RAND_CHARS.charAt(ThreadLocalRandom.current().nextInt(RAND_CHARS.length()));
        sb.append(randChar);
      }
      
