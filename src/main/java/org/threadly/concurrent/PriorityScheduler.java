@@ -207,8 +207,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   public void shutdown() {
     if (workerPool.startShutdown()) {
       ShutdownRunnable sr = new ShutdownRunnable(workerPool);
-      taskQueueManager.highPriorityQueueSet
-                      .addExecute(new OneTimeTaskWrapper(sr, taskQueueManager.highPriorityQueueSet.executeQueue, 
+      taskQueueManager.lowPriorityQueueSet
+                      .addExecute(new OneTimeTaskWrapper(sr, taskQueueManager.lowPriorityQueueSet.executeQueue, 
                                                          Clock.lastKnownForwardProgressingMillis()));
     }
   }
