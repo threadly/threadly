@@ -23,7 +23,9 @@ public interface SubmitterExecutor extends Executor {
    * @param task runnable to be executed
    * @return a future to know when the task has completed
    */
-  public ListenableFuture<?> submit(Runnable task);
+  default ListenableFuture<?> submit(Runnable task) {
+    return submit(task, null);
+  }
   
   /**
    * Submit a task to run as soon as possible.  The {@link ListenableFuture#get()} method will 

@@ -64,7 +64,9 @@ public interface SubmitterScheduler extends SubmitterExecutor {
    * @param delayInMs time in milliseconds to wait to execute task
    * @return a future to know when the task has completed
    */
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs);
+  default ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
+    return submitScheduled(task, null, delayInMs);
+  }
   
   /**
    * Schedule a task with a given delay.  The {@link ListenableFuture#get()} method will return 

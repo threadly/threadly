@@ -95,11 +95,6 @@ public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor
   }
 
   @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs) {
-    return submitScheduled(task, null, delayInMs);
-  }
-
-  @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
     return parentScheduler.submitScheduled(task == null ? null : wrapTask(task, false), 
                                            result, delayInMs);

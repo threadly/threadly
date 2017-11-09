@@ -43,11 +43,6 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutor {
   }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task) {
-    return submit(task, null);
-  }
-
-  @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
     ArgumentVerifier.assertNotNull(task, "task");
     

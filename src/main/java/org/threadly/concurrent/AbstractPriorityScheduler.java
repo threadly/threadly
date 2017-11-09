@@ -91,11 +91,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   public void execute(Runnable task, TaskPriority priority) {
     schedule(task, 0, priority);
   }
-
-  @Override
-  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
-    return submitScheduled(task, null, 0, priority);
-  }
   
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
@@ -116,12 +111,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     }
 
     doSchedule(task, delayInMs, priority);
-  }
-
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, 
-                                             TaskPriority priority) {
-    return submitScheduled(task, null, delayInMs, priority);
   }
 
   @Override

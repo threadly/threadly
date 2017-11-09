@@ -61,11 +61,6 @@ public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterc
   }
 
   @Override
-  public ListenableFuture<?> submit(Runnable task, TaskPriority priority) {
-    return submit(task, null, priority);
-  }
-
-  @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
     return parentScheduler.submit(task == null ? null : wrapTask(task, false), result, priority);
   }
@@ -84,11 +79,6 @@ public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterc
   @Override
   public void schedule(Runnable task, long delayInMs, TaskPriority priority) {
     parentScheduler.schedule(task == null ? null : wrapTask(task, false), delayInMs, priority);
-  }
-
-  @Override
-  public ListenableFuture<?> submitScheduled(Runnable task, long delayInMs, TaskPriority priority) {
-    return submitScheduled(task, null, delayInMs, priority);
   }
 
   @Override
