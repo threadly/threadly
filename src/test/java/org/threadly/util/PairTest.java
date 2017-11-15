@@ -128,7 +128,7 @@ public class PairTest {
       pairs.add(makePair(str, StringUtils.makeRandomString(5)));
     }
     
-    Iterator<String> testIt = Pair.iterateLeft(pairs.iterator());
+    Iterator<String> testIt = Pair.iterateLeft(pairs).iterator();
     Iterator<String> verifyIt = expectedResult.iterator();
     while (verifyIt.hasNext()) {
       assertTrue(testIt.hasNext());
@@ -147,7 +147,7 @@ public class PairTest {
       pairs.add(makePair(StringUtils.makeRandomString(5), str));
     }
     
-    Iterator<String> testIt = Pair.iterateRight(pairs.iterator());
+    Iterator<String> testIt = Pair.iterateRight(pairs).iterator();
     Iterator<String> verifyIt = expectedResult.iterator();
     while (verifyIt.hasNext()) {
       assertTrue(testIt.hasNext());

@@ -174,6 +174,24 @@ public class Pair<L, R> {
    * iterated / copied.  Allowing for potential concurrent structures to provide their special 
    * iterator behavior through this, as well as avoiding a potential short term memory copy.
    * 
+   * @param i Iterable to source pairs from
+   * @return An iterator that extracts out the left entry of each pair
+   */
+  public static <T> Iterable<T> iterateLeft(Iterable<? extends Pair<? extends T, ?>> i) {
+    return new Iterable<T>() {
+      @Override
+      public Iterator<T> iterator() {
+        return iterateLeft(i.iterator());
+      }
+    };
+  }
+  
+  /**
+   * Convert a {@link Pair} {@link Iterator} into an iterator that returns the left items.  This 
+   * has the minor advantage over {@link #collectLeft(Collection)} in that the collection is not 
+   * iterated / copied.  Allowing for potential concurrent structures to provide their special 
+   * iterator behavior through this, as well as avoiding a potential short term memory copy.
+   * 
    * @param i Iterator to source pairs from
    * @return An iterator that extracts out the left entry of each pair
    */
@@ -187,6 +205,24 @@ public class Pair<L, R> {
       @Override
       public T next() {
         return i.next().left;
+      }
+    };
+  }
+
+  /**
+   * Convert a {@link Pair} {@link Iterator} into an iterator that returns the right items.  This 
+   * has the minor advantage over {@link #collectRight(Collection)} in that the collection is not 
+   * iterated / copied.  Allowing for potential concurrent structures to provide their special 
+   * iterator behavior through this, as well as avoiding a potential short term memory copy.
+   * 
+   * @param i Iterable to source pairs from
+   * @return An iterator that extracts out the right entry of each pair
+   */
+  public static <T> Iterable<T> iterateRight(Iterable<? extends Pair<?, ? extends T>> i) {
+    return new Iterable<T>() {
+      @Override
+      public Iterator<T> iterator() {
+        return iterateRight(i.iterator());
       }
     };
   }
