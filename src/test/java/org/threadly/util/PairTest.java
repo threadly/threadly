@@ -5,6 +5,7 @@ import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -115,6 +116,44 @@ public class PairTest {
     assertEquals(TEST_QTY, result.getRight().size());
     assertTrue(expectedLeftResult.equals(result.getLeft()));
     assertTrue(expectedRightResult.equals(result.getRight()));
+  }
+  
+  @Test
+  public void iterateLeftTest() {
+    List<String> expectedResult = new ArrayList<>(TEST_QTY);
+    List<Pair<String, String>> pairs = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = StringUtils.makeRandomString(10);
+      expectedResult.add(str);
+      pairs.add(makePair(str, StringUtils.makeRandomString(5)));
+    }
+    
+    Iterator<String> testIt = Pair.iterateLeft(pairs.iterator());
+    Iterator<String> verifyIt = expectedResult.iterator();
+    while (verifyIt.hasNext()) {
+      assertTrue(testIt.hasNext());
+      assertEquals(verifyIt.next(), testIt.next());
+    }
+    assertFalse(testIt.hasNext());
+  }
+  
+  @Test
+  public void iterateRightTest() {
+    List<String> expectedResult = new ArrayList<>(TEST_QTY);
+    List<Pair<String, String>> pairs = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String str = StringUtils.makeRandomString(10);
+      expectedResult.add(str);
+      pairs.add(makePair(StringUtils.makeRandomString(5), str));
+    }
+    
+    Iterator<String> testIt = Pair.iterateRight(pairs.iterator());
+    Iterator<String> verifyIt = expectedResult.iterator();
+    while (verifyIt.hasNext()) {
+      assertTrue(testIt.hasNext());
+      assertEquals(verifyIt.next(), testIt.next());
+    }
+    assertFalse(testIt.hasNext());
   }
   
   @Test

@@ -3,6 +3,7 @@ package org.threadly.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -165,6 +166,52 @@ public class Pair<L, R> {
       }
     }
     return new Pair<>(left, right);
+  }
+  
+  /**
+   * Convert a {@link Pair} {@link Iterator} into an iterator that returns the left items.  This 
+   * has the minor advantage over {@link #collectLeft(Collection)} in that the collection is not 
+   * iterated / copied.  Allowing for potential concurrent structures to provide their special 
+   * iterator behavior through this, as well as avoiding a potential short term memory copy.
+   * 
+   * @param i Iterator to source pairs from
+   * @return An iterator that extracts out the left entry of each pair
+   */
+  public static <T> Iterator<T> iterateLeft(Iterator<? extends Pair<? extends T, ?>> i) {
+    return new Iterator<T>() {
+      @Override
+      public boolean hasNext() {
+        return i.hasNext();
+      }
+
+      @Override
+      public T next() {
+        return i.next().left;
+      }
+    };
+  }
+
+  /**
+   * Convert a {@link Pair} {@link Iterator} into an iterator that returns the right items.  This 
+   * has the minor advantage over {@link #collectRight(Collection)} in that the collection is not 
+   * iterated / copied.  Allowing for potential concurrent structures to provide their special 
+   * iterator behavior through this, as well as avoiding a potential short term memory copy.
+   * 
+   * @param i Iterator to source pairs from
+   * @return An iterator that extracts out the right entry of each pair
+   */
+  public static <T> Iterator<T> iterateRight(Iterator<? extends Pair<?, ? extends T>> i) {
+    return new Iterator<T>() {
+      @Override
+      public boolean hasNext() {
+        return i.hasNext();
+      }
+
+      @Override
+      public T next() {
+        return i.next().right;
+      }
+    };
   }
   
   /**
