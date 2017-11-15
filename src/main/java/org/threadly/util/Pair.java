@@ -174,6 +174,7 @@ public class Pair<L, R> {
    * iterated / copied.  Allowing for potential concurrent structures to provide their special 
    * iterator behavior through this, as well as avoiding a potential short term memory copy.
    * 
+   * @param <T> Type of object held as pair's left reference
    * @param i Iterable to source pairs from
    * @return An iterator that extracts out the left entry of each pair
    */
@@ -192,6 +193,7 @@ public class Pair<L, R> {
    * iterated / copied.  Allowing for potential concurrent structures to provide their special 
    * iterator behavior through this, as well as avoiding a potential short term memory copy.
    * 
+   * @param <T> Type of object held as pair's left reference
    * @param i Iterator to source pairs from
    * @return An iterator that extracts out the left entry of each pair
    */
@@ -215,6 +217,7 @@ public class Pair<L, R> {
    * iterated / copied.  Allowing for potential concurrent structures to provide their special 
    * iterator behavior through this, as well as avoiding a potential short term memory copy.
    * 
+   * @param <T> Type of object held as pair's right reference
    * @param i Iterable to source pairs from
    * @return An iterator that extracts out the right entry of each pair
    */
@@ -233,6 +236,7 @@ public class Pair<L, R> {
    * iterated / copied.  Allowing for potential concurrent structures to provide their special 
    * iterator behavior through this, as well as avoiding a potential short term memory copy.
    * 
+   * @param <T> Type of object held as pair's right reference
    * @param i Iterator to source pairs from
    * @return An iterator that extracts out the right entry of each pair
    */
