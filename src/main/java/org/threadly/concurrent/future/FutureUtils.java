@@ -1160,8 +1160,7 @@ public class FutureUtils {
         @Override
         public void handleResult(ST result) {
           try {
-            transformer.apply(result)
-                             .addCallback(new FailurePropogatingFutureCallback<RT>(slf) {
+            transformer.apply(result).addCallback(new FailurePropogatingFutureCallback<RT>(slf) {
               @Override
               public void handleResult(RT result) {
                 slf.setResult(result);
