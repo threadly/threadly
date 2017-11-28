@@ -24,7 +24,7 @@ public class Clock {
    * 
    * @since 3.1.0
    */
-  public static final int NANOS_IN_MILLISECOND = 1000000;
+  public static final int NANOS_IN_MILLISECOND = 1_000_000;
   /**
    * This is the frequency at which the thread which regularly updates the clock wakes up and 
    * updates the time.  Invocations to {@link #accurateForwardProgressingMillis()} and 
