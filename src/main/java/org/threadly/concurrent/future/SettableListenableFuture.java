@@ -61,6 +61,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     this.listenerHelper = new RunnableListenerHelper(true);
     this.resultLock = new Object();
     this.throwIfAlreadyComplete = throwIfAlreadyComplete;
+    this.runningThread = null;
     done = false;
     resultCleared = false;
     result = null;

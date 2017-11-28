@@ -1,11 +1,15 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.SingleThreadScheduler;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StringUtils;
@@ -172,6 +176,57 @@ public abstract class ListenableFutureInterfaceTest {
   }
   
   @Test
+  public void cancelWhileMappedFunctionRunningInterruptTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    try {
+      AtomicBoolean started = new AtomicBoolean();
+      AtomicBoolean interrupted = new AtomicBoolean();
+      ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+      ListenableFuture<Void> mappedLF = lf.map((o) -> {
+        started.set(true);
+        try {
+          Thread.sleep(10_000);
+        } catch (InterruptedException e) {
+          interrupted.set(true);
+        }
+        return null;
+      }, sts);
+      
+      new TestCondition(() -> started.get()).blockTillTrue();
+      assertTrue(mappedLF.cancel(true));
+      new TestCondition(() -> interrupted.get()).blockTillTrue();
+    } finally {
+      sts.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void cancelWhileMappedFunctionRunningNoInterruptTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    try {
+      AtomicBoolean started = new AtomicBoolean();
+      AtomicBoolean completed = new AtomicBoolean();
+      ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+      ListenableFuture<Void> mappedLF = lf.map((o) -> {
+        started.set(true);
+        try {
+          Thread.sleep(DELAY_TIME * 10);
+          completed.set(true);
+        } catch (InterruptedException e) {
+          // should not occur, if it does completed will never set
+        }
+        return null;
+      }, sts);
+      
+      new TestCondition(() -> started.get()).blockTillTrue();
+      assertFalse(mappedLF.cancel(false));
+      new TestCondition(() -> completed.get()).blockTillTrue();
+    } finally {
+      sts.shutdownNow();
+    }
+  }
+  
+  @Test
   public void flatMapAlreadyDoneTest() throws InterruptedException, ExecutionException {
     String sourceObject = StringUtils.makeRandomString(5);
     ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(sourceObject);
@@ -234,6 +289,72 @@ public abstract class ListenableFutureInterfaceTest {
 
     assertTrue(mappedLF.isDone());
     verifyFutureFailure(mappedLF, failure);
+  }
+  
+  @Test
+  public void cancelWhileFlatMappedMapFunctionRunningInterruptTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    try {
+      AtomicBoolean started = new AtomicBoolean();
+      AtomicBoolean interrupted = new AtomicBoolean();
+      ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+      ListenableFuture<Void> mappedLF = lf.flatMap((o) -> {
+        started.set(true);
+        try {
+          Thread.sleep(10_000);
+        } catch (InterruptedException e) {
+          interrupted.set(true);
+        }
+        return FutureUtils.immediateResultFuture(null);
+      }, sts);
+      
+      new TestCondition(() -> started.get()).blockTillTrue();
+      assertTrue(mappedLF.cancel(true));
+      new TestCondition(() -> interrupted.get()).blockTillTrue();
+    } finally {
+      sts.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void cancelWhileFlatMappedMapFunctionRunningNoInterruptTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    try {
+      AtomicBoolean started = new AtomicBoolean();
+      AtomicBoolean completed = new AtomicBoolean();
+      ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+      ListenableFuture<Void> mappedLF = lf.flatMap((o) -> {
+        started.set(true);
+        try {
+          Thread.sleep(DELAY_TIME * 10);
+          completed.set(true);
+        } catch (InterruptedException e) {
+          // should not occur, if it does completed will never set
+        }
+        return FutureUtils.immediateResultFuture(null);
+      }, sts);
+      
+      new TestCondition(() -> started.get()).blockTillTrue();
+      assertFalse(mappedLF.cancel(false));
+      new TestCondition(() -> completed.get()).blockTillTrue();
+    } finally {
+      sts.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void cancelWhileFlatMappedMapFutureIncompleteRunningInterruptTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    try {
+      ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
+      ListenableFuture<Void> scheduledFuture = sts.submitScheduled(DoNothingRunnable.instance(), null, 10_000);
+      ListenableFuture<Void> mappedLF = lf.flatMap((o) -> scheduledFuture);
+      
+      assertTrue(mappedLF.cancel(false)); // no interrupt needed, delegate future not started
+      assertTrue(scheduledFuture.isCancelled());
+    } finally {
+      sts.shutdownNow();
+    }
   }
   
   @Test

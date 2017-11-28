@@ -419,7 +419,7 @@ public class FutureUtils {
           // propagate error
           ListenableFuture<?> f = failedFutures.get(0);
           if (f.isCancelled()) {
-            resultFuture.cancelRegardlessOfDelegateFutureState();
+            resultFuture.cancelRegardlessOfDelegateFutureState(false);
           } else {
             try {
               f.get();
@@ -1079,7 +1079,7 @@ public class FutureUtils {
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
                                                            Function<? super ST, ? extends RT> transformer, 
                                                            Executor executor) {
-    if (executor == null && sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+    if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
         return FutureUtils.immediateResultFuture(transformer.apply(sourceFuture.get()));
@@ -1093,19 +1093,18 @@ public class FutureUtils {
         // failure calculating transformation
         return FutureUtils.immediateFailureFuture(t);
       }
+    } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
+      SettableListenableFuture<RT> slf = new SettableListenableFuture<>();
+      slf.cancel(false);
+      return slf;
     } else {
-      if (sourceFuture.isCancelled()) {
-        // shortcut
-        SettableListenableFuture<RT> slf = new SettableListenableFuture<>();
-        slf.cancel(false);
-        return slf;
-      }
       SettableListenableFuture<RT> slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
       // may still process in thread if future completed after check and executor is null
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
         public void handleResult(ST result) {
           try {
+            slf.setRunningThread(Thread.currentThread());
             slf.setResult(transformer.apply(result));
           } catch (Throwable t) {
             slf.setFailure(t);
@@ -1133,7 +1132,7 @@ public class FutureUtils {
   protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<ST> sourceFuture, 
                                                                Function<? super ST, ListenableFuture<RT>> transformer, 
                                                                Executor executor) {
-    if (executor == null && sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+    if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
         return transformer.apply(sourceFuture.get());
@@ -1147,19 +1146,17 @@ public class FutureUtils {
         // failure calculating transformation
         return FutureUtils.immediateFailureFuture(t);
       }
+    } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
+      SettableListenableFuture<RT> slf = new SettableListenableFuture<>();
+      slf.cancel(false);
+      return slf;
     } else {
-      SettableListenableFuture<RT> slf;
-      if (sourceFuture.isCancelled()) {
-        // shortcut
-        slf = new SettableListenableFuture<>();
-        slf.cancel(false);
-        return slf;
-      }
-      slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
+      SettableListenableFuture<RT> slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
         public void handleResult(ST result) {
           try {
+            slf.setRunningThread(Thread.currentThread());
             transformer.apply(result).addCallback(new FailurePropogatingFutureCallback<RT>(slf) {
               @Override
               public void handleResult(RT result) {
@@ -1222,18 +1219,27 @@ public class FutureUtils {
       cancelDelegateFuture = lf;
     }
     
-    protected void cancelRegardlessOfDelegateFutureState() {
-      if (super.cancel(false)) {
-        cancelDelegateFuture.cancel(false);
+    protected boolean cancelRegardlessOfDelegateFutureState(boolean interruptThread) {
+      if (super.cancel(interruptThread)) {
+        cancelDelegateFuture.cancel(interruptThread);
+        return true;
+      } else {
+        return false;
       }
     }
 
     @Override
     public boolean cancel(boolean interruptThread) {
-      if (cancelDelegateFuture.cancel(interruptThread)) {
-        return super.cancel(interruptThread);
+      if (interruptThread) {
+        // if we want to interrupt, we want to try to cancel ourselves even if our delegate has 
+        // already completed (in case there is processing associated to this future we can avoid)
+        return cancelRegardlessOfDelegateFutureState(true);
       } else {
-        return false;
+        if (cancelDelegateFuture.cancel(false)) {
+          return super.cancel(false);
+        } else {
+          return false;
+        }
       }
     }
   }
