@@ -5,8 +5,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
-
 import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.Clock;
 
@@ -76,36 +74,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   @Override
   public void addListener(Runnable listener, Executor executor) {
     listenerHelper.addListener(listener, executor);
-  }
-
-  @Override
-  public void addCallback(FutureCallback<? super T> callback) {
-    addCallback(callback, null);
-  }
-
-  @Override
-  public void addCallback(FutureCallback<? super T> callback, Executor executor) {
-    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor);
-  }
-
-  @Override
-  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper) {
-    return map(mapper, null);
-  }
-
-  @Override
-  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
-    return FutureUtils.transform(this, mapper, executor);
-  }
-
-  @Override
-  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper) {
-    return flatMap(mapper, null);
-  }
-
-  @Override
-  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, Executor executor) {
-    return FutureUtils.flatTransform(this, mapper, executor);
   }
   
   /**

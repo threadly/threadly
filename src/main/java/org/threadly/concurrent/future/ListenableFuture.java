@@ -45,7 +45,9 @@ public interface ListenableFuture<T> extends Future<T> {
    * @param mapper Function to invoke in order to transform the futures result
    * @return A new {@link ListenableFuture} with the specified result type
    */
-  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper);
+  public default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper) {
+    return map(mapper, null);
+  }
   
   /**
    * Transform this future's result into another result by applying the provided mapper function.  
@@ -72,7 +74,9 @@ public interface ListenableFuture<T> extends Future<T> {
    *          to invoke on this thread or future complete thread (depending on future state)
    * @return A new {@link ListenableFuture} with the specified result type
    */
-  public <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor);
+  public default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
+    return FutureUtils.transform(this, mapper, executor);
+  }
   
   /**
    * Similar to {@link #map(Function)}, in that this will apply a mapper function once the applied 
@@ -100,7 +104,9 @@ public interface ListenableFuture<T> extends Future<T> {
    * @param mapper Function to invoke in order to transform the futures result
    * @return A new {@link ListenableFuture} with the specified result type
    */
-  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper);
+  public default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper) {
+    return flatMap(mapper, null);
+  }
 
   /**
    * Similar to {@link #map(Function, Executor)}, in that this will apply a mapper function once 
@@ -124,8 +130,10 @@ public interface ListenableFuture<T> extends Future<T> {
    *          to invoke on this thread or future complete thread (depending on future state)
    * @return A new {@link ListenableFuture} with the specified result type
    */
-  public <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
-                                         Executor executor);
+  public default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
+                                                 Executor executor) {
+    return FutureUtils.flatTransform(this, mapper, executor);
+  }
   
   /**
    * Add a listener to be called once the future has completed.  If the future has already 
@@ -163,7 +171,9 @@ public interface ListenableFuture<T> extends Future<T> {
    * @since 1.2.0
    * @param callback to be invoked when the computation is complete
    */
-  public void addCallback(FutureCallback<? super T> callback);
+  public default void addCallback(FutureCallback<? super T> callback) {
+    addCallback(callback, null);
+  }
   
   /**
    * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
@@ -177,5 +187,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @param callback to be invoked when the computation is complete
    * @param executor {@link Executor} the callback should be ran on, or {@code null}
    */
-  public void addCallback(FutureCallback<? super T> callback, Executor executor);
+  public default void addCallback(FutureCallback<? super T> callback, Executor executor) {
+    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor);
+  }
 }
