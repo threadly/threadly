@@ -38,12 +38,14 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
   protected final Executor executor;
   protected final String subPoolName;
   protected final boolean addKeyToThreadName;
+  protected final boolean limitFutureListenersExecution;
   protected final StripedLock sLock;
   protected final ConcurrentHashMap<Object, LimiterContainer> currentLimiters;
   private volatile int maxConcurrency;
   
   protected AbstractKeyedLimiter(Executor executor, int maxConcurrency, 
                                  String subPoolName, boolean addKeyToThreadName, 
+                                 boolean limitFutureListenersExecution, 
                                  int expectedTaskAdditionParallism) {
     ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
     ArgumentVerifier.assertNotNull(executor, "executor");
@@ -52,6 +54,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     // make sure this is non-null so that it 'null' wont appear
     this.subPoolName = StringUtils.nullToEmpty(subPoolName);
     this.addKeyToThreadName = addKeyToThreadName;
+    this.limitFutureListenersExecution = limitFutureListenersExecution;
     this.sLock = new StripedLock(expectedTaskAdditionParallism);
     int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
                                   CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
@@ -198,7 +201,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     
     ListenableRunnableFuture<TT> rf = new ListenableFutureTask<>(false, task);
     
-    getLimiterContainer(taskKey).execute(rf);
+    getLimiterContainer(taskKey).submit(rf);
     
     return rf;
   }
@@ -290,7 +293,11 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     }
     
     public void execute(Runnable task) {
-      limiter.doExecute(wrap(task));
+      limiter.executeOrQueue(wrap(task), null);
+    }
+
+    public void submit(ListenableRunnableFuture<?> rf) {
+      limiter.executeOrQueue(wrap(rf), rf);
     }
     
     /**

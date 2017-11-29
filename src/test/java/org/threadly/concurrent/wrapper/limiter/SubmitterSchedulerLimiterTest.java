@@ -11,8 +11,8 @@ import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedule
 @SuppressWarnings("javadoc")
 public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
   @Override
-  protected SubmitterSchedulerLimiter getLimiter(int parallelCount) {
-    return new SubmitterSchedulerLimiter(scheduler, parallelCount);
+  protected SubmitterSchedulerLimiter getLimiter(int parallelCount, boolean limitFutureListenersExecution) {
+    return new SubmitterSchedulerLimiter(scheduler, parallelCount, limitFutureListenersExecution);
   }
   
   @Override

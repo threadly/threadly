@@ -25,7 +25,7 @@ public class KeyedExecutorLimiterTest extends AbstractKeyedLimiterTest {
 
   @Override
   protected AbstractKeyedLimiter<?> makeLimiter(int limit) {
-    return new KeyedExecutorLimiter(executor, limit, null, true, 1);
+    return new KeyedExecutorLimiter(executor, limit, null, true, true, 1);
   }
   
   @Test

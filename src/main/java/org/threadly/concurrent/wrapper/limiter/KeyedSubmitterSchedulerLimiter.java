@@ -1,6 +1,7 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterScheduler;
 import org.threadly.util.StringUtils;
 
@@ -26,7 +27,29 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
    * @param maxConcurrency Maximum concurrency allowed per task key
    */
   public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency) {
-    this(scheduler, maxConcurrency, null, false);
+    this(scheduler, maxConcurrency, ExecutorLimiter.DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION);
+  }
+  
+  /**
+   * Construct a new {@link KeyedSubmitterSchedulerLimiter} providing only the backing scheduler 
+   * and the maximum concurrency per unique key.  By default this will not rename threads for 
+   * tasks executing.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param scheduler Scheduler to execute and schedule tasks on
+   * @param maxConcurrency Maximum concurrency allowed per task key
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   */
+  public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency,
+                                        boolean limitFutureListenersExecution) {
+    this(scheduler, maxConcurrency, null, false, limitFutureListenersExecution);
   }
 
   /**
@@ -40,7 +63,33 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
    */
   public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
                                         String subPoolName, boolean addKeyToThreadName) {
-    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
+    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, 
+         ExecutorLimiter.DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION, DEFAULT_LOCK_PARALISM);
+  }
+
+  /**
+   * Construct a new {@link KeyedSubmitterSchedulerLimiter} providing the backing scheduler, the maximum 
+   * concurrency per unique key, and how keyed limiter threads should be named.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param scheduler Scheduler to execute and schedule tasks on
+   * @param maxConcurrency Maximum concurrency allowed per task key
+   * @param subPoolName Name prefix for sub pools, {@code null} to not change thread names
+   * @param addKeyToThreadName If {@code true} the key's .toString() will be added in the thread name
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   */
+  public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
+                                        String subPoolName, boolean addKeyToThreadName,
+                                        boolean limitFutureListenersExecution) {
+    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution, 
+         DEFAULT_LOCK_PARALISM);
   }
 
   /**
@@ -52,16 +101,52 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
    * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
+   * @deprecated Please use construct by specifying {@code limitFutureListenersExecution}
+   * 
    * @param scheduler Scheduler to execute and schedule tasks on
    * @param maxConcurrency Maximum concurrency allowed per task key
    * @param subPoolName Name prefix for sub pools, {@code null} to not change thread names
    * @param addKeyToThreadName If {@code true} the key's .toString() will be added in the thread name
    * @param expectedParallism Expected concurrent task addition access, used for performance tuning
    */
+  @Deprecated
   public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
                                         String subPoolName, boolean addKeyToThreadName, 
                                         int expectedParallism) {
-    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, expectedParallism);
+    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, 
+         ExecutorLimiter.DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION, expectedParallism);
+  }
+
+  /**
+   * Construct a new {@link KeyedSubmitterSchedulerLimiter} providing the backing scheduler, the 
+   * maximum concurrency per unique key, and how keyed limiter threads should be named.
+   * <p>
+   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
+   * given period of time.  Depending on task execution duration, and quantity of threads executing 
+   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
+   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param scheduler Scheduler to execute and schedule tasks on
+   * @param maxConcurrency Maximum concurrency allowed per task key
+   * @param subPoolName Name prefix for sub pools, {@code null} to not change thread names
+   * @param addKeyToThreadName If {@code true} the key's .toString() will be added in the thread name
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   * @param expectedParallism Expected concurrent task addition access, used for performance tuning
+   */
+  public KeyedSubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
+                                        String subPoolName, boolean addKeyToThreadName,
+                                        boolean limitFutureListenersExecution, 
+                                        int expectedParallism) {
+    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, 
+          limitFutureListenersExecution, expectedParallism);
   }
   
   @Override
@@ -70,7 +155,7 @@ public class KeyedSubmitterSchedulerLimiter extends AbstractKeyedSchedulerLimite
                                            scheduler : new ThreadRenamingSubmitterScheduler(scheduler, 
                                                                                             limiterThreadName, 
                                                                                             false), 
-                                         getMaxConcurrencyPerKey());
+                                         getMaxConcurrencyPerKey(), limitFutureListenersExecution);
   }
   
   /**********

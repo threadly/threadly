@@ -1,13 +1,16 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.Queue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.threadly.concurrent.AbstractSubmitterExecutor;
+import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterExecutor;
+import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -24,9 +27,12 @@ import org.threadly.util.ArgumentVerifier;
  * 
  * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent.limiter)
  */
-public class ExecutorLimiter extends AbstractSubmitterExecutor implements SubmitterExecutor {
+public class ExecutorLimiter implements SubmitterExecutor {
+  protected static final boolean DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION = true;
+  
   protected final Executor executor;
-  protected final Queue<LimiterRunnableWrapper> waitingTasks;
+  protected final Queue<RunnableRunnableContainer> waitingTasks;
+  protected final boolean limitFutureListenersExecution;
   private final AtomicInteger currentlyRunning;
   private volatile int maxConcurrency;
   
@@ -37,13 +43,57 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
    * @param maxConcurrency maximum quantity of tasks to run in parallel
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency) {
+    this(executor, maxConcurrency, DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION);
+  }
+  
+  /**
+   * Construct a new execution limiter that implements the {@link Executor} interface.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param executor {@link Executor} to submit task executions to.
+   * @param maxConcurrency maximum quantity of tasks to run in parallel
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   */
+  public ExecutorLimiter(Executor executor, int maxConcurrency, 
+                         boolean limitFutureListenersExecution) {
     ArgumentVerifier.assertNotNull(executor, "executor");
     ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
 
     this.executor = executor;
     this.waitingTasks = new ConcurrentLinkedQueue<>();
+    this.limitFutureListenersExecution = limitFutureListenersExecution;
     this.currentlyRunning = new AtomicInteger(0);
     this.maxConcurrency = maxConcurrency;
+  }
+  
+  @Override
+  public void execute(Runnable task) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    
+    executeOrQueue(task, null);
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+    return submit(new RunnableCallableAdapter<>(task, result));
+  }
+  
+  @Override
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
+    
+    executeOrQueue(lft, lft);
+    
+    return lft;
   }
   
   /**
@@ -104,6 +154,9 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
     }
   }
   
+  /**
+   * Submit any tasks that we can to the parent executor (dependent on our pools limit).
+   */
   protected void consumeAvailable() {
     if (currentlyRunning.get() >= maxConcurrency || waitingTasks.isEmpty()) {
       // shortcut before we lock
@@ -115,16 +168,9 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
     synchronized (this) {
       while (! waitingTasks.isEmpty() && canSubmitTasksToPool()) {
         // by entering loop we can now execute task
-        LimiterRunnableWrapper lrw = waitingTasks.poll();
-        lrw.submitToExecutor();
+        executor.execute(waitingTasks.poll());
       }
     }
-  }
-
-  @Override
-  protected void doExecute(Runnable task) {
-    LimiterRunnableWrapper lrw = new LimiterRunnableWrapper(executor, task);
-    executeWrapper(lrw);
   }
   
   /**
@@ -139,14 +185,49 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
   }
   
   /**
+   * Called to indicate that hold for the task execution should be released. 
+   */
+  private void releaseExecutionLimit() {
+    currentlyRunning.decrementAndGet();
+    
+    consumeAvailable(); // allow any waiting tasks to run
+  }
+
+  /**
+   * This is called once a task is ready to be executed (or if unable to execute immediately, 
+   * queued).  In addition to the task itself, this function takes in any future which represents 
+   * task execution (if available, otherwise {@code null}).  Passing in as a separate argument 
+   * allows us to avoid a {@code instanceof} check, but does require it to be specified for 
+   * pre-future listener completion support.
+   * 
+   * @param task Task to be executed
+   * @param future Future to represent task completion or {@code null} if not available
+   */
+  protected void executeOrQueue(Runnable task, ListenableFuture<?> future) {
+    if (limitFutureListenersExecution || future == null) {
+      executeOrQueueWrapper(new LimiterRunnableWrapper(task));
+    } else {
+      // we will release the limit restriction as soon as the future completes.
+      // listeners should be invoked in order, so we just need to be the first listener here
+      future.addListener(this::releaseExecutionLimit);
+
+      if (canRunTask()) {
+        executor.execute(task);
+      } else {
+        addToQueue(new TransparentRunnableContainer(task));
+      }
+    }
+  }
+  
+  /**
    * Executes the wrapper if there is room in the limiter, otherwise it will queue the wrapper to 
    * be executed once the limiter has room.
    * 
    * @param lrw Wrapper that is ready to execute once there is available slots in the limiter
    */
-  protected void executeWrapper(LimiterRunnableWrapper lrw) {
+  protected void executeOrQueueWrapper(LimiterRunnableWrapper lrw) {
     if (canRunTask()) {
-      lrw.submitToExecutor();
+      executor.execute(lrw);
     } else {
       addToQueue(lrw);
     }
@@ -161,9 +242,21 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
    * 
    * @param lrw {@link LimiterRunnableWrapper} to add to the queue
    */
-  protected void addToQueue(LimiterRunnableWrapper lrw) {
+  protected void addToQueue(RunnableRunnableContainer lrw) {
     waitingTasks.add(lrw);
     consumeAvailable(); // call to consume in case task finished after first check
+  }
+
+  // TODO - make higher level and reuse for this common interface combination?  Or avoid javadocs pollution?
+  /**
+   * Simple combination of {@link RunnableContainer} and {@link Runnable}.  This allows us to 
+   * specify two possible run implementations while have a collection of {@link RunnableContainer}'s 
+   * so that we can do task removal easily.
+   * 
+   * @since 5.7
+   */
+  protected interface RunnableRunnableContainer extends RunnableContainer, Runnable {
+    // intentionally left blank
   }
   
   /**
@@ -172,12 +265,10 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
    * 
    * @since 1.0.0
    */
-  protected class LimiterRunnableWrapper implements Runnable, RunnableContainer {
-    protected final Executor executor;
+  protected class LimiterRunnableWrapper implements RunnableRunnableContainer {
     protected final Runnable runnable;
     
-    public LimiterRunnableWrapper(Executor executor, Runnable runnable) {
-      this.executor = executor;
+    public LimiterRunnableWrapper(Runnable runnable) {
       this.runnable = runnable;
     }
     
@@ -189,14 +280,6 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
       // nothing in the default implementation
     }
     
-    /**
-     * Submits this task to the executor.  This can be overridden if it needs to be submitted in a 
-     * different way.
-     */
-    protected void submitToExecutor() {
-      this.executor.execute(this);
-    }
-    
     @Override
     public void run() {
       try {
@@ -205,9 +288,7 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
         try {
           doAfterRunTasks();
         } finally {
-          currentlyRunning.decrementAndGet();
-          
-          consumeAvailable(); // allow any waiting tasks to run
+          releaseExecutionLimit();
         }
       }
     }
@@ -215,6 +296,30 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
     @Override
     public Runnable getContainedRunnable() {
       return runnable;
+    }
+  }
+  
+  /**
+   * An implementation of {@link RunnableRunnableContainer} where the {@link Runnable#run()} 
+   * implementation delegates purely to the contained runnable.
+   * 
+   * @since 5.7
+   */
+  protected static class TransparentRunnableContainer implements RunnableRunnableContainer {
+    protected final Runnable task;
+    
+    protected TransparentRunnableContainer(Runnable task) {
+      this.task = task;
+    }
+    
+    @Override
+    public void run() {
+      task.run();
+    }
+    
+    @Override
+    public Runnable getContainedRunnable() {
+      return task;
     }
   }
 }

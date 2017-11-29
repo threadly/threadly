@@ -17,8 +17,8 @@ import org.threadly.test.concurrent.TestRunnable;
 @SuppressWarnings("javadoc")
 public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
   @Override
-  protected SchedulerServiceLimiter getLimiter(int parallelCount) {
-    return new SchedulerServiceLimiter(scheduler, parallelCount);
+  protected SchedulerServiceLimiter getLimiter(int parallelCount, boolean limitFutureListenersExecution) {
+    return new SchedulerServiceLimiter(scheduler, parallelCount, limitFutureListenersExecution);
   }
   
   @Override
@@ -48,7 +48,7 @@ public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
   public void removeRunnableFromQueueTest() {
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
-      SchedulerServiceLimiter limiter = getLimiter(1);
+      SchedulerServiceLimiter limiter = getLimiter(1, true);
       
       limiter.execute(btr);
       
@@ -69,7 +69,7 @@ public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
   public void removeCallableFromQueueTest() {
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
-      SchedulerServiceLimiter limiter = getLimiter(1);
+      SchedulerServiceLimiter limiter = getLimiter(1, true);
       
       limiter.execute(btr);
       

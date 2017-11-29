@@ -27,8 +27,10 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
   
   protected AbstractKeyedSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
                                           String subPoolName, boolean addKeyToThreadName, 
+                                          boolean limitFutureListenersExecution, 
                                           int expectedTaskAdditionParallism) {
-    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, expectedTaskAdditionParallism);
+    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution, 
+          expectedTaskAdditionParallism);
     
     this.scheduler = scheduler;
   }
@@ -97,7 +99,7 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
     
     ListenableFutureTask<TT> ft = new ListenableFutureTask<>(false, task);
     
-    schedule(taskKey, ft, delayInMs);
+    doSchedule(taskKey, ft, ft, delayInMs);
     
     return ft;
   }
@@ -117,8 +119,12 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
   public void schedule(Object taskKey, Runnable task, long delayInMs) {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     
+    doSchedule(taskKey, task, null, delayInMs);
+  }
+  
+  protected void doSchedule(Object taskKey, Runnable task, ListenableFuture<?> lf, long delayInMs) {
     LimiterContainer lc = getLimiterContainer(taskKey);
-    lc.limiter.doSchedule(lc.wrap(task), delayInMs);
+    lc.limiter.doSchedule(lc.wrap(task), lf, delayInMs);
   }
   
   /**

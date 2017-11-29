@@ -30,7 +30,7 @@ public class KeyedSchedulerServiceLimiterTest extends AbstractKeyedLimiterTest {
 
   @Override
   protected KeyedSchedulerServiceLimiter makeLimiter(int limit) {
-    return new KeyedSchedulerServiceLimiter(scheduler, limit, null, true, 1);
+    return new KeyedSchedulerServiceLimiter(scheduler, limit, null, true, true, 1);
   }
   
   @Test

@@ -46,8 +46,8 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     scheduler = null;
   }
   
-  protected ExecutorLimiter getLimiter(int parallelCount) {
-    return new ExecutorLimiter(scheduler, parallelCount);
+  protected ExecutorLimiter getLimiter(int parallelCount, boolean limitFutureListenersExecution) {
+    return new ExecutorLimiter(scheduler, parallelCount, limitFutureListenersExecution);
   }
   
   @Override
@@ -74,7 +74,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void getAndSetMaxConcurrencyTest() {
-    ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT);
+    ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT, true);
     assertEquals(PARALLEL_COUNT, limiter.getMaxConcurrency());
     limiter.setMaxConcurrency(1);
     assertEquals(1, limiter.getMaxConcurrency());
@@ -82,7 +82,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void increaseMaxConcurrencyTest() {
-    ExecutorLimiter limiter = getLimiter(1);
+    ExecutorLimiter limiter = getLimiter(1, true);
 
     BlockingTestRunnable btr = new BlockingTestRunnable();
     try {
@@ -103,7 +103,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void getUnsubmittedTaskCountTest() {
-    ExecutorLimiter limiter = getLimiter(1);
+    ExecutorLimiter limiter = getLimiter(1, true);
     
     assertEquals(0, limiter.getUnsubmittedTaskCount());
     
@@ -124,12 +124,12 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void consumeAvailableTest() {
-    ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT);
+    ExecutorLimiter limiter = getLimiter(PARALLEL_COUNT, true);
     List<TestRunnable> runnables = new ArrayList<>(PARALLEL_COUNT);
     for (int i = 0; i < PARALLEL_COUNT; i++) {
       TestRunnable tr = new TestRunnable();
       runnables.add(tr);
-      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(limiter.executor, tr));
+      limiter.waitingTasks.add(limiter.new LimiterRunnableWrapper(tr));
     }
     
     limiter.consumeAvailable();
@@ -145,7 +145,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void executeLimitTest() throws InterruptedException, TimeoutException {
-    Executor limitedExecutor = getLimiter(PARALLEL_COUNT);
+    Executor limitedExecutor = getLimiter(PARALLEL_COUNT, true);
     final AtomicInteger running = new AtomicInteger(0);
     final AsyncVerifier verifier = new AsyncVerifier();
     List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
@@ -224,6 +224,24 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
       super.submitRunnableTest();
     } finally {
       elf.shutdown();
+    }
+  }
+  
+  @Test
+  public void futureListenerUnlimitedTest() {
+    ExecutorLimiter limiter = getLimiter(1, false);
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      TestRunnable secondTask = new TestRunnable();
+      
+      limiter.submit(DoNothingRunnable.instance())
+             .addListener(btr);
+      btr.blockTillStarted();
+      limiter.execute(secondTask);
+      
+      secondTask.blockTillFinished(); // will throw if could not be executed due to listener blocking
+    } finally {
+      btr.unblock();
     }
   }
 

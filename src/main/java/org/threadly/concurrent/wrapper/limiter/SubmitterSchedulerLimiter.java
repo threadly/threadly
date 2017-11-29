@@ -35,7 +35,27 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public SubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency) {
-    super(scheduler, maxConcurrency);
+    this(scheduler, maxConcurrency, DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION);
+  }
+  
+  /**
+   * Constructs a new limiter that implements the {@link SubmitterScheduler}.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param scheduler {@link SubmitterScheduler} implementation to submit task executions to.
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   */
+  public SubmitterSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
+                                   boolean limitFutureListenersExecution) {
+    super(scheduler, maxConcurrency, limitFutureListenersExecution);
     
     this.scheduler = scheduler;
   }
@@ -56,7 +76,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     
     ListenableFutureTask<T> ft = new ListenableFutureTask<>(false, task);
     
-    doSchedule(ft, delayInMs);
+    doSchedule(ft, ft, delayInMs);
     
     return ft;
   }
@@ -68,9 +88,9 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
    * @param task Task for execution
    * @param delayInMs delay in milliseconds, greater than or equal to zero
    */
-  protected void doSchedule(Runnable task, long delayInMs) {
+  protected void doSchedule(Runnable task, ListenableFuture<?> future, long delayInMs) {
     if (delayInMs == 0) {
-      doExecute(task);
+      executeOrQueue(task, future);
     } else {
       scheduler.schedule(new DelayedExecutionRunnable(task), delayInMs);
     }
@@ -81,7 +101,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
-    doSchedule(task, delayInMs);
+    doSchedule(task, null, delayInMs);
   }
 
   @Override
@@ -90,7 +110,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
-    doSchedule(new RecurringDelayWrapper(task, recurringDelay), initialDelay);
+    doSchedule(new RecurringDelayWrapper(task, recurringDelay), null, initialDelay);
   }
 
   @Override
@@ -99,7 +119,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertGreaterThanZero(period, "period");
     
-    doSchedule(new RecurringRateWrapper(task, initialDelay, period), initialDelay);
+    doSchedule(new RecurringRateWrapper(task, initialDelay, period), null, initialDelay);
   }
   
   /**
@@ -112,7 +132,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     private final LimiterRunnableWrapper lrw;
 
     protected DelayedExecutionRunnable(Runnable runnable) {
-      this(new LimiterRunnableWrapper(executor, runnable));
+      this(new LimiterRunnableWrapper(runnable));
     }
 
     protected DelayedExecutionRunnable(LimiterRunnableWrapper lrw) {
@@ -144,7 +164,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     protected final DelayedExecutionRunnable delayRunnable;
     
     public RecurringDelayWrapper(Runnable runnable, long recurringDelay) {
-      super(scheduler, runnable);
+      super(runnable);
       
       this.recurringDelay = recurringDelay;
       delayRunnable = new DelayedExecutionRunnable(this);
@@ -167,7 +187,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     private long nextRunTime;
     
     public RecurringRateWrapper(Runnable runnable, long initialDelay, long period) {
-      super(scheduler, runnable);
+      super(runnable);
       
       this.period = period;
       delayRunnable = new DelayedExecutionRunnable(this);
@@ -179,7 +199,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
       nextRunTime += period;
       long nextDelay = nextRunTime - Clock.accurateForwardProgressingMillis();
       if (nextDelay < 1) {
-        executeWrapper(this);
+        executeOrQueueWrapper(this);
       } else {
         scheduler.schedule(delayRunnable, nextDelay);
       }

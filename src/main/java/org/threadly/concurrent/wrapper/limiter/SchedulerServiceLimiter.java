@@ -4,6 +4,7 @@ import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.ContainerHelper;
 import org.threadly.concurrent.SchedulerService;
+import org.threadly.concurrent.future.ListenableFuture;
 
 /**
  * This class is designed to limit how much parallel execution happens on a provided 
@@ -36,7 +37,27 @@ public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter
    * @param maxConcurrency maximum quantity of runnables to run in parallel
    */
   public SchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency) {
-    super(scheduler, maxConcurrency);
+    this(scheduler, maxConcurrency, DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION);
+  }
+  
+  /**
+   * Constructs a new limiter that implements the {@link SchedulerService}.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param scheduler {@link SchedulerService} implementation to submit task executions to.
+   * @param maxConcurrency maximum quantity of runnables to run in parallel
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   */
+  public SchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency, 
+                                 boolean limitFutureListenersExecution) {
+    super(scheduler, maxConcurrency, limitFutureListenersExecution);
     
     this.scheduler = scheduler;
   }
