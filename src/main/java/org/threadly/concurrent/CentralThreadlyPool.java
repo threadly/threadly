@@ -14,14 +14,12 @@ import org.threadly.util.ExceptionUtils;
  * submitted.
  * <p>
  * Internally this will delegate to a central or otherwise specific pool for your needs, while 
- * minimizing thread creation / churn for you.  In addition the returned pools do not need to be 
- * shutdown, but instead you can allow to be garbage collected as you are done with them. 
- * <p>
- * Unlike other pools, you can schedule a task out on pools returned from this one and then allow 
- * it to be garbage collected.  The scheduled task will run even if you no longer have a reference 
- * to the original pool.
+ * minimizing thread creation / churn as much as possible.  In addition the returned pools do not 
+ * need to be shutdown, but instead you can allow to be garbage collected as you are done with 
+ * them.  There is no need to be concerned about allowing a returned pool to be garbage collected 
+ * before any submitted / scheduled / recurring tasks have completed.
  * 
- * @since 5.4
+ * @since 5.7
  */
 public class CentralThreadlyPool {
   protected static final int LOW_PRIORITY_MAX_WAIT_IN_MS = 1000;  // TODO - configurable?  Diff from default?
@@ -40,9 +38,8 @@ public class CentralThreadlyPool {
     MASTER_SCHEDULER = 
         new PriorityScheduler(cpuCount + 2, // start with computation + 1 for interior management tasks and + 1 for shared use
                               TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, 
-                              new ConfigurableThreadFactory("ThreadlyCentralPool-", 
-                                                            false, true, Thread.NORM_PRIORITY, 
-                                                            null, null));
+                              new ConfigurableThreadFactory("ThreadlyCentralPool-", false, 
+                                                            true, Thread.NORM_PRIORITY, null, null));
     LOW_PRIORITY_MASTER_SCHEDULER = 
         new PrioritySchedulerDefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Low);
     STARVABLE_PRIORITY_MASTER_SCHEDULER = 
@@ -51,14 +48,13 @@ public class CentralThreadlyPool {
     POOL_SIZE_UPDATER = new PoolResizeUpdater(LOW_PRIORITY_MASTER_SCHEDULER);
     
     COMPUTATION_POOL = new SchedulerServiceLimiter(MASTER_SCHEDULER, cpuCount);
-    LOW_PRIORITY_POOL = 
-        new GuaranteedConnectionProtectingScheduler(TaskPriority.Low, 0, -1);
+    LOW_PRIORITY_POOL = new GuaranteedThreadProtectingScheduler(TaskPriority.Low, 0, -1);
     SINGLE_THREADED_LOW_PRIORITY_POOL = 
         new NoThreadSchedulerRunningTask(TaskPriority.Low, TaskPriority.Low, false);
   }
   
   /**
-   * Increase available threads threads that can be shared across tasks.
+   * Increase available threads threads that can be shared across pools.
    * 
    * @param count A positive number of threads to make available to the central pool
    */
@@ -82,7 +78,9 @@ public class CentralThreadlyPool {
   
   /**
    * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
-   * delayed.
+   * delayed.  If not single threaded this pool will execute only on any general processing threads 
+   * which are available.  By default there is only one, but it can be increased by invoking 
+   * {@link #increaseGeneralProcessingThreads(int)}.
    * 
    * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
    * @return Pool for running or scheduling out low priority tasks
@@ -94,6 +92,18 @@ public class CentralThreadlyPool {
       return LOW_PRIORITY_POOL;
     }
   }
+
+  /**
+   * Return a single threaded pool.  This can be useful for submitting tasks on where you don't 
+   * want to worry about any concurrency or shared memory issues.  If you want a single threaded 
+   * pool which is forced to use the already established pool limits, consider using 
+   * {@link #singleThreadPool(boolean)} with {@code false} to ensure pool churn is reduced.
+   * 
+   * @return Single threaded pool for running or scheduling tasks on
+   */
+  public static PrioritySchedulerService singleThreadPool() {
+    return singleThreadPool(true);
+  }
   
   /**
    * Return a single threaded pool.  This can be useful for submitting tasks on where you don't 
@@ -104,6 +114,35 @@ public class CentralThreadlyPool {
    */
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed) {
     return new NoThreadSchedulerRunningTask(TaskPriority.High, TaskPriority.High, threadGuaranteed);
+  }
+  
+  /**
+   * Requests a pool with a given size.  These threads are guaranteed to be available, but 
+   * general processing threads will not be available to any pools returned by this.  If you want 
+   * to be able to use part of the shared general processing threads use 
+   * {@link #rangedThreadCountPool(int, int)} with either a higher or negative value for 
+   * {@code maxThreads}.
+   * 
+   * @param threadCount The number of threads that should be available to tasks submitted on the returned pool
+   * @return A pool with the requested threads available for task scheduling or execution
+   */
+  public static SchedulerService threadPool(int threadCount) {
+    return threadPool(TaskPriority.High, threadCount);
+  }
+
+  /**
+   * Requests a pool with a given size.  These threads are guaranteed to be available, but 
+   * general processing threads will not be available to any pools returned by this.  If you want 
+   * to be able to use part of the shared general processing threads use 
+   * {@link #rangedThreadCountPool(TaskPriority, int, int)} with either a higher or negative value 
+   * for {@code maxThreads}.
+   * 
+   * @param priority Priority for tasks submitted on returned scheduler service
+   * @param threadCount The number of threads that should be available to tasks submitted on the returned pool
+   * @return A pool with the requested threads available for task scheduling or execution
+   */
+  public static SchedulerService threadPool(TaskPriority priority, int threadCount) {
+    return rangedThreadCountPool(priority, threadCount, threadCount);
   }
   
   /**
@@ -137,9 +176,10 @@ public class CentralThreadlyPool {
    */
   public static SchedulerService rangedThreadCountPool(TaskPriority priority, int guaranteedThreads, int maxThreads) {
     if (maxThreads == 1 && priority == TaskPriority.High) {
+      // This single thread implementation is more memory intensive, but better performing
       return singleThreadPool(guaranteedThreads > 0);
     } else {
-      return new GuaranteedConnectionProtectingScheduler(priority, guaranteedThreads, maxThreads);
+      return new GuaranteedThreadProtectingScheduler(priority, guaranteedThreads, maxThreads);
     }
   }
   
@@ -150,30 +190,6 @@ public class CentralThreadlyPool {
       return LOW_PRIORITY_MASTER_SCHEDULER;
     } else {
       return STARVABLE_PRIORITY_MASTER_SCHEDULER;
-    }
-  }
-  
-  /**
-   * Class which adjusts the size of the master pool up once it is constructed.  And down once it 
-   * is garbage collected (as an assumption that the class which needed the resize is no longer 
-   * available).
-   * <p>
-   * While using the garbage collector is not normally ideal for something like this, it avoids the 
-   * need to have a shutdown action on returned pools.  In addition a delay in reducing a pool size 
-   * down is desirable to reduce potential thread churn of the central pool.
-   */
-  protected static class PoolResizer {
-    private final int amount;
-    
-    public PoolResizer(int amount) {
-      this.amount = amount;
-
-      POOL_SIZE_UPDATER.adjustPoolSize(amount);
-    }
-    
-    @Override
-    protected void finalize() {
-      POOL_SIZE_UPDATER.adjustPoolSize(-amount);
     }
   }
   
@@ -202,8 +218,8 @@ public class CentralThreadlyPool {
     protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
       OneTimeTaskWrapper result = super.doSchedule(task, delayInMillis, priority);
       if (delayInMillis > 0) {
-        MASTER_SCHEDULER.schedule(() -> tickSchedulerTask.signalToRunImmediately(true), 
-                                  delayInMillis, priority);
+        tickSchedulerTask.scheduler.schedule(() -> tickSchedulerTask.signalToRunImmediately(true), 
+                                             delayInMillis);
       } else {
         tickSchedulerTask.signalToRun();
       }
@@ -214,27 +230,34 @@ public class CentralThreadlyPool {
     public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
                                        TaskPriority priority) {
       super.scheduleWithFixedDelay(task, initialDelay, recurringDelay, priority);
-      MASTER_SCHEDULER.scheduleWithFixedDelay(() -> tickSchedulerTask.signalToRunImmediately(true), 
-                                              initialDelay, recurringDelay, priority);
+      tickSchedulerTask.scheduler
+                       .scheduleWithFixedDelay(() -> tickSchedulerTask.signalToRunImmediately(true), 
+                                               initialDelay, recurringDelay);
     }
 
     @Override
     public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
                                     TaskPriority priority) {
       super.scheduleAtFixedRate(task, initialDelay, period, priority);
-      MASTER_SCHEDULER.scheduleAtFixedRate(() -> tickSchedulerTask.signalToRunImmediately(true), 
-                                           initialDelay, period, priority);
+      tickSchedulerTask.scheduler
+                       .scheduleAtFixedRate(() -> tickSchedulerTask.signalToRunImmediately(true), 
+                                            initialDelay, period);
     }
   }
 
-  protected static class GuaranteedConnectionProtectingScheduler extends SchedulerServiceLimiter {
+  /**
+   * Class for ensuring that no single scheduler could ever start consuming into another schedulers 
+   * guaranteed threads.  Instead restricting execution to only their own guaranteed threads and 
+   * any general use threads that might be available.
+   */
+  protected static class GuaranteedThreadProtectingScheduler extends SchedulerServiceLimiter {
     @SuppressWarnings("unused")
     private final Object gcReference; // object just held on to track garbage collection
     private final int guaranteedThreads;
     private final int maxThreads;
     
-    public GuaranteedConnectionProtectingScheduler(TaskPriority priority, 
-                                                   int guaranteedThreads, int maxThreads) {
+    public GuaranteedThreadProtectingScheduler(TaskPriority priority, 
+                                               int guaranteedThreads, int maxThreads) {
       super(masterScheduler(priority), 1);
       
       if (maxThreads > 0 && guaranteedThreads > maxThreads) {
@@ -257,8 +280,37 @@ public class CentralThreadlyPool {
     }
   }
   
+  /**
+   * Class which adjusts the size of the master pool up once it is constructed.  And down once it 
+   * is garbage collected (as an assumption that the class which needed the resize is no longer 
+   * available).
+   * <p>
+   * While using the garbage collector is not normally ideal for something like this, it avoids the 
+   * need to have a shutdown action on returned pools.  In addition a delay in reducing a pool size 
+   * down is desirable to reduce potential thread churn of the central pool.
+   */
+  protected static class PoolResizer {
+    private final int amount;
+    
+    public PoolResizer(int amount) {
+      this.amount = amount;
+
+      POOL_SIZE_UPDATER.adjustPoolSize(amount);
+    }
+    
+    @Override
+    protected void finalize() {
+      POOL_SIZE_UPDATER.adjustPoolSize(-amount);
+    }
+  }
+  
+  /**
+   * Class for handling the mechanics for adjusting the master schedulers pool size.  This class's 
+   * primary job is sending updates to that scheduler so that the applications needs are met, but 
+   * churn is minimized.
+   */
   protected static class PoolResizeUpdater extends ReschedulingOperation {
-    protected static final int POOL_SIZE_UPDATE_DELAY = 10_000; // delayed pool size changes reduce churn
+    protected static final int POOL_SIZE_UPDATE_DELAY = 120_000; // delayed pool size changes reduce churn
     
     protected LongAdder poolSizeChange;
 

@@ -561,13 +561,14 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         return;
       }
       
+      boolean poolSizeIncrease;
       synchronized (poolSizeChangeLock) {
-        boolean poolSizeIncrease = newPoolSize > this.maxPoolSize;
+        poolSizeIncrease = newPoolSize > this.maxPoolSize;
         
         this.maxPoolSize = newPoolSize;
-        
-        handleMaxPoolSizeChange(poolSizeIncrease);
       }
+      
+      handleMaxPoolSizeChange(poolSizeIncrease);
     }
     
     /**
@@ -586,16 +587,16 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
           throw new IllegalStateException(maxPoolSize + "" + delta + " must be at least 1");
         }
         this.maxPoolSize += delta;
-        
-        handleMaxPoolSizeChange(delta > 0);
       }
+      
+      handleMaxPoolSizeChange(delta > 0);
     }
     
     protected void handleMaxPoolSizeChange(boolean poolSizeIncrease) {
       if (poolSizeIncrease) {
         // now that pool size increased, start a worker so workers we can for the waiting tasks
         handleQueueUpdate();
-      } else {
+      } else if (currentPoolSize.get() > maxPoolSize) {
         addPoolStateChangeTask(new InternalRunnable() {
           @Override
           public void run() {
