@@ -18,6 +18,22 @@ import org.threadly.util.ExceptionUtils;
  * need to be shutdown, but instead you can allow to be garbage collected as you are done with 
  * them.  There is no need to be concerned about allowing a returned pool to be garbage collected 
  * before any submitted / scheduled / recurring tasks have completed.
+ * <p>
+ * Most users will find themselves sticking to the simple pools this provides:
+ * <ul>
+ * <li>{@link #computationPool()} for doing CPU bound computational tasks
+ * <li>{@link #lowPriorityPool(boolean)} for doing low priority maintenance tasks
+ * <li>{@link #singleThreadPool()} as a way to gain access to an efficient priority respected single thread pool
+ * <li>{@link #threadPool(int)} and {@link #threadPool(TaskPriority, int)} to have a multi-threaded pool
+ * </ul>
+ * <p>
+ * More advanced users can attempt to further reduce thread chun by adding general purpose threads 
+ * with {@link #increaseGeneralProcessingThreads(int)}.  You can then use 
+ * {@link #singleThreadPool(boolean)} with {@code false} to just depend on these general processing 
+ * threads.  And in addition {@link #rangedThreadCountPool(int, int)} and 
+ * {@link #rangedThreadCountPool(TaskPriority, int, int)} in order to specify how when guaranteed 
+ * threads need to be provided, and how much of the general processing threads the pool can take 
+ * advantage of.   
  * 
  * @since 5.7
  */
@@ -30,13 +46,13 @@ public class CentralThreadlyPool {
   protected static final SchedulerService COMPUTATION_POOL;
   protected static final SchedulerService LOW_PRIORITY_POOL;
   protected static final PrioritySchedulerService SINGLE_THREADED_LOW_PRIORITY_POOL;
-  private static volatile int GENERAL_USE_THREAD_COUNT;
+  private static volatile int generalUseThreadCount;
   
   static {
     int cpuCount = Runtime.getRuntime().availableProcessors();
-    GENERAL_USE_THREAD_COUNT = 1; // must have at least one
-    MASTER_SCHEDULER = 
-        new PriorityScheduler(cpuCount + 2, // start with computation + 1 for interior management tasks and + 1 for shared use
+    generalUseThreadCount = 1; // must have at least one
+    MASTER_SCHEDULER = // start with computation + 1 for interior management tasks and + 1 for shared use
+        new PriorityScheduler(cpuCount + 2, 
                               TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, 
                               new ConfigurableThreadFactory("ThreadlyCentralPool-", false, 
                                                             true, Thread.NORM_PRIORITY, null, null));
@@ -63,7 +79,7 @@ public class CentralThreadlyPool {
     
     synchronized (CentralThreadlyPool.class) {
       POOL_SIZE_UPDATER.adjustPoolSize(count);
-      GENERAL_USE_THREAD_COUNT += count;
+      generalUseThreadCount += count;
     }
   }
 
@@ -153,7 +169,7 @@ public class CentralThreadlyPool {
    * {@code > 0} then that many shared threads in the central pool may be used, otherwise all shared 
    * threads may be able to be used.
    * 
-   * @param guaranteedThreads Minimum number of threads the provided pool should be guaranteed to have, negative is ignored
+   * @param guaranteedThreads Number of threads the provided pool should be guaranteed to have
    * @param maxThreads Maximum number of threads to the returned pool can consume, or negative to use any available
    * @return A pool with the requested specifications for task scheduling or execution
    */
@@ -170,7 +186,7 @@ public class CentralThreadlyPool {
    * threads may be able to be used.
    * 
    * @param priority Priority for tasks submitted on returned scheduler service
-   * @param guaranteedThreads Minimum number of threads the provided pool should be guaranteed to have, negative is ignored
+   * @param guaranteedThreads Number of threads the provided pool should be guaranteed to have
    * @param maxThreads Maximum number of threads to the returned pool can consume, or negative to use any available
    * @return A pool with the requested specifications for task scheduling or execution
    */
@@ -271,7 +287,7 @@ public class CentralThreadlyPool {
 
     @Override
     protected boolean canSubmitTasksToPool() {
-      int allowedConcurrency = Math.min(maxThreads, guaranteedThreads + GENERAL_USE_THREAD_COUNT);
+      int allowedConcurrency = Math.min(maxThreads, guaranteedThreads + generalUseThreadCount);
       if (allowedConcurrency != getMaxConcurrency()) {
         setMaxConcurrency(allowedConcurrency);
       }
