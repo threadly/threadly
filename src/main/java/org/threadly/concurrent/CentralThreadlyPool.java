@@ -4,8 +4,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
 import org.threadly.concurrent.wrapper.limiter.SchedulerServiceLimiter;
+import org.threadly.concurrent.wrapper.limiter.SingleThreadSchedulerSubPool;
 import org.threadly.util.ArgumentVerifier;
-import org.threadly.util.ExceptionUtils;
 
 /**
  * Threadly's centrally provided pool manager.  This class is designed to avoid needing to 
@@ -66,7 +66,7 @@ public class CentralThreadlyPool {
     COMPUTATION_POOL = new SchedulerServiceLimiter(MASTER_SCHEDULER, cpuCount);
     LOW_PRIORITY_POOL = new GuaranteedThreadProtectingScheduler(TaskPriority.Low, 0, -1);
     SINGLE_THREADED_LOW_PRIORITY_POOL = 
-        new NoThreadSchedulerRunningTask(TaskPriority.Low, TaskPriority.Low, false);
+        new SingleThreadSubPool(TaskPriority.Low, TaskPriority.Low, false);
   }
   
   /**
@@ -129,7 +129,7 @@ public class CentralThreadlyPool {
    * @return Single threaded pool for running or scheduling tasks on
    */
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed) {
-    return new NoThreadSchedulerRunningTask(TaskPriority.High, TaskPriority.High, threadGuaranteed);
+    return new SingleThreadSubPool(TaskPriority.High, TaskPriority.High, threadGuaranteed);
   }
   
   /**
@@ -210,54 +210,15 @@ public class CentralThreadlyPool {
   }
   
   // TODO - returned counts don't take MASTER_SCHEDULER into consideration like the other wrappers are
-  protected static class NoThreadSchedulerRunningTask extends NoThreadScheduler
-                                                      implements PrioritySchedulerService {
+  protected static class SingleThreadSubPool extends SingleThreadSchedulerSubPool {
     @SuppressWarnings("unused")
     private final Object gcReference; // object just held on to track garbage collection
-    private final ReschedulingOperation tickSchedulerTask;
     
-    protected NoThreadSchedulerRunningTask(TaskPriority defaultPriority, TaskPriority tickPriority, 
-                                           boolean threadGuaranteed) {
-      super(defaultPriority, LOW_PRIORITY_MAX_WAIT_IN_MS);
+    protected SingleThreadSubPool(TaskPriority defaultPriority, TaskPriority tickPriority, 
+                                  boolean threadGuaranteed) {
+      super(masterScheduler(tickPriority), defaultPriority, LOW_PRIORITY_MAX_WAIT_IN_MS);
 
       this.gcReference = threadGuaranteed ? new PoolResizer(1) : null;
-      // Task that is signaled as we are ready to have tick invoked
-      tickSchedulerTask = new ReschedulingOperation(masterScheduler(tickPriority), 0) {
-        @Override
-        protected void run() {
-          tick(ExceptionUtils::handleException);
-        }
-      };
-    }
-
-    @Override
-    protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
-      OneTimeTaskWrapper result = super.doSchedule(task, delayInMillis, priority);
-      if (delayInMillis > 0) {
-        tickSchedulerTask.scheduler.schedule(() -> tickSchedulerTask.signalToRunImmediately(true), 
-                                             delayInMillis);
-      } else {
-        tickSchedulerTask.signalToRun();
-      }
-      return result;
-    }
-
-    @Override
-    public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay,
-                                       TaskPriority priority) {
-      super.scheduleWithFixedDelay(task, initialDelay, recurringDelay, priority);
-      tickSchedulerTask.scheduler
-                       .scheduleWithFixedDelay(() -> tickSchedulerTask.signalToRunImmediately(true), 
-                                               initialDelay, recurringDelay);
-    }
-
-    @Override
-    public void scheduleAtFixedRate(Runnable task, long initialDelay, long period,
-                                    TaskPriority priority) {
-      super.scheduleAtFixedRate(task, initialDelay, period, priority);
-      tickSchedulerTask.scheduler
-                       .scheduleAtFixedRate(() -> tickSchedulerTask.signalToRunImmediately(true), 
-                                            initialDelay, period);
     }
   }
 
