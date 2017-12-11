@@ -452,5 +452,10 @@ public abstract class SubmitterSchedulerInterfaceTest extends SubmitterExecutorI
   
   public interface SubmitterSchedulerFactory extends SubmitterExecutorFactory {
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable);
+    
+    @Override
+    public default SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
+      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
+    }
   }
 }

@@ -18,11 +18,6 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
 
   private class KeyBasedSubmitterSchedulerFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
-
-    @Override
-    public SubmitterScheduler makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
-    }
     
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {

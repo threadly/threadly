@@ -518,16 +518,6 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
     }
 
     @Override
-    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      return makeSchedulerService(poolSize, prestartIfAvailable);
-    }
-
-    @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return makeSchedulerService(poolSize, prestartIfAvailable);
-    }
-
-    @Override
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       PriorityScheduler result = makePriorityScheduler(poolSize);
       if (prestartIfAvailable) {

@@ -654,5 +654,10 @@ public abstract class AbstractPrioritySchedulerTest extends SchedulerServiceInte
                                                                    long maxWaitForLowPriority);
     
     public AbstractPriorityScheduler makeAbstractPriorityScheduler(int poolSize);
+    
+    @Override
+    public default SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
+      return makeAbstractPriorityScheduler(poolSize);
+    }
   }
 }

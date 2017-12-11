@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
-import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest.SubmitterSchedulerFactory;
 
@@ -44,11 +43,6 @@ public class SubmitterSchedulerLimiterTest extends ExecutorLimiterTest {
     @Override
     public void shutdown() {
       schedulerFactory.shutdown();
-    }
-
-    @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
     }
 
     @Override

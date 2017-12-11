@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
-import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 
@@ -19,11 +18,6 @@ public class KeyedSubmitterSchedulerLimiterInterfaceTest  extends SubmitterSched
   
   private static class KeyedSubmitterSchedulerLimiterFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
-    
-    @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
-    }
 
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {

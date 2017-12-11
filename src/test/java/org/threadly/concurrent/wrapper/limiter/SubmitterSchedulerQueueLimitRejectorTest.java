@@ -10,7 +10,6 @@ import org.junit.Test;
 import org.threadly.concurrent.AbstractSubmitterScheduler;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
-import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.test.concurrent.TestableScheduler;
@@ -119,11 +118,6 @@ public class SubmitterSchedulerQueueLimitRejectorTest extends SubmitterScheduler
   
   private static class SubmitterSchedulerQueueRejectorFactory implements SubmitterSchedulerFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
-
-    @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
-    }
     
     @Override
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {

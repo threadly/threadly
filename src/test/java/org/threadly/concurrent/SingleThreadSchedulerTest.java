@@ -226,16 +226,6 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     }
 
     @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return makeSchedulerService(poolSize, prestartIfAvailable);
-    }
-
-    @Override
-    public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
-      return makeSchedulerService(poolSize, prestartIfAvailable);
-    }
-
-    @Override
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable) {
       SingleThreadScheduler result = makeAbstractPriorityScheduler(poolSize);
       if (prestartIfAvailable) {

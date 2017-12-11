@@ -6,7 +6,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
-import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
@@ -70,11 +69,6 @@ public class SchedulerExecutorDelegatorTest extends SubmitterSchedulerInterfaceT
     @Override
     public void shutdown() {
       schedulerFactory.shutdown();
-    }
-
-    @Override
-    public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return makeSubmitterScheduler(poolSize, prestartIfAvailable);
     }
 
     @Override

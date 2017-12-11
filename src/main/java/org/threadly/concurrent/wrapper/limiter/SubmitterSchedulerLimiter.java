@@ -22,6 +22,9 @@ import org.threadly.util.Clock;
  * <p>
  * This is an alternative from having to create multiple thread pools.  By using this you also are 
  * able to accomplish more efficiently thread use than multiple thread pools would.
+ * <p>
+ * If limiting to a single thread, please see {@link SingleThreadSchedulerSubPool} as a possible 
+ * alternative.
  * 
  * @since 4.6.0 (since 4.3.0 at org.threadly.concurrent.limiter)
  */

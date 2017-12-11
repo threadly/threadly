@@ -177,5 +177,10 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
   
   public interface SchedulerServiceFactory extends SubmitterSchedulerFactory {
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable);
+    
+    @Override
+    public default SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
+      return makeSchedulerService(poolSize, prestartIfAvailable);
+    }
   }
 }

@@ -23,6 +23,9 @@ import org.threadly.concurrent.future.ListenableFuture;
  * This does not cause any performance hits, but does require a source {@link SchedulerService} to 
  * rely on.  If you have a {@link SchedulerService} available this implementation should be 
  * preferred over the {@link SubmitterSchedulerLimiter}.
+ * <p>
+ * If limiting to a single thread, please see {@link SingleThreadSchedulerSubPool} as a possible 
+ * alternative.
  * 
  * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent.limiter)
  */
