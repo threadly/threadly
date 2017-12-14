@@ -28,7 +28,7 @@ import org.threadly.util.ArgumentVerifier;
  * </ul>
  * <p>
  * More advanced users can attempt to further reduce thread chun by adding general purpose threads 
- * with {@link #increaseGeneralProcessingThreads(int)}.  You can then use 
+ * with {@link #increaseGenericThreads(int)}.  You can then use 
  * {@link #singleThreadPool(boolean)} with {@code false} to just depend on these general processing 
  * threads.  And in addition {@link #rangedThreadCountPool(int, int)} and 
  * {@link #rangedThreadCountPool(TaskPriority, int, int)} in order to specify how when guaranteed 
@@ -46,13 +46,13 @@ public class CentralThreadlyPool {
   protected static final SchedulerService COMPUTATION_POOL;
   protected static final SchedulerService LOW_PRIORITY_POOL;
   protected static final PrioritySchedulerService SINGLE_THREADED_LOW_PRIORITY_POOL;
-  private static volatile int generalUseThreadCount;
+  private static volatile int genericThreadCount;
   
   static {
     int cpuCount = Runtime.getRuntime().availableProcessors();
-    generalUseThreadCount = 1; // must have at least one
+    genericThreadCount = 1; // must have at least one
     MASTER_SCHEDULER = // start with computation + 1 for interior management tasks and + 1 for shared use
-        new PriorityScheduler(cpuCount + 2, 
+        new PriorityScheduler(cpuCount + genericThreadCount + 1, 
                               TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, 
                               new ConfigurableThreadFactory("ThreadlyCentralPool-", false, 
                                                             true, Thread.NORM_PRIORITY, null, null));
@@ -74,13 +74,23 @@ public class CentralThreadlyPool {
    * 
    * @param count A positive number of threads to make available to the central pool
    */
-  public static void increaseGeneralProcessingThreads(int count) {
+  public static void increaseGenericThreads(int count) {
     ArgumentVerifier.assertGreaterThanZero(count, "count");
     
     synchronized (CentralThreadlyPool.class) {
       POOL_SIZE_UPDATER.adjustPoolSize(count);
-      generalUseThreadCount += count;
+      genericThreadCount += count;
     }
+  }
+  
+  /**
+   * This reports the number of threads currently available for processing across all pools where 
+   * the max thread count is {@code >} the guaranteed thread count.
+   * 
+   * @return The number of threads currently available for general processing work
+   */
+  public static int getGenericThreadCount() {
+    return genericThreadCount;
   }
 
   /**
@@ -96,7 +106,7 @@ public class CentralThreadlyPool {
    * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
    * delayed.  If not single threaded this pool will execute only on any general processing threads 
    * which are available.  By default there is only one, but it can be increased by invoking 
-   * {@link #increaseGeneralProcessingThreads(int)}.
+   * {@link #increaseGenericThreads(int)}.
    * 
    * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
    * @return Pool for running or scheduling out low priority tasks
@@ -165,9 +175,14 @@ public class CentralThreadlyPool {
    * Requests a pool with a given range of threads.  Minimum threads are guaranteed to be available 
    * to tasks submitted to the returned threads.  In addition to those minimum threads tasks 
    * submitted may run on "general processing" threads (starts at {@code 1} but can be increased by 
-   * invoking {@link #increaseGeneralProcessingThreads(int)}).  If {@code maxThreads} is 
+   * invoking {@link #increaseGenericThreads(int)}).  If {@code maxThreads} is 
    * {@code > 0} then that many shared threads in the central pool may be used, otherwise all shared 
    * threads may be able to be used.
+   * <p>
+   * Different ranges may have minor different performance characteristics.  The most efficient 
+   * returned pool would be where {@code maxThreads == 1} (and single threaded pool).  For 
+   * multi-threaded pools the best option is where {@code maxThreads} is set less than or equal to
+   * {@code guaranteedThreads + getGeneralProcessingThreadCount()}.
    * 
    * @param guaranteedThreads Number of threads the provided pool should be guaranteed to have
    * @param maxThreads Maximum number of threads to the returned pool can consume, or negative to use any available
@@ -181,19 +196,29 @@ public class CentralThreadlyPool {
    * Requests a pool with a given range of threads.  Minimum threads are guaranteed to be available 
    * to tasks submitted to the returned threads.  In addition to those minimum threads tasks 
    * submitted may run on "general processing" threads (starts at {@code 1} but can be increased by 
-   * invoking {@link #increaseGeneralProcessingThreads(int)}).  If {@code maxThreads} is 
+   * invoking {@link #increaseGenericThreads(int)}).  If {@code maxThreads} is 
    * {@code > 0} then that many shared threads in the central pool may be used, otherwise all shared 
    * threads may be able to be used.
+   * <p>
+   * Different ranges may have minor different performance characteristics.  The most efficient 
+   * returned pool would be where {@code maxThreads == 1} (and single threaded pool).  For 
+   * multi-threaded pools the best option is where {@code maxThreads} is set less than or equal to
+   * {@code guaranteedThreads + getGeneralProcessingThreadCount()}.
    * 
    * @param priority Priority for tasks submitted on returned scheduler service
    * @param guaranteedThreads Number of threads the provided pool should be guaranteed to have
    * @param maxThreads Maximum number of threads to the returned pool can consume, or negative to use any available
    * @return A pool with the requested specifications for task scheduling or execution
    */
-  public static SchedulerService rangedThreadCountPool(TaskPriority priority, int guaranteedThreads, int maxThreads) {
+  public static SchedulerService rangedThreadCountPool(TaskPriority priority, 
+                                                       int guaranteedThreads, int maxThreads) {
     if (maxThreads == 1 && priority == TaskPriority.High) {
       // This single thread implementation is more memory intensive, but better performing
       return singleThreadPool(guaranteedThreads > 0);
+    } else if (maxThreads > 0 && 
+               Math.max(0, guaranteedThreads) + genericThreadCount >= maxThreads) {
+      // specified max threads wont ever exceed general use count, so use more efficient scheduler
+      return new MasterSchedulerResizingLimiter(priority, guaranteedThreads, maxThreads);
     } else {
       return new GuaranteedThreadProtectingScheduler(priority, guaranteedThreads, maxThreads);
     }
@@ -223,32 +248,53 @@ public class CentralThreadlyPool {
   }
 
   /**
-   * Class for ensuring that no single scheduler could ever start consuming into another schedulers 
-   * guaranteed threads.  Instead restricting execution to only their own guaranteed threads and 
-   * any general use threads that might be available.
+   * This limiter is so that a scheduler wont use beyond it's guaranteed thread count (and the 
+   * general use).  If used directly it is important to be sure the specified limit is set to 
+   * be low enough that the pool wont consume beyond it's guaranteed threads + general use 
+   * available at construction.
+   * <p>
+   * This is necessary to be sure that when a returned scheduler requests a given qty of threads, 
+   * those resources are for sure available to them.
    */
-  protected static class GuaranteedThreadProtectingScheduler extends SchedulerServiceLimiter {
+  protected static class MasterSchedulerResizingLimiter extends SchedulerServiceLimiter {
     @SuppressWarnings("unused")
     private final Object gcReference; // object just held on to track garbage collection
-    private final int guaranteedThreads;
-    private final int maxThreads;
     
-    public GuaranteedThreadProtectingScheduler(TaskPriority priority, 
-                                               int guaranteedThreads, int maxThreads) {
-      super(masterScheduler(priority), 1);
+    public MasterSchedulerResizingLimiter(TaskPriority priority, 
+                                          int guaranteedThreads, int maxThreads) {
+      super(masterScheduler(priority), maxThreads < 1 ? Integer.MAX_VALUE : maxThreads);
       
       if (maxThreads > 0 && guaranteedThreads > maxThreads) {
         throw new IllegalArgumentException("Max threads must be <= guaranteed threads");
       }
       
       this.gcReference = guaranteedThreads > 0 ? new PoolResizer(guaranteedThreads) : null;
+    }
+  }
+  
+  /**
+   * Similar to the extended classes {@link MasterSchedulerResizingLimiter} this class is for 
+   * ensuring that no single scheduler can completely dominate the central pool.  This class 
+   * however is for when limits are set very high, and we may need to be able to adapt to added 
+   * general use threads in the future.  This does have minor performance implications so if you 
+   * don't need to be flexible for future general use threads the 
+   * {@link MasterSchedulerResizingLimiter} is a better option.
+   */
+  protected static class GuaranteedThreadProtectingScheduler extends MasterSchedulerResizingLimiter {
+    private final int guaranteedThreads;
+    private final int maxThreads;
+    
+    public GuaranteedThreadProtectingScheduler(TaskPriority priority, 
+                                               int guaranteedThreads, int maxThreads) {
+      super(priority, guaranteedThreads, maxThreads);
+      
       this.guaranteedThreads = guaranteedThreads > 0 ? guaranteedThreads : 0;
-      this.maxThreads = maxThreads < 1 ? Integer.MAX_VALUE : maxThreads;
+      this.maxThreads = getMaxConcurrency();
     }
 
     @Override
     protected boolean canSubmitTasksToPool() {
-      int allowedConcurrency = Math.min(maxThreads, guaranteedThreads + generalUseThreadCount);
+      int allowedConcurrency = Math.min(maxThreads, guaranteedThreads + genericThreadCount);
       if (allowedConcurrency != getMaxConcurrency()) {
         setMaxConcurrency(allowedConcurrency);
       }
