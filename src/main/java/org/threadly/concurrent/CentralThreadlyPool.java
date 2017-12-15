@@ -42,7 +42,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 5.7
  */
 public class CentralThreadlyPool {
-  protected static final int LOW_PRIORITY_MAX_WAIT_IN_MS = 1000;  // TODO - configurable?  Diff from default?
+  protected static final int LOW_PRIORITY_MAX_WAIT_IN_MS = 1000;
   protected static final PoolResizeUpdater POOL_SIZE_UPDATER;
   protected static final PriorityScheduler MASTER_SCHEDULER;
   protected static final PrioritySchedulerService LOW_PRIORITY_MASTER_SCHEDULER;
@@ -68,7 +68,7 @@ public class CentralThreadlyPool {
     POOL_SIZE_UPDATER = new PoolResizeUpdater(LOW_PRIORITY_MASTER_SCHEDULER);
     
     COMPUTATION_POOL = new SchedulerServiceLimiter(MASTER_SCHEDULER, cpuCount);
-    LOW_PRIORITY_POOL = new GuaranteedThreadProtectingScheduler(TaskPriority.Low, 0, -1);
+    LOW_PRIORITY_POOL = new DynamicGenericThreadLimiter(TaskPriority.Low, 0, -1);
     SINGLE_THREADED_LOW_PRIORITY_POOL = 
         new SingleThreadSubPool(TaskPriority.Low, TaskPriority.Low, false);
   }
@@ -139,7 +139,7 @@ public class CentralThreadlyPool {
    * Return a single threaded pool.  This can be useful for submitting tasks on where you don't 
    * want to worry about any concurrency or shared memory issues.
    * 
-   * @param threadGuaranteed {@code true} indicates that the pool manager needs to expand its size if necessary
+   * @param threadGuaranteed {@code true} indicates that the pool manager needs to expand if necessary
    * @return Single threaded pool for running or scheduling tasks on
    */
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed) {
@@ -153,7 +153,7 @@ public class CentralThreadlyPool {
    * {@link #rangedThreadCountPool(int, int)} with either a higher or negative value for 
    * {@code maxThreads}.
    * 
-   * @param threadCount The number of threads that should be available to tasks submitted on the returned pool
+   * @param threadCount The number of threads that will be available to tasks submitted on the returned pool
    * @return A pool with the requested threads available for task scheduling or execution
    */
   public static SchedulerService threadPool(int threadCount) {
@@ -168,7 +168,7 @@ public class CentralThreadlyPool {
    * for {@code maxThreads}.
    * 
    * @param priority Priority for tasks submitted on returned scheduler service
-   * @param threadCount The number of threads that should be available to tasks submitted on the returned pool
+   * @param threadCount The number of threads that will be available to tasks submitted on the returned pool
    * @return A pool with the requested threads available for task scheduling or execution
    */
   public static SchedulerService threadPool(TaskPriority priority, int threadCount) {
@@ -224,7 +224,7 @@ public class CentralThreadlyPool {
       // specified max threads wont ever exceed general use count, so use more efficient scheduler
       return new MasterSchedulerResizingLimiter(priority, guaranteedThreads, maxThreads);
     } else {
-      return new GuaranteedThreadProtectingScheduler(priority, guaranteedThreads, maxThreads);
+      return new DynamicGenericThreadLimiter(priority, guaranteedThreads, maxThreads);
     }
   }
   
@@ -283,7 +283,7 @@ public class CentralThreadlyPool {
 
   /**
    * This limiter is so that a scheduler wont use beyond it's guaranteed thread count (and the 
-   * general use).  If used directly it is important to be sure the specified limit is set to 
+   * generic threads).  If used directly it is important to be sure the specified limit is set to 
    * be low enough that the pool wont consume beyond it's guaranteed threads + general use 
    * available at construction.
    * <p>
@@ -310,16 +310,15 @@ public class CentralThreadlyPool {
    * Similar to the extended classes {@link MasterSchedulerResizingLimiter} this class is for 
    * ensuring that no single scheduler can completely dominate the central pool.  This class 
    * however is for when limits are set very high, and we may need to be able to adapt to added 
-   * general use threads in the future.  This does have minor performance implications so if you 
-   * don't need to be flexible for future general use threads the 
-   * {@link MasterSchedulerResizingLimiter} is a better option.
+   * generic threads in the future.  This does have minor performance implications so if you don't 
+   * need to be flexible for future general use threads the {@link MasterSchedulerResizingLimiter} 
+   * is a better option.
    */
-  protected static class GuaranteedThreadProtectingScheduler extends MasterSchedulerResizingLimiter {
+  protected static class DynamicGenericThreadLimiter extends MasterSchedulerResizingLimiter {
     private final int guaranteedThreads;
     private final int maxThreads;
     
-    public GuaranteedThreadProtectingScheduler(TaskPriority priority, 
-                                               int guaranteedThreads, int maxThreads) {
+    public DynamicGenericThreadLimiter(TaskPriority priority, int guaranteedThreads, int maxThreads) {
       super(priority, guaranteedThreads, maxThreads);
       
       this.guaranteedThreads = guaranteedThreads > 0 ? guaranteedThreads : 0;
