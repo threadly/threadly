@@ -146,4 +146,29 @@ public class CentralThreadlyPoolTest {
     });
     av.waitForTest();
   }
+  
+  @Test
+  public void isolatedPoolTest() {
+    int testQty = 100;
+    List<BlockingTestRunnable> blockingRunnables = new ArrayList<>(testQty);
+    try {
+      SubmitterExecutor executor = CentralThreadlyPool.isolatedTaskPool();
+      for (int i = 0; i < testQty; i++) {
+        BlockingTestRunnable btr = new BlockingTestRunnable();
+        blockingRunnables.add(btr);
+        executor.execute(btr);
+      }
+      for (BlockingTestRunnable btr : blockingRunnables) {
+        btr.blockTillStarted();
+      }
+      // verify we can still execute on pool with existing threads
+      TestRunnable tr = new TestRunnable();
+      CentralThreadlyPool.lowPriorityPool(false).execute(tr);
+      tr.blockTillStarted();
+    } finally {
+      for (BlockingTestRunnable btr : blockingRunnables) {
+        btr.unblock();
+      }
+    }
+  }
 }
