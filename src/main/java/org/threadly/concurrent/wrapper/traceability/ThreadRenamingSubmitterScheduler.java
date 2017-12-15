@@ -17,7 +17,7 @@ public class ThreadRenamingSubmitterScheduler extends AbstractSubmitterScheduler
 
   /**
    * Constructs a new {@link ThreadRenamingSubmitterScheduler}, wrapping a supplied 
-   * {@link SubmitterScheduler}.  If /{@code replace} is {@code false} the thread will be named such 
+   * {@link SubmitterScheduler}.  If {@code replace} is {@code false} the thread will be named such 
    * that {@code threadName[originalThreadName]}.
    * 
    * @param scheduler SubmitterScheduler to wrap and send executions to
@@ -25,7 +25,7 @@ public class ThreadRenamingSubmitterScheduler extends AbstractSubmitterScheduler
    * @param replace If {@code true} the original name wont be included in the thread name
    */
   public ThreadRenamingSubmitterScheduler(SubmitterScheduler scheduler, 
-                                                 String threadName, boolean replace) {
+                                          String threadName, boolean replace) {
     this.scheduler = scheduler;
     this.threadName = threadName;
     this.replace = replace;
