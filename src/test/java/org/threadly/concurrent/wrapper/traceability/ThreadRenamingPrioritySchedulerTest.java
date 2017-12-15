@@ -21,7 +21,7 @@ public class ThreadRenamingPrioritySchedulerTest extends ThreadRenamingSubmitter
         scheduler.prestartAllThreads();
       }
       
-      return new ThreadRenamingPriorityScheduler(scheduler, "foo", false);
+      return new ThreadRenamingPriorityScheduler(scheduler, THREAD_NAME, false);
     }
 
     @Override
