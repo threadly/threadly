@@ -33,7 +33,11 @@ import org.threadly.util.ArgumentVerifier;
  * threads.  And in addition {@link #rangedThreadCountPool(int, int)} and 
  * {@link #rangedThreadCountPool(TaskPriority, int, int)} in order to specify how when guaranteed 
  * threads need to be provided, and how much of the general processing threads the pool can take 
- * advantage of.   
+ * advantage of.
+ * <p>
+ * Stats (like {@link SchedulerService#getActiveTaskCount()} and 
+ * {@link SchedulerService#getQueuedTaskCount()}, etc) from provided pools will always be 
+ * representative of the entire central pool rather than just relative to the returned pool.
  * 
  * @since 5.7
  */
@@ -224,6 +228,12 @@ public class CentralThreadlyPool {
     }
   }
   
+  /**
+   * Returns the master scheduler with a default priority requested.
+   * 
+   * @param defaultPriority Default priority for tasks submitted to scheduler
+   * @return Master scheduler with the provided default priority
+   */
   private static PrioritySchedulerService masterScheduler(TaskPriority defaultPriority) {
     if (defaultPriority == TaskPriority.High) {
       return MASTER_SCHEDULER;
@@ -234,7 +244,12 @@ public class CentralThreadlyPool {
     }
   }
   
-  // TODO - returned counts don't take MASTER_SCHEDULER into consideration like the other wrappers are
+  /**
+   * Implementation of {@link SingleThreadSchedulerSubPool} in order to get efficient single 
+   * threaded execution on top of the central pool.  In addition to handling possible pool size 
+   * changes, this also handles making sure the pool returns the same stats / values of the 
+   * delegate pool.
+   */
   protected static class SingleThreadSubPool extends SingleThreadSchedulerSubPool {
     @SuppressWarnings("unused")
     private final Object gcReference; // object just held on to track garbage collection
@@ -244,6 +259,25 @@ public class CentralThreadlyPool {
       super(masterScheduler(tickPriority), defaultPriority, LOW_PRIORITY_MAX_WAIT_IN_MS);
 
       this.gcReference = threadGuaranteed ? new PoolResizer(1) : null;
+    }
+
+    // SingleThreadSchedulerSubPool does not normally consider the parent pools load
+    // but queued / task counts for this pool are different, the below functions ensure that behavior
+    
+    @Override
+    public int getActiveTaskCount() {
+      return MASTER_SCHEDULER.getActiveTaskCount();
+    }
+    
+    @Override
+    public int getQueuedTaskCount(TaskPriority priority) {
+      return super.getQueuedTaskCount(priority) + MASTER_SCHEDULER.getQueuedTaskCount(priority);
+    }
+    
+    @Override
+    public int getWaitingForExecutionTaskCount(TaskPriority priority) {
+      return super.getWaitingForExecutionTaskCount(priority) + 
+               MASTER_SCHEDULER.getWaitingForExecutionTaskCount(priority);
     }
   }
 
