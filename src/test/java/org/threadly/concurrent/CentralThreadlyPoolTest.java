@@ -6,11 +6,14 @@ import static org.threadly.TestConstants.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class CentralThreadlyPoolTest {
@@ -59,6 +62,39 @@ public class CentralThreadlyPoolTest {
   }
   
   @Test
+  public void computationPoolThreadRenamedTest() throws InterruptedException, TimeoutException {
+    final String threadName = StringUtils.makeRandomString(5);
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.computationPool(threadName).execute(() -> {
+      av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
+      av.signalComplete();
+    });
+    av.waitForTest();
+  }
+  
+  @Test
+  public void lowPrioritySingleThreadRenamedTest() throws InterruptedException, TimeoutException {
+    final String threadName = StringUtils.makeRandomString(5);
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.lowPriorityPool(true, threadName).execute(() -> {
+      av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
+      av.signalComplete();
+    });
+    av.waitForTest();
+  }
+  
+  @Test
+  public void lowPriorityRenamedTest() throws InterruptedException, TimeoutException {
+    final String threadName = StringUtils.makeRandomString(5);
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.lowPriorityPool(false, threadName).execute(() -> {
+      av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
+      av.signalComplete();
+    });
+    av.waitForTest();
+  }
+  
+  @Test
   public void singleThreadPoolsGuaranteedThreadTest() {
     List<SchedulerService> executors = new ArrayList<>();
     for (int i = 0; i < TEST_QTY * 2; i++) {
@@ -80,6 +116,17 @@ public class CentralThreadlyPoolTest {
   }
   
   @Test
+  public void singleThreadRenamedTest() throws InterruptedException, TimeoutException {
+    final String threadName = StringUtils.makeRandomString(5);
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.singleThreadPool(false, threadName).execute(() -> {
+      av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
+      av.signalComplete();
+    });
+    av.waitForTest();
+  }
+  
+  @Test
   public void threadPoolsGuaranteedThreadTest() {
     int threadsPerScheduler = 10;
     List<SchedulerService> executors = new ArrayList<>();
@@ -87,5 +134,16 @@ public class CentralThreadlyPoolTest {
       executors.add(CentralThreadlyPool.threadPool(threadsPerScheduler));
     }
     verifyGuaranteedThreadProtection(executors, threadsPerScheduler);
+  }
+  
+  @Test
+  public void threadPoolRenamedTest() throws InterruptedException, TimeoutException {
+    final String threadName = StringUtils.makeRandomString(5);
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.threadPool(2, threadName).execute(() -> {
+      av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
+      av.signalComplete();
+    });
+    av.waitForTest();
   }
 }
