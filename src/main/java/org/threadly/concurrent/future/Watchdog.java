@@ -5,9 +5,8 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.threadly.concurrent.ConfigurableThreadFactory;
+import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.ReschedulingOperation;
-import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.Clock;
 
@@ -20,20 +19,17 @@ import org.threadly.util.Clock;
  * @since 4.0.0
  */
 public class Watchdog {
-  private static final AtomicReference<SingleThreadScheduler> STATIC_SCHEDULER = 
+  private static final AtomicReference<SubmitterScheduler> STATIC_SCHEDULER = 
       new AtomicReference<>();
   
   protected static final SubmitterScheduler getStaticScheduler() {
-    SingleThreadScheduler sts = STATIC_SCHEDULER.get();
-    if (sts == null) {
-      sts = new SingleThreadScheduler(new ConfigurableThreadFactory("WatchdogDefaultScheduler-", false));
-      if (! STATIC_SCHEDULER.compareAndSet(null, sts)) {
-        sts.shutdownNow();
-        sts = STATIC_SCHEDULER.get();
-      }
+    SubmitterScheduler ss = STATIC_SCHEDULER.get();
+    if (ss == null) {
+      STATIC_SCHEDULER.compareAndSet(null, CentralThreadlyPool.rangedThreadPool(1, -1, "WatchdogDefaultScheduler"));
+      ss = STATIC_SCHEDULER.get();
     }
     
-    return sts;
+    return ss;
   }
   
   protected final SubmitterScheduler scheduler;
