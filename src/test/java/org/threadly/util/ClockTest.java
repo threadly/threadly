@@ -18,9 +18,6 @@ public class ClockTest {
   @Before
   public void setup() {
     Clock.stopClockUpdateThread();
-    while (Clock.CLOCK_UPDATE_POOL.getActiveTaskCount() > 0) {
-      Thread.yield();
-    }
   }
   
   @Test

@@ -1,7 +1,6 @@
 package org.threadly.util;
 
-import org.threadly.concurrent.CentralThreadlyPool;
-import org.threadly.concurrent.SchedulerService;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * This is a utility class for low-resolution timing which avoids frequent 
@@ -38,9 +37,7 @@ public class Clock {
   public static final short AUTOMATIC_UPDATE_FREQUENCY_IN_MS = 100;
   protected static final short STOP_PARK_TIME_NANOS = 25000;
   
-  protected static final SchedulerService CLOCK_UPDATE_POOL = 
-      // ranged pool with max 2 is less memory overhead than single thread
-      CentralThreadlyPool.rangedThreadPool(1, 2, "ThreadlyClockUpdater");
+  protected static final Object UPDATE_LOCK = new Object();
   protected static ClockUpdater clockUpdater = null;
   protected static final long CLOCK_STARTUP_TIME_NANOS = System.nanoTime();
   private static volatile long nowNanos = CLOCK_STARTUP_TIME_NANOS;
@@ -54,14 +51,17 @@ public class Clock {
    * Starts a thread to regularly updated the clock automatically.
    */
   public static void startClockUpdateThread() {
-    synchronized (Clock.class) {
+    synchronized (UPDATE_LOCK) {
       if (clockUpdater != null) {
         return;
       } else {
         clockUpdater = new ClockUpdater();
-        CLOCK_UPDATE_POOL.scheduleAtFixedRate(clockUpdater, 
-                                              AUTOMATIC_UPDATE_FREQUENCY_IN_MS, 
-                                              AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
+        
+        Thread thread = new Thread(clockUpdater);
+        
+        thread.setName("Threadly clock updater");
+        thread.setDaemon(true);
+        thread.start();
       }
     }
   }
@@ -72,10 +72,20 @@ public class Clock {
    * This call blocks until the automatic update thread stops, or until this thread is interrupted.
    */
   public static void stopClockUpdateThread() {
-    synchronized (Clock.class) {
-      if (clockUpdater != null) {
-        CLOCK_UPDATE_POOL.remove(clockUpdater);
-        clockUpdater = null;
+    ClockUpdater oldUpdater;
+    synchronized (UPDATE_LOCK) {
+      oldUpdater = clockUpdater;
+      
+      clockUpdater = null;
+      
+      UPDATE_LOCK.notifyAll();
+    }
+    
+    if (oldUpdater != null) {
+      Thread currentThread = Thread.currentThread();
+      while (! oldUpdater.runnableFinished && 
+             ! currentThread.isInterrupted()) {
+        LockSupport.parkNanos(STOP_PARK_TIME_NANOS);
       }
     }
   }
@@ -186,30 +196,46 @@ public class Clock {
   }
   
   /**
-   * Runnable which will regularly update the stored clock time.  This runnable is designed to be 
-   * scheduled on a pool so that it can update at a set frequency.
+   * Runnable which will regularly update the stored clock time.  This runnable is designed to run 
+   * in its own dedicated thread.
    * 
    * @since 1.0.0
    */
   protected static class ClockUpdater implements Runnable {
+    protected volatile boolean runnableFinished = false;
     protected long lastUpdatedMillis = -1;
     protected long lastUpdatedNanos = -1;
     
     @Override
     public void run() {
-      if (nowMillis == lastUpdatedMillis || 
-          // check if task is not waking up as expected, if not lets update while we have cpu time
-          nowMillis - lastUpdatedMillis > AUTOMATIC_UPDATE_FREQUENCY_IN_MS) {
-        nowMillis = lastUpdatedMillis = System.currentTimeMillis();
-      } else {
-        lastUpdatedMillis = nowMillis;
-      }
-      if (nowNanos == lastUpdatedNanos || 
-          // check if task is not waking up as expected, if not lets update while we have cpu time
-          nowNanos - lastUpdatedNanos > AUTOMATIC_UPDATE_FREQUENCY_IN_MS * NANOS_IN_MILLISECOND) {
-        nowNanos = lastUpdatedNanos = System.nanoTime();
-      } else {
-        lastUpdatedNanos = nowNanos;
+      try {
+        synchronized (UPDATE_LOCK) {
+          while (clockUpdater == this) {
+            try {
+              if (nowMillis == lastUpdatedMillis || 
+                  // check if task is not waking up as expected, if not lets update while we have cpu time
+                  nowMillis - lastUpdatedMillis > AUTOMATIC_UPDATE_FREQUENCY_IN_MS) {
+                nowMillis = lastUpdatedMillis = System.currentTimeMillis();
+              } else {
+                lastUpdatedMillis = nowMillis;
+              }
+              if (nowNanos == lastUpdatedNanos || 
+                  // check if task is not waking up as expected, if not lets update while we have cpu time
+                  nowNanos - lastUpdatedNanos > AUTOMATIC_UPDATE_FREQUENCY_IN_MS * NANOS_IN_MILLISECOND) {
+                nowNanos = lastUpdatedNanos = System.nanoTime();
+              } else {
+                lastUpdatedNanos = nowNanos;
+              }
+              
+              UPDATE_LOCK.wait(AUTOMATIC_UPDATE_FREQUENCY_IN_MS);
+            } catch (InterruptedException e) {
+              clockUpdater = null;  // let thread exit
+              Thread.currentThread().interrupt();
+            }
+          }
+        }
+      } finally {
+        runnableFinished = true;
       }
     }
   }
