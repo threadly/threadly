@@ -1,9 +1,13 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
+import static org.threadly.TestConstants.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SchedulerService;
@@ -13,6 +17,7 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
@@ -41,6 +46,31 @@ public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
+    }
+  }
+  
+  @Test
+  public void executeLimitQueueTest() {
+    SchedulerServiceLimiter limitedExecutor = getLimiter(PARALLEL_COUNT, true);
+    List<BlockingTestRunnable> blockingRunnables = new ArrayList<>(PARALLEL_COUNT);
+    try {
+      for (int i = 0; i < PARALLEL_COUNT; i++) {
+        BlockingTestRunnable btr = new BlockingTestRunnable();
+        limitedExecutor.execute(btr);
+        blockingRunnables.add(btr);
+      }
+      for (BlockingTestRunnable btr : blockingRunnables) {
+        btr.blockTillStarted();
+      }
+      
+      assertEquals(0, limitedExecutor.getQueuedTaskCount());
+      limitedExecutor.execute(DoNothingRunnable.instance());
+      TestUtils.sleep(DELAY_TIME);
+      assertEquals(1, limitedExecutor.getQueuedTaskCount());
+    } finally {
+      for (BlockingTestRunnable btr : blockingRunnables) {
+        btr.unblock();
+      }
     }
   }
   
