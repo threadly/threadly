@@ -12,7 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.RunnableRunnableContainer;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -266,7 +266,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * 
    * @since 2.1.0
    */
-  protected static class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
+  protected static class ThrowableHandlingRecurringRunnable implements RunnableRunnableContainer {
     private final SchedulerService scheduler;
     private final Runnable task;
     

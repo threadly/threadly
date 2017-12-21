@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.RunnableRunnableContainer;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -330,7 +330,7 @@ class PriorityStatisticManager {
    * 
    * @since 4.5.0
    */
-  protected static class TaskStatWrapper implements Runnable, RunnableContainer {
+  protected static class TaskStatWrapper implements RunnableRunnableContainer {
     protected final PriorityStatisticManager statsManager;
     protected final TaskPriority priority;
     protected final Runnable task;

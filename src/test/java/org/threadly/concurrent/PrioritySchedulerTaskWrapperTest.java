@@ -61,7 +61,7 @@ public class PrioritySchedulerTaskWrapperTest {
     }
 
     @Override
-    public void runTask() {
+    public void run() {
       runCalled = true;
     }
 

@@ -3,7 +3,7 @@ package org.threadly.concurrent.wrapper.limiter;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.RunnableRunnableContainer;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -131,7 +131,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
    * 
    * @since 1.1.0
    */
-  protected class DelayedExecutionRunnable implements Runnable, RunnableContainer {
+  protected class DelayedExecutionRunnable implements RunnableRunnableContainer {
     private final LimiterRunnableWrapper lrw;
 
     protected DelayedExecutionRunnable(Runnable runnable) {

@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.LongAdder;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.RunnableRunnableContainer;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.statistics.StatisticExecutor;
 import org.threadly.util.ArgumentVerifier;
@@ -230,7 +230,7 @@ public class ExecutorStatisticWrapper extends AbstractSubmitterExecutor
    * 
    * @since 4.5.0
    */
-  protected static class StatisticRunnable implements RunnableContainer, Runnable {
+  protected static class StatisticRunnable implements RunnableRunnableContainer {
     private final Runnable task;
     private final long expectedRunTime;
     private final StatsContainer statsContainer;

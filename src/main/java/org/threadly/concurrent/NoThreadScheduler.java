@@ -143,7 +143,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
         // we can cheat with the execution reference since task de-queue is single threaded
         if (nextTask.canExecute(nextTask.getExecuteReference())) {
           try {
-            nextTask.runTask();
+            nextTask.run();
           } catch (Throwable t) {
             if (exceptionHandler != null) {
               exceptionHandler.handleException(t);
@@ -422,7 +422,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     }
 
     @Override
-    public void runTask() {
+    public void run() {
       if (! invalidated) {
         // Do not use ExceptionUtils to run task, so that exceptions can be handled in .tick()
         task.run();
@@ -457,7 +457,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     protected abstract void updateNextRunTime();
 
     @Override
-    public void runTask() {
+    public void run() {
       if (invalidated) {
         return;
       }
