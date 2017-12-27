@@ -11,7 +11,7 @@ import org.threadly.concurrent.ThreadlyInternalAccessor;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.concurrent.future.ScheduledFutureDelegate;
-import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
+import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 
 /**
  * This is a wrapper for {@link SingleThreadScheduler} to be a drop in replacement for any 
@@ -45,8 +45,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
    */
   public SingleThreadSchedulerServiceWrapper(SingleThreadScheduler scheduler, 
                                              TaskPriority taskPriority) {
-    super(taskPriority == null || taskPriority == scheduler.getDefaultPriority() ? 
-            scheduler : new PrioritySchedulerDefaultPriorityWrapper(scheduler, taskPriority));
+    super(DefaultPriorityWrapper.ensurePriority(scheduler, taskPriority));
     
     this.singleThreadScheduler = scheduler;
     this.taskPriority = taskPriority == null ? scheduler.getDefaultPriority() : taskPriority;

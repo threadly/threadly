@@ -9,8 +9,8 @@ import org.threadly.util.ArgumentVerifier;
  * Class which takes in both an executor and a scheduler.  Delegating executions to the executor 
  * when possible, and otherwise submitting to the provided scheduler.  This can be used to provide 
  * different behavior/implementations between scheduled and executed tasks (for example you could 
- * use {@link PrioritySchedulerDefaultPriorityWrapper} to have a different default priority for 
- * scheduled tasks vs executed).
+ * use {@link org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper} to 
+ * have a different default priority for scheduled tasks vs executed).
  * 
  * @since 4.7.0
  */

@@ -3,9 +3,9 @@ package org.threadly.concurrent;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
 import org.threadly.concurrent.wrapper.limiter.SchedulerServiceLimiter;
 import org.threadly.concurrent.wrapper.limiter.SingleThreadSchedulerSubPool;
+import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.concurrent.wrapper.traceability.ThreadRenamingPriorityScheduler;
 import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSchedulerService;
 import org.threadly.util.ArgumentVerifier;
@@ -67,9 +67,9 @@ public class CentralThreadlyPool {
                               new ConfigurableThreadFactory("ThreadlyCentralPool-", false, 
                                                             true, Thread.NORM_PRIORITY, null, null));
     LOW_PRIORITY_MASTER_SCHEDULER = 
-        new PrioritySchedulerDefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Low);
+        new DefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Low);
     STARVABLE_PRIORITY_MASTER_SCHEDULER = 
-        new PrioritySchedulerDefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Starvable);
+        new DefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Starvable);
     
     POOL_SIZE_UPDATER = new PoolResizeUpdater(LOW_PRIORITY_MASTER_SCHEDULER);
     

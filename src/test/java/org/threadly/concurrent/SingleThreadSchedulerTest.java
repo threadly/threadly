@@ -11,7 +11,7 @@ import java.util.concurrent.RejectedExecutionException;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
+import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
@@ -85,7 +85,7 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
      * will be waiting to execute after shutdown call.
      */
     TestRunnable lastRunnable = // submit tasks as low priority to ensure that the shutdown lets them finish
-        executeTestRunnables(new PrioritySchedulerDefaultPriorityWrapper(sts, TaskPriority.Low), 5)
+        executeTestRunnables(new DefaultPriorityWrapper(sts, TaskPriority.Low), 5)
           .get(TEST_QTY - 1);
     
     sts.shutdown();

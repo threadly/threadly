@@ -13,7 +13,7 @@ import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
+import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -233,7 +233,7 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
        * will be waiting to execute after shutdown call.
        */
       TestRunnable lastRunnable = 
-          executeTestRunnables(new PrioritySchedulerDefaultPriorityWrapper(scheduler, TaskPriority.Low), 5)
+          executeTestRunnables(new DefaultPriorityWrapper(scheduler, TaskPriority.Low), 5)
             .get(TEST_QTY - 1);
       
       scheduler.shutdown();

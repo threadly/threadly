@@ -15,7 +15,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.lock.StripedLock;
-import org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper;
+import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterScheduler;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.StringUtils;
@@ -208,8 +208,8 @@ public class KeyedRateLimiterExecutor {
     this.rejectedExecutionHandler = rejectedExecutionHandler;
     if (scheduler instanceof PrioritySchedulerService) {
       limiterCheckerScheduler = 
-          new PrioritySchedulerDefaultPriorityWrapper((PrioritySchedulerService)scheduler, 
-                                                      TaskPriority.Low);
+          DefaultPriorityWrapper.ensurePriority((PrioritySchedulerService)scheduler, 
+                                                TaskPriority.Low);
     } else {
       limiterCheckerScheduler = scheduler;
     }
