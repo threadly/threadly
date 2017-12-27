@@ -144,7 +144,7 @@ public class ExecutorLimiter implements SubmitterExecutor {
    * 
    * @return {@code true} if the task can be submitted to the pool
    */
-  protected boolean canSubmitTasksToPool() {
+  protected boolean canSubmitTaskToPool() {
     while (true) {  // loop till we have a result
       int currentValue = currentlyRunning.get();
       if (currentValue < maxConcurrency) {
@@ -169,7 +169,7 @@ public class ExecutorLimiter implements SubmitterExecutor {
      * parallel and possibly emptying after .isEmpty() check but before .poll()
      */
     synchronized (this) {
-      while (! waitingTasks.isEmpty() && canSubmitTasksToPool()) {
+      while (! waitingTasks.isEmpty() && canSubmitTaskToPool()) {
         // by entering loop we can now execute task
         executor.execute(waitingTasks.poll());
       }
@@ -178,13 +178,13 @@ public class ExecutorLimiter implements SubmitterExecutor {
   
   /**
    * Check that not only are we able to submit tasks to the pool, but there are no tasks currently 
-   * waiting to already be submitted.  If only {@link #canSubmitTasksToPool()} is checked, tasks 
+   * waiting to already be submitted.  If only {@link #canSubmitTaskToPool()} is checked, tasks 
    * may be able to cut in line with tasks that are already queued in the waiting queue.
    * 
    * @return true if the task can be submitted to the pool 
    */
   protected boolean canRunTask() {
-    return waitingTasks.isEmpty() && canSubmitTasksToPool();
+    return waitingTasks.isEmpty() && canSubmitTaskToPool();
   }
   
   /**
