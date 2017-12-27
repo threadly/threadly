@@ -17,6 +17,27 @@ import org.threadly.util.ArgumentVerifier;
  * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.PrioritySchedulerWrapper)
  */
 public class PrioritySchedulerDefaultPriorityWrapper implements PrioritySchedulerService {
+  /**
+   * Convenience function for wrapping the scheduler if the default priority is not what is desired.  
+   * If it is already the desired priority it will simply return the provided reference directly.
+   * 
+   * @since 5.8
+   * @param scheduler Scheduler to check priority against or wrap
+   * @param defaultPriority The default priority the returned scheduler should have
+   * @return A scheduler with the set default task priority
+   */
+  public static PrioritySchedulerService wrapIfNecessary(PrioritySchedulerService scheduler, 
+                                                         TaskPriority defaultPriority) {
+    ArgumentVerifier.assertNotNull(scheduler, "scheduler");
+    ArgumentVerifier.assertNotNull(defaultPriority, "defaultPriority");
+    
+    if (scheduler.getDefaultPriority() == defaultPriority) {
+      return scheduler;
+    } else {
+      return new PrioritySchedulerDefaultPriorityWrapper(scheduler, defaultPriority);
+    }
+  }
+  
   protected final PrioritySchedulerService scheduler;
   protected final TaskPriority defaultPriority;
   
