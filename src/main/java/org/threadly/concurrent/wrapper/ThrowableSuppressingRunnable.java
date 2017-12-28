@@ -1,6 +1,6 @@
 package org.threadly.concurrent.wrapper;
 
-import org.threadly.concurrent.RunnableRunnableContainer;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -10,7 +10,7 @@ import org.threadly.util.ExceptionUtils;
  * 
  * @since 4.6.0 (since 2.3.0 at org.threadly.concurrent)
  */
-public class ThrowableSuppressingRunnable implements RunnableRunnableContainer {
+public class ThrowableSuppressingRunnable implements RunnableContainer, Runnable {
   protected final Runnable task;
   
   /**

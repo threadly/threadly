@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableRunnableContainer;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -306,7 +306,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
      * 
      * @since 4.3.0
      */
-    private class LimiterCleaner implements RunnableRunnableContainer {
+    private class LimiterCleaner implements Runnable, RunnableContainer {
       private final Runnable wrappedTask;
       
       protected LimiterCleaner(Runnable wrappedTask) {

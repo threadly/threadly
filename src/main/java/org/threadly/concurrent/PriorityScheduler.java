@@ -891,7 +891,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       while (isRunning()) {
         TaskWrapper nextTask = workerPool.workerIdle(this);
         if (nextTask != null) {  // may be null if we are shutting down
-          nextTask.run();
+          nextTask.runTask();
         }
       }
     }

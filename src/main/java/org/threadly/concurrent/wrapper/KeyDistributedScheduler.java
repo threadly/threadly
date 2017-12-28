@@ -3,7 +3,7 @@ package org.threadly.concurrent.wrapper;
 import java.util.concurrent.Callable;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableRunnableContainer;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -368,7 +368,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * 
    * @since 1.0.0
    */
-  protected class AddTask implements RunnableRunnableContainer {
+  protected class AddTask implements Runnable, RunnableContainer {
     protected final Object key;
     protected final Runnable task;
     
@@ -393,7 +393,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * 
    * @since 3.1.0
    */
-  protected class RecrringDelayTask implements RunnableRunnableContainer {
+  protected class RecrringDelayTask implements Runnable, RunnableContainer {
     protected final Object key;
     protected final Runnable task;
     protected final long recurringDelay;
@@ -424,7 +424,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * 
    * @since 3.1.0
    */
-  protected class RecrringRateTask implements RunnableRunnableContainer {
+  protected class RecrringRateTask implements Runnable, RunnableContainer {
     protected final Object key;
     protected final Runnable task;
     protected final long recurringPeriod;

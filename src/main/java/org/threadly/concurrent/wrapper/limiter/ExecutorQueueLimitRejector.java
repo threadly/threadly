@@ -5,7 +5,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
-import org.threadly.concurrent.RunnableRunnableContainer;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -114,7 +114,7 @@ public class ExecutorQueueLimitRejector extends AbstractSubmitterExecutor {
    * 
    * @since 4.3.0
    */
-  protected static class DecrementingRunnable implements RunnableRunnableContainer {
+  protected static class DecrementingRunnable implements Runnable, RunnableContainer {
     private final Runnable task;
     private final AtomicInteger queuedTaskCount;
     

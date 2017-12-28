@@ -1,6 +1,6 @@
 package org.threadly.concurrent.wrapper.traceability;
 
-import org.threadly.concurrent.RunnableRunnableContainer;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -9,7 +9,7 @@ import org.threadly.util.ArgumentVerifier;
  * 
  * @since 4.8.0 (since 4.3.0 as org.threadly.concurrent.ThreadRenamingRunnableWrapper)
  */
-public class ThreadRenamingRunnable implements RunnableRunnableContainer {
+public class ThreadRenamingRunnable implements Runnable, RunnableContainer {
   protected final Runnable runnable;
   protected final String threadName;
   protected final boolean replace;

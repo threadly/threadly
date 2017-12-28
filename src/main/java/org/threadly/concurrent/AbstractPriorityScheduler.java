@@ -596,7 +596,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * 
    * @since 1.0.0
    */
-  protected abstract static class TaskWrapper implements RunnableRunnableContainer {
+  protected abstract static class TaskWrapper implements RunnableContainer {
     protected final Runnable task;
     protected volatile boolean invalidated;
     
@@ -611,8 +611,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * {@link RuntimeException}'s).  Throwing such an exception would result in the worker thread 
      * dying (and being leaked from the pool).
      */
-    @Override
-    public abstract void run();
+    public abstract void runTask();
 
     /**
      * Attempts to invalidate the task from running (assuming it has not started yet).  If the 
@@ -715,7 +714,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     }
 
     @Override
-    public void run() {
+    public void runTask() {
       if (! invalidated) {
         ExceptionUtils.runRunnable(task);
       }
@@ -865,7 +864,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     protected abstract void updateNextRunTime();
 
     @Override
-    public void run() {
+    public void runTask() {
       if (invalidated) {
         return;
       }

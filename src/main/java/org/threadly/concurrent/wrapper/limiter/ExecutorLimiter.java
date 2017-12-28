@@ -7,7 +7,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableRunnableContainer;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -250,6 +250,18 @@ public class ExecutorLimiter implements SubmitterExecutor {
     consumeAvailable(); // call to consume in case task finished after first check
   }
 
+  // TODO - make higher level and reuse for this common interface combination?  Or avoid javadocs pollution?
+  /**
+   * Simple combination of {@link RunnableContainer} and {@link Runnable}.  This allows us to 
+   * specify two possible run implementations while have a collection of {@link RunnableContainer}'s 
+   * so that we can do task removal easily.
+   * 
+   * @since 5.7
+   */
+  protected interface RunnableRunnableContainer extends RunnableContainer, Runnable {
+    // intentionally left blank
+  }
+  
   /**
    * Generic wrapper for runnables which are used within the limiters.  This wrapper ensures that 
    * {@link #handleTaskFinished()} will be called after the task completes.
