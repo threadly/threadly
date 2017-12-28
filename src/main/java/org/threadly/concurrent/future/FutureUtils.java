@@ -1078,7 +1078,7 @@ public class FutureUtils {
    */
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
                                                            Function<? super ST, ? extends RT> transformer, 
-                                                           Executor executor) {
+                                                           Executor executor, boolean optimizeExecution) {
     if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1110,7 +1110,7 @@ public class FutureUtils {
             slf.setFailure(t);
           }
         }
-      }, executor);
+      }, executor, optimizeExecution);
       return slf;
     }
   }
@@ -1131,7 +1131,7 @@ public class FutureUtils {
    */
   protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<ST> sourceFuture, 
                                                                Function<? super ST, ListenableFuture<RT>> transformer, 
-                                                               Executor executor) {
+                                                               Executor executor, boolean optimizeExecution) {
     if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1167,7 +1167,7 @@ public class FutureUtils {
             slf.setFailure(t);
           }
         }
-      }, executor);
+      }, executor, optimizeExecution);
       return slf;
     }
   }

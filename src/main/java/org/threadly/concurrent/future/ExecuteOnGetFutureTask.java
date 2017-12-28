@@ -33,7 +33,7 @@ public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
    * @param task runnable to be run
    */
   public ExecuteOnGetFutureTask(Runnable task) {
-    super(false, task, null);
+    super(false, task);
   }
   
   /**

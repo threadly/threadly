@@ -75,7 +75,45 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
-    return FutureUtils.transform(this, mapper, executor);
+    return map(mapper, executor, false);
+  }
+  
+  /**
+   * Transform this future's result into another result by applying the provided mapper function.  
+   * If this future completed in error, then the mapper will not be invoked, and instead the 
+   * returned future will be completed in the same error state this future resulted in.  If the 
+   * mapper function itself throws an Exception, then the returned future will result in the error 
+   * thrown from the mapper.  
+   * <p>
+   * This can be easily used to chain together a series of operations, happening async until the 
+   * final result is actually needed.  Once the future completes the mapper function will be invoked 
+   * on the executor (if provided).  Because of that providing an executor can ensure this will 
+   * never block.  If an executor is not provided then the mapper may be invoked on the calling 
+   * thread (if the future is already complete), or on the same thread which the future completes 
+   * on.  If the mapper function is very fast and cheap to run then {@link #map(Function)} or 
+   * providing {@code null} for the executor can allow more efficient operation.  
+   * <p>
+   * If your function returns a future, consider using {@link #flatMap(Function, Executor)} as an 
+   * alternative.
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  
+   * 
+   * @since 5.9
+   * @param <R> The type for the object returned from the mapper
+   * @param mapper Function to invoke in order to transform the futures result
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return A new {@link ListenableFuture} with the specified result type
+   */
+  default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, 
+                                      Executor executor, boolean optimizeExecution) {
+    return FutureUtils.transform(this, mapper, executor, optimizeExecution);
   }
   
   /**
@@ -132,7 +170,42 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor) {
-    return FutureUtils.flatTransform(this, mapper, executor);
+    return flatMap(mapper, executor, false);
+  }
+
+  /**
+   * Similar to {@link #map(Function, Executor)}, in that this will apply a mapper function once 
+   * the applied to future completes.  Once this future resolves it will provide the result into 
+   * the provided function.  Unlike {@link #flatMap(Function, Executor)}, this will then unwrap a 
+   * future provided from the function so that instead of having 
+   * {@code ListenableFuture<ListenableFuture<R>>} you can simply extract the final value.  The 
+   * returned future will only resolve once the future of the provided function completes.  
+   * <p>
+   * Once the future completes the mapper function will be invoked on the executor (if provided).  
+   * Because of that providing an executor can ensure this will never block.  If an executor is 
+   * not provided then the mapper may be invoked on the calling thread (if the future is already 
+   * complete), or on the same thread which the future completes on.  If the mapper function is 
+   * very fast and cheap to run then {@link #flatMap(Function)} or providing {@code null} for the 
+   * executor can allow more efficient operation.  
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.
+   * 
+   * @since 5.9
+   * @param <R> The type for the object contained in the future which is returned from the mapper
+   * @param mapper Function to invoke in order to transform the futures result
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return A new {@link ListenableFuture} with the specified result type
+   */
+  default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
+                                          Executor executor, boolean optimizeExecution) {
+    return FutureUtils.flatTransform(this, mapper, executor, optimizeExecution);
   }
   
   /**
@@ -145,7 +218,9 @@ public interface ListenableFuture<T> extends Future<T> {
    * 
    * @param listener the listener to run when the computation is complete
    */
-  public void addListener(Runnable listener);
+  default void addListener(Runnable listener) {
+    addListener(listener, null, false);
+  }
   
   /**
    * Add a listener to be called once the future has completed.  If the future has already 
@@ -158,7 +233,31 @@ public interface ListenableFuture<T> extends Future<T> {
    * @param listener the listener to run when the computation is complete
    * @param executor {@link Executor} the listener should be ran on, or {@code null}
    */
-  public void addListener(Runnable listener, Executor executor);
+  default void addListener(Runnable listener, Executor executor) {
+    addListener(listener, executor, false);
+  }
+  
+  /**
+   * Add a listener to be called once the future has completed.  If the future has already 
+   * finished, this will be called immediately.
+   * <p>
+   * If the provided {@link Executor} is null, the listener will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * listener will execute immediately on the thread which is adding the listener.
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  
+   * 
+   * @since 5.9
+   * @param listener the listener to run when the computation is complete
+   * @param executor {@link Executor} the listener should be ran on, or {@code null}
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   */
+  public void addListener(Runnable listener, Executor executor, boolean optimizeExecution);
   
   /**
    * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
@@ -188,6 +287,30 @@ public interface ListenableFuture<T> extends Future<T> {
    * @param executor {@link Executor} the callback should be ran on, or {@code null}
    */
   default void addCallback(FutureCallback<? super T> callback, Executor executor) {
-    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor);
+    addCallback(callback, executor, false);
+  }
+  
+  /**
+   * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.
+   * <p>
+   * If the provided {@link Executor} is null, the callback will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * callback will execute immediately on the thread which is adding the callback.
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  
+   * 
+   * @since 5.9
+   * @param callback to be invoked when the computation is complete
+   * @param executor {@link Executor} the callback should be ran on, or {@code null}
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   */
+  default void addCallback(FutureCallback<? super T> callback, Executor executor, boolean optimizeExecution) {
+    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor, optimizeExecution);
   }
 }

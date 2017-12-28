@@ -21,7 +21,7 @@ abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelabl
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor) {
+  public void addListener(Runnable listener, Executor executor, boolean optimizeExecution) {
     if (executor != null) {
       executor.execute(listener);
     } else {

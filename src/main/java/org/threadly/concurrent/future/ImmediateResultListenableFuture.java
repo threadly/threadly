@@ -56,7 +56,8 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   }
 
   @Override
-  public void addCallback(FutureCallback<? super T> callback, Executor executor) {
+  public void addCallback(FutureCallback<? super T> callback, Executor executor, 
+                          boolean optimizeExecution) {
     if (executor != null) {
       executor.execute(new CallbackInvokingTask(callback));
     } else {

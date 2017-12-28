@@ -67,12 +67,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   }
 
   @Override
-  public void addListener(Runnable listener) {
-    listenerHelper.addListener(listener);
-  }
-
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
+  public void addListener(Runnable listener, Executor executor, boolean optimizeExecution) {
     listenerHelper.addListener(listener, executor);
   }
   

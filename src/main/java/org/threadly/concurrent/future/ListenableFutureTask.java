@@ -20,6 +20,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   protected final RunnableListenerHelper listenerHelper;
   protected final boolean recurring;
   protected Callable<T> callable;
+  private Executor executingExecutor;
   
   /**
    * Constructs a runnable future with a runnable work unit.
@@ -28,7 +29,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    * @param task runnable to be run
    */
   public ListenableFutureTask(boolean recurring, Runnable task) {
-    this(recurring, task, null);
+    this(recurring, task, null, null);
   }
   
   /**
@@ -39,7 +40,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    * @param result result to be provide after run has completed
    */
   public ListenableFutureTask(boolean recurring, Runnable task, T result) {
-    this(recurring, new RunnableCallableAdapter<>(task, result));
+    this(recurring, task, result, null);
   }
 
   /**
@@ -49,11 +50,46 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    * @param task callable to be run
    */
   public ListenableFutureTask(boolean recurring, Callable<T> task) {
+    this(recurring, task, null);
+  }
+  
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
+   * @param task runnable to be run
+   * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
+   */
+  public ListenableFutureTask(boolean recurring, Runnable task, Executor executingExecutor) {
+    this(recurring, task, null, executingExecutor);
+  }
+  
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
+   * @param task runnable to be run
+   * @param result result to be provide after run has completed
+   * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
+   */
+  public ListenableFutureTask(boolean recurring, Runnable task, T result, Executor executingExecutor) {
+    this(recurring, new RunnableCallableAdapter<>(task, result), executingExecutor);
+  }
+
+  /**
+   * Constructs a runnable future with a callable work unit.
+   * 
+   * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
+   * @param task callable to be run
+   * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
+   */
+  public ListenableFutureTask(boolean recurring, Callable<T> task, Executor executingExecutor) {
     super(task);
 
     this.listenerHelper = new RunnableListenerHelper(true);
     this.recurring = recurring;
     this.callable = task;
+    this.executingExecutor = executingExecutor;
   }
   
   @Override
@@ -66,13 +102,8 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   }
 
   @Override
-  public void addListener(Runnable listener) {
-    listenerHelper.addListener(listener);
-  }
-
-  @Override
-  public void addListener(Runnable listener, Executor executor) {
-    listenerHelper.addListener(listener, executor);
+  public void addListener(Runnable listener, Executor executor, boolean optimizeExecution) {
+    listenerHelper.addListener(listener, optimizeExecution && executor == executingExecutor ? null : executor);
   }
   
   /**
@@ -83,6 +114,8 @@ public class ListenableFutureTask<T> extends FutureTask<T>
     callable = null;
     
     listenerHelper.callListeners();
+    
+    executingExecutor = null;
   }
 
   @Override

@@ -123,7 +123,7 @@ public class ThreadRenamingPriorityScheduler extends AbstractSubmitterScheduler
                                                  TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task, this);
     doSchedule(rf, delayInMs, priority);
     
     return rf;
