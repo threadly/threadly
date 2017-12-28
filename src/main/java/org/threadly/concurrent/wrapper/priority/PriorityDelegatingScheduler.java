@@ -162,7 +162,6 @@ public class PriorityDelegatingScheduler extends AbstractSubmitterScheduler
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
     scheduler(defaultPriority).scheduleWithFixedDelay(task, initialDelay, recurringDelay);
-    
   }
 
   @Override
