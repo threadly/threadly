@@ -63,6 +63,6 @@ public class StripedLock {
    * @return consistent Object for a given hash code
    */
   public Object getLock(int hashCode) {
-    return locks[Math.abs(hashCode) % locks.length];
+    return locks[(int)(Math.abs((long)hashCode) % locks.length)];
   }
 }

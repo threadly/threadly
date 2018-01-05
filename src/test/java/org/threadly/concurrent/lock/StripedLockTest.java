@@ -50,4 +50,9 @@ public class StripedLockTest {
     assertTrue(sLock.getLock(testKey1) == lock);
     assertTrue(sLock.getLock(testKey1.hashCode() + LOCK_QTY) == lock);
   }
+  
+  @Test
+  public void getLockIntegerMinValueOverflowTest() {
+    assertNotNull(sLock.getLock(Integer.MIN_VALUE));
+  }
 }
