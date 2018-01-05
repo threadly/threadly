@@ -2,6 +2,8 @@ package org.threadly.concurrent.event;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.Executor;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -9,6 +11,7 @@ import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
@@ -43,6 +46,30 @@ public class RunnableListenerHelperTest {
     assertTrue(onceHelper.getSubscribedListeners().contains(tr));
     onceHelper.removeListener(tr);
     assertTrue(onceHelper.getSubscribedListeners().isEmpty());
+  }
+  
+  @Test
+  public void getSubscribedListenersInThreadOnlyTest() {
+    TestRunnable tr = new TestRunnable();
+    onceHelper.addListener(tr);
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr));
+  }
+  
+  @Test
+  public void getSubscribedListenersExecutorOnlyTest() {
+    TestRunnable tr = new TestRunnable();
+    onceHelper.addListener(tr, SameThreadSubmitterExecutor.instance());
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr));
+  }
+  
+  @Test
+  public void getSubscribedListenersMixedExecutionTest() {
+    TestRunnable tr1 = new TestRunnable();
+    TestRunnable tr2 = new TestRunnable();
+    onceHelper.addListener(tr1);
+    onceHelper.addListener(tr2, SameThreadSubmitterExecutor.instance());
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr1));
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr2));
   }
   
   @Test
@@ -117,6 +144,11 @@ public class RunnableListenerHelperTest {
     
     assertEquals(0, onceHelper.registeredListenerCount());
     assertEquals(1, repeatedHelper.registeredListenerCount());
+    
+
+    repeatedHelper.addListener(DoNothingRunnable.instance(), SameThreadSubmitterExecutor.instance());
+    
+    assertEquals(2, repeatedHelper.registeredListenerCount());
   }
   
   @Test
@@ -180,14 +212,23 @@ public class RunnableListenerHelperTest {
   
   @Test
   public void removeListenerTest() {
+    removeListenerTest(null);
+  }
+  
+  @Test
+  public void removeExecutorListenerTest() {
+    removeListenerTest(SameThreadSubmitterExecutor.instance());
+  }
+  
+  private void removeListenerTest(Executor executor) {
     TestRunnable onceTR = new TestRunnable();
     TestRunnable repeatedTR = new TestRunnable();
     
     assertFalse(onceHelper.removeListener(onceTR));
     assertFalse(repeatedHelper.removeListener(repeatedTR));
     
-    onceHelper.addListener(onceTR);
-    repeatedHelper.addListener(repeatedTR);
+    onceHelper.addListener(onceTR, executor);
+    repeatedHelper.addListener(repeatedTR, executor);
 
     // should be false for the opposite
     assertFalse(onceHelper.removeListener(repeatedTR));
@@ -217,19 +258,30 @@ public class RunnableListenerHelperTest {
   
   @Test
   public void removeListenerFromCallingThreadTest() {
+    removeListenerFromCallingThreadTest(null);
+  }
+  
+  @Test
+  public void removeExecutorListenerFromCallingThreadTest() {
+    removeListenerFromCallingThreadTest(SameThreadSubmitterExecutor.instance());
+  }
+  
+  private void removeListenerFromCallingThreadTest(Executor executor) {
     final TestRunnable removedRunnable = new TestRunnable();
     repeatedHelper.addListener(new TestRunnable());
-    repeatedHelper.addListener(new TestRunnable());
+    repeatedHelper.addListener(new TestRunnable(), executor);
+    repeatedHelper.addListener(new TestRunnable(), executor);
     repeatedHelper.addListener(new Runnable() {
       @Override
       public void run() {
         repeatedHelper.removeListener(removedRunnable);
       }
-    });
-    repeatedHelper.addListener(new TestRunnable());
-    repeatedHelper.addListener(new TestRunnable());
-    repeatedHelper.addListener(removedRunnable);
-    repeatedHelper.addListener(new TestRunnable());
+    }, executor);
+    repeatedHelper.addListener(new TestRunnable(), executor);
+    repeatedHelper.addListener(new TestRunnable(), executor);
+    repeatedHelper.addListener(removedRunnable, executor);
+    repeatedHelper.addListener(new TestRunnable(), executor);
+    repeatedHelper.addListener(new TestRunnable(), executor);
     repeatedHelper.addListener(new TestRunnable());
     
     repeatedHelper.callListeners();
@@ -258,15 +310,24 @@ public class RunnableListenerHelperTest {
   
   @Test
   public void addListenerFromCallingThread() {
+    addListenerFromCallingThread(null);
+  }
+  
+  @Test
+  public void addExecutorListenerFromCallingThread() {
+    addListenerFromCallingThread(SameThreadSubmitterExecutor.instance());
+  }
+  
+  private void addListenerFromCallingThread(Executor executor) {
     final TestRunnable addedTR = new TestRunnable();
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunFinish() {
-        repeatedHelper.addListener(addedTR);
+          repeatedHelper.addListener(addedTR, executor);
       }
     };
-    repeatedHelper.addListener(tr);
-    repeatedHelper.addListener(DoNothingRunnable.instance());
+    repeatedHelper.addListener(tr, executor);
+    repeatedHelper.addListener(DoNothingRunnable.instance(), executor);
     
     repeatedHelper.callListeners();
     
