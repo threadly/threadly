@@ -1168,6 +1168,7 @@ public class FutureUtils {
                 slf.setResult(result);
               }
             });
+            slf.setRunningThread(null); // may be processing async now
           } catch (Throwable t) {
             slf.setFailure(t);
           }
