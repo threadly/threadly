@@ -20,6 +20,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
   protected final boolean throwIfAlreadyComplete;
+  private Executor executingExecutor;
   private volatile Thread runningThread;
   private volatile boolean done;
   private volatile boolean canceled;
@@ -56,9 +57,30 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    * @param throwIfAlreadyComplete Defines the behavior when result or failure is set on a completed future
    */
   public SettableListenableFuture(boolean throwIfAlreadyComplete) {
+    this(throwIfAlreadyComplete, null);
+  }
+  
+  /**
+   * Constructs a new {@link SettableListenableFuture}.  You can return this immediately and 
+   * provide a result to the object later when it is ready.  
+   * <p>
+   * This constructor allows you to control the behavior when results are attempt to be set after 
+   * the future has already completed (either by 
+   * {@link #cancel(boolean)}, {@link #setResult(Object)}, or {@link #setFailure(Throwable)}).  
+   * <p>
+   * If {@code true}, any additional attempts to {@link #setResult(Object)} or 
+   * {@link #setFailure(Throwable)} will result in a {@link IllegalStateException} being thrown.  
+   * <p>
+   * If {@code false}, additional attempts to set a result will just be silently ignored.
+   * 
+   * @param throwIfAlreadyComplete Defines the behavior when result or failure is set on a completed future
+   * @param executingExecutor Executor this future will complete on, used for optimizations
+   */
+  protected SettableListenableFuture(boolean throwIfAlreadyComplete, Executor executingExecutor) {
     this.listenerHelper = new RunnableListenerHelper(true);
     this.resultLock = new Object();
     this.throwIfAlreadyComplete = throwIfAlreadyComplete;
+    this.executingExecutor = executingExecutor;
     this.runningThread = null;
     done = false;
     resultCleared = false;
@@ -67,7 +89,19 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, boolean optimizeExecution) {
+  public void addListener(Runnable listener, Executor executor, 
+                          ListenerOptimizationStrategy optimize) {
+    if (done) {
+      // if we add the below condition above, we must check `done` again for the second check
+      if (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+        executor = null;
+      }
+    } else if (executor == executingExecutor) {
+      if (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone || 
+          optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) {
+        executor = null;
+      }
+    }
     listenerHelper.addListener(listener, executor);
   }
   

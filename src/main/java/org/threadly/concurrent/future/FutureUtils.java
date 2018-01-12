@@ -22,6 +22,7 @@ import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.SuppressedStackRuntimeException;
@@ -1078,7 +1079,8 @@ public class FutureUtils {
    */
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
                                                            Function<? super ST, ? extends RT> transformer, 
-                                                           Executor executor, boolean optimizeExecution) {
+                                                           Executor executor, 
+                                                           ListenerOptimizationStrategy optimizeExecution) {
     if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1098,7 +1100,8 @@ public class FutureUtils {
       slf.cancel(false);
       return slf;
     } else {
-      SettableListenableFuture<RT> slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
+      SettableListenableFuture<RT> slf = 
+          new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
       // may still process in thread if future completed after check and executor is null
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
@@ -1131,7 +1134,8 @@ public class FutureUtils {
    */
   protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<ST> sourceFuture, 
                                                                Function<? super ST, ListenableFuture<RT>> transformer, 
-                                                               Executor executor, boolean optimizeExecution) {
+                                                               Executor executor, 
+                                                               ListenerOptimizationStrategy optimizeExecution) {
     if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1151,7 +1155,8 @@ public class FutureUtils {
       slf.cancel(false);
       return slf;
     } else {
-      SettableListenableFuture<RT> slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
+      SettableListenableFuture<RT> slf = 
+          new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
         public void handleResult(ST result) {
@@ -1215,7 +1220,12 @@ public class FutureUtils {
     private final ListenableFuture<?> cancelDelegateFuture;
     
     protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf) {
-      super(false);
+      this(lf, null);
+    }
+    
+    protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf, 
+                                                     Executor executingExecutor) {
+      super(false, executingExecutor);
       cancelDelegateFuture = lf;
     }
     

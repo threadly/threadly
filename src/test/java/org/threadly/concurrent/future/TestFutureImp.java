@@ -62,7 +62,8 @@ public class TestFutureImp implements ListenableFuture<Object> {
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, boolean optimizeExecution) {
+  public void addListener(Runnable listener, Executor executor, 
+                          ListenerOptimizationStrategy optimizeExecution) {
     addListener(listener);
   }
 }

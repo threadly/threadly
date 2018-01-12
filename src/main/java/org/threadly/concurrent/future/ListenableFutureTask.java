@@ -102,8 +102,20 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, boolean optimizeExecution) {
-    listenerHelper.addListener(listener, optimizeExecution && executor == executingExecutor ? null : executor);
+  public void addListener(Runnable listener, Executor executor, 
+                          ListenerOptimizationStrategy optimize) {
+    if (isDone()) {
+      // if we add the below condition above, we must check `done` again for the second check
+      if (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+        executor = null;
+      }
+    } else if (executor == executingExecutor) {
+      if (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone || 
+          optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) {
+        executor = null;
+      }
+    }
+    listenerHelper.addListener(listener, executor);
   }
   
   /**

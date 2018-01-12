@@ -968,6 +968,26 @@ public class FutureUtilsTest {
     
     ImmediateListenableFutureTest.failureAddCallbackTest(testFuture, failure);
   }
+
+  @Test
+  public void immediateResultFutureListenerOptimizeListenerExecutorTest() throws InterruptedException, TimeoutException {
+    ListenableFutureInterfaceTest.optimizeDoneListenerExecutorTest(FutureUtils.immediateResultFuture(null));
+  }
+
+  @Test
+  public void immediateResultFutureDontOptimizeListenerExecutorTest() throws InterruptedException, TimeoutException {
+    ListenableFutureInterfaceTest.dontOptimizeDoneListenerExecutorTest(FutureUtils.immediateResultFuture(null));
+  }
+
+  @Test
+  public void immediateFailureFutureListenerOptimizeListenerExecutorTest() throws InterruptedException, TimeoutException {
+    ListenableFutureInterfaceTest.optimizeDoneListenerExecutorTest(FutureUtils.immediateFailureFuture(null));
+  }
+
+  @Test
+  public void immediateFailureFutureDontOptimizeListenerExecutorTest() throws InterruptedException, TimeoutException {
+    ListenableFutureInterfaceTest.dontOptimizeDoneListenerExecutorTest(FutureUtils.immediateFailureFuture(null));
+  }
   
   @Test
   public void scheduleWhileTaskResultNullFirstRunInThreadTest() throws Exception {
