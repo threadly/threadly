@@ -73,7 +73,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
-    ListenableFutureTask<Void> lft = new ListenableFutureTask<>(false, task);
+    ListenableFutureTask<Void> lft = new ListenableFutureTask<>(false, task, singleThreadScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
                                                                  lft, taskPriority, delayInMillis);
     
@@ -82,7 +82,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
-    ListenableFutureTask<V> lft = new ListenableFutureTask<>(false, callable);
+    ListenableFutureTask<V> lft = new ListenableFutureTask<>(false, callable, singleThreadScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
                                                                  lft, taskPriority, delayInMillis);
     
@@ -95,7 +95,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<>(scheduler, true, task);
+    ListenableFutureTask<Void> lft = 
+        new CancelRemovingListenableFutureTask<>(scheduler, true, task, singleThreadScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleWithFixedDelayAndGetDelayed(singleThreadScheduler, 
                                                                                lft, taskPriority, 
                                                                                initialDelay, 
@@ -110,7 +111,8 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
     // wrap the task to ensure the correct behavior on exceptions
     task = new ThrowableHandlingRecurringRunnable(scheduler, task);
     
-    ListenableFutureTask<Void> lft = new CancelRemovingListenableFutureTask<>(scheduler, true, task);
+    ListenableFutureTask<Void> lft = 
+        new CancelRemovingListenableFutureTask<>(scheduler, true, task, singleThreadScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAtFixedRateAndGetDelayed(singleThreadScheduler, 
                                                                             lft, taskPriority, 
                                                                             initialDelay, 

@@ -3,7 +3,6 @@ package org.threadly.concurrent.event;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
 import org.threadly.concurrent.ContainerHelper;
@@ -25,7 +24,8 @@ public class RunnableListenerHelper {
   protected final Object listenersLock;
   protected final boolean callOnce;
   protected volatile boolean done;
-  protected List<Pair<Runnable, Executor>> listeners;
+  protected List<Runnable> inThreadListeners;
+  protected List<Pair<Runnable, Executor>> executorListeners;
   
   /**
    * Constructs a new {@link RunnableListenerHelper}.  This can call listeners only once, or every 
@@ -37,7 +37,8 @@ public class RunnableListenerHelper {
     this.listenersLock = new Object();
     this.callOnce = callListenersOnce;
     this.done = false;
-    this.listeners = null;
+    this.inThreadListeners = null;
+    this.executorListeners = null;
   }
   
   /**
@@ -48,10 +49,17 @@ public class RunnableListenerHelper {
    */
   public Collection<Runnable> getSubscribedListeners() {
     synchronized (listenersLock) {
-      if (listeners == null) {
+      if (inThreadListeners == null && executorListeners == null) {
         return Collections.emptyList();
+      } else if (inThreadListeners == null) {
+        return Collections.unmodifiableList(Pair.collectLeft(executorListeners));
+      } else if (executorListeners == null) {
+        return Collections.unmodifiableList(inThreadListeners);
       } else {
-        return Collections.unmodifiableList(Pair.collectLeft(listeners));
+        List<Runnable> listeners = Pair.collectLeft(executorListeners);
+        // dependent on modifiable listeners, unit test verified
+        listeners.addAll(inThreadListeners);
+        return Collections.unmodifiableList(listeners);
       }
     }
   }
@@ -90,18 +98,20 @@ public class RunnableListenerHelper {
    * call listeners once design).
    */
   protected void doCallListeners() {
-    if (listeners == null) {
-      return;
+    if (executorListeners != null) {
+      for (Pair<Runnable, Executor> listener : executorListeners) {
+        runListener(listener.getLeft(), listener.getRight(), false);
+      }
     }
-    
-    Iterator<Pair<Runnable, Executor>> it = listeners.iterator();
-    while (it.hasNext()) {
-      Pair<Runnable, Executor> listener = it.next();
-      runListener(listener.getLeft(), listener.getRight(), false);
+    if (inThreadListeners != null) {
+      for (Runnable listener : inThreadListeners) {
+        runListener(listener, null, false);
+      }
     }
     
     if (callOnce) {
-      listeners = null;
+      executorListeners = null;
+      inThreadListeners = null;
     }
   }
   
@@ -169,19 +179,26 @@ public class RunnableListenerHelper {
       synchronized (listenersLock) {
         // done should only be set to true if we are only calling listeners once
         if (! (runListener = done)) {
-          if (addingFromCallingThread) {
-            // we must create a new instance of listeners to prevent a ConcurrentModificationException
-            // we know at this point that listeners can not be null
-            List<Pair<Runnable, Executor>> newListeners = new ArrayList<>(listeners.size() + 1);
-            newListeners.addAll(listeners);
-            newListeners.add(new Pair<>(listener, executor));
-            
-            listeners = newListeners;
-          } else {
-            if (listeners == null) {
-              listeners = new ArrayList<>(2);
+          if (executor != null) {
+            if (addingFromCallingThread && executorListeners != null) {
+              // copy to prevent a ConcurrentModificationException
+              executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, executor));
+            } else {
+              if (executorListeners == null) {
+                executorListeners = new ArrayList<>(2);
+              }
+              executorListeners.add(new Pair<>(listener, executor));
             }
-            listeners.add(new Pair<>(listener, executor));
+          } else {
+            if (addingFromCallingThread && inThreadListeners != null) {
+              // copy to prevent a ConcurrentModificationException
+              inThreadListeners = copyAndAdd(inThreadListeners, listener);
+            } else {
+              if (inThreadListeners == null) {
+                inThreadListeners = new ArrayList<>(2);
+              }
+              inThreadListeners.add(listener);
+            }
           }
         }
       }
@@ -193,6 +210,13 @@ public class RunnableListenerHelper {
     }
   }
   
+  private static <T> List<T> copyAndAdd(List<T> sourceList, T item) {
+    List<T> result = new ArrayList<>(sourceList.size() + 1);
+    result.addAll(sourceList);
+    result.add(item);
+    return result;
+  }
+  
   /**
    * Attempts to remove a listener waiting to be called.
    * 
@@ -202,18 +226,32 @@ public class RunnableListenerHelper {
   public boolean removeListener(Runnable listener) {
     boolean removingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
-      if (listeners == null) {
-        return false;
+      if (executorListeners != null) {
+        int i = 0;
+        for (Pair<Runnable, Executor> p : executorListeners) {
+          if (ContainerHelper.isContained(p.getLeft(), listener)) {
+            if (removingFromCallingThread) {
+              executorListeners = new ArrayList<>(executorListeners);
+            }
+            executorListeners.remove(i);
+            return true;
+          } else {
+            i++;  // try next index if there is one
+          }
+        }
       }
-      
-      if (removingFromCallingThread) {
-        listeners = new ArrayList<Pair<Runnable, Executor>>(listeners);
-      }
-      Iterator<Pair<Runnable, Executor>> it = listeners.iterator();
-      while (it.hasNext()) {
-        if (ContainerHelper.isContained(it.next().getLeft(), listener)) {
-          it.remove();
-          return true;
+      if (inThreadListeners != null) {
+        int i = 0;
+        for (Runnable r : inThreadListeners) {
+          if (ContainerHelper.isContained(r, listener)) {
+            if (removingFromCallingThread) {
+              inThreadListeners = new ArrayList<>(inThreadListeners);
+            }
+            inThreadListeners.remove(i);
+            return true;
+          } else {
+            i++;  // try next index if there is one
+          }
         }
       }
       
@@ -226,7 +264,8 @@ public class RunnableListenerHelper {
    */
   public void clearListeners() {
     synchronized (listenersLock) {
-      listeners = null;
+      executorListeners = null;
+      inThreadListeners = null;
     }
   }
   
@@ -239,7 +278,8 @@ public class RunnableListenerHelper {
    */
   public int registeredListenerCount() {
     synchronized (listenersLock) {
-      return listeners == null ? 0 : listeners.size();
+      return (executorListeners == null ? 0 : executorListeners.size()) + 
+               (inThreadListeners == null ? 0 : inThreadListeners.size());
     }
   }
 }

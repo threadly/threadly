@@ -199,9 +199,10 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableRunnableFuture<TT> rf = new ListenableFutureTask<>(false, task);
+    LimiterContainer lc = getLimiterContainer(taskKey);
+    ListenableRunnableFuture<TT> rf = new ListenableFutureTask<>(false, task, lc.limiter);
     
-    getLimiterContainer(taskKey).submit(rf);
+    lc.submit(rf);
     
     return rf;
   }

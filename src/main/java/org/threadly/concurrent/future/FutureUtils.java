@@ -22,6 +22,7 @@ import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
@@ -1079,7 +1080,8 @@ public class FutureUtils {
    */
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
                                                            Function<? super ST, ? extends RT> transformer, 
-                                                           Executor executor) {
+                                                           Executor executor, 
+                                                           ListenerOptimizationStrategy optimizeExecution) {
     if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1102,7 +1104,8 @@ public class FutureUtils {
       slf.cancel(false);
       return slf;
     } else {
-      SettableListenableFuture<RT> slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
+      SettableListenableFuture<RT> slf = 
+          new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
       // may still process in thread if future completed after check and executor is null
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
@@ -1118,7 +1121,7 @@ public class FutureUtils {
             slf.setFailure(t);
           }
         }
-      }, executor);
+      }, executor, optimizeExecution);
       return slf;
     }
   }
@@ -1139,7 +1142,8 @@ public class FutureUtils {
    */
   protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<ST> sourceFuture, 
                                                                Function<? super ST, ListenableFuture<RT>> transformer, 
-                                                               Executor executor) {
+                                                               Executor executor, 
+                                                               ListenerOptimizationStrategy optimizeExecution) {
     if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1162,7 +1166,8 @@ public class FutureUtils {
       slf.cancel(false);
       return slf;
     } else {
-      SettableListenableFuture<RT> slf = new CancelDelegateSettableListenableFuture<>(sourceFuture);
+      SettableListenableFuture<RT> slf = 
+          new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
         public void handleResult(ST result) {
@@ -1174,6 +1179,7 @@ public class FutureUtils {
                 slf.setResult(result);
               }
             });
+            slf.setRunningThread(null); // may be processing async now
           } catch (Throwable t) {
             // failure calculating transformation, let handler get a chance to see the uncaught exception
             // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
@@ -1182,7 +1188,7 @@ public class FutureUtils {
             slf.setFailure(t);
           }
         }
-      }, executor);
+      }, executor, optimizeExecution);
       return slf;
     }
   }
@@ -1230,7 +1236,12 @@ public class FutureUtils {
     private final ListenableFuture<?> cancelDelegateFuture;
     
     protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf) {
-      super(false);
+      this(lf, null);
+    }
+    
+    protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf, 
+                                                     Executor executingExecutor) {
+      super(false, executingExecutor);
       cancelDelegateFuture = lf;
     }
     

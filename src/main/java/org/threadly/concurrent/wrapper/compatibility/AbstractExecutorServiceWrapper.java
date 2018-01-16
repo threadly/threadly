@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -307,8 +308,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     private final SchedulerService scheduler;
 
     public CancelRemovingListenableFutureTask(SchedulerService scheduler, 
-                                              boolean recurring, Runnable task) {
-      super(recurring, task);
+                                              boolean recurring, Runnable task, 
+                                              Executor executingExecutor) {
+      super(recurring, task, executingExecutor);
       
       this.scheduler = scheduler;
     }

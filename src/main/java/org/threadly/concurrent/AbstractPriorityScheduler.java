@@ -128,7 +128,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task, this);
     doSchedule(rf, delayInMs, priority);
     
     return rf;

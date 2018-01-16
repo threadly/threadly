@@ -51,6 +51,33 @@ public class ListenerHelperTest {
   }
   
   @Test
+  public void getSubscribedListenersInThreadOnlyTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    TestImp ti = new TestImp();
+    lh.addListener(ti);
+    assertTrue(lh.getSubscribedListeners().contains(ti));
+  }
+  
+  @Test
+  public void getSubscribedListenersExecutorOnlyTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    TestImp ti = new TestImp();
+    lh.addListener(ti, SameThreadSubmitterExecutor.instance());
+    assertTrue(lh.getSubscribedListeners().contains(ti));
+  }
+  
+  @Test
+  public void getSubscribedListenersMixedExecutionTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    TestImp ti1 = new TestImp();
+    TestImp ti2 = new TestImp();
+    lh.addListener(ti1);
+    lh.addListener(ti2, SameThreadSubmitterExecutor.instance());
+    assertTrue(lh.getSubscribedListeners().contains(ti1));
+    assertTrue(lh.getSubscribedListeners().contains(ti2));
+  }
+  
+  @Test
   public void addNullListenerTest() {
     makeListenerHelper(TestInterface.class).addListener(null);
     // no exception thrown
@@ -63,7 +90,12 @@ public class ListenerHelperTest {
     ch.addListener(ti);
     
     assertEquals(1, ch.registeredListenerCount());
-    assertTrue(Pair.containsLeft(ch.listeners, ti));
+    if (ch instanceof DefaultExecutorListenerHelper) {
+      // special case for extending class
+      assertTrue(Pair.containsLeft(ch.executorListeners, ti));
+    } else {
+      assertTrue(ch.inThreadListeners.contains(ti));
+    }
   }
   
   @Test
@@ -74,7 +106,7 @@ public class ListenerHelperTest {
     ch.addListener(ti, executor);
 
     assertEquals(1, ch.registeredListenerCount());
-    assertTrue(Pair.getRightFromLeft(ch.listeners, ti) == executor);
+    assertTrue(Pair.containsLeft(ch.executorListeners, ti));
   }
   
   @Test
@@ -113,12 +145,21 @@ public class ListenerHelperTest {
   
   @Test
   public void removeListenerTest() {
+    removeListenerTest(null);
+  }
+  
+  @Test
+  public void removeExecutorListenerTest() {
+    removeListenerTest(SameThreadSubmitterExecutor.instance());
+  }
+  
+  private void removeListenerTest(Executor executor) {
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp();
     
     assertFalse(ch.removeListener(null));
     
-    ch.addListener(ti);
+    ch.addListener(ti, executor);
     assertFalse(ch.removeListener(null));
     assertFalse(ch.removeListener(new TestImp()));
     assertEquals(1, ch.registeredListenerCount());
@@ -133,6 +174,15 @@ public class ListenerHelperTest {
   
   @Test
   public void removeListenerFromCallTest() {
+    removeListenerFromCallTest(null);
+  }
+  
+  @Test
+  public void removeExecutorListenerFromCallTest() {
+    removeListenerFromCallTest(SameThreadSubmitterExecutor.instance());
+  }
+  
+  private void removeListenerFromCallTest(Executor executor) {
     int firstCallInt = 42;
     String firstCallStr = StringUtils.makeRandomString(10);
     int secondCallInt = 1337;
@@ -146,16 +196,16 @@ public class ListenerHelperTest {
         ch.removeListener(removedListener);
       }
     };
-    ch.addListener(new TestImp());
-    ch.addListener(new TestImp());
-    ch.addListener(ti);
-    ch.addListener(new TestImp());
-    ch.addListener(new TestImp());
-    ch.addListener(removedListener);
-    ch.addListener(new TestImp());
-    ch.addListener(new TestImp());
+    ch.addListener(new TestImp(), executor);
+    ch.addListener(new TestImp(), executor);
+    ch.addListener(ti, executor);
+    ch.addListener(new TestImp(), executor);
+    ch.addListener(new TestImp(), executor);
+    ch.addListener(removedListener, executor);
+    ch.addListener(new TestImp(), executor);
+    ch.addListener(new TestImp(), executor);
     TestImp lastListener = new TestImp();
-    ch.addListener(lastListener);
+    ch.addListener(lastListener, executor);
     
     ch.call().call(firstCallInt, firstCallStr);
     // verify the other listeners were called
@@ -179,13 +229,16 @@ public class ListenerHelperTest {
     
     ch.addListener(new TestImp());
     assertEquals(1, ch.registeredListenerCount());
+    
+    ch.addListener(new TestImp(), SameThreadSubmitterExecutor.instance());
+    assertEquals(2, ch.registeredListenerCount());
   }
   
   @Test
   public void clearListenersTest() {
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     ch.addListener(new TestImp());
-    ch.addListener(new TestImp());
+    ch.addListener(new TestImp(), SameThreadSubmitterExecutor.instance());
     assertEquals(2, ch.registeredListenerCount());
     
     ch.clearListeners();

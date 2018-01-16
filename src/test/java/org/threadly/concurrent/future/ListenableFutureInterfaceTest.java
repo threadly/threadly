@@ -4,11 +4,15 @@ import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
+import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
+import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
@@ -435,6 +439,42 @@ public abstract class ListenableFutureInterfaceTest {
 
     assertTrue(mappedLF.isDone());
     verifyFutureFailure(mappedLF, failure);
+  }
+
+  @Test
+  public void optimizeDoneListenerExecutorTest() throws InterruptedException, TimeoutException {
+    optimizeDoneListenerExecutorTest(makeListenableFutureFactory().makeWithResult(null));
+  }
+
+  @Test
+  public void dontOptimizeDoneListenerExecutorTest() throws InterruptedException, TimeoutException {
+    dontOptimizeDoneListenerExecutorTest(makeListenableFutureFactory().makeWithResult(null));
+  }
+  
+  public static void optimizeDoneListenerExecutorTest(ListenableFuture<?> lf) throws InterruptedException, TimeoutException {
+    AsyncVerifier av = new AsyncVerifier();
+    Thread t = Thread.currentThread();
+    
+    lf.addListener(() -> {av.assertTrue(Thread.currentThread() == t) ; av.signalComplete();}, 
+                   CentralThreadlyPool.computationPool(), 
+                   ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    
+    av.waitForTest();
+  }
+  
+  public static void dontOptimizeDoneListenerExecutorTest(ListenableFuture<?> lf) throws InterruptedException, TimeoutException {
+    AsyncVerifier av = new AsyncVerifier();
+    Thread t = Thread.currentThread();
+    Runnable threadTester = 
+        () -> {av.assertFalse(Thread.currentThread() == t) ; av.signalComplete();};
+
+    lf.addListener(threadTester, CentralThreadlyPool.computationPool(), null);
+    lf.addListener(threadTester, CentralThreadlyPool.computationPool(), 
+                   ListenerOptimizationStrategy.None);
+    lf.addListener(threadTester, CentralThreadlyPool.computationPool(), 
+                   ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+    
+    av.waitForTest(10_000, 3);
   }
   
   private static void verifyFutureFailure(ListenableFuture<?> f, Exception failure) throws InterruptedException {

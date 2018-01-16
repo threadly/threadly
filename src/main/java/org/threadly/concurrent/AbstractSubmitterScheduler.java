@@ -52,7 +52,7 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, this);
 
     doSchedule(lft, delayInMs);
     
