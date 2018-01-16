@@ -24,6 +24,7 @@ import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 /**
@@ -1090,7 +1091,10 @@ public class FutureUtils {
         // failure in getting result from future, transfer failure
         return FutureUtils.immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
-        // failure calculating transformation
+        // failure calculating transformation, let handler get a chance to see the uncaught exception
+        // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+        ExceptionUtils.handleException(t);
+        
         return FutureUtils.immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
@@ -1107,6 +1111,10 @@ public class FutureUtils {
             slf.setRunningThread(Thread.currentThread());
             slf.setResult(transformer.apply(result));
           } catch (Throwable t) {
+            // failure calculating transformation, let handler get a chance to see the uncaught exception
+            // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+            ExceptionUtils.handleException(t);
+            
             slf.setFailure(t);
           }
         }
@@ -1143,7 +1151,10 @@ public class FutureUtils {
         // failure in getting result from future, transfer failure
         return FutureUtils.immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
-        // failure calculating transformation
+        // failure calculating transformation, let handler get a chance to see the uncaught exception
+        // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+        ExceptionUtils.handleException(t);
+        
         return FutureUtils.immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
@@ -1164,6 +1175,10 @@ public class FutureUtils {
               }
             });
           } catch (Throwable t) {
+            // failure calculating transformation, let handler get a chance to see the uncaught exception
+            // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+            ExceptionUtils.handleException(t);
+            
             slf.setFailure(t);
           }
         }
