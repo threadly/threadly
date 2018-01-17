@@ -925,6 +925,7 @@ public class FutureUtils {
         // should not be possible
         throw new RuntimeException(e);
       } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
         return immediateFailureFuture(t);
       }
     }
@@ -969,7 +970,10 @@ public class FutureUtils {
             resultFuture.setResult(result);
           }
         } catch (Throwable t) {
-          // failure likely from the predicate test
+          // failure likely from the predicate test, handle exception 
+          // so the behavior is closer to if the exception was thrown from a task submitted to the pool
+          ExceptionUtils.handleException(t);
+          
           resultFuture.setFailure(t);
         }
       }
