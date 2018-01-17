@@ -20,7 +20,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
   protected final boolean throwIfAlreadyComplete;
-  private Executor executingExecutor;
+  private Executor executingExecutor; // since done is volatile, this does not need to be
   private volatile Thread runningThread;
   private volatile boolean done;
   private volatile boolean canceled;
@@ -286,6 +286,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     }
     
     done = true;
+    executingExecutor = null;
     runningThread = null;
     
     resultLock.notifyAll();

@@ -123,11 +123,10 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    */
   @Override
   protected final void done() {
+    executingExecutor = null;
     callable = null;
     
     listenerHelper.callListeners();
-    
-    executingExecutor = null;
   }
 
   @Override
