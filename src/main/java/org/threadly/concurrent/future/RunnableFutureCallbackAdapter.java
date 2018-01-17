@@ -17,6 +17,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 3.2.0
  * @param <T> The result object type returned by this future
  */
+// TODO - consider deprecating, not likely to be used externally, could have reduced visibility
 public class RunnableFutureCallbackAdapter<T> implements Runnable {
   protected final Future<T> future;
   protected final FutureCallback<? super T> callback;

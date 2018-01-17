@@ -1079,11 +1079,15 @@ public class FutureUtils {
    * @param <RT> The result type for the object returned from the mapper
    * @param sourceFuture Future to source input into transformation function
    * @param transformer Function to apply result from future into returned future
+   * @param reportedTransformedExceptions {@code true} to indicate transformer is not expected to throw exception.
+   *                                          If any are thrown they will be delegated to 
+   *                                          {@link ExceptionUtils#handleException(Throwable)}.
    * @param executor Executor to execute transformation function on, or {@code null}
    * @return Future with result of transformation function or respective error
    */
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
                                                            Function<? super ST, ? extends RT> transformer, 
+                                                           boolean reportedTransformedExceptions, 
                                                            Executor executor, 
                                                            ListenerOptimizationStrategy optimizeExecution) {
     if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
@@ -1097,9 +1101,11 @@ public class FutureUtils {
         // failure in getting result from future, transfer failure
         return FutureUtils.immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
-        // failure calculating transformation, let handler get a chance to see the uncaught exception
-        // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
-        ExceptionUtils.handleException(t);
+        if (reportedTransformedExceptions) {
+          // failure calculating transformation, let handler get a chance to see the uncaught exception
+          // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+          ExceptionUtils.handleException(t);
+        }
         
         return FutureUtils.immediateFailureFuture(t);
       }
@@ -1118,9 +1124,11 @@ public class FutureUtils {
             slf.setRunningThread(Thread.currentThread());
             slf.setResult(transformer.apply(result));
           } catch (Throwable t) {
-            // failure calculating transformation, let handler get a chance to see the uncaught exception
-            // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
-            ExceptionUtils.handleException(t);
+            if (reportedTransformedExceptions) {
+              // failure calculating transformation, let handler get a chance to see the uncaught exception
+              // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+              ExceptionUtils.handleException(t);
+            }
             
             slf.setFailure(t);
           }

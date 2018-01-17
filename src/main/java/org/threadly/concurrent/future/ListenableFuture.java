@@ -52,7 +52,10 @@ public interface ListenableFuture<T> extends Future<T> {
    * If this future completed in error, then the mapper will not be invoked, and instead the 
    * returned future will be completed in the same error state this future resulted in.  If the 
    * mapper function itself throws an Exception, then the returned future will result in the error 
-   * thrown from the mapper.  
+   * thrown from the mapper and 
+   * {@link org.threadly.util.ExceptionUtils#handleException(Throwable)} will be invoked.  If you 
+   * don't want mapped exceptions to be treated as unexpected / uncaught please see 
+   * {@link #throwMap(Function)}.
    * <p>
    * This can be easily used to chain together a series of operations, happening async (or in 
    * calling thread if already complete) until the final result is actually needed.  
@@ -88,7 +91,10 @@ public interface ListenableFuture<T> extends Future<T> {
    * If this future completed in error, then the mapper will not be invoked, and instead the 
    * returned future will be completed in the same error state this future resulted in.  If the 
    * mapper function itself throws an Exception, then the returned future will result in the error 
-   * thrown from the mapper.  
+   * thrown from the mapper and 
+   * {@link org.threadly.util.ExceptionUtils#handleException(Throwable)} will be invoked.  If you 
+   * don't want mapped exceptions to be treated as unexpected / uncaught please see 
+   * {@link #throwMap(Function, Executor)}.
    * <p>
    * This can be easily used to chain together a series of operations, happening async until the 
    * final result is actually needed.  Once the future completes the mapper function will be invoked 
@@ -117,7 +123,10 @@ public interface ListenableFuture<T> extends Future<T> {
    * If this future completed in error, then the mapper will not be invoked, and instead the 
    * returned future will be completed in the same error state this future resulted in.  If the 
    * mapper function itself throws an Exception, then the returned future will result in the error 
-   * thrown from the mapper.  
+   * thrown from the mapper and 
+   * {@link org.threadly.util.ExceptionUtils#handleException(Throwable)} will be invoked.  If you 
+   * don't want mapped exceptions to be treated as unexpected / uncaught please see 
+   * {@link #throwMap(Function, Executor, ListenerOptimizationStrategy)}.
    * <p>
    * This can be easily used to chain together a series of operations, happening async until the 
    * final result is actually needed.  Once the future completes the mapper function will be invoked 
@@ -148,7 +157,128 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor, 
                                       ListenerOptimizationStrategy optimizeExecution) {
-    return FutureUtils.transform(this, mapper, executor, optimizeExecution);
+    return FutureUtils.transform(this, mapper, true, executor, optimizeExecution);
+  }
+  
+  /**
+   * Transform this future's result into another result by applying the provided mapper function.  
+   * If this future completed in error, then the mapper will not be invoked, and instead the 
+   * returned future will be completed in the same error state this future resulted in.
+   * <p>
+   * This function differs from {@link #map(Function)} only in how exceptions thrown from the 
+   * {@code mapper} function are handled.  Please see {@link #map(Function)} for a general 
+   * understanding for the behavior of this operation.  This is to be used when the mapper function 
+   * throwing an exception is EXPECTED.  Used to avoid treating mapping an exception as an 
+   * unexpected behavior.
+   * <p>
+   * Say for example you wanted to use {@code FutureUtils.scheduleWhile()} to retry an operation 
+   * as long as it kept throwing an exception.  You might put the result and exception into 
+   * a {@code Pair} so it can be checked for a maximum number of times like this:
+   * <pre>{@code 
+   *   ListenableFuture<Pair<ResultType, RetryException>> exceptionConvertingLoop =
+   *        FutureUtils.scheduleWhile(scheduler, retryDelayMillis, true, () -> {
+   *          try {
+   *            return new Pair<>(makeResultOrThrow(), null);
+   *          } catch (RetryException e) {
+   *            // we can't throw or we will break the loop
+   *           return new Pair<>(null, e);
+   *          }
+   *        }, new Predicate<Pair<?, RetryException>>() {
+   *          private int selfRetryCount = 0;
+   *
+   *          public boolean test(Pair<?, RetryException> p) {
+   *            return p.getLeft() == null && ++selfRetryCount <= maxRetryCount;
+   *          }
+   *        });
+   * }</pre> 
+   * You would then need to use {@link #throwMap(Function)} in order to convert that {@code Pair}
+   * back into a {@link ListenableFuture} with either a result, or the contained failure.  For 
+   * example:
+   * <pre>{@code 
+   * ListenableFuture<ResultType> resultFuture =
+   *     exceptionConvertingLoop.throwMap((p) -> {
+   *       if (p.getLeft() != null) {
+   *         return p.getLeft();
+   *       } else {
+   *         throw p.getRight();
+   *       }
+   *     });
+   * }</pre>
+   * 
+   * @since 5.11
+   * @param <R> The type for the object returned from the mapper
+   * @param mapper Function to invoke in order to transform the futures result
+   * @return A new {@link ListenableFuture} with the specified result type
+   */
+  default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper) {
+    return throwMap(mapper, null, null);
+  }
+  
+  /**
+   * Transform this future's result into another result by applying the provided mapper function.  
+   * If this future completed in error, then the mapper will not be invoked, and instead the 
+   * returned future will be completed in the same error state this future resulted in.
+   * <p>
+   * This function differs from {@link #map(Function, Executor)} only in how exceptions thrown 
+   * from the {@code mapper} function are handled.  Please see {@link #map(Function, Executor)} 
+   * for a general understanding for the behavior of this operation.  This is to be used when the 
+   * mapper function throwing an exception is EXPECTED.  Used to avoid treating mapping an 
+   * exception as an unexpected behavior.  Please see {@link #throwMap(Function)} for more usage 
+   * examples.
+   * <p>
+   * Once the future completes the mapper function will be invoked on the executor (if provided).  
+   * Because of that providing an executor can ensure this will never block.  If an executor is not 
+   * provided then the mapper may be invoked on the calling thread (if the future is already 
+   * complete), or on the same thread which the future completes on.  If the mapper function is 
+   * very fast and cheap to run then {@link #throwMap(Function)} or providing {@code null} for 
+   * the executor can allow more efficient operation.  
+   * 
+   * @since 5.11
+   * @param <R> The type for the object returned from the mapper
+   * @param mapper Function to invoke in order to transform the futures result
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @return A new {@link ListenableFuture} with the specified result type
+   */
+  default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, 
+                                           Executor executor) {
+    return throwMap(mapper, executor, null);
+  }
+  
+  /**
+   * Transform this future's result into another result by applying the provided mapper function.  
+   * If this future completed in error, then the mapper will not be invoked, and instead the 
+   * returned future will be completed in the same error state this future resulted in.  If the 
+   * mapper function itself throws an Exception, then the returned future will result in the error 
+   * thrown from the mapper.  
+   * <p>
+   * This can be easily used to chain together a series of operations, happening async until the 
+   * final result is actually needed.  Once the future completes the mapper function will be invoked 
+   * on the executor (if provided).  Because of that providing an executor can ensure this will 
+   * never block.  If an executor is not provided then the mapper may be invoked on the calling 
+   * thread (if the future is already complete), or on the same thread which the future completes 
+   * on.  If the mapper function is very fast and cheap to run then {@link #throwMap(Function)} or 
+   * providing {@code null} for the executor can allow more efficient operation.  
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
+   * details of what optimizations are available.
+   * 
+   * @since 5.11
+   * @param <R> The type for the object returned from the mapper
+   * @param mapper Function to invoke in order to transform the futures result
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return A new {@link ListenableFuture} with the specified result type
+   */
+  default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, Executor executor, 
+                                           ListenerOptimizationStrategy optimizeExecution) {
+    return FutureUtils.transform(this, mapper, false, executor, optimizeExecution);
   }
   
   /**
