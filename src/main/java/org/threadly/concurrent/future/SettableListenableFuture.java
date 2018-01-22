@@ -91,20 +91,11 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   @Override
   public void addListener(Runnable listener, Executor executor, 
                           ListenerOptimizationStrategy optimize) {
-    Executor queueExecutor = executor;
-    /* We don't need to check if done, because queue executor will be useless if done anyways
-    if (done) {
-      // if we add the below condition above, we must check `done` again for the second check
-      if (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
-        queueExecutor = null;
-      }
-    } else */if (queueExecutor == executingExecutor) {
-      if (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone || 
-          optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) {
-        queueExecutor = null;
-      }
-    }
-    listenerHelper.addListener(listener, queueExecutor, 
+    listenerHelper.addListener(listener, 
+                               executor == executingExecutor && 
+                                   (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
+                                    optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
+                                 null : executor, 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
   }
