@@ -149,7 +149,7 @@ public class RunnableListenerHelper {
    * @param listener runnable to call when trigger event called
    */
   public void addListener(Runnable listener) {
-    addListener(listener, null);
+    addListener(listener, null, null);
   }
 
   /**
@@ -169,6 +169,25 @@ public class RunnableListenerHelper {
    * @param executor executor listener should run on, or {@code null}
    */
   public void addListener(Runnable listener, Executor executor) {
+    addListener(listener, executor, executor);
+  }
+
+  /**
+   * Adds a listener to be called.  If the {@link RunnableListenerHelper} was constructed with 
+   * {@code true} (listeners can only be called once) then this listener will be called 
+   * immediately.
+   * <p>
+   * This allows you to provide different executors to use depending on the state of this 
+   * {@link RunnableListenerHelper}.  This is typically used as an optimization inside the threadly 
+   * library only.  Most users will be looking for the {@link #addListener(Runnable, Executor)} 
+   * which just provides that executor to both arguments here.
+   * 
+   * @param listener runnable to call when trigger event called
+   * @param queueExecutor executor listener should run on if this has to queue, or {@code null}
+   * @param inThreadExecutionExecutor executor listener should run on if this helpers state has transitioned to done
+   */
+  public void addListener(Runnable listener, 
+                          Executor queueExecutor, Executor inThreadExecutionExecutor) {
     if (listener == null) {
       return;
     }
@@ -179,15 +198,15 @@ public class RunnableListenerHelper {
       synchronized (listenersLock) {
         // done should only be set to true if we are only calling listeners once
         if (! (runListener = done)) {
-          if (executor != null) {
+          if (queueExecutor != null) {
             if (addingFromCallingThread && executorListeners != null) {
               // copy to prevent a ConcurrentModificationException
-              executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, executor));
+              executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, queueExecutor));
             } else {
               if (executorListeners == null) {
                 executorListeners = new ArrayList<>(2);
               }
-              executorListeners.add(new Pair<>(listener, executor));
+              executorListeners.add(new Pair<>(listener, queueExecutor));
             }
           } else {
             if (addingFromCallingThread && inThreadListeners != null) {
@@ -206,7 +225,7 @@ public class RunnableListenerHelper {
     
     if (runListener) {
       // run listener outside of lock
-      runListener(listener, executor, true);
+      runListener(listener, inThreadExecutionExecutor, true);
     }
   }
   
