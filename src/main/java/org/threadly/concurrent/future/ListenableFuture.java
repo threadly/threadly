@@ -480,6 +480,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @param executor {@link Executor} the callback should be ran on, or {@code null}
    * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
    */
+  @SuppressWarnings("deprecation")
   default void addCallback(FutureCallback<? super T> callback, Executor executor, 
                            ListenerOptimizationStrategy optimizeExecution) {
     addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor, optimizeExecution);

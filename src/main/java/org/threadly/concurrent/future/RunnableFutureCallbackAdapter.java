@@ -14,10 +14,14 @@ import org.threadly.util.ArgumentVerifier;
  * Instead of constructing this class, it is usually much easier to call into 
  * {@link ListenableFuture#addCallback(FutureCallback)}.
  * 
+ * @deprecated To be removed without replacement, if you use this, open an issue on github
+ * 
  * @since 3.2.0
  * @param <T> The result object type returned by this future
  */
-// TODO - consider deprecating, not likely to be used externally, could have reduced visibility
+// TODO - deprecation is only for javadocs, instead of remove change visibility
+//          and remove @SuppressWarnings from ListenableFuture
+@Deprecated
 public class RunnableFutureCallbackAdapter<T> implements Runnable {
   protected final Future<T> future;
   protected final FutureCallback<? super T> callback;
@@ -39,11 +43,9 @@ public class RunnableFutureCallbackAdapter<T> implements Runnable {
   @Override
   public void run() {
     try {
-      T result = future.get();
-      callback.handleResult(result);
+      callback.handleResult(future.get());
     } catch (InterruptedException e) {
       // will not be possible if provided as a listener to a ListenableFuture
-      Thread.currentThread().interrupt();
       callback.handleFailure(e);
       throw new RuntimeException(e);
     } catch (ExecutionException e) {
