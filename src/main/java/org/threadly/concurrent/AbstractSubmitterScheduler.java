@@ -41,7 +41,6 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
     doSchedule(task, delayInMs);
   }
 
-  // TODO - should the below move into default functions and deprecate this class?
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
     return submitScheduled(new RunnableCallableAdapter<>(task, result), delayInMs);

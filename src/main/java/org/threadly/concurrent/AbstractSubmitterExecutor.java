@@ -35,7 +35,6 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutor {
     doExecute(task);
   }
 
-  // TODO - should the below move into default functions and deprecate this class?
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
     return submit(new RunnableCallableAdapter<>(task, result));
