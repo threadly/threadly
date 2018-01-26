@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class RunnableFutureCallbackAdapterTest {
   @Test
   public void constructorTest() {
@@ -94,7 +94,6 @@ public class RunnableFutureCallbackAdapterTest {
           rfca.run();
           av.fail("Exception did not throw");
         } catch (RuntimeException expected) {
-          av.assertTrue(Thread.currentThread().isInterrupted());
           av.signalComplete();
         }
       }
