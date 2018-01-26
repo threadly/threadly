@@ -347,9 +347,17 @@ public class FutureUtils {
    * @param result Result to provide returned future once all futures complete
    * @return ListenableFuture which will be done once all futures provided are done
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                                            final T result) {
+    if (result == null) {
+      return (ListenableFuture<T>)makeCompleteFuture(futures);
+    }
     final EmptyFutureCollection efc = new EmptyFutureCollection(futures);
+    if (efc.isDone()) {
+      return immediateResultFuture(result);
+    }
+    
     final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<>(efc);
     efc.addCallback(new FutureCallback<Object>() {
       @Override
@@ -410,6 +418,36 @@ public class FutureUtils {
       makeFailurePropagatingCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                            final T result) {
     FailureFutureCollection<Object> ffc = new FailureFutureCollection<>(futures);
+    if (ffc.isDone()) {
+      // optimize already done case
+      try {
+        List<ListenableFuture<?>> failedFutures = ffc.get();
+        if (failedFutures.isEmpty()) {
+          return immediateResultFuture(result);
+        } else {
+          // propagate error
+          ListenableFuture<?> f = failedFutures.get(0);
+          if (f.isCancelled()) {
+            return immediateCanceledFuture();
+          } else {
+            try {
+              f.get();
+            } catch (ExecutionException e) {
+              immediateFailureFuture(e.getCause());
+            } catch (InterruptedException e) {
+              // should not be possible
+              throw new RuntimeException(e);
+            }
+          }
+        }
+      } catch (InterruptedException e) {
+        // should not be possible
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        return FutureUtils.immediateFailureFuture(e.getCause());
+      }
+    }
+    
     final CancelDelegateSettableListenableFuture<T> resultFuture = 
         new CancelDelegateSettableListenableFuture<>(ffc);
     ffc.addCallback(new FutureCallback<List<ListenableFuture<?>>>() {
@@ -683,6 +721,12 @@ public class FutureUtils {
   public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
     return new ImmediateFailureListenableFuture<>(failure);
   }
+  
+  private static <T> ListenableFuture<T> immediateCanceledFuture() {
+    SettableListenableFuture<T> slf = new SettableListenableFuture<>();
+    slf.cancel(false);
+    return slf;
+  }
 
   /**
    * Will continue to schedule the provided task as long as the task is returning a {@code null} 
@@ -911,9 +955,7 @@ public class FutureUtils {
     // shortcut optimization in case future is done, and loop is not needed
     if (startingFuture.isDone()) {
       if (startingFuture.isCancelled()) {
-        SettableListenableFuture<T> resultFuture = new SettableListenableFuture<>();
-        resultFuture.cancel(false);
-        return resultFuture;
+        return immediateCanceledFuture();
       }
       try {
         if (! loopTest.test(startingFuture.get())) {
@@ -1110,9 +1152,7 @@ public class FutureUtils {
         return FutureUtils.immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-      SettableListenableFuture<RT> slf = new SettableListenableFuture<>();
-      slf.cancel(false);
-      return slf;
+      return immediateCanceledFuture();
     } else {
       SettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
@@ -1174,9 +1214,7 @@ public class FutureUtils {
         return FutureUtils.immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-      SettableListenableFuture<RT> slf = new SettableListenableFuture<>();
-      slf.cancel(false);
-      return slf;
+      return immediateCanceledFuture();
     } else {
       SettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);

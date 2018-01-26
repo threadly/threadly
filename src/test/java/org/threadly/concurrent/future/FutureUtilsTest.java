@@ -257,7 +257,7 @@ public class FutureUtilsTest {
   }
   
   private static void verifyCompleteFuture(final ListenableFuture<?> f, 
-                                           final List<ListenableFuture<?>> futures) throws InterruptedException, TimeoutException {
+                                           final List<? extends ListenableFuture<?>> futures) throws InterruptedException, TimeoutException {
     final AsyncVerifier av = new AsyncVerifier();
     
     f.addListener(new Runnable() {
@@ -265,7 +265,7 @@ public class FutureUtilsTest {
       public void run() {
         av.assertTrue(f.isDone());
         
-        Iterator<ListenableFuture<?>> it = futures.iterator();
+        Iterator<? extends ListenableFuture<?>> it = futures.iterator();
         while (it.hasNext()) {
           av.assertTrue(it.next().isDone());
         }
@@ -287,21 +287,6 @@ public class FutureUtilsTest {
   @Test
   public void makeCompleteFutureEmptyListTest() {
     List<ListenableFuture<?>> futures = Collections.emptyList();
-    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
-    
-    assertTrue(f.isDone());
-  }
-  
-  @Test
-  public void makeCompleteFutureAlreadyDoneFuturesTest() {
-    List<ListenableFuture<?>> futures = new ArrayList<>(TEST_QTY);
-    
-    for (int i = 0; i < TEST_QTY; i++) {
-      SettableListenableFuture<?> future = new SettableListenableFuture<>();
-      future.setResult(null);
-      futures.add(future);
-    }
-
     ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
     
     assertTrue(f.isDone());
@@ -354,11 +339,30 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void makeCompleteFutureWithResultTest() throws InterruptedException, TimeoutException, ExecutionException {
+  public void makeCompleteFutureWithResultAlreadyDoneTest() throws InterruptedException, TimeoutException, ExecutionException {
     String result = StringUtils.makeRandomString(5);
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
     
     ListenableFuture<String> f = FutureUtils.makeCompleteFuture(futures, result);
+    
+    verifyCompleteFuture(f, futures);
+    assertEquals(result, f.get());
+  }
+  
+  @Test
+  public void makeCompleteFutureWithResultNotCompleteTest() throws InterruptedException, TimeoutException, ExecutionException {
+    String result = StringUtils.makeRandomString(5);
+    List<SettableListenableFuture<?>> futures = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<?> future = new SettableListenableFuture<>();
+      if (i != 0) {
+        future.setResult(null);
+      }
+      futures.add(future);
+    }
+    
+    ListenableFuture<String> f = FutureUtils.makeCompleteFuture(futures, result);
+    futures.get(0).setResult(null); // complete now
     
     verifyCompleteFuture(f, futures);
     assertEquals(result, f.get());
@@ -475,11 +479,30 @@ public class FutureUtilsTest {
   }
   
   @Test
-  public void makeFailurePropagatingCompleteFutureWithResultTest() throws InterruptedException, TimeoutException, ExecutionException {
+  public void makeFailurePropagatingCompleteFutureWithResultAlreadyDoneTest() throws InterruptedException, TimeoutException, ExecutionException {
     String result = StringUtils.makeRandomString(5);
     List<ListenableFuture<?>> futures = makeFutures(TEST_QTY, -1);
     
     ListenableFuture<String> f = FutureUtils.makeFailurePropagatingCompleteFuture(futures, result);
+    
+    verifyCompleteFuture(f, futures);
+    assertEquals(result, f.get());
+  }
+  
+  @Test
+  public void makeFailurePropagatingCompleteFutureWithResultNotCompleteTest() throws InterruptedException, TimeoutException, ExecutionException {
+    String result = StringUtils.makeRandomString(5);
+    List<SettableListenableFuture<?>> futures = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<?> future = new SettableListenableFuture<>();
+      if (i != 0) {
+        future.setResult(null);
+      }
+      futures.add(future);
+    }
+    
+    ListenableFuture<String> f = FutureUtils.makeFailurePropagatingCompleteFuture(futures, result);
+    futures.get(0).setResult(null);
     
     verifyCompleteFuture(f, futures);
     assertEquals(result, f.get());
