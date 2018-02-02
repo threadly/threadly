@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -212,7 +213,8 @@ public class ExecutorLimiter implements SubmitterExecutor {
     } else {
       // we will release the limit restriction as soon as the future completes.
       // listeners should be invoked in order, so we just need to be the first listener here
-      future.addListener(this::releaseExecutionLimit);
+      // We add a `SameThreadSubmitterExecutor` so that we get executed first as if it was async
+      future.addListener(this::releaseExecutionLimit, SameThreadSubmitterExecutor.instance());
 
       if (canRunTask()) {
         executor.execute(task);

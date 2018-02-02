@@ -1373,7 +1373,7 @@ public class FutureUtils {
      * @param f Future to attach to
      */
     protected void attachFutureDoneTask(ListenableFuture<? extends T> f) {
-      f.addListener(new FutureDoneTask(f));
+      f.addListener(new FutureDoneTask(f), SameThreadSubmitterExecutor.instance());
     }
     
     @Override
@@ -1500,7 +1500,7 @@ public class FutureUtils {
         doneTaskSingleton = new FutureDoneTask(null);
       }
       
-      f.addListener(doneTaskSingleton);
+      f.addListener(doneTaskSingleton, SameThreadSubmitterExecutor.instance());
     }
   }
   

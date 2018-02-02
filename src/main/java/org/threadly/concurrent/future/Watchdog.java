@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.ReschedulingOperation;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.Clock;
 
@@ -117,7 +118,7 @@ public class Watchdog {
       public void run() {
         futures.remove(fw);
       }
-    });
+    }, SameThreadSubmitterExecutor.instance());
     
     checkRunner.signalToRun();
   }
