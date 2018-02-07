@@ -8,7 +8,7 @@ import org.threadly.concurrent.TaskPriority;
 import org.threadly.util.ExceptionUtils;
 
 /**
- * This sub-pool is a special time of limiter.  It is able to have expanded semantics than the pool 
+ * This sub-pool is a special type of limiter.  It is able to have expanded semantics than the pool 
  * it delegates to.  For example this pool provides {@link TaskPriority} capabilities even though 
  * the pool it runs on top of does not necessarily provide that.  In addition most status's returned 
  * do not consider the parent pools state (for example {@link #getActiveTaskCount()} does not 
