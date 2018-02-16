@@ -2,6 +2,7 @@ package org.threadly.util;
 
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 
 /**
  * Some small utilities and constants around handling strings.
@@ -10,6 +11,45 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class StringUtils {
   protected static final String RAND_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  
+  /**
+   * Check to see if all characters in a provided string match to a given {@link Predicate}.  This 
+   * can be easily used when provided predicates from {@link Character}.  For example providing 
+   * {@code Character::isLetter} for the predicate will verify all characters in the string are 
+   * letters.
+   * 
+   * @since 5.14
+   * @param p Character test
+   * @param s String to check against
+   * @return {@code true} if predicate returned true for every character in string
+   */
+  public static boolean allCharsMatch(Predicate<Character> p, String s) {
+    for (int i = 0; i < s.length(); i++) {
+      if (! p.test(s.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  /**
+   * Check to see if any characters in a provided string match to a given {@link Predicate}.  This 
+   * can be easily used when provided predicates from {@link Character}.  For example providing 
+   * {@code Character::isDigit} for the predicate to see if this string contains any numbers.
+   * 
+   * @since 5.14
+   * @param p Character test
+   * @param s String to check against
+   * @return {@code true} if predicate returned true for any characters in the string
+   */
+  public static boolean anyCharsMatch(Predicate<Character> p, String s) {
+    for (int i = 0; i < s.length(); i++) {
+      if (p.test(s.charAt(i))) {
+        return true;
+      }
+    }
+    return false;
+  }
   
   /**
    * Makes sure a given string is not {@code null}.  If it is not {@code null}, the provided string 

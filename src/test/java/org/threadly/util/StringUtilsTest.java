@@ -7,6 +7,20 @@ import org.junit.Test;
 @SuppressWarnings("javadoc")
 public class StringUtilsTest {
   @Test
+  public void allCharsMatchTest() {
+    assertTrue(StringUtils.allCharsMatch(Character::isLetter, ""));
+    assertTrue(StringUtils.allCharsMatch(Character::isLetter, "foo"));
+    assertFalse(StringUtils.allCharsMatch(Character::isLetter, "fo1o"));
+  }
+  
+  @Test
+  public void anyCharsMatchTest() {
+    assertTrue(StringUtils.anyCharsMatch(Character::isDigit, "fo1o"));
+    assertFalse(StringUtils.anyCharsMatch(Character::isDigit, "foo"));
+    assertFalse(StringUtils.anyCharsMatch(Character::isLetter, ""));
+  }
+  
+  @Test
   public void nullToEmptyTest() {
     assertNotNull(StringUtils.nullToEmpty(null));
     assertTrue(StringUtils.nullToEmpty(null).isEmpty());
