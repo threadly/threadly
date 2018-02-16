@@ -284,7 +284,7 @@ public interface ListenableFuture<T> extends Future<T> {
   /**
    * Similar to {@link #map(Function)}, in that this will apply a mapper function once the applied 
    * to future completes.  Once this future resolves it will provide the result into the provided 
-   * function.  Unlike {@link #flatMap(Function)}, this will then unwrap a future provided from the 
+   * function.  Unlike {@link #map(Function)}, this will then unwrap a future provided from the 
    * function so that instead of having {@code ListenableFuture<ListenableFuture<R>>} you can 
    * simply extract the final value.  The returned future will only resolve once the future of the 
    * provided function completes.  
@@ -314,7 +314,7 @@ public interface ListenableFuture<T> extends Future<T> {
   /**
    * Similar to {@link #map(Function, Executor)}, in that this will apply a mapper function once 
    * the applied to future completes.  Once this future resolves it will provide the result into 
-   * the provided function.  Unlike {@link #flatMap(Function, Executor)}, this will then unwrap a 
+   * the provided function.  Unlike {@link #map(Function, Executor)}, this will then unwrap a 
    * future provided from the function so that instead of having 
    * {@code ListenableFuture<ListenableFuture<R>>} you can simply extract the final value.  The 
    * returned future will only resolve once the future of the provided function completes.  
@@ -341,7 +341,7 @@ public interface ListenableFuture<T> extends Future<T> {
   /**
    * Similar to {@link #map(Function, Executor)}, in that this will apply a mapper function once 
    * the applied to future completes.  Once this future resolves it will provide the result into 
-   * the provided function.  Unlike {@link #flatMap(Function, Executor)}, this will then unwrap a 
+   * the provided function.  Unlike {@link #map(Function, Executor)}, this will then unwrap a 
    * future provided from the function so that instead of having 
    * {@code ListenableFuture<ListenableFuture<R>>} you can simply extract the final value.  The 
    * returned future will only resolve once the future of the provided function completes.  
