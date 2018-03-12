@@ -409,7 +409,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
               public void run() {
                 finishShutdown();
               }
-            });
+            }, TaskPriority.Low);
           }
           
           break;

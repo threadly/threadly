@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
@@ -43,6 +44,30 @@ public class RunnableListenerHelperTest {
     assertTrue(onceHelper.getSubscribedListeners().contains(tr));
     onceHelper.removeListener(tr);
     assertTrue(onceHelper.getSubscribedListeners().isEmpty());
+  }
+  
+  @Test
+  public void getSubscribedListenersInThreadOnlyTest() {
+    TestRunnable tr = new TestRunnable();
+    onceHelper.addListener(tr);
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr));
+  }
+  
+  @Test
+  public void getSubscribedListenersExecutorOnlyTest() {
+    TestRunnable tr = new TestRunnable();
+    onceHelper.addListener(tr, SameThreadSubmitterExecutor.instance());
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr));
+  }
+  
+  @Test
+  public void getSubscribedListenersMixedExecutionTest() {
+    TestRunnable tr1 = new TestRunnable();
+    TestRunnable tr2 = new TestRunnable();
+    onceHelper.addListener(tr1);
+    onceHelper.addListener(tr2, SameThreadSubmitterExecutor.instance());
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr1));
+    assertTrue(onceHelper.getSubscribedListeners().contains(tr2));
   }
   
   @Test
@@ -117,6 +142,10 @@ public class RunnableListenerHelperTest {
     
     assertEquals(0, onceHelper.registeredListenerCount());
     assertEquals(1, repeatedHelper.registeredListenerCount());
+    
+    repeatedHelper.addListener(DoNothingRunnable.instance(), SameThreadSubmitterExecutor.instance());
+    
+    assertEquals(2, repeatedHelper.registeredListenerCount());
   }
   
   @Test

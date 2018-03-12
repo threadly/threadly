@@ -154,7 +154,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     
     assertEquals(2, ctProfiler.controledThreadStore.profiledThreads.size());
     
-    assertTrue(ctProfiler.removedProfiledThread(thread1));
+    assertTrue(ctProfiler.removeProfiledThread(thread1));
     
     assertEquals(1, ctProfiler.controledThreadStore.profiledThreads.size());
   }
@@ -176,7 +176,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     int removedCount = 0;
     while (it.hasNext()) {
       Thread t = it.next();
-      ctProfiler.removedProfiledThread(t);
+      ctProfiler.removeProfiledThread(t);
       removedCount++;
       assertEquals(testThreadCount - removedCount, ctProfiler.getProfiledThreadCount());
     }

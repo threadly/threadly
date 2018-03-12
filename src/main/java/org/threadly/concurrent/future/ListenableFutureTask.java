@@ -21,7 +21,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
                                                 CallableContainer<T> {
   protected final RunnableListenerHelper listenerHelper;
   protected final boolean recurring;
-  protected final Callable<T> callable;
+  protected Callable<T> callable;
   
   /**
    * Constructs a runnable future with a runnable work unit.
@@ -83,6 +83,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void addCallback(FutureCallback<? super T> callback, Executor executor) {
     addListener(new RunnableFutureCallbackAdapter<T>(this, callback), executor);
   }
@@ -92,6 +93,8 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    */
   @Override
   protected final void done() {
+    callable = null;
+    
     listenerHelper.callListeners();
   }
 

@@ -21,11 +21,24 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
    * 
    * @since 4.2.0
    */
-  public static final ImmediateResultListenableFuture<?> NULL_RESULT;
-  
-  static {
-    NULL_RESULT = new ImmediateResultListenableFuture<Object>(null);
-  }
+  public static final ImmediateResultListenableFuture<?> NULL_RESULT = 
+      new ImmediateResultListenableFuture<Object>(null);
+  /**
+   * Static instance of {@link ImmediateResultListenableFuture} which provides a {@link Boolean} 
+   * in the {@code true} state as the result.
+   * 
+   * @since 5.6
+   */
+  public static final ImmediateResultListenableFuture<Boolean> BOOLEAN_TRUE_RESULT = 
+      new ImmediateResultListenableFuture<Boolean>(Boolean.TRUE);
+  /**
+   * Static instance of {@link ImmediateResultListenableFuture} which provides a {@link Boolean} 
+   * in the {@code false} state as the result.
+   * 
+   * @since 5.6
+   */
+  public static final ImmediateResultListenableFuture<Boolean> BOOLEAN_FALSE_RESULT = 
+      new ImmediateResultListenableFuture<Boolean>(Boolean.FALSE);
   
   protected final T result;
   

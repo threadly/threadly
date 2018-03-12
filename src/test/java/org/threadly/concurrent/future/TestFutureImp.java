@@ -72,6 +72,7 @@ public class TestFutureImp implements ListenableFuture<Object> {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void addCallback(FutureCallback<? super Object> callback, Executor executor) {
     addListener(new RunnableFutureCallbackAdapter<Object>(this, callback), executor);
   }

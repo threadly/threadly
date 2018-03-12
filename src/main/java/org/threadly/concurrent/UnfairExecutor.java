@@ -246,7 +246,12 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       throw new RejectedExecutionException("Pool is shutdown");
     }
     
-    schedulers[(int)(Math.abs(stripeGenerator.getStripe(task)) % schedulers.length)].addTask(task);
+    long val = stripeGenerator.getStripe(task);
+    if (val == Long.MIN_VALUE) {
+      // handle possible overflow case with Math.abs
+      val++;
+    }
+    schedulers[(int)(Math.abs(val) % schedulers.length)].addTask(task);
   }
 
   /**

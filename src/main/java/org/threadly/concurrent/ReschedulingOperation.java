@@ -5,27 +5,26 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.threadly.util.ArgumentVerifier;
 
 /**
- * <p>Abstract implementation for more complicated recurring behavior.  Unlike submitting a task 
- * to {@link SubmitterScheduler#scheduleWithFixedDelay(Runnable, long, long)}, this can provide 
- * the ability to only have the task scheduled if there is work to do.  In addition it provides the 
- * ability to change the frequency of execution without needing to remove and re-add the task.</p>
- * 
- * <p>This task will only schedule or reschedule itself if it has been notified there is work to 
- * do.  It is assumed that after execution all work is complete.  If there is additional work to 
+ * Abstract implementation for more complicated recurring behavior.  Unlike submitting a task to 
+ * {@link SubmitterScheduler#scheduleWithFixedDelay(Runnable, long, long)}, this can provide the 
+ * ability to only have the task scheduled if there is work to do.  In addition it provides the 
+ * ability to change the frequency of execution without needing to remove and re-add the task.
+ * <p>
+ * This task will only schedule or reschedule itself if it has been notified there is work to do.  
+ * It is assumed that after execution all work is complete.  If there is additional work to 
  * perform, then the task should invoke {@link #signalToRun()} before it completes to ensure that 
  * it is rescheduled at the current set delay.  Because of that behavior there is no way to remove 
  * this task from the scheduler, instead you must just ensure that {@link #signalToRun()} is not 
- * invoked to prevent the task from rescheduling itself.</p>
+ * invoked to prevent the task from rescheduling itself.
+ * <p>
+ * An additional advantage to using this over scheduling a recurring task is that you don't have 
+ * to worry about removing the task before garbage collection occurs (ie no cleanup, just stop 
+ * invoking {@link #signalToRun()}).
  * 
- * <p>An additional advantage to using this over scheduling a recurring task is that you don't 
- * have to worry about removing the task before garbage collection occurs (ie no cleanup, just 
- * stop invoking {@link #signalToRun()}).</p>
- * 
- * @author jent - Mike Jensen
  * @since 4.9.0
  */
 public abstract class ReschedulingOperation {
-  private final SubmitterScheduler scheduler;
+  protected final SubmitterScheduler scheduler;
   // -1 = not scheduled, 0 = scheduled, 1 = running, 2 = updated while running
   private final AtomicInteger taskState;
   private final CheckRunner runner;
@@ -67,31 +66,52 @@ public abstract class ReschedulingOperation {
     this.scheduleDelay = scheduleDelay;
   }
   
+  private boolean firstSignal() {
+    while (true) {
+      int casState = taskState.get();
+      if (casState == -1) {
+        if (taskState.compareAndSet(-1, 0)) {
+          return true;
+        }
+      } else if (casState == 1) {
+        if (taskState.compareAndSet(1, 2)) {
+          return false;
+        }
+      } else {
+        // either already scheduled, or already marked as more added
+        return false;
+      }
+    }
+  }
+  
+  /**
+   * Similar to {@link #signalToRun()} except that any configured schedule / delay will be ignored 
+   * and instead the task will try to run ASAP.
+   * 
+   * @param runOnCallingThreadIfPossible {@code true} to run the task on the invoking thread if possible
+   */
+  public void signalToRunImmediately(boolean runOnCallingThreadIfPossible) {
+    if (firstSignal()) {
+      if (runOnCallingThreadIfPossible) {
+        runner.run();
+      } else {
+        scheduler.execute(runner);
+      }
+    }
+  }
+  
   /**
    * Invoke to indicate that this operation has stuff to do.  If necessary the task will be 
    * scheduled for execution.  If the task is already running then it will ensure the task 
    * re-executes itself when done (at the set delay).  This re-execution can help ensure that any 
    * thread state changes can be witnessed on the next execution.
+   * <p>
+   * If you want to signal the task to run immediately (ignore the schedule delay) please see 
+   * {@link #signalToRunImmediately(boolean)}.
    */
   public void signalToRun() {
-    while (true) {
-      if (taskState.get() == -1) {
-        if (taskState.compareAndSet(-1, 0)) {
-          if (scheduleDelay == 0) {
-            scheduler.execute(runner);
-          } else {
-            scheduler.schedule(runner, scheduleDelay);
-          }
-          return;
-        }
-      } else if (taskState.get() == 1) {
-        if (taskState.compareAndSet(1, 2)) {
-          return;
-        }
-      } else {
-        // either already scheduled, or already marked as more added
-        return;
-      }
+    if (firstSignal()) {
+      scheduler.schedule(runner, scheduleDelay);
     }
   }
   
@@ -99,17 +119,16 @@ public abstract class ReschedulingOperation {
    * Abstract function which must be implemented to handle actual operation.  It is expected that 
    * when this runs all outstanding work is handled.  If it can not be fully handled then invoke 
    * {@link #signalToRun()} before returning.
-   * 
+   * <p>
    * If this throws an exception it will not impact the state of future executions (ie if 
    * {@link #signalToRun()} was invoked, the task will be rescheduled despite a thrown exception).
    */
   protected abstract void run();
   
   /**
-   * <p>Class to in a thread safe way update the execution state, and reschedule the task on 
-   * completion if necessary.</p>
+   * Class to in a thread safe way update the execution state, and reschedule the task on 
+   * completion if necessary.
    * 
-   * @author jent - Mike Jensen
    * @since 4.9.0
    */
   protected class CheckRunner implements Runnable {
@@ -126,13 +145,8 @@ public abstract class ReschedulingOperation {
               // nothing to run, just return
               break;
             }
-          } else if (taskState.get() == 2) {
-            // will be set back to 1 when this restarts
-            if (scheduleDelay == 0) {
-              scheduler.execute(this);
-            } else {
-              scheduler.schedule(this, scheduleDelay);
-            }
+          } else if (taskState.get() == 2) { // will be set back to 1 when this restarts
+            scheduler.schedule(this, scheduleDelay);
             break;
           }
         }

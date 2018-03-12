@@ -160,6 +160,28 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
     }
   }
   
+  @Test
+  public void getQueuedTaskCountTest() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    SchedulerServiceFactory factory = getSchedulerServiceFactory();
+    final SchedulerService scheduler = factory.makeSchedulerService(1, false);
+    try {
+      // verify nothing at the start
+      assertEquals(0, scheduler.getQueuedTaskCount());
+      
+      scheduler.execute(btr);
+      btr.blockTillStarted();
+      
+      assertEquals(0, scheduler.getQueuedTaskCount());
+      
+      scheduler.execute(DoNothingRunnable.instance());
+      assertEquals(1, scheduler.getQueuedTaskCount());
+    } finally {
+      btr.unblock();
+      factory.shutdown();
+    }
+  }
+  
   public interface SchedulerServiceFactory extends SubmitterSchedulerFactory {
     public SchedulerService makeSchedulerService(int poolSize, boolean prestartIfAvailable);
   }

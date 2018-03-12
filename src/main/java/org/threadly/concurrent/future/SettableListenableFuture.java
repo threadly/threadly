@@ -83,6 +83,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void addCallback(FutureCallback<? super T> callback, Executor executor) {
     addListener(new RunnableFutureCallbackAdapter<T>(this, callback), executor);
   }

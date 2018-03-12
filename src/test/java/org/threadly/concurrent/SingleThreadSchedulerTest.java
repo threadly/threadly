@@ -121,8 +121,9 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     /* adding a run time to have greater chances that runnable 
      * will be waiting to execute after shutdown call.
      */
-    TestRunnable lastRunnable = executeTestRunnables(sts, 5).get(TEST_QTY - 1);
-    
+    TestRunnable lastRunnable = // submit tasks as low priority to ensure that the shutdown lets them finish
+        executeTestRunnables(new org.threadly.concurrent.wrapper.PrioritySchedulerDefaultPriorityWrapper(sts, TaskPriority.Low), 5)
+          .get(TEST_QTY - 1);    
     sts.shutdown();
     
     // runnable should finish

@@ -51,6 +51,33 @@ public class ListenerHelperTest {
   }
   
   @Test
+  public void getSubscribedListenersInThreadOnlyTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    TestImp ti = new TestImp();
+    lh.addListener(ti);
+    assertTrue(lh.getSubscribedListeners().contains(ti));
+  }
+  
+  @Test
+  public void getSubscribedListenersExecutorOnlyTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    TestImp ti = new TestImp();
+    lh.addListener(ti, SameThreadSubmitterExecutor.instance());
+    assertTrue(lh.getSubscribedListeners().contains(ti));
+  }
+  
+  @Test
+  public void getSubscribedListenersMixedExecutionTest() {
+    ListenerHelper<TestInterface> lh = makeListenerHelper(TestInterface.class);
+    TestImp ti1 = new TestImp();
+    TestImp ti2 = new TestImp();
+    lh.addListener(ti1);
+    lh.addListener(ti2, SameThreadSubmitterExecutor.instance());
+    assertTrue(lh.getSubscribedListeners().contains(ti1));
+    assertTrue(lh.getSubscribedListeners().contains(ti2));
+  }
+  
+  @Test
   public void addNullListenerTest() {
     makeListenerHelper(TestInterface.class).addListener(null);
     // no exception thrown
@@ -179,13 +206,16 @@ public class ListenerHelperTest {
     
     ch.addListener(new TestImp());
     assertEquals(1, ch.registeredListenerCount());
+    
+    ch.addListener(new TestImp(), SameThreadSubmitterExecutor.instance());
+    assertEquals(2, ch.registeredListenerCount());
   }
   
   @Test
   public void clearListenersTest() {
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     ch.addListener(new TestImp());
-    ch.addListener(new TestImp());
+    ch.addListener(new TestImp(), SameThreadSubmitterExecutor.instance());
     assertEquals(2, ch.registeredListenerCount());
     
     ch.clearListeners();

@@ -14,10 +14,13 @@ import org.threadly.util.ArgumentVerifier;
  * <p>Instead of constructing this class, it is usually much easier to call into 
  * {@link ListenableFuture#addCallback(FutureCallback)}.</p>
  * 
+ * @deprecated to be removed in 6.0
+ * 
  * @author jent - Mike Jensen
  * @since 3.2.0
  * @param <T> The result object type returned by this future
  */
+@Deprecated
 public class RunnableFutureCallbackAdapter<T> implements Runnable {
   protected final Future<T> future;
   protected final FutureCallback<? super T> callback;

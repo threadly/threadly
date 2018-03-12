@@ -67,7 +67,9 @@ public class AsyncCallRunnableListenerHelper extends RunnableListenerHelper {
   protected class CallListenersTask implements Runnable {
     @Override
     public void run() {
-      AsyncCallRunnableListenerHelper.super.doCallListeners();
+      synchronized (listenersLock) {
+        AsyncCallRunnableListenerHelper.super.doCallListeners();
+      }
     }
   }
 }

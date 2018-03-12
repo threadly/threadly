@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.util.Clock;
 
@@ -247,6 +248,34 @@ public class FutureUtils {
     }
     
     return resultCount;
+  }
+  
+  /**
+   * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
+   * when all futures are complete without blocking.  Unlike 
+   * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
+   * {@link ListenableFuture}'s.  But will return immediately, providing a new 
+   * {@link ListenableFuture} that will be called once all the provided futures have finished.  
+   * <p>
+   * The future returned will provide a {@code null} result, it is the responsibility of the 
+   * caller to get the actual results from the provided futures.  This is designed to just be an 
+   * indicator as to when they have finished.  If you need the results from the provided futures, 
+   * consider using {@link #makeCompleteListFuture(Iterable)}.  You should also consider using 
+   * {@link #makeFailurePropagatingCompleteFuture(Iterable)}, it has the same semantics as this one 
+   * except it will put the returned future into an error state if any of the provided futures error.
+   * 
+   * @since 5.3
+   * @param futures Collection of futures that must finish before returned future is satisfied
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static ListenableFuture<?> makeCompleteFuture(List<? extends ListenableFuture<?>> futures) {
+    if (futures == null || futures.isEmpty()) {
+      return ImmediateResultListenableFuture.NULL_RESULT;
+    } else if (futures.size() == 1) {
+      return futures.get(0);
+    } else {
+      return makeCompleteFuture((Iterable<? extends ListenableFuture<?>>)futures);
+    }
   }
   
   /**
@@ -723,7 +752,7 @@ public class FutureUtils {
      * @param f Future to attach to
      */
     protected void attachFutureDoneTask(ListenableFuture<? extends T> f) {
-      f.addListener(new FutureDoneTask(f));
+      f.addListener(new FutureDoneTask(f), SameThreadSubmitterExecutor.instance());
     }
     
     @Override

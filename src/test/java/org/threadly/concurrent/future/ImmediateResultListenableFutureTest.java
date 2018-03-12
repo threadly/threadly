@@ -9,9 +9,14 @@ import org.junit.Test;
 public class ImmediateResultListenableFutureTest {
   @Test
   public void nullResultTest() throws InterruptedException, ExecutionException, TimeoutException {
-    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<Void>(null);
-    
-    ImmediateListenableFutureTest.resultTest(testFuture, null);
+    ImmediateListenableFutureTest.resultTest(new ImmediateResultListenableFuture<Void>(null), null);
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.NULL_RESULT, null);
+  }
+  
+  @Test
+  public void booleanResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.BOOLEAN_FALSE_RESULT, false);
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.BOOLEAN_TRUE_RESULT, true);
   }
   
   @Test

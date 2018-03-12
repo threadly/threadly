@@ -1,7 +1,5 @@
 package org.threadly.concurrent.lock;
 
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -19,8 +17,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 1.0.0
  */
 public class StripedLock {
-  private final int expectedConcurrencyLevel;
-  private final ConcurrentHashMap<Integer, Object> locks;
+  private final Object[] locks;
   
   /**
    * Constructs a new {@link StripedLock} with a given expected concurrency level.  The higher the 
@@ -31,9 +28,10 @@ public class StripedLock {
    */
   public StripedLock(int expectedConcurrencyLevel) {
     ArgumentVerifier.assertGreaterThanZero(expectedConcurrencyLevel, "expectedConcurrencyLevel");
-    
-    this.expectedConcurrencyLevel = expectedConcurrencyLevel;
-    this.locks = new ConcurrentHashMap<Integer, Object>();
+    locks = new Object[expectedConcurrencyLevel];
+    for(int i=0; i<expectedConcurrencyLevel; i++) {
+      locks[i] = new Object();
+    }
   }
   
   /**
@@ -42,7 +40,7 @@ public class StripedLock {
    * @return the constructed level of concurrency
    */
   public int getExpectedConcurrencyLevel() {
-    return expectedConcurrencyLevel;
+    return locks.length;
   }
   
   /**
@@ -66,16 +64,6 @@ public class StripedLock {
    * @return consistent Object for a given hash code
    */
   public Object getLock(int hashCode) {
-    int lockIndex = Math.abs(hashCode) % expectedConcurrencyLevel;
-    Object result = locks.get(lockIndex);
-    if (result == null) {
-      result = new Object();
-      Object putIfAbsentResult = locks.putIfAbsent(lockIndex, result);
-      if (putIfAbsentResult != null) {
-        result = putIfAbsentResult;
-      }
-    }
-    
-    return result;
+    return locks[(int)(Math.abs((long)hashCode) % locks.length)];
   }
 }

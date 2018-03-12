@@ -88,6 +88,10 @@ public class ExecutorLimiter extends AbstractSubmitterExecutor implements Submit
   }
   
   protected void consumeAvailable() {
+    if (currentlyRunning.get() >= maxConcurrency || waitingTasks.isEmpty()) {
+      // shortcut before we lock
+      return;
+    }
     /* must synchronize in queue consumer to avoid 
      * multiple threads from consuming tasks in parallel 
      * and possibly emptying after .isEmpty() check but 

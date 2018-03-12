@@ -89,7 +89,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     }
     // block till all tasks finish, or we reach our timeout
     if (timeoutInMs < Long.MAX_VALUE) {
-      long remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
+      long remainingTime = timeoutInMs - (Clock.lastKnownForwardProgressingMillis() - startTime);
       try {
         FutureUtils.blockTillAllComplete(resultList, remainingTime);
       } catch (TimeoutException e) {
@@ -135,8 +135,9 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
       // submit first one
       submittedFutures.add(ecs.submit(it.next()));
 
-      long remainingTime = timeoutInMs - (Clock.lastKnownForwardProgressingMillis() - startTime);
-      while (it.hasNext() && remainingTime > 0) {
+      long remainingTime;
+      while (it.hasNext() && 
+             (remainingTime = timeoutInMs - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
         Future<T> completedFuture = ecs.poll();
         if (completedFuture == null) {
           // submit another
@@ -149,11 +150,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
             lastEE = e;
           }
         }
-        remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
       }
       
       // we must compare against failure count otherwise we may throw a TimeoutException when all tasks have failed
-      while (remainingTime > 0 && failureCount < submittedFutures.size()) {
+      while ((remainingTime = timeoutInMs - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0 && 
+             failureCount < submittedFutures.size()) {
         Future<T> completedFuture = ecs.poll(remainingTime, TimeUnit.MILLISECONDS);
         if (completedFuture == null) {
           throw new TimeoutException();
@@ -165,7 +166,6 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
             lastEE = e;
           }
         }
-        remainingTime = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime);
       }
       
       if (remainingTime <= 0) {
