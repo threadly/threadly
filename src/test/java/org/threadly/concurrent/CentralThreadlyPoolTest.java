@@ -45,7 +45,7 @@ public class CentralThreadlyPoolTest {
         
         // verify we can still execute on pool with existing threads
         TestRunnable tr = new TestRunnable();
-        CentralThreadlyPool.lowPriorityPool(false).execute(tr);
+        CentralThreadlyPool.lowPriorityPool().execute(tr);
         tr.blockTillStarted();
       }
     } finally {
@@ -76,7 +76,7 @@ public class CentralThreadlyPoolTest {
   public void lowPrioritySingleThreadRenamedTest() throws InterruptedException, TimeoutException {
     final String threadName = StringUtils.makeRandomString(5);
     AsyncVerifier av = new AsyncVerifier();
-    CentralThreadlyPool.lowPriorityPool(true, threadName).execute(() -> {
+    CentralThreadlyPool.singleThreadPool(threadName).execute(() -> {
       av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
       av.signalComplete();
     });
@@ -87,7 +87,7 @@ public class CentralThreadlyPoolTest {
   public void lowPriorityRenamedTest() throws InterruptedException, TimeoutException {
     final String threadName = StringUtils.makeRandomString(5);
     AsyncVerifier av = new AsyncVerifier();
-    CentralThreadlyPool.lowPriorityPool(false, threadName).execute(() -> {
+    CentralThreadlyPool.lowPriorityPool(threadName).execute(() -> {
       av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
       av.signalComplete();
     });
@@ -163,7 +163,7 @@ public class CentralThreadlyPoolTest {
       }
       // verify we can still execute on pool with existing threads
       TestRunnable tr = new TestRunnable();
-      CentralThreadlyPool.lowPriorityPool(false).execute(tr);
+      CentralThreadlyPool.lowPriorityPool().execute(tr);
       tr.blockTillStarted();
     } finally {
       for (BlockingTestRunnable btr : blockingRunnables) {

@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.threadly</groupId>
   <artifactId>threadly</artifactId>
-  <version>5.14</version>
+  <version>5.15-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>Threadly</name>

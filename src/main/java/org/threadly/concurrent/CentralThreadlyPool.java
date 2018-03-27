@@ -116,7 +116,7 @@ public class CentralThreadlyPool {
   /**
    * Thread pool well suited for running CPU intensive computations on the tasks thread.
    * 
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return Pool for CPU bound tasks
    */
   public static SchedulerService computationPool(String threadName) {
@@ -129,13 +129,72 @@ public class CentralThreadlyPool {
   
   /**
    * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
+   * delayed.  This pool will only have one thread, so tasks should complete quickly or they might 
+   * block other tasks.
+   * 
+   * @return Single threaded pool for running or scheduling out low priority tasks
+   */
+  public static PrioritySchedulerService lowPrioritySingleThreadPool() {
+    return lowPrioritySingleThreadPool(null);
+  }
+  
+  /**
+   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
+   * delayed.  This pool will only have one thread, so tasks should complete quickly or they might 
+   * block other tasks.
+   * 
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
+   * @return Single threaded pool for running or scheduling out low priority tasks
+   */
+  public static PrioritySchedulerService lowPrioritySingleThreadPool(String threadName) {
+    if (StringUtils.isNullOrEmpty(threadName)) {
+      return SINGLE_THREADED_LOW_PRIORITY_POOL;
+    } else {
+      return new ThreadRenamingPriorityScheduler(SINGLE_THREADED_LOW_PRIORITY_POOL, threadName, false);
+    }
+  }
+  
+  /**
+   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
+   * delayed.  This pool will execute only on any general processing threads which are available.  
+   * By default there is only one, but it can be increased by invoking 
+   * {@link #increaseGenericThreads(int)}.
+   * 
+   * @return Pool for running or scheduling out low priority tasks
+   */
+  public static SchedulerService lowPriorityPool() {
+    return lowPriorityPool(null);
+  }
+  
+  /**
+   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
+   * delayed.  This pool will execute only on any general processing threads which are available.  
+   * By default there is only one, but it can be increased by invoking 
+   * {@link #increaseGenericThreads(int)}.
+   * 
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
+   * @return Pool for running or scheduling out low priority tasks
+   */
+  public static SchedulerService lowPriorityPool(String threadName) {
+    if (StringUtils.isNullOrEmpty(threadName)) {
+      return LOW_PRIORITY_POOL;
+    } else {
+      return new ThreadRenamingSchedulerService(LOW_PRIORITY_POOL, threadName, false);
+    }
+  }
+  
+  /**
+   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
    * delayed.  If not single threaded this pool will execute only on any general processing threads 
    * which are available.  By default there is only one, but it can be increased by invoking 
    * {@link #increaseGenericThreads(int)}.
    * 
+   * @deprecated use {@link #lowPrioritySingleThreadPool()} or {@link #lowPriorityPool()}
+   * 
    * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
    * @return Pool for running or scheduling out low priority tasks
    */
+  @Deprecated
   public static SchedulerService lowPriorityPool(boolean singleThreaded) {
     return lowPriorityPool(singleThreaded, null);
   }
@@ -146,10 +205,13 @@ public class CentralThreadlyPool {
    * which are available.  By default there is only one, but it can be increased by invoking 
    * {@link #increaseGenericThreads(int)}.
    * 
+   * @deprecated use {@link #lowPrioritySingleThreadPool(String)} or {@link #lowPriorityPool(String)}
+   * 
    * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return Pool for running or scheduling out low priority tasks
    */
+  @Deprecated
   public static SchedulerService lowPriorityPool(boolean singleThreaded, String threadName) {
     SchedulerService scheduler = singleThreaded ? SINGLE_THREADED_LOW_PRIORITY_POOL : LOW_PRIORITY_POOL;
     if (StringUtils.isNullOrEmpty(threadName)) {
@@ -184,7 +246,7 @@ public class CentralThreadlyPool {
    * {@link #isolatedTaskPool(String)} as an alternative.
    * 
    * @return Single threaded pool for running or scheduling tasks on
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    */
   public static PrioritySchedulerService singleThreadPool(String threadName) {
     return singleThreadPool(true, threadName);
@@ -212,7 +274,7 @@ public class CentralThreadlyPool {
    * please see {@link #isolatedTaskPool(String)} as an alternative.
    * 
    * @param threadGuaranteed {@code true} indicates that the pool manager needs to expand if necessary
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return Single threaded pool for running or scheduling tasks on
    */
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed, String threadName) {
@@ -247,7 +309,7 @@ public class CentralThreadlyPool {
    * {@link #isolatedTaskPool(String)} as an alternative.
    * 
    * @param threadCount The number of threads that will be available to tasks submitted on the returned pool
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return A pool with the requested threads available for task scheduling or execution
    */
   public static SchedulerService threadPool(int threadCount, String threadName) {
@@ -284,7 +346,7 @@ public class CentralThreadlyPool {
    * 
    * @param priority Priority for tasks submitted on returned scheduler service
    * @param threadCount The number of threads that will be available to tasks submitted on the returned pool
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return A pool with the requested threads available for task scheduling or execution
    */
   public static SchedulerService threadPool(TaskPriority priority, int threadCount, 
@@ -328,7 +390,7 @@ public class CentralThreadlyPool {
    * 
    * @param guaranteedThreads Number of threads the provided pool should be guaranteed to have
    * @param maxThreads Maximum number of threads to the returned pool can consume, or negative to use any available
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return A pool with the requested specifications for task scheduling or execution
    */
   public static SchedulerService rangedThreadPool(int guaranteedThreads, int maxThreads, 
@@ -375,7 +437,7 @@ public class CentralThreadlyPool {
    * @param priority Priority for tasks submitted on returned scheduler service
    * @param guaranteedThreads Number of threads the provided pool should be guaranteed to have
    * @param maxThreads Maximum number of threads to the returned pool can consume, or negative to use any available
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return A pool with the requested specifications for task scheduling or execution
    */
   public static SchedulerService rangedThreadPool(TaskPriority priority, 
@@ -425,7 +487,7 @@ public class CentralThreadlyPool {
    * reduce size churn), and this is much better if you only have a single task (to reduce memory 
    * overhead).
    * 
-   * @param threadName Name to prefix to thread while tasks on this pool execute
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
    * @return Pool which will ensure there is a thread available for every task executed on it
    */
   public static SchedulerService isolatedTaskPool(String threadName) {
