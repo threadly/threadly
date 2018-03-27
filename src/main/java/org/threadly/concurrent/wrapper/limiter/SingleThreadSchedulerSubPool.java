@@ -88,6 +88,10 @@ public class SingleThreadSchedulerSubPool extends AbstractPriorityScheduler {
   protected QueueManager getQueueManager() {
     return noThreadScheduler.getQueueManager();
   }
+  
+  protected void executeTasks() {
+    noThreadScheduler.tick(ExceptionUtils::handleException);
+  }
 
   @Override
   protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
@@ -111,7 +115,7 @@ public class SingleThreadSchedulerSubPool extends AbstractPriorityScheduler {
 
     @Override
     protected void run() {
-      noThreadScheduler.tick(ExceptionUtils::handleException);
+      executeTasks();
     }
   }
   

@@ -76,7 +76,8 @@ public class CentralThreadlyPool {
     COMPUTATION_POOL = new SchedulerServiceLimiter(MASTER_SCHEDULER, cpuCount);
     LOW_PRIORITY_POOL = new DynamicGenericThreadLimiter(TaskPriority.Low, 0, -1, "LowPriority");
     SINGLE_THREADED_LOW_PRIORITY_POOL = 
-        new SingleThreadSubPool(TaskPriority.Low, false, "SingleThreadLowPriority");
+        new SinglePriorityThreadSubPool(TaskPriority.Low, false, 
+                                        "SingleThreadLowPriority", Thread.MIN_PRIORITY);
     PER_TASK_SIZING_POOL = new PerTaskSizingSubmitterScheduler();
   }
   
@@ -279,6 +280,29 @@ public class CentralThreadlyPool {
    */
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed, String threadName) {
     return new SingleThreadSubPool(TaskPriority.High, threadGuaranteed, threadName);
+  }
+  
+  /**
+   * Return a single threaded pool.  This can be useful for submitting tasks on where you don't 
+   * want to worry about any concurrency or shared memory issues.  This is similar to 
+   * {@link #singleThreadPool(boolean, String)} except that it optionally allows you to specify the 
+   * priority for the thread during task execution.  This priority should be inclusively between 
+   * {@link Thread#MIN_PRIORITY} and {@link Thread#MAX_PRIORITY}.  Typically 
+   * {@link #singleThreadPool(boolean, String)} will be a better option, but this may be useful in 
+   * certain cases.
+   * <p>
+   * If wanting guaranteed thread, and returned pool will only be accepting one or two tasks, 
+   * please see {@link #isolatedTaskPool(String)} as an alternative.
+   * 
+   * @param threadGuaranteed {@code true} indicates that the pool manager needs to expand if necessary
+   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
+   * @param threadPriority the priority the thread should run as while executing tasks
+   * @return Single threaded pool for running or scheduling tasks on
+   */
+  public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed, 
+                                                          String threadName, int threadPriority) {
+    return new SinglePriorityThreadSubPool(TaskPriority.High, threadGuaranteed, 
+                                           threadName, threadPriority);
   }
   
   /**
@@ -667,6 +691,36 @@ public class CentralThreadlyPool {
     public int getWaitingForExecutionTaskCount(TaskPriority priority) {
       return super.getWaitingForExecutionTaskCount(priority) + 
                MASTER_SCHEDULER.getWaitingForExecutionTaskCount(priority);
+    }
+  }
+  
+  /**
+   * Similar to {@link SingleThreadSubPool} except this implementation also adjusts the priority 
+   * of the thread while executing.
+   */
+  protected static class SinglePriorityThreadSubPool extends SingleThreadSubPool {
+    private final int threadPriority;
+    
+    protected SinglePriorityThreadSubPool(TaskPriority tickPriority, boolean threadGuaranteed,
+                                          String threadName, int threadPriority) {
+      super(tickPriority, threadGuaranteed, threadName);
+      
+      this.threadPriority = threadPriority;
+    }
+    
+    @Override
+    protected void executeTasks() {
+      Thread currentThread = Thread.currentThread();
+      int startPriority = currentThread.getPriority();
+      if (startPriority == threadPriority) {
+        super.executeTasks();
+      } else {
+        currentThread.setPriority(threadPriority);
+        
+        super.executeTasks();
+        
+        currentThread.setPriority(startPriority);
+      }
     }
   }
 
