@@ -76,7 +76,7 @@ public class CentralThreadlyPool {
     COMPUTATION_POOL = new SchedulerServiceLimiter(MASTER_SCHEDULER, cpuCount);
     LOW_PRIORITY_POOL = new DynamicGenericThreadLimiter(TaskPriority.Low, 0, -1, "LowPriority");
     SINGLE_THREADED_LOW_PRIORITY_POOL = 
-        new SingleThreadSubPool(TaskPriority.Low, TaskPriority.Low, false, "SingleThreadLowPriority");
+        new SingleThreadSubPool(TaskPriority.Low, false, "SingleThreadLowPriority");
     PER_TASK_SIZING_POOL = new PerTaskSizingSubmitterScheduler();
   }
   
@@ -278,7 +278,7 @@ public class CentralThreadlyPool {
    * @return Single threaded pool for running or scheduling tasks on
    */
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed, String threadName) {
-    return new SingleThreadSubPool(TaskPriority.High, TaskPriority.High, threadGuaranteed, threadName);
+    return new SingleThreadSubPool(TaskPriority.High, threadGuaranteed, threadName);
   }
   
   /**
@@ -643,9 +643,9 @@ public class CentralThreadlyPool {
     @SuppressWarnings("unused")
     private final Object gcReference; // object just held on to track garbage collection
     
-    protected SingleThreadSubPool(TaskPriority defaultPriority, TaskPriority tickPriority, 
+    protected SingleThreadSubPool(TaskPriority tickPriority, 
                                   boolean threadGuaranteed, String threadName) {
-      super(masterScheduler(tickPriority, threadName), defaultPriority, LOW_PRIORITY_MAX_WAIT_IN_MS);
+      super(masterScheduler(tickPriority, threadName), TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS);
 
       this.gcReference = threadGuaranteed ? new PoolResizer(1) : null;
     }
