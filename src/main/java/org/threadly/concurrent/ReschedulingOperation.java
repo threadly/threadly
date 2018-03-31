@@ -1,5 +1,6 @@
 package org.threadly.concurrent;
 
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.util.ArgumentVerifier;
@@ -24,11 +25,26 @@ import org.threadly.util.ArgumentVerifier;
  * @since 4.9.0
  */
 public abstract class ReschedulingOperation {
-  protected final SubmitterScheduler scheduler;
+  protected final Executor executor;  // never null
+  private final SubmitterScheduler scheduler; // may be null
   // -1 = not scheduled, 0 = scheduled, 1 = running, 2 = updated while running
   private final AtomicInteger taskState;
   private final CheckRunner runner;
   private volatile long scheduleDelay;
+  
+  /**
+   * Construct a new operation with an executor to execute on.  Because this takes an executor and 
+   * not a scheduler an {@link UnsupportedOperationException} will be thrown if 
+   * {@link #setScheduleDelay(long)} updates the schedule to be anything non-zero. 
+   * 
+   * @since 5.15
+   * @param executor Executor to execute on
+   */
+  protected ReschedulingOperation(Executor executor) {
+    this(executor, null, 0);
+    
+    ArgumentVerifier.assertNotNull(executor, "executor");
+  }
   
   /**
    * Construct a new operation with the provided scheduler to schedule on to and the initial delay.
@@ -37,12 +53,19 @@ public abstract class ReschedulingOperation {
    * @param scheduleDelay Delay in milliseconds to schedule operation out when has stuff to do
    */
   protected ReschedulingOperation(SubmitterScheduler scheduler, long scheduleDelay) {
-    ArgumentVerifier.assertNotNull(scheduler, "scheduler");
+    this(scheduler, scheduler, scheduleDelay);
     
+    ArgumentVerifier.assertNotNull(scheduler, "scheduler");
+  }
+  
+  private ReschedulingOperation(Executor executor, SubmitterScheduler scheduler, long scheduleDelay) {
+    ArgumentVerifier.assertNotNegative(scheduleDelay, "scheduleDelay");
+    
+    this.executor = executor;
     this.scheduler = scheduler;
     this.taskState = new AtomicInteger(-1);
     this.runner = new CheckRunner();
-    setScheduleDelay(scheduleDelay);
+    this.scheduleDelay = scheduleDelay;
   }
 
   /**
@@ -61,9 +84,13 @@ public abstract class ReschedulingOperation {
    * @param scheduleDelay Delay in milliseconds to schedule operation out on, can not be negative
    */
   public void setScheduleDelay(long scheduleDelay) {
-    ArgumentVerifier.assertNotNegative(scheduleDelay, "scheduleDelay");
-    
-    this.scheduleDelay = scheduleDelay;
+    if (scheduler == null && scheduleDelay != 0) {
+      throw new UnsupportedOperationException("Only an executor is provided, scheduling not possible");
+    } else {
+      ArgumentVerifier.assertNotNegative(scheduleDelay, "scheduleDelay");
+        
+      this.scheduleDelay = scheduleDelay;
+    }
   }
   
   private boolean firstSignal() {
@@ -95,7 +122,7 @@ public abstract class ReschedulingOperation {
       if (runOnCallingThreadIfPossible) {
         runner.run();
       } else {
-        scheduler.execute(runner);
+        executor.execute(runner);
       }
     }
   }
@@ -111,7 +138,15 @@ public abstract class ReschedulingOperation {
    */
   public void signalToRun() {
     if (firstSignal()) {
+      executeRunner();
+    }
+  }
+  
+  private void executeRunner() {
+    if (scheduler != null) {
       scheduler.schedule(runner, scheduleDelay);
+    } else {
+      executor.execute(runner);
     }
   }
   
@@ -146,7 +181,7 @@ public abstract class ReschedulingOperation {
               break;
             }
           } else if (taskState.get() == 2) { // will be set back to 1 when this restarts
-            scheduler.schedule(this, scheduleDelay);
+            executeRunner();
             break;
           }
         }

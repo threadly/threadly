@@ -1,7 +1,8 @@
 package org.threadly.concurrent.wrapper;
 
+import java.util.concurrent.Executor;
+
 import org.threadly.concurrent.AbstractSubmitterScheduler;
-import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.ArgumentVerifier;
 
@@ -15,7 +16,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 4.7.0
  */
 public class SchedulerExecutorDelegator extends AbstractSubmitterScheduler {
-  protected final SubmitterExecutor parentExecutor;
+  protected final Executor parentExecutor;
   protected final SubmitterScheduler parentScheduler;
   
   /**
@@ -24,7 +25,7 @@ public class SchedulerExecutorDelegator extends AbstractSubmitterScheduler {
    * @param parentExecutor Executor to use when ever possible
    * @param parentScheduler Scheduler to use when executions need to be delayed
    */
-  public SchedulerExecutorDelegator(SubmitterExecutor parentExecutor, 
+  public SchedulerExecutorDelegator(Executor parentExecutor, 
                                     SubmitterScheduler parentScheduler) {
     ArgumentVerifier.assertNotNull(parentExecutor, "parentExecutor");
     ArgumentVerifier.assertNotNull(parentScheduler, "parentScheduler");

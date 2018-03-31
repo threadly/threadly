@@ -2,6 +2,8 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.Executor;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +35,12 @@ public class ReschedulingOperationTest {
       // expected
     }
     try {
+      new TestReschedulingOperation(null, false);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+    try {
       new TestReschedulingOperation(scheduler, -1, false);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
@@ -41,7 +49,7 @@ public class ReschedulingOperationTest {
   }
   
   @Test
-  public void runAfterSignaledTest() {
+  public void runOnSchedulerAfterSignaledTest() {
     TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, SCHEDULE_DELAY, false);
     
     assertEquals(0, scheduler.advance(SCHEDULE_DELAY));
@@ -57,6 +65,29 @@ public class ReschedulingOperationTest {
     
     // should run again, but not again
     assertEquals(1, scheduler.advance(SCHEDULE_DELAY));
+    assertEquals(0, scheduler.advance(SCHEDULE_DELAY));
+    assertEquals(0, scheduler.getQueuedTaskCount());
+    
+    assertEquals(2, testOp.tr.getRunCount());
+  }
+  
+  @Test
+  public void runOnExecutorAfterSignaledTest() {
+    TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, false);
+    
+    assertEquals(0, scheduler.advance(SCHEDULE_DELAY));
+    
+    testOp.signalToRun();
+    
+    // should run once, but not again
+    assertEquals(1, scheduler.tick());
+    assertEquals(0, scheduler.advance(SCHEDULE_DELAY));
+    assertEquals(0, scheduler.getQueuedTaskCount());
+    
+    testOp.signalToRun();
+    
+    // should run again, but not again
+    assertEquals(1, scheduler.tick());
     assertEquals(0, scheduler.advance(SCHEDULE_DELAY));
     assertEquals(0, scheduler.getQueuedTaskCount());
     
@@ -87,10 +118,27 @@ public class ReschedulingOperationTest {
     assertEquals(1, scheduler.advance(SCHEDULE_DELAY / 2));
     assertEquals(1, testOp.tr.getRunCount());
   }
+
+  @Test (expected = UnsupportedOperationException.class)
+  public void changeScheduleDelayFail() {
+    TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, false);
+    
+    testOp.setScheduleDelay(10);
+  }
   
   @Test
-  public void signalToRunImmediatelyTest() {
+  public void signalToRunImmediatelyOnSchedulerTest() {
     TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, SCHEDULE_DELAY, false);
+
+    testOp.signalToRunImmediately(false);
+
+    assertEquals(1, scheduler.advance(1));
+    assertEquals(1, testOp.tr.getRunCount());
+  }
+  
+  @Test
+  public void signalToRunImmediatelyOnExecutorTest() {
+    TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, false);
 
     testOp.signalToRunImmediately(false);
 
@@ -111,6 +159,12 @@ public class ReschedulingOperationTest {
   private static class TestReschedulingOperation extends ReschedulingOperation {
     public final TestRunnable tr = new TestRunnable();
     private final boolean alwaysReschedule;
+
+    protected TestReschedulingOperation(Executor executor, boolean alwaysReschedule) {
+      super(executor);
+      
+      this.alwaysReschedule = alwaysReschedule;
+    }
 
     protected TestReschedulingOperation(SubmitterScheduler scheduler, 
                                         long scheduleDelay, boolean alwaysReschedule) {
