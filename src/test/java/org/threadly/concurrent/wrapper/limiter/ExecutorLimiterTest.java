@@ -14,6 +14,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
@@ -24,6 +25,7 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -44,6 +46,11 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   public static void cleanupClass() {
     scheduler.shutdownNow();
     scheduler = null;
+  }
+  
+  @Before
+  public void setup() {
+    new TestCondition(() -> scheduler.getQueuedTaskCount() == 0).blockTillTrue();
   }
   
   protected ExecutorLimiter getLimiter(int parallelCount, boolean limitFutureListenersExecution) {

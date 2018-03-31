@@ -117,6 +117,60 @@ public class SchedulerServiceLimiterTest extends SubmitterSchedulerLimiterTest {
   }
   
   @Test
+  public void removeRunningRecurringFixedRateTask() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      SchedulerServiceLimiter limiter = getLimiter(1, true);
+      
+      limiter.scheduleAtFixedRate(btr, 0, 100);
+      btr.blockTillStarted();
+      
+      assertTrue(limiter.remove(btr));
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test
+  public void removeRunningRecurringFixedDelayTask() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      SchedulerServiceLimiter limiter = getLimiter(1, true);
+      
+      limiter.scheduleWithFixedDelay(btr, 0, 100);
+      btr.blockTillStarted();
+      
+      assertTrue(limiter.remove(btr));
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test
+  public void removeRunningRecurringMultipleInstancesTest() {
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      SchedulerServiceLimiter limiter = getLimiter(1, true);
+      
+      limiter.scheduleAtFixedRate(btr, 0, 100);
+      btr.blockTillStarted();
+      // a couple others that we should be able to remove individually
+      limiter.scheduleAtFixedRate(btr, 0, 100);
+      limiter.execute(btr);
+
+      assertEquals(2, limiter.getQueuedTaskCount());
+      assertTrue(limiter.remove(btr));
+      assertEquals(2, limiter.getQueuedTaskCount());
+      assertTrue(limiter.remove(btr));
+      assertEquals(1, limiter.getQueuedTaskCount());
+      assertTrue(limiter.remove(btr));
+      assertEquals(0, limiter.getQueuedTaskCount());
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test
   public void isShutdownTest() {
     PriorityScheduler executor = new StrictPriorityScheduler(1);
     try {

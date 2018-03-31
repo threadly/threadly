@@ -1,6 +1,7 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
@@ -106,23 +107,31 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
     
     doSchedule(task, null, delayInMs);
   }
+  
+  protected void initialRecurringSchedule(RecurringWrapper rw, long initialDelay) {
+    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
+    
+    if (initialDelay == 0) {
+      executeOrQueueWrapper(rw);
+    } else {
+      scheduler.schedule(rw.delayRunnable, initialDelay);
+    }
+  }
 
   @Override
   public void scheduleWithFixedDelay(Runnable task, long initialDelay, long recurringDelay) {
     ArgumentVerifier.assertNotNull(task, "task");
-    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertNotNegative(recurringDelay, "recurringDelay");
     
-    doSchedule(new RecurringDelayWrapper(task, recurringDelay), null, initialDelay);
+    initialRecurringSchedule(new RecurringDelayWrapper(task, recurringDelay), initialDelay);
   }
 
   @Override
   public void scheduleAtFixedRate(Runnable task, long initialDelay, long period) {
     ArgumentVerifier.assertNotNull(task, "task");
-    ArgumentVerifier.assertNotNegative(initialDelay, "initialDelay");
     ArgumentVerifier.assertGreaterThanZero(period, "period");
     
-    doSchedule(new RecurringRateWrapper(task, initialDelay, period), null, initialDelay);
+    initialRecurringSchedule(new RecurringRateWrapper(task, initialDelay, period), initialDelay);
   }
   
   /**
@@ -156,21 +165,48 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
       return lrw.getContainedRunnable();
     }
   }
+  
+  /**
+   * Abstract class to represent a wrapper for a recurring task.  The primary need for this is to 
+   * deal with the removal of these recurring tasks in the {@link SchedulerServiceLimiter}.
+   * 
+   * @since 5.15
+   */
+  protected abstract class RecurringWrapper extends LimiterRunnableWrapper {
+    protected final AtomicBoolean valid;
+    protected final DelayedExecutionRunnable delayRunnable;
+    
+    public RecurringWrapper(Runnable runnable) {
+      super(runnable);
+      
+      valid = new AtomicBoolean(true);
+      delayRunnable = new DelayedExecutionRunnable(this);
+    }
+    
+    public boolean invalidate() {
+      return valid.compareAndSet(true, false);
+    }
+    
+    @Override
+    public void run() {
+      if (valid.get()) {
+        super.run();
+      }
+    }
+  }
 
   /**
    * Wrapper for recurring tasks that reschedule with a given delay after completing execution.
    * 
    * @since 3.1.0
    */
-  protected class RecurringDelayWrapper extends LimiterRunnableWrapper {
+  protected class RecurringDelayWrapper extends RecurringWrapper {
     protected final long recurringDelay;
-    protected final DelayedExecutionRunnable delayRunnable;
     
     public RecurringDelayWrapper(Runnable runnable, long recurringDelay) {
       super(runnable);
       
       this.recurringDelay = recurringDelay;
-      delayRunnable = new DelayedExecutionRunnable(this);
     }
     
     @Override
@@ -184,16 +220,14 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
    * 
    * @since 3.1.0
    */
-  protected class RecurringRateWrapper extends LimiterRunnableWrapper {
+  protected class RecurringRateWrapper extends RecurringWrapper {
     protected final long period;
-    protected final DelayedExecutionRunnable delayRunnable;
     private long nextRunTime;
     
     public RecurringRateWrapper(Runnable runnable, long initialDelay, long period) {
       super(runnable);
       
       this.period = period;
-      delayRunnable = new DelayedExecutionRunnable(this);
       nextRunTime = Clock.accurateForwardProgressingMillis() + initialDelay + period;
     }
     

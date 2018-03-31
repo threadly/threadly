@@ -1,6 +1,10 @@
 package org.threadly.concurrent.wrapper.limiter;
 
+import java.lang.ref.WeakReference;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.threadly.concurrent.ContainerHelper;
 import org.threadly.concurrent.SchedulerService;
@@ -32,6 +36,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter
                                      implements SchedulerService {
   protected final SchedulerService scheduler;
+  private final Collection<WeakReference<RecurringWrapper>> recurringTasks;
   
   /**
    * Constructs a new limiter that implements the {@link SchedulerService}.
@@ -63,31 +68,73 @@ public class SchedulerServiceLimiter extends SubmitterSchedulerLimiter
     super(scheduler, maxConcurrency, limitFutureListenersExecution);
     
     this.scheduler = scheduler;
+    this.recurringTasks = new ConcurrentLinkedQueue<>();
+  }
+  
+  @Override
+  protected void initialRecurringSchedule(RecurringWrapper rw, long initialDelay) {
+    // first cleanup if needed
+    Iterator<WeakReference<RecurringWrapper>> it = recurringTasks.iterator();
+    while (it.hasNext()) {
+      if (it.next().get() == null) {
+        it.remove();
+      }
+    }
+
+    recurringTasks.add(new WeakReference<>(rw));
+    
+    super.initialRecurringSchedule(rw, initialDelay);
   }
 
   @Override
   public boolean remove(Runnable task) {
+    Iterator<WeakReference<RecurringWrapper>> it = recurringTasks.iterator();
+    while (it.hasNext()) {
+      RecurringWrapper rw = it.next().get();
+      if (rw == null) {
+        it.remove();
+      } else if (ContainerHelper.isContained(rw, task)) {
+        it.remove();
+        
+        if (rw.invalidate()) {
+          // try to remove proactively
+          waitingTasks.remove(rw);
+          scheduler.remove(rw.delayRunnable);
+          scheduler.remove(rw);
+          return true;
+        }
+      }
+    }
+    
     // synchronize on this so that we don't consume tasks while trying to remove
     synchronized (this) {
-      // try to remove from scheduler first
-      if (scheduler.remove(task)) {
-        return true;
-      }
-      
-      return ContainerHelper.remove(waitingTasks, task);
+      return ContainerHelper.remove(waitingTasks, task) || scheduler.remove(task);
     }
   }
 
   @Override
   public boolean remove(Callable<?> task) {
+    Iterator<WeakReference<RecurringWrapper>> it = recurringTasks.iterator();
+    while (it.hasNext()) {
+      RecurringWrapper rw = it.next().get();
+      if (rw == null) {
+        it.remove();
+      } else if (ContainerHelper.isContained(rw, task)) {
+        it.remove();
+        
+        if (rw.invalidate()) {
+          // try to remove proactively
+          waitingTasks.remove(rw);
+          scheduler.remove(rw.delayRunnable);
+          scheduler.remove(rw);
+          return true;
+        }
+      }
+    }
+    
     // synchronize on this so that we don't consume tasks while trying to remove
     synchronized (this) {
-      // try to remove from scheduler first
-      if (scheduler.remove(task)) {
-        return true;
-      }
-      
-      return ContainerHelper.remove(waitingTasks, task);
+      return ContainerHelper.remove(waitingTasks, task) || scheduler.remove(task);
     }
   }
 
