@@ -177,7 +177,7 @@ public abstract class ReschedulingOperation {
         while (true) {
           if (taskState.get() == 1) {
             if (taskState.compareAndSet(1, -1)) {
-              // nothing to run, just return
+              // set back to idle state, we are done
               break;
             }
           } else if (taskState.get() == 2) { // will be set back to 1 when this restarts

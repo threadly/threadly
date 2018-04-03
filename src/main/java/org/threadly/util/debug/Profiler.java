@@ -16,8 +16,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
@@ -119,7 +119,7 @@ public class Profiler {
    * @return the number of times since the start or last reset we have sampled the threads
    */
   public int getCollectedSampleQty() {
-    return pStore.collectedSamples.get();
+    return pStore.collectedSamples.intValue();
   }
   
   /**
@@ -128,7 +128,7 @@ public class Profiler {
    */
   public void reset() {
     pStore.threadTraces.clear();
-    pStore.collectedSamples.set(0);
+    pStore.collectedSamples.reset();
   }
   
   /**
@@ -637,7 +637,7 @@ public class Profiler {
   protected static class ProfileStorage {
     protected final AtomicReference<Thread> collectorThread;
     protected final Map<ThreadIdentifier, Map<Trace, Trace>> threadTraces;
-    protected final AtomicInteger collectedSamples;
+    protected final LongAdder collectedSamples;
     protected volatile int pollIntervalInMs;
     protected volatile Thread dumpingThread;
     protected volatile Runnable dumpLoopRun;
@@ -648,7 +648,7 @@ public class Profiler {
       collectorThread = new AtomicReference<>(null);
       threadTraces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE, 
                                              DEFAULT_MAP_LOAD_FACTOR, DEFAULT_MAP_CONCURRENCY_LEVEL);
-      collectedSamples = new AtomicInteger(0);
+      collectedSamples = new LongAdder();
       this.pollIntervalInMs = pollIntervalInMs;
       dumpingThread = null;
       dumpLoopRun = null;
@@ -722,7 +722,7 @@ public class Profiler {
         }
         
         if (storedSample) {
-          pStore.collectedSamples.incrementAndGet();
+          pStore.collectedSamples.increment();
         }
         try {
           Thread.sleep(pStore.pollIntervalInMs);
