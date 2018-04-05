@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -15,10 +16,34 @@ import org.threadly.util.TestUncaughtExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ConfigurableThreadFactoryTest {
+  protected ConfigurableThreadFactory makeThreadFactory() {
+    return new ConfigurableThreadFactory();
+  }
+  
+  protected ConfigurableThreadFactory makeThreadFactory(String poolPrefix, boolean appendPoolId) {
+    return new ConfigurableThreadFactory(poolPrefix, appendPoolId);
+  }
+  
+  protected ConfigurableThreadFactory makeThreadFactory(boolean daemon) {
+    return new ConfigurableThreadFactory(daemon);
+  }
+  
+  protected ConfigurableThreadFactory makeThreadFactory(int threadPriority) {
+    return new ConfigurableThreadFactory(threadPriority);
+  }
+  
+  protected ConfigurableThreadFactory makeThreadFactory(UncaughtExceptionHandler ueh) {
+    return new ConfigurableThreadFactory(ueh);
+  }
+
+  protected ConfigurableThreadFactory makeThreadFactory(ExceptionHandler eh) {
+    return new ConfigurableThreadFactory(eh);
+  }
+  
   @Test
   public void emptyConstructorTest() {
-    ThreadFactory defaultFactory = new ConfigurableThreadFactory();
-    ConfigurableThreadFactory ctf = new ConfigurableThreadFactory();
+    ThreadFactory defaultFactory = makeThreadFactory();
+    ConfigurableThreadFactory ctf = makeThreadFactory();
     
     Thread defaultThread = defaultFactory.newThread(DoNothingRunnable.instance());
     Thread configurableThread = ctf.newThread(DoNothingRunnable.instance());
@@ -43,8 +68,8 @@ public class ConfigurableThreadFactoryTest {
   @Test
   public void setPrefixWithPoolIdTest() {
     String poolPrefix = StringUtils.makeRandomString(5);
-    ConfigurableThreadFactory ctf1 = new ConfigurableThreadFactory(poolPrefix, true);
-    ConfigurableThreadFactory ctf2 = new ConfigurableThreadFactory(poolPrefix, true);
+    ConfigurableThreadFactory ctf1 = makeThreadFactory(poolPrefix, true);
+    ConfigurableThreadFactory ctf2 = makeThreadFactory(poolPrefix, true);
 
     assertTrue(ctf1.threadNamePrefix.contains(poolPrefix));
     assertFalse(ctf1.threadNamePrefix.equals(ctf2.threadNamePrefix));
@@ -52,12 +77,12 @@ public class ConfigurableThreadFactoryTest {
     Thread t = ctf1.newThread(DoNothingRunnable.instance());
     assertTrue(t.getName().contains(ctf1.threadNamePrefix));
   }
-  
+
   @Test
   public void setPrefixWithoutPoolIdTest() {
     String poolPrefix = StringUtils.makeRandomString(5);
-    ConfigurableThreadFactory ctf1 = new ConfigurableThreadFactory(poolPrefix, false);
-    ConfigurableThreadFactory ctf2 = new ConfigurableThreadFactory(poolPrefix, false);
+    ConfigurableThreadFactory ctf1 = makeThreadFactory(poolPrefix, false);
+    ConfigurableThreadFactory ctf2 = makeThreadFactory(poolPrefix, false);
 
     assertTrue(ctf1.threadNamePrefix.contains(poolPrefix));
     assertTrue(ctf1.threadNamePrefix.equals(ctf2.threadNamePrefix));
@@ -68,8 +93,8 @@ public class ConfigurableThreadFactoryTest {
   
   @Test
   public void useDaemonThreadTest() {
-    ConfigurableThreadFactory ctfFalse = new ConfigurableThreadFactory(false);
-    ConfigurableThreadFactory ctfTrue = new ConfigurableThreadFactory(true);
+    ConfigurableThreadFactory ctfFalse = makeThreadFactory(false);
+    ConfigurableThreadFactory ctfTrue = makeThreadFactory(true);
     
     Thread t;
     assertFalse(ctfFalse.useDaemonThreads);
@@ -80,25 +105,25 @@ public class ConfigurableThreadFactoryTest {
     t = ctfTrue.newThread(DoNothingRunnable.instance());
     assertTrue(t.isDaemon());
   }
-  
+
   @Test
   public void priorityUnderMinTest() {
-    ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(-1000);
+    ConfigurableThreadFactory ctf = makeThreadFactory(-1000);
     
     assertEquals(Thread.MIN_PRIORITY, ctf.threadPriority);
   }
   
   @Test
   public void priorityOverMaxTest() {
-    ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(1000);
+    ConfigurableThreadFactory ctf = makeThreadFactory(1000);
     
     assertEquals(Thread.MAX_PRIORITY, ctf.threadPriority);
   }
-  
+
   @Test
   public void setPriorityTest() {
     int priority = Thread.NORM_PRIORITY + 1;
-    ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(priority);
+    ConfigurableThreadFactory ctf = makeThreadFactory(priority);
     
     assertEquals(priority, ctf.threadPriority);
     Thread t = ctf.newThread(DoNothingRunnable.instance());
@@ -108,17 +133,17 @@ public class ConfigurableThreadFactoryTest {
   @Test
   public void setUncaughtExceptionHandlerTest() {
     TestUncaughtExceptionHandler ueh = new TestUncaughtExceptionHandler();
-    ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(ueh);
+    ConfigurableThreadFactory ctf = makeThreadFactory(ueh);
     
     assertEquals(ueh, ctf.defaultUncaughtExceptionHandler);
     Thread t = ctf.newThread(DoNothingRunnable.instance());
     assertEquals(ueh, t.getUncaughtExceptionHandler());
   }
-  
+
   @Test
   public void setExceptionHandlerTest() {
     TestExceptionHandler teh = new TestExceptionHandler();
-    ConfigurableThreadFactory ctf = new ConfigurableThreadFactory(teh);
+    ConfigurableThreadFactory ctf = makeThreadFactory(teh);
     
     assertEquals(teh, ctf.defaultThreadlyExceptionHandler);
     

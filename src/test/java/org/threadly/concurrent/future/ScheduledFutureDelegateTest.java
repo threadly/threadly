@@ -13,7 +13,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class ScheduledFutureDelegateTest<T> {
+public class ScheduledFutureDelegateTest {
   @Test
   public void getDelayTest() {
     int startVal = TEST_QTY * -1;
