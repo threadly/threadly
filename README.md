@@ -9,7 +9,7 @@ Include the threadly library into your project from maven central:
 <dependency>
 	<groupId>org.threadly</groupId>
 	<artifactId>threadly</artifactId>
-	<version>5.14</version>
+	<version>5.15</version>
 </dependency>
 ```
 
