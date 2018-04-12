@@ -1017,6 +1017,7 @@ public class FutureUtilsTest {
     int scheduleDelayMillis = 10;
     TestableScheduler scheduler = new TestableScheduler();
     Object result = new Object();
+    @SuppressWarnings("deprecation")
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhileTaskResultNull(scheduler, scheduleDelayMillis, false, 
                                                 new Callable<Object>() {
@@ -1043,6 +1044,7 @@ public class FutureUtilsTest {
     int scheduleDelayMillis = 10;
     TestableScheduler scheduler = new TestableScheduler();
     Object result = new Object();
+    @SuppressWarnings("deprecation")
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhileTaskResultNull(scheduler, scheduleDelayMillis, true, 
                                                 new Callable<Object>() {
@@ -1070,6 +1072,7 @@ public class FutureUtilsTest {
   public void scheduleWhileTaskResultNullTaskFailureInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
     RuntimeException failure = new SuppressedStackRuntimeException();
+    @SuppressWarnings("deprecation")
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, false, () -> { throw failure; });
     
@@ -1086,6 +1089,7 @@ public class FutureUtilsTest {
   public void scheduleWhileTaskResultNullTaskFailureOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
     RuntimeException failure = new SuppressedStackRuntimeException();
+    @SuppressWarnings("deprecation")
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, true, () -> { throw failure; });
 
@@ -1104,6 +1108,7 @@ public class FutureUtilsTest {
   public void scheduleWhileTaskResultNullTimeoutTest() throws Exception {
     SingleThreadScheduler scheduler = new SingleThreadScheduler();
     try {
+      @SuppressWarnings("deprecation")
       ListenableFuture<?> f = 
           FutureUtils.scheduleWhileTaskResultNull(scheduler, 2, true, () -> null, DELAY_TIME);
       
@@ -1117,6 +1122,7 @@ public class FutureUtilsTest {
   public void scheduleWhileTaskResultNullCancelReturnedFutureTest() {
     TestableScheduler scheduler = new TestableScheduler();
     AtomicInteger runCount = new AtomicInteger();
+    @SuppressWarnings("deprecation")
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhileTaskResultNull(scheduler, 1, false, () -> {
           runCount.incrementAndGet();
@@ -1456,6 +1462,86 @@ public class FutureUtilsTest {
 
     assertFalse(f.isDone());
     assertEquals(1, scheduler.tick());
+    assertTrue(f.isDone());
+    try {
+      f.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
+  }
+  
+  @Test
+  public void executeWhileTest() throws InterruptedException, ExecutionException {
+    AtomicInteger ai = new AtomicInteger();
+    ListenableFuture<Integer> f = 
+        FutureUtils.executeWhile(() -> FutureUtils.immediateResultFuture(ai.getAndIncrement()), 
+                                 (i) -> i < 10);
+
+    assertTrue(f.isDone());
+    assertEquals(10, f.get().intValue());
+  }
+  
+  @Test
+  public void executeWhileThreadedTest() throws InterruptedException, ExecutionException {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      AtomicInteger ai = new AtomicInteger();
+      ListenableFuture<Integer> f = 
+          FutureUtils.executeWhile(() -> scheduler.submitScheduled(ai::getAndIncrement, 1), 
+                                   (i) -> i < 10);
+  
+      assertEquals(10, f.get().intValue());
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  @Test
+  public void executeWhileTaskFailureTest() throws InterruptedException {
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<?> f = 
+        FutureUtils.executeWhile(FutureUtils.immediateResultFuture(null), () -> { throw failure; }, (o) -> true);
+
+    assertTrue(f.isDone());
+    try {
+      f.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == failure);
+    }
+  }
+  
+  @Test
+  public void executeWhileTimeoutWithResultTest() throws Exception {
+    ListenableFuture<Optional<?>> f = 
+        FutureUtils.executeWhile(() -> FutureUtils.immediateResultFuture(Optional.empty()), 
+                                 (o) -> ! o.isPresent(), DELAY_TIME, true);
+    assertNotNull(f.get());
+    assertFalse(f.get(DELAY_TIME + 1_000, TimeUnit.MILLISECONDS).isPresent());
+  }
+  
+  @Test
+  public void executeWhileTimeoutWithExceptionTest() throws Exception {
+    ListenableFuture<Optional<?>> f = 
+        FutureUtils.executeWhile(() -> FutureUtils.immediateResultFuture(Optional.empty()), 
+                                 (o) -> ! o.isPresent(), DELAY_TIME, false);
+      
+    try {
+      f.get(DELAY_TIME + 1_000, TimeUnit.MILLISECONDS);
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      // expected
+      assertTrue(e.getCause() instanceof TimeoutException);
+    }
+  }
+  
+  @Test
+  public void executeWhilePredicateThrowsTest() throws InterruptedException {
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFuture<Object> f = 
+        FutureUtils.executeWhile(() -> FutureUtils.immediateResultFuture(null), (o) -> { throw failure; });
+    
     assertTrue(f.isDone());
     try {
       f.get();

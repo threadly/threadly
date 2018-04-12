@@ -747,6 +747,8 @@ public class FutureUtils {
    * If you want to ensure this does not reschedule forever consider using 
    * {@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable, long)}.
    * 
+   * @deprecated Please use {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)}
+   * 
    * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
@@ -755,6 +757,7 @@ public class FutureUtils {
    * @param task Task which will provide result, or {@code null} to reschedule itself again
    * @return Future that will resolve with non-null result from task
    */
+  @Deprecated
   public static <T> ListenableFuture<T> scheduleWhileTaskResultNull(SubmitterScheduler scheduler, 
                                                                     long scheduleDelayMillis, 
                                                                     boolean firstRunAsync, 
@@ -781,6 +784,8 @@ public class FutureUtils {
    * execution.  If non-null then the result will be able to be retrieved from the returned 
    * {@link ListenableFuture}.
    * 
+   * @deprecated Please use {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)}
+   * 
    * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
@@ -790,6 +795,7 @@ public class FutureUtils {
    * @param timeoutMillis Timeout in milliseconds task wont be rescheduled and instead just finish with {@code null}
    * @return Future that will resolve with non-null result from task
    */
+  @Deprecated
   public static <T> ListenableFuture<T> scheduleWhileTaskResultNull(SubmitterScheduler scheduler, 
                                                                     long scheduleDelayMillis, 
                                                                     boolean firstRunAsync, 
@@ -797,6 +803,83 @@ public class FutureUtils {
                                                                     long timeoutMillis) {
     return scheduleWhile(scheduler, scheduleDelayMillis, firstRunAsync, task, 
                          (r) -> r == null, timeoutMillis, true);
+  }
+
+  /**
+   * Executes a task until the provided supplier returns {@code false}.  This can be a good way to 
+   * implement retry logic where there completion (but not result) needs to be communicated.  If 
+   * a result is needed please see 
+   * {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)}.
+   * <p>
+   * The returned future will only provide a result once the looping of the task has completed.  
+   * Canceling the returned future will prevent future executions from being attempted.  Canceling 
+   * with an interrupt will transmit the interrupt to the running task if it is currently running.  
+   * <p>
+   * The first execution will either be immediately executed in thread or submitted for immediate 
+   * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
+   * this execution completes the result will be provided to the {@link Supplier} to determine if 
+   * another schedule should occur to re-run the task.  
+   * <p>
+   * If you want to ensure this does not reschedule forever consider using 
+   * {@link #scheduleWhile(SubmitterScheduler, long, boolean, Runnable, Supplier, long)}.
+   *  
+   * @since 5.0
+   * @param scheduler Scheduler to schedule out task executions
+   * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
+   * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
+   * @param task Task to execute as long as test returns {@code true}
+   * @param loopTest Test to see if scheduled loop should continue
+   * @return Future that will resolve once returned {@link Supplier} returns {@code false}
+   */
+  public static ListenableFuture<?> scheduleWhile(SubmitterScheduler scheduler, 
+                                                  long scheduleDelayMillis, 
+                                                  boolean firstRunAsync, 
+                                                  Runnable task, 
+                                                  Supplier<Boolean> loopTest) {
+    return scheduleWhile(scheduler, scheduleDelayMillis, firstRunAsync, task, loopTest, -1);
+  }
+
+  /**
+   * Executes a task, checking the result from the task to see if it needs to reschedule the task 
+   * again.  This can be a good way to implement retry logic where a result ultimately needs to be 
+   * communicated through a future.  
+   * <p>
+   * The returned future will only provide a result once the looping of the task has completed, or 
+   * until the provided timeout is reached.  If the timeout is reached then the task wont be 
+   * rescheduled.  Even if only 1 millisecond before timeout, the entire 
+   * {@code rescheduleDelayMillis} will be provided for the next attempt's scheduled delay.  On a 
+   * timeout, if {@code true} was provided for {@code timeoutProvideLastValue} then the future 
+   * will be resolved with the last result provided.  If {@code false} was provided then the 
+   * future will complete in an error state, the cause of which being a {@link TimeoutException}.
+   * Canceling the returned future will prevent future executions from being attempted.  Canceling 
+   * with an interrupt will transmit the interrupt to the running task if it is currently running.  
+   * <p>
+   * The first execution will either be immediately executed in thread or submitted for immediate 
+   * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
+   * this execution completes the result will be provided to the {@link Supplier} to determine if 
+   * another schedule should occur to re-run the task.  
+   *  
+   * @since 5.0
+   * @param scheduler Scheduler to schedule out task executions
+   * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
+   * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
+   * @param task Task to execute as long as test returns {@code true}
+   * @param loopTest Test to see if scheduled loop should continue
+   * @param timeoutMillis If greater than zero, wont reschedule and instead will just return the last result
+   * @return Future that will resolve once returned {@link Supplier} returns {@code false}
+   */
+  public static ListenableFuture<?> scheduleWhile(SubmitterScheduler scheduler, 
+                                                  long scheduleDelayMillis, 
+                                                  boolean firstRunAsync, 
+                                                  Runnable task, 
+                                                  Supplier<Boolean> loopTest,
+                                                  long timeoutMillis) {
+    ArgumentVerifier.assertNotNull(task, "task");
+    ArgumentVerifier.assertNotNull(loopTest, "loopTest");
+    
+    return scheduleWhile(scheduler, scheduleDelayMillis, 
+                         firstRunAsync, new RunnableCallableAdapter<>(task, null), 
+                         (ignored) -> loopTest.get(), timeoutMillis, false);
   }
   
   /**
@@ -939,6 +1022,9 @@ public class FutureUtils {
    *                                  {@code true} completes with the last result
    * @return Future that will resolve once returned {@link Predicate} returns {@code false}
    */
+  // TODO - de-duplicate code with executeWhile.  This is slightly awkward because of when we check the cancel state
+  //          If we just nievely call directly into it we will check the state before submitting to the scheduler, 
+  //          And not when the task is about to actually be executed.  Also there will be annoying wrapping overhead
   public static <T> ListenableFuture<T> scheduleWhile(SubmitterScheduler scheduler, 
                                                       long scheduleDelayMillis, 
                                                       ListenableFuture<? extends T> startingFuture, 
@@ -952,24 +1038,9 @@ public class FutureUtils {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNull(loopTest, "loopTest");
     
-    // shortcut optimization in case future is done, and loop is not needed
-    if (startingFuture.isDone()) {
-      if (startingFuture.isCancelled()) {
-        return immediateCanceledFuture();
-      }
-      try {
-        if (! loopTest.test(startingFuture.get())) {
-          return immediateResultFuture(startingFuture.get());
-        } // else, we need to go through the normal scheduling logic below
-      } catch (ExecutionException e) {
-        return immediateFailureFuture(e.getCause());
-      } catch (InterruptedException e) {
-        // should not be possible
-        throw new RuntimeException(e);
-      } catch (Throwable t) {
-        ExceptionUtils.handleException(t);
-        return immediateFailureFuture(t);
-      }
+    ListenableFuture<T> alreadyDoneResult = shortcutAsyncWhile(startingFuture, loopTest);
+    if (alreadyDoneResult != null) {
+      return alreadyDoneResult;
     }
     
     long startTime = timeoutMillis > 0 ? Clock.accurateForwardProgressingMillis() : -1;
@@ -1005,6 +1076,7 @@ public class FutureUtils {
               resultFuture.setFailure(new TimeoutException());
             }
           } else if (loopTest.test(result)) {
+            // TODO - if future is always already complete, this may StackOverflow
             scheduler.submitScheduled(cancelCheckingTask, scheduleDelayMillis)
                      .addCallback(this);  // add this to check again once execution completes
           } else {
@@ -1023,82 +1095,211 @@ public class FutureUtils {
     
     return resultFuture;
   }
-
+  
   /**
-   * Executes a task until the provided supplier returns {@code false}.  This can be a good way to 
-   * implement retry logic where there completion (but not result) needs to be communicated.  If 
-   * a result is needed please see 
-   * {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)}.
+   * Similar to {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)} 
+   * except that no executor is needed because the callable instead will return a future from the 
+   * provided async submission (which may be a scheduled task or otherwise).
    * <p>
-   * The returned future will only provide a result once the looping of the task has completed.  
-   * Canceling the returned future will prevent future executions from being attempted.  Canceling 
-   * with an interrupt will transmit the interrupt to the running task if it is currently running.  
-   * <p>
-   * The first execution will either be immediately executed in thread or submitted for immediate 
-   * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
-   * this execution completes the result will be provided to the {@link Supplier} to determine if 
-   * another schedule should occur to re-run the task.  
-   * <p>
-   * If you want to ensure this does not reschedule forever consider using 
-   * {@link #scheduleWhile(SubmitterScheduler, long, boolean, Runnable, Supplier, long)}.
-   *  
-   * @since 5.0
-   * @param scheduler Scheduler to schedule out task executions
-   * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
-   * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
-   * @param task Task to execute as long as test returns {@code true}
-   * @param loopTest Test to see if scheduled loop should continue
-   * @return Future that will resolve once returned {@link Supplier} returns {@code false}
+   * In the end this is just another way to have a loop of async actions, checking results as they 
+   * are provided but not resolving the returned future till the async action completes.
+   * 
+   * @param <T> The result object type returned by the task and provided by the future
+   * @param asyncTask Callable to produce a {@link ListenableFuture} for when a result is ready 
+   * @param loopTest The test to check the ready result to see if we need to keep looping
+   * @return Future that will resolve once returned {@link Predicate} returns {@code false}
    */
-  public static ListenableFuture<?> scheduleWhile(SubmitterScheduler scheduler, 
-                                                  long scheduleDelayMillis, 
-                                                  boolean firstRunAsync, 
-                                                  Runnable task, 
-                                                  Supplier<Boolean> loopTest) {
-    return scheduleWhile(scheduler, scheduleDelayMillis, firstRunAsync, task, loopTest, -1);
+  public static <T> ListenableFuture<T> executeWhile(Callable<? extends ListenableFuture<? extends T>> asyncTask, 
+                                                     Predicate<? super T> loopTest) {
+    return executeWhile(asyncTask, loopTest, -1, false);
   }
 
   /**
-   * Executes a task, checking the result from the task to see if it needs to reschedule the task 
-   * again.  This can be a good way to implement retry logic where a result ultimately needs to be 
-   * communicated through a future.  
+   * Similar to {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)} 
+   * except that no executor is needed because the callable instead will return a future from the 
+   * provided async submission (which may be a scheduled task or otherwise).
    * <p>
-   * The returned future will only provide a result once the looping of the task has completed, or 
-   * until the provided timeout is reached.  If the timeout is reached then the task wont be 
-   * rescheduled.  Even if only 1 millisecond before timeout, the entire 
-   * {@code rescheduleDelayMillis} will be provided for the next attempt's scheduled delay.  On a 
+   * In the end this is just another way to have a loop of async actions, checking results as they 
+   * are provided but not resolving the returned future till the async action completes.  On a 
    * timeout, if {@code true} was provided for {@code timeoutProvideLastValue} then the future 
    * will be resolved with the last result provided.  If {@code false} was provided then the 
    * future will complete in an error state, the cause of which being a {@link TimeoutException}.
    * Canceling the returned future will prevent future executions from being attempted.  Canceling 
    * with an interrupt will transmit the interrupt to the running task if it is currently running.  
-   * <p>
-   * The first execution will either be immediately executed in thread or submitted for immediate 
-   * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
-   * this execution completes the result will be provided to the {@link Supplier} to determine if 
-   * another schedule should occur to re-run the task.  
-   *  
-   * @since 5.0
-   * @param scheduler Scheduler to schedule out task executions
-   * @param scheduleDelayMillis Delay after predicate indicating to loop again before re-executed
-   * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
-   * @param task Task to execute as long as test returns {@code true}
-   * @param loopTest Test to see if scheduled loop should continue
+   * 
+   * @param <T> The result object type returned by the task and provided by the future
+   * @param asyncTask Callable to produce a {@link ListenableFuture} for when a result is ready 
+   * @param loopTest The test to check the ready result to see if we need to keep looping
    * @param timeoutMillis If greater than zero, wont reschedule and instead will just return the last result
-   * @return Future that will resolve once returned {@link Supplier} returns {@code false}
+   * @param timeoutProvideLastValue On timeout {@code false} will complete with a TimeoutException, 
+   *                                  {@code true} completes with the last result
+   * @return Future that will resolve once returned {@link Predicate} returns {@code false}
    */
-  public static ListenableFuture<?> scheduleWhile(SubmitterScheduler scheduler, 
-                                                  long scheduleDelayMillis, 
-                                                  boolean firstRunAsync, 
-                                                  Runnable task, 
-                                                  Supplier<Boolean> loopTest,
-                                                  long timeoutMillis) {
-    ArgumentVerifier.assertNotNull(task, "task");
+  public static <T> ListenableFuture<T> executeWhile(Callable<? extends ListenableFuture<? extends T>> asyncTask, 
+                                                     Predicate<? super T> loopTest, 
+                                                     long timeoutMillis, 
+                                                     boolean timeoutProvideLastValue) {
+    ArgumentVerifier.assertNotNull(asyncTask, "asyncTask");
     ArgumentVerifier.assertNotNull(loopTest, "loopTest");
     
-    return scheduleWhile(scheduler, scheduleDelayMillis, 
-                         firstRunAsync, new RunnableCallableAdapter<>(task, null), 
-                         (ignored) -> loopTest.get(), timeoutMillis, false);
+    try {
+      return executeWhile(asyncTask.call(), asyncTask, loopTest, 
+                          timeoutMillis, timeoutProvideLastValue);
+    } catch (Exception e) {
+      return FutureUtils.immediateFailureFuture(e);
+    }
+  }
+
+  /**
+   * Similar to {@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate)} 
+   * except that no executor is needed because the callable instead will return a future from the 
+   * provided async submission (which may be a scheduled task or otherwise).
+   * <p>
+   * In the end this is just another way to have a loop of async actions, checking results as they 
+   * are provided but not resolving the returned future till the async action completes.
+   * 
+   * @param <T> The result object type returned by the task and provided by the future
+   * @param startingFuture Future to use for first result to test for loop
+   * @param asyncTask Callable to produce a {@link ListenableFuture} for when a result is ready 
+   * @param loopTest The test to check the ready result to see if we need to keep looping
+   * @return Future that will resolve once returned {@link Predicate} returns {@code false}
+   */
+  public static <T> ListenableFuture<T> executeWhile(ListenableFuture<? extends T> startingFuture, 
+                                                     Callable<? extends ListenableFuture<? extends T>> asyncTask, 
+                                                     Predicate<? super T> loopTest) {
+    return executeWhile(startingFuture, asyncTask, loopTest, -1, false);
+  }
+
+  /**
+   * Similar to {@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate, long, boolean)} 
+   * except that no executor is needed because the callable instead will return a future from the 
+   * provided async submission (which may be a scheduled task or otherwise).
+   * <p>
+   * In the end this is just another way to have a loop of async actions, checking results as they 
+   * are provided but not resolving the returned future till the async action completes.  On a 
+   * timeout, if {@code true} was provided for {@code timeoutProvideLastValue} then the future 
+   * will be resolved with the last result provided.  If {@code false} was provided then the 
+   * future will complete in an error state, the cause of which being a {@link TimeoutException}.
+   * Canceling the returned future will prevent future executions from being attempted.  Canceling 
+   * with an interrupt will transmit the interrupt to the running task if it is currently running.  
+   * 
+   * @param <T> The result object type returned by the task and provided by the future
+   * @param startingFuture Future to use for first result to test for loop
+   * @param asyncTask Callable to produce a {@link ListenableFuture} for when a result is ready 
+   * @param loopTest The test to check the ready result to see if we need to keep looping
+   * @param timeoutMillis If greater than zero, wont reschedule and instead will just return the last result
+   * @param timeoutProvideLastValue On timeout {@code false} will complete with a TimeoutException, 
+   *                                  {@code true} completes with the last result
+   * @return Future that will resolve once returned {@link Predicate} returns {@code false}
+   */
+  public static <T> ListenableFuture<T> executeWhile(ListenableFuture<? extends T> startingFuture, 
+                                                     Callable<? extends ListenableFuture<? extends T>> asyncTask, 
+                                                     Predicate<? super T> loopTest, 
+                                                     long timeoutMillis, 
+                                                     boolean timeoutProvideLastValue) {
+    ArgumentVerifier.assertNotNull(startingFuture, "startingFuture");
+    ArgumentVerifier.assertNotNull(asyncTask, "asyncTask");
+    ArgumentVerifier.assertNotNull(loopTest, "loopTest");
+    
+    ListenableFuture<T> alreadyDoneResult = shortcutAsyncWhile(startingFuture, loopTest);
+    if (alreadyDoneResult != null) {
+      return alreadyDoneResult;
+    }
+    
+    long startTime = timeoutMillis > 0 ? Clock.accurateForwardProgressingMillis() : -1;
+    // can not assert not resolved in parallel because user may cancel future at any point
+    SettableListenableFuture<T> resultFuture = new SettableListenableFuture<>(false);
+    Callable<ListenableFuture<? extends T>> cancelCheckingTask = new Callable<ListenableFuture<? extends T>>() {
+      @Override
+      public ListenableFuture<? extends T> call() throws Exception {
+        // set thread before check canceled state so if canceled with interrupt we will interrupt the call
+        resultFuture.setRunningThread(Thread.currentThread());
+        try {
+          if (! resultFuture.isCancelled()) {
+            return asyncTask.call();
+          } else {
+            // result future is already complete, so throw to avoid executing, but only throw such 
+            // that we wont attempt to do anything with the result future
+            throw FailurePropogatingFutureCallback.IGNORED_FAILURE;
+          }
+        } finally {
+          resultFuture.setRunningThread(null);
+        }
+      }
+    };
+    
+    startingFuture.addCallback(new FailurePropogatingFutureCallback<T>(resultFuture) {
+      @Override
+      public void handleResult(T result) {
+        try {
+          while (loopTest.test(result)) {
+            if (startTime > -1 && Clock.lastKnownForwardProgressingMillis() - startTime > timeoutMillis) {
+              if (timeoutProvideLastValue) {
+                resultFuture.setResult(result);
+              } else {
+                resultFuture.setFailure(new TimeoutException());
+              }
+              return;
+            }
+            ListenableFuture<? extends T> lf = cancelCheckingTask.call();
+            if (lf.isDone()) {  // prevent StackOverflow when already done futures are returned
+              try {
+                result = lf.get();
+                continue;
+              } catch (ExecutionException e) {
+                // uncaught exception already handled, don't handle twice
+                resultFuture.setFailure(e.getCause());
+                return;
+              }
+            } else {
+              lf.addCallback(this);
+              return;
+            }
+          }
+          // if broke loop without return, result is ready
+          resultFuture.setResult(result);
+        } catch (Throwable t) {
+          // failure likely from the predicate test, handle exception 
+          // so the behavior is closer to if the exception was thrown from a task submitted to the pool
+          ExceptionUtils.handleException(t);
+          
+          resultFuture.setFailure(t);
+        }
+      }
+    });
+    
+    return resultFuture;
+  }
+  
+  /**
+   * Check if we can shortcut our async while loop by producing an already completed future.  If 
+   * we can do this it will be returned, otherwise {@code null} will be returned.
+   * 
+   * @param startingFuture Future to check for already complete result
+   * @param doneTest Test to see if the initial result is valid
+   * @return A future that is already complete with the existing result, otherwise {@code null}
+   */
+  private static <T> ListenableFuture<T> shortcutAsyncWhile(ListenableFuture<? extends T> startingFuture, 
+                                                            Predicate<? super T> doneTest) {
+    if (startingFuture.isDone()) {
+      if (startingFuture.isCancelled()) {
+        return immediateCanceledFuture();
+      }
+      try {
+        if (! doneTest.test(startingFuture.get())) {
+          return immediateResultFuture(startingFuture.get());
+        }
+      } catch (ExecutionException e) {
+        return immediateFailureFuture(e.getCause());
+      } catch (InterruptedException e) {
+        // should not be possible
+        throw new RuntimeException(e);
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+        return immediateFailureFuture(t);
+      }
+    }
+    return null;
   }
   
   /**
