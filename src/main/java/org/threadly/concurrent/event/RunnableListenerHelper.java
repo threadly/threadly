@@ -100,42 +100,26 @@ public class RunnableListenerHelper {
   protected void doCallListeners() {
     if (executorListeners != null) {
       for (Pair<Runnable, Executor> listener : executorListeners) {
-        runListener(listener.getLeft(), listener.getRight(), false);
+        try {
+          listener.getRight().execute(listener.getLeft());
+        } catch (Throwable t) {
+          ExceptionUtils.handleException(t);
+        }
       }
     }
     if (inThreadListeners != null) {
       for (Runnable listener : inThreadListeners) {
-        runListener(listener, null, false);
+        try {
+          listener.run();
+        } catch (Throwable t) {
+          ExceptionUtils.handleException(t);
+        }
       }
     }
     
     if (callOnce) {
       executorListeners = null;
       inThreadListeners = null;
-    }
-  }
-  
-  /**
-   * Invokes a single listener, if an executor is provided that listener is invoked on that 
-   * executor, otherwise it runs in this thread.
-   * 
-   * @param listener Listener to run
-   * @param executor Executor to run listener on, or null to run on calling thread
-   * @param throwException {@code true} throws exceptions from runnable, {@code false} handles exceptions
-   */
-  protected void runListener(Runnable listener, Executor executor, boolean throwException) {
-    try {
-      if (executor != null) {
-        executor.execute(listener);
-      } else {
-        listener.run();
-      }
-    } catch (Throwable t) {
-      if (throwException) {
-        throw ExceptionUtils.makeRuntime(t);
-      } else {
-        ExceptionUtils.handleException(t);
-      }
     }
   }
 
@@ -225,7 +209,15 @@ public class RunnableListenerHelper {
     
     if (runListener) {
       // run listener outside of lock
-      runListener(listener, inThreadExecutionExecutor, true);
+      try {
+        if (inThreadExecutionExecutor != null) {
+          inThreadExecutionExecutor.execute(listener);
+        } else {
+          listener.run();
+        }
+      } catch (Throwable t) {
+        throw ExceptionUtils.makeRuntime(t);
+      }
     }
   }
   
