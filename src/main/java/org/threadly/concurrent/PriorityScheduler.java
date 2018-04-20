@@ -584,7 +584,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       synchronized (poolSizeChangeLock) {
         if (maxPoolSize + delta < 1) {
-          throw new IllegalStateException(maxPoolSize + "" + delta + " must be at least 1");
+          throw new IllegalStateException(maxPoolSize + " " + delta + " must be at least 1");
         }
         this.maxPoolSize += delta;
       }

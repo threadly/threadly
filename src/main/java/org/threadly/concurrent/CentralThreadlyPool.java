@@ -606,14 +606,14 @@ public class CentralThreadlyPool {
 
     /**
      * {@link Runnable} which expands the pool on construction, and will keep the pool expanded 
-     * till execution completes.  This is designed for tasks which run once.
+     * till it can be garbage collected.  This is designed for tasks which run multiple times.
      */
-    protected static class PoolResizingOnCompleteionTask implements Runnable, RunnableContainer {
+    protected static class PoolResizingOnCollectionTask implements Runnable, RunnableContainer {
       protected final Runnable task;
       @SuppressWarnings("unused")
       private final Object gcReference; // object just held on to track garbage collection
       
-      public PoolResizingOnCompleteionTask(Runnable task) {
+      public PoolResizingOnCollectionTask(Runnable task) {
         this.task = task;
         this.gcReference = new PoolResizer(1);
       }
@@ -628,15 +628,15 @@ public class CentralThreadlyPool {
         return task;
       }
     }
-    
+
     /**
      * {@link Runnable} which expands the pool on construction, and will keep the pool expanded 
-     * till it can be garbage collected.  This is designed for tasks which run multiple times.
+     * till execution completes.  This is designed for tasks which run once.
      */
-    protected static class PoolResizingOnCollectionTask implements Runnable, RunnableContainer {
+    protected static class PoolResizingOnCompleteionTask implements Runnable, RunnableContainer {
       protected final Runnable task;
       
-      public PoolResizingOnCollectionTask(Runnable task) {
+      public PoolResizingOnCompleteionTask(Runnable task) {
         this.task = task;
         POOL_SIZE_UPDATER.adjustPoolSize(1);
       }
