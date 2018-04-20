@@ -64,14 +64,16 @@ import org.threadly.util.SuppressedStackRuntimeException;
  * <p>
  * Retry operation and return final result in future:
  * <ul>
- * <li>{@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable)}
- * <li>{@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable, long)}
  * <li>{@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)}
  * <li>{@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)}
  * <li>{@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate)}
  * <li>{@link #scheduleWhile(SubmitterScheduler, long, ListenableFuture, Callable, Predicate, long, boolean)}
  * <li>{@link #scheduleWhile(SubmitterScheduler, long, boolean, Runnable, Supplier)}
  * <li>{@link #scheduleWhile(SubmitterScheduler, long, boolean, Runnable, Supplier, long)}
+ * <li>{@link #executeWhile(Callable, Predicate)}
+ * <li>{@link #executeWhile(Callable, Predicate, long, boolean)}
+ * <li>{@link #executeWhile(ListenableFuture, Callable, Predicate)}
+ * <li>{@link #executeWhile(ListenableFuture, Callable, Predicate, long, boolean)}
  * </ul>
  * 
  * @since 1.0.0
