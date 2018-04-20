@@ -784,7 +784,8 @@ public class FutureUtils {
    * execution.  If non-null then the result will be able to be retrieved from the returned 
    * {@link ListenableFuture}.
    * 
-   * @deprecated Please use {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)}
+   * @deprecated Please use with a simple null checking Predicate
+   *               {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)}
    * 
    * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
