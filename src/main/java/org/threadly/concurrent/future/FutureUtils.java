@@ -1427,12 +1427,7 @@ public class FutureUtils {
         public void handleResult(ST result) {
           try {
             slf.setRunningThread(Thread.currentThread());
-            transformer.apply(result).addCallback(new FailurePropogatingFutureCallback<RT>(slf) {
-              @Override
-              public void handleResult(RT result) {
-                slf.setResult(result);
-              }
-            });
+            transformer.apply(result).addCallback(slf);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable t) {
             // failure calculating transformation, let handler get a chance to see the uncaught exception
@@ -1471,10 +1466,8 @@ public class FutureUtils {
     public void handleFailure(Throwable t) {
       if (t == IGNORED_FAILURE) {
         // ignored
-      } else if (t instanceof CancellationException) {
-        settableFuture.cancel(false);
       } else {
-        settableFuture.setFailure(t);
+        settableFuture.handleFailure(t);
       }
     }
   }

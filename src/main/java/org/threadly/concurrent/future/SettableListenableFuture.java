@@ -122,7 +122,8 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   /**
    * This call defers to {@link #setFailure(Throwable)}.  It is implemented so that you can 
    * construct this, return it immediately, but only later provide this as a callback to another 
-   * {@link ListenableFuture} implementation.  
+   * {@link ListenableFuture} implementation.  If the parent chained future was canceled this 
+   * implementation will attempt to cancel the future as well.
    * <p>
    * This should never be invoked by the implementor, this should only be invoked by other 
    * {@link ListenableFuture}'s.  
@@ -135,7 +136,11 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    */
   @Override
   public void handleFailure(Throwable t) {
-    setFailure(t);
+    if (t instanceof CancellationException) {
+      cancel(false);
+    } else {
+      setFailure(t);
+    }
   }
   
   /**

@@ -386,6 +386,26 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     }
   }
   
+  @Test
+  public void chainCanceledFutureTest() {
+    SettableListenableFuture<String> canceledSlf = new SettableListenableFuture<>();
+    assertTrue(canceledSlf.cancel(false));
+    
+    canceledSlf.addCallback(slf);
+    
+    assertTrue(slf.isCancelled());
+  }
+  
+  @Test
+  public void cancelChainedFutureTest() {
+    SettableListenableFuture<String> canceledSlf = new SettableListenableFuture<>();
+    
+    canceledSlf.addCallback(slf);
+    assertTrue(canceledSlf.cancel(false));
+    
+    assertTrue(slf.isCancelled());
+  }
+  
   private static class SettableListenableFutureFactory implements ListenableFutureFactory {
     @Override
     public ListenableFuture<?> makeCanceled() {
