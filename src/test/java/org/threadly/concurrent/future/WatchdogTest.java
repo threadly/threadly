@@ -29,13 +29,6 @@ public class WatchdogTest {
   }
   
   @Test
-  public void emptySchedulerConstructorTest() {
-    watchdog = new Watchdog(1, true);
-    
-    assertNotNull(watchdog.scheduler);
-  }
-  
-  @Test
   public void getTimeoutInMillisTest() {
     assertEquals(TIMEOUT, watchdog.getTimeoutInMillis());
   }

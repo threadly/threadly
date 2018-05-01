@@ -33,7 +33,6 @@ public class Watchdog {
     return ss;
   }
   
-  protected final SubmitterScheduler scheduler;
   protected final long timeoutInMillis;
   protected final boolean sendInterruptToTrackedThreads;
   protected final CheckRunner checkRunner;
@@ -66,7 +65,6 @@ public class Watchdog {
    */
   public Watchdog(SubmitterScheduler scheduler, long timeoutInMillis, 
                   boolean sendInterruptOnFutureCancel) {
-    this.scheduler = scheduler;
     this.timeoutInMillis = timeoutInMillis;
     this.sendInterruptToTrackedThreads = sendInterruptOnFutureCancel;
     this.checkRunner = new CheckRunner(scheduler, timeoutInMillis);
@@ -146,7 +144,7 @@ public class Watchdog {
    * 
    * @since 4.0.0
    */
-  private class CheckRunner extends ReschedulingOperation {
+  protected class CheckRunner extends ReschedulingOperation {
     public CheckRunner(SubmitterScheduler scheduler, long scheduleDelay) {
       super(scheduler, scheduleDelay);
     }
