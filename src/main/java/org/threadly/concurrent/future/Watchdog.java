@@ -158,13 +158,10 @@ public class Watchdog {
       FutureWrapper fw = null;
       while (it.hasNext()) {
         fw = it.next();
-        if (now >= fw.expireTime) {
+        if (now >= fw.expireTime || (now = Clock.accurateForwardProgressingMillis()) >= fw.expireTime) {
           it.remove();
-          try {
-            fw.future.cancel(sendInterruptToTrackedThreads);
-          } finally {
-            fw = null;
-          }
+          fw.future.cancel(sendInterruptToTrackedThreads);
+          fw = null;
         } else {
           /* since futures are added in order of expiration, 
           we know at this point we don't need to inspect any more items*/
@@ -173,9 +170,9 @@ public class Watchdog {
       }
       
       if (fw != null) {
-        signalToRun();  // notify we still have work to do
         // update our execution time to when the next expiration will occur
         setScheduleDelay(fw.expireTime - now);
+        signalToRun();  // notify we still have work to do
       } else {
         // ensure schedule delay is set correctly
         setScheduleDelay(timeoutInMillis);
