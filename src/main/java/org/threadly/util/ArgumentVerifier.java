@@ -32,7 +32,7 @@ public class ArgumentVerifier {
    */
   public static void assertNotNegative(double val, String name) {
     if (val < 0) {
-      throw new IllegalArgumentException(StringUtils.nullToEmpty(name) + " can not be negative");
+      throw new IllegalArgumentException(StringUtils.nullToEmpty(name) + " can not be negative: " + val);
     }
   }
   
@@ -46,7 +46,7 @@ public class ArgumentVerifier {
    */
   public static void assertGreaterThanZero(double val, String name) {
     if (val <= 0) {
-      throw new IllegalArgumentException(StringUtils.nullToEmpty(name) + " must be > 0");
+      throw new IllegalArgumentException(StringUtils.nullToEmpty(name) + " must be > 0: " + val);
     }
   }
   
@@ -62,7 +62,7 @@ public class ArgumentVerifier {
   public static void assertLessThan(double val, double compareVal, String name) {
     if (val >= compareVal) {
       throw new IllegalArgumentException(StringUtils.nullToEmpty(name) + 
-                                           " must be < " + compareVal);
+                                           " must be < " + compareVal + ": " + val);
     }
   }
 }

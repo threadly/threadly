@@ -766,7 +766,7 @@ public class CentralThreadlyPool {
       super(priority, guaranteedThreads, maxThreads, threadName);
       
       this.guaranteedThreads = guaranteedThreads > 0 ? guaranteedThreads : 0;
-      this.maxThreads = maxThreads;
+      this.maxThreads = getMaxConcurrency();
     }
 
     @Override
