@@ -7,6 +7,7 @@ plugins.withType(JavaPlugin) {
 }
 
 test {
+  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 4))
   jacoco {
     excludes = ['**/package-info**','**/*Test']
     destinationFile = file("$buildDir/reports/jacoco/test.exec")

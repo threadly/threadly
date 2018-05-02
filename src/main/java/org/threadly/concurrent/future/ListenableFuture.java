@@ -376,6 +376,141 @@ public interface ListenableFuture<T> extends Future<T> {
   }
   
   /**
+   * Similar to {@link #throwMap(Function)} except this mapper will only be invoked when the 
+   * future is in a failure state (from either the original computation or an earlier mapper 
+   * throwing an exception).  If this future does resolve in a failure state, and that exception 
+   * class matches the one provided here.  The mapper function will then be provided that 
+   * throwable, it can then map that throwable back into a result (perhaps an {@code Optional}), 
+   * or re-throw either the same or a different exception keep the future in a failure state.  If 
+   * the future completes with a normal result, this mapper will be ignored, and the result will 
+   * be forwarded on without invoking this mapper.
+   * 
+   * @since 5.17
+   * @param <TT> The type of throwable that should be handled 
+   * @param throwableType The class referencing to the type of throwable this mapper handles
+   * @param mapper The mapper to convert a thrown exception to either a result or thrown exception
+   * @return A {@link ListenableFuture} that will resolve after the mapper is considered
+   */
+  default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
+                                                                Function<TT, T> mapper) {
+    return mapFailure(throwableType, mapper, null, null);
+  }
+
+  /**
+   * Similar to {@link #throwMap(Function, Executor)} except this mapper will only be invoked when 
+   * the future is in a failure state (from either the original computation or an earlier mapper 
+   * throwing an exception).  If this future does resolve in a failure state, and that exception 
+   * class matches the one provided here.  The mapper function will then be provided that 
+   * throwable, it can then map that throwable back into a result (perhaps an {@code Optional}), 
+   * or re-throw either the same or a different exception keep the future in a failure state.  If 
+   * the future completes with a normal result, this mapper will be ignored, and the result will 
+   * be forwarded on without invoking this mapper.
+   * 
+   * @since 5.17
+   * @param <TT> The type of throwable that should be handled 
+   * @param throwableType The class referencing to the type of throwable this mapper handles
+   * @param mapper The mapper to convert a thrown exception to either a result or thrown exception
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @return A {@link ListenableFuture} that will resolve after the mapper is considered
+   */
+  default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
+                                                                Function<TT, T> mapper, 
+                                                                Executor executor) {
+    return mapFailure(throwableType, mapper, executor, null);
+  }
+
+  /**
+   * Similar to {@link #throwMap(Function, Executor, ListenerOptimizationStrategy)} except this 
+   * mapper will only be invoked when the future is in a failure state (from either the original 
+   * computation or an earlier mapper throwing an exception).  If this future does resolve in a 
+   * failure state, and that exception class matches the one provided here.  The mapper function 
+   * will then be provided that throwable, it can then map that throwable back into a result 
+   * perhaps an {@code Optional}), or re-throw either the same or a different exception keep the 
+   * future in a failure state.  If the future completes with a normal result, this mapper will be 
+   * ignored, and the result will be forwarded on without invoking this mapper.
+   * 
+   * @since 5.17
+   * @param <TT> The type of throwable that should be handled 
+   * @param throwableType The class referencing to the type of throwable this mapper handles
+   * @param mapper The mapper to convert a thrown exception to either a result or thrown exception
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return A {@link ListenableFuture} that will resolve after the mapper is considered
+   */
+  default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
+                                                                Function<TT, T> mapper, 
+                                                                Executor executor, 
+                                                                ListenerOptimizationStrategy optimizeExecution) {
+    return FutureUtils.failureTransform(this, mapper, throwableType, executor, optimizeExecution);
+  }
+
+  /**
+   * Similar to {@link #mapFailure(Class, Function)} except that this mapper function returns a 
+   * {@link ListenableFuture} if it needs to map the Throwable / failure into a result or another 
+   * failure.  The mapper function can return a Future that will (or may) provide a result, or it 
+   * can provide a future that will result in the same or another failure.  Similar to  
+   * {@link #mapFailure(Class, Function)} the mapper can also throw an exception directly.
+   * 
+   * @since 5.17
+   * @param <TT> The type of throwable that should be handled 
+   * @param throwableType The class referencing to the type of throwable this mapper handles
+   * @param mapper Function to invoke in order to transform the futures result
+   * @return A {@link ListenableFuture} that will resolve after the mapper is considered
+   */
+  default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
+                                                                    Function<TT, ListenableFuture<T>> mapper) {
+    return flatMapFailure(throwableType, mapper, null, null);
+  }
+
+  /**
+   * Similar to {@link #mapFailure(Class, Function, Executor)} except that this mapper function 
+   * returns a {@link ListenableFuture} if it needs to map the Throwable / failure into a result 
+   * or another failure.  The mapper function can return a Future that will (or may) provide a 
+   * result, or it can provide a future that will result in the same or another failure.  Similar 
+   * to {@link #mapFailure(Class, Function, Executor)} the mapper can also throw an exception 
+   * directly.
+   * 
+   * @since 5.17
+   * @param <TT> The type of throwable that should be handled 
+   * @param throwableType The class referencing to the type of throwable this mapper handles
+   * @param mapper Function to invoke in order to transform the futures result
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @return A {@link ListenableFuture} that will resolve after the mapper is considered
+   */
+  default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
+                                                                    Function<TT, ListenableFuture<T>> mapper, 
+                                                                    Executor executor) {
+    return flatMapFailure(throwableType, mapper, executor, null);
+  }
+
+  /**
+   * Similar to {@link #mapFailure(Class, Function, Executor, ListenerOptimizationStrategy)} except 
+   * that this mapper function returns a {@link ListenableFuture} if it needs to map the Throwable 
+   * into a result or another failure.  The mapper function can return a Future that will (or may) 
+   * provide a result, or it can provide a future that will result in the same or another failure.  
+   * Similar to {@link #mapFailure(Class, Function, Executor, ListenerOptimizationStrategy)} the 
+   * mapper can also throw an exception directly.
+   * 
+   * @since 5.17
+   * @param <TT> The type of throwable that should be handled 
+   * @param throwableType The class referencing to the type of throwable this mapper handles
+   * @param mapper Function to invoke in order to transform the futures result
+   * @param executor Executor to invoke mapper function on, or {@code null} 
+   *          to invoke on this thread or future complete thread (depending on future state)
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return A {@link ListenableFuture} that will resolve after the mapper is considered
+   */
+  default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
+                                                                    Function<TT, ListenableFuture<T>> mapper, 
+                                                                    Executor executor, 
+                                                                    ListenerOptimizationStrategy optimizeExecution) {
+    return FutureUtils.flatFailureTransform(this, mapper, throwableType, executor, optimizeExecution);
+  }
+  
+  /**
    * Add a listener to be called once the future has completed.  If the future has already 
    * finished, this will be called immediately.
    * <p>

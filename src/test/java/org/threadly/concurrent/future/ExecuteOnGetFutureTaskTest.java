@@ -74,8 +74,8 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
     }
 
     @Override
-    public ListenableFuture<?> makeWithFailure(Exception t) {
-      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<>(() -> { throw t; });
+    public ListenableFuture<Object> makeWithFailure(Exception t) {
+      ListenableFutureTask<Object> lft = new ExecuteOnGetFutureTask<>(() -> { throw t; });
       lft.run();
       return lft;
     }

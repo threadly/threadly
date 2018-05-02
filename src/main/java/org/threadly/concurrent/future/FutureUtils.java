@@ -1441,6 +1441,160 @@ public class FutureUtils {
       return slf;
     }
   }
+
+  /**
+   * Transform a future's failure condition into another future by applying the transformation 
+   * function.  The mapper can then choose to either throw an exception, or convert the exception 
+   * back into a normal result.
+   * TODO verify javadocs below  
+   * <p>
+   * This can be easily used to chain together a series of operations, happening async until the 
+   * final result is actually needed.  Once the future completes the mapper function will be invoked 
+   * on the executor (if provided).  Because of that providing an executor can ensure this will 
+   * never block.  If an executor is not provided then the mapper may be invoked on the calling 
+   * thread (if the future is already complete), or on the same thread which the future completes 
+   * on.  If the mapper function is very fast and cheap to run then {@link #map(Function)} or 
+   * providing {@code null} for the executor can allow more efficient operation.
+   * 
+   * @since 5.17
+   * @param <ST> The source type for the object returned from the future and inputed into the mapper
+   * @param <RT> The result type for the object returned from the mapper
+   * @param sourceFuture Future to source input into transformation function
+   * @param transformer Function to apply result from future into returned future
+   * @param reportedTransformedExceptions {@code true} to indicate transformer is not expected to throw exception.
+   *                                          If any are thrown they will be delegated to 
+   *                                          {@link ExceptionUtils#handleException(Throwable)}.
+   * @param executor Executor to execute transformation function on, or {@code null}
+   * @return Future with result of transformation function or respective error
+   */
+  @SuppressWarnings("unchecked")
+  protected static <TT extends Throwable, RT> ListenableFuture<RT> 
+      failureTransform(ListenableFuture<RT> sourceFuture, Function<TT, RT> mapper,
+                       Class<TT> throwableType, Executor executor, 
+                       ListenerOptimizationStrategy optimizeExecution) {
+    if (executor == null & sourceFuture.isDone()) {
+      // optimized path for already complete futures which we can now process in thread
+      if (sourceFuture.isCancelled()) {
+        if (throwableType.isAssignableFrom(CancellationException.class)) {
+          try {
+            return FutureUtils.immediateResultFuture(mapper.apply((TT)new CancellationException()));
+          } catch (Throwable t) {
+            return FutureUtils.immediateFailureFuture(t);
+          }
+        } else {
+          return sourceFuture;
+        }
+      } else {
+        try {
+          sourceFuture.get();
+          return sourceFuture;  // no error
+        } catch (InterruptedException e) {
+          // should not be possible
+          throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+          if (throwableType.isAssignableFrom(e.getCause().getClass())) {
+            try {
+              return FutureUtils.immediateResultFuture(mapper.apply((TT)e.getCause()));
+            } catch (Throwable t) {
+              return FutureUtils.immediateFailureFuture(t);
+            }
+          } else {
+            return sourceFuture;
+          }
+        }
+      }
+    }
+    
+    SettableListenableFuture<RT> slf = 
+        new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
+    // may still process in thread if future completed after check and executor is null
+    sourceFuture.addCallback(new FutureCallback<RT>() {
+      @Override
+      public void handleResult(RT result) {
+        slf.setResult(result);
+      }
+      
+      @Override
+      public void handleFailure(Throwable t) {
+        if (throwableType.isAssignableFrom(t.getClass())) {
+          try {
+            slf.setRunningThread(Thread.currentThread());
+            slf.setResult(mapper.apply((TT)t));
+          } catch (Throwable newT) {
+            slf.setFailure(newT);
+          }
+        } else {
+          slf.setFailure(t);
+        }
+      }
+    }, executor, optimizeExecution);
+    return slf;
+  }
+
+  @SuppressWarnings("unchecked")
+  protected static <TT extends Throwable, RT> ListenableFuture<RT> 
+      flatFailureTransform(ListenableFuture<RT> sourceFuture, Function<TT, ListenableFuture<RT>> mapper,
+                           Class<TT> throwableType, Executor executor, 
+                           ListenerOptimizationStrategy optimizeExecution) {
+    if (executor == null & sourceFuture.isDone()) {
+      if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
+        if (throwableType.isAssignableFrom(CancellationException.class)) {
+          try {
+            return mapper.apply((TT)new CancellationException());
+          } catch (Throwable t) {
+            return FutureUtils.immediateFailureFuture(t);
+          }
+        } else {
+          return sourceFuture;
+        }
+      } else {
+        // optimized path for already complete futures which we can now process in thread
+        try {
+          sourceFuture.get();
+          return sourceFuture;  // no error
+        } catch (InterruptedException e) {
+          // should not be possible
+          throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+          if (throwableType.isAssignableFrom(e.getCause().getClass())) {
+            try {
+              return mapper.apply((TT)e.getCause());
+            } catch (Throwable t) {
+              return FutureUtils.immediateFailureFuture(t);
+            }
+          } else {
+            return sourceFuture;
+          }
+        }
+      }
+    }
+    
+    SettableListenableFuture<RT> slf = 
+        new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
+    // may still process in thread if future completed after check and executor is null
+    sourceFuture.addCallback(new FutureCallback<RT>() {
+      @Override
+      public void handleResult(RT result) {
+        slf.setResult(result);
+      }
+      
+      @Override
+      public void handleFailure(Throwable t) {
+        if (throwableType.isAssignableFrom(t.getClass())) {
+          try {
+            slf.setRunningThread(Thread.currentThread());
+            mapper.apply((TT)t).addCallback(slf);
+            slf.setRunningThread(null); // may be processing async now
+          } catch (Throwable newT) {
+            slf.setFailure(newT);
+          }
+        } else {
+          slf.setFailure(t);
+        }
+      }
+    }, executor, optimizeExecution);
+    return slf;
+  }
   
   /**
    * Class which will propagate a failure condition to a {@link SettableListenableFuture} from a 

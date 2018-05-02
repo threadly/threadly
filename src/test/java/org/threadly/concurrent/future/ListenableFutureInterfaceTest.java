@@ -576,6 +576,289 @@ public abstract class ListenableFutureInterfaceTest {
     assertTrue(mappedLF.isDone());
     verifyFutureFailure(mappedLF, failure);
   }
+  
+  @Test
+  public void mapFailureIgnoredTest() {
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<Object> finalLF = lf.mapFailure(Throwable.class, 
+                                                     (t) -> { mapped.set(true); return new Object(); });
+    
+    assertFalse(mapped.get());
+    assertTrue(lf == finalLF);
+  }
+  
+  @Test
+  public void mapFailureIgnoredFailureTypeTest() {
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(RuntimeException.class, 
+                                                (t) -> { mapped.set(true); return null; });
+    
+    assertFalse(mapped.get());
+    assertTrue(lf == finalLF);
+  }
+  
+  @Test
+  public void mapFailureIntoExceptionTest() throws InterruptedException {
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(Exception.class, 
+                                                (t) -> { mapped.set(true); throw finalException; });
+
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
+  private static void verifyFailureConditionFuture(ListenableFuture<?> finalLF, 
+                                                   Exception expectedFailure) throws InterruptedException {
+    assertTrue(finalLF.isDone());
+    try {
+      finalLF.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException expected) {
+      assertTrue(expected.getCause() == expectedFailure);
+    }
+  }
+  
+  @Test
+  public void mapFailureIntoResultTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(Exception.class, 
+                                                (t) -> { mapped.set(true); return null; });
+
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    assertNull(finalLF.get());
+  }
+  
+  @Test
+  public void flatMapFailureIgnoredTest() {
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<Object> finalLF = 
+        lf.flatMapFailure(Throwable.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(new Object()); });
+    
+    assertFalse(mapped.get());
+    assertTrue(lf == finalLF);
+  }
+  
+  @Test
+  public void flatMapFailureIgnoredFailureTypeTest() {
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = 
+        lf.flatMapFailure(RuntimeException.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(null); });
+    
+    assertFalse(mapped.get());
+    assertTrue(lf == finalLF);
+  }
+  
+  @Test
+  public void flatMapFailureIntoThrownExceptionTest() throws InterruptedException {
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.flatMapFailure(Exception.class, 
+                                                    (t) -> { mapped.set(true); throw finalException; });
+
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
+  @Test
+  public void flatMapFailureIntoReturnedExceptionTest() throws InterruptedException {
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<Object> finalLF = 
+        lf.flatMapFailure(Exception.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateFailureFuture(finalException); });
+
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
+  @Test
+  public void flatMapFailureIntoResultTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = 
+        lf.flatMapFailure(Exception.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(null); });
+
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    assertNull(finalLF.get());
+  }
+  
+  @Test
+  public void mapFailureWithExecutorIgnoredTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<Object> finalLF = lf.mapFailure(Throwable.class, 
+                                                     (t) -> { mapped.set(true); return new Object(); }, 
+                                                     scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertFalse(mapped.get());
+    assertTrue(finalLF.isDone());
+  }
+  
+  @Test
+  public void mapFailureWithExecutorIgnoredFailureTypeTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(RuntimeException.class, 
+                                                (t) -> { mapped.set(true); return null; }, 
+                                                scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertFalse(mapped.get());
+    assertTrue(finalLF.isDone());
+  }
+  
+  @Test
+  public void mapFailureWithExecutorIntoExceptionTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(Exception.class, 
+                                                (t) -> { mapped.set(true); throw finalException; }, 
+                                                scheduler);
+
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
+  @Test
+  public void mapFailureWithExecutorIntoResultTest() throws InterruptedException, ExecutionException {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(Exception.class, 
+                                                (t) -> { mapped.set(true); return null; }, 
+                                                scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    assertNull(finalLF.get());
+  }
+  
+  @Test
+  public void flatMapFailureWithExecutorIgnoredTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<Object> finalLF = 
+        lf.flatMapFailure(Throwable.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(new Object()); }, 
+                          scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertFalse(mapped.get());
+    assertTrue(finalLF.isDone());
+  }
+  
+  @Test
+  public void flatMapFailureWithExecutorIgnoredFailureTypeTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = 
+        lf.flatMapFailure(RuntimeException.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(null); }, 
+                          scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertFalse(mapped.get());
+    assertTrue(finalLF.isDone());
+  }
+  
+  @Test
+  public void flatMapFailureWithExecutorIntoThrownExceptionTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.flatMapFailure(Exception.class, 
+                                                    (t) -> { mapped.set(true); throw finalException; }, 
+                                                    scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
+  @Test
+  public void flatMapFailureWithExecutorIntoReturnedExceptionTest() throws InterruptedException {
+    TestableScheduler scheduler = new TestableScheduler();
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<Object> finalLF = 
+        lf.flatMapFailure(Exception.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateFailureFuture(finalException); }, 
+                          scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
+  @Test
+  public void flatMapFailureWithExecutorIntoResultTest() throws InterruptedException, ExecutionException {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = 
+        lf.flatMapFailure(Exception.class, 
+                          (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(null); }, 
+                          scheduler);
+
+    assertTrue(finalLF != lf);
+    assertFalse(finalLF.isDone());
+    assertEquals(1, scheduler.tick());
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    assertNull(finalLF.get());
+  }
 
   @Test
   public void optimizeDoneListenerExecutorTest() throws InterruptedException, TimeoutException {
@@ -624,7 +907,7 @@ public abstract class ListenableFutureInterfaceTest {
   
   protected interface ListenableFutureFactory {
     public ListenableFuture<?> makeCanceled();
-    public ListenableFuture<?> makeWithFailure(Exception e);
+    public ListenableFuture<Object> makeWithFailure(Exception e);
     public <T> ListenableFuture<T> makeWithResult(T result);
   }
 }
