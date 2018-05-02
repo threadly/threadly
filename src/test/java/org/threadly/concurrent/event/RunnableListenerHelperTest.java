@@ -10,8 +10,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
+import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
+import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class RunnableListenerHelperTest {
@@ -74,6 +77,59 @@ public class RunnableListenerHelperTest {
     onceHelper.addListener(null);
     repeatedHelper.addListener(null);
     // no exception thrown
+  }
+  
+  @Test
+  public void runListenerNoExecutorTest() {
+    TestRunnable tr = new TestRunnable();
+    onceHelper.addListener(tr);
+    onceHelper.callListeners();
+    
+    assertTrue(tr.ranOnce());
+    assertTrue(Thread.currentThread() == tr.lastRanThread);
+  }
+  
+  @Test
+  public void runListenerExecutorTest() {
+    PriorityScheduler executor = new StrictPriorityScheduler(1);
+    try {
+      TestRunnable tr = new TestRunnable();
+      onceHelper.addListener(tr, executor);
+      onceHelper.callListeners();
+      tr.blockTillFinished();
+      
+      assertTrue(tr.ranOnce());
+      assertTrue(Thread.currentThread() != tr.lastRanThread);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void runListenerCatchExecptionTest() {
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new SuppressedStackRuntimeException();
+      }
+    };
+    onceHelper.addListener(tr);
+    onceHelper.callListeners();
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test (expected = RuntimeException.class)
+  public void runListenerThrowExecptionTest() {
+    onceHelper.callListeners();
+    TestRunnable tr = new TestRunnable() {
+      @Override
+      public void handleRunFinish() {
+        throw new SuppressedStackRuntimeException();
+      }
+    };
+    onceHelper.addListener(tr);
+    fail("Execption should have thrown");
   }
   
   @Test
