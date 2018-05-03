@@ -207,8 +207,8 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     }
 
     @Override
-    public ListenableFuture<?> makeWithFailure(Exception e) {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, () -> { throw e; });
+    public ListenableFuture<Object> makeWithFailure(Exception e) {
+      ListenableFutureTask<Object> lft = new ListenableFutureTask<>(false, () -> { throw e; });
       lft.run();
       return lft;
     }

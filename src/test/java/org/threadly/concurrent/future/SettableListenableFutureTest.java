@@ -415,8 +415,8 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     }
     
     @Override
-    public ListenableFuture<?> makeWithFailure(Exception e) {
-      SettableListenableFuture<?> slf = new SettableListenableFuture<>();
+    public ListenableFuture<Object> makeWithFailure(Exception e) {
+      SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
       slf.handleFailure(e);
       return slf;
     }

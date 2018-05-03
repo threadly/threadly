@@ -2,6 +2,7 @@ package org.threadly.concurrent.future;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Completed implementation of {@link ListenableFuture} that will immediately return a result.  
@@ -48,6 +49,24 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
    */
   public ImmediateResultListenableFuture(T result) {
     this.result = result;
+  }
+
+  @Override
+  public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType,
+                                                               Function<TT, T> mapper,
+                                                               Executor executor,
+                                                               ListenerOptimizationStrategy optimizeExecution) {
+    // nothing to map, we are not in error
+    return this;
+  }
+
+  @Override
+  public <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType,
+                                                                   Function<TT, ListenableFuture<T>> mapper,
+                                                                   Executor executor,
+                                                                   ListenerOptimizationStrategy optimizeExecution) {
+    // nothing to map, we are not in error
+    return this;
   }
 
   @Override
