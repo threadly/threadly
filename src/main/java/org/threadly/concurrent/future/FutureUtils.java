@@ -1383,10 +1383,10 @@ public class FutureUtils {
   }
   
   /**
-   * Similar to {@link #transform(ListenableFuture, Function, Executor)} except designed to handle 
-   * functions which return futures.  This will take what otherwise would be 
-   * {@code ListenableFuture<ListenableFuture<R>>}, and flattens it into a single future which will 
-   * resolve once the contained future is complete.
+   * Similar to {@link #transform(ListenableFuture, Function, Executor, ListenerOptimizationStrategy)} 
+   * except designed to handle functions which return futures.  This will take what otherwise 
+   * would be {@code ListenableFuture<ListenableFuture<R>>}, and flattens it into a single future 
+   * which will resolve once the contained future is complete.
    * 
    * @since 5.0
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
@@ -1446,18 +1446,16 @@ public class FutureUtils {
    * Transform a future's failure condition into another future by applying the transformation 
    * function.  The mapper can then choose to either throw an exception, or convert the exception 
    * back into a normal result.
-   * TODO verify javadocs below  
    * <p>
    * This can be easily used to chain together a series of operations, happening async until the 
    * final result is actually needed.  Once the future completes the mapper function will be invoked 
    * on the executor (if provided).  Because of that providing an executor can ensure this will 
    * never block.  If an executor is not provided then the mapper may be invoked on the calling 
    * thread (if the future is already complete), or on the same thread which the future completes 
-   * on.  If the mapper function is very fast and cheap to run then {@link #map(Function)} or 
-   * providing {@code null} for the executor can allow more efficient operation.
+   * on.
    * 
    * @since 5.17
-   * @param <ST> The source type for the object returned from the future and inputed into the mapper
+   * @param <TT> The type of throwable that should be handled
    * @param <RT> The result type for the object returned from the mapper
    * @param sourceFuture Future to source input into transformation function
    * @param transformer Function to apply result from future into returned future
@@ -1531,6 +1529,23 @@ public class FutureUtils {
     return slf;
   }
 
+  /**
+   * Similar to {@link #failureTransform(ListenableFuture, Function, Executor)} except designed to 
+   * handle mapper functions which return futures.  This will take what otherwise would be 
+   * {@code ListenableFuture<ListenableFuture<R>>}, and flattens it into a single future which will 
+   * resolve once the contained future is complete.
+   * 
+   * @since 5.17
+   * @param <TT> The type of throwable that should be handled
+   * @param <RT> The result type for the object contained in the future returned from the mapper
+   * @param sourceFuture Future to source input into transformation function
+   * @param transformer Function to apply result from future into returned future
+   * @param reportedTransformedExceptions {@code true} to indicate transformer is not expected to throw exception.
+   *                                          If any are thrown they will be delegated to 
+   *                                          {@link ExceptionUtils#handleException(Throwable)}.
+   * @param executor Executor to execute transformation function on, or {@code null}
+   * @return Future with result of transformation function or respective error
+   */
   @SuppressWarnings("unchecked")
   protected static <TT extends Throwable, RT> ListenableFuture<RT> 
       flatFailureTransform(ListenableFuture<RT> sourceFuture, Function<TT, ListenableFuture<RT>> mapper,

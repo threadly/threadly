@@ -386,7 +386,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * be forwarded on without invoking this mapper.
    * 
    * @since 5.17
-   * @param <TT> The type of throwable that should be handled 
+   * @param <TT> The type of throwable that should be handled
    * @param throwableType The class referencing to the type of throwable this mapper handles
    * @param mapper The mapper to convert a thrown exception to either a result or thrown exception
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
@@ -407,7 +407,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * be forwarded on without invoking this mapper.
    * 
    * @since 5.17
-   * @param <TT> The type of throwable that should be handled 
+   * @param <TT> The type of throwable that should be handled
    * @param throwableType The class referencing to the type of throwable this mapper handles
    * @param mapper The mapper to convert a thrown exception to either a result or thrown exception
    * @param executor Executor to invoke mapper function on, or {@code null} 
@@ -431,7 +431,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * ignored, and the result will be forwarded on without invoking this mapper.
    * 
    * @since 5.17
-   * @param <TT> The type of throwable that should be handled 
+   * @param <TT> The type of throwable that should be handled
    * @param throwableType The class referencing to the type of throwable this mapper handles
    * @param mapper The mapper to convert a thrown exception to either a result or thrown exception
    * @param executor Executor to invoke mapper function on, or {@code null} 
@@ -454,7 +454,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * {@link #mapFailure(Class, Function)} the mapper can also throw an exception directly.
    * 
    * @since 5.17
-   * @param <TT> The type of throwable that should be handled 
+   * @param <TT> The type of throwable that should be handled
    * @param throwableType The class referencing to the type of throwable this mapper handles
    * @param mapper Function to invoke in order to transform the futures result
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
@@ -473,7 +473,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * directly.
    * 
    * @since 5.17
-   * @param <TT> The type of throwable that should be handled 
+   * @param <TT> The type of throwable that should be handled
    * @param throwableType The class referencing to the type of throwable this mapper handles
    * @param mapper Function to invoke in order to transform the futures result
    * @param executor Executor to invoke mapper function on, or {@code null} 
@@ -495,7 +495,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * mapper can also throw an exception directly.
    * 
    * @since 5.17
-   * @param <TT> The type of throwable that should be handled 
+   * @param <TT> The type of throwable that should be handled
    * @param throwableType The class referencing to the type of throwable this mapper handles
    * @param mapper Function to invoke in order to transform the futures result
    * @param executor Executor to invoke mapper function on, or {@code null} 
