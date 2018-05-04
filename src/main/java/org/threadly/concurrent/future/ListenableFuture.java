@@ -282,6 +282,21 @@ public interface ListenableFuture<T> extends Future<T> {
   }
   
   /**
+   * Convenience function for mapping this future in with an existing future, ignoring the result 
+   * of this current future.  This is equivalent to {@code flatMap((ignored) -> future)}, and 
+   * conceptually the same as {@link FutureUtils#makeFailurePropagatingCompleteFuture(Iterable)} 
+   * with both futures being provided (though this allows us to capture the result of the provided 
+   * future).
+   * 
+   * @param <R> The type of result returned from the provided future
+   * @param future The future to flat mpa against this one
+   * @return A new {@link ListenableFuture} with the specified result type that will complete when both this and the provided future does
+   */
+  default <R> ListenableFuture<R> flatMap(ListenableFuture<R> future) {
+    return flatMap((ignored) -> future);
+  }
+  
+  /**
    * Similar to {@link #map(Function)}, in that this will apply a mapper function once the applied 
    * to future completes.  Once this future resolves it will provide the result into the provided 
    * function.  Unlike {@link #map(Function)}, this will then unwrap a future provided from the 
