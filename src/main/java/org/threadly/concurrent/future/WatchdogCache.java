@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.util.ArgumentVerifier;
 
 /**
  * A class which handles a collection of  {@link Watchdog} instances.  Because the timeout for 
@@ -17,12 +18,14 @@ import org.threadly.concurrent.SubmitterScheduler;
  */
 public class WatchdogCache {
   protected static final int INSPECTION_INTERVAL_MILLIS = 1000 * 10;
+  protected static final int DEFAULT_RESOLUTION_MILLIS = 200;
   
   protected final SubmitterScheduler scheduler;
   protected final boolean sendInterruptOnFutureCancel;
   protected final ConcurrentMap<Long, Watchdog> cachedDogs;
   protected final Function<Long, Watchdog> watchdogProducer;
   protected final Runnable cacheCleaner;
+  protected final long resolutionMillis;
   private final AtomicBoolean cleanerScheduled;
   
   /**
@@ -35,7 +38,7 @@ public class WatchdogCache {
    *                                      an interrupt will be sent on timeout
    */
   public WatchdogCache(boolean sendInterruptOnFutureCancel) {
-    this(Watchdog.getStaticScheduler(), sendInterruptOnFutureCancel);
+    this(Watchdog.getStaticScheduler(), sendInterruptOnFutureCancel, DEFAULT_RESOLUTION_MILLIS);
   }
 
   /**
@@ -49,12 +52,35 @@ public class WatchdogCache {
    *                                      an interrupt will be sent on timeout
    */
   public WatchdogCache(SubmitterScheduler scheduler, boolean sendInterruptOnFutureCancel) {
+    this(scheduler, sendInterruptOnFutureCancel, DEFAULT_RESOLUTION_MILLIS);
+  }
+
+  /**
+   * Constructs a new {@link WatchdogCache} with a scheduler of your choosing.  It is critical 
+   * that this scheduler has a free thread available to inspect futures which may not have 
+   * completed in the given timeout.  You may want to use a org.threadly.concurrent.limiter to 
+   * ensure that there are threads available.
+   * <p>
+   * This constructor allows you to set the timeout resolutions.  Setting the resolution too large
+   * can result in futures timing out later than you expected.  Setting it too low results in 
+   * heavy memory consumption when used with a wide variety of timeouts.
+   * 
+   * @param scheduler Scheduler to schedule task to look for expired futures
+   * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
+   *                                      an interrupt will be sent on timeout
+   * @param resolutionMillis The resolution to allow timeout granularity
+   */
+  public WatchdogCache(SubmitterScheduler scheduler, boolean sendInterruptOnFutureCancel, 
+                       long resolutionMillis) {
+    ArgumentVerifier.assertGreaterThanZero(resolutionMillis, "resolutionMillis");
+    
     this.scheduler = scheduler;
     this.sendInterruptOnFutureCancel = sendInterruptOnFutureCancel;
     cachedDogs = new ConcurrentHashMap<>();
     watchdogProducer = (timeout) -> new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
     cacheCleaner = new CleanRunner();
     cleanerScheduled = new AtomicBoolean(false);
+    this.resolutionMillis = resolutionMillis;
   }
   
   /**
@@ -73,7 +99,13 @@ public class WatchdogCache {
       return;
     }
     
-    cachedDogs.computeIfAbsent(timeoutInMillis, watchdogProducer)
+    long adjustedTimeout = timeoutInMillis / resolutionMillis;
+    adjustedTimeout *= resolutionMillis; // int division to zero out
+    if (adjustedTimeout != timeoutInMillis) {
+      adjustedTimeout += resolutionMillis;  // prefer timing out later rather than early
+    }
+    
+    cachedDogs.computeIfAbsent(adjustedTimeout, watchdogProducer)
               .watch(future);
     
     maybeScheduleCleaner();

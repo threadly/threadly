@@ -18,7 +18,7 @@ public class WatchdogCacheTest {
   @Before
   public void setup() {
     scheduler = new TestableScheduler();
-    watchdog = new WatchdogCache(scheduler, true);
+    watchdog = new WatchdogCache(scheduler, true, 1);
   }
   
   @After
@@ -65,5 +65,20 @@ public class WatchdogCacheTest {
     assertEquals(2, scheduler.advance(WatchdogCache.INSPECTION_INTERVAL_MILLIS));
     
     assertTrue(watchdog.cachedDogs.isEmpty());
+  }
+  
+  @Test
+  public void resolutionTest() {
+    watchdog = new WatchdogCache(scheduler, true);
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS);
+    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS / 2);
+    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS / 4);
+    
+    assertEquals(1, watchdog.cachedDogs.size());
+    
+    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS + 1);
+    
+    assertEquals(2, watchdog.cachedDogs.size());
   }
 }
