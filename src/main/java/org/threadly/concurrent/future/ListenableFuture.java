@@ -287,6 +287,11 @@ public interface ListenableFuture<T> extends Future<T> {
    * conceptually the same as {@link FutureUtils#makeFailurePropagatingCompleteFuture(Iterable)} 
    * with both futures being provided (though this allows us to capture the result of the provided 
    * future).
+   * <p>
+   * Please be aware that {@code flatMap(futureProducer.get())} is NOT equivalent to 
+   * {@code flatMap((ignored) -> futureProducer.get())}.  As the second version would delay starting 
+   * the future generation until this future completes.  By calling into this with a future you will 
+   * be starting its execution immediately.
    * 
    * @param <R> The type of result returned from the provided future
    * @param future The future to flat mpa against this one
