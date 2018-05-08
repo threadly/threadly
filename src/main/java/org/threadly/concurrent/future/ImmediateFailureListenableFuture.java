@@ -38,11 +38,11 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor, 
                           ListenerOptimizationStrategy optimize) {
-    if (executor != null && 
-        optimize != ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
-      executor.execute(new CallbackInvokingTask(callback));
-    } else {
+    if (executor == null | 
+        optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
       callback.handleFailure(failure);
+    } else {
+      executor.execute(new CallbackInvokingTask(callback));
     }
   }
 

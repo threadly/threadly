@@ -83,7 +83,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper) {
-    return map(mapper, null, null);
+    return FutureUtils.transform(this, mapper, true, null, null);
   }
   
   /**
@@ -115,7 +115,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
-    return map(mapper, executor, null);
+    return FutureUtils.transform(this, mapper, true, executor, null);
   }
   
   /**
@@ -211,7 +211,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper) {
-    return throwMap(mapper, null, null);
+    return FutureUtils.transform(this, mapper, false, null, null);
   }
   
   /**
@@ -242,7 +242,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, 
                                            Executor executor) {
-    return throwMap(mapper, executor, null);
+    return FutureUtils.transform(this, mapper, false, executor, null);
   }
   
   /**
@@ -298,7 +298,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} that will complete when both this and the provided future does
    */
   default <R> ListenableFuture<R> flatMap(ListenableFuture<R> future) {
-    return flatMap((ignored) -> future);
+    return FutureUtils.flatTransform(this, (ignored) -> future, null, null);
   }
   
   /**
@@ -328,7 +328,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper) {
-    return flatMap(mapper, null, null);
+    return FutureUtils.flatTransform(this, mapper, null, null);
   }
 
   /**
@@ -355,7 +355,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor) {
-    return flatMap(mapper, executor, null);
+    return FutureUtils.flatTransform(this, mapper, executor, null);
   }
 
   /**
@@ -413,7 +413,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
                                                                 Function<TT, T> mapper) {
-    return mapFailure(throwableType, mapper, null, null);
+    return FutureUtils.failureTransform(this, mapper, throwableType, null, null);
   }
 
   /**
@@ -437,7 +437,7 @@ public interface ListenableFuture<T> extends Future<T> {
   default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
                                                                 Function<TT, T> mapper, 
                                                                 Executor executor) {
-    return mapFailure(throwableType, mapper, executor, null);
+    return FutureUtils.failureTransform(this, mapper, throwableType, executor, null);
   }
 
   /**
@@ -481,7 +481,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
                                                                     Function<TT, ListenableFuture<T>> mapper) {
-    return flatMapFailure(throwableType, mapper, null, null);
+    return FutureUtils.flatFailureTransform(this, mapper, throwableType, null, null);
   }
 
   /**
@@ -503,7 +503,7 @@ public interface ListenableFuture<T> extends Future<T> {
   default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
                                                                     Function<TT, ListenableFuture<T>> mapper, 
                                                                     Executor executor) {
-    return flatMapFailure(throwableType, mapper, executor, null);
+    return FutureUtils.flatFailureTransform(this, mapper, throwableType, executor, null);
   }
 
   /**
