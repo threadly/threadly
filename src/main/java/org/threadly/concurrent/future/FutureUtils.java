@@ -131,9 +131,8 @@ public class FutureUtils {
       return;
     }
     
-    Iterator<? extends Future<?>> it = futures.iterator();
-    while (it.hasNext()) {
-      it.next().get();
+    for (Future<?> f : futures) {
+      f.get();
     }
   }
 
@@ -157,15 +156,13 @@ public class FutureUtils {
       return;
     }
     
-    Iterator<? extends Future<?>> it = futures.iterator();
     long startTime = Clock.accurateForwardProgressingMillis();
     long remainingTime;
-    while (it.hasNext() && 
-           (remainingTime = timeoutInMillis - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
-      it.next().get(remainingTime, TimeUnit.MILLISECONDS);
-    }
-    if (it.hasNext()) {
-      throw new TimeoutException();
+    for (Future<?> f : futures) {
+      if ((remainingTime = timeoutInMillis - (Clock.lastKnownForwardProgressingMillis() - startTime)) <= 0) {
+        throw new TimeoutException();
+      }
+      f.get(remainingTime, TimeUnit.MILLISECONDS);
     }
   }
   
@@ -196,9 +193,7 @@ public class FutureUtils {
     }
     
     int resultCount = 0;
-    Iterator<? extends Future<?>> it = futures.iterator();
-    while (it.hasNext()) {
-      Future<?> f = it.next();
+    for (Future<?> f : futures) {
       if (f.isCancelled()) {
         continue;
       }
@@ -247,12 +242,12 @@ public class FutureUtils {
     }
     
     int resultCount = 0;
-    Iterator<? extends Future<?>> it = futures.iterator();
     long startTime = Clock.accurateForwardProgressingMillis();
     long remainingTime;
-    while (it.hasNext() && 
-           (remainingTime = timeoutInMillis - (Clock.lastKnownForwardProgressingMillis() - startTime)) > 0) {
-      Future<?> f = it.next();
+    for (Future<?> f : futures) {
+      if ((remainingTime = timeoutInMillis - (Clock.lastKnownForwardProgressingMillis() - startTime)) <= 0) {
+        throw new TimeoutException();
+      }
       try {
         if (comparisonResult == null) {
           if (f.get(remainingTime, TimeUnit.MILLISECONDS) == null) {
@@ -266,9 +261,6 @@ public class FutureUtils {
       } catch (ExecutionException e) {
         // swallowed
       }
-    }
-    if (it.hasNext()) {
-      throw new TimeoutException();
     }
     
     return resultCount;
