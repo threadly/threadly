@@ -142,9 +142,15 @@ public class ListenerHelper<T> {
           executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, executor));
         } else {
           if (executorListeners == null) {
-            executorListeners = new ArrayList<>(2);
+            executorListeners = Collections.singletonList(new Pair<>(listener, executor));
+          } else if (executorListeners.size() == 1) {
+            Pair<T, Executor> firstP = executorListeners.get(0);
+            executorListeners = new ArrayList<>(4);
+            executorListeners.add(firstP);
+            executorListeners.add(new Pair<>(listener, executor));
+          } else {
+            executorListeners.add(new Pair<>(listener, executor));
           }
-          executorListeners.add(new Pair<>(listener, executor));
         }
       } else {
         if (addingFromCallingThread && inThreadListeners != null) {
@@ -152,9 +158,15 @@ public class ListenerHelper<T> {
           inThreadListeners = copyAndAdd(inThreadListeners, listener);
         } else {
           if (inThreadListeners == null) {
-            inThreadListeners = new ArrayList<>(2);
+            inThreadListeners = Collections.singletonList(listener);
+          } else if (inThreadListeners.size() == 1) {
+            T firstListener = inThreadListeners.get(0);
+            inThreadListeners = new ArrayList<>(4);
+            inThreadListeners.add(firstListener);
+            inThreadListeners.add(listener);
+          } else {
+            inThreadListeners.add(listener);
           }
-          inThreadListeners.add(listener);
         }
       }
     }
@@ -177,6 +189,15 @@ public class ListenerHelper<T> {
     boolean removingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
       if (executorListeners != null) {
+        if (executorListeners.size() == 1) {
+          if (executorListeners.get(0).getLeft().equals(listener)) {
+            executorListeners = null;
+            return true;
+          } else {
+            return false;
+          }
+        }
+        
         int i = 0;
         for (Pair<T, Executor> p : executorListeners) {
           if (p.getLeft().equals(listener)) {
@@ -191,6 +212,15 @@ public class ListenerHelper<T> {
         }
       }
       if (inThreadListeners != null) {
+        if (inThreadListeners.size() == 1) {
+          if (inThreadListeners.get(0).equals(listener)) {
+            inThreadListeners = null;
+            return true;
+          } else {
+            return false;
+          }
+        }
+        
         int i = 0;
         for (T l : inThreadListeners) {
           if (l.equals(listener)) {

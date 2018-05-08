@@ -188,9 +188,15 @@ public class RunnableListenerHelper {
               executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, queueExecutor));
             } else {
               if (executorListeners == null) {
-                executorListeners = new ArrayList<>(2);
+                executorListeners = Collections.singletonList(new Pair<>(listener, queueExecutor));
+              } else if (executorListeners.size() == 1) {
+                Pair<Runnable, Executor> firstP = executorListeners.get(0);
+                executorListeners = new ArrayList<>(4);
+                executorListeners.add(firstP);
+                executorListeners.add(new Pair<>(listener, queueExecutor));
+              } else {
+                executorListeners.add(new Pair<>(listener, queueExecutor));
               }
-              executorListeners.add(new Pair<>(listener, queueExecutor));
             }
           } else {
             if (addingFromCallingThread && inThreadListeners != null) {
@@ -198,9 +204,15 @@ public class RunnableListenerHelper {
               inThreadListeners = copyAndAdd(inThreadListeners, listener);
             } else {
               if (inThreadListeners == null) {
-                inThreadListeners = new ArrayList<>(2);
+                inThreadListeners = Collections.singletonList(listener);
+              } else if (inThreadListeners.size() == 1) {
+                Runnable firstListener = inThreadListeners.get(0);
+                inThreadListeners = new ArrayList<>(4);
+                inThreadListeners.add(firstListener);
+                inThreadListeners.add(listener);
+              } else {
+                inThreadListeners.add(listener);
               }
-              inThreadListeners.add(listener);
             }
           }
         }
@@ -238,6 +250,15 @@ public class RunnableListenerHelper {
     boolean removingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
       if (executorListeners != null) {
+        if (executorListeners.size() == 1) {
+          if (ContainerHelper.isContained(executorListeners.get(0).getLeft(), listener)) {
+            executorListeners = null;
+            return true;
+          } else {
+            return false;
+          }
+        }
+        
         int i = 0;
         for (Pair<Runnable, Executor> p : executorListeners) {
           if (ContainerHelper.isContained(p.getLeft(), listener)) {
@@ -252,6 +273,15 @@ public class RunnableListenerHelper {
         }
       }
       if (inThreadListeners != null) {
+        if (inThreadListeners.size() == 1) {
+          if (ContainerHelper.isContained(inThreadListeners.get(0), listener)) {
+            inThreadListeners = null;
+            return true;
+          } else {
+            return false;
+          }
+        }
+        
         int i = 0;
         for (Runnable r : inThreadListeners) {
           if (ContainerHelper.isContained(r, listener)) {
