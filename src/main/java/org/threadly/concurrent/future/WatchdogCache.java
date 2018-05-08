@@ -4,6 +4,7 @@ import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.threadly.concurrent.SubmitterScheduler;
@@ -19,6 +20,40 @@ import org.threadly.util.ArgumentVerifier;
 public class WatchdogCache {
   protected static final int INSPECTION_INTERVAL_MILLIS = 1000 * 10;
   protected static final int DEFAULT_RESOLUTION_MILLIS = 200;
+
+  private static final AtomicReference<WatchdogCache> INTERRUPTING_WATCHDOG_CACHE = 
+      new AtomicReference<>();
+  private static final AtomicReference<WatchdogCache> NONINTERRUPTING_WATCHDOG_CACHE = 
+      new AtomicReference<>();
+  
+  /**
+   * Return a static / shared {@link WatchdogCache} instance.  This instance is backed by the 
+   * {@link org.threadly.concurrent.CentralThreadlyPool} which should be fine in most cases, but if 
+   * you have specific needs you can construct your own instance by 
+   * {@link #WatchdogCache(SubmitterScheduler, boolean)}, or if you need to specify a specific 
+   * timeout resolution using the {@link #WatchdogCache(SubmitterScheduler, boolean, long)} 
+   * constructor.
+   * <p>
+   * As long as those special cases are not needed, using a shared instance allows for potentially 
+   * improved efficiency.
+   * 
+   * @since 5.19
+   * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
+   *                                      an interrupt will be sent on timeout
+   * @return A shared {@link WatchdogCache} with the specified configuration
+   */
+  public static final WatchdogCache centralWatchdogCache(boolean sendInterruptOnFutureCancel) {
+    AtomicReference<WatchdogCache> ar = sendInterruptOnFutureCancel ? 
+                                          INTERRUPTING_WATCHDOG_CACHE : NONINTERRUPTING_WATCHDOG_CACHE;
+    WatchdogCache wd = ar.get();
+    if (wd == null) {
+      ar.compareAndSet(null, new WatchdogCache(Watchdog.getStaticScheduler(), 
+                                               sendInterruptOnFutureCancel));
+      wd = ar.get();
+    }
+    
+    return wd;
+  }
   
   protected final SubmitterScheduler scheduler;
   protected final boolean sendInterruptOnFutureCancel;
@@ -34,9 +69,12 @@ public class WatchdogCache {
    * own scheduler if you want to avoid the thread creation (which is shared among all instances 
    * that were constructed with this constructor or {@link Watchdog#Watchdog(long, boolean)}}.
    * 
+   * @deprecated Please use {@link #centralWatchdogCache(boolean)}
+   * 
    * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 
    *                                      an interrupt will be sent on timeout
    */
+  @Deprecated
   public WatchdogCache(boolean sendInterruptOnFutureCancel) {
     this(Watchdog.getStaticScheduler(), sendInterruptOnFutureCancel, DEFAULT_RESOLUTION_MILLIS);
   }

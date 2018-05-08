@@ -26,7 +26,7 @@ public class Watchdog {
   protected static final SubmitterScheduler getStaticScheduler() {
     SubmitterScheduler ss = STATIC_SCHEDULER.get();
     if (ss == null) {
-      STATIC_SCHEDULER.compareAndSet(null, CentralThreadlyPool.rangedThreadPool(1, -1, "WatchdogDefaultScheduler"));
+      STATIC_SCHEDULER.compareAndSet(null, CentralThreadlyPool.threadPool(2, "WatchdogDefaultScheduler"));
       ss = STATIC_SCHEDULER.get();
     }
     
@@ -41,8 +41,8 @@ public class Watchdog {
   /**
    * Constructs a new {@link Watchdog}.  This constructor will use a default static scheduler 
    * (which is lazily constructed).  This should be fine in most cases, but you can provide your 
-   * own scheduler if you want to avoid the thread creation (which is shared among all instances 
-   * that were constructed with this constructor or {@link WatchdogCache#WatchdogCache(boolean)}).
+   * own scheduler if you have specific needs where the {@link CentralThreadlyPool} default is not 
+   * a good option.
    * 
    * @param timeoutInMillis Time in milliseconds that futures will be set to error if they are not done
    * @param sendInterruptOnFutureCancel If {@code true}, and a thread is provided with the future, 

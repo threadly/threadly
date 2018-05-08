@@ -28,8 +28,16 @@ public class WatchdogCacheTest {
   }
   
   @Test
-  public void emptySchedulerConstructorTest() {
+  @SuppressWarnings("deprecation")
+  public void booleanSchedulerConstructorTest() {
     watchdog = new WatchdogCache(true);
+    
+    assertNotNull(watchdog.scheduler);
+  }
+  
+  @Test
+  public void centralWatchdogCacheConstructorTest() {
+    watchdog = WatchdogCache.centralWatchdogCache(true);
     
     assertNotNull(watchdog.scheduler);
   }
