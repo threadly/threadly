@@ -150,7 +150,8 @@ public class FutureUtils {
    * @throws TimeoutException Thrown if the timeout elapsed while waiting on futures to complete
    * @throws ExecutionException Thrown if future throws exception on .get() call
    */
-  public static void blockTillAllCompleteOrFirstError(Iterable<? extends Future<?>> futures, long timeoutInMillis) 
+  public static void blockTillAllCompleteOrFirstError(Iterable<? extends Future<?>> futures, 
+                                                      long timeoutInMillis) 
       throws InterruptedException, TimeoutException, ExecutionException {
     if (futures == null) {
       return;
@@ -1554,7 +1555,8 @@ public class FutureUtils {
       flatFailureTransform(ListenableFuture<RT> sourceFuture, Function<TT, ListenableFuture<RT>> mapper,
                            Class<TT> throwableType, Executor executor, 
                            ListenerOptimizationStrategy optimizeExecution) {
-    if (executor == null & sourceFuture.isDone()) {
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+        sourceFuture.isDone()) {
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType.isAssignableFrom(CancellationException.class)) {
           try {
