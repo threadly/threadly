@@ -1336,7 +1336,8 @@ public class FutureUtils {
                                                            boolean reportedTransformedExceptions, 
                                                            Executor executor, 
                                                            ListenerOptimizationStrategy optimizeExecution) {
-    if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+        sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
         return FutureUtils.immediateResultFuture(transformer.apply(sourceFuture.get()));
@@ -1400,7 +1401,8 @@ public class FutureUtils {
                                                                Function<? super ST, ListenableFuture<RT>> transformer, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
-    if (executor == null & sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+        sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
         return transformer.apply(sourceFuture.get());
@@ -1470,7 +1472,8 @@ public class FutureUtils {
       failureTransform(ListenableFuture<RT> sourceFuture, Function<TT, RT> mapper,
                        Class<TT> throwableType, Executor executor, 
                        ListenerOptimizationStrategy optimizeExecution) {
-    if (executor == null & sourceFuture.isDone()) {
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+        sourceFuture.isDone()) {
       // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) {
         if (throwableType.isAssignableFrom(CancellationException.class)) {
