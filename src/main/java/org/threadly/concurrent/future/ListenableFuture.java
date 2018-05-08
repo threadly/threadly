@@ -295,7 +295,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * 
    * @param <R> The type of result returned from the provided future
    * @param future The future to flat mpa against this one
-   * @return A new {@link ListenableFuture} with the specified result type that will complete when both this and the provided future does
+   * @return A new {@link ListenableFuture} that will complete when both this and the provided future does
    */
   default <R> ListenableFuture<R> flatMap(ListenableFuture<R> future) {
     return flatMap((ignored) -> future);
