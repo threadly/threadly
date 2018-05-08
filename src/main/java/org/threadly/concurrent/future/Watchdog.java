@@ -91,7 +91,7 @@ public class Watchdog {
    * @return {@code true} if this watchdog is currently in use
    */
   public boolean isActive() {
-    return ! futures.isEmpty() || checkRunner.isActive();
+    return checkRunner.isActive() || ! futures.isEmpty();
   }
   
   /**

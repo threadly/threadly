@@ -18,7 +18,7 @@ import org.threadly.util.ArgumentVerifier;
  * @since 4.0.0
  */
 public class WatchdogCache {
-  protected static final int INSPECTION_INTERVAL_MILLIS = 1000 * 10;
+  protected static final int INSPECTION_INTERVAL_MILLIS = 10_000;
   protected static final int DEFAULT_RESOLUTION_MILLIS = 200;
 
   private static final AtomicReference<WatchdogCache> INTERRUPTING_WATCHDOG_CACHE = 
@@ -115,7 +115,10 @@ public class WatchdogCache {
     this.scheduler = scheduler;
     this.sendInterruptOnFutureCancel = sendInterruptOnFutureCancel;
     cachedDogs = new ConcurrentHashMap<>();
-    watchdogProducer = (timeout) -> new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
+    watchdogProducer = (timeout) -> {
+      maybeScheduleCleaner();
+      return new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
+    };
     cacheCleaner = new CleanRunner();
     cleanerScheduled = new AtomicBoolean(false);
     this.resolutionMillis = resolutionMillis;
@@ -132,21 +135,19 @@ public class WatchdogCache {
    * @param timeoutInMillis Time in milliseconds that future should be completed within
    */
   public void watch(ListenableFuture<?> future, long timeoutInMillis) {
-    // attempt around a cheap shortcut
-    if (future == null || future.isDone()) {
-      return;
-    }
-    
     long adjustedTimeout = timeoutInMillis / resolutionMillis;
     adjustedTimeout *= resolutionMillis; // int division to zero out
     if (adjustedTimeout != timeoutInMillis) {
       adjustedTimeout += resolutionMillis;  // prefer timing out later rather than early
     }
     
+    // attempt around a cheap shortcut
+    if (future == null || future.isDone()) {
+      return;
+    }
+    
     cachedDogs.computeIfAbsent(adjustedTimeout, watchdogProducer)
               .watch(future);
-    
-    maybeScheduleCleaner();
   }
   
   private void maybeScheduleCleaner() {
