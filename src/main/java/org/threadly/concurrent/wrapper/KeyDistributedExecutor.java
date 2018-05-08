@@ -507,7 +507,11 @@ public class KeyDistributedExecutor {
      * @param task Runnable to run
      */
     protected void runTask(Runnable task) {
-      ExceptionUtils.runRunnable(task);
+      try {
+        task.run();
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+      }
     }
     
     @Override

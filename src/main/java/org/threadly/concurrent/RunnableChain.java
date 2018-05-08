@@ -57,7 +57,11 @@ public class RunnableChain implements Runnable {
   protected void runIsolated() {
     Iterator<? extends Runnable> it = toRun.iterator();
     while (it.hasNext()) {
-      ExceptionUtils.runRunnable(it.next());
+      try {
+        it.next().run();
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+      }
     }
   }
 }

@@ -733,7 +733,11 @@ public class Profiler {
         }
         Runnable toRun = pStore.dumpLoopRun;
         if (toRun != null) {
-          ExceptionUtils.runRunnable(toRun);
+          try {
+            toRun.run();
+          } catch (Throwable t) {
+            ExceptionUtils.handleException(t);
+          }
         }
       }
     }

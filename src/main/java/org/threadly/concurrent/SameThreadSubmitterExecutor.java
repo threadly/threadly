@@ -19,10 +19,10 @@ import org.threadly.util.ExceptionUtils;
  * @since 1.2.0
  */
 public class SameThreadSubmitterExecutor implements SubmitterExecutor {
-  private static final SameThreadSubmitterExecutor DEFAULT_INSTANCE;
+  private static final SameThreadSubmitterExecutor INSTANCE;
   
   static {
-    DEFAULT_INSTANCE = new SameThreadSubmitterExecutor();
+    INSTANCE = new SameThreadSubmitterExecutor();
   }
   
   /**
@@ -32,14 +32,18 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutor {
    * @return a static instance of SameThreadSubmitterExecutor
    */
   public static SameThreadSubmitterExecutor instance() {
-    return DEFAULT_INSTANCE;
+    return INSTANCE;
   }
   
   @Override
   public void execute(Runnable task) {
     ArgumentVerifier.assertNotNull(task, "task");
-    
-    ExceptionUtils.runRunnable(task);
+
+    try {
+      task.run();
+    } catch (Throwable t) {
+      ExceptionUtils.handleException(t);
+    }
   }
 
   @Override

@@ -716,7 +716,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     @Override
     public void runTask() {
       if (! invalidated) {
-        ExceptionUtils.runRunnable(task);
+        try {
+          task.run();
+        } catch (Throwable t) {
+          ExceptionUtils.handleException(t);
+        }
       }
     }
     
@@ -869,8 +873,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         return;
       }
       
-      // no need for try/finally due to ExceptionUtils usage
-      ExceptionUtils.runRunnable(task);
+      try {
+        task.run();
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+      }
       
       if (! invalidated) {
         updateNextRunTime();

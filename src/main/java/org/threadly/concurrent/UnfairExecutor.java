@@ -403,12 +403,20 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
           if (parked) {
             parked = false;
           }
-          ExceptionUtils.runRunnable(task);
+          try {
+            task.run();
+          } catch (Throwable t) {
+            ExceptionUtils.handleException(t);
+          }
         } else if (! parked) {
           // check neighbor worker to see if they need help
           task = checkNeighborWorker.taskQueue.poll();
           if (task != null) {
-            ExceptionUtils.runRunnable(task);
+            try {
+              task.run();
+            } catch (Throwable t) {
+              ExceptionUtils.handleException(t);
+            }
           } else {
             parked = true;
           }

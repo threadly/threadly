@@ -29,6 +29,7 @@ public class ExceptionUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void runRunnableTest() {
     TestRunnable tr = new TestRunnable();
     ExceptionUtils.runRunnable(tr);
@@ -37,6 +38,7 @@ public class ExceptionUtilsTest {
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void runRunnableThrownTest() {
     TestExceptionHandler exceptionHandler = new TestExceptionHandler();
     ExceptionUtils.setThreadExceptionHandler(exceptionHandler);

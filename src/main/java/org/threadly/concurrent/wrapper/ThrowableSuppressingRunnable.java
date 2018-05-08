@@ -26,7 +26,11 @@ public class ThrowableSuppressingRunnable implements RunnableContainer, Runnable
   @Override
   public void run() {
     if (task != null) {
-      ExceptionUtils.runRunnable(task);
+      try {
+        task.run();
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+      }
     }
   }
 

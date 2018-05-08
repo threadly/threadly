@@ -93,8 +93,11 @@ public class ExceptionUtils {
    * throwables are thrown out of this invocation.  If any throwable's are thrown, they will be 
    * provided to {@link #handleException(Throwable)}.
    * 
+   * @deprecated Please use {@code SameThreadSubmitterExecutor.instance().execute(r)} as an alternative
+   * 
    * @param r Runnable to invoke, can not be null
    */
+  @Deprecated
   public static void runRunnable(Runnable r) {
     try {
       r.run();
