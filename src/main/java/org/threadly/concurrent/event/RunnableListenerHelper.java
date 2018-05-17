@@ -99,8 +99,11 @@ public class RunnableListenerHelper {
    */
   protected void doCallListeners() {
     if (executorListeners != null) {
-      for (Pair<Runnable, Executor> listener : executorListeners) {
+      List<Pair<Runnable, Executor>> executorListeners = this.executorListeners;
+      // only list types will be able to efficiently retrieve by index, avoid iterator creation
+      for (int i = 0; i < executorListeners.size(); i++) {
         try {
+          Pair<Runnable, Executor> listener = executorListeners.get(i);
           listener.getRight().execute(listener.getLeft());
         } catch (Throwable t) {
           ExceptionUtils.handleException(t);
@@ -108,9 +111,10 @@ public class RunnableListenerHelper {
       }
     }
     if (inThreadListeners != null) {
-      for (Runnable listener : inThreadListeners) {
+      List<Runnable> inThreadListeners = this.inThreadListeners;
+      for (int i = 0; i < inThreadListeners.size(); i++) {
         try {
-          listener.run();
+          inThreadListeners.get(i).run();
         } catch (Throwable t) {
           ExceptionUtils.handleException(t);
         }

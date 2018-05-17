@@ -298,7 +298,10 @@ public class ListenerHelper<T> {
     protected void callListeners(final Method method, final Object[] args) {
       synchronized (listenersLock) {
         if (executorListeners != null) {
-          for (Pair<T, Executor> listener : executorListeners) {
+          List<Pair<T, Executor>> listeners = executorListeners;
+          // only list types will be able to efficiently retrieve by index, avoid iterator creation
+          for (int i = 0; i < listeners.size(); i++) {
+            Pair<T, Executor> listener = listeners.get(i);
             listener.getRight().execute(new Runnable() {
               @Override
               public void run() {
@@ -308,8 +311,9 @@ public class ListenerHelper<T> {
           }
         }
         if (inThreadListeners != null) {
-          for (T listener : inThreadListeners) {
-            callListener(listener, method, args);
+          List<T> listeners = inThreadListeners;
+          for (int i = 0; i < listeners.size(); i++) {
+            callListener(listeners.get(i), method, args);
           }
         }
       }
