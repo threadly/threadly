@@ -1,5 +1,7 @@
 package org.threadly.concurrent.future;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.function.Function;
@@ -641,10 +643,31 @@ public interface ListenableFuture<T> extends Future<T> {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         isDone()) {
       // no need to construct anything, just invoke directly
-      RunnableFutureCallbackAdapter.adaptCallback(this, callback);
+      try {
+        callback.handleResult(get());
+      } catch (InterruptedException e) {
+        // should not be possible
+        Thread.currentThread().interrupt();
+        callback.handleFailure(e);
+      } catch (ExecutionException e) {
+        callback.handleFailure(e.getCause());
+      } catch (CancellationException e) {
+        callback.handleFailure(e);
+      }
     } else {
-      addListener(() -> RunnableFutureCallbackAdapter.adaptCallback(this, callback), 
-                  executor, optimizeExecution);
+      addListener(() -> {
+        try {
+          callback.handleResult(get());
+        } catch (InterruptedException e) {
+          // should not be possible
+          Thread.currentThread().interrupt();
+          callback.handleFailure(e);
+        } catch (ExecutionException e) {
+          callback.handleFailure(e.getCause());
+        } catch (CancellationException e) {
+          callback.handleFailure(e);
+        }
+      }, executor, optimizeExecution);
     }
   }
 }

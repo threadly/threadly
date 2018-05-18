@@ -19,24 +19,8 @@ import org.threadly.util.ArgumentVerifier;
  * @since 3.2.0
  * @param <T> The result object type returned by this future
  */
-// TODO - deprecation is only for javadocs, and as a constructable class.  Eventually we will just 
-//          access the static function only and change visibility
 @Deprecated
 public class RunnableFutureCallbackAdapter<T> implements Runnable {
-  protected static <T> void adaptCallback(Future<T> future, FutureCallback<? super T> callback) {
-    try {
-      callback.handleResult(future.get());
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      callback.handleFailure(e);
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      callback.handleFailure(e.getCause());
-    } catch (CancellationException e) {
-      callback.handleFailure(e);
-    }
-  }
-  
   protected final Future<T> future;
   protected final FutureCallback<? super T> callback;
   
@@ -56,6 +40,16 @@ public class RunnableFutureCallbackAdapter<T> implements Runnable {
 
   @Override
   public void run() {
-    adaptCallback(future, callback);
+    try {
+      callback.handleResult(future.get());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      callback.handleFailure(e);
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      callback.handleFailure(e.getCause());
+    } catch (CancellationException e) {
+      callback.handleFailure(e);
+    }
   }
 }
