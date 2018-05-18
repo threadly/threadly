@@ -137,7 +137,11 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   @Override
   public void handleFailure(Throwable t) {
     if (t instanceof CancellationException) {
-      cancel(false);
+      boolean interrupt = Thread.currentThread().isInterrupted();
+      if (! cancel(interrupt)) {
+        // may have been overriden, go ahead and complete the future into a cancel state
+        internalCancel(interrupt);
+      }
     } else {
       setFailure(t);
     }
@@ -220,6 +224,19 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
 
   @Override
   public boolean cancel(boolean interruptThread) {
+    return internalCancel(interruptThread);
+  }
+  
+  /**
+   * This internal cancel function ensures we can set the class into a canceled state even if the 
+   * {@link #cancel(boolean)} function is overriden.  However this should only be invoked after 
+   * {@link #cancel(boolean)} was tried initially (so overriding classes can handle cancel logic 
+   * they may require).
+   * 
+   * @param interruptThread If {@code true} send an interrupt to the processing thread
+   * @return {@code true} if this future was transitioned to a canceled state
+   */
+  private boolean internalCancel(boolean interruptThread) {
     if (done) {
       return false;
     }
