@@ -29,6 +29,7 @@ public class RunnableFutureCallbackAdapter<T> implements Runnable {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       callback.handleFailure(e);
+      throw new RuntimeException(e);
     } catch (ExecutionException e) {
       callback.handleFailure(e.getCause());
     } catch (CancellationException e) {

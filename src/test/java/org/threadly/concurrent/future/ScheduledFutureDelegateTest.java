@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestDelayed;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
@@ -162,13 +163,13 @@ public class ScheduledFutureDelegateTest {
   }
   
   @Test
-  public void addCallbackTest() {
+  public void addCallbackAlreadyDoneTest() {
     TestFutureImp future = new TestFutureImp(false);
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     testItem.addCallback(new TestFutureCallback());
     
-    assertEquals(1, future.listeners.size());
+    assertEquals(0, future.listeners.size());
   }
   
   @Test
@@ -176,7 +177,8 @@ public class ScheduledFutureDelegateTest {
     TestFutureImp future = new TestFutureImp(false);
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
-    testItem.addCallback(new TestFutureCallback(), null);
+    testItem.addCallback(new TestFutureCallback(), 
+                         SameThreadSubmitterExecutor.instance()); // trick so already-done optimization does not kick in
     
     assertEquals(1, future.listeners.size());
   }
