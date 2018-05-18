@@ -638,6 +638,13 @@ public interface ListenableFuture<T> extends Future<T> {
   @SuppressWarnings("deprecation")
   default void addCallback(FutureCallback<? super T> callback, Executor executor, 
                            ListenerOptimizationStrategy optimizeExecution) {
-    addListener(new RunnableFutureCallbackAdapter<>(this, callback), executor, optimizeExecution);
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
+        isDone()) {
+      // no need to construct anything, just invoke directly
+      RunnableFutureCallbackAdapter.adaptCallback(this, callback);
+    } else {
+      addListener(() -> RunnableFutureCallbackAdapter.adaptCallback(this, callback), 
+                  executor, optimizeExecution);
+    }
   }
 }

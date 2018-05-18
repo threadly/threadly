@@ -1329,7 +1329,7 @@ public class FutureUtils {
                                                            boolean reportedTransformedExceptions, 
                                                            Executor executor, 
                                                            ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1394,7 +1394,7 @@ public class FutureUtils {
                                                                Function<? super ST, ListenableFuture<RT>> transformer, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       // optimized path for already complete futures which we can now process in thread
       try {
@@ -1465,7 +1465,7 @@ public class FutureUtils {
       failureTransform(ListenableFuture<RT> sourceFuture, Function<TT, RT> mapper,
                        Class<TT> throwableType, Executor executor, 
                        ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone()) {
       // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) {
@@ -1547,7 +1547,7 @@ public class FutureUtils {
       flatFailureTransform(ListenableFuture<RT> sourceFuture, Function<TT, ListenableFuture<RT>> mapper,
                            Class<TT> throwableType, Executor executor, 
                            ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) & 
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone()) {
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType.isAssignableFrom(CancellationException.class)) {
@@ -1655,6 +1655,7 @@ public class FutureUtils {
     protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf, 
                                                      Executor executingExecutor) {
       super(false, executingExecutor);
+      
       cancelDelegateFuture = lf;
     }
     
