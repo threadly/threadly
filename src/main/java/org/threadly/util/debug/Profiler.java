@@ -813,22 +813,14 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class Trace implements Comparable<Trace> {
-    protected final StackTraceElement[] elements;
-    protected final int hash;
+  protected static class Trace extends StackTracker.ComparableTrace {
     /* threadSeenCount is how many times this trace has been seen in a specific thread.  It should 
      * only be incremented by a single thread, but can be read from any thread.
      */
     private volatile int threadSeenCount = 1;
     
     public Trace(StackTraceElement[] elements) {
-      this.elements = elements;
-      
-      int h = 0;
-      for (StackTraceElement e: elements) {
-        h ^= e.hashCode();
-      }
-      hash = h;
+      super(elements);
     }
     
     /**
@@ -846,34 +838,6 @@ public class Profiler {
      */
     protected int getThreadCount() {
       return threadSeenCount;
-    }
-    
-    @Override
-    public int hashCode() {
-      return hash;
-    }
-    
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      } else {
-        try {
-          Trace t = (Trace) o;
-          if (t.hash != hash) {
-            return false;
-          } else {
-            return Arrays.equals(t.elements, elements);
-          }
-        } catch (ClassCastException e) {
-          return false;
-        }
-      }
-    }
-    
-    @Override
-    public int compareTo(Trace t) {
-      return this.hash - t.hash;
     }
   }
   
