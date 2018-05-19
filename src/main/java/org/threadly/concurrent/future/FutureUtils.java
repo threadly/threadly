@@ -1719,12 +1719,7 @@ public class FutureUtils {
         setResult(getFinalResultList());
       }
       
-      addListener(new Runnable() {
-        @Override
-        public void run() {
-          futures = null;
-        }
-      });
+      addListener(() -> futures = null);
     }
     
     /**

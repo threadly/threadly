@@ -251,20 +251,17 @@ public class Profiler {
           final SettableListenableFuture<?> runningThreadFuture;
           runningThreadFuture = new SettableListenableFuture<>();
           
-          executor.execute(new Runnable() {
-            @Override
-            public void run() {
-              try {
-                // if collector thread can't be set, then some other thread has taken over
-                if (! pStore.collectorThread.compareAndSet(null, Thread.currentThread())) {
-                  return;
-                }
-              } finally {
-                runningThreadFuture.setResult(null);
+          executor.execute(() -> {
+            try {
+              // if collector thread can't be set, then some other thread has taken over
+              if (! pStore.collectorThread.compareAndSet(null, Thread.currentThread())) {
+                return;
               }
-              
-              pr.run();
+            } finally {
+              runningThreadFuture.setResult(null);
             }
+            
+            pr.run();
           });
           
           // now block till collectorThread has been set and profiler has started on the executor
