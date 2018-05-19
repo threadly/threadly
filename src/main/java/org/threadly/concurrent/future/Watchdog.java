@@ -111,12 +111,7 @@ public class Watchdog {
     final FutureWrapper fw = new FutureWrapper(future);
     futures.add(fw);
     // we attempt to remove the future on completion to reduce inspection needed
-    future.addListener(new Runnable() {
-      @Override
-      public void run() {
-        futures.remove(fw);
-      }
-    }, SameThreadSubmitterExecutor.instance());
+    future.addListener(new WrapperRemover(fw), SameThreadSubmitterExecutor.instance());
     
     checkRunner.signalToRun();
   }
@@ -134,6 +129,25 @@ public class Watchdog {
     public FutureWrapper(ListenableFuture<?> future) {
       this.expireTime = Clock.accurateForwardProgressingMillis() + timeoutInMillis;
       this.future = future;
+    }
+  }
+  
+  /**
+   * Listener implementation for removing the wrapper from the queue when it completes (and thus 
+   * invokes this).
+   * 
+   * @since 5.20
+   */
+  private class WrapperRemover implements Runnable {
+    private final FutureWrapper fw;
+    
+    protected WrapperRemover(FutureWrapper fw) {
+      this.fw = fw;
+    }
+    
+    @Override
+    public void run() {
+      futures.remove(fw);
     }
   }
 
