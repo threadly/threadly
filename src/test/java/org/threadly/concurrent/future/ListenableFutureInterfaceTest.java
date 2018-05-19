@@ -612,6 +612,19 @@ public abstract class ListenableFutureInterfaceTest {
     verifyFailureConditionFuture(finalLF, finalException);
   }
   
+  @Test
+  public void mapFailureIntoExceptionNullClassTest() throws InterruptedException {
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(null, 
+                                                (t) -> { mapped.set(true); throw finalException; });
+
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
   private static void verifyFailureConditionFuture(ListenableFuture<?> finalLF, 
                                                    Exception expectedFailure) throws InterruptedException {
     assertTrue(finalLF.isDone());
@@ -629,6 +642,18 @@ public abstract class ListenableFutureInterfaceTest {
     AtomicBoolean mapped = new AtomicBoolean(false);
     ListenableFuture<?> finalLF = lf.mapFailure(Exception.class, 
                                                 (t) -> { mapped.set(true); return null; });
+
+    assertTrue(finalLF.isDone());
+    assertTrue(mapped.get());
+    assertTrue(finalLF != lf);
+    assertNull(finalLF.get());
+  }
+  
+  @Test
+  public void mapFailureIntoResultNullClassTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new Exception());
+    AtomicBoolean mapped = new AtomicBoolean(false);
+    ListenableFuture<?> finalLF = lf.mapFailure(null, (t) -> { mapped.set(true); return null; });
 
     assertTrue(finalLF.isDone());
     assertTrue(mapped.get());

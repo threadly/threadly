@@ -1469,7 +1469,7 @@ public class FutureUtils {
         sourceFuture.isDone()) {
       // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) {
-        if (throwableType.isAssignableFrom(CancellationException.class)) {
+        if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
             return FutureUtils.immediateResultFuture(mapper.apply((TT)new CancellationException()));
           } catch (Throwable t) {
@@ -1486,7 +1486,7 @@ public class FutureUtils {
           // should not be possible
           throw new RuntimeException(e);
         } catch (ExecutionException e) {
-          if (throwableType.isAssignableFrom(e.getCause().getClass())) {
+          if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
             try {
               return FutureUtils.immediateResultFuture(mapper.apply((TT)e.getCause()));
             } catch (Throwable t) {
@@ -1510,7 +1510,7 @@ public class FutureUtils {
       
       @Override
       public void handleFailure(Throwable t) {
-        if (throwableType.isAssignableFrom(t.getClass())) {
+        if (throwableType == null || throwableType.isAssignableFrom(t.getClass())) {
           try {
             slf.setRunningThread(Thread.currentThread());
             slf.setResult(mapper.apply((TT)t));
@@ -1550,7 +1550,7 @@ public class FutureUtils {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone()) {
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-        if (throwableType.isAssignableFrom(CancellationException.class)) {
+        if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
             return mapper.apply((TT)new CancellationException());
           } catch (Throwable t) {
@@ -1568,7 +1568,7 @@ public class FutureUtils {
           // should not be possible
           throw new RuntimeException(e);
         } catch (ExecutionException e) {
-          if (throwableType.isAssignableFrom(e.getCause().getClass())) {
+          if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
             try {
               return mapper.apply((TT)e.getCause());
             } catch (Throwable t) {
@@ -1592,7 +1592,7 @@ public class FutureUtils {
       
       @Override
       public void handleFailure(Throwable t) {
-        if (throwableType.isAssignableFrom(t.getClass())) {
+        if (throwableType == null || throwableType.isAssignableFrom(t.getClass())) {
           try {
             slf.setRunningThread(Thread.currentThread());
             mapper.apply((TT)t).addCallback(slf);
