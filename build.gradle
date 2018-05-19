@@ -14,25 +14,55 @@ test {
   }
 }
 
-build.dependsOn("jacocoTestReport");
+build.dependsOn jacocoTestReport
 
 jacocoTestReport {
   doFirst {
-    classDirectories = fileTree(dir: 'build/classes/main', include: 'org/threadly/**')
-    sourceDirectories = fileTree(dir: 'scr/main/java', include: 'org/threadly/**')
+    classDirectories = fileTree(dir: 'build/classes/java/main', include: 'org/threadly/**')
+    sourceDirectories = fileTree(dir: 'src/main/java', include: 'org/threadly/**')
   }
   reports {
     csv.enabled = false
     xml.enabled = true
-    xml.destination = file("${buildDir}/reports/jacoco/jacoco.xml")
+    xml.destination = file("$buildDir/reports/jacoco/jacoco.xml")
     html.enabled = true
-    html.destination = file("${buildDir}/reports/jacoco/html")
+    html.destination = file("$buildDir/reports/jacoco/html")
   }
   doLast {
     println "Test results available at:"
     println "html - $buildDir/reports/tests/html/index.html"
     println "Test coverage reports available at:"
     println "html - $buildDir/reports/jacoco/html/index.html"
-    println "xml  - $buildDir/reports/jacoco/jacoco.xml"
   }
 }
+
+jacocoTestCoverageVerification {
+  violationRules {
+    rule {
+      limit {
+        counter = 'METHOD'
+        minimum = 0.9
+      }
+    }
+    rule {
+      limit {
+        counter = 'CLASS'
+        minimum = 0.9
+      }
+    }
+    rule {
+      limit {
+        counter = 'LINE'
+        minimum = 0.9
+      }
+    }
+    rule {
+      limit {
+        counter = 'BRANCH'
+        minimum = 0.8
+      }
+    }
+  }
+}
+
+check.dependsOn jacocoTestCoverageVerification
