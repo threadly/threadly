@@ -353,7 +353,8 @@ public class FutureUtils {
       return immediateResultFuture(result);
     }
     
-    final SettableListenableFuture<T> resultFuture = new CancelDelegateSettableListenableFuture<>(efc);
+    final SettableListenableFuture<T> resultFuture = 
+        new CancelDelegateSettableListenableFuture<>(efc);
     efc.addCallback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object ignored) {
@@ -362,11 +363,7 @@ public class FutureUtils {
 
       @Override
       public void handleFailure(Throwable t) {
-        if (t instanceof CancellationException) {
-          // caused by user canceling returned CancelDelegateSettableListenableFuture
-        } else {
-          resultFuture.setFailure(t);
-        }
+        resultFuture.setFailure(t);
       }
     });
     return resultFuture;
@@ -615,11 +612,7 @@ public class FutureUtils {
 
       @Override
       public void handleFailure(Throwable t) {
-        if (t instanceof CancellationException) {
-          // caused by user canceling returned CancelDelegateSettableListenableFuture
-        } else {
-          result.setFailure(t);
-        }
+        result.setFailure(t);
       }
     });
     
@@ -1699,6 +1692,7 @@ public class FutureUtils {
     
     protected FutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
       super(false);
+      
       remainingResult = new AtomicInteger(0); // may go negative if results finish before all are added
       buildingResult = new AtomicReference<>(null);
       futures = new ArrayList<>();
