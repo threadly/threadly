@@ -1,4 +1,4 @@
-Threadly
+Threadly [![Build status](https://badge.buildkite.com/7f78724dd03f9e47cc655d0b645ed39f7d0558e4f1b4bd7e91.svg)](https://buildkite.com/threadly/nightly-threadly)
 ========
 
 A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of concurrent development and testing needs. This is designed to be a complement to `java.util.concurrent` and uses `java.util.concurrent` to help assist in it's implementations where it makes sense.
