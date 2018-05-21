@@ -467,11 +467,7 @@ public class FutureUtils {
 
       @Override
       public void handleFailure(Throwable t) {
-        if (t instanceof CancellationException) {
-          // caused by user canceling returned CancelDelegateSettableListenableFuture
-        } else {
-          resultFuture.setFailure(t);
-        }
+        resultFuture.setFailure(t);
       }
     });
     return resultFuture;
