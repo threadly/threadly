@@ -29,7 +29,7 @@ public abstract class SubmitterExecutorInterfaceTest {
     ThreadlyTestUtil.setIgnoreExceptionHandler();
   }
   
-  protected List<TestRunnable> executeTestRunnables(Executor executor, int runnableSleepTime) {
+  protected static List<TestRunnable> executeTestRunnables(Executor executor, int runnableSleepTime) {
     List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
       for (int i = 0; i < TEST_QTY; i++) {
         TestRunnable tr = new TestRunnable(runnableSleepTime);

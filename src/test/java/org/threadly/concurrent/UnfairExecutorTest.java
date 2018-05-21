@@ -10,20 +10,34 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
+import org.threadly.concurrent.UnfairExecutor.TaskStripeGenerator;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
-  @Override
-  protected SubmitterExecutorFactory getSubmitterExecutorFactory() {
-    return new UnfairExecutorFactory();
+public class UnfairExecutorTest {
+  @Test
+  @SuppressWarnings("unused")
+  public void constructorFail() {
+    try {
+      new UnfairExecutor(-1);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException execpted) {
+      // expected
+    }
+    try {
+      new UnfairExecutor(13, (TaskStripeGenerator)null);
+      fail("Exception should have thrown");
+    } catch (IllegalArgumentException execpted) {
+      // expected
+    }
   }
   
   @Test
-  @Override
-  public void executeInOrderTest() {
-    // ignored, this test makes no sense for this executor
+  public void constructorTest() {
+    assertTrue(new UnfairExecutor(13, true).schedulers[0].thread.isDaemon());
+    assertFalse(new UnfairExecutor(13, false).schedulers[0].thread.isDaemon());
   }
   
   @Test
@@ -31,7 +45,7 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     UnfairExecutor ue = new UnfairExecutor(1);
     assertFalse(ue.isShutdown());
 
-    executeTestRunnables(ue, 0);
+    SubmitterExecutorInterfaceTest.executeTestRunnables(ue, 0);
     ue.shutdown();
     assertTrue(ue.isShutdown());
     
@@ -46,7 +60,8 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     /* adding a run time to have greater chances that runnable 
      * will be waiting to execute after shutdown call.
      */
-    TestRunnable lastRunnable = executeTestRunnables(ue, 5).get(TEST_QTY - 1);
+    TestRunnable lastRunnable = 
+        SubmitterExecutorInterfaceTest.executeTestRunnables(ue, 5).get(TEST_QTY - 1);
     
     ue.shutdown();
     
@@ -63,7 +78,8 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     ue.execute(btr);
 
     try {
-      List<TestRunnable> expectedRunnables = executeTestRunnables(ue, 0);
+      List<TestRunnable> expectedRunnables = 
+          SubmitterExecutorInterfaceTest.executeTestRunnables(ue, 0);
       
       btr.blockTillStarted();
       
@@ -90,7 +106,8 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     /* adding a run time to have greater chances that runnable 
      * will be waiting to execute after shutdown call.
      */
-    TestRunnable lastRunnable = executeTestRunnables(ue, 5).get(TEST_QTY - 1);
+    TestRunnable lastRunnable = 
+        SubmitterExecutorInterfaceTest.executeTestRunnables(ue, 5).get(TEST_QTY - 1);
     
     ue.shutdown();
     ue.awaitTermination();
@@ -105,7 +122,8 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     /* adding a run time to have greater chances that runnable 
      * will be waiting to execute after shutdown call.
      */
-    TestRunnable lastRunnable = executeTestRunnables(ue, 5).get(TEST_QTY - 1);
+    TestRunnable lastRunnable = 
+        SubmitterExecutorInterfaceTest.executeTestRunnables(ue, 5).get(TEST_QTY - 1);
 
     ue.shutdown();
     assertTrue(ue.awaitTermination(1000 * 10));
@@ -117,7 +135,7 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
   @Test
   public void awaitTerminationWithTimeoutExpireTest() throws InterruptedException {
     UnfairExecutor ue = new UnfairExecutor(1);
-    executeTestRunnables(ue, 1000 * 10);
+    SubmitterExecutorInterfaceTest.executeTestRunnables(ue, 1000 * 10);
     
     long start = Clock.accurateForwardProgressingMillis();
     ue.shutdown();
@@ -142,12 +160,17 @@ public class UnfairExecutorTest extends SubmitterExecutorInterfaceTest {
     ue.execute(DoNothingRunnable.instance());
   }
 
-  private static class UnfairExecutorFactory implements SubmitterExecutorFactory {
+  protected static class UnfairExecutorFactory implements SubmitterExecutorFactory {
+    private final TaskStripeGenerator stripeGenerator;
     private List<UnfairExecutor> executors = new ArrayList<>(1);
+    
+    public UnfairExecutorFactory(TaskStripeGenerator stripeGenerator) {
+      this.stripeGenerator = stripeGenerator;
+    }
     
     @Override
     public UnfairExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      UnfairExecutor result = new UnfairExecutor(poolSize);
+      UnfairExecutor result = new UnfairExecutor(poolSize, stripeGenerator);
       executors.add(result);
       
       return result;

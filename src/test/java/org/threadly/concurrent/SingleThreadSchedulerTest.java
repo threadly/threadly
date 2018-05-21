@@ -35,6 +35,22 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
+  public void constructorTest() {
+    assertTrue(new SingleThreadScheduler(true).sManager.execThread.isDaemon());
+    assertFalse(new SingleThreadScheduler(false).sManager.execThread.isDaemon());
+  }
+  
+  @Test
+  public void prestartExecutionThreadTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    assertFalse(sts.sManager.execThread.isAlive());
+    
+    sts.prestartExecutionThread(true);
+    
+    assertTrue(sts.sManager.execThread.isAlive());
+  }
+  
+  @Test
   public void isShutdownTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     assertFalse(sts.isShutdown());

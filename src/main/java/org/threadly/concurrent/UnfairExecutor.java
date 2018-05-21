@@ -125,7 +125,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     }
   }
   
-  private final Worker[] schedulers;
+  protected final Worker[] schedulers;
   private final AtomicBoolean shutdownStarted;
   private final TaskStripeGenerator stripeGenerator;
   
