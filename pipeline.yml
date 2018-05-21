@@ -1,0 +1,27 @@
+steps:
+  - command: "./gradlew clean assemble"
+    label: "compile"
+    artifact_paths: "build/libs/*.jar"
+    timeout: 2
+
+  - wait
+
+  - command: "./gradlew test"
+    label: "unit tests"
+    artifact_paths: "build/reports/tests/xml/*.xml"
+    timeout: 10
+
+  - wait: ~
+    continue_on_failure: true
+
+  - plugins:
+      junit-annotate#v1.2.0:
+        artifacts: build/reports/tests/xml/*.xml
+
+  - command: "./gradlew checkstyleMain"
+    label: "checkstyle"
+    timeout: 2
+
+  - command: "./gradlew jacocoTestCoverageVerification"
+    label: "jacoco"
+    timeout: 2
