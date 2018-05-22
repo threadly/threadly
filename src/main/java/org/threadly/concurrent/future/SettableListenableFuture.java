@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.Clock;
 
@@ -98,6 +99,35 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
                                  null : executor, 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
+  }
+  
+  @Override
+  public void addCallback(FutureCallback<? super T> callback, Executor executor, 
+                          ListenerOptimizationStrategy optimize) {
+    if ((executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
+        done) {
+      synchronized (resultLock) {
+        if (failure != null) {
+          callback.handleFailure(failure);
+        } else if (canceled) {
+          callback.handleFailure(new CancellationException());
+        } else {
+          callback.handleResult(result);
+        }
+      }
+    } else {
+      addListener(() -> {
+        synchronized (resultLock) {
+          if (failure != null) {
+            callback.handleFailure(failure);
+          } else if (canceled) {
+            callback.handleFailure(new CancellationException());
+          } else {
+            callback.handleResult(result);
+          }
+        }
+      }, executor, optimize);
+    }
   }
   
   /**
