@@ -1,4 +1,4 @@
-package org.threadly.concurrent.future;
+package org.threadly.concurrent.wrapper.compatibility;
 
 import static org.junit.Assert.*;
 import static org.threadly.TestConstants.*;
@@ -10,10 +10,13 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Test;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestDelayed;
+import org.threadly.concurrent.future.TestFutureCallback;
+import org.threadly.concurrent.future.TestFutureImp;
+import org.threadly.concurrent.wrapper.compatibility.AbstractExecutorServiceWrapper.ScheduledFutureDelegate;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class ScheduledFutureDelegateTest {
   @Test
   public void getDelayTest() {

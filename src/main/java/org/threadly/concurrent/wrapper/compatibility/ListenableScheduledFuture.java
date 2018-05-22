@@ -1,6 +1,8 @@
-package org.threadly.concurrent.future;
+package org.threadly.concurrent.wrapper.compatibility;
 
 import java.util.concurrent.ScheduledFuture;
+
+import org.threadly.concurrent.future.ListenableFuture;
 
 /**
  * Interface which includes the {@link ScheduledFuture} interface as well as the 
@@ -9,12 +11,11 @@ import java.util.concurrent.ScheduledFuture;
  * This is almost identically to {@link java.util.concurrent.ScheduledFuture} except it provides 
  * the additional functionality of the {@link ListenableFuture}.
  * 
- * @deprecated Replaced with org.threadly.concurrent.wrapper.compatibility.ListenableScheduledFuture
- * 
- * @since 1.0.0
+ * @since 5.22 (since 1.0.0 under org.threadly.concurrent.future package)
  * @param <T> The result object type returned by this future
  */
-@Deprecated
-public interface ListenableScheduledFuture<T> extends ScheduledFuture<T>, ListenableFuture<T> {
+@SuppressWarnings("deprecation")
+public interface ListenableScheduledFuture<T> extends ScheduledFuture<T>, ListenableFuture<T>, 
+                                                      org.threadly.concurrent.future.ListenableScheduledFuture<T> {
   // nothing added here
 }

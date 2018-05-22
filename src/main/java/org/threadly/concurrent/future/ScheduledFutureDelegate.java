@@ -10,9 +10,12 @@ import java.util.concurrent.TimeoutException;
  * Implementation of the {@link ListenableScheduledFuture} interface.  This design delegates 
  * between a {@link Delayed} instance and {@link ListenableFuture} instance.
  * 
+ * @deprecated To be removed without public replacement, if used please open github issue 
+ * 
  * @since 1.0.0
  * @param <T> The result object type returned by this future
  */
+@Deprecated
 public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
   protected final ListenableFuture<? extends T> futureImp;
   protected final Delayed delayed;

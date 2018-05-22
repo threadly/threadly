@@ -10,9 +10,9 @@ import java.util.concurrent.TimeoutException;
 
 @SuppressWarnings("javadoc")
 public class TestFutureImp implements ListenableFuture<Object> {
+  public List<Runnable> listeners = new ArrayList<>(1);
   public final Object result = new Object();
   protected boolean canceled = false;
-  protected List<Runnable> listeners = new ArrayList<>(1);
   private final boolean runListeners;
   
   public TestFutureImp(boolean runListeners) {

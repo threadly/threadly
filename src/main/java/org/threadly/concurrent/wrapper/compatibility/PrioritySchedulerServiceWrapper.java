@@ -10,8 +10,6 @@ import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.ThreadlyInternalAccessor;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.future.ListenableScheduledFuture;
-import org.threadly.concurrent.future.ScheduledFutureDelegate;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 
 /**

@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Delayed;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
@@ -15,10 +16,10 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SchedulerService;
+import org.threadly.concurrent.future.FutureCallback;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
-import org.threadly.concurrent.future.ListenableScheduledFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
@@ -257,6 +258,78 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   protected abstract ListenableScheduledFuture<?> scheduleAtFixedRate(Runnable task,
                                                                       long initialDelayInMillis,
                                                                       long periodInMillis);
+  
+  /**
+   * Implementation of the {@link ListenableScheduledFuture} interface.  This design delegates 
+   * between a {@link Delayed} instance and {@link ListenableFuture} instance.
+   * 
+   * @since 5.22 (since 1.0.0 under org.threadly.concurrent.future package)
+   * @param <T> The result object type returned by this future
+   */
+  protected static class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
+    protected final ListenableFuture<? extends T> futureImp;
+    protected final Delayed delayed;
+    
+    /**
+     * Constructs a new {@link ScheduledFutureDelegate} with the provided instances to call to for 
+     * each interface.
+     * 
+     * @param futureImp implementation to call to for all Future calls
+     * @param delayed implementation to call to for getDelay and compareTo
+     */
+    public ScheduledFutureDelegate(ListenableFuture<? extends T> futureImp, Delayed delayed) {
+      this.futureImp = futureImp;
+      this.delayed = delayed;
+    }
+    
+    @Override
+    public long getDelay(TimeUnit unit) {
+      return delayed.getDelay(unit);
+    }
+
+    @Override
+    public int compareTo(Delayed o) {
+      return delayed.compareTo(o);
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      return futureImp.cancel(mayInterruptIfRunning);
+    }
+
+    @Override
+    public boolean isCancelled() {
+      return futureImp.isCancelled();
+    }
+
+    @Override
+    public boolean isDone() {
+      return futureImp.isDone();
+    }
+
+    @Override
+    public T get() throws InterruptedException, ExecutionException {
+      return futureImp.get();
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws InterruptedException, 
+                                                     ExecutionException, TimeoutException {
+      return futureImp.get(timeout, unit);
+    }
+
+    @Override
+    public void addListener(Runnable listener, Executor executor, 
+                            ListenerOptimizationStrategy optimizeExecution) {
+      futureImp.addListener(listener, executor, optimizeExecution);
+    }
+
+    @Override
+    public void addCallback(FutureCallback<? super T> callback, Executor executor, 
+                            ListenerOptimizationStrategy optimizeExecution) {
+      futureImp.addCallback(callback, executor, optimizeExecution);
+    }
+  }
   
   /**
    * Because in {@link java.util.concurrent.ScheduledExecutorService} an exception from a 
