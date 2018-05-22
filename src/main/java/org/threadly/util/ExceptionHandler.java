@@ -1,5 +1,7 @@
 package org.threadly.util;
 
+import java.util.function.Consumer;
+
 /**
  * Interface for implementation to handle exceptions which occur.  This is similar to 
  * {@link java.lang.Thread.UncaughtExceptionHandler}, except that exceptions provided to this 
@@ -8,7 +10,7 @@ package org.threadly.util;
  * 
  * @since 4.3.0 (since 2.4.0 as ExceptionHandlerInterface)
  */
-public interface ExceptionHandler {
+public interface ExceptionHandler extends Consumer<Throwable> {
   /**
    * Default {@link ExceptionHandler} implementation which will invoke 
    * {@link Throwable#printStackTrace()}.
@@ -26,4 +28,9 @@ public interface ExceptionHandler {
    * @param thrown Throwable that was thrown, and caught
    */
   public void handleException(Throwable thrown);
+  
+  @Override
+  default void accept(Throwable thrown) {
+    handleException(thrown);
+  }
 }
