@@ -79,7 +79,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
    */
   protected SettableListenableFuture(boolean throwIfAlreadyComplete, Executor executingExecutor) {
     this.listenerHelper = new RunnableListenerHelper(true);
-    this.resultLock = new Object();
+    this.resultLock = listenerHelper; // cheating to avoiding another object just for a lock
     this.throwIfAlreadyComplete = throwIfAlreadyComplete;
     this.executingExecutor = executingExecutor;
     this.runningThread = null;
@@ -328,7 +328,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       if (throwIfAlreadyComplete) {
         throw new IllegalStateException("Future already done", cause);
       }
-      
       return false;
     }
     
@@ -380,9 +379,10 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
         throw new ExecutionException(failure);
       } else if (canceled) {
         throw new CancellationException();
-      } else if (resultCleared) {
-        throw new IllegalStateException("Result cleared, future get's not possible");
       } else if (done) {
+        if (resultCleared) {
+          throw new IllegalStateException("Result cleared, future get's not possible");
+        }
         return result;
       } else {
         throw new TimeoutException();
