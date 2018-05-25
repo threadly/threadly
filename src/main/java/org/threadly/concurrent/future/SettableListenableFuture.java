@@ -322,7 +322,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     }
   }
   
-  // should be synchronized on resultLock before calling
+  // MUST be synchronized on resultLock before calling
   private boolean setDone(Throwable cause) {
     if (done) {
       if (throwIfAlreadyComplete) {
@@ -351,14 +351,13 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       while (! done) {
         resultLock.wait();
       }
-      if (resultCleared) {
-        throw new IllegalStateException("Result cleared, future get's not possible");
-      }
       
       if (failure != null) {
         throw new ExecutionException(failure);
       } else if (canceled) {
         throw new CancellationException();
+      } else if (resultCleared) {
+        throw new IllegalStateException("Result cleared, future get's not possible");
       } else {
         return result;
       }
@@ -376,14 +375,13 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
              (remainingInMs = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime)) > 0) {
         resultLock.wait(remainingInMs);
       }
-      if (resultCleared) {
-        throw new IllegalStateException("Result cleared, future get's not possible");
-      }
       
       if (failure != null) {
         throw new ExecutionException(failure);
       } else if (canceled) {
         throw new CancellationException();
+      } else if (resultCleared) {
+        throw new IllegalStateException("Result cleared, future get's not possible");
       } else if (done) {
         return result;
       } else {
