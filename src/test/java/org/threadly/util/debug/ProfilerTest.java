@@ -13,9 +13,11 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.util.Clock;
 
@@ -113,10 +115,11 @@ public class ProfilerTest {
     profiler.start(null);
     
     assertTrue(profiler.isRunning());
+    blockForProfilerSample();
   }
   
   @Test
-  public void startWitExecutorTest() {
+  public void startWithExecutorTest() {
     PrioritySchedulerStatisticTracker e = new PrioritySchedulerStatisticTracker(1);
     try {
       assertEquals(0, e.getActiveTaskCount());
@@ -125,10 +128,40 @@ public class ProfilerTest {
       
       assertTrue(profiler.isRunning());
       assertEquals(1, e.getActiveTaskCount());
+      blockForProfilerSample();
     } finally {
       profiler.stop();
       e.shutdownNow();
     }
+  }
+  
+  @Test
+  public void startWithSameThreadExecutorTest() throws InterruptedException, TimeoutException {
+    AsyncVerifier av = new AsyncVerifier();
+    PrioritySchedulerStatisticTracker s = new PrioritySchedulerStatisticTracker(1);
+    try {
+      s.schedule(() -> {
+        av.assertTrue(profiler.isRunning());
+        try {
+          blockForProfilerSample();
+          profiler.stop();  // this should unblock the test thread
+        } catch (Exception e) {
+          av.fail(e);
+        }
+        av.signalComplete();
+      }, 200);
+      profiler.start(SameThreadSubmitterExecutor.instance()); // will block while profile runs
+      av.waitForTest();  // test already completed, just check result
+    } finally {
+      s.shutdownNow();
+    }
+  }
+  
+  @Test
+  public void startWithSameThreadExecutorAndTimeoutTest() {
+    profiler.start(SameThreadSubmitterExecutor.instance(), 200);
+    assertFalse(profiler.isRunning());
+    assertTrue(profiler.getCollectedSampleQty() > 0);
   }
   
   @Test

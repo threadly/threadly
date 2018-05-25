@@ -6,10 +6,14 @@ import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.debug.Profiler.ThreadSample;
 
 @SuppressWarnings("javadoc")
@@ -135,6 +139,51 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   }
   
   @Test
+  @Override
+  public void startWithoutExecutorTest() {
+    ctProfiler.addProfiledThread(Thread.currentThread());
+    
+    super.startWithoutExecutorTest();
+  }
+  
+  @Test
+  @Override
+  public void startWithExecutorTest() {
+    ctProfiler.addProfiledThread(Thread.currentThread());
+    
+    super.startWithExecutorTest();
+  }
+  
+  @Test
+  @Override
+  public void startWithSameThreadExecutorTest() throws InterruptedException, TimeoutException {
+    try {
+      CentralThreadlyPool.lowPriorityPool()
+                         .submit(() -> ctProfiler.addProfiledThread(Thread.currentThread())).get();
+    } catch (ExecutionException e) {
+      throw ExceptionUtils.makeRuntime(e.getCause());
+    }
+    
+    super.startWithSameThreadExecutorTest();
+  }
+  
+  @Test
+  @Override
+  public void startWithSameThreadExecutorAndTimeoutTest() {
+    try {
+      CentralThreadlyPool.lowPriorityPool()
+                         .submit(() -> ctProfiler.addProfiledThread(Thread.currentThread())).get();
+    } catch (ExecutionException e) {
+      throw ExceptionUtils.makeRuntime(e.getCause());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    }
+    
+    super.startWithSameThreadExecutorAndTimeoutTest();
+  }
+  
+  @Test
   public void getProfiledThreadCountTest() {
     int testThreadCount = 10;
     assertEquals(0, ctProfiler.getProfiledThreadCount());
@@ -156,7 +205,6 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
       assertEquals(testThreadCount - removedCount, ctProfiler.getProfiledThreadCount());
     }
   }
-  
   @Test
   @Override
   public void resetTest() {

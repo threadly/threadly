@@ -19,6 +19,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
@@ -228,6 +229,9 @@ public class Profiler {
    */
   private void start(Executor executor, final long sampleDurationInMillis, 
                      SettableListenableFuture<String> completionFuture) {
+    final ProfilerRunner pr = new ProfilerRunner(pStore);
+    boolean runInCallingThread = false;
+    Thread callingThread = null;
     synchronized (startStopLock) {
       if (sampleDurationInMillis > 0) {
         // stop in case it's running, this allows us to simplify our start logic
@@ -237,31 +241,56 @@ public class Profiler {
         stopFutures.add(completionFuture);
       }
       if (pStore.collectorThread.get() == null) {
-        final ProfilerRunner pr = new ProfilerRunner(pStore);
         if (executor == null) {
           // no executor, so we simply create our own thread
           Thread thread = new Thread(pr);
           
           pStore.collectorThread.set(thread);
           
-          thread.setName("Profiler data collector");
+          thread.setName("Threadly Profiler data collector");
           thread.setPriority(Thread.MAX_PRIORITY);
           thread.start();
+        } else if (executor == SameThreadSubmitterExecutor.instance() || 
+                   executor instanceof SameThreadSubmitterExecutor) {
+          // I don't really like having special logic if the goal is to profile on the invoking 
+          // thread like this, but anything else might complicate the logic below (or at least it's 
+          // not obvious what a clean way to adjust the below logic is).  Despite the use of an 
+          // AtomicReference for the collectorThread reference, if we allow the thread to be set 
+          // outside of the lock we risk a case where the profiler was started, started, then 
+          // stopped.  If the second start task was able to submit to the pool, but not execute till 
+          // after the stop, then a profiler would continue to run (maybe forever)  
+          callingThread = Thread.currentThread();
+          pStore.collectorThread.set(callingThread);
+          runInCallingThread = true;
         } else {
           final SettableListenableFuture<?> runningThreadFuture;
           runningThreadFuture = new SettableListenableFuture<>();
           
           executor.execute(() -> {
+            Thread currentThread = Thread.currentThread();
             try {
               // if collector thread can't be set, then some other thread has taken over
-              if (! pStore.collectorThread.compareAndSet(null, Thread.currentThread())) {
+              if (! pStore.collectorThread.compareAndSet(null, currentThread)) {
                 return;
               }
             } finally {
               runningThreadFuture.setResult(null);
             }
             
-            pr.run();
+            String originalName = currentThread.getName();
+            int origPriority = currentThread.getPriority();
+            try {
+              if (origPriority < Thread.MAX_PRIORITY) {
+                currentThread.setPriority(Thread.MAX_PRIORITY);
+              }
+              currentThread.setName("Threadly Profiler data collector[" + originalName + "]");
+              pr.run();
+            } finally {
+              if (origPriority < Thread.MAX_PRIORITY) {
+                currentThread.setPriority(origPriority);
+              }
+              currentThread.setName(originalName);
+            }
           });
           
           // now block till collectorThread has been set and profiler has started on the executor
@@ -271,7 +300,6 @@ public class Profiler {
             Thread.currentThread().interrupt();
             return;
           } catch (ExecutionException e) {
-            // is virtually impossible
             throw ExceptionUtils.makeRuntime(e.getCause());
           }
         }
@@ -290,6 +318,20 @@ public class Profiler {
           };
         }
       }
+    }
+    if (runInCallingThread) {
+      int origPriority = callingThread.getPriority();
+      try {
+        if (origPriority < Thread.MAX_PRIORITY) {
+          callingThread.setPriority(Thread.MAX_PRIORITY);
+        }
+        pr.run();
+      } finally {
+        if (origPriority < Thread.MAX_PRIORITY) {
+          callingThread.setPriority(origPriority);
+        }
+      }
+      Thread.interrupted(); // reset interrupted status incase that is what caused us to unblock
     }
   }
   
