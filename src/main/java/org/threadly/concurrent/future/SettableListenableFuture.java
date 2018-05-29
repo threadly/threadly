@@ -104,30 +104,19 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor, 
                           ListenerOptimizationStrategy optimize) {
-    if ((executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        done) {
-      synchronized (resultLock) {
-        if (failure != null) {
-          callback.handleFailure(failure);
-        } else if (canceled) {
-          callback.handleFailure(new CancellationException());
-        } else {
-          callback.handleResult(result);
-        }
+    // it's better to unconditionally add a listener here.  Mostly because it allows us to avoid 
+    // synchronization (since listeners wont be invoked till final / result state has all be set 
+    // and synced).  So this allows us to avoid synchronization (which is important as we don't 
+    // want to hold the lock while invoking into the callback
+    addListener(() -> {
+      if (failure != null) {
+        callback.handleFailure(failure);
+      } else if (canceled) {
+        callback.handleFailure(new CancellationException());
+      } else {
+        callback.handleResult(result);
       }
-    } else {
-      addListener(() -> {
-        synchronized (resultLock) {
-          if (failure != null) {
-            callback.handleFailure(failure);
-          } else if (canceled) {
-            callback.handleFailure(new CancellationException());
-          } else {
-            callback.handleResult(result);
-          }
-        }
-      }, executor, optimize);
-    }
+    }, executor, optimize);
   }
   
   /**
