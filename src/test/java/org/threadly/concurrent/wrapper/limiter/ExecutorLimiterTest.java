@@ -241,8 +241,17 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
     try {
       TestRunnable secondTask = new TestRunnable();
       
-      limiter.submit(DoNothingRunnable.instance())
-             .addListener(btr);
+      Thread callingThread = Thread.currentThread();
+      new Runnable() {
+        @Override
+        public void run() {
+          if (Thread.currentThread() == callingThread) {
+            limiter.submit(DoNothingRunnable.instance()).addListener(this);
+          } else {
+            btr.run();
+          }
+        }
+      }.run();
       btr.blockTillStarted();
       limiter.execute(secondTask);
       
