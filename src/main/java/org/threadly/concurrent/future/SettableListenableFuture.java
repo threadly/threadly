@@ -104,19 +104,39 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   @Override
   public void addCallback(FutureCallback<? super T> callback, Executor executor, 
                           ListenerOptimizationStrategy optimize) {
-    // it's better to unconditionally add a listener here.  Mostly because it allows us to avoid 
-    // synchronization (since listeners wont be invoked till final / result state has all be set 
-    // and synced).  So this allows us to avoid synchronization (which is important as we don't 
-    // want to hold the lock while invoking into the callback
-    addListener(() -> {
-      if (failure != null) {
+    if (executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+      // can't check `done` without synchronizing, but we can check final states optimistically
+      // because a `null` result requires us to check `done` (which needs to synchronize or we may 
+      // see an inconsistent final state), this only works for non-null results
+      if (result != null) {
+        callback.handleResult(result);
+        return;
+      } else if (failure != null) {
         callback.handleFailure(failure);
+        return;
       } else if (canceled) {
         callback.handleFailure(new CancellationException());
-      } else {
-        callback.handleResult(result);
+        return;
       }
-    }, executor, optimize);
+    }
+    // This allows us to avoid synchronization (since listeners wont be invoked till final / 
+    // result state has all be set and synced).  So this allows us to avoid synchronization (which 
+    // is important as we don't want to hold the lock while invoking into the callback
+    listenerHelper.addListener(() -> {
+                                 if (failure != null) {
+                                   callback.handleFailure(failure);
+                                 } else if (canceled) {
+                                   callback.handleFailure(new CancellationException());
+                                 } else {
+                                   callback.handleResult(result);
+                                 }
+                               }, 
+                               executor == executingExecutor && 
+                                   (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
+                                    optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
+                                 null : executor, 
+                               optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
+                                 null : executor);
   }
   
   /**
