@@ -1,22 +1,21 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class RunnableChainTest {
+public class RunnableChainTest extends ThreadlyTester {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   private static final int FAIL_INDEX = 2;

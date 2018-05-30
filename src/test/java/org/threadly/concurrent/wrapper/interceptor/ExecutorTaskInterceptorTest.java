@@ -10,6 +10,7 @@ import java.util.concurrent.Executor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -18,7 +19,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class ExecutorTaskInterceptorTest {
+public class ExecutorTaskInterceptorTest extends ThreadlyTester {
   protected TestableScheduler scheduler;
   protected ExecutorTaskInterceptor executorInterceptor;
   protected TestInterceptor testInterceptor;

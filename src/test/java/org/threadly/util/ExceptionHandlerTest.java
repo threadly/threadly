@@ -9,9 +9,10 @@ import java.io.PrintStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class ExceptionHandlerTest {
+public class ExceptionHandlerTest extends ThreadlyTester {
   private static final PrintStream ORIG_STD_ERR = System.err;
   
   private StringBuilder stdErrBuilder; 

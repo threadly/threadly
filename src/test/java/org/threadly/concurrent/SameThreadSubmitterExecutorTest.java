@@ -8,7 +8,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.future.ListenableFuture;
 
 @SuppressWarnings("javadoc")
@@ -17,7 +16,7 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
   
   @BeforeClass
   public static void classSetup() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   @Before

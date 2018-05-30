@@ -6,9 +6,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class FutureCallbackResultHandlerTest {
+public class FutureCallbackResultHandlerTest extends ThreadlyTester {
   @Test
   public void failureIgnoredTest() {
     AtomicBoolean resultProvided = new AtomicBoolean(false);

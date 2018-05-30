@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerService;
@@ -17,7 +18,7 @@ import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 
 @SuppressWarnings("javadoc")
-public class DefaultPriorityWrapperTest {
+public class DefaultPriorityWrapperTest extends ThreadlyTester {
   private static PriorityScheduler scheduler;
   
   @BeforeClass

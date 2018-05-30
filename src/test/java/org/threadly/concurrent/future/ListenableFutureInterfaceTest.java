@@ -1,13 +1,13 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
@@ -22,7 +22,7 @@ import org.threadly.util.SuppressedStackRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
-public abstract class ListenableFutureInterfaceTest {
+public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   protected abstract ListenableFutureFactory makeListenableFutureFactory();
   
   @Test

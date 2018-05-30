@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.RejectedExecutionException;
 
@@ -47,6 +46,7 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
     assertEquals(TEST_QTY * 2, queueRejector.getQueueLimit());
   }
   
+  @Override
   @Test
   public void getQueuedTaskCountTest() {
     TestableScheduler testableScheduler = new TestableScheduler();

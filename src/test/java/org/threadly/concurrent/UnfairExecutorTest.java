@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -10,13 +9,14 @@ import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.UnfairExecutor.TaskStripeGenerator;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class UnfairExecutorTest {
+public class UnfairExecutorTest extends ThreadlyTester {
   @Test
   @SuppressWarnings("unused")
   public void constructorFail() {

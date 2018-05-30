@@ -1,13 +1,13 @@
 package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class TestConditionTest {
+public class TestConditionTest extends ThreadlyTester {
   @Test
   public void blockTest() {
     DelayCondition dc = new DelayCondition(DELAY_TIME);

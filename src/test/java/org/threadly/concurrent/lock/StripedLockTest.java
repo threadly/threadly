@@ -3,9 +3,10 @@ package org.threadly.concurrent.lock;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class StripedLockTest {
+public class StripedLockTest extends ThreadlyTester {
   private static final int LOCK_QTY = 10;
   
   private StripedLock sLock = new StripedLock(LOCK_QTY);

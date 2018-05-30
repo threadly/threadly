@@ -1,7 +1,6 @@
 package org.threadly.util.debug;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
@@ -13,6 +12,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -22,7 +22,7 @@ import org.threadly.test.concurrent.TestCondition;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class ProfilerTest {
+public class ProfilerTest extends ThreadlyTester {
   private static final int POLL_INTERVAL = 1;
   private static final int MIN_RESPONSE_LENGTH = 10;
   

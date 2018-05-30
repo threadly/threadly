@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper.interceptor;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.List;

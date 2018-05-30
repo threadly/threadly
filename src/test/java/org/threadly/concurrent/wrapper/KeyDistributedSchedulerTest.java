@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -12,7 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
@@ -25,13 +24,13 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class KeyDistributedSchedulerTest {
+public class KeyDistributedSchedulerTest extends ThreadlyTester {
   private static final int PARALLEL_LEVEL = Runtime.getRuntime().availableProcessors();
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY;
   
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   private PriorityScheduler scheduler;

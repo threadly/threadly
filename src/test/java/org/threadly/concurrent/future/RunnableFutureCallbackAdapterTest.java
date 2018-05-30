@@ -7,11 +7,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 
 @SuppressWarnings({"javadoc", "deprecation"})
-public class RunnableFutureCallbackAdapterTest {
+public class RunnableFutureCallbackAdapterTest extends ThreadlyTester {
   @Test
   public void constructorTest() {
     Future<Object> future = new TestFutureImp(false);

@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,10 +8,11 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class ContainerHelperTest {
+public class ContainerHelperTest extends ThreadlyTester {
   @Test
   public void removeRunnableFromCollectionTest() {
     List<TestRunnableContainer> testRunnables = new ArrayList<>(TEST_QTY);

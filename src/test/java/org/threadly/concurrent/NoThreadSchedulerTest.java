@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -24,7 +24,7 @@ import org.threadly.util.ExceptionHandler;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class NoThreadSchedulerTest {
+public class NoThreadSchedulerTest extends ThreadlyTester {
   protected NoThreadScheduler scheduler;
   
   @Before

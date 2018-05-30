@@ -3,9 +3,10 @@ package org.threadly.util;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class ArgumentVerifierTest {
+public class ArgumentVerifierTest extends ThreadlyTester {
   @Test
   public void assertNotNullTest() {
     ArgumentVerifier.assertNotNull(new Object(), "foo");

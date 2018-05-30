@@ -1,12 +1,6 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.threadly.TestConstants.SLOW_MACHINE;
-import static org.threadly.TestConstants.TEST_PROFILE;
-import static org.threadly.TestConstants.TEST_QTY;
+import static org.junit.Assert.*;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -15,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.TestConstants.TestLoad;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;

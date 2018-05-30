@@ -1,9 +1,10 @@
 package org.threadly.concurrent.future;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class ImmediateFailureListenableFutureTest {
+public class ImmediateFailureListenableFutureTest extends ThreadlyTester {
   @Test
   public void getTest() {
     Exception failure = new Exception();

@@ -3,6 +3,7 @@ package org.threadly.concurrent.wrapper;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionUtils;
@@ -10,7 +11,7 @@ import org.threadly.util.SuppressedStackRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
-public class ThrowableSuppressingRunnableTest {
+public class ThrowableSuppressingRunnableTest extends ThreadlyTester {
   @Test
   public void getContainedRunnableTest() {
     TestRunnable tr = new TestRunnable();

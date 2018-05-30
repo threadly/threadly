@@ -1,7 +1,6 @@
 package org.threadly.concurrent.collections;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -14,11 +13,12 @@ import java.util.NoSuchElementException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
-public class ConcurrentArrayListTest {
+public class ConcurrentArrayListTest extends ThreadlyTester {
   private ConcurrentArrayList<String> testList;
   
   @Before

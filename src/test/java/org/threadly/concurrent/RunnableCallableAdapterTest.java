@@ -3,10 +3,11 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class RunnableCallableAdapterTest {
+public class RunnableCallableAdapterTest extends ThreadlyTester {
   @Test
   public void constructorTest() {
     TestRunnable tr = new TestRunnable();

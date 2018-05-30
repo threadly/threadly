@@ -11,13 +11,14 @@ import java.util.StringTokenizer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionUtils.TransformedException;
 import org.threadly.util.ExceptionUtils.TransformedSuppressedStackException;
 
 @SuppressWarnings("javadoc")
-public class ExceptionUtilsTest {
+public class ExceptionUtilsTest extends ThreadlyTester {
   @Before
   @After
   public void cleanup() {

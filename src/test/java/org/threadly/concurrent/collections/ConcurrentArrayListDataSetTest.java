@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 
 @SuppressWarnings("javadoc")
-public class ConcurrentArrayListDataSetTest {
+public class ConcurrentArrayListDataSetTest extends ThreadlyTester {
   // because these objects are immutable, there is no need to create news before each test
   private static final DataSet<Integer> orderedNormal;
   private static final DataSet<Integer> removedFromFront;

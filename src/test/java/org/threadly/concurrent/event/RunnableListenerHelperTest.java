@@ -8,7 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
@@ -17,10 +17,10 @@ import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class RunnableListenerHelperTest {
+public class RunnableListenerHelperTest extends ThreadlyTester {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   protected RunnableListenerHelper onceHelper;

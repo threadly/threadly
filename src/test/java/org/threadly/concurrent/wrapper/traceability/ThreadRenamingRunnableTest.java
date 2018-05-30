@@ -3,11 +3,12 @@ package org.threadly.concurrent.wrapper.traceability;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
-public class ThreadRenamingRunnableTest {
+public class ThreadRenamingRunnableTest extends ThreadlyTester {
   @Test
   public void renameReplaceAndResetTest() {
     final String originalName = Thread.currentThread().getName();

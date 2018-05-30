@@ -4,17 +4,17 @@ import static org.junit.Assert.*;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class InvocationTeeTest {
+public class InvocationTeeTest extends ThreadlyTester {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   @Test (expected = IllegalArgumentException.class)

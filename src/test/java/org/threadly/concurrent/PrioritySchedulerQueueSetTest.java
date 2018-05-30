@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +10,7 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSet;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSetListener;
@@ -20,7 +20,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class PrioritySchedulerQueueSetTest {
+public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   private QueueSet queueSet;
   
   @Before

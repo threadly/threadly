@@ -13,7 +13,6 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.TestCallable;
@@ -25,7 +24,7 @@ import org.threadly.util.SuppressedStackRuntimeException;
 public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceTest {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   @Override

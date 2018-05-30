@@ -3,9 +3,10 @@ package org.threadly.util.debug;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class ProfilerTraceTest {
+public class ProfilerTraceTest extends ThreadlyTester {
   @Test
   public void equalsSameObjectTest() {
     StackTraceElement[] stack = Thread.currentThread().getStackTrace();

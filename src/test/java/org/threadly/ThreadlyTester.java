@@ -1,14 +1,18 @@
 package org.threadly;
 
+import java.lang.Thread.UncaughtExceptionHandler;
+
+import org.junit.Rule;
+import org.threadly.util.ExceptionHandler;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.StringUtils;
 
 /**
- * Class which contains constants which impact how long the unit tests run.
- * 
- * This way if we want to stress test the code, we only have to adjust the 
- * constants from one class.  In all cases, lower numbers mean faster tests.
+ * Class which contains constants which impact how long the unit tests run, as well as anything 
+ * commonly needed across tests.
  */
-public class TestConstants {
+@SuppressWarnings("javadoc")
+public abstract class ThreadlyTester {
   /**
    * Profile to use when no specific profile is specified. 
    */
@@ -113,6 +117,33 @@ public class TestConstants {
         break;
       default:
         throw new UnsupportedOperationException("Load not supported: " + TEST_PROFILE);
+    }
+  }
+
+  public static void setIgnoreExceptionHandler() {
+    IgnoreExceptionHandler ieh = new IgnoreExceptionHandler();
+    
+    Thread.currentThread().setUncaughtExceptionHandler(null);
+    Thread.setDefaultUncaughtExceptionHandler(ieh);
+    
+    ExceptionUtils.setThreadExceptionHandler(null);
+    ExceptionUtils.setInheritableExceptionHandler(null);
+    ExceptionUtils.setDefaultExceptionHandler(ieh);
+  }
+  
+  @Rule
+  public RepeatRule repeatRule = new RepeatRule();
+  
+  private static class IgnoreExceptionHandler implements UncaughtExceptionHandler, 
+                                                         ExceptionHandler {
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+      // ignored
+    }
+
+    @Override
+    public void handleException(Throwable thrown) {
+      // ignored
     }
   }
 }

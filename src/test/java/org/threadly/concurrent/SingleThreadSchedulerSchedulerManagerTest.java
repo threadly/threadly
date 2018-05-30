@@ -3,10 +3,11 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SingleThreadScheduler.SchedulerManager;
 
 @SuppressWarnings("javadoc")
-public class SingleThreadSchedulerSchedulerManagerTest {
+public class SingleThreadSchedulerSchedulerManagerTest extends ThreadlyTester {
   @Test
   public void constructorTest() {
     SchedulerManager sm = new SchedulerManager(AbstractPriorityScheduler.DEFAULT_PRIORITY, 

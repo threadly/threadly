@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;

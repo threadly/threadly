@@ -7,9 +7,10 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class StatisticsUtilsTest {
+public class StatisticsUtilsTest extends ThreadlyTester {
   @Test
   public void averageTest() {
     assertEquals(0, StatisticsUtils.getAverage(Collections.<Long>emptyList()), 0);

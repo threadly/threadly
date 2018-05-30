@@ -1,8 +1,6 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.threadly.TestConstants.TEST_QTY;
+import static org.junit.Assert.*;
 
 import java.util.concurrent.RejectedExecutionException;
 

@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -20,7 +21,7 @@ import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class PollerTest {
+public class PollerTest extends ThreadlyTester {
   private static final int POLL_INTERVAL = 10_000;
 
   private TestableScheduler scheduler;

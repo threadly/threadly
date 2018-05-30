@@ -5,11 +5,12 @@ import static org.junit.Assert.*;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
-public class ClockTest {
+public class ClockTest extends ThreadlyTester {
   @AfterClass
   public static void cleanupClass() {
     Clock.startClockUpdateThread();

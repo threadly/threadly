@@ -7,10 +7,11 @@ import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.Pair;
 
 @SuppressWarnings("javadoc")
-public class StackTrackerTest {
+public class StackTrackerTest extends ThreadlyTester {
   private StackTracker tracker;
   
   @Before

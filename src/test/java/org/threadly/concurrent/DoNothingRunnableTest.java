@@ -3,9 +3,10 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class DoNothingRunnableTest {
+public class DoNothingRunnableTest extends ThreadlyTester {
   @Test
   public void doNothingRun() {
     new DoNothingRunnable().run();

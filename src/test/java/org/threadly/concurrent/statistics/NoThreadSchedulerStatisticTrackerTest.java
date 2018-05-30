@@ -1,7 +1,6 @@
 package org.threadly.concurrent.statistics;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.Iterator;
 import java.util.List;

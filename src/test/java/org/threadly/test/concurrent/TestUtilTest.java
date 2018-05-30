@@ -1,17 +1,17 @@
 package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class TestUtilTest {
+public class TestUtilTest extends ThreadlyTester {
   @Test
   public void sleepTest() {
     long start = Clock.accurateForwardProgressingMillis();

@@ -5,9 +5,10 @@ import static org.junit.Assert.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class AbstractFutureCallbackFailureHandlerTest {
+public class AbstractFutureCallbackFailureHandlerTest extends ThreadlyTester {
   @Test
   public void resultIgnoredTest() {
     final AtomicReference<Throwable> failureProvided = new AtomicReference<>(null);

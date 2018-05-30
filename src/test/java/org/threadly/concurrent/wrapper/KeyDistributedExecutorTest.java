@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +19,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
@@ -38,7 +37,7 @@ import org.threadly.util.SuppressedStackRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
-public class KeyDistributedExecutorTest {
+public class KeyDistributedExecutorTest extends ThreadlyTester {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
@@ -46,7 +45,7 @@ public class KeyDistributedExecutorTest {
   
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
     
     executor = new UnfairExecutor((PARALLEL_LEVEL * 2) + 1);
   }

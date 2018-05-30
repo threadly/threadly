@@ -5,10 +5,11 @@ import static org.junit.Assert.*;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class SchedulingUtilsTest {
+public class SchedulingUtilsTest extends ThreadlyTester {
   private static long getNowToHour() {
     long hours = Clock.lastKnownTimeMillis() / TimeUnit.HOURS.toMillis(1);
     return TimeUnit.HOURS.toMillis(hours);

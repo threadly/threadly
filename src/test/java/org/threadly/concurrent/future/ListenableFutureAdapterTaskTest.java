@@ -5,10 +5,11 @@ import static org.junit.Assert.*;
 import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.ExceptionUtils;
 
 @SuppressWarnings("javadoc")
-public class ListenableFutureAdapterTaskTest {
+public class ListenableFutureAdapterTaskTest extends ThreadlyTester {
   @Test
   public void resultTest() throws InterruptedException, ExecutionException {
     Object result = new Object();

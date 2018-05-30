@@ -9,15 +9,15 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
-public class AsyncVerifierTest {
+public class AsyncVerifierTest extends ThreadlyTester {
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   @AfterClass

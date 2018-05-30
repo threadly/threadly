@@ -4,10 +4,11 @@ import static org.junit.Assert.*;
 
 import org.junit.After;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
-public class DebugLoggerTest {
+public class DebugLoggerTest extends ThreadlyTester {
   @After
   public void cleanup() {
     DebugLogger.getAllStoredMessages(); // should clear state

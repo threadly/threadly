@@ -1,7 +1,6 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -25,7 +25,7 @@ import org.threadly.util.StringUtils;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class FutureUtilsTest {
+public class FutureUtilsTest extends ThreadlyTester {
   private static <T> List<ListenableFuture<? extends T>> makeFutures(int count, int errorIndex) {
     List<ListenableFuture<? extends T>> result = new ArrayList<>(count + 1);
     

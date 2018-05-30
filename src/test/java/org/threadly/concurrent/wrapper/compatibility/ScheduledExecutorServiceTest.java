@@ -1,7 +1,6 @@
 package org.threadly.concurrent.wrapper.compatibility;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +19,7 @@ import java.util.concurrent.TimeoutException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
@@ -31,12 +30,12 @@ import org.threadly.util.Clock;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public abstract class ScheduledExecutorServiceTest {
+public abstract class ScheduledExecutorServiceTest extends ThreadlyTester {
   private static final int THREAD_COUNT = 1000;
   
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   protected abstract ScheduledExecutorService makeScheduler(int poolSize);

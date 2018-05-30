@@ -1,17 +1,17 @@
 package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestCondition.ConditionTimeoutException;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class TestRunnableTest {
+public class TestRunnableTest extends ThreadlyTester {
   private TestRunnable instance;
   
   @Before

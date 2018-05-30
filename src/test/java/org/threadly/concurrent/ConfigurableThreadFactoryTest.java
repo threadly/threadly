@@ -7,6 +7,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
@@ -15,7 +16,7 @@ import org.threadly.util.TestExceptionHandler;
 import org.threadly.util.TestUncaughtExceptionHandler;
 
 @SuppressWarnings("javadoc")
-public class ConfigurableThreadFactoryTest {
+public class ConfigurableThreadFactoryTest extends ThreadlyTester {
   protected ConfigurableThreadFactory makeThreadFactory() {
     return new ConfigurableThreadFactory();
   }

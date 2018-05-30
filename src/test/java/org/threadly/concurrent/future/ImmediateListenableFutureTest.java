@@ -6,11 +6,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
-public class ImmediateListenableFutureTest {
+public class ImmediateListenableFutureTest extends ThreadlyTester {
   public static void cancelTest(ListenableFuture<?> testFuture) {
     assertFalse(testFuture.cancel(true));
     assertFalse(testFuture.isCancelled());

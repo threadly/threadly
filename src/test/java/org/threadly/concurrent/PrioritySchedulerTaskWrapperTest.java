@@ -3,11 +3,12 @@ package org.threadly.concurrent;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.AbstractPriorityScheduler.TaskWrapper;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
-public class PrioritySchedulerTaskWrapperTest {
+public class PrioritySchedulerTaskWrapperTest extends ThreadlyTester {
   @Test
   public void invalidateTest() {
     TestWrapper tw = new TestWrapper();

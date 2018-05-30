@@ -1,16 +1,16 @@
 package org.threadly.util;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class SortUtilsTest {
+public class SortUtilsTest extends ThreadlyTester {
   private static final int BINARY_SEARCH_RANDOM_SIZE = TEST_QTY * 10;
   private static final int INCREMENTAL_SEARCH_COUNT = TEST_QTY * 10;
 

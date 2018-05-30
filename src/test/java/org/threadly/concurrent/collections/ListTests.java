@@ -1,7 +1,6 @@
 package org.threadly.concurrent.collections;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,8 +10,10 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
+import org.threadly.ThreadlyTester;
+
 @SuppressWarnings("javadoc")
-public class ListTests {
+public class ListTests extends ThreadlyTester {
   public static void populateIntStrings(List<String> testList, int qty) {
     for (int i = 0; i < qty; i++) {
       String str = Integer.toString(i);

@@ -3,9 +3,10 @@ package org.threadly.util;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class StringUtilsTest {
+public class StringUtilsTest extends ThreadlyTester {
   @Test
   public void allCharsMatchTest() {
     assertTrue(StringUtils.allCharsMatch(Character::isLetter, ""));

@@ -1,7 +1,6 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;

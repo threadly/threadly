@@ -7,9 +7,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class AbstractServiceTest {
+public class AbstractServiceTest extends ThreadlyTester {
   private TestService service;
   
   @Before

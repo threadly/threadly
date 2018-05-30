@@ -9,13 +9,14 @@ import java.util.concurrent.SynchronousQueue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
-public class BlockingQueueConsumerTest {
+public class BlockingQueueConsumerTest extends ThreadlyTester {
    private SynchronousQueue<Object> queue;
    private TestAcceptor acceptor;
    private BlockingQueueConsumer<Object> queueConsumer;

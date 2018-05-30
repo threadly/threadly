@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,13 +9,14 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
-public class CentralThreadlyPoolTest {
+public class CentralThreadlyPoolTest extends ThreadlyTester {
   @Test
   public void getAndIncreaseGenericThreadsTest() {
     int startingCount = CentralThreadlyPool.getGenericThreadCount();

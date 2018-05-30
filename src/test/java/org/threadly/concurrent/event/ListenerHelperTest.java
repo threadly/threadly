@@ -1,7 +1,6 @@
 package org.threadly.concurrent.event;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -9,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
@@ -17,7 +17,7 @@ import org.threadly.util.SuppressedStackRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
-public class ListenerHelperTest {
+public class ListenerHelperTest extends ThreadlyTester {
   protected <T> ListenerHelper<T> makeListenerHelper(Class<T> listenerInterface) {
     return new ListenerHelper<>(listenerInterface);
   }

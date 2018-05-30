@@ -5,11 +5,12 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class WatchdogCacheTest {
+public class WatchdogCacheTest extends ThreadlyTester {
   private static final int TIMEOUT = 1;
   
   private TestableScheduler scheduler;

@@ -3,10 +3,11 @@ package org.threadly.concurrent.future;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
-public class FutureCallbackExceptionHandlerAdapterTest {
+public class FutureCallbackExceptionHandlerAdapterTest extends ThreadlyTester {
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {

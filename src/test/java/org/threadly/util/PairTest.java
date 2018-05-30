@@ -1,7 +1,6 @@
 package org.threadly.util;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,9 +9,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class PairTest {
+public class PairTest extends ThreadlyTester {
   protected <T> Pair<T, T> makePair(T left, T right) {
     return new Pair<>(left, right);
   }

@@ -7,12 +7,14 @@ import java.util.concurrent.Executor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
-public class ReschedulingOperationTest {
+public class ReschedulingOperationTest extends ThreadlyTester {
   private static final int SCHEDULE_DELAY = 100;
+  
   private TestableScheduler scheduler;
   
   @Before

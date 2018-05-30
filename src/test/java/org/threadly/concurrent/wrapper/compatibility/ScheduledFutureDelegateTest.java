@@ -1,13 +1,13 @@
 package org.threadly.concurrent.wrapper.compatibility;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestDelayed;
 import org.threadly.concurrent.future.TestFutureCallback;
@@ -17,7 +17,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public class ScheduledFutureDelegateTest {
+public class ScheduledFutureDelegateTest extends ThreadlyTester {
   @Test
   public void getDelayTest() {
     int startVal = TEST_QTY * -1;

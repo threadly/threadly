@@ -5,10 +5,11 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.util.debug.Profiler.ThreadIterator;
 
 @SuppressWarnings("javadoc")
-public class ProfilerThreadIteratorTest {
+public class ProfilerThreadIteratorTest extends ThreadlyTester {
   private ThreadIterator ti;
   
   @Before

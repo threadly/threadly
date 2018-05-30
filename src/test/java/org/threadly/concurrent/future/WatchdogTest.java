@@ -1,16 +1,16 @@
 package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
-public class WatchdogTest {
+public class WatchdogTest extends ThreadlyTester {
   private static final int TIMEOUT = 1;
   
   private NoThreadScheduler scheduler;

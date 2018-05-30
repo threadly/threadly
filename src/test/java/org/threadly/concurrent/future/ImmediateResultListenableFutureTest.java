@@ -4,9 +4,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class ImmediateResultListenableFutureTest {
+public class ImmediateResultListenableFutureTest extends ThreadlyTester {
   @Test
   public void nullResultTest() throws InterruptedException, ExecutionException, TimeoutException {
     ImmediateListenableFutureTest.resultTest(new ImmediateResultListenableFuture<>(null), null);

@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;

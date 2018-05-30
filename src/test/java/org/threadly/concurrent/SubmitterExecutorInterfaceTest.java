@@ -1,7 +1,6 @@
 package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -14,19 +13,19 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.ThreadlyTestUtil;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
-public abstract class SubmitterExecutorInterfaceTest {
+public abstract class SubmitterExecutorInterfaceTest extends ThreadlyTester {
   protected abstract SubmitterExecutorFactory getSubmitterExecutorFactory();
   
   @BeforeClass
   public static void setupClass() {
-    ThreadlyTestUtil.setIgnoreExceptionHandler();
+    setIgnoreExceptionHandler();
   }
   
   protected static List<TestRunnable> executeTestRunnables(Executor executor, int runnableSleepTime) {

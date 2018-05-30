@@ -8,9 +8,10 @@ import java.io.Writer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class StringBufferWriterTest {
+public class StringBufferWriterTest extends ThreadlyTester {
   private StringBuffer sb;
   private StringBufferWriter sbw;
   

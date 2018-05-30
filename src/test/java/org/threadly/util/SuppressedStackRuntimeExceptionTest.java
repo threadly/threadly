@@ -3,9 +3,10 @@ package org.threadly.util;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
-public class SuppressedStackRuntimeExceptionTest {
+public class SuppressedStackRuntimeExceptionTest extends ThreadlyTester {
   @Test
   public void suppressTest() {
     assertSuppressed(new SuppressedStackRuntimeException());

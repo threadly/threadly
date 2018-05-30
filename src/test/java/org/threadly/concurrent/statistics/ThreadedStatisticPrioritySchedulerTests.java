@@ -1,13 +1,13 @@
 package org.threadly.concurrent.statistics;
 
 import static org.junit.Assert.*;
-import static org.threadly.TestConstants.*;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.threadly.BlockingTestRunnable;
+import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -17,7 +17,7 @@ import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Pair;
 
 @SuppressWarnings("javadoc")
-public class ThreadedStatisticPrioritySchedulerTests {
+public class ThreadedStatisticPrioritySchedulerTests extends ThreadlyTester {
   public static void blockTillSchedulerIdle(final StatisticPriorityScheduler scheduler, 
                                             final int expectedSampleSize) {
     new TestCondition() { // block till all are finished
