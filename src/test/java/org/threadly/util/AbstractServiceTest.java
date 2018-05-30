@@ -20,6 +20,7 @@ public class AbstractServiceTest extends ThreadlyTester {
   
   @After
   public void cleanup() {
+    service.stopIfRunning();  // prevent GC warning
     service = null;
   }
   

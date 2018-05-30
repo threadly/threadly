@@ -301,7 +301,8 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
   @Test
   public void recurringExecutionTest() {
     List<KDRunnable> runs = populate(new AddHandler() {
-      int initialDelay = 0;
+      private int initialDelay = 0;
+      
       @Override
       public void addTDRunnable(Object key, KDRunnable tdr) {
         distributor.scheduleTaskWithFixedDelay(key, tdr, initialDelay++, DELAY_TIME);
@@ -312,7 +313,7 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
     while (it.hasNext()) {
       KDRunnable tr = it.next();
       assertTrue(tr.getDelayTillRun(2) - tr.getDelayTillRun(1) >= DELAY_TIME);
-      tr.blockTillFinished(10_000, 4);
+      tr.blockTillFinished(20_000 + (runs.size() * 10) +  (DELAY_TIME * 4), 4);
       assertFalse(tr.ranConcurrently());  // verify that it never run in parallel
     }
   }
