@@ -12,7 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -24,7 +24,6 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.AsyncVerifier;
-import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -32,24 +31,22 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   protected static final int PARALLEL_COUNT = TEST_QTY / 2;
   protected static final int THREAD_COUNT = PARALLEL_COUNT * 2;
   
-  protected static PriorityScheduler scheduler;
-  
   @BeforeClass
   public static void setupClass() {
-    scheduler = new StrictPriorityScheduler(THREAD_COUNT);
-    
     SubmitterExecutorInterfaceTest.setupClass();
   }
   
-  @AfterClass
-  public static void cleanupClass() {
-    scheduler.shutdownNow();
-    scheduler = null;
-  }
+  protected PriorityScheduler scheduler;
   
   @Before
   public void setup() {
-    new TestCondition(() -> scheduler.getQueuedTaskCount() == 0).blockTillTrue();
+    scheduler = new StrictPriorityScheduler(THREAD_COUNT);
+  }
+  
+  @After
+  public void cleanup() {
+    scheduler.shutdownNow();
+    scheduler = null;
   }
   
   protected ExecutorLimiter getLimiter(int parallelCount, boolean limitFutureListenersExecution) {

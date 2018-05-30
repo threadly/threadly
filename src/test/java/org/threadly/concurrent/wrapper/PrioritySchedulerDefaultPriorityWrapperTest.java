@@ -4,8 +4,8 @@ import static org.junit.Assert.*;
 
 import java.util.concurrent.Callable;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -19,15 +19,15 @@ import org.threadly.concurrent.future.ListenableFuture;
 
 @SuppressWarnings({"javadoc", "deprecation"})
 public class PrioritySchedulerDefaultPriorityWrapperTest extends ThreadlyTester {
-  private static PriorityScheduler scheduler;
+  private PriorityScheduler scheduler;
   
-  @BeforeClass
-  public static void setupClass() {
+  @Before
+  public void setupClass() {
     scheduler = new StrictPriorityScheduler(2);
   }
   
-  @AfterClass
-  public static void cleanupClass() {
+  @After
+  public void cleanupClass() {
     scheduler.shutdown();
     scheduler = null;
   }

@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,26 +40,18 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
-  protected static UnfairExecutor executor;
-  
   @BeforeClass
   public static void setupClass() {
     setIgnoreExceptionHandler();
-    
-    executor = new UnfairExecutor((PARALLEL_LEVEL * 2) + 1);
   }
-  
-  @AfterClass
-  public static void cleanupClass() {
-    executor.shutdownNow();
-    executor = null;
-  }
-  
+
+  protected UnfairExecutor executor;
   protected Object agentLock;
   protected KeyDistributedExecutor distributor;
   
   @Before
   public void setup() {
+    executor = new UnfairExecutor((PARALLEL_LEVEL * 2) + 1);
     StripedLock sLock = new StripedLock(1);
     agentLock = sLock.getLock(null);  // there should be only one lock
     distributor = new KeyDistributedExecutor(executor, sLock, Integer.MAX_VALUE, false);
@@ -68,6 +59,8 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   
   @After
   public void cleanup() {
+    executor.shutdownNow();
+    executor = null;
     agentLock = null;
     distributor = null;
   }
@@ -459,7 +452,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
     assertEquals(2, kde.getTaskQueueSize(taskKey));
   }
   
-  private static void getTaskQueueSizeThreadedTest(boolean accurateDistributor) {
+  private void getTaskQueueSizeThreadedTest(boolean accurateDistributor) {
     final Object taskKey = new Object();
     KeyDistributedExecutor kde = new KeyDistributedExecutor(executor, accurateDistributor);
     
@@ -518,7 +511,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
     assertEquals((Integer)2, result.get(taskKey));
   }
   
-  private static void getTaskQueueSizeMapThreadedTest(boolean accurateDistributor) {
+  private void getTaskQueueSizeMapThreadedTest(boolean accurateDistributor) {
     final Object taskKey = new Object();
     KeyDistributedExecutor kde = new KeyDistributedExecutor(executor, accurateDistributor);
 
