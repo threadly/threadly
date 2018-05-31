@@ -43,8 +43,6 @@ public class Profiler {
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
   private static final short DEFAULT_MAP_INITIAL_SIZE = 16;
-  private static final float DEFAULT_MAP_LOAD_FACTOR = .75f;
-  private static final short DEFAULT_MAP_CONCURRENCY_LEVEL = 2;
   
   static {
     String prefix = "functions by ";
@@ -685,8 +683,7 @@ public class Profiler {
       ArgumentVerifier.assertNotNegative(pollIntervalInMs, "pollIntervalInMs");
       
       collectorThread = new AtomicReference<>(null);
-      threadTraces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE, 
-                                             DEFAULT_MAP_LOAD_FACTOR, DEFAULT_MAP_CONCURRENCY_LEVEL);
+      threadTraces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE);
       collectedSamples = new LongAdder();
       this.pollIntervalInMs = pollIntervalInMs;
       dumpingThread = null;
@@ -713,7 +710,7 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  private static class ProfilerRunner implements Runnable {
+  protected static class ProfilerRunner implements Runnable {
     private final ProfileStorage pStore;
     
     protected ProfilerRunner(ProfileStorage pStore) {
@@ -730,31 +727,22 @@ public class Profiler {
           ThreadSample threadSample = it.next();
           
           // we skip the Profiler threads (collector thread, and dumping thread if one exists)
-          if (threadSample.getThread() != runningThread && 
+          if (threadSample.getThread() != runningThread & 
               threadSample.getThread() != pStore.dumpingThread) {
             StackTraceElement[] threadStack = threadSample.getStackTrace();
             if (threadStack.length > 0) {
               storedSample = true;
-              ThreadIdentifier threadIdentifier = new ThreadIdentifier(threadSample.getThread());
-              Trace t = new Trace(threadStack);
               
-              Map<Trace, Trace> existingTraces = pStore.threadTraces.get(threadIdentifier);
-              if (existingTraces == null) {
-                // must initialize name before identifier can be stored for retrieval
-                threadIdentifier.finishInitialization(threadSample.getThread());
-                existingTraces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE, 
-                                                         DEFAULT_MAP_LOAD_FACTOR, 
-                                                         DEFAULT_MAP_CONCURRENCY_LEVEL);
-                pStore.threadTraces.put(threadIdentifier, existingTraces);
-  
+              Map<Trace, Trace> existingTraces = 
+                  pStore.threadTraces
+                        .computeIfAbsent(new ThreadIdentifier(threadSample.getThread()), 
+                                         (key) -> new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE));
+              Trace t = new Trace(threadStack);
+              Trace existingTrace = existingTraces.get(t);
+              if (existingTrace == null) {
                 existingTraces.put(t, t);
               } else {
-                Trace existingTrace = existingTraces.get(t);
-                if (existingTrace == null) {
-                  existingTraces.put(t, t);
-                } else {
-                  existingTrace.incrementThreadCount();
-                }
+                existingTrace.incrementThreadCount();
               }
             }
           }
@@ -791,37 +779,21 @@ public class Profiler {
    */
   protected static class ThreadIdentifier {
     private final long threadId;
-    private final int hashCode;
-    private byte[] threadName;
+    private final String threadName;
     
     /**
-     * Construct a new identifier which can be used for hash and equals comparison.  To make this 
-     * fully usable {@link #finishInitialization(Thread)} must be invoked first.  This is separated 
-     * from the constructor in order to make generation efficient if only used for comparison.
+     * Construct a new identifier which can be used for hash and equals comparison.
      * 
      * @param t Thread to be referenced
      */
     public ThreadIdentifier(Thread t) {
       this.threadId = t.getId();
-      this.hashCode = t.hashCode();
-      threadName = null;
-    }
-    
-    /**
-     * Finish initialization of identifier so that this can be used for more than just comparisons.
-     * 
-     * @param t Thread that was provided at time of construction
-     */
-    public void finishInitialization(Thread t) {
-      threadName = t.getName().getBytes();
+      this.threadName = t.getName();
     }
     
     @Override
     public String toString() {
-      if (threadName == null) {
-        throw new IllegalStateException();
-      }
-      return new String(threadName) + ';' + threadId;
+      return threadName + ';' + threadId;
     }
     
     @Override
@@ -831,7 +803,7 @@ public class Profiler {
       } else {
         try {
           ThreadIdentifier t = (ThreadIdentifier)o;
-          return t.threadId == threadId && t.hashCode == hashCode;
+          return t.threadId == threadId && t.threadName.equals(threadName);
         } catch (ClassCastException e) {
           return false;
         }
@@ -840,7 +812,7 @@ public class Profiler {
     
     @Override
     public int hashCode() {
-      return hashCode;
+      return (int)threadId;
     }
   }
   
