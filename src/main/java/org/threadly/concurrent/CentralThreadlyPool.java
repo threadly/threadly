@@ -64,7 +64,7 @@ public class CentralThreadlyPool {
     MASTER_SCHEDULER = // start with computation + 1 for interior management tasks and + 1 for shared use
         new PriorityScheduler(cpuCount + genericThreadCount + 1, 
                               TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, 
-                              new ConfigurableThreadFactory("ThreadlyCentralPool-", false, 
+                              new ConfigurableThreadFactory("CentralThreadlyPool-", false, 
                                                             true, Thread.NORM_PRIORITY, null, null));
     LOW_PRIORITY_MASTER_SCHEDULER = 
         new DefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Low);
@@ -74,10 +74,12 @@ public class CentralThreadlyPool {
     POOL_SIZE_UPDATER = new PoolResizeUpdater(LOW_PRIORITY_MASTER_SCHEDULER);
     
     COMPUTATION_POOL = new SchedulerServiceLimiter(MASTER_SCHEDULER, cpuCount);
-    LOW_PRIORITY_POOL = new DynamicGenericThreadLimiter(TaskPriority.Low, 0, -1, "LowPriority");
+    LOW_PRIORITY_POOL = new DynamicGenericThreadLimiter(TaskPriority.Low, 0, -1, 
+                                                        "CentralThreadlyPool-LowPriority", true);
     SINGLE_THREADED_LOW_PRIORITY_POOL = 
         new SinglePriorityThreadSubPool(TaskPriority.Low, false, 
-                                        "SingleThreadLowPriority", Thread.MIN_PRIORITY);
+                                        "CentralThreadlyPool-SingleThreadLowPriority", true, 
+                                        Thread.MIN_PRIORITY);
     PER_TASK_SIZING_POOL = new PerTaskSizingSubmitterScheduler();
   }
   
@@ -279,7 +281,7 @@ public class CentralThreadlyPool {
    * @return Single threaded pool for running or scheduling tasks on
    */
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed, String threadName) {
-    return new SingleThreadSubPool(TaskPriority.High, threadGuaranteed, threadName);
+    return new SingleThreadSubPool(TaskPriority.High, threadGuaranteed, threadName, false);
   }
   
   /**
@@ -302,7 +304,7 @@ public class CentralThreadlyPool {
   public static PrioritySchedulerService singleThreadPool(boolean threadGuaranteed, 
                                                           String threadName, int threadPriority) {
     return new SinglePriorityThreadSubPool(TaskPriority.High, threadGuaranteed, 
-                                           threadName, threadPriority);
+                                           threadName, false, threadPriority);
   }
   
   /**
@@ -473,9 +475,11 @@ public class CentralThreadlyPool {
     } else if (maxThreads > 0 && 
                Math.max(0, guaranteedThreads) + genericThreadCount >= maxThreads) {
       // specified max threads wont ever exceed general use count, so use more efficient scheduler
-      return new MasterSchedulerResizingLimiter(priority, guaranteedThreads, maxThreads, threadName);
+      return new MasterSchedulerResizingLimiter(priority, guaranteedThreads, maxThreads, 
+                                                threadName, false);
     } else {
-      return new DynamicGenericThreadLimiter(priority, guaranteedThreads, maxThreads, threadName);
+      return new DynamicGenericThreadLimiter(priority, guaranteedThreads, maxThreads, 
+                                             threadName, false);
     }
   }
   
@@ -530,7 +534,7 @@ public class CentralThreadlyPool {
    * @return Master scheduler with the provided default priority
    */
   private static PrioritySchedulerService masterScheduler(TaskPriority defaultPriority, 
-                                                          String threadName) {
+                                                          String threadName, boolean replaceName) {
     PrioritySchedulerService result;
     if (defaultPriority == TaskPriority.High) {
       result = MASTER_SCHEDULER;
@@ -542,7 +546,7 @@ public class CentralThreadlyPool {
     if (StringUtils.isNullOrEmpty(threadName)) {
       return result;
     } else {
-      return new ThreadRenamingPriorityScheduler(result, threadName, false);
+      return new ThreadRenamingPriorityScheduler(result, threadName, replaceName);
     }
   }
   
@@ -667,9 +671,10 @@ public class CentralThreadlyPool {
     @SuppressWarnings("unused")
     private final Object gcReference; // object just held on to track garbage collection
     
-    protected SingleThreadSubPool(TaskPriority tickPriority, 
-                                  boolean threadGuaranteed, String threadName) {
-      super(masterScheduler(tickPriority, threadName), TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS);
+    protected SingleThreadSubPool(TaskPriority tickPriority, boolean threadGuaranteed, 
+                                  String threadName, boolean replaceName) {
+      super(masterScheduler(tickPriority, threadName, replaceName), 
+            TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS);
 
       this.gcReference = threadGuaranteed ? new PoolResizer(1) : null;
     }
@@ -702,8 +707,8 @@ public class CentralThreadlyPool {
     private final int threadPriority;
     
     protected SinglePriorityThreadSubPool(TaskPriority tickPriority, boolean threadGuaranteed,
-                                          String threadName, int threadPriority) {
-      super(tickPriority, threadGuaranteed, threadName);
+                                          String threadName, boolean replaceName, int threadPriority) {
+      super(tickPriority, threadGuaranteed, threadName, replaceName);
       
       this.threadPriority = threadPriority;
     }
@@ -737,9 +742,10 @@ public class CentralThreadlyPool {
     @SuppressWarnings("unused")
     private final Object gcReference; // object just held on to track garbage collection
     
-    public MasterSchedulerResizingLimiter(TaskPriority priority, 
-                                          int guaranteedThreads, int maxThreads, String threadName) {
-      super(masterScheduler(priority, threadName), maxThreads < 1 ? Integer.MAX_VALUE : maxThreads);
+    public MasterSchedulerResizingLimiter(TaskPriority priority, int guaranteedThreads, 
+                                          int maxThreads, String threadName, boolean replaceName) {
+      super(masterScheduler(priority, threadName, replaceName), 
+            maxThreads < 1 ? Integer.MAX_VALUE : maxThreads);
       
       if (maxThreads > 0 && guaranteedThreads > maxThreads) {
         throw new IllegalArgumentException("Max threads must be <= guaranteed threads");
@@ -761,9 +767,9 @@ public class CentralThreadlyPool {
     private final int guaranteedThreads;
     private final int maxThreads;
     
-    public DynamicGenericThreadLimiter(TaskPriority priority, 
-                                       int guaranteedThreads, int maxThreads, String threadName) {
-      super(priority, guaranteedThreads, maxThreads, threadName);
+    public DynamicGenericThreadLimiter(TaskPriority priority, int guaranteedThreads, 
+                                       int maxThreads, String threadName, boolean replaceName) {
+      super(priority, guaranteedThreads, maxThreads, threadName, replaceName);
       
       this.guaranteedThreads = guaranteedThreads > 0 ? guaranteedThreads : 0;
       this.maxThreads = getMaxConcurrency();
