@@ -169,4 +169,11 @@ class CommonStacktraces {
   private static boolean isParkedStack(StackTraceElement[] stackTrace) {
     return stackTrace.length > 1 && stackTrace[0].getMethodName().equals("park");
   }
+  
+  /**
+   * Not required to be invoked, just a convince function to load {@code static} variables.
+   */
+  public static void init() {
+    // not required to be invoked, just 
+  }
 }

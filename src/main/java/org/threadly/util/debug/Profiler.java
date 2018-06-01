@@ -60,6 +60,8 @@ public class Profiler {
     String columns = "(total, top, name)";
     FUNCTION_BY_NET_HEADER = prefix + "top count: " + columns;
     FUNCTION_BY_COUNT_HEADER = prefix + "total count: " + columns;
+    
+    CommonStacktraces.init();
   }
   
   protected final Object startStopLock;
