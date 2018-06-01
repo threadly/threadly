@@ -28,6 +28,7 @@ import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
+import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
@@ -326,6 +327,7 @@ public class ProfilerTest extends ThreadlyTester {
     profilingExecutor(ps);
     ps.prestartAllThreads();
     profiler.start();
+    TestUtils.sleep(10);
     blockForProfilerSample();
     
     String resultStr = profiler.dump(false);
@@ -340,10 +342,12 @@ public class ProfilerTest extends ThreadlyTester {
     profilingExecutor(sts);
     sts.prestartExecutionThread(true);
     profiler.start();
+    TestUtils.sleep(10);
     blockForProfilerSample();
     
     sts.schedule(DoNothingRunnable.instance(), 600_000);
     sts.submit(DoNothingRunnable.instance()).get();
+    TestUtils.sleep(10);
     blockForProfilerSample();
     
     String resultStr = profiler.dump(false);
@@ -359,6 +363,7 @@ public class ProfilerTest extends ThreadlyTester {
     profilingExecutor(tpe);
     tpe.prestartCoreThread();
     profiler.start();
+    TestUtils.sleep(10);
     blockForProfilerSample();
 
     String resultStr = profiler.dump(false);
@@ -373,6 +378,7 @@ public class ProfilerTest extends ThreadlyTester {
     profilingExecutor(tpe);
     tpe.prestartCoreThread();
     profiler.start();
+    TestUtils.sleep(10);
     blockForProfilerSample();
 
     String resultStr = profiler.dump(false);
@@ -387,6 +393,7 @@ public class ProfilerTest extends ThreadlyTester {
     profilingExecutor(tpe);
     tpe.prestartCoreThread();
     profiler.start();
+    TestUtils.sleep(10);
     blockForProfilerSample();
 
     String resultStr = profiler.dump(false);
@@ -400,6 +407,7 @@ public class ProfilerTest extends ThreadlyTester {
     profilingExecutor(stpe);
     stpe.prestartCoreThread();
     profiler.start();
+    TestUtils.sleep(10);
     blockForProfilerSample();
 
     String resultStr = profiler.dump(false);
