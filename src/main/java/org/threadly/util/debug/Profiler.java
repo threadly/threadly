@@ -6,12 +6,12 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -25,6 +25,7 @@ import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
+import org.threadly.util.Pair;
 import org.threadly.util.StringUtils;
 
 /**
@@ -418,19 +419,20 @@ public class Profiler {
     try {
       Map<Trace, Integer> globalTraces = new HashMap<>();
       // create a local copy so the stats wont change while we are dumping them
-      Map<ThreadIdentifier, Map<Trace, Trace>> threadTraces = new HashMap<>(pStore.threadTraces);
-      
-      // log out individual thread traces
-      Iterator<Entry<ThreadIdentifier, Map<Trace, Trace>>> it = threadTraces.entrySet().iterator();
+      // convert to a pair list so we can sort by name
+      List<Pair<ThreadIdentifier, ThreadSamples>> threadSamples = Pair.convertMap(pStore.threadTraces);
+      Collections.sort(threadSamples, 
+                       (p1, p2) -> p1.getRight().threadNames().compareTo(p2.getRight().threadNames()));
+      Iterator<Pair<ThreadIdentifier, ThreadSamples>> it = threadSamples.iterator();
       while (it.hasNext()) {
-        Entry<ThreadIdentifier, Map<Trace, Trace>> entry = it.next();
+        Pair<ThreadIdentifier, ThreadSamples> entry = it.next();
         if (dumpIndividualThreads) {
-          ps.println("Profile for thread: " + entry.getKey().toString());
-          dumpTraces(entry.getValue().keySet(), null, ps);
+          ps.println("Profile for thread: " + entry.getRight().threadNames() + ';' + entry.getLeft().threadId);
+          dumpTraces(entry.getRight().traceSet(), null, ps);
         }
         
         // add in this threads trace data to the global trace map
-        Iterator<Trace> traceIt = entry.getValue().keySet().iterator();
+        Iterator<Trace> traceIt = entry.getRight().traceSet().iterator();
         while (traceIt.hasNext()) {
           Trace currTrace = traceIt.next();
           Integer globalTraceCount = globalTraces.get(currTrace);
@@ -673,7 +675,7 @@ public class Profiler {
    */
   protected static class ProfileStorage {
     protected final AtomicReference<Thread> collectorThread;
-    protected final Map<ThreadIdentifier, Map<Trace, Trace>> threadTraces;
+    protected final Map<ThreadIdentifier, ThreadSamples> threadTraces;
     protected final LongAdder collectedSamples;
     protected volatile int pollIntervalInMs;
     protected volatile Thread dumpingThread;
@@ -733,17 +735,10 @@ public class Profiler {
             if (threadStack.length > 0) {
               storedSample = true;
               
-              Map<Trace, Trace> existingTraces = 
-                  pStore.threadTraces
-                        .computeIfAbsent(new ThreadIdentifier(threadSample.getThread()), 
-                                         (key) -> new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE));
-              Trace t = new Trace(threadStack);
-              Trace existingTrace = existingTraces.get(t);
-              if (existingTrace == null) {
-                existingTraces.put(t, t);
-              } else {
-                existingTrace.incrementThreadCount();
-              }
+              pStore.threadTraces
+                    .computeIfAbsent(new ThreadIdentifier(threadSample.getThread()), 
+                                     (k) -> new ThreadSamples())
+                    .recordSample(new Trace(threadStack), threadSample.getThread().getName());
             }
           }
         }
@@ -771,6 +766,51 @@ public class Profiler {
   }
   
   /**
+   * Storage for samples from a thread.  This can include more than just the stack traces (for 
+   * example the thread names as well).
+   * 
+   * @since 5.25
+   */
+  protected static class ThreadSamples {
+    private final Map<Trace, Trace> traces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE);
+    private final Set<String> threadNames = ConcurrentHashMap.newKeySet(1);
+    private volatile String cachedThreadNames = null;
+    
+    public void recordSample(Trace trace, String threadName) {
+      if (threadNames.add(threadName)) {
+        cachedThreadNames = null;
+      }
+      
+      Trace existingTrace = traces.get(trace);
+      if (existingTrace == null) {
+        traces.put(trace, trace);
+      } else {
+        existingTrace.incrementThreadCount();
+      }
+    }
+
+    public String threadNames() {
+      String cachedThreadNames = this.cachedThreadNames;
+      if (cachedThreadNames != null) {
+        return cachedThreadNames;
+      } else if (threadNames.size() == 1) {
+        return this.cachedThreadNames = threadNames.iterator().next();
+      } else if (threadNames.isEmpty()) {
+        throw new IllegalStateException("No samples recorded for thread");
+      } else {
+        // we want names in a consistent order
+        List<String> nameCopy = new ArrayList<>(threadNames);
+        Collections.sort(nameCopy);
+        return this.cachedThreadNames = nameCopy.toString();
+      }
+    }
+
+    public Set<Trace> traceSet() {
+      return traces.keySet();
+    }
+  }
+  
+  /**
    * Small class to store referencing to thread.  This is designed to be more memory efficient 
    * than just using a string.  It also tries to delay the expensive storage aspect until we know 
    * we know we will need to store it long term.
@@ -779,7 +819,7 @@ public class Profiler {
    */
   protected static class ThreadIdentifier {
     private final long threadId;
-    private final String threadName;
+    private final int hashCode;
     
     /**
      * Construct a new identifier which can be used for hash and equals comparison.
@@ -788,12 +828,12 @@ public class Profiler {
      */
     public ThreadIdentifier(Thread t) {
       this.threadId = t.getId();
-      this.threadName = t.getName();
+      this.hashCode = t.hashCode();
     }
     
     @Override
     public String toString() {
-      return threadName + ';' + threadId;
+      return "ThreadId:" + threadId;
     }
     
     @Override
@@ -803,7 +843,7 @@ public class Profiler {
       } else {
         try {
           ThreadIdentifier t = (ThreadIdentifier)o;
-          return t.threadId == threadId && t.threadName.equals(threadName);
+          return t.threadId == threadId && t.hashCode == hashCode;
         } catch (ClassCastException e) {
           return false;
         }
@@ -812,7 +852,7 @@ public class Profiler {
     
     @Override
     public int hashCode() {
-      return (int)threadId;
+      return hashCode;
     }
   }
   
