@@ -327,4 +327,10 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   public void idlePrioritySchedulerTest() {
     // ignored because we can't easily access both threads in the scheduler
   }
+  
+  @Test
+  @Override
+  public void idlePrioritySchedulerWithExceptionHandlerTest() {
+    // ignored because we can't easily access both threads in the scheduler
+  }
 }

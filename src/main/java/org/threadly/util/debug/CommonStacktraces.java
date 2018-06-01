@@ -1,5 +1,6 @@
 package org.threadly.util.debug;
 
+import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -9,9 +10,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SingleThreadScheduler;
+import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -22,8 +25,12 @@ import org.threadly.util.ExceptionUtils;
 class CommonStacktraces {
   protected static final ComparableTrace IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
   protected static final ComparableTrace IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
+  protected static final ComparableTrace IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1;
+  protected static final ComparableTrace IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2;
   protected static final ComparableTrace IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1;
   protected static final ComparableTrace IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2;
+  protected static final ComparableTrace IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1;
+  protected static final ComparableTrace IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2;
   protected static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE;
   protected static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE;
   protected static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE;
@@ -121,6 +128,42 @@ class CommonStacktraces {
       
       IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stsThread.getStackTrace());
       IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2 = new ComparableTrace(stpeThread.getStackTrace());
+      
+      AtomicReference<StackTraceElement> insertElement = new AtomicReference<>();
+      Thread t = new ConfigurableThreadFactory(ExceptionHandler.PRINT_STACKTRACE_HANDLER)
+          .newThread(new Runnable() { // weirdly does not work with a lambda?
+            @Override
+            public void run() {
+              StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+              insertElement.set(stack[stack.length - 2]);
+            }
+          });
+      t.start();
+      t.join();
+      
+      StackTraceElement[] stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.elements, 
+                                                     IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.elements.length + 1);
+      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
+      stackTrace[stackTrace.length - 2] = insertElement.get();
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1 = new ComparableTrace(stackTrace);
+      
+      stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.elements, 
+                                 IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.elements.length + 1);
+      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
+      stackTrace[stackTrace.length - 2] = insertElement.get();
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2 = new ComparableTrace(stackTrace);
+      
+      stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements, 
+                                 IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements.length + 1);
+      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
+      stackTrace[stackTrace.length - 2] = insertElement.get();
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1 = new ComparableTrace(stackTrace);
+      
+      stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements, 
+                                 IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements.length + 1);
+      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
+      stackTrace[stackTrace.length - 2] = insertElement.get();
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stackTrace);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException(e);

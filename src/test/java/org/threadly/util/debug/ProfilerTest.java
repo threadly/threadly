@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
+import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
@@ -30,6 +31,7 @@ import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
+import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ProfilerTest extends ThreadlyTester {
@@ -354,6 +356,42 @@ public class ProfilerTest extends ThreadlyTester {
     
     assertTrue(resultStr.contains("SingleThreadScheduler idle thread (stack 1)"));
     assertTrue(resultStr.contains("SingleThreadScheduler idle thread (stack 2)"));
+  }
+  
+  @Test
+  public void idlePrioritySchedulerWithExceptionHandlerTest() {
+    PriorityScheduler ps = new PriorityScheduler(2, null, 100, 
+                                                 new ConfigurableThreadFactory(ExceptionHandler.PRINT_STACKTRACE_HANDLER));
+    profilingExecutor(ps);
+    ps.prestartAllThreads();
+    profiler.start();
+    TestUtils.sleep(10);
+    blockForProfilerSample();
+    
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("PriorityScheduler with ExceptionHandler idle thread (stack 1)"));
+    assertTrue(resultStr.contains("PriorityScheduler with ExceptionHandler idle thread (stack 2)"));
+  }
+  
+  @Test
+  public void idleSingleThreadSchedulerWithExceptionHandlerTest() throws InterruptedException, ExecutionException {
+    SingleThreadScheduler sts = new SingleThreadScheduler(new ConfigurableThreadFactory(ExceptionHandler.PRINT_STACKTRACE_HANDLER));
+    profilingExecutor(sts);
+    sts.prestartExecutionThread(true);
+    profiler.start();
+    TestUtils.sleep(10);
+    blockForProfilerSample();
+    
+    sts.schedule(DoNothingRunnable.instance(), 600_000);
+    sts.submit(DoNothingRunnable.instance()).get();
+    TestUtils.sleep(10);
+    blockForProfilerSample();
+    
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("SingleThreadScheduler with ExceptionHandler idle thread (stack 1)"));
+    assertTrue(resultStr.contains("SingleThreadScheduler with ExceptionHandler idle thread (stack 2)"));
   }
   
   @Test

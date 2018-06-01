@@ -1,5 +1,9 @@
 package org.threadly.util.debug;
 
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1;
@@ -544,10 +548,18 @@ public class Profiler {
         out.println("\tPriorityScheduler idle thread (stack 1)\n");
       } else if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.equals(t)) {
         out.println("\tPriorityScheduler idle thread (stack 2)\n");
+      } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1.equals(t)) {
+        out.println("\tPriorityScheduler with ExceptionHandler idle thread (stack 1)\n");
+      } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2.equals(t)) {
+        out.println("\tPriorityScheduler with ExceptionHandler idle thread (stack 2)\n");
       } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.equals(t)) {
         out.println("\tSingleThreadScheduler idle thread (stack 1)\n");
       } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.equals(t)) {
         out.println("\tSingleThreadScheduler idle thread (stack 2)\n");
+      } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1.equals(t)) {
+        out.println("\tSingleThreadScheduler with ExceptionHandler idle thread (stack 1)\n");
+      } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2.equals(t)) {
+        out.println("\tSingleThreadScheduler with ExceptionHandler idle thread (stack 2)\n");
       } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE.equals(t)) {
         out.println("\tThreadPoolExecutor SynchronousQueue idle thread\n");
       } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE.equals(t)) {
@@ -824,10 +836,18 @@ public class Profiler {
           trace = new Trace(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.elements);
         } else if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.elements);
+        } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1.elements);
+        } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2.elements);
         } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements);
         } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements);
+        } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1.elements);
+        } else if (IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2.elements);
         } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE.elements);
         } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE.equals(trace)) {
