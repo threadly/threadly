@@ -27,7 +27,8 @@ class CommonStacktraces {
   protected static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE;
   protected static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE;
   protected static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE;
-  protected static final ComparableTrace IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR;
+  protected static final ComparableTrace IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1;
+  protected static final ComparableTrace IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2;
   
   static {
     AtomicReference<Thread> psSchedulerThread = new AtomicReference<>();
@@ -98,21 +99,28 @@ class CommonStacktraces {
       tpeLQ.prestartCoreThread();
       stpe.prestartCoreThread();
       
-      while (! isParkedStack(stsThread.getStackTrace())) {
-        Thread.yield();
-      } 
-      
       Thread sqThread = getParkedThread(threadPoolExecutorSynchronousQueueThread, null);
       Thread aqThread = getParkedThread(threadPoolExecutorArrayBlockingQueueThread, null);
       Thread lqThread = getParkedThread(threadPoolExecutorLinkedBlockingQueueThread, null);
       Thread stpeThread = getParkedThread(scheduledThreadPoolExecutorThread, null);
-      
-      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stsThread.getStackTrace());
-      
+
       IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE = new ComparableTrace(sqThread.getStackTrace());
       IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE = new ComparableTrace(aqThread.getStackTrace());
       IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE = new ComparableTrace(lqThread.getStackTrace());
-      IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR = new ComparableTrace(stpeThread.getStackTrace());
+      IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1 = new ComparableTrace(stpeThread.getStackTrace());
+      
+      stpe.schedule(DoNothingRunnable.instance(), 1, TimeUnit.HOURS);
+      stpe.submit(DoNothingRunnable.instance()).get(); // make sure we execute so the next park is our ideal state
+      
+      while (! isParkedStack(stsThread.getStackTrace())) {
+        Thread.yield();
+      }
+      while (! isParkedStack(stpeThread.getStackTrace())) {
+        Thread.yield();
+      }
+      
+      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stsThread.getStackTrace());
+      IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2 = new ComparableTrace(stpeThread.getStackTrace());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException(e);

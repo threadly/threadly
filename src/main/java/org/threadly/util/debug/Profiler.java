@@ -2,7 +2,8 @@ package org.threadly.util.debug;
 
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
-import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE;
@@ -551,8 +552,10 @@ public class Profiler {
         out.println("\tThreadPoolExecutor ArrayBlockingQueue idle thread\n");
       } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE.equals(t)) {
         out.println("\tThreadPoolExecutor LinkedBlockingQueue idle thread\n");
-      } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR.equals(t)) {
-        out.println("\tScheduledThreadPoolExecutor idle thread\n");
+      } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1.equals(t)) {
+        out.println("\tScheduledThreadPoolExecutor idle thread (stack 1)\n");
+      } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.equals(t)) {
+        out.println("\tScheduledThreadPoolExecutor idle thread (stack 2)\n");
       } else {
         out.println(ExceptionUtils.stackToString(t.elements));
       }
@@ -829,8 +832,10 @@ public class Profiler {
           trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE.elements);
         } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE.elements);
-        } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR.equals(trace)) {
-          trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR.elements);
+        } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1.elements);
+        } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.elements);
         }
         
         traces.put(trace, trace);
