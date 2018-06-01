@@ -7,7 +7,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -262,35 +261,9 @@ public class Profiler {
           pStore.collectorThread.set(callingThread);
           runInCallingThread = true;
         } else {
-          final SettableListenableFuture<?> runningThreadFuture;
-          runningThreadFuture = new SettableListenableFuture<>();
+          final SettableListenableFuture<?> runningThreadFuture = new SettableListenableFuture<>();
           
-          executor.execute(() -> {
-            Thread currentThread = Thread.currentThread();
-            try {
-              // if collector thread can't be set, then some other thread has taken over
-              if (! pStore.collectorThread.compareAndSet(null, currentThread)) {
-                return;
-              }
-            } finally {
-              runningThreadFuture.setResult(null);
-            }
-            
-            String originalName = currentThread.getName();
-            int origPriority = currentThread.getPriority();
-            try {
-              if (origPriority < Thread.MAX_PRIORITY) {
-                currentThread.setPriority(Thread.MAX_PRIORITY);
-              }
-              currentThread.setName("Threadly Profiler data collector[" + originalName + "]");
-              pr.run();
-            } finally {
-              if (origPriority < Thread.MAX_PRIORITY) {
-                currentThread.setPriority(origPriority);
-              }
-              currentThread.setName(originalName);
-            }
-          });
+          executor.execute(new ExecutorRunnerTask(pStore, runningThreadFuture, pr));
           
           // now block till collectorThread has been set and profiler has started on the executor
           try {
@@ -427,22 +400,16 @@ public class Profiler {
       while (it.hasNext()) {
         Pair<ThreadIdentifier, ThreadSamples> entry = it.next();
         if (dumpIndividualThreads) {
-          ps.println("Profile for thread: " + entry.getRight().threadNames() + ';' + entry.getLeft().threadId);
+          ps.println("Profile for thread: " + 
+                        entry.getRight().threadNames() + ';' + entry.getLeft().threadId);
           dumpTraces(entry.getRight().traceSet(), null, ps);
         }
         
         // add in this threads trace data to the global trace map
         Iterator<Trace> traceIt = entry.getRight().traceSet().iterator();
         while (traceIt.hasNext()) {
-          Trace currTrace = traceIt.next();
-          Integer globalTraceCount = globalTraces.get(currTrace);
-          if (globalTraceCount == null) {
-            // make sure this is reset in case we dump multiple times
-            globalTraces.put(currTrace, currTrace.getThreadCount());
-          } else {
-            // update the global count
-            globalTraces.put(currTrace, currTrace.getThreadCount() + globalTraceCount);
-          }
+          globalTraces.compute(traceIt.next(), 
+                               (k, v) -> v == null ? k.getThreadCount() : v + k.getThreadCount());
         }
 
         if (dumpIndividualThreads) {
@@ -518,12 +485,7 @@ public class Profiler {
     out.println(FUNCTION_BY_NET_HEADER);
     out.println();
     
-    Arrays.sort(methodArray, new Comparator<Function>() {
-      @Override
-      public int compare(Function a, Function b) {
-        return b.getStackTopCount() - a.getStackTopCount();
-      }
-    });
+    Arrays.sort(methodArray, (a, b) -> b.getStackTopCount() - a.getStackTopCount());
     
     for (int i = 0; i < methodArray.length; i++) {
       dumpFunction(methodArray[i], out);
@@ -533,12 +495,7 @@ public class Profiler {
     out.println(FUNCTION_BY_COUNT_HEADER);
     out.println();
     
-    Arrays.sort(methodArray, new Comparator<Function>() {
-      @Override
-      public int compare(Function a, Function b) {
-        return b.getCount() - a.getCount();
-      }
-    });
+    Arrays.sort(methodArray, (a, b) -> b.getCount() - a.getCount());
     
     for (int i = 0; i < methodArray.length; i++) {
       dumpFunction(methodArray[i], out);
@@ -549,19 +506,9 @@ public class Profiler {
     out.println();
     
     if (globalCounts != null) {
-      Arrays.sort(traceArray, new Comparator<Trace>() {
-        @Override
-        public int compare(Trace a, Trace b) {
-          return globalCounts.get(b) - globalCounts.get(a);
-        }
-      });
+      Arrays.sort(traceArray, (a, b) -> globalCounts.get(b) - globalCounts.get(a));
     } else {
-      Arrays.sort(traceArray, new Comparator<Trace>() {
-        @Override
-        public int compare(Trace a, Trace b) {
-          return b.getThreadCount() - a.getThreadCount();
-        }
-      });
+      Arrays.sort(traceArray, (a, b) -> b.getThreadCount() - a.getThreadCount());
     }
     
     for (int i = 0; i < traceArray.length; i++) {
@@ -705,6 +652,56 @@ public class Profiler {
     protected Iterator<? extends ThreadSample> getProfileThreadsIterator() {
       return new ThreadIterator();
     }
+  }
+  
+  /**
+   * Class for executing the {@ilnk ProfilerRunner} on a {@link Executor}.  This normally would be 
+   * a lambda or anonymous inner class.  But having it defined like this ensures we don't hold a 
+   * reference to our parent class (allowing finalization stops to work correctly).
+   * 
+   * @since 5.25
+   */
+  protected static class ExecutorRunnerTask implements Runnable {
+    private final ProfileStorage pStore;
+    private final SettableListenableFuture<?> runningThreadFuture;
+    private final ProfilerRunner pr;
+    
+    public ExecutorRunnerTask(ProfileStorage pStore, 
+                              SettableListenableFuture<?> runningThreadFuture, 
+                              ProfilerRunner pr) {
+      this.pStore = pStore;
+      this.runningThreadFuture = runningThreadFuture;
+      this.pr = pr;
+    }
+    
+    @Override
+    public void run() {
+      Thread currentThread = Thread.currentThread();
+      try {
+        // if collector thread can't be set, then some other thread has taken over
+        if (! pStore.collectorThread.compareAndSet(null, currentThread)) {
+          return;
+        }
+      } finally {
+        runningThreadFuture.setResult(null);
+      }
+      
+      String originalName = currentThread.getName();
+      int origPriority = currentThread.getPriority();
+      try {
+        if (origPriority < Thread.MAX_PRIORITY) {
+          currentThread.setPriority(Thread.MAX_PRIORITY);
+        }
+        currentThread.setName("Threadly Profiler data collector[" + originalName + "]");
+        pr.run();
+      } finally {
+        if (origPriority < Thread.MAX_PRIORITY) {
+          currentThread.setPriority(origPriority);
+        }
+        currentThread.setName(originalName);
+      }
+    }
+    
   }
   
   /**
