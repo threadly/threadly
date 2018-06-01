@@ -326,6 +326,7 @@ public class Profiler {
           while (it.hasNext()) {
             it.next().setResult(result);
           }
+          stopFutures.clear();
         }
       }
     }

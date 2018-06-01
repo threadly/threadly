@@ -194,6 +194,16 @@ public class ProfilerTest extends ThreadlyTester {
       ps.shutdownNow();
     }
   }
+
+  @Test
+  public void stopTwiceTest() {
+    ListenableFuture<String> lf = profiler.start(20_000);
+    profiler.stop();
+    assertTrue(lf.isDone());
+    lf = profiler.start(20_000);
+    profiler.stop();
+    assertTrue(lf.isDone());
+  }
   
   @Test
   public void getAndSetProfileIntervalTest() {
