@@ -5,8 +5,11 @@ import static org.junit.Assert.*;
 import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -350,7 +353,7 @@ public class ProfilerTest extends ThreadlyTester {
   }
   
   @Test
-  public void idleThreadPoolExecutorTest() {
+  public void idleThreadPoolExecutorSynchronousQueueTest() {
     ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 100, TimeUnit.MILLISECONDS, 
                                                     new SynchronousQueue<>());
     profilingExecutor(tpe);
@@ -360,6 +363,47 @@ public class ProfilerTest extends ThreadlyTester {
 
     String resultStr = profiler.dump(false);
     
-    assertTrue(resultStr.contains("ThreadPoolExecutor idle thread"));
+    assertTrue(resultStr.contains("ThreadPoolExecutor SynchronousQueue idle thread"));
+  }
+  
+  @Test
+  public void idleThreadPoolExecutorArrayBlockingQueueTest() {
+    ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 100, TimeUnit.MILLISECONDS, 
+                                                    new ArrayBlockingQueue<>(1));
+    profilingExecutor(tpe);
+    tpe.prestartCoreThread();
+    profiler.start();
+    blockForProfilerSample();
+
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("ThreadPoolExecutor ArrayBlockingQueue idle thread"));
+  }
+  
+  @Test
+  public void idleThreadPoolExecutorLinkedBlockingQueueTest() {
+    ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 100, TimeUnit.MILLISECONDS, 
+                                                    new LinkedBlockingQueue<>());
+    profilingExecutor(tpe);
+    tpe.prestartCoreThread();
+    profiler.start();
+    blockForProfilerSample();
+
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("ThreadPoolExecutor LinkedBlockingQueue idle thread"));
+  }
+  
+  @Test
+  public void idleScheduledThreadPoolExecutorTest() {
+    ScheduledThreadPoolExecutor stpe = new ScheduledThreadPoolExecutor(1);
+    profilingExecutor(stpe);
+    stpe.prestartCoreThread();
+    profiler.start();
+    blockForProfilerSample();
+
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("ScheduledThreadPoolExecutor idle thread"));
   }
 }

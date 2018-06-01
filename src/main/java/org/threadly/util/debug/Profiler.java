@@ -1,5 +1,14 @@
 package org.threadly.util.debug;
 
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE;
+
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -16,16 +25,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
-import org.threadly.concurrent.DoNothingRunnable;
-import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
-import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
@@ -33,7 +36,6 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
 import org.threadly.util.StringUtils;
-import org.threadly.util.debug.StackTracker.ComparableTrace;
 
 /**
  * Tool for profiling a running java application to get an idea of where the slow points 
@@ -51,103 +53,12 @@ public class Profiler {
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
   private static final short DEFAULT_MAP_INITIAL_SIZE = 16;
-  private static final ComparableTrace IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
-  private static final ComparableTrace IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
-  private static final ComparableTrace IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1;
-  private static final ComparableTrace IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2;
-  private static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR;
   
   static {
     String prefix = "functions by ";
     String columns = "(total, top, name)";
     FUNCTION_BY_NET_HEADER = prefix + "top count: " + columns;
     FUNCTION_BY_COUNT_HEADER = prefix + "total count: " + columns;
-    
-    AtomicReference<Thread> psSchedulerThread = new AtomicReference<>();
-    AtomicReference<Thread> stsSchedulerThread = new AtomicReference<>();
-    AtomicReference<Thread> threadPoolExecutorThread = new AtomicReference<>();
-    PriorityScheduler ps = new PriorityScheduler(1, null, 100, (r) -> {
-      Thread t = new Thread(r);
-      t.setDaemon(true);
-      psSchedulerThread.set(t);
-      return t;
-    });
-    SingleThreadScheduler sts = new SingleThreadScheduler((r) -> {
-      Thread t = new Thread(r);
-      t.setDaemon(true);
-      stsSchedulerThread.set(t);
-      return t;
-    });
-    ThreadPoolExecutor tpe = 
-        new ThreadPoolExecutor(1, 1, 100, TimeUnit.MILLISECONDS, new SynchronousQueue<>(), 
-                               (r) -> {
-                                 Thread t = new Thread(r);
-                                 t.setDaemon(true);
-                                 threadPoolExecutorThread.set(t);
-                                 return t;
-                               });
-    try {
-      sts.prestartExecutionThread(false);
-      ps.prestartAllThreads();
-      
-      Thread psFirstThread = getParkedThread(psSchedulerThread, null);
-      ps.setPoolSize(2);
-      ps.prestartAllThreads();
-      Thread psSecondThread = getParkedThread(psSchedulerThread, psFirstThread);
-      
-      Thread stsThread = getParkedThread(stsSchedulerThread, null);
-      
-      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1 = new ComparableTrace(psFirstThread.getStackTrace());
-      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2 = new ComparableTrace(psSecondThread.getStackTrace());
-      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1 = new ComparableTrace(stsThread.getStackTrace());
-      
-      sts.schedule(DoNothingRunnable.instance(), TimeUnit.HOURS.toMillis(1));
-      sts.submit(DoNothingRunnable.instance()).get(); // make sure we execute so the next park is our ideal state
-      
-      if (tpe.prestartCoreThread()) {
-        IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR = 
-            new ComparableTrace(getParkedThread(threadPoolExecutorThread, null).getStackTrace());
-      } else {
-        System.err.println("Could not start ThreadPoolExecutor thread for stack simplification");
-        IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR = new ComparableTrace(new StackTraceElement[0]);
-      }
-      
-      do {
-        Thread.yield();
-      } while (! isParkedStack(stsThread.getStackTrace()));
-      
-      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stsThread.getStackTrace());
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new RuntimeException(e);
-    } catch (ExecutionException e) {
-      throw ExceptionUtils.makeRuntime(e.getCause());
-    } finally {
-      try {
-        ps.shutdownNow();
-      } finally {
-        sts.shutdownNow();
-      }
-    }
-  }
-  
-  private static Thread getParkedThread(AtomicReference<Thread> threadReference, Thread not) {
-    Thread thread;
-    StackTraceElement[] stackTrace;
-    while (true) {
-      if ((thread = threadReference.get()) != not && thread.isAlive()) {
-        stackTrace = thread.getStackTrace();
-        if (isParkedStack(stackTrace)) {
-          break;
-        }
-      }
-      Thread.yield();
-    }
-    return thread;
-  }
-  
-  private static boolean isParkedStack(StackTraceElement[] stackTrace) {
-    return stackTrace.length > 1 && stackTrace[0].getMethodName().equals("park");
   }
   
   protected final Object startStopLock;
@@ -627,15 +538,21 @@ public class Profiler {
       out.println(count + " time(s):");
 
       if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.equals(t)) {
-        out.println("\tPriorityScheduler idle thread (stack 1)");
+        out.println("\tPriorityScheduler idle thread (stack 1)\n");
       } else if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.equals(t)) {
-        out.println("\tPriorityScheduler idle thread (stack 2)");
+        out.println("\tPriorityScheduler idle thread (stack 2)\n");
       } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.equals(t)) {
-        out.println("\tSingleThreadScheduler idle thread (stack 1)");
+        out.println("\tSingleThreadScheduler idle thread (stack 1)\n");
       } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.equals(t)) {
-        out.println("\tSingleThreadScheduler idle thread (stack 2)");
-      } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR.equals(t)) {
-        out.println("\tThreadPoolExecutor idle thread");
+        out.println("\tSingleThreadScheduler idle thread (stack 2)\n");
+      } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE.equals(t)) {
+        out.println("\tThreadPoolExecutor SynchronousQueue idle thread\n");
+      } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE.equals(t)) {
+        out.println("\tThreadPoolExecutor ArrayBlockingQueue idle thread\n");
+      } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE.equals(t)) {
+        out.println("\tThreadPoolExecutor LinkedBlockingQueue idle thread\n");
+      } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR.equals(t)) {
+        out.println("\tScheduledThreadPoolExecutor idle thread\n");
       } else {
         out.println(ExceptionUtils.stackToString(t.elements));
       }
@@ -906,8 +823,14 @@ public class Profiler {
           trace = new Trace(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements);
         } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements);
-        } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR.equals(trace)) {
-          trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR.elements);
+        } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE.elements);
+        } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE.elements);
+        } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE.elements);
+        } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR.elements);
         }
         
         traces.put(trace, trace);
