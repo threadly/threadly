@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,7 +54,7 @@ public class Profiler {
   
   protected final Object startStopLock;
   protected final ProfileStorage pStore;
-  protected final List<SettableListenableFuture<String>> stopFutures; // guarded by startStopLock
+  protected final List<WeakReference<SettableListenableFuture<String>>> stopFutures; // guarded by startStopLock
   
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
@@ -236,7 +237,7 @@ public class Profiler {
         stop();
       }
       if (completionFuture != null) {
-        stopFutures.add(completionFuture);
+        stopFutures.add(new WeakReference<>(completionFuture));
       }
       if (pStore.collectorThread.get() == null) {
         if (executor == null) {
@@ -319,12 +320,17 @@ public class Profiler {
         runningThread.interrupt();
         pStore.collectorThread.set(null);
         
-        String result = null;
         if (! stopFutures.isEmpty()) {
-          result = dump();
-          Iterator<SettableListenableFuture<String>> it = stopFutures.iterator();
+          String result = null;
+          Iterator<WeakReference<SettableListenableFuture<String>>> it = stopFutures.iterator();
           while (it.hasNext()) {
-            it.next().setResult(result);
+            SettableListenableFuture<String> slf = it.next().get();
+            if (slf != null) {
+              if (result == null) {
+                result = dump();
+              }
+              slf.setResult(result);
+            }
           }
           stopFutures.clear();
         }
