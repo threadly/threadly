@@ -7,11 +7,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.concurrent.CentralThreadlyPool;
+import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.debug.Profiler.ThreadSample;
@@ -28,6 +31,14 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   public void setup() {
     ctProfiler = new ControlledThreadProfiler(POLL_INTERVAL);
     profiler = ctProfiler;
+  }
+  
+  @Override
+  protected void profilingExecutor(Executor executor) {
+    AtomicReference<Thread> tAR = new AtomicReference<>();
+    executor.execute(() -> tAR.set(Thread.currentThread()));
+    new TestCondition(() -> tAR.get() != null).blockTillTrue();
+    ctProfiler.addProfiledThread(tAR.get());
   }
   
   @Test
@@ -309,5 +320,11 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
     ctProfiler.addProfiledThread(Thread.currentThread());
     
     super.dumpStringOnlySummaryTest();
+  }
+  
+  @Test
+  @Override
+  public void idlePrioritySchedulerTest() {
+    // ignored because we can't easily access both threads in the scheduler
   }
 }

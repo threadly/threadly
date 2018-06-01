@@ -16,10 +16,16 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
+import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
+import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.util.ArgumentVerifier;
@@ -27,6 +33,7 @@ import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
 import org.threadly.util.StringUtils;
+import org.threadly.util.debug.StackTracker.ComparableTrace;
 
 /**
  * Tool for profiling a running java application to get an idea of where the slow points 
@@ -44,12 +51,103 @@ public class Profiler {
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
   private static final short DEFAULT_MAP_INITIAL_SIZE = 16;
+  private static final ComparableTrace IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
+  private static final ComparableTrace IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
+  private static final ComparableTrace IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1;
+  private static final ComparableTrace IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2;
+  private static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR;
   
   static {
     String prefix = "functions by ";
     String columns = "(total, top, name)";
     FUNCTION_BY_NET_HEADER = prefix + "top count: " + columns;
     FUNCTION_BY_COUNT_HEADER = prefix + "total count: " + columns;
+    
+    AtomicReference<Thread> psSchedulerThread = new AtomicReference<>();
+    AtomicReference<Thread> stsSchedulerThread = new AtomicReference<>();
+    AtomicReference<Thread> threadPoolExecutorThread = new AtomicReference<>();
+    PriorityScheduler ps = new PriorityScheduler(1, null, 100, (r) -> {
+      Thread t = new Thread(r);
+      t.setDaemon(true);
+      psSchedulerThread.set(t);
+      return t;
+    });
+    SingleThreadScheduler sts = new SingleThreadScheduler((r) -> {
+      Thread t = new Thread(r);
+      t.setDaemon(true);
+      stsSchedulerThread.set(t);
+      return t;
+    });
+    ThreadPoolExecutor tpe = 
+        new ThreadPoolExecutor(1, 1, 100, TimeUnit.MILLISECONDS, new SynchronousQueue<>(), 
+                               (r) -> {
+                                 Thread t = new Thread(r);
+                                 t.setDaemon(true);
+                                 threadPoolExecutorThread.set(t);
+                                 return t;
+                               });
+    try {
+      sts.prestartExecutionThread(false);
+      ps.prestartAllThreads();
+      
+      Thread psFirstThread = getParkedThread(psSchedulerThread, null);
+      ps.setPoolSize(2);
+      ps.prestartAllThreads();
+      Thread psSecondThread = getParkedThread(psSchedulerThread, psFirstThread);
+      
+      Thread stsThread = getParkedThread(stsSchedulerThread, null);
+      
+      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1 = new ComparableTrace(psFirstThread.getStackTrace());
+      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2 = new ComparableTrace(psSecondThread.getStackTrace());
+      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1 = new ComparableTrace(stsThread.getStackTrace());
+      
+      sts.schedule(DoNothingRunnable.instance(), TimeUnit.HOURS.toMillis(1));
+      sts.submit(DoNothingRunnable.instance()).get(); // make sure we execute so the next park is our ideal state
+      
+      if (tpe.prestartCoreThread()) {
+        IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR = 
+            new ComparableTrace(getParkedThread(threadPoolExecutorThread, null).getStackTrace());
+      } else {
+        System.err.println("Could not start ThreadPoolExecutor thread for stack simplification");
+        IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR = new ComparableTrace(new StackTraceElement[0]);
+      }
+      
+      do {
+        Thread.yield();
+      } while (! isParkedStack(stsThread.getStackTrace()));
+      
+      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stsThread.getStackTrace());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    } catch (ExecutionException e) {
+      throw ExceptionUtils.makeRuntime(e.getCause());
+    } finally {
+      try {
+        ps.shutdownNow();
+      } finally {
+        sts.shutdownNow();
+      }
+    }
+  }
+  
+  private static Thread getParkedThread(AtomicReference<Thread> threadReference, Thread not) {
+    Thread thread;
+    StackTraceElement[] stackTrace;
+    while (true) {
+      if ((thread = threadReference.get()) != not && thread.isAlive()) {
+        stackTrace = thread.getStackTrace();
+        if (isParkedStack(stackTrace)) {
+          break;
+        }
+      }
+      Thread.yield();
+    }
+    return thread;
+  }
+  
+  private static boolean isParkedStack(StackTraceElement[] stackTrace) {
+    return stackTrace.length > 1 && stackTrace[0].getMethodName().equals("park");
   }
   
   protected final Object startStopLock;
@@ -527,8 +625,20 @@ public class Profiler {
         count = t.getThreadCount();
       }
       out.println(count + " time(s):");
-      
-      out.println(ExceptionUtils.stackToString(t.elements));
+
+      if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.equals(t)) {
+        out.println("\tPriorityScheduler idle thread (stack 1)");
+      } else if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.equals(t)) {
+        out.println("\tPriorityScheduler idle thread (stack 2)");
+      } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.equals(t)) {
+        out.println("\tSingleThreadScheduler idle thread (stack 1)");
+      } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.equals(t)) {
+        out.println("\tSingleThreadScheduler idle thread (stack 2)");
+      } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR.equals(t)) {
+        out.println("\tThreadPoolExecutor idle thread");
+      } else {
+        out.println(ExceptionUtils.stackToString(t.elements));
+      }
     }
   }
   
@@ -787,6 +897,19 @@ public class Profiler {
       
       Trace existingTrace = traces.get(trace);
       if (existingTrace == null) {
+        // this is really cheap to de-duplicate, so might as well
+        if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.elements);
+        } else if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.elements);
+        } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements);
+        } else if (IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements);
+        } else if (IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR.elements);
+        }
+        
         traces.put(trace, trace);
       } else {
         existingTrace.incrementThreadCount();

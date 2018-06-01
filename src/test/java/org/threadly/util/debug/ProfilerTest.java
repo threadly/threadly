@@ -6,6 +6,9 @@ import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -13,7 +16,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
+import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
+import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker;
@@ -39,8 +45,13 @@ public class ProfilerTest extends ThreadlyTester {
     profiler = null;
   }
   
+  protected void profilingExecutor(@SuppressWarnings("unused") Executor executor) {
+    // ignored by default, overriden in other cases
+  }
+  
   protected void blockForProfilerSample() {
-    new TestCondition(() -> profiler.getCollectedSampleQty() > 0).blockTillTrue(1000 * 20);
+    int startCount = profiler.getCollectedSampleQty();
+    new TestCondition(() -> profiler.getCollectedSampleQty() > startCount).blockTillTrue(1000 * 20);
   }
   
   @Test
@@ -304,5 +315,51 @@ public class ProfilerTest extends ThreadlyTester {
     
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_COUNT_HEADER));
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_NET_HEADER));
+  }
+  
+  @Test
+  public void idlePrioritySchedulerTest() {
+    PriorityScheduler ps = new PriorityScheduler(2);
+    profilingExecutor(ps);
+    ps.prestartAllThreads();
+    profiler.start();
+    blockForProfilerSample();
+    
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("PriorityScheduler idle thread (stack 1)"));
+    assertTrue(resultStr.contains("PriorityScheduler idle thread (stack 2)"));
+  }
+  
+  @Test
+  public void idleSingleThreadSchedulerTest() throws InterruptedException, ExecutionException {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    profilingExecutor(sts);
+    sts.prestartExecutionThread(true);
+    profiler.start();
+    blockForProfilerSample();
+    
+    sts.schedule(DoNothingRunnable.instance(), 600_000);
+    sts.submit(DoNothingRunnable.instance()).get();
+    blockForProfilerSample();
+    
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("SingleThreadScheduler idle thread (stack 1)"));
+    assertTrue(resultStr.contains("SingleThreadScheduler idle thread (stack 2)"));
+  }
+  
+  @Test
+  public void idleThreadPoolExecutorTest() {
+    ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, 1, 100, TimeUnit.MILLISECONDS, 
+                                                    new SynchronousQueue<>());
+    profilingExecutor(tpe);
+    tpe.prestartCoreThread();
+    profiler.start();
+    blockForProfilerSample();
+
+    String resultStr = profiler.dump(false);
+    
+    assertTrue(resultStr.contains("ThreadPoolExecutor idle thread"));
   }
 }
