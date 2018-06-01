@@ -13,7 +13,6 @@ import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.debug.StackTracker.ComparableTrace;
 
 /**
  * Class of stack traces that could be used for reference against common situations.

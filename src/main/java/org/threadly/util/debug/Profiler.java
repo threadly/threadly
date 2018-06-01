@@ -914,7 +914,7 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class Trace extends StackTracker.ComparableTrace {
+  protected static class Trace extends ComparableTrace {
     /* threadSeenCount is how many times this trace has been seen in a specific thread.  It should 
      * only be incremented by a single thread, but can be read from any thread.
      */
