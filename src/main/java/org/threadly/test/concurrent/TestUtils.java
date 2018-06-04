@@ -27,22 +27,10 @@ public class TestUtils {
    * the {@link Clock} class's representation of time has advanced.
    */
   public static void blockTillClockAdvances() {
-    new TestCondition() {
-      private static final short POLL_INTERVAL_IN_MS = 1;
-      
-      private final long startTime = Clock.accurateTimeMillis();
-      private final long alwaysProgressingStartTime = Clock.accurateForwardProgressingMillis();
-      
-      @Override
-      public boolean get() {
-        return Clock.accurateTimeMillis() > startTime && 
-                 Clock.accurateForwardProgressingMillis() > alwaysProgressingStartTime;
-      }
-      
-      @Override
-      public void blockTillTrue() {
-        blockTillTrue(DEFAULT_TIMEOUT, POLL_INTERVAL_IN_MS);
-      }
-    }.blockTillTrue();
+    long startTime = Clock.accurateTimeMillis();
+    long alwaysProgressingStartTime = Clock.accurateForwardProgressingMillis();
+    new TestCondition(() -> Clock.accurateTimeMillis() > startTime && 
+                              Clock.accurateForwardProgressingMillis() > alwaysProgressingStartTime)
+        .blockTillTrue(TestCondition.DEFAULT_TIMEOUT, 1);
   }
 }

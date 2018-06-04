@@ -183,20 +183,17 @@ public class TestRunnable implements Runnable {
   public void blockTillFinished(int timeout, int expectedRunCount) {
     final int blockRunCount = expectedRunCount;
     
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        int finishCount = runCount.get();
-        
-        if (finishCount < blockRunCount) {
-          return false;
-        } else if (finishCount > blockRunCount) {
-          return true;
-        } else {  // they are equal
-          return currentRunningCount.get() == 0;
-        }
+    new TestCondition(() -> {
+      int finishCount = runCount.get();
+      
+      if (finishCount < blockRunCount) {
+        return false;
+      } else if (finishCount > blockRunCount) {
+        return true;
+      } else {  // they are equal
+        return currentRunningCount.get() == 0;
       }
-    }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
+    }).blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
   
   /**
@@ -213,12 +210,8 @@ public class TestRunnable implements Runnable {
    * @param timeout time to wait for run to be called before throwing exception
    */
   public void blockTillStarted(int timeout) {
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return ! runTime.isEmpty();
-      }
-    }.blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
+    new TestCondition(() -> ! runTime.isEmpty())
+        .blockTillTrue(timeout, RUN_CONDITION_POLL_INTERVAL);
   }
   
   @Override

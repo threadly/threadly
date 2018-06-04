@@ -1,6 +1,8 @@
 package org.threadly.test.concurrent;
 
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.IntBinaryOperator;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.threadly.util.ArgumentVerifier;
@@ -18,33 +20,86 @@ import org.threadly.util.Clock;
  */
 public class TestCondition {
   protected static final int DEFAULT_POLL_INTERVAL = 10;
-  protected static final int DEFAULT_TIMEOUT = 1000 * 10;
-  protected static final int SPIN_THRESHOLD = 10;
+  protected static final int DEFAULT_TIMEOUT = 10_000;
   
-  private final Supplier<Boolean> condition;
+  private static void delay(long maxMillis) {
+    if (maxMillis > 10) {
+      LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * maxMillis);
+    } else {
+      Thread.yield();
+    }
+  }
+  
+  private final IntBinaryOperator blockCondition;
   
   /**
    * This constructor is expected to have {@link #get()} overridden, otherwise an exception will be 
    * thrown when this condition is checked/used.
    */
   public TestCondition() {
-    this(() -> { 
-      throw new RuntimeException("Must override get() or provide condition supplier");
-    });
+    this(null);
   }
 
   /**
-   * Construct a new test condition with a provided supplier for when the state changes.  
+   * Construct a new {@link TestCondition} with a provided supplier for when the state changes.  
    * Alternatively this can be constructed with {@link #TestCondition()} and then the condition can 
    * be reported by overriding {@link #get()}.
    * 
    * @since 5.0
-   * @param condition Condition to check
+   * @param condition Condition to check for
    */
   public TestCondition(Supplier<Boolean> condition) {
-    ArgumentVerifier.assertNotNull(condition, "condition");
+    blockCondition = (timeoutInMillis, pollIntervalInMillis) -> {
+      long startTime = Clock.accurateForwardProgressingMillis();
+      long now = startTime;
+      boolean lastResult;
+      while (! (lastResult = condition == null ? get() : condition.get()) && 
+             ! Thread.currentThread().isInterrupted() && 
+             (now = Clock.accurateForwardProgressingMillis()) - startTime < timeoutInMillis) {
+        delay(pollIntervalInMillis);
+      }
+      
+      if (lastResult) {
+        return 0; // ignored result
+      } else {
+        throw new ConditionTimeoutException("Still 'false' after " + 
+                                              (now - startTime) + "ms, interrupted: " + 
+                                              Thread.currentThread().isInterrupted());
+      }
+    };
+  }
+  
+  /**
+   * Construct a new {@link TestCondition} where one function will supply a result and a second 
+   * function will test that result to see if the condition is met.
+   * 
+   * @param <T> the type of object returned from the supplier and tested by the predicate
+   * @param supplier The function to provide a result to test
+   * @param predicate The predicate a result is provided to for checking the test condition
+   */
+  public <T> TestCondition(Supplier<? extends T> supplier, Predicate<? super T> predicate) {
+    ArgumentVerifier.assertNotNull(supplier, "supplier");
+    ArgumentVerifier.assertNotNull(predicate, "predicate");
     
-    this.condition = condition;
+    blockCondition = (timeoutInMillis, pollIntervalInMillis) -> {
+      long startTime = Clock.accurateForwardProgressingMillis();
+      long now = startTime;
+      boolean pass;
+      T lastResult;
+      while (! (pass = predicate.test(lastResult = supplier.get())) && 
+             ! Thread.currentThread().isInterrupted() && 
+             (now = Clock.accurateForwardProgressingMillis()) - startTime < timeoutInMillis) {
+        delay(pollIntervalInMillis);
+      }
+      
+      if (pass) {
+        return 0; // ignored result
+      } else {
+        throw new ConditionTimeoutException("Still '" + lastResult + "' after " + 
+                                              (now - startTime) + "ms, interrupted: " + 
+                                              Thread.currentThread().isInterrupted());
+      }
+    };
   }
   
   /**
@@ -55,7 +110,7 @@ public class TestCondition {
    * @return Test condition state, {@code true} if ready
    */
   public boolean get() {
-    return condition.get();
+    throw new RuntimeException("Must override get() or provide condition supplier");
   }
 
   /**
@@ -88,21 +143,7 @@ public class TestCondition {
    * @param pollIntervalInMillis time to sleep between checks
    */
   public void blockTillTrue(int timeoutInMillis, int pollIntervalInMillis) {
-    long startTime = Clock.accurateForwardProgressingMillis();
-    long now = startTime;
-    boolean lastResult;
-    while (! (lastResult = get()) && ! Thread.currentThread().isInterrupted() && 
-           (now = Clock.accurateForwardProgressingMillis()) - startTime < timeoutInMillis) {
-      if (pollIntervalInMillis > SPIN_THRESHOLD) {
-        LockSupport.parkNanos(Clock.NANOS_IN_MILLISECOND * pollIntervalInMillis);
-      }
-    }
-    
-    if (! lastResult) {
-      throw new ConditionTimeoutException("Still false after " + 
-                                            (now - startTime) + "ms, interrupted: " + 
-                                            Thread.currentThread().isInterrupted());
-    }
+    blockCondition.applyAsInt(timeoutInMillis, pollIntervalInMillis);
   }
   
   /**

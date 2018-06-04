@@ -63,12 +63,8 @@ public class PollerTest extends ThreadlyTester {
     ListenableFuture<?> f = poller.watch(() -> false);
     TestUtils.sleep(10);
 
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return f.isDone() && f.isCancelled();
-      }
-    }.blockTillTrue();// will throw if does not become true
+    new TestCondition(() -> f.isDone() && f.isCancelled())
+        .blockTillTrue();// will throw if does not become true
   }
   
   @Test

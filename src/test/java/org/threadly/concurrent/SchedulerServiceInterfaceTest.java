@@ -119,7 +119,7 @@ public abstract class SchedulerServiceInterfaceTest extends SubmitterSchedulerIn
       
       btr.unblock();
       
-      new TestCondition(() -> scheduler.getActiveTaskCount() == 0).blockTillTrue();
+      new TestCondition(scheduler::getActiveTaskCount, (c) -> c == 0).blockTillTrue();
     } finally {
       factory.shutdown();
     }

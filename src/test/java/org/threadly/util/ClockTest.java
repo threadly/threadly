@@ -68,12 +68,8 @@ public class ClockTest extends ThreadlyTester {
     assertTrue(timeSinceClockStartMillis >= 0);
     assertTrue(timeSinceClockStartMillis < 1000 * 60 * 15); // less than 15 min
     
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        return Clock.accurateForwardProgressingMillis() > timeSinceClockStartMillis;
-      }
-    }.blockTillTrue(200);
+    new TestCondition(() -> Clock.accurateForwardProgressingMillis() > timeSinceClockStartMillis)
+        .blockTillTrue(200);
   }
   
   @Test

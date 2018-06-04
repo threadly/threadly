@@ -20,13 +20,9 @@ import org.threadly.util.Pair;
 public class ThreadedStatisticPrioritySchedulerTests extends ThreadlyTester {
   public static void blockTillSchedulerIdle(final StatisticPriorityScheduler scheduler, 
                                             final int expectedSampleSize) {
-    new TestCondition() { // block till all are finished
-      @Override
-      public boolean get() {
-        return scheduler.getActiveTaskCount() == 0 && 
-                 scheduler.getExecutionDurationSamples().size() >= expectedSampleSize;
-      }
-    }.blockTillTrue();
+    new TestCondition(() -> scheduler.getActiveTaskCount() == 0 && 
+        scheduler.getExecutionDurationSamples().size() >= expectedSampleSize) // block till all are finished
+      .blockTillTrue();
   }
   
   public static void resetCollectedStatsTest(StatisticPriorityScheduler scheduler) {

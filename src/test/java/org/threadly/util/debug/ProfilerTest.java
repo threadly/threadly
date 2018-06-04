@@ -310,9 +310,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
     
-    String resultStr = profiler.dump(false);
-    
-    assertTrue(resultStr.startsWith("Combined profile for all threads"));
+    assertTrue(profiler.dump(false).startsWith("Combined profile for all threads"));
   }
   
   protected static void verifyDumpStr(String resultStr) {
@@ -320,6 +318,10 @@ public class ProfilerTest extends ThreadlyTester {
     
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_COUNT_HEADER));
     assertTrue(resultStr.contains(Profiler.FUNCTION_BY_NET_HEADER));
+  }
+  
+  private void verifyDumpContains(String str) {
+    new TestCondition(() -> profiler.dump(false), (s) -> s.contains(str)).blockTillTrue();
   }
   
   @Test
@@ -330,12 +332,10 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
     
-    new TestCondition(() -> {
-      String resultStr = profiler.dump(false);
-      
-      return resultStr.contains("PriorityScheduler idle thread (stack 1)") &&
-             resultStr.contains("PriorityScheduler idle thread (stack 2)");
-    }).blockTillTrue();
+    new TestCondition(() -> profiler.dump(false), 
+                      (s) -> s.contains("PriorityScheduler idle thread (stack 1)") &&
+                             s.contains("PriorityScheduler idle thread (stack 2)"))
+        .blockTillTrue();
   }
   
   @Test
@@ -345,18 +345,14 @@ public class ProfilerTest extends ThreadlyTester {
     sts.prestartExecutionThread(true);
     profiler.start();
     blockForProfilerSample();
+
+    verifyDumpContains("SingleThreadScheduler idle thread (stack 1)");
     
     sts.schedule(DoNothingRunnable.instance(), 600_000);
     sts.submit(DoNothingRunnable.instance()).get();
     blockForProfilerSample();
-    
 
-    new TestCondition(() -> {
-      String resultStr = profiler.dump(false);
-      
-      return resultStr.contains("SingleThreadScheduler idle thread (stack 1)") &&
-             resultStr.contains("SingleThreadScheduler idle thread (stack 2)");
-    }).blockTillTrue();
+    verifyDumpContains("SingleThreadScheduler idle thread (stack 2)");
   }
   
   @Test
@@ -368,12 +364,10 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
 
-    new TestCondition(() -> {
-      String resultStr = profiler.dump(false);
-      
-      return resultStr.contains("PriorityScheduler with ExceptionHandler idle thread (stack 1)") &&
-             resultStr.contains("PriorityScheduler with ExceptionHandler idle thread (stack 2)");
-    }).blockTillTrue();
+    new TestCondition(() -> profiler.dump(false), 
+                      (s) -> s.contains("PriorityScheduler with ExceptionHandler idle thread (stack 1)") &&
+                             s.contains("PriorityScheduler with ExceptionHandler idle thread (stack 2)"))
+        .blockTillTrue();
   }
   
   @Test
@@ -383,17 +377,14 @@ public class ProfilerTest extends ThreadlyTester {
     sts.prestartExecutionThread(true);
     profiler.start();
     blockForProfilerSample();
+
+    verifyDumpContains("SingleThreadScheduler with ExceptionHandler idle thread (stack 1)");
     
     sts.schedule(DoNothingRunnable.instance(), 600_000);
     sts.submit(DoNothingRunnable.instance()).get();
     blockForProfilerSample();
 
-    new TestCondition(() -> {
-      String resultStr = profiler.dump(false);
-      
-      return resultStr.contains("SingleThreadScheduler with ExceptionHandler idle thread (stack 1)") &&
-             resultStr.contains("SingleThreadScheduler with ExceptionHandler idle thread (stack 2)");
-    }).blockTillTrue();
+    verifyDumpContains("SingleThreadScheduler with ExceptionHandler idle thread (stack 2)");
   }
   
   @Test
@@ -405,9 +396,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
 
-    new TestCondition(() -> profiler.dump(false)
-                                    .contains("ThreadPoolExecutor SynchronousQueue idle thread"))
-        .blockTillTrue();
+    verifyDumpContains("ThreadPoolExecutor SynchronousQueue idle thread");
   }
   
   @Test
@@ -419,9 +408,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
 
-    new TestCondition(() -> profiler.dump(false)
-                                    .contains("ThreadPoolExecutor ArrayBlockingQueue idle thread"))
-        .blockTillTrue();
+    verifyDumpContains("ThreadPoolExecutor ArrayBlockingQueue idle thread");
   }
   
   @Test
@@ -433,9 +420,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
 
-    new TestCondition(() -> profiler.dump(false)
-                                    .contains("ThreadPoolExecutor LinkedBlockingQueue idle thread"))
-        .blockTillTrue();
+    verifyDumpContains("ThreadPoolExecutor LinkedBlockingQueue idle thread");
   }
   
   @Test
@@ -446,8 +431,6 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
 
-    new TestCondition(() -> profiler.dump(false)
-                                    .contains("ScheduledThreadPoolExecutor idle thread"))
-        .blockTillTrue();
+    verifyDumpContains("ScheduledThreadPoolExecutor idle thread");
   }
 }

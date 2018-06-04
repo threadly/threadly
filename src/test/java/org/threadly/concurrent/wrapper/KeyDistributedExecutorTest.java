@@ -315,14 +315,11 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
     });
     
     // block till ready to ensure other thread got testLock lock
-    new TestCondition() {
-      @Override
-      public boolean get() {
-        synchronized (testLock) {
-          return runs.size() == expectedCount;
-        }
+    new TestCondition(() -> {
+      synchronized (testLock) {
+        return runs.size();
       }
-    }.blockTillTrue(20 * 1000, 100);
+    }, (size) -> size == expectedCount).blockTillTrue(20 * 1000, 100);
 
     synchronized (testLock) {
       Iterator<KDRunnable> it = runs.iterator();
@@ -416,7 +413,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
       });
       
       // block till there is for sure a backup of key1 tasks
-      new TestCondition(() -> waitingTasks.get() > 10).blockTillTrue();
+      new TestCondition(waitingTasks::get, (c) -> c > 10).blockTillTrue();
       
       TestRunnable key2Runnable = new TestRunnable();
       distributor.execute(key2, key2Runnable);

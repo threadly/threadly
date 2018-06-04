@@ -131,7 +131,7 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
       queue.put(item);
       
       // will throw exception if test fails
-      new TestCondition(() -> teh.getLastThrowable() == e).blockTillTrue();
+      new TestCondition(teh::getLastThrowable, (t) -> t == e).blockTillTrue();
       
       // verify thread did not die
       assertTrue(queueConsumer.runningThread.isAlive());

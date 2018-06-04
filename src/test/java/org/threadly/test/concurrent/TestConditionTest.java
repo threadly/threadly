@@ -2,6 +2,9 @@ package org.threadly.test.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.util.Clock;
@@ -41,10 +44,14 @@ public class TestConditionTest extends ThreadlyTester {
     tc.get();
   }
   
-  @Test (expected = IllegalArgumentException.class)
-  public void nullConstructorFail() {
-    @SuppressWarnings("unused")
-    TestCondition tc = new TestCondition(null);
+  @Test
+  public void supplierPredicateTest() {
+    Queue<String> values = new ArrayDeque<>(8);
+    values.add("foo");
+    values.add("false");
+    values.add("true");
+    
+    new TestCondition(() -> values.remove(), Boolean::parseBoolean).blockTillTrue();
   }
   
   private class DelayCondition extends TestCondition {
