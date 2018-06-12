@@ -1379,7 +1379,7 @@ public class FutureUtils {
    * @param executor Executor to execute transformation function on, or {@code null}
    * @return Future with result of transformation function or respective error
    */
-  protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<ST> sourceFuture, 
+  protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<? extends ST> sourceFuture, 
                                                                Function<? super ST, ListenableFuture<RT>> transformer, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
@@ -1451,7 +1451,7 @@ public class FutureUtils {
    */
   @SuppressWarnings("unchecked")
   protected static <TT extends Throwable, RT> ListenableFuture<RT> 
-      failureTransform(ListenableFuture<RT> sourceFuture, Function<TT, RT> mapper,
+      failureTransform(ListenableFuture<RT> sourceFuture, Function<? super TT, ? extends RT> mapper,
                        Class<TT> throwableType, Executor executor, 
                        ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
@@ -1533,7 +1533,7 @@ public class FutureUtils {
    */
   @SuppressWarnings("unchecked")
   protected static <TT extends Throwable, RT> ListenableFuture<RT> 
-      flatFailureTransform(ListenableFuture<RT> sourceFuture, Function<TT, ListenableFuture<RT>> mapper,
+      flatFailureTransform(ListenableFuture<RT> sourceFuture, Function<? super TT, ListenableFuture<RT>> mapper,
                            Class<TT> throwableType, Executor executor, 
                            ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 

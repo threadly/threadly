@@ -414,7 +414,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
    */
   default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
-                                                                Function<TT, T> mapper) {
+                                                                Function<? super TT, ? extends T> mapper) {
     return FutureUtils.failureTransform(this, mapper, throwableType, null, null);
   }
 
@@ -437,7 +437,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
    */
   default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
-                                                                Function<TT, T> mapper, 
+                                                                Function<? super TT, ? extends T> mapper, 
                                                                 Executor executor) {
     return FutureUtils.failureTransform(this, mapper, throwableType, executor, null);
   }
@@ -462,7 +462,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
    */
   default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
-                                                                Function<TT, T> mapper, 
+                                                                Function<? super TT, ? extends T> mapper, 
                                                                 Executor executor, 
                                                                 ListenerOptimizationStrategy optimizeExecution) {
     return FutureUtils.failureTransform(this, mapper, throwableType, executor, optimizeExecution);
@@ -482,7 +482,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
    */
   default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
-                                                                    Function<TT, ListenableFuture<T>> mapper) {
+                                                                    Function<? super TT, ListenableFuture<T>> mapper) {
     return FutureUtils.flatFailureTransform(this, mapper, throwableType, null, null);
   }
 
@@ -503,7 +503,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
    */
   default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
-                                                                    Function<TT, ListenableFuture<T>> mapper, 
+                                                                    Function<? super TT, ListenableFuture<T>> mapper, 
                                                                     Executor executor) {
     return FutureUtils.flatFailureTransform(this, mapper, throwableType, executor, null);
   }
@@ -526,7 +526,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A {@link ListenableFuture} that will resolve after the mapper is considered
    */
   default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
-                                                                    Function<TT, ListenableFuture<T>> mapper, 
+                                                                    Function<? super TT, ListenableFuture<T>> mapper, 
                                                                     Executor executor, 
                                                                     ListenerOptimizationStrategy optimizeExecution) {
     return FutureUtils.flatFailureTransform(this, mapper, throwableType, executor, optimizeExecution);

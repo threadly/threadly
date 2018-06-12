@@ -53,7 +53,7 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
 
   @Override
   public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType,
-                                                               Function<TT, T> mapper,
+                                                               Function<? super TT, ? extends T> mapper,
                                                                Executor executor,
                                                                ListenerOptimizationStrategy optimizeExecution) {
     // nothing to map, we are not in error
@@ -62,7 +62,7 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
 
   @Override
   public <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType,
-                                                                   Function<TT, ListenableFuture<T>> mapper,
+                                                                   Function<? super TT, ListenableFuture<T>> mapper,
                                                                    Executor executor,
                                                                    ListenerOptimizationStrategy optimizeExecution) {
     // nothing to map, we are not in error
