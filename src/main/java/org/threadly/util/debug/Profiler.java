@@ -23,9 +23,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -58,12 +60,18 @@ public class Profiler {
   protected static final String FUNCTION_BY_NET_HEADER;
   protected static final String FUNCTION_BY_COUNT_HEADER;
   private static final short DEFAULT_MAP_INITIAL_SIZE = 16;
+  private static final Set<String> BLACKLIST_THREAD_NAMES;
   
   static {
     String prefix = "functions by ";
     String columns = "(total, top, name)";
     FUNCTION_BY_NET_HEADER = prefix + "top count: " + columns;
     FUNCTION_BY_COUNT_HEADER = prefix + "total count: " + columns;
+    Set<String> blacklistThreadNames = new HashSet<>(4);
+    blacklistThreadNames.add("Threadly clock updater");
+    blacklistThreadNames.add("Reference Handler");
+    blacklistThreadNames.add("Finalizer");
+    BLACKLIST_THREAD_NAMES = Collections.unmodifiableSet(blacklistThreadNames);
     
     CommonStacktraces.init();
   }
@@ -632,19 +640,40 @@ public class Profiler {
    */
   protected static class ThreadIterator implements Iterator<ThreadSample> {
     protected final Iterator<Map.Entry<Thread, StackTraceElement[]>> it;
+    private Map.Entry<Thread, StackTraceElement[]> next;
     
     protected ThreadIterator() {
       it = Thread.getAllStackTraces().entrySet().iterator();
+      next = it.next();
     }
     
     @Override
     public boolean hasNext() {
-      return it.hasNext();
+      return next != null;
     }
 
     @Override
     public ThreadSample next() {
-      final Map.Entry<Thread, StackTraceElement[]> entry = it.next();
+      if (next == null) {
+        throw new NoSuchElementException();
+      }
+      
+      final Map.Entry<Thread, StackTraceElement[]> entry = next;
+      // update to our next entry if there is one
+      if (it.hasNext()) {
+        next = it.next();
+        while (BLACKLIST_THREAD_NAMES.contains(next.getKey().getName())) {
+          if (it.hasNext()) {
+            next = it.next();
+          } else {
+            next = null;
+            break;
+          }
+        }
+      } else {
+        next = null;
+      }
+      
       return new ThreadSample() {
         @Override
         public Thread getThread() {

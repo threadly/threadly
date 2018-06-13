@@ -59,7 +59,7 @@ public class Clock {
         
         Thread thread = new Thread(clockUpdater);
         
-        thread.setName("Threadly clock updater");
+        thread.setName("Threadly clock updater"); // name referenced in Profiler
         thread.setDaemon(true);
         thread.start();
       }
