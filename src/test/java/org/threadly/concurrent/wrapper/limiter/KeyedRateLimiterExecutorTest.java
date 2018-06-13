@@ -202,16 +202,19 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
   
   @Test
   public void verifyCleanupTaskTest() {
+    double permits = .1;
     Object key = new Object();
-    limiter.execute(.1, key, DoNothingRunnable.instance());
-    assertEquals(2, scheduler.advance(1000));
+    limiter.execute(permits, key, DoNothingRunnable.instance());
+    assertEquals(2, scheduler.advance(KeyedRateLimiterExecutor.LIMITER_IDLE_TIMEOUT));
     assertEquals(1, limiter.getTrackedKeyCount());
-    assertFalse(limiter.currentLimiters.isEmpty()); // should have item for 100 millis
-    TestUtils.sleep(100);
-    TestUtils.blockTillClockAdvances();
-    assertEquals(1, scheduler.advance(1000));
-    assertTrue(limiter.currentLimiters.isEmpty());
-    assertEquals(0, limiter.getTrackedKeyCount());
+    assertFalse(limiter.currentLimiters.isEmpty());
+    if (TEST_PROFILE == TestLoad.Stress) {  // too slow for normal tests right now
+      TestUtils.sleep((long)(KeyedRateLimiterExecutor.LIMITER_IDLE_TIMEOUT + (1000 * permits)));
+      TestUtils.blockTillClockAdvances();
+      assertEquals(1, scheduler.advance(KeyedRateLimiterExecutor.LIMITER_IDLE_TIMEOUT));
+      assertTrue(limiter.currentLimiters.isEmpty());
+      assertEquals(0, limiter.getTrackedKeyCount());
+    }
   }
   
   @Test (expected = RejectedExecutionException.class)

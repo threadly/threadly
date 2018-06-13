@@ -2,22 +2,20 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PrioritySchedulerService;
-import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.future.ImmediateResultListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.future.ListenableFutureTask;
-import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.concurrent.wrapper.traceability.ThreadRenamingSubmitterScheduler;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
 
 /**
@@ -37,12 +35,8 @@ import org.threadly.util.StringUtils;
  * @since 4.7.0
  */
 public class KeyedRateLimiterExecutor {
-  protected static final short DEFAULT_LOCK_PARALISM = 32;
-  protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = 0.75f;  // 0.75 is ConcurrentHashMap default
-  protected static final short CONCURRENT_HASH_MAP_MIN_SIZE = 8;
-  protected static final short CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 64;
-  protected static final short CONCURRENT_HASH_MAP_MIN_CONCURRENCY_LEVEL = 4;
-  protected static final short CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
+  protected static final short LIMITER_IDLE_TIMEOUT = 2_000;
+  protected static final short CONCURRENT_HASH_MAP_INITIAL_SIZE = 16;
   
   protected final SubmitterScheduler scheduler;
   protected final RejectedExecutionHandler rejectedExecutionHandler;
@@ -51,7 +45,6 @@ public class KeyedRateLimiterExecutor {
   protected final long maxScheduleDelayMillis;
   protected final String subPoolName;
   protected final boolean addKeyToThreadName;
-  protected final StripedLock sLock;
   protected final ConcurrentHashMap<Object, RateLimiterExecutor> currentLimiters;
   
   /**
@@ -65,7 +58,7 @@ public class KeyedRateLimiterExecutor {
    * @param permitsPerSecond how many permits should be allowed per second per key
    */
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond) {
-    this(scheduler, permitsPerSecond, Long.MAX_VALUE, null, "", false, DEFAULT_LOCK_PARALISM);
+    this(scheduler, permitsPerSecond, Long.MAX_VALUE, null, "", false);
   }
   
   /**
@@ -85,7 +78,7 @@ public class KeyedRateLimiterExecutor {
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                                   String subPoolName, boolean addKeyToThreadName) {
     this(scheduler, permitsPerSecond, Long.MAX_VALUE, null, 
-         subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
+         subPoolName, addKeyToThreadName);
   }
   
   /**
@@ -102,7 +95,7 @@ public class KeyedRateLimiterExecutor {
    */
   public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
                                   long maxScheduleDelayMillis) {
-    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, null, "", false, DEFAULT_LOCK_PARALISM);
+    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, null, "", false);
   }
   
   /**
@@ -122,7 +115,7 @@ public class KeyedRateLimiterExecutor {
                                   long maxScheduleDelayMillis, 
                                   RejectedExecutionHandler rejectedExecutionHandler) {
     this(scheduler, permitsPerSecond, maxScheduleDelayMillis, rejectedExecutionHandler, 
-         "", false, DEFAULT_LOCK_PARALISM);
+         "", false);
   }
   
   /**
@@ -145,7 +138,7 @@ public class KeyedRateLimiterExecutor {
                                   long maxScheduleDelayMillis, 
                                   String subPoolName, boolean addKeyToThreadName) {
     this(scheduler, permitsPerSecond, maxScheduleDelayMillis, null, 
-         subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
+         subPoolName, addKeyToThreadName);
   }
   
   /**
@@ -169,37 +162,6 @@ public class KeyedRateLimiterExecutor {
                                   long maxScheduleDelayMillis, 
                                   RejectedExecutionHandler rejectedExecutionHandler, 
                                   String subPoolName, boolean addKeyToThreadName) {
-    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, rejectedExecutionHandler, 
-         subPoolName, addKeyToThreadName, DEFAULT_LOCK_PARALISM);
-  }
-  
-  /**
-   * Constructs a new key rate limiting executor.  This constructor allows you to set both the 
-   * thread naming behavior as well as the level of parallelism expected for task submission.  
-   * <p>
-   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
-   * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
-   * thrown instead of scheduling the task.
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
-   * 
-   * @since 4.8.0
-   * @param scheduler Scheduler to defer executions to
-   * @param permitsPerSecond how many permits should be allowed per second per key
-   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
-   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
-   * @param subPoolName Prefix to give threads while executing tasks submitted through this limiter
-   * @param addKeyToThreadName {@code true} to append the task's key to the thread name
-   * @param expectedParallism Expected level of task submission parallelism
-   */
-  public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
-                                  long maxScheduleDelayMillis, 
-                                  RejectedExecutionHandler rejectedExecutionHandler, 
-                                  String subPoolName, boolean addKeyToThreadName, 
-                                  int expectedParallism) {
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
     ArgumentVerifier.assertGreaterThanZero(permitsPerSecond, "permitsPerSecond");
     ArgumentVerifier.assertGreaterThanZero(maxScheduleDelayMillis, "maxScheduleDelayMillis");
@@ -218,21 +180,41 @@ public class KeyedRateLimiterExecutor {
     // make sure this is non-null so that it 'null' wont appear
     this.subPoolName = StringUtils.nullToEmpty(subPoolName);
     this.addKeyToThreadName = addKeyToThreadName;
-    this.sLock = new StripedLock(expectedParallism);
-    int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
-                                  CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
-    if (mapInitialSize < CONCURRENT_HASH_MAP_MIN_SIZE) {
-      mapInitialSize = CONCURRENT_HASH_MAP_MIN_SIZE;
-    }
-    int mapConcurrencyLevel = Math.max(CONCURRENT_HASH_MAP_MIN_CONCURRENCY_LEVEL, 
-                                       Math.min(sLock.getExpectedConcurrencyLevel() / 2, 
-                                                CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL));
-    if (mapConcurrencyLevel < 1) {
-      mapConcurrencyLevel = 1;
-    }
-    this.currentLimiters = new ConcurrentHashMap<>(mapInitialSize,  
-                                                   CONCURRENT_HASH_MAP_LOAD_FACTOR, 
-                                                   mapConcurrencyLevel);
+    this.currentLimiters = new ConcurrentHashMap<>(CONCURRENT_HASH_MAP_INITIAL_SIZE);
+  }
+  
+  /**
+   * Constructs a new key rate limiting executor.  This constructor allows you to set both the 
+   * thread naming behavior as well as the level of parallelism expected for task submission.  
+   * <p>
+   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
+   * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
+   * thrown instead of scheduling the task.
+   * <p>
+   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
+   * given period of time.  Depending on task execution duration, and quantity of threads executing 
+   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
+   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
+   * 
+   * @deprecated Please use {@link #KeyedRateLimiterExecutor(SubmitterScheduler, double, long, RejectedExecutionHandler, String, boolean)}
+   * 
+   * @since 4.8.0
+   * @param scheduler Scheduler to defer executions to
+   * @param permitsPerSecond how many permits should be allowed per second per key
+   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
+   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
+   * @param subPoolName Prefix to give threads while executing tasks submitted through this limiter
+   * @param addKeyToThreadName {@code true} to append the task's key to the thread name
+   * @param expectedParallism IGNORED AND DEPRECATED
+   */
+  @Deprecated
+  public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
+                                  long maxScheduleDelayMillis, 
+                                  RejectedExecutionHandler rejectedExecutionHandler, 
+                                  String subPoolName, boolean addKeyToThreadName, 
+                                  @SuppressWarnings("unused") int expectedParallism) {
+    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, rejectedExecutionHandler, 
+         subPoolName, addKeyToThreadName);
   }
   
   /**
@@ -281,8 +263,6 @@ public class KeyedRateLimiterExecutor {
     if (currentMinimumDelay == 0) {
       return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance());
-      
       long futureDelay;
       if (maximumDelay > 0 && currentMinimumDelay > maximumDelay) {
         futureDelay = maximumDelay;
@@ -290,9 +270,7 @@ public class KeyedRateLimiterExecutor {
         futureDelay = currentMinimumDelay;
       }
       
-      scheduler.schedule(lft, futureDelay);
-      
-      return lft;
+      return scheduler.submitScheduled(DoNothingRunnable.instance(), futureDelay);
     }
   }
   
@@ -322,10 +300,9 @@ public class KeyedRateLimiterExecutor {
    */
   public long execute(double permits, Object taskKey, Runnable task) {
     ArgumentVerifier.assertNotNegative(permits, "permits");
-    ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    return doExecute(permits, taskKey, task);
+    return limiterForKey(taskKey, (l) -> l.execute(permits, task));
   }
   
   /**
@@ -339,7 +316,7 @@ public class KeyedRateLimiterExecutor {
    * @return Future to represent when the execution has occurred
    */
   public ListenableFuture<?> submit(Object taskKey, Runnable task) {
-    return submit(1, taskKey, task);
+    return submit(1, taskKey, task, null);
   }
   
   /**
@@ -387,7 +364,8 @@ public class KeyedRateLimiterExecutor {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   public <T> ListenableFuture<T> submit(double permits, Object taskKey, Runnable task, T result) {
-    return submit(permits, taskKey, new RunnableCallableAdapter<>(task, result));
+    // we go directly to the limiter here to get DoNothingRunnable optimizations (can't wrap task)
+    return limiterForKey(taskKey, (l) -> l.submit(permits, task, result));
   }
   
   /**
@@ -418,31 +396,25 @@ public class KeyedRateLimiterExecutor {
    * @return Future to represent when the execution has occurred and provide the result from the callable
    */
   public <T> ListenableFuture<T> submit(double permits, Object taskKey, Callable<T> task) {
-    ArgumentVerifier.assertNotNegative(permits, "permits");
-    ArgumentVerifier.assertNotNull(taskKey, "taskKey");
-    ArgumentVerifier.assertNotNull(task, "task");
-    
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
-    
-    doExecute(permits, taskKey, rf);
-    
-    return rf;
+    return limiterForKey(taskKey, (l) -> l.submit(permits, task));
   }
   
   /**
-   * Internal call to actually execute prepared runnable.
+   * This invokes a function with a provided {@link RateLimiterExecutor}.  This invocation is 
+   * atomic using {@link ConcurrentHashMap#compute(Object, java.util.function.BiFunction)} so that 
+   * it will not interfere with others.
    * 
-   * @param permits resource permits for this task
+   * @param <T> Type of result from provided function
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
-   * @param task Runnable to execute when ready
-   * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
+   * @return A {@link RateLimiterExecutor} that is shared by the key
    */
-  protected long doExecute(double permits, Object taskKey, Runnable task) {
-    RateLimiterExecutor rle;
-    Object lock = sLock.getLock(taskKey);
-    synchronized (lock) {
-      rle = currentLimiters.get(taskKey);
-      if (rle == null) {
+  @SuppressWarnings("unchecked")
+  protected <T> T limiterForKey(Object taskKey, Function<RateLimiterExecutor, ? extends T> c) {
+    ArgumentVerifier.assertNotNull(taskKey, "taskKey");
+    
+    Object[] capture = new Object[1];
+    currentLimiters.compute(taskKey, (k, v) -> {
+      if (v == null) {
         String keyedPoolName = subPoolName + (addKeyToThreadName ? taskKey.toString() : "");
         SubmitterScheduler threadNamedScheduler;
         if (StringUtils.isNullOrEmpty(keyedPoolName)) {
@@ -450,17 +422,15 @@ public class KeyedRateLimiterExecutor {
         } else {
           threadNamedScheduler = new ThreadRenamingSubmitterScheduler(scheduler, keyedPoolName, false);
         }
-        rle = new RateLimiterExecutor(threadNamedScheduler, permitsPerSecond, 
-                                      maxScheduleDelayMillis, rejectedExecutionHandler);
-
-        currentLimiters.put(taskKey, rle);
+        v = new RateLimiterExecutor(threadNamedScheduler, permitsPerSecond, 
+                                    maxScheduleDelayMillis, rejectedExecutionHandler);
         // schedule task to check for removal later, should only be one task per limiter
-        limiterCheckerScheduler.schedule(new LimiterChecker(taskKey, rle), 1000);
+        limiterCheckerScheduler.schedule(new LimiterChecker(taskKey, v), LIMITER_IDLE_TIMEOUT);
       }
-      
-      // must execute while in lock to prevent early removal
-      return rle.execute(permits, task);
-    }
+      capture[0] = c.apply(v);
+      return v;
+    });
+    return (T)capture[0];
   }
 
   /**
@@ -485,6 +455,7 @@ public class KeyedRateLimiterExecutor {
    * @return Executor which will only execute with reference to the provided key
    */
   public SubmitterExecutor getSubmitterExecutorForKey(double permits, Object taskKey) {
+    ArgumentVerifier.assertNotNegative(permits, "permits");
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     
     return new KeyedSubmitterExecutor(permits, taskKey);
@@ -506,7 +477,7 @@ public class KeyedRateLimiterExecutor {
     
     @Override
     protected void doExecute(Runnable task) {
-      KeyedRateLimiterExecutor.this.doExecute(permits, taskKey, task);
+      limiterForKey(taskKey, (l) -> l.execute(permits, task));
     }
   }
   
@@ -528,17 +499,14 @@ public class KeyedRateLimiterExecutor {
 
     @Override
     public void run() {
-      int minimumDelay;
-      synchronized (sLock.getLock(taskKey)) {
-        minimumDelay = limiter.getMinimumDelay();
-        if (minimumDelay == 0) {
-          currentLimiters.remove(taskKey);
-          return;
+      currentLimiters.computeIfPresent(taskKey, (k, v) -> {
+        if (Clock.lastKnownForwardProgressingMillis() - v.getLastScheduleTime() < LIMITER_IDLE_TIMEOUT) {
+          limiterCheckerScheduler.schedule(this, LIMITER_IDLE_TIMEOUT / 2);
+          return v;
+        } else {
+          return null;  // remove
         }
-      }
-      
-      // did not return above, so reschedule our check
-      limiterCheckerScheduler.schedule(this, minimumDelay + 100); // add a little to encourage object reuse
+      });
     }
   }
 }

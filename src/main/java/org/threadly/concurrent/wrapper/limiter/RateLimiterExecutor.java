@@ -5,6 +5,7 @@ import java.util.concurrent.Callable;
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ImmediateResultListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -148,6 +149,18 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   }
   
   /**
+   * Call to get the time the last task was scheduled at.  This time is relative to 
+   * {@link Clock#lastKnownForwardProgressingMillis()}.  It may be in the future or present.
+   * 
+   * @return Time that last task was scheduled at
+   */
+  protected long getLastScheduleTime() {
+    synchronized (permitLock) {
+      return (long)lastScheduleTime;
+    }
+  }
+  
+  /**
    * In order to help assist with avoiding to schedule too much on the scheduler at any given 
    * time, this call returns a future that will block until the delay for the next task falls 
    * below the maximum delay provided into this call.  If you want to ensure that the next task 
@@ -222,11 +235,31 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
-    
-    doExecute(permits, lft);
-    
-    return lft;
+    if (task == DoNothingRunnable.instance()) {
+      long taskDelay = getTaskDelay(permits);
+      if (taskDelay < 0) {
+        ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
+
+        rejectedExecutionHandler.handleRejectedTask(lft);
+        
+        return lft;
+      } else if (taskDelay == 0) {
+        // don't even need to burden the scheduler
+        return FutureUtils.immediateResultFuture(null);
+      } else {
+        ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
+
+        scheduler.schedule(lft, taskDelay);
+        
+        return lft;
+      }
+    } else {
+      ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
+      
+      doExecute(permits, lft);
+      
+      return lft;
+    }
   }
 
   /**
@@ -255,6 +288,32 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     doExecute(1, task);
   }
   
+  private long getTaskDelay(double permits) {
+    double effectiveDelay = (permits / permitsPerSecond) * 1000;
+    synchronized (permitLock) {
+      if (permits == 0 && lastScheduleTime < Clock.lastKnownForwardProgressingMillis()) {
+        // shortcut
+        return 0;
+      } else {
+        double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
+        if (scheduleDelay > maxScheduleDelayMillis) {
+          // let rejection handler invoke outside of lock
+          return -1;
+        } else if (scheduleDelay < 1) {
+          if (scheduleDelay < 0) {
+            lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
+          } else {
+            lastScheduleTime += effectiveDelay;
+          }
+          return 0;
+        } else {
+          lastScheduleTime += effectiveDelay;
+          return (long)scheduleDelay;
+        }
+      }
+    }
+  }
+  
   /**
    * Performs the execution by scheduling the task out as necessary.  The provided permits will 
    * impact the next execution's schedule time to ensure the given rate.
@@ -264,36 +323,13 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
    */
   protected long doExecute(double permits, Runnable task) {
-    double effectiveDelay = (permits / permitsPerSecond) * 1000;
-    synchronized (permitLock) {
-      if (permits == 0 && lastScheduleTime < Clock.lastKnownForwardProgressingMillis()) {
-        // shortcut
-        scheduler.execute(task);
-        return 0;
-      } else {
-        double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
-        if (scheduleDelay > maxScheduleDelayMillis) {
-          // let rejection handler invoke outside of lock
-        } else if (scheduleDelay < 1) {
-          if (scheduleDelay < 0) {
-            lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
-          } else {
-            lastScheduleTime += effectiveDelay;
-          }
-          scheduler.execute(task);
-          return 0;
-        } else {
-          lastScheduleTime += effectiveDelay;
-          long lScheduleDelay = (long)scheduleDelay;
-          scheduler.schedule(task, lScheduleDelay);
-          return lScheduleDelay;
-        }
-      }
+    long taskDelay = getTaskDelay(permits);
+    if (taskDelay < 0) {
+      rejectedExecutionHandler.handleRejectedTask(task);
+    } else {
+      scheduler.schedule(task, taskDelay);
     }
     
-    // if not returned, then task is rejected
-    rejectedExecutionHandler.handleRejectedTask(task);
-    return -1;
+    return taskDelay;
   }
-  
 }
