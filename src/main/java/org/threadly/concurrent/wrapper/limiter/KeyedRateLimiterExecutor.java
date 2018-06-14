@@ -2,6 +2,7 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -301,7 +302,7 @@ public class KeyedRateLimiterExecutor {
     ArgumentVerifier.assertNotNegative(permits, "permits");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    return limiterForKey(taskKey).execute(permits, task);
+    return limiterForKey(taskKey, (l) -> l.execute(permits, task));
   }
   
   /**
@@ -364,7 +365,7 @@ public class KeyedRateLimiterExecutor {
    */
   public <T> ListenableFuture<T> submit(double permits, Object taskKey, Runnable task, T result) {
     // we go directly to the limiter here to get DoNothingRunnable optimizations (can't wrap task)
-    return limiterForKey(taskKey).submit(permits, task, result);
+    return limiterForKey(taskKey, (l) -> l.submit(permits, task, result));
   }
   
   /**
@@ -395,36 +396,41 @@ public class KeyedRateLimiterExecutor {
    * @return Future to represent when the execution has occurred and provide the result from the callable
    */
   public <T> ListenableFuture<T> submit(double permits, Object taskKey, Callable<T> task) {
-    return limiterForKey(taskKey).submit(permits, task);
+    return limiterForKey(taskKey, (l) -> l.submit(permits, task));
   }
   
   /**
-   * Get a limiter for a given task key.  The returned limiter may be considered "cleaned up" at 
-   * any time.  If that occurs it can continue to function, but other task keys may use a different 
-   * limiter (thus the limit per-key would not be respected).  As long as operations use the 
-   * limiter quickly (sub second), this should not be possible.
+   * This invokes a function with a provided {@link RateLimiterExecutor}.  This invocation is 
+   * atomic using {@link ConcurrentHashMap#compute(Object, java.util.function.BiFunction)} so that 
+   * it will not interfere with others.
    * 
+   * @param <T> Type of result from provided function
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
    * @return A {@link RateLimiterExecutor} that is shared by the key
    */
-  protected RateLimiterExecutor limiterForKey(Object taskKey) {
+  @SuppressWarnings("unchecked")
+  protected <T> T limiterForKey(Object taskKey, Function<RateLimiterExecutor, ? extends T> c) {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     
-    return currentLimiters.computeIfAbsent(taskKey, (k) -> {
-      String keyedPoolName = subPoolName + (addKeyToThreadName ? taskKey.toString() : "");
-      SubmitterScheduler threadNamedScheduler;
-      if (StringUtils.isNullOrEmpty(keyedPoolName)) {
-        threadNamedScheduler = scheduler;
-      } else {
-        threadNamedScheduler = new ThreadRenamingSubmitterScheduler(scheduler, keyedPoolName, false);
+    Object[] capture = new Object[1];
+    currentLimiters.compute(taskKey, (k, v) -> {
+      if (v == null) {
+        String keyedPoolName = subPoolName + (addKeyToThreadName ? taskKey.toString() : "");
+        SubmitterScheduler threadNamedScheduler;
+        if (StringUtils.isNullOrEmpty(keyedPoolName)) {
+          threadNamedScheduler = scheduler;
+        } else {
+          threadNamedScheduler = new ThreadRenamingSubmitterScheduler(scheduler, keyedPoolName, false);
+        }
+        v = new RateLimiterExecutor(threadNamedScheduler, permitsPerSecond, 
+                                    maxScheduleDelayMillis, rejectedExecutionHandler);
+        // schedule task to check for removal later, should only be one task per limiter
+        limiterCheckerScheduler.schedule(new LimiterChecker(taskKey, v), LIMITER_IDLE_TIMEOUT);
       }
-      RateLimiterExecutor rle = 
-          new RateLimiterExecutor(threadNamedScheduler, permitsPerSecond, 
-                                  maxScheduleDelayMillis, rejectedExecutionHandler);
-      // schedule task to check for removal later, should only be one task per limiter
-      limiterCheckerScheduler.schedule(new LimiterChecker(taskKey, rle), LIMITER_IDLE_TIMEOUT);
-      return rle;
+      capture[0] = c.apply(v);
+      return v;
     });
+    return (T)capture[0];
   }
 
   /**
@@ -471,7 +477,7 @@ public class KeyedRateLimiterExecutor {
     
     @Override
     protected void doExecute(Runnable task) {
-      limiterForKey(taskKey).execute(permits, task);
+      limiterForKey(taskKey, (l) -> l.execute(permits, task));
     }
   }
   
@@ -493,11 +499,14 @@ public class KeyedRateLimiterExecutor {
 
     @Override
     public void run() {
-      if (Clock.lastKnownForwardProgressingMillis() - limiter.getLastScheduleTime() > LIMITER_IDLE_TIMEOUT) {
-        currentLimiters.remove(taskKey);
-      } else {
-        limiterCheckerScheduler.schedule(this, LIMITER_IDLE_TIMEOUT / 2);
-      }
+      currentLimiters.computeIfPresent(taskKey, (k, v) -> {
+        if (Clock.lastKnownForwardProgressingMillis() - v.getLastScheduleTime() < LIMITER_IDLE_TIMEOUT) {
+          limiterCheckerScheduler.schedule(this, LIMITER_IDLE_TIMEOUT / 2);
+          return v;
+        } else {
+          return null;  // remove
+        }
+      });
     }
   }
 }
