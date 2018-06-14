@@ -24,7 +24,7 @@ public class KeyedSubmitterSchedulerLimiterTest extends AbstractKeyedLimiterTest
 
   @Override
   protected AbstractKeyedLimiter<?> makeLimiter(int limit) {
-    return new KeyedSubmitterSchedulerLimiter(scheduler, limit, null, true, true, 1);
+    return new KeyedSubmitterSchedulerLimiter(scheduler, limit, null, true, true);
   }
   
   @Test
