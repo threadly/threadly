@@ -237,19 +237,17 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     
     if (task == DoNothingRunnable.instance()) {
       long taskDelay = getTaskDelay(permits);
-      if (taskDelay < 0) {
-        ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
-
-        rejectedExecutionHandler.handleRejectedTask(lft);
-        
-        return lft;
-      } else if (taskDelay == 0) {
+      if (taskDelay == 0) {
         // don't even need to burden the scheduler
-        return FutureUtils.immediateResultFuture(null);
+        return FutureUtils.immediateResultFuture(result);
       } else {
         ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
-
-        scheduler.schedule(lft, taskDelay);
+        
+        if (taskDelay < 0) {
+          rejectedExecutionHandler.handleRejectedTask(lft);
+        } else {
+          scheduler.schedule(lft, taskDelay);
+        }
         
         return lft;
       }
