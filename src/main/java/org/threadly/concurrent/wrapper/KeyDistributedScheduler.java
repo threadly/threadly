@@ -9,7 +9,6 @@ import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -36,7 +35,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    *                  possible threads as keys that will be used in parallel.
    */
   public KeyDistributedScheduler(SubmitterScheduler scheduler) {
-    this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, false);
+    this(scheduler, Integer.MAX_VALUE, false);
   }
   
   /**
@@ -53,7 +52,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
   public KeyDistributedScheduler(SubmitterScheduler scheduler, boolean accurateQueueSize) {
-    this(DEFAULT_LOCK_PARALISM, scheduler, Integer.MAX_VALUE, accurateQueueSize);
+    this(scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
   
   /**
@@ -74,7 +73,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
   public KeyDistributedScheduler(SubmitterScheduler scheduler, int maxTasksPerCycle) {
-    this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, false);
+    this(scheduler, maxTasksPerCycle, false);
   }
   
   /**
@@ -99,7 +98,9 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    */
   public KeyDistributedScheduler(SubmitterScheduler scheduler, int maxTasksPerCycle, 
                                  boolean accurateQueueSize) {
-    this(DEFAULT_LOCK_PARALISM, scheduler, maxTasksPerCycle, accurateQueueSize);
+    super(scheduler, maxTasksPerCycle, accurateQueueSize);
+    
+    this.scheduler = scheduler;
   }
   
   /**
@@ -107,18 +108,17 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    */
-  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler) {
-    this(expectedParallism, scheduler, Integer.MAX_VALUE, false);
+  @Deprecated
+  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
+                                 SubmitterScheduler scheduler) {
+    this(scheduler, Integer.MAX_VALUE, false);
   }
   
   /**
@@ -127,20 +127,18 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
    * given thread keys.  There is a performance hit associated with this, so this should only be 
    * enabled if {@link #getTaskQueueSize(Object)} calls will be used.
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler, boolean)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler, 
-                                 boolean accurateQueueSize) {
-    this(expectedParallism, scheduler, Integer.MAX_VALUE, accurateQueueSize);
+  @Deprecated
+  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
+                                 SubmitterScheduler scheduler, boolean accurateQueueSize) {
+    this(scheduler, Integer.MAX_VALUE, accurateQueueSize);
   }
   
   /**
@@ -154,20 +152,18 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler, int)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler, 
-                                 int maxTasksPerCycle) {
-    this(expectedParallism, scheduler, maxTasksPerCycle, false);
+  @Deprecated
+  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
+                                 SubmitterScheduler scheduler, int maxTasksPerCycle) {
+    this(scheduler, maxTasksPerCycle, false);
   }
   
   /**
@@ -182,41 +178,20 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler, int, boolean)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
    *                  possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedScheduler(int expectedParallism, SubmitterScheduler scheduler, 
+  @Deprecated
+  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
+                                 SubmitterScheduler scheduler, 
                                  int maxTasksPerCycle, boolean accurateQueueSize) {
-    this(scheduler, new StripedLock(expectedParallism), maxTasksPerCycle, accurateQueueSize);
-  }
-  
-  /**
-   * Constructor to be used in unit tests.
-   * <p>
-   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
-   * to another key.  This can make it more fair, and make it so no single key can starve other 
-   * keys from running.  The lower this is set however, the less efficient it becomes in part 
-   * because it has to give up the thread and get it again, but also because it must copy the 
-   * subset of the task queue which it can run.
-   * 
-   * @param scheduler scheduler to be used for task worker execution 
-   * @param sLock lock to be used for controlling access to workers
-   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   */
-  protected KeyDistributedScheduler(SubmitterScheduler scheduler, StripedLock sLock, 
-                                    int maxTasksPerCycle, boolean accurateQueueSize) {
-    super(scheduler, sLock, maxTasksPerCycle, accurateQueueSize);
-    
-    this.scheduler = scheduler;
+    this(scheduler, maxTasksPerCycle, accurateQueueSize);
   }
   
   /**

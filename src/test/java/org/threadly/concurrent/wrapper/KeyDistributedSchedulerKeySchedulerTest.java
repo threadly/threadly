@@ -23,7 +23,7 @@ public class KeyDistributedSchedulerKeySchedulerTest extends SubmitterSchedulerI
     public SubmitterScheduler makeSubmitterScheduler(int poolSize, boolean prestartIfAvailable) {
       SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
       
-      KeyDistributedScheduler distributor = new KeyDistributedScheduler(poolSize, scheduler);
+      KeyDistributedScheduler distributor = new KeyDistributedScheduler(scheduler);
       
       return distributor.getSchedulerForKey(this);
     }
