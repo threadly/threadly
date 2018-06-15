@@ -7,6 +7,16 @@ package org.threadly.concurrent;
  */
 public class DoNothingRunnable implements Runnable {
   private static final DoNothingRunnable DEFAULT_INSTANCE = new DoNothingRunnable();
+  
+  /**
+   * Constructs a new {@link DoNothingRunnable}.
+   * 
+   * @deprecated Please use {@link DoNothingRunnable#instance()} instead
+   */
+  @Deprecated
+  public DoNothingRunnable() {
+    // nothing here by default
+  }
 
   /**
    * Call to get a default instance of the {@link DoNothingRunnable}.  Because there is no saved 

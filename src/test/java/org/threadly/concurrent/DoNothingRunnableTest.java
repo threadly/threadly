@@ -8,13 +8,13 @@ import org.threadly.ThreadlyTester;
 @SuppressWarnings("javadoc")
 public class DoNothingRunnableTest extends ThreadlyTester {
   @Test
-  public void doNothingRun() {
-    new DoNothingRunnable().run();
-    // no exception
+  public void staticInstanceTest() {
+    assertNotNull(DoNothingRunnable.instance());
   }
   
   @Test
-  public void staticInstanceTest() {
-    assertNotNull(DoNothingRunnable.instance());
+  public void doNothingRun() {
+    DoNothingRunnable.instance().run();
+    // no exception
   }
 }
