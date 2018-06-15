@@ -201,7 +201,7 @@ public class KeyedRateLimiterExecutor {
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
    * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @deprecated Please use {@link #KeyedRateLimiterExecutor(SubmitterScheduler, double, long, RejectedExecutionHandler, String, boolean)}
+   * @deprecated Please use constructor without the {@code expectedParallism} field
    * 
    * @since 4.8.0
    * @param scheduler Scheduler to defer executions to

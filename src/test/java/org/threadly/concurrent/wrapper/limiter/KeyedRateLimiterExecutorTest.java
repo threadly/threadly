@@ -14,6 +14,7 @@ import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
+import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -29,7 +30,7 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
   @Before
   public void setup() {
     scheduler = new TestableScheduler();
-    limiter = new KeyedRateLimiterExecutor(scheduler, 1);
+    limiter = new KeyedRateLimiterExecutor(scheduler, 1, 600_000);
   }
 
   @Override
@@ -230,9 +231,27 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
 
     @Override
     public SubmitterExecutor makeSubmitterExecutor(int poolSize, boolean prestartIfAvailable) {
-      return new KeyedRateLimiterExecutor(schedulerFactory.makeSchedulerService(poolSize, 
-                                                                           prestartIfAvailable), 
-                                          rateLimit).getSubmitterExecutorForKey(new Object());
+      SubmitterScheduler scheduler = schedulerFactory.makeSubmitterScheduler(poolSize, prestartIfAvailable);
+      
+      KeyedRateLimiterExecutor executor = new KeyedRateLimiterExecutor(scheduler, rateLimit, 600_000, 
+                                                                       "test", true);
+      
+      return new SubmitterExecutor() {
+        @Override
+        public void execute(Runnable task) {
+          executor.execute("foo", task);
+        }
+
+        @Override
+        public <T> ListenableFuture<T> submit(Runnable task, T result) {
+          return executor.submit("foo", task, result);
+        }
+
+        @Override
+        public <T> ListenableFuture<T> submit(Callable<T> task) {
+          return executor.submit("foo", task);
+        }
+      };
     }
 
     @Override
