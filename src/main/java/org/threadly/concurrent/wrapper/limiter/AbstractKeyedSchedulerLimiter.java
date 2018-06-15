@@ -27,10 +27,8 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
   
   protected AbstractKeyedSchedulerLimiter(SubmitterScheduler scheduler, int maxConcurrency, 
                                           String subPoolName, boolean addKeyToThreadName, 
-                                          boolean limitFutureListenersExecution, 
-                                          int expectedTaskAdditionParallism) {
-    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution, 
-          expectedTaskAdditionParallism);
+                                          boolean limitFutureListenersExecution) {
+    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution);
     
     this.scheduler = scheduler;
   }

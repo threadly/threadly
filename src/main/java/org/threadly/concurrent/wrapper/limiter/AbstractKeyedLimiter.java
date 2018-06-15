@@ -14,7 +14,6 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.StringUtils;
 
@@ -28,47 +27,27 @@ import org.threadly.util.StringUtils;
  * @param <T> Type of limiter stored internally
  */
 abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
-  protected static final short DEFAULT_LOCK_PARALISM = 32;
-  protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = 0.75f;  // 0.75 is ConcurrentHashMap default
-  protected static final short CONCURRENT_HASH_MAP_MIN_SIZE = 8;
-  protected static final short CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 64;
-  protected static final short CONCURRENT_HASH_MAP_MIN_CONCURRENCY_LEVEL = 4;
-  protected static final short CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
+  protected static final short CONCURRENT_HASH_MAP_INITIAL_SIZE = 16;
   
   protected final Executor executor;
   protected final String subPoolName;
   protected final boolean addKeyToThreadName;
   protected final boolean limitFutureListenersExecution;
-  protected final StripedLock sLock;
   protected final ConcurrentHashMap<Object, LimiterContainer> currentLimiters;
   private volatile int maxConcurrency;
   
   protected AbstractKeyedLimiter(Executor executor, int maxConcurrency, 
                                  String subPoolName, boolean addKeyToThreadName, 
-                                 boolean limitFutureListenersExecution, 
-                                 int expectedTaskAdditionParallism) {
-    ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
+                                 boolean limitFutureListenersExecution) {
     ArgumentVerifier.assertNotNull(executor, "executor");
+    ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
 
     this.executor = executor;
     // make sure this is non-null so that it 'null' wont appear
     this.subPoolName = StringUtils.nullToEmpty(subPoolName);
     this.addKeyToThreadName = addKeyToThreadName;
     this.limitFutureListenersExecution = limitFutureListenersExecution;
-    this.sLock = new StripedLock(expectedTaskAdditionParallism);
-    int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
-                                  CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
-    if (mapInitialSize < CONCURRENT_HASH_MAP_MIN_SIZE) {
-      mapInitialSize = CONCURRENT_HASH_MAP_MIN_SIZE;
-    }
-    int mapConcurrencyLevel = Math.max(CONCURRENT_HASH_MAP_MIN_CONCURRENCY_LEVEL, 
-                                       Math.min(sLock.getExpectedConcurrencyLevel() / 2, 
-                                                CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL));
-    if (mapConcurrencyLevel < 1) {
-      mapConcurrencyLevel = 1;
-    }
-    this.currentLimiters = new ConcurrentHashMap<>(mapInitialSize,  
-                                                   CONCURRENT_HASH_MAP_LOAD_FACTOR, mapConcurrencyLevel);
+    this.currentLimiters = new ConcurrentHashMap<>(CONCURRENT_HASH_MAP_INITIAL_SIZE);
     this.maxConcurrency = maxConcurrency;
   }
   
@@ -217,20 +196,15 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
    * @return Container with limiter and associated state data
    */
   protected LimiterContainer getLimiterContainer(Object taskKey) {
-    LimiterContainer lc;
-    Object lock = sLock.getLock(taskKey);
-    synchronized (lock) {
-      lc = currentLimiters.get(taskKey);
-      if (lc == null) {
-        lc = new LimiterContainer(taskKey, makeLimiter(subPoolName + 
-                                                         (addKeyToThreadName ? taskKey.toString() : "")));
-        currentLimiters.put(taskKey, lc);
+    return currentLimiters.compute(taskKey, (k, v) -> {
+      if (v == null) {
+        v = new LimiterContainer(taskKey, makeLimiter(subPoolName + 
+                                                      (addKeyToThreadName ? taskKey.toString() : "")));
       }
-      // must increment while in lock to prevent early removal
-      lc.handlingTasks.incrementAndGet();
-    }
-    
-    return lc;
+      // must increment while in compute to prevent early removal
+      v.handlingTasks.incrementAndGet();
+      return v;
+    });
   }
   
   /**
@@ -320,12 +294,14 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
           wrappedTask.run();
         } finally {
           if (handlingTasks.decrementAndGet() == 0) {
-            synchronized (sLock.getLock(taskKey)) {
-              // must verify removal in lock so that map gets are atomic with removals
-              if (handlingTasks.get() == 0) {
-                currentLimiters.remove(taskKey);
+            currentLimiters.computeIfPresent(taskKey, (k, v) -> {
+              // must verify removal in compute so that map gets are atomic with removals
+              if (v.handlingTasks.get() == 0) {
+                return null;
+              } else {
+                return v;
               }
-            }
+            });
           }
         }
       }

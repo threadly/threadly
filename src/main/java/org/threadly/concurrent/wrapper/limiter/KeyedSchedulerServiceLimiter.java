@@ -92,8 +92,9 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
   public KeyedSchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency, 
                                       String subPoolName, boolean addKeyToThreadName, 
                                       boolean limitFutureListenersExecution) {
-    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution, 
-         DEFAULT_LOCK_PARALISM);
+    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution);
+    
+    this.scheduler = scheduler;
   }
 
   /**
@@ -105,13 +106,13 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
    * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
    * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @deprecated Please use {@link #KeyedSchedulerServiceLimiter(SchedulerService, int, String, boolean, boolean, int)}
+   * @deprecated Please use {@link #KeyedSchedulerServiceLimiter(SchedulerService, int, String, boolean, boolean)}
    * 
    * @param scheduler Scheduler to execute and schedule tasks on
    * @param maxConcurrency Maximum concurrency allowed per task key
    * @param subPoolName Name prefix for sub pools, {@code null} to not change thread names
    * @param addKeyToThreadName If {@code true} the key's .toString() will be added in the thread name
-   * @param expectedParallism Expected concurrent task addition access, used for performance tuning
+   * @param expectedParallism IGNORED AND DEPRECATED
    */
   @Deprecated
   public KeyedSchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency, 
@@ -125,11 +126,6 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
    * Construct a new {@link KeyedSchedulerServiceLimiter} providing the backing scheduler, the 
    * maximum concurrency per unique key, and how keyed limiter threads should be named.
    * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
-   * <p>
    * This constructor allows you to specify if listeners / 
    * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
    * {@link ListenableFuture#map(java.util.function.Function)} or 
@@ -138,21 +134,22 @@ public class KeyedSchedulerServiceLimiter extends AbstractKeyedSchedulerLimiter<
    * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
    * (without an executor) complete.
    * 
+   * @deprecated Please use {@link #KeyedSchedulerServiceLimiter(SchedulerService, int, String, boolean, boolean)}
+   * 
    * @param scheduler Scheduler to execute and schedule tasks on
    * @param maxConcurrency Maximum concurrency allowed per task key
    * @param subPoolName Name prefix for sub pools, {@code null} to not change thread names
    * @param addKeyToThreadName If {@code true} the key's .toString() will be added in the thread name
    * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
-   * @param expectedParallism Expected concurrent task addition access, used for performance tuning
+   * @param expectedParallism IGNORED AND DEPRECATED
    */
+  @Deprecated
   public KeyedSchedulerServiceLimiter(SchedulerService scheduler, int maxConcurrency, 
                                       String subPoolName, boolean addKeyToThreadName, 
                                       boolean limitFutureListenersExecution, 
-                                      int expectedParallism) {
-    super(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, 
-          limitFutureListenersExecution, expectedParallism);
-    
-    this.scheduler = scheduler;
+                                      @SuppressWarnings("unused") int expectedParallism) {
+    this(scheduler, maxConcurrency, subPoolName, addKeyToThreadName, 
+         limitFutureListenersExecution);
   }
   
   @Override

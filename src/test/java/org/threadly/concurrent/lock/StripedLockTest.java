@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class StripedLockTest extends ThreadlyTester {
   private static final int LOCK_QTY = 10;
   

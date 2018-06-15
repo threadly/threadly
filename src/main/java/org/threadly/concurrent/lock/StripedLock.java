@@ -13,8 +13,11 @@ import org.threadly.util.ArgumentVerifier;
  * and {@code unlock()} functionality.  This choice was primarily because of the way the internals 
  * of threadly work.
  * 
+ * @deprecated To be removed without replacement, if this is useful please file an issue on github
+ * 
  * @since 1.0.0
  */
+@Deprecated
 public class StripedLock {
   private final Object[] locks;
   

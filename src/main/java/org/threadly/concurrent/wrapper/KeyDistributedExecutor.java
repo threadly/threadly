@@ -9,13 +9,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiFunction;
 
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
-import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
@@ -37,17 +37,12 @@ import org.threadly.util.ExceptionUtils;
  * @since 4.6.0 (since 1.0.0 as org.threadly.concurrent.TaskExecutorDistributor)
  */
 public class KeyDistributedExecutor {
-  protected static final short DEFAULT_LOCK_PARALISM = 32;
-  protected static final float CONCURRENT_HASH_MAP_LOAD_FACTOR = 0.75f;  // 0.75 is ConcurrentHashMap default
-  protected static final short CONCURRENT_HASH_MAP_MIN_SIZE = 8;
-  protected static final short CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE = 64;
-  protected static final short CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL = 32;
+  protected static final short CONCURRENT_HASH_MAP_INITIAL_SIZE = 16;
   protected static final short ARRAY_DEQUE_INITIAL_SIZE = 8;  // minimum is 8, should be 2^X
   
   protected final Executor executor;
-  protected final StripedLock sLock;
   protected final int maxTasksPerCycle;
-  protected final WorkerFactory wFactory;
+  protected final BiFunction<Object, Runnable, TaskQueueWorker> wFactory;
   protected final ConcurrentHashMap<Object, TaskQueueWorker> taskWorkers;
   
   /**
@@ -61,7 +56,7 @@ public class KeyDistributedExecutor {
    *                 possible threads as keys that will be used in parallel. 
    */
   public KeyDistributedExecutor(Executor executor) {
-    this(DEFAULT_LOCK_PARALISM, executor, Integer.MAX_VALUE, false);
+    this(executor, Integer.MAX_VALUE, false);
   }
   
   /**
@@ -78,7 +73,7 @@ public class KeyDistributedExecutor {
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
   public KeyDistributedExecutor(Executor executor, boolean accurateQueueSize) {
-    this(DEFAULT_LOCK_PARALISM, executor, Integer.MAX_VALUE, accurateQueueSize);
+    this(executor, Integer.MAX_VALUE, accurateQueueSize);
   }
   
   /**
@@ -103,7 +98,7 @@ public class KeyDistributedExecutor {
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
   public KeyDistributedExecutor(Executor executor, int maxTasksPerCycle) {
-    this(DEFAULT_LOCK_PARALISM, executor, maxTasksPerCycle, false);
+    this(executor, maxTasksPerCycle, false);
   }
   
   /**
@@ -128,7 +123,17 @@ public class KeyDistributedExecutor {
    */
   public KeyDistributedExecutor(Executor executor, int maxTasksPerCycle, 
                                 boolean accurateQueueSize) {
-    this(DEFAULT_LOCK_PARALISM, executor, maxTasksPerCycle, accurateQueueSize);
+    ArgumentVerifier.assertNotNull(executor, "executor");
+    ArgumentVerifier.assertGreaterThanZero(maxTasksPerCycle, "maxTasksPerCycle");
+    
+    this.executor = executor;
+    this.maxTasksPerCycle = maxTasksPerCycle;
+    if (accurateQueueSize) {
+      wFactory = StatisticWorker::new;
+    } else {
+      wFactory = TaskQueueWorker::new;
+    }
+    this.taskWorkers = new ConcurrentHashMap<>(CONCURRENT_HASH_MAP_INITIAL_SIZE);
   }
   
   /**
@@ -136,16 +141,14 @@ public class KeyDistributedExecutor {
    * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedExecutor(Executor)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
    *                 possible threads as keys that will be used in parallel.
    */
+  @Deprecated
   public KeyDistributedExecutor(int expectedParallism, Executor executor) {
     this(expectedParallism, executor, Integer.MAX_VALUE, false);
   }
@@ -156,20 +159,18 @@ public class KeyDistributedExecutor {
    * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
    * given thread keys.  There is a performance hit associated with this, so this should only be 
    * enabled if {@link #getTaskQueueSize(Object)} calls will be used.
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedExecutor(Executor, boolean)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
    *                 possible threads as keys that will be used in parallel.
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedExecutor(int expectedParallism, Executor executor, 
+  @Deprecated
+  public KeyDistributedExecutor(@SuppressWarnings("unused") int expectedParallism, Executor executor, 
                                 boolean accurateQueueSize) {
-    this(expectedParallism, executor, Integer.MAX_VALUE, accurateQueueSize);
+    this(executor, Integer.MAX_VALUE, accurateQueueSize);
   }
   
   /**
@@ -183,19 +184,18 @@ public class KeyDistributedExecutor {
    * <p>
    * This constructor does not attempt to have an accurate queue size for the 
    * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedExecutor(Executor, int)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
    *                 possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    */
-  public KeyDistributedExecutor(int expectedParallism, Executor executor, int maxTasksPerCycle) {
-    this(expectedParallism, executor, maxTasksPerCycle, false);
+  @Deprecated
+  public KeyDistributedExecutor(@SuppressWarnings("unused") int expectedParallism, 
+                                Executor executor, int maxTasksPerCycle) {
+    this(executor, maxTasksPerCycle, false);
   }
   
   /**
@@ -210,73 +210,19 @@ public class KeyDistributedExecutor {
    * This also allows you to specify if you want accurate queue sizes to be tracked for given 
    * thread keys.  There is a performance hit associated with this, so this should only be enabled 
    * if {@link #getTaskQueueSize(Object)} calls will be used.
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
    * 
-   * @param expectedParallism level of expected quantity of threads adding tasks in parallel
+   * @deprecated Please use {@link #KeyDistributedExecutor(Executor, int, boolean)}
+   * 
+   * @param expectedParallism IGNORED AND DEPRECATED
    * @param executor A multi-threaded executor to distribute tasks to.  Ideally has as many 
    *                 possible threads as keys that will be used in parallel.
    * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
    * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
    */
-  public KeyDistributedExecutor(int expectedParallism, Executor executor, 
+  @Deprecated
+  public KeyDistributedExecutor(@SuppressWarnings("unused") int expectedParallism, Executor executor, 
                                 int maxTasksPerCycle, boolean accurateQueueSize) {
-    this(executor, new StripedLock(expectedParallism), maxTasksPerCycle, accurateQueueSize);
-  }
-  
-  /**
-   * Constructor to be used in unit tests.
-   * <p>
-   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
-   * to another key.  This can make it more fair, and make it so no single key can starve other 
-   * keys from running.  The lower this is set however, the less efficient it becomes in part 
-   * because it has to give up the thread and get it again, but also because it must copy the 
-   * subset of the task queue which it can run.
-   * 
-   * @param executor executor to be used for task worker execution 
-   * @param sLock lock to be used for controlling access to workers
-   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
-   */
-  protected KeyDistributedExecutor(Executor executor, StripedLock sLock, 
-                                   int maxTasksPerCycle, boolean accurateQueueSize) {
-    ArgumentVerifier.assertNotNull(executor, "executor");
-    ArgumentVerifier.assertNotNull(sLock, "sLock");
-    ArgumentVerifier.assertGreaterThanZero(maxTasksPerCycle, "maxTasksPerCycle");
-    
-    this.executor = executor;
-    this.sLock = sLock;
-    this.maxTasksPerCycle = maxTasksPerCycle;
-    int mapInitialSize = Math.min(sLock.getExpectedConcurrencyLevel(), 
-                                  CONCURRENT_HASH_MAP_MAX_INITIAL_SIZE);
-    if (mapInitialSize < CONCURRENT_HASH_MAP_MIN_SIZE) {
-      mapInitialSize = CONCURRENT_HASH_MAP_MIN_SIZE;
-    }
-    int mapConcurrencyLevel = Math.min(sLock.getExpectedConcurrencyLevel() / 2, 
-                                       CONCURRENT_HASH_MAP_MAX_CONCURRENCY_LEVEL);
-    if (mapConcurrencyLevel < 1) {
-      mapConcurrencyLevel = 1;
-    }
-    if (accurateQueueSize) {
-      wFactory = new WorkerFactory() {
-        @Override
-        public TaskQueueWorker build(Object mapKey, Object workerLock, Runnable firstTask) {
-          return new StatisticWorker(mapKey, workerLock, firstTask);
-        }
-      };
-    } else {
-      wFactory = new WorkerFactory() {
-        @Override
-        public TaskQueueWorker build(Object mapKey, Object workerLock, Runnable firstTask) {
-          return new TaskQueueWorker(mapKey, workerLock, firstTask);
-        }
-      };
-    }
-    this.taskWorkers = new ConcurrentHashMap<>(mapInitialSize, 
-                                               CONCURRENT_HASH_MAP_LOAD_FACTOR, mapConcurrencyLevel);
+    this(executor, maxTasksPerCycle, accurateQueueSize);
   }
   
   /**
@@ -384,22 +330,22 @@ public class KeyDistributedExecutor {
    * @param Executor to run worker on (if it needs to be started)
    */
   protected void addTask(Object threadKey, Runnable task, Executor executor) {
-    TaskQueueWorker worker;
-    Object workerLock = sLock.getLock(threadKey);
-    synchronized (workerLock) {
-      worker = taskWorkers.get(threadKey);
-      if (worker == null) {
-        worker = wFactory.build(threadKey, workerLock, task);
-        taskWorkers.put(threadKey, worker);
+    boolean[] startCapture = new boolean[1];
+    TaskQueueWorker worker = taskWorkers.compute(threadKey, (k, v) -> {
+      if (v == null) {
+        startCapture[0] = true;
+        v = wFactory.apply(threadKey, task);
       } else {
-        worker.add(task);
-        // return so we wont start worker
-        return;
+        startCapture[0] = false;
+        v.add(task);
       }
-    }
+      return v;
+    });
 
     // must run execute outside of lock
-    executor.execute(worker);
+    if (startCapture[0]) {
+      executor.execute(worker);
+    }
   }
   
   /**
@@ -446,16 +392,6 @@ public class KeyDistributedExecutor {
   }
   
   /**
-   * Simple factory interface so we can build the most efficient {@link TaskQueueWorker} 
-   * implementation for the settings provided at construction.
-   * 
-   * @since 1.2.0
-   */
-  private interface WorkerFactory {
-    public TaskQueueWorker build(Object mapKey, Object workerLock, Runnable firstTask);
-  }
-  
-  /**
    * Worker which will consume through a given queue of tasks.  Each key is represented by one 
    * worker at any given time.
    * 
@@ -463,14 +399,12 @@ public class KeyDistributedExecutor {
    */
   protected class TaskQueueWorker implements Runnable {
     protected final Object mapKey;
-    protected final Object workerLock;
     // we treat the first task special to attempt to avoid constructing the ArrayDeque
     protected volatile Runnable firstTask;
     protected Queue<Runnable> queue;  // locked around workerLock
     
-    protected TaskQueueWorker(Object mapKey, Object workerLock, Runnable firstTask) {
+    protected TaskQueueWorker(Object mapKey, Runnable firstTask) {
       this.mapKey = mapKey;
-      this.workerLock = workerLock;
       this.queue = null;
       this.firstTask = firstTask;
     }
@@ -482,14 +416,17 @@ public class KeyDistributedExecutor {
      */
     public int getQueueSize() {
       // the default implementation is very inaccurate
-      synchronized (workerLock) {
-        return (firstTask == null ? 0 : 1) + (queue == null ? 0 : queue.size());
-      }
+      int[] resultCapture = new int[1];
+      taskWorkers.computeIfPresent(mapKey, (k, v) -> {
+        resultCapture[0] = (v.firstTask == null ? 0 : 1) + (v.queue == null ? 0 : v.queue.size());
+        return v;
+      });
+      return resultCapture[0];
     }
     
     /**
-     * You MUST hold the workerLock before calling into this.  This is designed to be overridden 
-     * if you need to track how tasks are being added.
+     * You MUST be within `compute` of taskWorkers before calling into this.  This is designed to 
+     * be overridden if you need to track how tasks are being added.
      * 
      * @param task Runnable to add to the worker's queue
      */
@@ -529,41 +466,47 @@ public class KeyDistributedExecutor {
       }
       
       while (true) {
-        Queue<Runnable> nextQueue;
-        synchronized (workerLock) {
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Queue<Runnable>[] nextQueue = new Queue[1];
+        final int fConsumedItems = consumedItems;
+        TaskQueueWorker self = taskWorkers.compute(mapKey, (k, v) -> {
           if (queue == null) {  // nothing left to run
-            taskWorkers.remove(mapKey);
-            return;
-          } else if (consumedItems < maxTasksPerCycle) {
+            return null;
+          } else if (fConsumedItems < maxTasksPerCycle) {
             // we can run at least one task...let's figure out how much we can run
-            if (queue.size() + consumedItems <= maxTasksPerCycle) {
+            if (queue.size() + fConsumedItems <= maxTasksPerCycle) {
               // we can run the entire next queue
-              nextQueue = queue;
+              nextQueue[0] = queue;
               queue = null;
             } else {
               // we need to run a subset of the queue, so copy and remove what we can run
-              int nextListSize = maxTasksPerCycle - consumedItems;
-              nextQueue = new ArrayDeque<>(nextListSize);
+              int nextListSize = maxTasksPerCycle - fConsumedItems;
+              nextQueue[0] = new ArrayDeque<>(nextListSize);
               Iterator<Runnable> it = queue.iterator();
               do {
-                nextQueue.add(it.next());
+                nextQueue[0].add(it.next());
                 it.remove();
-              } while (nextQueue.size() < nextListSize);
+              } while (nextQueue[0].size() < nextListSize);
             }
-            
-            consumedItems += nextQueue.size();
           } else {
-            // re-execute this worker to give other works a chance to run
-            executor.execute(this);
-            /* notice that we never removed from taskWorkers, and thus wont be
-             * executed from people adding new tasks 
-             */
-            return;
+            // just don't set the queue, but also don't remove the worker.  This will 
+            // re-execute this worker to give other workers a chance to run
+            nextQueue[0] = null;
           }
-        }
-        
-        for (Runnable r : nextQueue) {
-          runTask(r);
+          return v;
+        });
+
+        if (nextQueue[0] != null) {
+          consumedItems += nextQueue[0].size();
+          for (Runnable r : nextQueue[0]) {
+            runTask(r);
+          }
+        } else {
+          if (self != null) {
+            // we are just re-executing ourselves (reached execution limit)
+            executor.execute(this);
+          }
+          break;
         }
       }
     }
@@ -578,8 +521,8 @@ public class KeyDistributedExecutor {
   protected class StatisticWorker extends TaskQueueWorker {
     private final LongAdder queueSize;
     
-    protected StatisticWorker(Object mapKey, Object workerLock, Runnable firstTask) {
-      super(mapKey, workerLock, firstTask);
+    protected StatisticWorker(Object mapKey, Runnable firstTask) {
+      super(mapKey, firstTask);
       
       queueSize = new LongAdder();
       queueSize.increment();

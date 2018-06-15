@@ -26,7 +26,6 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.UnfairExecutor;
-import org.threadly.concurrent.lock.StripedLock;
 import org.threadly.concurrent.wrapper.limiter.ExecutorLimiter;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
@@ -46,41 +45,42 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   }
 
   protected UnfairExecutor executor;
-  protected Object agentLock;
   protected KeyDistributedExecutor distributor;
   
   @Before
   public void setup() {
     executor = new UnfairExecutor((PARALLEL_LEVEL * 2) + 1);
-    StripedLock sLock = new StripedLock(1);
-    agentLock = sLock.getLock(null);  // there should be only one lock
-    distributor = new KeyDistributedExecutor(executor, sLock, Integer.MAX_VALUE, false);
+    distributor = new KeyDistributedExecutor(executor, Integer.MAX_VALUE, false);
   }
   
   @After
   public void cleanup() {
     executor.shutdownNow();
     executor = null;
-    agentLock = null;
     distributor = null;
   }
   
   protected List<KDRunnable> populate(AddHandler ah) {
     final List<KDRunnable> runs = new ArrayList<>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-    
-    // hold agent lock to prevent execution till ready
-    synchronized (agentLock) {
-      for (int i = 0; i < PARALLEL_LEVEL; i++) {
-        ThreadContainer tc = new ThreadContainer();
-        KDRunnable previous = null;
-        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-          KDRunnable tr = new KDRunnable(tc, previous);
-          runs.add(tr);
-          ah.addTDRunnable(tc, tr);
-          
-          previous = tr;
-        }
+
+    BlockingTestRunnable[] btrs = new BlockingTestRunnable[PARALLEL_LEVEL];
+    for (int i = 0; i < PARALLEL_LEVEL; i++) {
+      ThreadContainer tc = new ThreadContainer();
+      KDRunnable previous = null;
+      btrs[i] = new BlockingTestRunnable();
+      distributor.execute(tc, btrs[i]);
+      for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+        KDRunnable tr = new KDRunnable(tc, previous);
+        runs.add(tr);
+        ah.addTDRunnable(tc, tr);
+        
+        previous = tr;
       }
+    }
+    
+    for (BlockingTestRunnable btr : btrs) {
+      // allow all to execute once submitted / queued, the thread should be consistent at this point
+      btr.unblock();
     }
     
     return runs;
@@ -94,32 +94,19 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
     new KeyDistributedExecutor(executor, true);
     new KeyDistributedExecutor(executor, 1);
     new KeyDistributedExecutor(executor, 1, true);
-    new KeyDistributedExecutor(1, executor);
-    new KeyDistributedExecutor(1, executor, true);
-    new KeyDistributedExecutor(1, executor, 1);
-    new KeyDistributedExecutor(1, executor, 1, true);
-    StripedLock sLock = new StripedLock(1);
-    new KeyDistributedExecutor(executor, sLock, 1, false);
   }
   
   @SuppressWarnings("unused")
   @Test
   public void constructorFail() {
     try {
-      new KeyDistributedExecutor(1, null);
+      new KeyDistributedExecutor(null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new KeyDistributedExecutor(executor, null, 
-                                 Integer.MAX_VALUE, false);
-      fail("Exception should have been thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      new KeyDistributedExecutor(executor, new StripedLock(1), -1, false);
+      new KeyDistributedExecutor(executor, -1, false);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -230,20 +217,24 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   @Test
   public void submitCallableConsistentThreadTest() {
     List<KDCallable> runs = new ArrayList<>(PARALLEL_LEVEL * RUNNABLE_COUNT_PER_LEVEL);
-    
-    // hold agent lock to avoid execution till all are submitted
-    synchronized (agentLock) {
-      for (int i = 0; i < PARALLEL_LEVEL; i++) {
-        ThreadContainer tc = new ThreadContainer();
-        KDCallable previous = null;
-        for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
-          KDCallable tr = new KDCallable(tc, previous);
-          runs.add(tr);
-          distributor.submit(tc, tr);
+
+    BlockingTestRunnable[] btrs = new BlockingTestRunnable[PARALLEL_LEVEL];
+    for (int i = 0; i < PARALLEL_LEVEL; i++) {
+      ThreadContainer tc = new ThreadContainer();
+      KDCallable previous = null;
+      btrs[i] = new BlockingTestRunnable();
+      distributor.execute(tc, btrs[i]);
+      for (int j = 0; j < RUNNABLE_COUNT_PER_LEVEL; j++) {
+        KDCallable tr = new KDCallable(tc, previous);
+        runs.add(tr);
+        distributor.submit(tc, tr);
           
-          previous = tr;
-        }
+        previous = tr;
       }
+    }
+    for (BlockingTestRunnable btr : btrs) {
+      // allow all to execute once submitted / queued, the thread should be consistent at this point
+      btr.unblock();
     }
     
     Iterator<KDCallable> it = runs.iterator();
@@ -277,7 +268,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
     final int expectedCount = (PARALLEL_LEVEL * 2) * (RUNNABLE_COUNT_PER_LEVEL * 2);
     final List<KDRunnable> runs = new ArrayList<>(expectedCount);
     
-    // we can't use populate here because we don't want to hold the agentLock
+    // we can't use populate here because we don't want to delay execution
     
     executor.execute(new Runnable() {
       private final Map<Integer, ThreadContainer> containers = new HashMap<>();
@@ -353,7 +344,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   @Test
   public void limitExecutionPerCycleTest() {
     final AtomicInteger execCount = new AtomicInteger(0);
-    KeyDistributedExecutor distributor = new KeyDistributedExecutor(1, new Executor() {
+    KeyDistributedExecutor distributor = new KeyDistributedExecutor(new Executor() {
       @Override
       public void execute(Runnable command) {
         execCount.incrementAndGet();
@@ -390,7 +381,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
       final Integer key1 = 1;
       final Integer key2 = 2;
       Executor singleThreadedExecutor = new ExecutorLimiter(scheduler, 1);
-      final KeyDistributedExecutor distributor = new KeyDistributedExecutor(2, singleThreadedExecutor, 2);
+      final KeyDistributedExecutor distributor = new KeyDistributedExecutor(singleThreadedExecutor, 2);
       final AtomicInteger waitingTasks = new AtomicInteger();
       final AtomicReference<TestRunnable> lastTestRunnable = new AtomicReference<>();
       scheduler.execute(new Runnable() {  // execute thread to add for key 1
