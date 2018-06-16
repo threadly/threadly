@@ -304,9 +304,6 @@ public class KeyedRateLimiterExecutor {
    * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
    */
   public long execute(double permits, Object taskKey, Runnable task) {
-    ArgumentVerifier.assertNotNegative(permits, "permits");
-    ArgumentVerifier.assertNotNull(task, "task");
-    
     return limiterForKey(taskKey, (l) -> l.execute(permits, task));
   }
   

@@ -19,6 +19,7 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.Clock;
 
@@ -205,7 +206,7 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
   public void verifyCleanupTaskTest() {
     double permits = .1;
     Object key = new Object();
-    limiter.execute(permits, key, DoNothingRunnable.instance());
+    limiter.execute(permits, key, new TestRunnable());
     assertEquals(2, scheduler.advance(KeyedRateLimiterExecutor.LIMITER_IDLE_TIMEOUT));
     assertEquals(1, limiter.getTrackedKeyCount());
     assertFalse(limiter.currentLimiters.isEmpty());

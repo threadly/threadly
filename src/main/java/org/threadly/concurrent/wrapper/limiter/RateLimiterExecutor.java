@@ -203,8 +203,16 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
   public long execute(double permits, Runnable task) {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
-    
-    return doExecute(permits, task);
+   
+    if (task == DoNothingRunnable.instance()) {
+      long result = getTaskDelay(permits);
+      if (result < 0) {
+        rejectedExecutionHandler.handleRejectedTask(task);
+      }
+      return result;
+    } else {
+      return doExecute(permits, task);
+    }
   }
 
   /**
