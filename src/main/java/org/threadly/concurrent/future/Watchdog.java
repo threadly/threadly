@@ -9,6 +9,7 @@ import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.ReschedulingOperation;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
 /**
@@ -22,6 +23,7 @@ import org.threadly.util.Clock;
 public class Watchdog {
   private static final AtomicReference<SubmitterScheduler> STATIC_SCHEDULER = 
       new AtomicReference<>();
+  private static final int MAX_CHECK_INTERVAL_MILLIS = 20_000;  // Max to avoid too much garbage on long timeouts
   
   protected static final SubmitterScheduler getStaticScheduler() {
     SubmitterScheduler ss = STATIC_SCHEDULER.get();
@@ -65,9 +67,12 @@ public class Watchdog {
    */
   public Watchdog(SubmitterScheduler scheduler, long timeoutInMillis, 
                   boolean sendInterruptOnFutureCancel) {
+    // scheduler not null verified in CheckRunner
+    ArgumentVerifier.assertGreaterThanZero(timeoutInMillis, "timeoutInMillis");
+    
     this.timeoutInMillis = timeoutInMillis;
     this.sendInterruptToTrackedThreads = sendInterruptOnFutureCancel;
-    this.checkRunner = new CheckRunner(scheduler, timeoutInMillis);
+    this.checkRunner = new CheckRunner(scheduler, Math.min(MAX_CHECK_INTERVAL_MILLIS, timeoutInMillis));
     this.futures = new ConcurrentLinkedQueue<>();
   }
   
@@ -183,11 +188,11 @@ public class Watchdog {
       
       if (fw != null) {
         // update our execution time to when the next expiration will occur
-        setScheduleDelay(fw.expireTime - now);
+        setScheduleDelay(Math.min(MAX_CHECK_INTERVAL_MILLIS, fw.expireTime - now));
         signalToRun();  // notify we still have work to do
       } else {
         // ensure schedule delay is set correctly
-        setScheduleDelay(timeoutInMillis);
+        setScheduleDelay(Math.min(MAX_CHECK_INTERVAL_MILLIS, timeoutInMillis));
       }
     }
   }
