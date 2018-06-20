@@ -161,7 +161,7 @@ abstract class AbstractKeyedLimiter<T extends ExecutorLimiter> {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   public <TT> ListenableFuture<TT> submit(Object taskKey, Runnable task, TT result) {
-    return submit(taskKey, new RunnableCallableAdapter<>(task, result));
+    return submit(taskKey, RunnableCallableAdapter.adapt(task, result));
   }
   
   /**

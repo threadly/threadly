@@ -13,6 +13,27 @@ import org.threadly.util.ArgumentVerifier;
  * @param <T> Type of result returned
  */
 public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContainer {
+  /**
+   * Adapt a {@link Runnable} and result into a {@link Callable}.  The returned callable will 
+   * invoke {@link Runnable#run()} then return the result provided to this function.
+   * 
+   * @param runnable Runnable to be invoked when this adapter is ran
+   * @param result Result to return from Callable or {@code null}
+   * @return A {@link Callable} instance for invocation
+   */
+  @SuppressWarnings("unchecked")
+  public static <T> Callable<T> adapt(Runnable runnable, T result) {
+    if (runnable == DoNothingRunnable.instance()) {
+      if (result == null) {
+        return (Callable<T>) DoNothingCallable.INSTANCE;
+      } else {
+        return () -> result;
+      }
+    } else {
+      return new RunnableCallableAdapter<>(runnable, result);
+    }
+  }
+  
   protected final Runnable runnable;
   protected final T result;
   
@@ -20,8 +41,11 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
    * Constructs a new adapter with a provided runnable to execute.  The returned result from this 
    * callable will be {@code null}.
    * 
+   * @deprecated Please use static function {@link RunnableCallableAdapter#adapt(Runnable, Object)}
+   * 
    * @param runnable Runnable to be invoked when this adapter is ran
    */
+  @Deprecated
   public RunnableCallableAdapter(Runnable runnable) {
     this(runnable, null);
   }
@@ -29,9 +53,12 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
   /**
    * Constructs a new adapter with a provided runnable to execute, and an optional result.
    * 
+   * @deprecated Please use static function {@link RunnableCallableAdapter#adapt(Runnable, Object)}
+   * 
    * @param runnable Runnable to be invoked when this adapter is ran
-   * @param result Result to return from runnable or {@code null}
+   * @param result Result to return from Callable or {@code null}
    */
+  @Deprecated
   public RunnableCallableAdapter(Runnable runnable, T result) {
     ArgumentVerifier.assertNotNull(runnable, "runnable");
     
@@ -48,5 +75,23 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
   public T call() {
     runnable.run();
     return result;
+  }
+  
+  /**
+   * Callable implementation which does no action, and just returns {@code null}.
+   * 
+   * @since 5.26
+   */
+  protected static class DoNothingCallable implements Callable<Object> {
+    protected static final DoNothingCallable INSTANCE = new DoNothingCallable();
+    
+    private DoNothingCallable() {
+      // don't allow construction
+    }
+    
+    @Override
+    public Object call() {
+      return null;
+    }
   }
 }

@@ -1,7 +1,7 @@
 package org.threadly.concurrent;
 
 /**
- * Runnable implementation which does no action.
+ * {@link Runnable} implementation which does no action.
  * 
  * @since 4.1.0
  */

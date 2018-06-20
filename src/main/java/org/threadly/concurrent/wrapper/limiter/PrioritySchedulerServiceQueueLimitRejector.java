@@ -129,7 +129,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result, TaskPriority priority) {
-    return submit(new RunnableCallableAdapter<T>(task, result), priority);
+    return submit(RunnableCallableAdapter.adapt(task, result), priority);
   }
 
   @Override
@@ -159,7 +159,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
                                                  TaskPriority priority) {
-    return submitScheduled(new RunnableCallableAdapter<T>(task, result), delayInMs, priority);
+    return submitScheduled(RunnableCallableAdapter.adapt(task, result), delayInMs, priority);
   }
 
   @Override

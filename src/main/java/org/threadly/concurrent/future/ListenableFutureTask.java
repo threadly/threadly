@@ -73,7 +73,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
    * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
    */
   public ListenableFutureTask(boolean recurring, Runnable task, T result, Executor executingExecutor) {
-    this(recurring, new RunnableCallableAdapter<>(task, result), executingExecutor);
+    this(recurring, RunnableCallableAdapter.adapt(task, result), executingExecutor);
   }
 
   /**

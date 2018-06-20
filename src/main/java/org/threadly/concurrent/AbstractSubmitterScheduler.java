@@ -43,7 +43,7 @@ public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecut
 
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs) {
-    return submitScheduled(new RunnableCallableAdapter<>(task, result), delayInMs);
+    return submitScheduled(RunnableCallableAdapter.adapt(task, result), delayInMs);
   }
 
   @Override

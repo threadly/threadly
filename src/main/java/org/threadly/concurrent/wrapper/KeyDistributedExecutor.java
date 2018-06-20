@@ -369,7 +369,7 @@ public class KeyDistributedExecutor {
    * @return Future to represent when the execution has occurred and provide the given result
    */
   public <T> ListenableFuture<T> submit(Object threadKey, Runnable task, T result) {
-    return submit(threadKey, new RunnableCallableAdapter<>(task, result));
+    return submit(threadKey, RunnableCallableAdapter.adapt(task, result));
   }
   
   /**

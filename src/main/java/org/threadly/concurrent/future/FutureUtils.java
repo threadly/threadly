@@ -863,7 +863,7 @@ public class FutureUtils {
     ArgumentVerifier.assertNotNull(loopTest, "loopTest");
     
     return scheduleWhile(scheduler, scheduleDelayMillis, 
-                         firstRunAsync, new RunnableCallableAdapter<>(task, null), 
+                         firstRunAsync, RunnableCallableAdapter.adapt(task, null), 
                          (ignored) -> loopTest.get(), timeoutMillis, false);
   }
   

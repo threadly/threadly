@@ -115,7 +115,7 @@ public class ThreadRenamingPriorityScheduler extends AbstractSubmitterScheduler
   @Override
   public <T> ListenableFuture<T> submitScheduled(Runnable task, T result, long delayInMs,
                                                  TaskPriority priority) {
-    return submitScheduled(new RunnableCallableAdapter<>(task, result), delayInMs, priority);
+    return submitScheduled(RunnableCallableAdapter.adapt(task, result), delayInMs, priority);
   }
 
   @Override

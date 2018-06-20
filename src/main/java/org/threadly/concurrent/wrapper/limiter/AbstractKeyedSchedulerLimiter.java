@@ -74,7 +74,7 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
    * @return a future to know when the task has completed
    */
   public <TT> ListenableFuture<TT> submitScheduled(Object taskKey, Runnable task, TT result, long delayInMs) {
-    return submitScheduled(taskKey, new RunnableCallableAdapter<>(task, result), delayInMs);
+    return submitScheduled(taskKey, RunnableCallableAdapter.adapt(task, result), delayInMs);
   }
 
   /**

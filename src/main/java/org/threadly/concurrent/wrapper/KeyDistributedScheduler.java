@@ -257,7 +257,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    */
   public <T> ListenableFuture<T> submitScheduled(Object threadKey, Runnable task, 
                                                  T result, long delayInMs) {
-    return submitScheduled(threadKey, new RunnableCallableAdapter<>(task, result), delayInMs);
+    return submitScheduled(threadKey, RunnableCallableAdapter.adapt(task, result), delayInMs);
   }
 
   /**

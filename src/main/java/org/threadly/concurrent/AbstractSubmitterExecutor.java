@@ -37,7 +37,7 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutor {
 
   @Override
   public <T> ListenableFuture<T> submit(Runnable task, T result) {
-    return submit(new RunnableCallableAdapter<>(task, result));
+    return submit(RunnableCallableAdapter.adapt(task, result));
   }
 
   @Override
