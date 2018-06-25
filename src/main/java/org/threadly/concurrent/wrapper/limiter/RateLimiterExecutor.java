@@ -205,7 +205,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     ArgumentVerifier.assertNotNegative(permits, "permits");
    
     if (task == DoNothingRunnable.instance()) {
-      long result = getTaskDelay(permits);
+      long result = taskDelayForPermits(permits);
       if (result < 0) {
         rejectedExecutionHandler.handleRejectedTask(task);
       }
@@ -244,7 +244,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
     if (task == DoNothingRunnable.instance()) {
-      long taskDelay = getTaskDelay(permits);
+      long taskDelay = taskDelayForPermits(permits);
       if (taskDelay == 0) {
         // don't even need to burden the scheduler
         return FutureUtils.immediateResultFuture(result);
@@ -294,7 +294,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     doExecute(1, task);
   }
   
-  private long getTaskDelay(double permits) {
+  private long taskDelayForPermits(double permits) {
     double effectiveDelay = (permits / permitsPerSecond) * 1000;
     synchronized (permitLock) {
       if (permits == 0 && lastScheduleTime < Clock.lastKnownForwardProgressingMillis()) {
@@ -329,7 +329,7 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
    * @return Time in milliseconds task was delayed to maintain rate, or {@code -1} if rejected but handler did not throw
    */
   protected long doExecute(double permits, Runnable task) {
-    long taskDelay = getTaskDelay(permits);
+    long taskDelay = taskDelayForPermits(permits);
     if (taskDelay < 0) {
       rejectedExecutionHandler.handleRejectedTask(task);
     } else {
