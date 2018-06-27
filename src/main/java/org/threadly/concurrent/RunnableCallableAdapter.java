@@ -17,6 +17,7 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
    * Adapt a {@link Runnable} and result into a {@link Callable}.  The returned callable will 
    * invoke {@link Runnable#run()} then return the result provided to this function.
    * 
+   * @param <T> Type of result to be returned from provided {@link Callable}
    * @param runnable Runnable to be invoked when this adapter is ran
    * @param result Result to return from Callable or {@code null}
    * @return A {@link Callable} instance for invocation

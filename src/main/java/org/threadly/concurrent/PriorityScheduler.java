@@ -218,8 +218,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     if (workerPool.startShutdown()) {
       ShutdownRunnable sr = new ShutdownRunnable(workerPool);
       taskQueueManager.lowPriorityQueueSet
-                      .addExecute(new OneTimeTaskWrapper(sr, taskQueueManager.lowPriorityQueueSet.executeQueue, 
-                                                         Clock.lastKnownForwardProgressingMillis()));
+                      .addExecute(new ImmediateTaskWrapper(sr, taskQueueManager.lowPriorityQueueSet.executeQueue));
     }
   }
 
@@ -282,8 +281,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
       addToExecuteQueue(queueSet, 
-                        (result = new OneTimeTaskWrapper(task, queueSet.executeQueue, 
-                                                         Clock.lastKnownForwardProgressingMillis())));
+                        (result = new ImmediateTaskWrapper(task, queueSet.executeQueue)));
     } else {
       addToScheduleQueue(queueSet, 
                          (result = new OneTimeTaskWrapper(task, queueSet.scheduleQueue, 
@@ -505,9 +503,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       // add to starvable queue, since we only need these tasks to be consumed and ran when there 
       // is nothing else to run.
       queueManager.starvablePriorityQueueSet
-                  .addExecute(new OneTimeTaskWrapper(task, 
-                                                     queueManager.starvablePriorityQueueSet.executeQueue, 
-                                                     Clock.lastKnownForwardProgressingMillis()));
+                  .addExecute(new ImmediateTaskWrapper(task, 
+                                                       queueManager.starvablePriorityQueueSet.executeQueue));
     }
 
     /**

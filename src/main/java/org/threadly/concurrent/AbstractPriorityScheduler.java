@@ -712,12 +712,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public long getRunTime() {
       return runTime;
     }
-    
-    @Override
-    public long getScheduleDelay() {
-      // override to avoid volatile read performance hit
-      return 0;
-    }
 
     @Override
     public void runTask() {
@@ -745,6 +739,25 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       } else {
         return false;
       }
+    }
+  }
+  
+  /**
+   * Similar to {@link OneTimeTaskWrapper} except that this task must always be eligible for 
+   * execution immediately.  This allows for some minor assumptions to be made to facilitate 
+   * performance.
+   * 
+   * @since 5.26
+   */
+  protected static class ImmediateTaskWrapper extends OneTimeTaskWrapper {
+    protected ImmediateTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue) {
+      super(task, taskQueue, Clock.lastKnownForwardProgressingMillis());
+    }
+    
+    @Override
+    public long getScheduleDelay() {
+      // override to avoid volatile read performance hit
+      return 0;
     }
   }
   
