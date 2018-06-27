@@ -518,11 +518,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       if (nextTask == null) {
         return starvablePriorityQueueSet.getNextTask();
       } else {
-        // TODO - does it make sense to reduce the logic in the below conditionals
         long nextTaskDelay = nextTask.getScheduleDelay();
         if (nextTaskDelay > 0) {
           TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
-          if (nextStarvableTask != null && nextTaskDelay > nextStarvableTask.getScheduleDelay()) {
+          if (nextStarvableTask != null && 
+              nextStarvableTask.getPureRunTime() < nextTask.getPureRunTime()) {
             return nextStarvableTask;
           } else {
             return nextTask;
@@ -711,6 +711,12 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     @Override
     public long getRunTime() {
       return runTime;
+    }
+    
+    @Override
+    public long getScheduleDelay() {
+      // override to avoid volatile read performance hit
+      return 0;
     }
 
     @Override
