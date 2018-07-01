@@ -20,4 +20,3 @@ Once imported, if you want to contribute to the project, you should consider imp
 If you plan to contribute to threadly, there are some important things to keep in mind:
 * Run the entire gradle build (which can be done just by running 'gradle build').  This ensures multiple things, first that the unit tests will pass, but also that the checkstyle will pass.  We don't want to accept changes which have checkstyle regressions, or unit test failures.  All tests should be passing.
 * If you want to contribute a new feature or a significant amount of code, please write unit tests for it.  Part of this projects success will be the testability of the project.  If you find this to be a road block, let me know, and we can work together to get new code/features under test.
-* Unless it's a very low risk bug fix, please send the pull request into the unstable_staging branch of threadly.
