@@ -2,8 +2,8 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 
-import org.threadly.concurrent.AbstractSubmitterExecutor;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ImmediateResultListenableFuture;
@@ -29,7 +29,7 @@ import org.threadly.util.Clock;
  * 
  * @since 4.6.0 (since 2.0.0 at org.threadly.concurrent.limiter)
  */
-public class RateLimiterExecutor extends AbstractSubmitterExecutor {
+public class RateLimiterExecutor implements SubmitterExecutor {
   protected final SubmitterScheduler scheduler;
   protected final RejectedExecutionHandler rejectedExecutionHandler;
   protected final Object permitLock;
@@ -190,6 +190,11 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
       return lft;
     }
   }
+
+  @Override
+  public void execute(Runnable task) {
+    execute(1, task);
+  }
   
   /**
    * Exact same as execute counter part, except you can specify how many permits this task will 
@@ -213,6 +218,11 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     } else {
       return doExecute(permits, task);
     }
+  }
+
+  @Override
+  public <T> ListenableFuture<T> submit(Runnable task, T result) {
+    return submit(1, task, result);
   }
 
   /**
@@ -268,6 +278,11 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     }
   }
 
+  @Override
+  public <T> ListenableFuture<T> submit(Callable<T> task) {
+    return submit(1, task);
+  }
+
   /**
    * Exact same as the submit counter part, except you can specify how many permits this task will 
    * require/use (instead of defaulting to 1).  The task will be scheduled out as far as necessary 
@@ -287,11 +302,6 @@ public class RateLimiterExecutor extends AbstractSubmitterExecutor {
     doExecute(permits, lft);
     
     return lft;
-  }
-  
-  @Override
-  protected void doExecute(Runnable task) {
-    doExecute(1, task);
   }
   
   private long taskDelayForPermits(double permits) {
