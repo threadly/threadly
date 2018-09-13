@@ -2,14 +2,14 @@ steps:
   - command: "./gradlew clean assemble"
     label: "compile"
     artifact_paths: "build/libs/*.jar"
-    timeout: 2
+    timeout: 10
 
   - wait
 
-  - command: "./gradlew test"
+  - command: "./gradlew -b build.slow test"
     label: "unit tests"
     artifact_paths: "build/reports/tests/xml/*.xml"
-    timeout: 10
+    timeout: 20
 
   - wait: ~
     continue_on_failure: true
@@ -20,8 +20,8 @@ steps:
 
   - command: "./gradlew checkstyleMain"
     label: "checkstyle"
-    timeout: 2
+    timeout: 10
 
   - command: "./gradlew jacocoTestCoverageVerification"
     label: "jacoco"
-    timeout: 2
+    timeout: 10

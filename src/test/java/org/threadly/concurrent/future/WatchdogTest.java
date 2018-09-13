@@ -89,10 +89,11 @@ public class WatchdogTest extends ThreadlyTester {
   
   @Test
   public void rescheduledFutureCheckTest() throws InterruptedException {
-    watchdog = new Watchdog(scheduler, DELAY_TIME * 2, true);
+    long delayTime = 100; // longer than constants DELAY_TIME to ensure we can tick BEFORE the second future times out
+    watchdog = new Watchdog(scheduler, delayTime * 2, true);
     SettableListenableFuture<?> slf1 = new SettableListenableFuture<>();
     watchdog.watch(slf1);
-    TestUtils.sleep(DELAY_TIME);
+    TestUtils.sleep(delayTime);
     SettableListenableFuture<?> slf2 = new SettableListenableFuture<>();
     watchdog.watch(slf2);
     

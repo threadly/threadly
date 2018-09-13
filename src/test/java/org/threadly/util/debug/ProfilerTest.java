@@ -364,10 +364,8 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
 
-    new TestCondition(() -> profiler.dump(false), 
-                      (s) -> s.contains("PriorityScheduler with ExceptionHandler idle thread (stack 1)") &&
-                             s.contains("PriorityScheduler with ExceptionHandler idle thread (stack 2)"))
-        .blockTillTrue();
+    verifyDumpContains("PriorityScheduler with ExceptionHandler idle thread (stack 1)");
+    verifyDumpContains("PriorityScheduler with ExceptionHandler idle thread (stack 2)");
   }
   
   @Test

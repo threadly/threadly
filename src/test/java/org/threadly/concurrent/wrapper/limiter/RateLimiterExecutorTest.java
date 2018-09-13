@@ -100,24 +100,22 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   
   @Test
   public void limitTest() throws InterruptedException, ExecutionException {
-    int rateLimit = 100;
+    int rateLimit = 200;
     final AtomicInteger ranPermits = new AtomicInteger();
     PriorityScheduler pse = new StrictPriorityScheduler(32);
     try {
       RateLimiterExecutor rls = new RateLimiterExecutor(pse, rateLimit);
       ListenableFuture<?> lastFuture = null;
       double startTime = Clock.accurateForwardProgressingMillis();
-      boolean flip = true;
-      for (int i = 0; i < TEST_QTY * 2; i++) {
-        final int permit = 5;
-        if (flip) {
+      for (int i = 0; i < TEST_QTY * 10; i++) {
+        final int permit = (i % 4) + 1;
+        if (i % 2 == 0) {
           lastFuture = rls.submit(permit, new Runnable() {
             @Override
             public void run() {
               ranPermits.addAndGet(permit);
             }
           });
-          flip = false;
         } else {
           lastFuture = rls.submit(permit, new Callable<Void>() {
             @Override
@@ -126,14 +124,13 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
               return null;
             }
           });
-          flip = true;
         }
       }
       lastFuture.get();
       long endTime = Clock.accurateForwardProgressingMillis();
-      double actualLimit = ranPermits.get() / ((endTime - startTime) / 1000);
+      double actualLimit = ranPermits.get() / ((endTime - startTime) / 1000.);
       
-      assertEquals(rateLimit, actualLimit, SLOW_MACHINE ? 75 : 50);
+      assertEquals(rateLimit, actualLimit, SLOW_MACHINE ? 150 : 100);
     } finally {
       pse.shutdownNow();
     }

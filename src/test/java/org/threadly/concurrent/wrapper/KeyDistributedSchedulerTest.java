@@ -117,7 +117,7 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
     Iterator<KDRunnable> it = runs.iterator();
     while (it.hasNext()) {
       KDRunnable tr = it.next();
-      tr.blockTillFinished(1000);
+      tr.blockTillFinished(2_000);
       assertEquals(1, tr.getRunCount()); // verify each only ran once
       assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
       assertTrue(tr.previousRanFirst());  // verify runnables were run in order
@@ -183,7 +183,7 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
     Iterator<KDCallable> it = runs.iterator();
     while (it.hasNext()) {
       KDCallable tr = it.next();
-      tr.blockTillFinished(10_000);
+      tr.blockTillFinished(20_000);
       assertTrue(tr.threadTracker.threadConsistent());  // verify that all threads for a given key ran in the same thread
       assertTrue(tr.previousRanFirst());  // verify runnables were run in order
     }
@@ -217,7 +217,7 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
     Iterator<KDRunnable> it = runs.iterator();
     while (it.hasNext()) {
       KDRunnable tr = it.next();
-      tr.blockTillFinished(1000);
+      tr.blockTillFinished(2_000);
       assertEquals(1, tr.getRunCount()); // verify each only ran once
       assertTrue(tr.getDelayTillFirstRun() >= DELAY_TIME);
     }

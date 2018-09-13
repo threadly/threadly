@@ -166,7 +166,7 @@ public class NoThreadSchedulerStatisticTrackerTest extends NoThreadSchedulerTest
     scheduler.execute(new ClockUpdateRunnable());
     TestUtils.blockTillClockAdvances();
     scheduler.tick(null);
-    assertEquals(1, scheduler.getExecutionDelayPercentiles(90).get(90.), 2);
+    assertEquals(1, scheduler.getExecutionDelayPercentiles(90).get(90.), SLOW_MACHINE ? 50 : 20);
   }
   
   protected void getPriorityExecutionDelayPercentilesTest(TaskPriority priority) {
@@ -175,7 +175,7 @@ public class NoThreadSchedulerStatisticTrackerTest extends NoThreadSchedulerTest
     scheduler.execute(new ClockUpdateRunnable(), priority);
     TestUtils.blockTillClockAdvances();
     scheduler.tick(null);
-    assertEquals(1, scheduler.getExecutionDelayPercentiles(90).get(90.), 20);
+    assertEquals(1, scheduler.getExecutionDelayPercentiles(90).get(90.), SLOW_MACHINE ? 50 : 20);
   }
 
   @Test

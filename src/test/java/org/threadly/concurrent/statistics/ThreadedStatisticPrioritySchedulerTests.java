@@ -170,7 +170,7 @@ public class ThreadedStatisticPrioritySchedulerTests extends ThreadlyTester {
       scheduler.execute(new ClockUpdateRunnable());
       TestUtils.blockTillClockAdvances();
       btr.unblock();
-      assertEquals(2, scheduler.getExecutionDelayPercentiles(90).get(90.), 20);
+      assertEquals(2, scheduler.getExecutionDelayPercentiles(90).get(90.), SLOW_MACHINE ? 50 : 20);
     } finally {
       btr.unblock();
     }
@@ -185,7 +185,7 @@ public class ThreadedStatisticPrioritySchedulerTests extends ThreadlyTester {
       scheduler.execute(new ClockUpdateRunnable(), priority);
       TestUtils.blockTillClockAdvances();
       btr.unblock();
-      assertEquals(2, scheduler.getExecutionDelayPercentiles(90).get(90.), 20);
+      assertEquals(2, scheduler.getExecutionDelayPercentiles(90).get(90.), SLOW_MACHINE ? 50 : 20);
     } finally {
       btr.unblock();
     }

@@ -99,7 +99,7 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
   @Test
   public void limitTest() throws InterruptedException, ExecutionException {
     Object key = new Object();
-    int rateLimit = 100;
+    int rateLimit = 200;
     final AtomicInteger ranPermits = new AtomicInteger();
     PriorityScheduler pse = new StrictPriorityScheduler(32);
     try {
@@ -107,8 +107,8 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
       ListenableFuture<?> lastFuture = null;
       double startTime = Clock.accurateForwardProgressingMillis();
       boolean flip = true;
-      for (int i = 0; i < TEST_QTY * 2; i++) {
-        final int permit = 5;
+      for (int i = 0; i < TEST_QTY * 10; i++) {
+        final int permit = (i % 4) + 1;
         if (flip) {
           lastFuture = krls.submit(permit, key, new Runnable() {
             @Override
@@ -131,8 +131,8 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
       lastFuture.get();
       long endTime = Clock.accurateForwardProgressingMillis();
       double actualLimit = ranPermits.get() / ((endTime - startTime) / 1000);
-      
-      assertEquals(rateLimit, actualLimit, SLOW_MACHINE ? 75 : 50);
+
+      assertEquals(rateLimit, actualLimit, SLOW_MACHINE ? 150 : 100);
     } finally {
       pse.shutdownNow();
     }
