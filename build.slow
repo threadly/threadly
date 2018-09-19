@@ -2,5 +2,6 @@ apply from: 'build.gradle'
 apply plugin: 'jacoco'
 
 test {
+  maxParallelForks = 1
   systemProperty 'systemSpeed', 'slow'
 }
