@@ -205,9 +205,7 @@ public class FutureUtils {
         } else if (comparisonResult.equals(f.get())) {
           resultCount++;
         }
-      } catch (CancellationException e) {
-        // swallowed
-      } catch (ExecutionException e) {
+      } catch (CancellationException | ExecutionException e) {
         // swallowed
       }
     }
@@ -256,9 +254,7 @@ public class FutureUtils {
         } else if (comparisonResult.equals(f.get(remainingTime, TimeUnit.MILLISECONDS))) {
           resultCount++;
         }
-      } catch (CancellationException e) {
-        // swallowed
-      } catch (ExecutionException e) {
+      } catch (CancellationException | ExecutionException e) {
         // swallowed
       }
     }
@@ -315,8 +311,7 @@ public class FutureUtils {
   public static ListenableFuture<?> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures) {
     ListenableFuture<?> result = new EmptyFutureCollection(futures);
     if (result.isDone()) {
-      // might as well return a cheaper option
-      return ImmediateResultListenableFuture.NULL_RESULT;
+      return ImmediateResultListenableFuture.NULL_RESULT; // might as well return a cheaper option
     } else {
       return result;
     }
@@ -354,7 +349,7 @@ public class FutureUtils {
     }
     
     final SettableListenableFuture<T> resultFuture = 
-        new CancelDelegateSettableListenableFuture<>(efc);
+        new CancelDelegateSettableListenableFuture<>(efc, null);
     efc.addCallback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object ignored) {
@@ -422,26 +417,18 @@ public class FutureUtils {
           if (f.isCancelled()) {
             return immediateCanceledFuture();
           } else {
-            try {
-              f.get();
-            } catch (ExecutionException e) {
-              immediateFailureFuture(e.getCause());
-            } catch (InterruptedException e) {
-              // should not be possible
-              throw new RuntimeException(e);
-            }
+            f.get();  // will throw ExecutionException to be handled below
           }
         }
-      } catch (InterruptedException e) {
-        // should not be possible
+      } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
       } catch (ExecutionException e) {
-        return FutureUtils.immediateFailureFuture(e.getCause());
+        return immediateFailureFuture(e.getCause());
       }
     }
     
     final CancelDelegateSettableListenableFuture<T> resultFuture = 
-        new CancelDelegateSettableListenableFuture<>(ffc);
+        new CancelDelegateSettableListenableFuture<>(ffc, null);
     ffc.addCallback(new FutureCallback<List<ListenableFuture<?>>>() {
       @Override
       public void handleResult(List<ListenableFuture<?>> failedFutures) {
@@ -457,8 +444,7 @@ public class FutureUtils {
               f.get();
             } catch (ExecutionException e) {
               resultFuture.setFailure(e.getCause());
-            } catch (InterruptedException e) {
-              // should not be possible
+            } catch (InterruptedException e) {  // should not be possible
               throw new RuntimeException(e);
             }
           }
@@ -568,7 +554,7 @@ public class FutureUtils {
     
     ListenableFuture<List<ListenableFuture<? extends T>>> completeFuture = makeCompleteListFuture(futures);
     final SettableListenableFuture<List<T>> result;
-    result = new CancelDelegateSettableListenableFuture<>(completeFuture);
+    result = new CancelDelegateSettableListenableFuture<>(completeFuture, null);
     
     completeFuture.addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
       @Override
@@ -1276,8 +1262,7 @@ public class FutureUtils {
         }
       } catch (ExecutionException e) {
         return immediateFailureFuture(e.getCause());
-      } catch (InterruptedException e) {
-        // should not be possible
+      } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
       } catch (Throwable t) {
         ExceptionUtils.handleException(t);
@@ -1323,8 +1308,7 @@ public class FutureUtils {
       // optimized path for already complete futures which we can now process in thread
       try {
         return FutureUtils.immediateResultFuture(transformer.apply(sourceFuture.get()));
-      } catch (InterruptedException e) {
-        // should not be possible
+      } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
       } catch (ExecutionException e) {
         // failure in getting result from future, transfer failure
@@ -1388,8 +1372,7 @@ public class FutureUtils {
       // optimized path for already complete futures which we can now process in thread
       try {
         return transformer.apply(sourceFuture.get());
-      } catch (InterruptedException e) {
-        // should not be possible
+      } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
       } catch (ExecutionException e) {
         // failure in getting result from future, transfer failure
@@ -1404,14 +1387,16 @@ public class FutureUtils {
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
       return immediateCanceledFuture();
     } else {
-      SettableListenableFuture<RT> slf = 
+      CancelDelegateSettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
       sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
         public void handleResult(ST result) {
           try {
             slf.setRunningThread(Thread.currentThread());
-            transformer.apply(result).addCallback(slf);
+            ListenableFuture<? extends RT> mapFuture = transformer.apply(result);
+            slf.updateCancelDelegateFuture(mapFuture);
+            mapFuture.addCallback(slf);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable t) {
             // failure calculating transformation, let handler get a chance to see the uncaught exception
@@ -1471,8 +1456,7 @@ public class FutureUtils {
         try {
           sourceFuture.get();
           return sourceFuture;  // no error
-        } catch (InterruptedException e) {
-          // should not be possible
+        } catch (InterruptedException e) {  // should not be possible
           throw new RuntimeException(e);
         } catch (ExecutionException e) {
           if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
@@ -1553,8 +1537,7 @@ public class FutureUtils {
         try {
           sourceFuture.get();
           return sourceFuture;  // no error
-        } catch (InterruptedException e) {
-          // should not be possible
+        } catch (InterruptedException e) {  // should not be possible
           throw new RuntimeException(e);
         } catch (ExecutionException e) {
           if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
@@ -1570,7 +1553,7 @@ public class FutureUtils {
       }
     }
     
-    SettableListenableFuture<RT> slf = 
+    CancelDelegateSettableListenableFuture<RT> slf = 
         new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
     // may still process in thread if future completed after check and executor is null
     sourceFuture.addCallback(new FutureCallback<RT>() {
@@ -1584,7 +1567,9 @@ public class FutureUtils {
         if (throwableType == null || throwableType.isAssignableFrom(t.getClass())) {
           try {
             slf.setRunningThread(Thread.currentThread());
-            mapper.apply((TT)t).addCallback(slf);
+            ListenableFuture<RT> mapFuture = mapper.apply((TT)t);
+            slf.updateCancelDelegateFuture(mapFuture);
+            mapFuture.addCallback(slf);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable newT) {
             slf.setFailure(newT);
@@ -1635,17 +1620,17 @@ public class FutureUtils {
    * @param <T> The result object type returned from the futures
    */
   protected static class CancelDelegateSettableListenableFuture<T> extends SettableListenableFuture<T> {
-    private final ListenableFuture<?> cancelDelegateFuture;
-    
-    protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf) {
-      this(lf, null);
-    }
-    
+    private volatile ListenableFuture<?> cancelDelegateFuture;
+
     protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf, 
                                                      Executor executingExecutor) {
       super(false, executingExecutor);
       
       cancelDelegateFuture = lf;
+    }
+    
+    public void updateCancelDelegateFuture(ListenableFuture<?> lf) {
+      this.cancelDelegateFuture = lf;
     }
     
     protected boolean cancelRegardlessOfDelegateFutureState(boolean interruptThread) {
@@ -1663,13 +1648,49 @@ public class FutureUtils {
         // if we want to interrupt, we want to try to cancel ourselves even if our delegate has 
         // already completed (in case there is processing associated to this future we can avoid)
         return cancelRegardlessOfDelegateFutureState(true);
-      } else {
-        if (cancelDelegateFuture.cancel(false)) {
-          return super.cancel(false);
-        } else {
-          return false;
+      }
+      /**
+       * The below code is inspired from the `super` implementation.  We must re-implement it in 
+       * order to handle the case where canceling the delegate future may cancel ourselves (due to 
+       * being a listener).  To solve this we synchronize the `resultLock` first, and know if we 
+       * transition to `done` while holding the lock, it must be because we are a listener.
+       * 
+       * A simple nieve implementation may look like:
+         if (cancelDelegateFuture.cancel(false)) {
+           super.cancel(false);
+           return true;
+         } else {
+           return false;
+         }
+       * This solves the listener problem by ignoring the need for `super` to cancel.  This likely 
+       * will work for most situations, but has the risk that this future may have completed 
+       * unexpectedly and we signal that it was canceled when really it completed with a result or 
+       * failure.
+       */
+      if (isDone()) {
+        return false;
+      }
+      
+      boolean canceled = false;
+      boolean callListeners = false;
+      synchronized (resultLock) {
+        if (! isDone()) {
+          if (cancelDelegateFuture.cancel(false)) {
+            canceled = true;
+            if (! isDone()) { // may have transitioned to canceled already as a listener (within lock)
+              callListeners = true;
+              setCanceled();
+            }
+          }
         }
       }
+      
+      if (callListeners) {
+        // call outside of lock
+        listenerHelper.callListeners();
+      }
+      
+      return canceled;
     }
   }
   
@@ -1901,9 +1922,7 @@ public class FutureUtils {
         // if no exception thrown, add future
         super.handleFutureDone(f);
       } catch (InterruptedException e) {
-        /* should not be possible since this should only 
-         * be called once the future is already done
-         */
+        // should not be possible since this should only be called once the future is already done
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         // ignored
@@ -1939,13 +1958,10 @@ public class FutureUtils {
       try {
         f.get();
       } catch (InterruptedException e) {
-        /* should not be possible since this should only 
-         * be called once the future is already done
-         */
+        // should not be possible since this should only be called once the future is already done
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        // failed so add it
-        super.handleFutureDone(f);
+        super.handleFutureDone(f); // failed so add it
       } catch (CancellationException e) {
         // should not be possible due check at start on what should be an already done future
         throw e;

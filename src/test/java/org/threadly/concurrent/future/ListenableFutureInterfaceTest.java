@@ -483,7 +483,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   }
   
   @Test
-  public void cancelWhileFlatMappedMapFutureIncompleteRunningInterruptTest() {
+  public void cancelFlatMappedCompletedFutureTest() {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     try {
       ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);

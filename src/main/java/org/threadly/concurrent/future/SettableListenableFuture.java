@@ -284,8 +284,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     synchronized (resultLock) {
       canceled = ! done;
       if (canceled) {
-        this.canceled = true;
-        
         if (interruptThread) {
           Thread runningThread = this.runningThread;
           if (runningThread != null) {
@@ -293,7 +291,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
           }
         }
         
-        setDone(null);
+        setCanceled();
       }
     }
     
@@ -329,6 +327,13 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       result = null;
       failure = null;
     }
+  }
+
+  // MUST be synchronized on resultLock before calling
+  protected void setCanceled() {
+    this.canceled = true;
+    
+    setDone(null);
   }
   
   // MUST be synchronized on resultLock before calling

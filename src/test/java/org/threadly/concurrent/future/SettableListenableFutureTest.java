@@ -405,6 +405,17 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     assertTrue(slf.isCancelled());
   }
   
+  @Test
+  public void cancelFlatMappedAsyncFutureTest() {
+    SettableListenableFuture<Void> asyncSLF = new SettableListenableFuture<>();
+    ListenableFuture<Void> mappedLF = slf.flatMap(asyncSLF);
+      
+    slf.setResult(null);  // complete source future before cancel
+    assertFalse(mappedLF.isDone());
+    assertTrue(mappedLF.cancel(false)); // no interrupt needed, delegate future not started
+    assertTrue(asyncSLF.isCancelled());
+  }
+  
   private static class SettableListenableFutureFactory implements ListenableFutureFactory {
     @Override
     public ListenableFuture<?> makeCanceled() {

@@ -182,6 +182,18 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     future.get(100, TimeUnit.MILLISECONDS);
   }
   
+  @Test
+  public void cancelFlatMappedAsyncFutureTest() {
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
+    SettableListenableFuture<Void> asyncSLF = new SettableListenableFuture<>();
+    ListenableFuture<Void> mappedLF = future.flatMap(asyncSLF);
+      
+    future.run();  // complete source future before cancel
+    assertFalse(mappedLF.isDone());
+    assertTrue(mappedLF.cancel(false)); // no interrupt needed, delegate future not started
+    assertTrue(asyncSLF.isCancelled());
+  }
+  
   private class ListenableFutureTaskFactory implements ExecuteOnGetFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
