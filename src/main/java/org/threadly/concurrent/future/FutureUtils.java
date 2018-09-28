@@ -30,7 +30,7 @@ import org.threadly.util.SuppressedStackRuntimeException;
 
 /**
  * A collection of small utilities for handling futures.  This class has lots of tools for dealing 
- * with collections of futures, either blocking, extracting results, and more.
+ * with collections of futures, ranging from blocking, extracting results, and more.
  * <p>
  * Generating already done futures:
  * <ul>
@@ -130,7 +130,6 @@ public class FutureUtils {
     if (futures == null) {
       return;
     }
-    
     for (Future<?> f : futures) {
       f.get();
     }
@@ -155,7 +154,6 @@ public class FutureUtils {
     if (futures == null) {
       return;
     }
-    
     long startTime = Clock.accurateForwardProgressingMillis();
     long remainingTime;
     for (Future<?> f : futures) {
@@ -191,7 +189,6 @@ public class FutureUtils {
     if (futures == null) {
       return 0;
     }
-    
     int resultCount = 0;
     for (Future<?> f : futures) {
       if (f.isCancelled()) {
@@ -238,7 +235,6 @@ public class FutureUtils {
     if (futures == null) {
       return 0;
     }
-    
     int resultCount = 0;
     long startTime = Clock.accurateForwardProgressingMillis();
     long remainingTime;
@@ -551,7 +547,6 @@ public class FutureUtils {
     if (futures == null) {
       return immediateResultFuture(Collections.<T>emptyList());
     }
-    
     ListenableFuture<List<ListenableFuture<? extends T>>> completeFuture = makeCompleteListFuture(futures);
     final SettableListenableFuture<List<T>> result;
     result = new CancelDelegateSettableListenableFuture<>(completeFuture, null);
@@ -638,7 +633,6 @@ public class FutureUtils {
     if (futures == null) {
       return;
     }
-    
     final ArrayList<ListenableFuture<?>> futuresCopy;
     final Iterable<? extends ListenableFuture<?>> callbackFutures;
     if (copy) {
@@ -719,7 +713,6 @@ public class FutureUtils {
    * 
    * @deprecated Please use {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)}
    * 
-   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
@@ -757,7 +750,6 @@ public class FutureUtils {
    * @deprecated Please use with a simple null checking Predicate
    *               {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)}
    * 
-   * @since 5.0
    * @param <T> The result object type returned by the task and provided by the future
    * @param scheduler Scheduler to schedule out task executions
    * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
@@ -927,9 +919,7 @@ public class FutureUtils {
                                                       long timeoutMillis, 
                                                       boolean timeoutProvideLastValue) {
     return scheduleWhile(scheduler, scheduleDelayMillis, 
-                         firstRunAsync ? 
-                           scheduler.submit(task) : 
-                           SameThreadSubmitterExecutor.instance().submit(task), 
+                         (firstRunAsync ? scheduler : SameThreadSubmitterExecutor.instance()).submit(task), 
                          task, loopTest, timeoutMillis, timeoutProvideLastValue);
   }
   
@@ -994,7 +984,7 @@ public class FutureUtils {
    * @return Future that will resolve once returned {@link Predicate} returns {@code false}
    */
   // TODO - de-duplicate code with executeWhile.  This is slightly awkward because of when we check the cancel state
-  //          If we just nievely call directly into it we will check the state before submitting to the scheduler, 
+  //          If we just naively call directly into it we will check the state before submitting to the scheduler, 
   //          And not when the task is about to actually be executed.  Also there will be annoying wrapping overhead
   public static <T> ListenableFuture<T> scheduleWhile(SubmitterScheduler scheduler, 
                                                       long scheduleDelayMillis, 
@@ -1117,7 +1107,7 @@ public class FutureUtils {
       return executeWhile(asyncTask.call(), asyncTask, loopTest, 
                           timeoutMillis, timeoutProvideLastValue);
     } catch (Exception e) {
-      return FutureUtils.immediateFailureFuture(e);
+      return immediateFailureFuture(e);
     }
   }
 
@@ -1159,15 +1149,14 @@ public class FutureUtils {
    * @param asyncTask Callable to produce a {@link ListenableFuture} for when a result is ready 
    * @param loopTest The test to check the ready result to see if we need to keep looping
    * @param timeoutMillis If greater than zero, wont reschedule and instead will just return the last result
-   * @param timeoutProvideLastValue On timeout {@code false} will complete with a TimeoutException, 
-   *                                  {@code true} completes with the last result
+   * @param lastValueOnTimeout On timeout {@code false} will complete with a TimeoutException, 
+   *                               {@code true} completes with the last result
    * @return Future that will resolve once returned {@link Predicate} returns {@code false}
    */
   public static <T> ListenableFuture<T> executeWhile(ListenableFuture<? extends T> startingFuture, 
                                                      Callable<? extends ListenableFuture<? extends T>> asyncTask, 
                                                      Predicate<? super T> loopTest, 
-                                                     long timeoutMillis, 
-                                                     boolean timeoutProvideLastValue) {
+                                                     long timeoutMillis, boolean lastValueOnTimeout) {
     ArgumentVerifier.assertNotNull(startingFuture, "startingFuture");
     ArgumentVerifier.assertNotNull(asyncTask, "asyncTask");
     ArgumentVerifier.assertNotNull(loopTest, "loopTest");
@@ -1205,7 +1194,7 @@ public class FutureUtils {
         try {
           while (loopTest.test(result)) {
             if (startTime > -1 && Clock.lastKnownForwardProgressingMillis() - startTime > timeoutMillis) {
-              if (timeoutProvideLastValue) {
+              if (lastValueOnTimeout) {
                 resultFuture.setResult(result);
               } else {
                 resultFuture.setFailure(new TimeoutException());
@@ -1305,14 +1294,12 @@ public class FutureUtils {
                                                            ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
-      // optimized path for already complete futures which we can now process in thread
-      try {
-        return FutureUtils.immediateResultFuture(transformer.apply(sourceFuture.get()));
+      try { // optimized path for already complete futures which we can now process in thread
+        return immediateResultFuture(transformer.apply(sourceFuture.get()));
       } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
-      } catch (ExecutionException e) {
-        // failure in getting result from future, transfer failure
-        return FutureUtils.immediateFailureFuture(e.getCause());
+      } catch (ExecutionException e) { // failure in getting result from future, transfer failure
+        return immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
         if (reportedTransformedExceptions) {
           // failure calculating transformation, let handler get a chance to see the uncaught exception
@@ -1320,7 +1307,7 @@ public class FutureUtils {
           ExceptionUtils.handleException(t);
         }
         
-        return FutureUtils.immediateFailureFuture(t);
+        return immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
       return immediateCanceledFuture();
@@ -1369,20 +1356,18 @@ public class FutureUtils {
                                                                ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
-      // optimized path for already complete futures which we can now process in thread
-      try {
+      try { // optimized path for already complete futures which we can now process in thread
         return transformer.apply(sourceFuture.get());
       } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
-      } catch (ExecutionException e) {
-        // failure in getting result from future, transfer failure
-        return FutureUtils.immediateFailureFuture(e.getCause());
+      } catch (ExecutionException e) { // failure in getting result from future, transfer failure
+        return immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
         // failure calculating transformation, let handler get a chance to see the uncaught exception
         // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
         ExceptionUtils.handleException(t);
         
-        return FutureUtils.immediateFailureFuture(t);
+        return immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
       return immediateCanceledFuture();
@@ -1440,14 +1425,13 @@ public class FutureUtils {
                        Class<TT> throwableType, Executor executor, 
                        ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        sourceFuture.isDone()) {
-      // optimized path for already complete futures which we can now process in thread
-      if (sourceFuture.isCancelled()) {
+        sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
+      if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
-            return FutureUtils.immediateResultFuture(mapper.apply((TT)new CancellationException()));
+            return immediateResultFuture(mapper.apply((TT)new CancellationException()));
           } catch (Throwable t) {
-            return FutureUtils.immediateFailureFuture(t);
+            return immediateFailureFuture(t);
           }
         } else {
           return sourceFuture;
@@ -1461,9 +1445,9 @@ public class FutureUtils {
         } catch (ExecutionException e) {
           if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
             try {
-              return FutureUtils.immediateResultFuture(mapper.apply((TT)e.getCause()));
+              return immediateResultFuture(mapper.apply((TT)e.getCause()));
             } catch (Throwable t) {
-              return FutureUtils.immediateFailureFuture(t);
+              return immediateFailureFuture(t);
             }
           } else {
             return sourceFuture;
@@ -1521,19 +1505,18 @@ public class FutureUtils {
                            Class<TT> throwableType, Executor executor, 
                            ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        sourceFuture.isDone()) {
+        sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
             return mapper.apply((TT)new CancellationException());
           } catch (Throwable t) {
-            return FutureUtils.immediateFailureFuture(t);
+            return immediateFailureFuture(t);
           }
         } else {
           return sourceFuture;
         }
       } else {
-        // optimized path for already complete futures which we can now process in thread
         try {
           sourceFuture.get();
           return sourceFuture;  // no error
@@ -1544,7 +1527,7 @@ public class FutureUtils {
             try {
               return mapper.apply((TT)e.getCause());
             } catch (Throwable t) {
-              return FutureUtils.immediateFailureFuture(t);
+              return immediateFailureFuture(t);
             }
           } else {
             return sourceFuture;
