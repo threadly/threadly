@@ -17,6 +17,9 @@ import org.threadly.util.Clock;
  * timeout.  Once the timeout is reached, if the future has not already completed this will 
  * attempt to invoke {@link ListenableFuture#cancel(boolean)}.  The future should then throw a 
  * {@link java.util.concurrent.CancellationException} on a {@link ListenableFuture#get()} call.
+ * <p>
+ * Using {@link CancelDebuggingListenableFuture} to wrap the futures before providing to this class 
+ * can provide an easier understanding of the state of a Future when it was timed out by this class.
  * 
  * @since 4.0.0
  */

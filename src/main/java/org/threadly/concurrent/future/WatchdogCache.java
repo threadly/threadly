@@ -14,6 +14,9 @@ import org.threadly.util.ArgumentVerifier;
  * A class which handles a collection of  {@link Watchdog} instances.  Because the timeout for 
  * {@link Watchdog} is set in the constructor {@link Watchdog#Watchdog(long, boolean)}, you can 
  * use this class to be more flexible and set the timeout at the time of watching the future.
+ * <p>
+ * Using {@link CancelDebuggingListenableFuture} to wrap the futures before providing to this class 
+ * can provide an easier understanding of the state of a Future when it was timed out by this class.
  * 
  * @since 4.0.0
  */
