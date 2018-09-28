@@ -30,4 +30,9 @@ abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelabl
       listener.run();
     }
   }
+
+  @Override
+  public StackTraceElement[] getRunningStackTrace() {
+    return null;
+  }
 }

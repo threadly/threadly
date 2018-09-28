@@ -1611,7 +1611,30 @@ public class FutureUtils {
       this.cancelDelegateFuture = lf;
     }
     
+    @Override
+    protected boolean setDone(Throwable cause) {
+      if (super.setDone(cause)) {
+        cancelDelegateFuture = null;
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public StackTraceElement[] getRunningStackTrace() {
+      ListenableFuture<?> delegateFuture = this.cancelDelegateFuture;
+      if (delegateFuture != null) {
+        StackTraceElement[] result = delegateFuture.getRunningStackTrace();
+        if (result != null) {
+          return result;
+        }
+      }
+      return super.getRunningStackTrace();
+    }
+    
     protected boolean cancelRegardlessOfDelegateFutureState(boolean interruptThread) {
+      ListenableFuture<?> cancelDelegateFuture = this.cancelDelegateFuture;
       if (super.cancel(interruptThread)) {
         cancelDelegateFuture.cancel(interruptThread);
         return true;

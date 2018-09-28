@@ -79,4 +79,9 @@ public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> 
                           ListenerOptimizationStrategy optimizeExecution) {
     futureImp.addCallback(callback, executor, optimizeExecution);
   }
+
+  @Override
+  public StackTraceElement[] getRunningStackTrace() {
+    return futureImp.getRunningStackTrace();
+  }
 }

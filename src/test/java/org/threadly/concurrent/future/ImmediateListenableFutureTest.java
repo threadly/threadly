@@ -88,4 +88,8 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     testFuture.addCallback(tfc, new SameThreadSubmitterExecutor());
     assertTrue(tfc.getLastFailure() == expectedFailure);
   }
+  
+  public static void getRunningStackTraceTest(ListenableFuture<?> testFuture) {
+    assertNull(testFuture.getRunningStackTrace());
+  }
 }

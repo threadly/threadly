@@ -66,4 +66,9 @@ public class TestFutureImp implements ListenableFuture<Object> {
                           ListenerOptimizationStrategy optimizeExecution) {
     addListener(listener);
   }
+
+  @Override
+  public StackTraceElement[] getRunningStackTrace() {
+    return null;
+  }
 }

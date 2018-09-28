@@ -337,7 +337,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   }
   
   // MUST be synchronized on resultLock before calling
-  private boolean setDone(Throwable cause) {
+  protected boolean setDone(Throwable cause) {
     if (done) {
       if (throwIfAlreadyComplete) {
         throw new IllegalStateException("Future already done", cause);
@@ -400,6 +400,21 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
         return result;
       } else {
         throw new TimeoutException();
+      }
+    }
+  }
+
+  @Override
+  public StackTraceElement[] getRunningStackTrace() {
+    Thread t = runningThread;
+    if (t == null) {
+      return null;
+    } else {
+      StackTraceElement[] stack = t.getStackTrace();
+      if (stack.length == 0 || t != runningThread) {
+        return null;
+      } else {
+        return stack;
       }
     }
   }

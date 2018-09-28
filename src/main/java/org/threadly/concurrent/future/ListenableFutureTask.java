@@ -1,11 +1,13 @@
 package org.threadly.concurrent.future;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
 import org.threadly.concurrent.CallableContainer;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.event.RunnableListenerHelper;
+import org.threadly.util.UnsafeAccess;
 
 /**
  * This is a future which can be executed.  Allowing you to construct the future with the interior 
@@ -17,6 +19,19 @@ import org.threadly.concurrent.event.RunnableListenerHelper;
 public class ListenableFutureTask<T> extends FutureTask<T> 
                                      implements ListenableRunnableFuture<T>, 
                                                 CallableContainer<T> {
+
+  private static final Field RUNNING_THREAD_FIELD;
+  
+  static {
+    try {
+      RUNNING_THREAD_FIELD = FutureTask.class.getDeclaredField("runner");
+      UnsafeAccess.setFieldToPublic(RUNNING_THREAD_FIELD);
+    } catch (NoSuchFieldException | SecurityException e) {
+      throw new RuntimeException("Unsupported JVM version, please update threadly or file an issue" + 
+                                   "...Can not get running thread reference", e);
+    }
+  }
+  
   protected final RunnableListenerHelper listenerHelper;
   protected final boolean recurring;
   protected Callable<T> callable;
@@ -127,5 +142,25 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   @Override
   public Callable<T> getContainedCallable() {
     return callable;
+  }
+  
+  @Override
+  public StackTraceElement[] getRunningStackTrace() {
+    try {
+      Thread t = (Thread)RUNNING_THREAD_FIELD.get(this);
+      if (t == null) {
+        return null;
+      } else {
+        StackTraceElement[] stack = t.getStackTrace();
+        if (stack.length == 0 || t != (Thread)RUNNING_THREAD_FIELD.get(this)) {
+          return null;
+        } else {
+          return stack;
+        }
+      }
+    } catch (IllegalArgumentException | IllegalAccessException | SecurityException  e) {
+      // at this point we should be good to go, this exception would be truly unexpected
+      throw new RuntimeException(e);
+    }
   }
 }

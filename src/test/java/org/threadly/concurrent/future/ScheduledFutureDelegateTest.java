@@ -182,4 +182,16 @@ public class ScheduledFutureDelegateTest extends ThreadlyTester {
     
     assertEquals(1, future.listeners.size());
   }
+  
+  @Test
+  public void getRunningStackTraceTest() {
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(slf, null);
+    
+    assertNull(testItem.getRunningStackTrace());
+    
+    slf.setRunningThread(Thread.currentThread());
+
+    assertNotNull(testItem.getRunningStackTrace());
+  }
 }

@@ -329,6 +329,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
                             ListenerOptimizationStrategy optimizeExecution) {
       futureImp.addCallback(callback, executor, optimizeExecution);
     }
+
+    @Override
+    public StackTraceElement[] getRunningStackTrace() {
+      return futureImp.getRunningStackTrace();
+    }
   }
   
   /**

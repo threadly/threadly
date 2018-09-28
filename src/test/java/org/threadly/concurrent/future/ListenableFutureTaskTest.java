@@ -13,8 +13,10 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
@@ -192,6 +194,68 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     assertFalse(mappedLF.isDone());
     assertTrue(mappedLF.cancel(false)); // no interrupt needed, delegate future not started
     assertTrue(asyncSLF.isCancelled());
+  }
+  
+  @Test
+  public void getRunningStackTraceTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    ListenableFutureTask<Object> future = makeFutureTask(btr, null);
+    
+    try {
+      assertNull(future.getRunningStackTrace());
+      
+      sts.execute(future);
+      btr.blockTillStarted();
+
+      StackTraceElement[] stack = future.getRunningStackTrace();
+      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+    } finally {
+      btr.unblock();
+      sts.shutdown();
+    }
+  }
+  
+  @Test
+  public void getMappedRunningStackTraceTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    ListenableFutureTask<Object> futureTask = makeFutureTask(btr, null);
+    ListenableFuture<Object> mappedFuture = futureTask.map((o) -> o).map((o) -> null);
+    try {
+      assertNull(mappedFuture.getRunningStackTrace());
+      
+      sts.execute(futureTask);
+      btr.blockTillStarted();
+
+      StackTraceElement[] stack = mappedFuture.getRunningStackTrace();
+      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+    } finally {
+      btr.unblock();
+      sts.shutdown();
+    }
+  }
+  
+  @Test
+  public void getFlatMappedRunningStackTraceTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    ListenableFutureTask<Object> futureTask = makeFutureTask(btr, null);
+    ListenableFuture<Object> mappedFuture = 
+        futureTask.flatMap((o) -> FutureUtils.immediateResultFuture(o))
+                  .flatMap((o) -> FutureUtils.immediateResultFuture(null));
+    try {
+      assertNull(mappedFuture.getRunningStackTrace());
+      
+      sts.execute(futureTask);
+      btr.blockTillStarted();
+
+      StackTraceElement[] stack = mappedFuture.getRunningStackTrace();
+      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+    } finally {
+      btr.unblock();
+      sts.shutdown();
+    }
   }
   
   private class ListenableFutureTaskFactory implements ExecuteOnGetFutureFactory {

@@ -82,4 +82,11 @@ public class ImmediateResultListenableFutureTest extends ThreadlyTester {
                                                        (t) -> FutureUtils.immediateFailureFuture(new RuntimeException()), 
                                                        SameThreadSubmitterExecutor.instance(), null));
   }
+  
+  @Test
+  public void getRunningStackTraceTest() {
+    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(null);
+    
+    ImmediateListenableFutureTest.getRunningStackTraceTest(testFuture);
+  }
 }

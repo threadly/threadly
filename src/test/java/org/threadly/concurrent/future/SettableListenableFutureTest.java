@@ -416,6 +416,48 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     assertTrue(asyncSLF.isCancelled());
   }
   
+  @Test
+  public void getRunningStackTraceTest() {
+    assertNull(slf.getRunningStackTrace());
+    
+    slf.setRunningThread(Thread.currentThread());
+    StackTraceElement[] stack = slf.getRunningStackTrace();
+    assertEquals(this.getClass().getName(), stack[2].getClassName());
+
+    slf.setResult(null);
+    assertNull(slf.getRunningStackTrace());
+  }
+  
+  @Test
+  public void getMappedRunningStackTraceTest() {
+    ListenableFuture<Object> mappedFuture = slf.map((o) -> o).map((o) -> null);
+    
+    assertNull(mappedFuture.getRunningStackTrace());
+    
+    slf.setRunningThread(Thread.currentThread());
+    StackTraceElement[] stack = mappedFuture.getRunningStackTrace();
+    assertEquals(this.getClass().getName(), stack[4].getClassName());
+
+    slf.setResult(null);
+    assertNull(mappedFuture.getRunningStackTrace());
+  }
+  
+  @Test
+  public void getFlatMappedRunningStackTraceTest() {
+    ListenableFuture<Object> mappedFuture = 
+        slf.flatMap((o) -> FutureUtils.immediateResultFuture(o))
+           .flatMap((o) -> FutureUtils.immediateResultFuture(null));
+    
+    assertNull(mappedFuture.getRunningStackTrace());
+    
+    slf.setRunningThread(Thread.currentThread());
+    StackTraceElement[] stack = mappedFuture.getRunningStackTrace();
+    assertEquals(this.getClass().getName(), stack[4].getClassName());
+
+    slf.setResult(null);
+    assertNull(mappedFuture.getRunningStackTrace());
+  }
+  
   private static class SettableListenableFutureFactory implements ListenableFutureFactory {
     @Override
     public ListenableFuture<?> makeCanceled() {

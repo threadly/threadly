@@ -34,4 +34,11 @@ public class ImmediateFailureListenableFutureTest extends ThreadlyTester {
     
     ImmediateListenableFutureTest.failureAddCallbackTest(testFuture, failure);
   }
+  
+  @Test
+  public void getRunningStackTraceTest() {
+    ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<>(null);
+    
+    ImmediateListenableFutureTest.getRunningStackTraceTest(testFuture);
+  }
 }

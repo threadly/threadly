@@ -11,6 +11,10 @@ dependencies {
 
 compileJava {
   options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
+
+  if (JavaVersion.current().isJava8()) {
+    options.compilerArgs << "-XDenableSunApiLintControl" << "-Xlint:-sunapi"
+  }
 }
 
 compileTestJava {

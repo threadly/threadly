@@ -670,4 +670,18 @@ public interface ListenableFuture<T> extends Future<T> {
       }, executor, optimizeExecution);
     }
   }
+  
+  /**
+   * A best effort to return the stack trace for for the executing thread of either this future, 
+   * or a future which this depends on through the use of {@link #map(Function)} or similar 
+   * functions.  If there is no thread executing the future yet, or the future has already 
+   * completed, then this will return {@code null}. 
+   * <p>
+   * This is done without locking (though generating a stack trace still requires a JVM safe point), 
+   * so the resulting stack trace is NOT guaranteed to be accurate.  In most cases (particularly 
+   * when blocking) this should be accurate though.
+   * 
+   * @return The stack trace currently executing the future, or {@code null} if unavailable
+   */
+  public StackTraceElement[] getRunningStackTrace();
 }
