@@ -9,6 +9,30 @@ dependencies {
   testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+sourceSets {
+  moduleInfo {
+    java {
+      srcDir 'src/module-info/java'
+    }
+  }
+}
+
+compileModuleInfoJava {
+  sourceCompatibility = 9
+  targetCompatibility = 9
+
+  inputs.property("moduleName", moduleName)
+
+  doFirst {
+    classpath += sourceSets.main.compileClasspath
+
+    options.compilerArgs = [
+                            '--module-path', classpath.asPath,
+                            '-d', sourceSets.main.output.classesDirs.asPath
+                           ]
+  }
+}
+
 compileJava {
   options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
 }
@@ -24,6 +48,9 @@ test {
 }
 
 jar {
+  from sourceSets.main.output
+  from sourceSets.moduleInfo.output
+
   manifest {
     attributes 'Implementation-Title': 'Threadly', 'Implementation-Version': version
   }
