@@ -50,23 +50,47 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   public ImmediateResultListenableFuture(T result) {
     this.result = result;
   }
-
+  
   @Override
-  public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType,
-                                                               Function<? super TT, ? extends T> mapper,
-                                                               Executor executor,
-                                                               ListenerOptimizationStrategy optimizeExecution) {
-    // nothing to map, we are not in error
-    return this;
+  public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
+                                                               Function<? super TT, ? extends T> mapper) {
+    return this;  // nothing to map, we are not in error
   }
 
   @Override
-  public <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType,
-                                                                   Function<? super TT, ListenableFuture<T>> mapper,
-                                                                   Executor executor,
+  public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
+                                                               Function<? super TT, ? extends T> mapper, 
+                                                               Executor executor) {
+    return this;  // nothing to map, we are not in error
+  }
+
+  @Override
+  public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
+                                                               Function<? super TT, ? extends T> mapper, 
+                                                               Executor executor, 
+                                                               ListenerOptimizationStrategy optimizeExecution) {
+    return this;  // nothing to map, we are not in error
+  }
+
+  @Override
+  public <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
+                                                                   Function<? super TT, ListenableFuture<T>> mapper) {
+    return this;  // nothing to map, we are not in error
+  }
+
+  @Override
+  public <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
+                                                                   Function<? super TT, ListenableFuture<T>> mapper, 
+                                                                   Executor executor) {
+    return this;  // nothing to map, we are not in error
+  }
+
+  @Override
+  public <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
+                                                                   Function<? super TT, ListenableFuture<T>> mapper, 
+                                                                   Executor executor, 
                                                                    ListenerOptimizationStrategy optimizeExecution) {
-    // nothing to map, we are not in error
-    return this;
+    return this;  // nothing to map, we are not in error
   }
 
   @Override

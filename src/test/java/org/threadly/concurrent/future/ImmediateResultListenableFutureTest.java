@@ -1,10 +1,13 @@
 package org.threadly.concurrent.future;
 
+import static org.junit.Assert.*;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 
 @SuppressWarnings("javadoc")
 public class ImmediateResultListenableFutureTest extends ThreadlyTester {
@@ -48,5 +51,35 @@ public class ImmediateResultListenableFutureTest extends ThreadlyTester {
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(result);
     
     ImmediateListenableFutureTest.resultAddCallbackTest(testFuture, result);
+  }
+  
+  @Test
+  public void mapFailureTest() {
+    // should be straight through
+    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(null);
+    
+    assertTrue(testFuture == testFuture.mapFailure(Exception.class, 
+                                                   (t) -> { throw new RuntimeException(); }));
+    assertTrue(testFuture == testFuture.mapFailure(Exception.class, 
+                                                   (t) -> { throw new RuntimeException(); }, 
+                                                   SameThreadSubmitterExecutor.instance()));
+    assertTrue(testFuture == testFuture.mapFailure(Exception.class, 
+                                                   (t) -> { throw new RuntimeException(); }, 
+                                                   SameThreadSubmitterExecutor.instance(), null));
+  }
+  
+  @Test
+  public void flatMapFailureTest() {
+    // should be straight through
+    ListenableFuture<Object> testFuture = new ImmediateResultListenableFuture<>(null);
+    
+    assertTrue(testFuture == testFuture.flatMapFailure(Exception.class, 
+                                                       (t) -> FutureUtils.immediateFailureFuture(new RuntimeException())));
+    assertTrue(testFuture == testFuture.flatMapFailure(Exception.class, 
+                                                       (t) -> FutureUtils.immediateFailureFuture(new RuntimeException()), 
+                                                       SameThreadSubmitterExecutor.instance()));
+    assertTrue(testFuture == testFuture.flatMapFailure(Exception.class, 
+                                                       (t) -> FutureUtils.immediateFailureFuture(new RuntimeException()), 
+                                                       SameThreadSubmitterExecutor.instance(), null));
   }
 }
