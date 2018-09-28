@@ -206,7 +206,6 @@ public class FutureUtils {
         // swallowed
       }
     }
-    
     return resultCount;
   }
   
@@ -254,7 +253,6 @@ public class FutureUtils {
         // swallowed
       }
     }
-    
     return resultCount;
   }
   
@@ -592,7 +590,6 @@ public class FutureUtils {
         result.setFailure(t);
       }
     });
-    
     return result;
   }
   
@@ -1053,7 +1050,6 @@ public class FutureUtils {
         }
       }
     });
-    
     return resultFuture;
   }
   
@@ -1227,7 +1223,6 @@ public class FutureUtils {
         }
       }
     });
-    
     return resultFuture;
   }
   
@@ -1901,7 +1896,6 @@ public class FutureUtils {
       }
       try {
         f.get();
-        
         // if no exception thrown, add future
         super.handleFutureDone(f);
       } catch (InterruptedException e) {
