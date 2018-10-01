@@ -7,6 +7,8 @@ import java.util.concurrent.FutureTask;
 import org.threadly.concurrent.CallableContainer;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.event.RunnableListenerHelper;
+import org.threadly.util.ExceptionUtils;
+import org.threadly.util.SuppressedStackRuntimeException;
 import org.threadly.util.UnsafeAccess;
 
 /**
@@ -23,12 +25,17 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   private static final Field RUNNING_THREAD_FIELD;
   
   static {
+    Field runningThreadField = null;
     try {
-      RUNNING_THREAD_FIELD = FutureTask.class.getDeclaredField("runner");
-      UnsafeAccess.setFieldToPublic(RUNNING_THREAD_FIELD);
+      runningThreadField = FutureTask.class.getDeclaredField("runner");
+      UnsafeAccess.setFieldToPublic(runningThreadField);
     } catch (NoSuchFieldException | SecurityException e) {
-      throw new RuntimeException("Unsupported JVM version, please update threadly or file an issue" + 
-                                   "...Can not get running thread reference", e);
+      ExceptionUtils.handleException(new RuntimeException("Unsupported JVM version, please update threadly or file an issue" + 
+                                                             "...Can not get running thread reference", e));
+    } catch (RuntimeException e) {  // wrapped exception thrown from UnsafeAccess
+      ExceptionUtils.handleException(e);
+    } finally {
+      RUNNING_THREAD_FIELD = runningThreadField;
     }
   }
   
@@ -158,9 +165,11 @@ public class ListenableFutureTask<T> extends FutureTask<T>
           return stack;
         }
       }
-    } catch (IllegalArgumentException | IllegalAccessException | SecurityException  e) {
-      // at this point we should be good to go, this exception would be truly unexpected
-      throw new RuntimeException(e);
+    } catch (RuntimeException | IllegalAccessException  e) {
+      ExceptionUtils.handleException(
+          new SuppressedStackRuntimeException("Stack access not supported, returning null" + 
+                                                "...Please see first exception for more details", e));
+      return null;
     }
   }
 }
