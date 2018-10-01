@@ -187,6 +187,16 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   }
   
   /**
+   * This is to be called at the end of completion to notify listeners and then unset the running 
+   * thread.  It is separate from {@link #setDone(Throwable)} because it must be invoked OUTSIDE 
+   * of the `resultLock`.
+   */
+  protected void finishCompletion() {
+    listenerHelper.callListeners();
+    runningThread = null;
+  }
+  
+  /**
    * Call to indicate this future is done, and provide the given result.  It is expected that only 
    * this or {@link #setFailure(Throwable)} are called.
    * <p>
@@ -208,7 +218,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     }
     
     // call outside of lock
-    listenerHelper.callListeners();
+    finishCompletion();
     
     return true;
   }
@@ -240,7 +250,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     }
     
     // call outside of lock
-    listenerHelper.callListeners();
+    finishCompletion();
     
     return true;
   }
@@ -297,7 +307,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     
     if (canceled) {
       // call outside of lock
-      listenerHelper.callListeners();
+      finishCompletion();
     }
     
     return canceled;
@@ -347,7 +357,6 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     
     done = true;
     executingExecutor = null;
-    runningThread = null;
     
     resultLock.notifyAll();
     return true;

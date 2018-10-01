@@ -1688,7 +1688,7 @@ public class FutureUtils {
       
       if (callListeners) {
         // call outside of lock
-        listenerHelper.callListeners();
+        finishCompletion();
       }
       
       return canceled;
