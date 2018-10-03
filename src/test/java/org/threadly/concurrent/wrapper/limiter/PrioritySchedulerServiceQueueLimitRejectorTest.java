@@ -162,6 +162,48 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
     assertEquals(TEST_QTY, testableScheduler.tick());
   }
   
+  @Test
+  public void getDefaultPriorityTest() {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    
+    
+    assertEquals(testableScheduler.getDefaultPriority(), queueRejector.getDefaultPriority());
+  }
+  
+  @Test
+  public void getMaxWaitForLowPriority() {
+    TestableScheduler testableScheduler = new TestableScheduler();
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    
+    
+    assertEquals(testableScheduler.getMaxWaitForLowPriority(), 
+                 queueRejector.getMaxWaitForLowPriority());
+  }
+  
+  @Test
+  @Override
+  public void getWaitingForExecutionTaskCountTest() {
+    super.getWaitingForExecutionTaskCountTest();  // more complete tests, we focus here on priorities
+    
+    TestableScheduler testableScheduler = new TestableScheduler();
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+    
+    assertEquals(0, queueRejector.getWaitingForExecutionTaskCount());
+    
+    queueRejector.execute(DoNothingRunnable.instance(), TaskPriority.Low);
+    assertEquals(1, queueRejector.getWaitingForExecutionTaskCount());
+    assertEquals(0, queueRejector.getWaitingForExecutionTaskCount(TaskPriority.High));
+    assertEquals(1, queueRejector.getWaitingForExecutionTaskCount(TaskPriority.Low));
+    
+    testableScheduler.tick();
+    assertEquals(0, queueRejector.getWaitingForExecutionTaskCount());
+    assertEquals(0, queueRejector.getWaitingForExecutionTaskCount(TaskPriority.Low));
+  }
+  
   private static class PrioritySchedulerServiceQueueRejectorFactory implements SchedulerServiceFactory {
     private final PrioritySchedulerFactory schedulerFactory = new PrioritySchedulerFactory();
 

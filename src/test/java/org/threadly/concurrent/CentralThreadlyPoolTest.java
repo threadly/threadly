@@ -73,10 +73,35 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
   }
   
   @Test
+  public void rangedThreadPoolAvailableExecuteTest() throws InterruptedException, TimeoutException {
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.rangedThreadPool(0, 1).execute(av::signalComplete);
+    av.waitForTest();
+  }
+  
+  @Test
+  public void rangedThreadPoolThreadRenamedTest() throws InterruptedException, TimeoutException {
+    final String threadName = StringUtils.makeRandomString(5);
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.rangedThreadPool(0, 1, threadName).execute(() -> {
+      av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
+      av.signalComplete();
+    });
+    av.waitForTest();
+  }
+  
+  @Test
+  public void lowPrioritySingleThreadExecuteTest() throws InterruptedException, TimeoutException {
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.lowPrioritySingleThreadPool().execute(av::signalComplete);
+    av.waitForTest();
+  }
+  
+  @Test
   public void lowPrioritySingleThreadRenamedTest() throws InterruptedException, TimeoutException {
     final String threadName = StringUtils.makeRandomString(5);
     AsyncVerifier av = new AsyncVerifier();
-    CentralThreadlyPool.singleThreadPool(threadName).execute(() -> {
+    CentralThreadlyPool.lowPrioritySingleThreadPool(threadName).execute(() -> {
       av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
       av.signalComplete();
     });
@@ -121,6 +146,16 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
     AsyncVerifier av = new AsyncVerifier();
     CentralThreadlyPool.singleThreadPool(false, threadName).execute(() -> {
       av.assertTrue(Thread.currentThread().getName().startsWith(threadName));
+      av.signalComplete();
+    });
+    av.waitForTest();
+  }
+  
+  @Test
+  public void singleThreadPriorityTest() throws InterruptedException, TimeoutException {
+    AsyncVerifier av = new AsyncVerifier();
+    CentralThreadlyPool.singleThreadPool(false, null, Thread.MIN_PRIORITY).execute(() -> {
+      av.assertEquals(Thread.MIN_PRIORITY, Thread.currentThread().getPriority());
       av.signalComplete();
     });
     av.waitForTest();
