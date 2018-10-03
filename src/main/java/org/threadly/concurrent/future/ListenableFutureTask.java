@@ -30,8 +30,9 @@ public class ListenableFutureTask<T> extends FutureTask<T>
       runningThreadField = FutureTask.class.getDeclaredField("runner");
       UnsafeAccess.setFieldToPublic(runningThreadField);
     } catch (NoSuchFieldException | SecurityException e) {
-      ExceptionUtils.handleException(new RuntimeException("Unsupported JVM version, please update threadly or file an issue" + 
-                                                             "...Can not get running thread reference", e));
+      ExceptionUtils.handleException(
+          new RuntimeException("Unsupported JVM version, please update threadly or file an issue" + 
+                                 "...Can not get running thread reference", e));
     } catch (RuntimeException e) {  // wrapped exception thrown from UnsafeAccess
       ExceptionUtils.handleException(e);
     } finally {

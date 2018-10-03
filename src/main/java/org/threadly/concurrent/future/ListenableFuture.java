@@ -85,7 +85,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper) {
-    return FutureUtils.transform(this, mapper, true, null, null);
+    return InternalFutureUtils.transform(this, mapper, true, null, null);
   }
   
   /**
@@ -117,7 +117,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
-    return FutureUtils.transform(this, mapper, true, executor, null);
+    return InternalFutureUtils.transform(this, mapper, true, executor, null);
   }
   
   /**
@@ -159,7 +159,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor, 
                                       ListenerOptimizationStrategy optimizeExecution) {
-    return FutureUtils.transform(this, mapper, true, executor, optimizeExecution);
+    return InternalFutureUtils.transform(this, mapper, true, executor, optimizeExecution);
   }
   
   /**
@@ -213,7 +213,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper) {
-    return FutureUtils.transform(this, mapper, false, null, null);
+    return InternalFutureUtils.transform(this, mapper, false, null, null);
   }
   
   /**
@@ -244,7 +244,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, 
                                            Executor executor) {
-    return FutureUtils.transform(this, mapper, false, executor, null);
+    return InternalFutureUtils.transform(this, mapper, false, executor, null);
   }
   
   /**
@@ -280,7 +280,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, Executor executor, 
                                            ListenerOptimizationStrategy optimizeExecution) {
-    return FutureUtils.transform(this, mapper, false, executor, optimizeExecution);
+    return InternalFutureUtils.transform(this, mapper, false, executor, optimizeExecution);
   }
   
   /**
@@ -300,7 +300,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} that will complete when both this and the provided future does
    */
   default <R> ListenableFuture<R> flatMap(ListenableFuture<R> future) {
-    return FutureUtils.flatTransform(this, (ignored) -> future, null, null);
+    return InternalFutureUtils.flatTransform(this, (ignored) -> future, null, null);
   }
   
   /**
@@ -330,7 +330,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper) {
-    return FutureUtils.flatTransform(this, mapper, null, null);
+    return InternalFutureUtils.flatTransform(this, mapper, null, null);
   }
 
   /**
@@ -357,7 +357,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor) {
-    return FutureUtils.flatTransform(this, mapper, executor, null);
+    return InternalFutureUtils.flatTransform(this, mapper, executor, null);
   }
 
   /**
@@ -394,7 +394,7 @@ public interface ListenableFuture<T> extends Future<T> {
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor, 
                                           ListenerOptimizationStrategy optimizeExecution) {
-    return FutureUtils.flatTransform(this, mapper, executor, optimizeExecution);
+    return InternalFutureUtils.flatTransform(this, mapper, executor, optimizeExecution);
   }
   
   /**
@@ -415,7 +415,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
                                                                 Function<? super TT, ? extends T> mapper) {
-    return FutureUtils.failureTransform(this, mapper, throwableType, null, null);
+    return InternalFutureUtils.failureTransform(this, mapper, throwableType, null, null);
   }
 
   /**
@@ -439,7 +439,7 @@ public interface ListenableFuture<T> extends Future<T> {
   default <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
                                                                 Function<? super TT, ? extends T> mapper, 
                                                                 Executor executor) {
-    return FutureUtils.failureTransform(this, mapper, throwableType, executor, null);
+    return InternalFutureUtils.failureTransform(this, mapper, throwableType, executor, null);
   }
 
   /**
@@ -465,7 +465,7 @@ public interface ListenableFuture<T> extends Future<T> {
                                                                 Function<? super TT, ? extends T> mapper, 
                                                                 Executor executor, 
                                                                 ListenerOptimizationStrategy optimizeExecution) {
-    return FutureUtils.failureTransform(this, mapper, throwableType, executor, optimizeExecution);
+    return InternalFutureUtils.failureTransform(this, mapper, throwableType, executor, optimizeExecution);
   }
 
   /**
@@ -483,7 +483,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
                                                                     Function<? super TT, ListenableFuture<T>> mapper) {
-    return FutureUtils.flatFailureTransform(this, mapper, throwableType, null, null);
+    return InternalFutureUtils.flatFailureTransform(this, mapper, throwableType, null, null);
   }
 
   /**
@@ -505,7 +505,7 @@ public interface ListenableFuture<T> extends Future<T> {
   default <TT extends Throwable> ListenableFuture<T> flatMapFailure(Class<TT> throwableType, 
                                                                     Function<? super TT, ListenableFuture<T>> mapper, 
                                                                     Executor executor) {
-    return FutureUtils.flatFailureTransform(this, mapper, throwableType, executor, null);
+    return InternalFutureUtils.flatFailureTransform(this, mapper, throwableType, executor, null);
   }
 
   /**
@@ -529,7 +529,7 @@ public interface ListenableFuture<T> extends Future<T> {
                                                                     Function<? super TT, ListenableFuture<T>> mapper, 
                                                                     Executor executor, 
                                                                     ListenerOptimizationStrategy optimizeExecution) {
-    return FutureUtils.flatFailureTransform(this, mapper, throwableType, executor, optimizeExecution);
+    return InternalFutureUtils.flatFailureTransform(this, mapper, throwableType, executor, optimizeExecution);
   }
   
   /**
