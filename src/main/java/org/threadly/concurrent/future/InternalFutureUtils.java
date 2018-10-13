@@ -464,7 +464,8 @@ class InternalFutureUtils {
       
       if (callListeners) {
         // call outside of lock
-        finishCompletion();
+        listenerHelper.callListeners();
+        runningThread = null;
       }
       
       return canceled;
