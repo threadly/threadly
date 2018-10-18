@@ -20,10 +20,10 @@ public class StringUtils {
    * 
    * @since 5.14
    * @param p Character test
-   * @param s String to check against
+   * @param s CharSequence to check against
    * @return {@code true} if predicate returned true for every character in string
    */
-  public static boolean allCharsMatch(Predicate<Character> p, String s) {
+  public static boolean allCharsMatch(Predicate<Character> p, CharSequence s) {
     for (int i = 0; i < s.length(); i++) {
       if (! p.test(s.charAt(i))) {
         return false;
@@ -39,10 +39,10 @@ public class StringUtils {
    * 
    * @since 5.14
    * @param p Character test
-   * @param s String to check against
+   * @param s CharSequence to check against
    * @return {@code true} if predicate returned true for any characters in the string
    */
-  public static boolean anyCharsMatch(Predicate<Character> p, String s) {
+  public static boolean anyCharsMatch(Predicate<Character> p, CharSequence s) {
     for (int i = 0; i < s.length(); i++) {
       if (p.test(s.charAt(i))) {
         return true;
