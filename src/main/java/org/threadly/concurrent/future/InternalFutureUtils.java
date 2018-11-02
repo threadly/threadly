@@ -151,7 +151,7 @@ class InternalFutureUtils {
           try {
             slf.setRunningThread(Thread.currentThread());
             ListenableFuture<? extends RT> mapFuture = transformer.apply(result);
-            slf.updateCancelDelegateFuture(mapFuture);
+            slf.updateDelegateFuture(mapFuture);
             mapFuture.addCallback(slf);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable t) {
@@ -322,7 +322,7 @@ class InternalFutureUtils {
           try {
             slf.setRunningThread(Thread.currentThread());
             ListenableFuture<RT> mapFuture = mapper.apply((TT)t);
-            slf.updateCancelDelegateFuture(mapFuture);
+            slf.updateDelegateFuture(mapFuture);
             mapFuture.addCallback(slf);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable newT) {
@@ -374,23 +374,23 @@ class InternalFutureUtils {
    * @param <T> The result object type returned from the futures
    */
   protected static class CancelDelegateSettableListenableFuture<T> extends SettableListenableFuture<T> {
-    private volatile ListenableFuture<?> cancelDelegateFuture;
+    private volatile ListenableFuture<?> delegateFuture;
 
     protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf, 
                                                      Executor executingExecutor) {
       super(false, executingExecutor);
       
-      cancelDelegateFuture = lf;
+      delegateFuture = lf;
     }
     
-    public void updateCancelDelegateFuture(ListenableFuture<?> lf) {
-      this.cancelDelegateFuture = lf;
+    public void updateDelegateFuture(ListenableFuture<?> lf) {
+      this.delegateFuture = lf;
     }
     
     @Override
     protected boolean setDone(Throwable cause) {
       if (super.setDone(cause)) {
-        cancelDelegateFuture = null;
+        delegateFuture = null;
         return true;
       } else {
         return false;
@@ -399,7 +399,7 @@ class InternalFutureUtils {
 
     @Override
     public StackTraceElement[] getRunningStackTrace() {
-      ListenableFuture<?> delegateFuture = this.cancelDelegateFuture;
+      ListenableFuture<?> delegateFuture = this.delegateFuture;
       if (delegateFuture != null) {
         StackTraceElement[] result = delegateFuture.getRunningStackTrace();
         if (result != null) {
@@ -410,7 +410,7 @@ class InternalFutureUtils {
     }
     
     protected boolean cancelRegardlessOfDelegateFutureState(boolean interruptThread) {
-      ListenableFuture<?> cancelDelegateFuture = this.cancelDelegateFuture;
+      ListenableFuture<?> cancelDelegateFuture = this.delegateFuture;
       if (super.cancel(interruptThread)) {
         cancelDelegateFuture.cancel(interruptThread);
         return true;
@@ -452,7 +452,7 @@ class InternalFutureUtils {
       boolean callListeners = false;
       synchronized (resultLock) {
         if (! isDone()) {
-          if (cancelDelegateFuture.cancel(false)) {
+          if (delegateFuture.cancel(false)) {
             canceled = true;
             if (! isDone()) { // may have transitioned to canceled already as a listener (within lock)
               callListeners = true;

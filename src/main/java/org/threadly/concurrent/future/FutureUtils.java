@@ -986,7 +986,8 @@ public class FutureUtils extends InternalFutureUtils {
     
     long startTime = timeoutMillis > 0 ? Clock.accurateForwardProgressingMillis() : -1;
     // can not assert not resolved in parallel because user may cancel future at any point
-    SettableListenableFuture<T> resultFuture = new SettableListenableFuture<>(false);
+    CancelDelegateSettableListenableFuture<T> resultFuture = 
+        new CancelDelegateSettableListenableFuture<>(startingFuture, scheduler);
     Callable<T> cancelCheckingTask = new Callable<T>() {
       @Override
       public T call() throws Exception {
@@ -1017,9 +1018,11 @@ public class FutureUtils extends InternalFutureUtils {
               resultFuture.setFailure(new TimeoutException());
             }
           } else if (loopTest.test(result)) {
+            ListenableFuture<T> lf = 
+                scheduler.submitScheduled(cancelCheckingTask, scheduleDelayMillis);
+            resultFuture.updateDelegateFuture(lf);
             // TODO - if future is always already complete, this may StackOverflow
-            scheduler.submitScheduled(cancelCheckingTask, scheduleDelayMillis)
-                     .addCallback(this);  // add this to check again once execution completes
+            lf.addCallback(this);  // add this to check again once execution completes
           } else {
             // once we have our result, this will end our loop
             resultFuture.setResult(result);
@@ -1146,8 +1149,8 @@ public class FutureUtils extends InternalFutureUtils {
     }
     
     long startTime = timeoutMillis > 0 ? Clock.accurateForwardProgressingMillis() : -1;
-    // can not assert not resolved in parallel because user may cancel future at any point
-    SettableListenableFuture<T> resultFuture = new SettableListenableFuture<>(false);
+    CancelDelegateSettableListenableFuture<T> resultFuture = 
+        new CancelDelegateSettableListenableFuture<>(startingFuture, null);
     
     startingFuture.addCallback(new FailurePropogatingFutureCallback<T>(resultFuture) {
       @Override
@@ -1178,6 +1181,7 @@ public class FutureUtils extends InternalFutureUtils {
                 return;
               }
             } else {
+              resultFuture.updateDelegateFuture(lf);
               lf.addCallback(this);
               return;
             }

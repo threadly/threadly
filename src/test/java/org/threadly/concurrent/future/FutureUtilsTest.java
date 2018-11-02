@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
+import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
@@ -1472,6 +1473,30 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void scheduleWhileGetRunningStackTraceTest() {
+    SingleThreadScheduler sts = new SingleThreadScheduler();
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    ListenableFuture<Boolean> future = 
+        FutureUtils.scheduleWhile(sts, 0, 
+                                  sts.submitScheduled(() -> { return true; }, DELAY_TIME), 
+                                  () -> { 
+                                    btr.run();
+                                    return false;
+                                  }, 
+                                  (loop) -> loop);
+    try {
+      btr.blockTillStarted();
+      
+      StackTraceElement[] stack = future.getRunningStackTrace();
+      assertNotNull(stack);
+      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+    } finally {
+      btr.unblock();
+      sts.shutdown();
+    }
+  }
+  
+  @Test
   public void executeWhileTest() throws InterruptedException, ExecutionException {
     AtomicInteger ai = new AtomicInteger();
     ListenableFuture<Integer> f = 
@@ -1501,7 +1526,9 @@ public class FutureUtilsTest extends ThreadlyTester {
   public void executeWhileTaskFailureTest() throws InterruptedException {
     RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableFuture<?> f = 
-        FutureUtils.executeWhile(FutureUtils.immediateResultFuture(null), () -> { throw failure; }, (o) -> true);
+        FutureUtils.executeWhile(FutureUtils.immediateResultFuture(null), 
+                                 () -> { throw failure; }, 
+                                 (o) -> true);
 
     assertTrue(f.isDone());
     try {
@@ -1548,6 +1575,26 @@ public class FutureUtilsTest extends ThreadlyTester {
       fail("Exception should have thrown");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() == failure);
+    }
+  }
+  
+  @Test
+  public void executeWhileGetRunningStackTraceTest() {
+    SettableListenableFuture<Boolean> startingFuture = new SettableListenableFuture<>();
+    SettableListenableFuture<Boolean> runningFuture = new SettableListenableFuture<>();
+    ListenableFuture<Boolean> future = 
+        FutureUtils.executeWhile(startingFuture, 
+                                 () -> runningFuture, 
+                                 (loop) -> loop);
+    try {
+      startingFuture.setResult(true); // loop to running future
+      runningFuture.setRunningThread(Thread.currentThread());
+
+      StackTraceElement[] stack = future.getRunningStackTrace();
+      assertNotNull(stack);
+      assertEquals(this.getClass().getName(), stack[3].getClassName());
+    } finally {
+      runningFuture.setResult(false);
     }
   }
 }
