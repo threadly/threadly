@@ -966,9 +966,6 @@ public class FutureUtils extends InternalFutureUtils {
    *                                  {@code true} completes with the last result
    * @return Future that will resolve once returned {@link Predicate} returns {@code false}
    */
-  // TODO - de-duplicate code with executeWhile.  This is slightly awkward because of when we check the cancel state
-  //          If we just naively call directly into it we will check the state before submitting to the scheduler, 
-  //          And not when the task is about to actually be executed.  Also there will be annoying wrapping overhead
   public static <T> ListenableFuture<T> scheduleWhile(SubmitterScheduler scheduler, 
                                                       long scheduleDelayMillis, 
                                                       ListenableFuture<? extends T> startingFuture, 
@@ -1151,28 +1148,11 @@ public class FutureUtils extends InternalFutureUtils {
     long startTime = timeoutMillis > 0 ? Clock.accurateForwardProgressingMillis() : -1;
     // can not assert not resolved in parallel because user may cancel future at any point
     SettableListenableFuture<T> resultFuture = new SettableListenableFuture<>(false);
-    Callable<ListenableFuture<? extends T>> cancelCheckingTask = new Callable<ListenableFuture<? extends T>>() {
-      @Override
-      public ListenableFuture<? extends T> call() throws Exception {
-        // set thread before check canceled state so if canceled with interrupt we will interrupt the call
-        resultFuture.setRunningThread(Thread.currentThread());
-        try {
-          if (! resultFuture.isCancelled()) {
-            return asyncTask.call();
-          } else {
-            // result future is already complete, so throw to avoid executing, but only throw such 
-            // that we wont attempt to do anything with the result future
-            throw FailurePropogatingFutureCallback.IGNORED_FAILURE;
-          }
-        } finally {
-          resultFuture.setRunningThread(null);
-        }
-      }
-    };
     
     startingFuture.addCallback(new FailurePropogatingFutureCallback<T>(resultFuture) {
       @Override
       public void handleResult(T result) {
+        resultFuture.setRunningThread(Thread.currentThread());
         try {
           while (loopTest.test(result)) {
             if (startTime > -1 && Clock.lastKnownForwardProgressingMillis() - startTime > timeoutMillis) {
@@ -1183,7 +1163,11 @@ public class FutureUtils extends InternalFutureUtils {
               }
               return;
             }
-            ListenableFuture<? extends T> lf = cancelCheckingTask.call();
+            if (resultFuture.isCancelled()) {
+              // already completed, just break the loop
+              return;
+            }
+            ListenableFuture<? extends T> lf = asyncTask.call();
             if (lf.isDone()) {  // prevent StackOverflow when already done futures are returned
               try {
                 result = lf.get();
@@ -1206,6 +1190,9 @@ public class FutureUtils extends InternalFutureUtils {
           ExceptionUtils.handleException(t);
           
           resultFuture.setFailure(t);
+        } finally {
+          // unset running thread in case loop broke without final result
+          resultFuture.setRunningThread(null);
         }
       }
     });
