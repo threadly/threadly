@@ -157,9 +157,7 @@ public class Clock {
    * @return Amount of time in milliseconds since Clock class was loaded
    */
   public static long accurateForwardProgressingMillis() {
-    accurateTimeNanos();
-    
-    return lastKnownForwardProgressingMillis();
+    return ((nowNanos = System.nanoTime()) - CLOCK_STARTUP_TIME_NANOS) / NANOS_IN_MILLISECOND;
   }
 
   /**
