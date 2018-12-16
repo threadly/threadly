@@ -449,8 +449,8 @@ public class FutureUtils extends InternalFutureUtils {
    * This call is similar to {@link #makeCompleteFuture(Iterable)} in that it will immediately 
    * provide a future that will not be satisfied till all provided futures complete.  
    * <p>
-   * This future provides a list of the completed futures as the result.  The order of this list 
-   * is NOT deterministic.
+   * This future provides a list of the completed futures as the result.  The order of the result 
+   * list will match the order returned by the provided {@link Iterable}.
    * <p>
    * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
    * futures will attempt to be canceled in the same way.
@@ -470,7 +470,8 @@ public class FutureUtils extends InternalFutureUtils {
    * provide a future that will not be satisfied till all provided futures complete.  
    * <p>
    * This future provides a list of the futures that completed without throwing an exception nor 
-   * were canceled.  The order of the resulting list is NOT deterministic.
+   * were canceled.  The order of the resulting list is NOT deterministic.  If order is needed 
+   * please see {@link #makeCompleteListFuture(Iterable)} and check for results.
    * <p>
    * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
    * futures will attempt to be canceled in the same way.
@@ -490,7 +491,8 @@ public class FutureUtils extends InternalFutureUtils {
    * provide a future that will not be satisfied till all provided futures complete.  
    * <p>
    * This future provides a list of the futures that failed by either throwing an exception or 
-   * were canceled.  The order of the resulting list is NOT deterministic.
+   * were canceled.  The order of the resulting list is NOT deterministic.  If order is needed 
+   * please see {@link #makeCompleteListFuture(Iterable)} and check for results.
    * <p>
    * If {@link ListenableFuture#cancel(boolean)} is invoked on the returned future, all provided 
    * futures will attempt to be canceled in the same way.
@@ -511,7 +513,7 @@ public class FutureUtils extends InternalFutureUtils {
    * call does NOT block, instead it will return a future which will not complete until all the 
    * provided futures complete.  
    * <p>
-   * The order of the result list is NOT deterministic.
+   * The order of the result list will match the order returned by the provided {@link Iterable}.
    * <p>
    * If called with {@code true} for {@code ignoreFailedFutures}, even if some of the provided 
    * futures finished in error, they will be ignored and just the successful results will be 
@@ -537,9 +539,10 @@ public class FutureUtils extends InternalFutureUtils {
     if (futures == null) {
       return immediateResultFuture(Collections.<T>emptyList());
     }
-    ListenableFuture<List<ListenableFuture<? extends T>>> completeFuture = makeCompleteListFuture(futures);
-    final SettableListenableFuture<List<T>> result;
-    result = new CancelDelegateSettableListenableFuture<>(completeFuture, null);
+    ListenableFuture<List<ListenableFuture<? extends T>>> completeFuture = 
+        makeCompleteListFuture(futures);
+    final SettableListenableFuture<List<T>> result = 
+        new CancelDelegateSettableListenableFuture<>(completeFuture, null);
     
     completeFuture.addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
       @Override

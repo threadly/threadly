@@ -575,6 +575,7 @@ public class FutureUtilsTest extends ThreadlyTester {
     }
     
     assertFalse(result.contains(excludedFuture));
+    assertEquals(expected.size() - (excludedFuture == null ? 0 : 1), result.size());
   }
   
   @Test
@@ -833,6 +834,36 @@ public class FutureUtilsTest extends ThreadlyTester {
    
     assertTrue(actualResults.containsAll(expectedResults));
     assertTrue(expectedResults.containsAll(actualResults));
+  }
+  
+  @Test
+  public void makeResultListOrderTest() throws InterruptedException, ExecutionException {
+    List<String> expectedResults = new ArrayList<>(TEST_QTY);
+    List<SettableListenableFuture<String>> futures = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      String result = StringUtils.makeRandomString(5);
+      expectedResults.add(result);
+      SettableListenableFuture<String> slf = new SettableListenableFuture<>();
+      if (i % 2 == 1) {
+        slf.setResult(result);
+      }
+      futures.add(slf);
+    }
+    
+    ListenableFuture<List<String>> collectionFuture = FutureUtils.makeResultListFuture(futures, false);
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<String> slf = futures.get(i);
+      if (! slf.isDone()) {
+        slf.setResult(expectedResults.get(i));
+      }
+    }
+    
+    List<String> actualResults = collectionFuture.get();
+
+    for (int i = 0; i < TEST_QTY; i++) {
+      assertEquals(expectedResults.get(i), actualResults.get(i));
+    }
   }
   
   @Test
