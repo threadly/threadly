@@ -683,6 +683,42 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void makeSuccessListOrderTest() throws InterruptedException, ExecutionException {
+    List<String> expectedResults = new ArrayList<>(TEST_QTY);
+    List<SettableListenableFuture<String>> futures = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      SettableListenableFuture<String> slf = new SettableListenableFuture<>();
+      if (i == 1) {
+        slf.setFailure(new Exception());
+      } else {
+        String result = StringUtils.makeRandomString(5);
+        expectedResults.add(result);
+        if (i % 2 == 0) {
+          slf.setResult(result);
+        }
+      }
+      futures.add(slf);
+    }
+    
+    ListenableFuture<List<ListenableFuture<? extends String>>> collectionFuture = 
+        FutureUtils.makeSuccessListFuture(futures);
+
+    for (int i = 2; i < TEST_QTY; i++) {
+      SettableListenableFuture<String> slf = futures.get(i);
+      if (! slf.isDone()) {
+        slf.setResult(expectedResults.get(i - 1));
+      }
+    }
+    
+    List<ListenableFuture<? extends String>> actualResults = collectionFuture.get();
+    
+    assertEquals(expectedResults.size(), actualResults.size());
+    for (int i = 0; i < expectedResults.size(); i++) {
+      assertEquals(expectedResults.get(i), actualResults.get(i).get());
+    }
+  }
+  
+  @Test
   public void makeFailureListFutureNullTest() {
     ListenableFuture<List<ListenableFuture<?>>> f = FutureUtils.makeFailureListFuture(null);
     

@@ -541,6 +541,16 @@ class InternalFutureUtils {
     }
     
     /**
+     * Adds item to the result list.  This list may be lazily constructed and thus why you must add 
+     * through this function rather than directly on to the list.
+     */
+    protected void addResult(ListenableFuture<? extends T> f, int index) {
+      synchronized (this) {
+        ensureCapacity(index + 1)[index] = f;
+      }
+    }
+    
+    /**
      * Attach a {@link FutureDoneTask} to the provided future.  This is necessary for tracking as 
      * futures complete, failing to attach a task could result in this future never completing.  
      * <p>
@@ -583,7 +593,9 @@ class InternalFutureUtils {
       if (buildingResult == EMPTY_ARRAY) {
         return Collections.emptyList();
       } else {
-        return Arrays.asList(buildingResult);
+        List<ListenableFuture<? extends T>> result = Arrays.asList(buildingResult);
+        buildingResult = null;
+        return result;
       }
     }
     
@@ -677,9 +689,7 @@ class InternalFutureUtils {
 
     @Override
     protected void handleFutureDone(ListenableFuture<? extends T> f, int index) {
-      synchronized (this) {
-        ensureCapacity(index + 1)[index] = f;
-      }
+      addResult(f, index);
     }
   }
   
@@ -691,32 +701,34 @@ class InternalFutureUtils {
    * @param <T> The result object type returned from the futures
    */
   protected static abstract class PartialFutureCollection<T> extends FutureCollection<T> {
-    private int count;  // don't set with `=` due to use from super constructor, so use default 0
-    
     protected PartialFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
     
-    /**
-     * Adds item to the result list.  This list may be lazily constructed and thus why you must add 
-     * through this function rather than directly on to the list.
-     */
-    protected void addResult(ListenableFuture<? extends T> f) {
-      synchronized (this) {
-        int index = count;
-        ensureCapacity(++count)[index] = f;
-      }
-    }
-    
     @Override
     protected List<ListenableFuture<? extends T>> getFinalResultList() {
-      if (count == 0) {
-        return Collections.emptyList();
-      } else if (count < buildingResult.length) {
-        return Arrays.asList(Arrays.copyOf(buildingResult, count));
-      } else {
-        return Arrays.asList(buildingResult);
+      List<ListenableFuture<? extends T>> superResult = super.getFinalResultList();
+      
+      for (int i = 0; i < superResult.size(); i++) {  // should be RandomAccess list
+        if (superResult.get(i) == null) { // indicates we must manipulate list
+          for (i = i == 0 ? 1 : 0; i < superResult.size(); i++) {
+            if (superResult.get(i) != null) { // found first item that must be included
+              ArrayList<ListenableFuture<? extends T>> result = 
+                  new ArrayList<>(superResult.size() - Math.max(i, 1));
+              for (; i < superResult.size(); i++) {
+                ListenableFuture<? extends T> lf = superResult.get(i);
+                if (lf != null) {
+                  result.add(lf);
+                }
+              }
+              return result;
+            }
+          }
+          return Collections.emptyList(); // all items were null
+        }
       }
+      
+      return superResult; // no null found
     }
   }
   
@@ -744,8 +756,7 @@ class InternalFutureUtils {
       }
       try {
         f.get();
-        // if no exception thrown, add future
-        addResult(f);
+        addResult(f, index);  // if no exception thrown, add future
       } catch (InterruptedException e) {
         // should not be possible since this should only be called once the future is already done
         Thread.currentThread().interrupt();
@@ -782,7 +793,7 @@ class InternalFutureUtils {
     protected void handleFutureDone(ListenableFuture<? extends T> f, int index) {
       if (f.isCancelled()) {
         // detect canceled conditions before an exception would have otherwise thrown 
-        addResult(f);
+        addResult(f, index);
         return;
       }
       try {
@@ -791,7 +802,7 @@ class InternalFutureUtils {
         // should not be possible since this should only be called once the future is already done
         Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
-        addResult(f); // failed so add it
+        addResult(f, index); // failed so add it
       } catch (CancellationException e) {
         // should not be possible due check at start on what should be an already done future
         throw e;
