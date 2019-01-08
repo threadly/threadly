@@ -279,6 +279,60 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void invokeAfterAllCompleteNullTest() {
+    TestRunnable tr = new TestRunnable();
+    
+    FutureUtils.invokeAfterAllComplete(null, tr);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void invokeAfterAllCompleteEmptyListTest() {
+    List<ListenableFuture<?>> futures = Collections.emptyList();
+    TestRunnable tr = new TestRunnable();
+    
+    FutureUtils.invokeAfterAllComplete(futures, tr);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void invokeAfterAllCompleteTest() {
+    List<SettableListenableFuture<Void>> futures = 
+        Collections.singletonList(new SettableListenableFuture<>());
+    TestRunnable tr = new TestRunnable();
+    
+    FutureUtils.invokeAfterAllComplete(futures, tr);
+    
+    assertEquals(0, tr.getRunCount());
+    
+    futures.get(0).setResult(null);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void invokeAfterAllCompleteOnExecutorTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    List<SettableListenableFuture<Void>> futures = 
+        Collections.singletonList(new SettableListenableFuture<>());
+    TestRunnable tr = new TestRunnable();
+    
+    FutureUtils.invokeAfterAllComplete(futures, tr, scheduler);
+    
+    assertEquals(0, tr.getRunCount());
+    
+    futures.get(0).setResult(null);
+    
+    assertEquals(0, tr.getRunCount());
+    
+    assertEquals(1, scheduler.tick());
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
   public void makeCompleteFutureNullTest() {
     ListenableFuture<?> f = FutureUtils.makeCompleteFuture(null);
     
@@ -286,11 +340,36 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void makeCompleteFutureEmptyListTest() {
+  public void makeCompleteFutureEmptyListTest() throws InterruptedException, ExecutionException {
     List<ListenableFuture<?>> futures = Collections.emptyList();
     ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
     
     assertTrue(f.isDone());
+    assertNull(f.get());
+  }
+  
+  @Test
+  public void makeCompleteFutureSingletonListTest() {
+    List<ListenableFuture<?>> futures = Collections.singletonList(FutureUtils.immediateResultFuture(null));
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(futures);
+    
+    assertTrue(f == futures.get(0));
+  }
+  
+  @Test
+  public void makeCompleteFutureEmptyCollectionTest() throws InterruptedException, ExecutionException {
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(Collections.emptySet());
+    
+    assertTrue(f.isDone());
+    assertNull(f.get());
+  }
+  
+  @Test
+  public void makeCompleteFutureSinletonCollectionTest() {
+    ListenableFuture<?> singletonFuture = FutureUtils.immediateResultFuture(null);
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(Collections.singleton(singletonFuture));
+    
+    assertTrue(f == singletonFuture);
   }
   
   @Test

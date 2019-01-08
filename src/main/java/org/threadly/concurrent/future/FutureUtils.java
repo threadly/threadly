@@ -1,15 +1,18 @@
 package org.threadly.concurrent.future;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -44,6 +47,8 @@ import org.threadly.util.ExceptionUtils;
  * <li>{@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)}
  * <li>{@link #countFuturesWithResult(Iterable, Object)}
  * <li>{@link #countFuturesWithResult(Iterable, Object, long)}
+ * <li>{@link #invokeAfterAllComplete(Collection, Runnable)}
+ * <li>{@link #invokeAfterAllComplete(Collection, Runnable, Executor)}
  * <li>{@link #makeCompleteFuture(Iterable)}
  * <li>{@link #makeCompleteFuture(Iterable, Object)}
  * <li>{@link #makeFailurePropagatingCompleteFuture(Iterable)}
@@ -249,6 +254,71 @@ public class FutureUtils extends InternalFutureUtils {
   }
   
   /**
+   * A potentially more performant option than {@link #makeCompleteFuture(List)} when only a 
+   * listener invocation is desired after all the futures complete.  This is effective an async 
+   * implementation of {@link #blockTillAllComplete(Iterable)}.  If the listener needs to be 
+   * invoked on another thread than one of the provided futures please use 
+   * {@link #invokeAfterAllComplete(Collection, Runnable, Executor)}.  Please see 
+   * {@link ListenableFuture#addListener(Runnable)} for more information on execution without an 
+   * {@link Executor}.
+   * <p>
+   * It is critical that the collection is NOT modified while this is invoked.  A change in the 
+   * futures contained in the collection will lead to unreliable behavior with the exectuion of the 
+   * listener.
+   * 
+   * @param futures Futures that must complete before listener is invoked
+   * @param listener Invoked once all the provided futures have completed
+   */
+  public static void invokeAfterAllComplete(Collection<? extends ListenableFuture<?>> futures, 
+                                            Runnable listener) {
+    invokeAfterAllComplete(futures, listener, null);
+  }
+  
+  /**
+   * A potentially more performant option than {@link #makeCompleteFuture(List)} when only a 
+   * listener invocation is desired after all the futures complete.  This is effective an async 
+   * implementation of {@link #blockTillAllComplete(Iterable)}.
+   * <p>
+   * It is critical that the collection is NOT modified while this is invoked.  A change in the 
+   * futures contained in the collection will lead to unreliable behavior with the exectuion of the 
+   * listener.
+   * 
+   * @param futures Futures that must complete before listener is invoked
+   * @param listener Invoked once all the provided futures have completed
+   * @param executor Executor (or {@code null}) to invoke listener on, see 
+   *                    {@link ListenableFuture#addListener(Runnable, Executor)}
+   */
+  public static void invokeAfterAllComplete(Collection<? extends ListenableFuture<?>> futures, 
+                                            Runnable listener, Executor executor) {
+    ArgumentVerifier.assertNotNull(listener, "listener");
+    
+    int size = futures == null ? 0 : futures.size();
+    if (size == 0) {
+      if (executor == null) {
+        listener.run();
+      } else {
+        executor.execute(listener);
+      }
+    } else if (size == 1) {
+      futures.iterator().next().addListener(listener, executor);
+    } else {
+      AtomicInteger remaining = new AtomicInteger(size);
+      Runnable decrementingListener = () -> {
+        if (remaining.decrementAndGet() == 0) {
+          if (executor == null) {
+            listener.run();
+          } else {
+            executor.execute(listener);
+          }
+        }
+      };
+      for (ListenableFuture<?> lf : futures) {
+        lf.addListener(decrementingListener);
+      }
+    }
+  }
+  
+  /**
    * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
    * when all futures are complete without blocking.  Unlike 
    * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
@@ -271,6 +341,34 @@ public class FutureUtils extends InternalFutureUtils {
       return ImmediateResultListenableFuture.NULL_RESULT;
     } else if (futures.size() == 1) {
       return futures.get(0);
+    } else {
+      return makeCompleteFuture((Iterable<? extends ListenableFuture<?>>)futures);
+    }
+  }
+  
+  /**
+   * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
+   * when all futures are complete without blocking.  Unlike 
+   * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
+   * {@link ListenableFuture}'s.  But will return immediately, providing a new 
+   * {@link ListenableFuture} that will be called once all the provided futures have finished.  
+   * <p>
+   * The future returned will provide a {@code null} result, it is the responsibility of the 
+   * caller to get the actual results from the provided futures.  This is designed to just be an 
+   * indicator as to when they have finished.  If you need the results from the provided futures, 
+   * consider using {@link #makeCompleteListFuture(Iterable)}.  You should also consider using 
+   * {@link #makeFailurePropagatingCompleteFuture(Iterable)}, it has the same semantics as this one 
+   * except it will put the returned future into an error state if any of the provided futures error.
+   * 
+   * @since 5.3
+   * @param futures Collection of futures that must finish before returned future is satisfied
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static ListenableFuture<?> makeCompleteFuture(Collection<? extends ListenableFuture<?>> futures) {
+    if (futures == null || futures.isEmpty()) {
+      return ImmediateResultListenableFuture.NULL_RESULT;
+    } else if (futures.size() == 1) {
+      return futures.iterator().next();
     } else {
       return makeCompleteFuture((Iterable<? extends ListenableFuture<?>>)futures);
     }

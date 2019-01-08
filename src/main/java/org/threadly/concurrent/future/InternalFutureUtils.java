@@ -700,7 +700,7 @@ class InternalFutureUtils {
    * @since 5.30
    * @param <T> The result object type returned from the futures
    */
-  protected static abstract class PartialFutureCollection<T> extends FutureCollection<T> {
+  protected abstract static class PartialFutureCollection<T> extends FutureCollection<T> {
     protected PartialFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
