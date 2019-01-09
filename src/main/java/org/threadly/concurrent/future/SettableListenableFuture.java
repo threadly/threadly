@@ -115,7 +115,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
         callback.handleFailure(failure);
         return;
       } else if (canceled) {
-        callback.handleFailure(new CancellationException());
+        callback.handleFailure(new CancellationException(getCancellationExceptionMessage()));
         return;
       }
     }
@@ -126,7 +126,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
                                  if (failure != null) {
                                    callback.handleFailure(failure);
                                  } else if (canceled) {
-                                   callback.handleFailure(new CancellationException());
+                                   callback.handleFailure(new CancellationException(getCancellationExceptionMessage()));
                                  } else {
                                    callback.handleResult(result);
                                  }
@@ -359,6 +359,18 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   public boolean isDone() {
     return done;
   }
+  
+  /**
+   * Invoked when a {@link CancellationException} is constructed.  By default this will return 
+   * {@code null}, but it may be overriden if a custom message wants to be included with the 
+   * {@link CancellationException}.  This can be useful for extending the class and recording 
+   * state when a cancel occurs, then later providing this state as a message in the exception.
+   * 
+   * @return The message to be provided to the {@link CancellationException} constructor, or {@code null}
+   */
+  protected String getCancellationExceptionMessage() {
+    return null;
+  }
 
   @Override
   public T get() throws InterruptedException, ExecutionException {
@@ -370,7 +382,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       if (failure != null) {
         throw new ExecutionException(failure);
       } else if (canceled) {
-        throw new CancellationException();
+        throw new CancellationException(getCancellationExceptionMessage());
       } else if (resultCleared) {
         throw new IllegalStateException("Result cleared, future get's not possible");
       } else {
@@ -394,7 +406,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       if (failure != null) {
         throw new ExecutionException(failure);
       } else if (canceled) {
-        throw new CancellationException();
+        throw new CancellationException(getCancellationExceptionMessage());
       } else if (done) {
         if (resultCleared) {
           throw new IllegalStateException("Result cleared, future get's not possible");
