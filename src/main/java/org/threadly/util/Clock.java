@@ -159,6 +159,21 @@ public class Clock {
   public static long accurateForwardProgressingMillis() {
     return ((nowNanos = System.nanoTime()) - CLOCK_STARTUP_TIME_NANOS) / NANOS_IN_MILLISECOND;
   }
+  
+  /**
+   * Finds the duration in milliseconds from the reference time.  Effectively this is the same as 
+   * subtracting the result from {@link #lastKnownForwardProgressingMillis()} from the parameter 
+   * provided.  The parameter provided should have been a result from 
+   * {@link #lastKnownForwardProgressingMillis()} or {@link #accurateForwardProgressingMillis()}.  
+   * Manipulating that time before calling this is not supported (negative results will not be 
+   * provided).  This is simply a helper function for this very common operation.
+   * 
+   * @param forwardMillis The reference time
+   * @return The milliseconds from the provided reference time
+   */
+  public static long forwardProgressingDuration(long forwardMillis) {
+    return Math.max(0, lastKnownForwardProgressingMillis() - forwardMillis);
+  }
 
   /**
    * Getter for the last known time in milliseconds.  This time is considered semi-accurate, based 

@@ -73,6 +73,17 @@ public class ClockTest extends ThreadlyTester {
   }
   
   @Test
+  public void forwardProgressingDurationTest() {
+    long startTime = Clock.lastKnownForwardProgressingMillis();
+    
+    assertEquals(0, Clock.forwardProgressingDuration(startTime));
+    
+    TestUtils.blockTillClockAdvances();
+    
+    assertTrue(Clock.forwardProgressingDuration(startTime) > 0);
+  }
+  
+  @Test
   public void lastKnownForwardProgressingMillisAccurateTimeUpdateTest() {
     // verify clock is not updating
     long before = Clock.lastKnownForwardProgressingMillis();
