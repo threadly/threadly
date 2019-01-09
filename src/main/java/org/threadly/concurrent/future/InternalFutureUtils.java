@@ -24,7 +24,6 @@ import org.threadly.util.SuppressedStackRuntimeException;
  * @since 5.29
  */
 class InternalFutureUtils {
-  
   protected static <T> ListenableFuture<T> immediateCanceledFuture() {
     SettableListenableFuture<T> slf = new SettableListenableFuture<>();
     slf.cancel(false);
