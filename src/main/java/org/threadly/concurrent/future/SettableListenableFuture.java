@@ -5,9 +5,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
 import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.Clock;
+import org.threadly.util.StringUtils;
 
 /**
  * This class is designed to be a helper when returning a single result asynchronously.  This is 
@@ -17,13 +17,17 @@ import org.threadly.util.Clock;
  * @since 1.2.0
  * @param <T> The result object type returned by this future
  */
-public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureCallback<T> {
+public class SettableListenableFuture<T> extends AbstractCancellationMessageProvidingListenableFuture<T>
+                                         implements ListenableFuture<T>, FutureCallback<T> {
+  // used to represent a canceled state when no other message is available
+  private static final String EMPTY_CANCEL_STATE_MESSAGE = StringUtils.makeRandomString(64);
+  
   protected final RunnableListenerHelper listenerHelper;
   protected final Object resultLock;
   protected final boolean throwIfAlreadyComplete;
   protected volatile Thread runningThread;
   private volatile boolean done;
-  private volatile boolean canceled;
+  private volatile String cancelStateMessage;  // set non-null when canceled
   private Executor executingExecutor; // since done is volatile, this does not need to be
   private boolean resultCleared;
   private T result;
@@ -84,6 +88,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     this.runningThread = null;
     this.executingExecutor = executingExecutor;
     done = false;
+    cancelStateMessage = null;
     resultCleared = false;
     result = null;
     failure = null;
@@ -114,7 +119,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       } else if (failure != null) {
         callback.handleFailure(failure);
         return;
-      } else if (canceled) {
+      } else if (cancelStateMessage != null) {
         callback.handleFailure(new CancellationException(getCancellationExceptionMessage()));
         return;
       }
@@ -125,7 +130,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     listenerHelper.addListener(() -> {
                                  if (failure != null) {
                                    callback.handleFailure(failure);
-                                 } else if (canceled) {
+                                 } else if (cancelStateMessage != null) {
                                    callback.handleFailure(new CancellationException(getCancellationExceptionMessage()));
                                  } else {
                                    callback.handleResult(result);
@@ -176,10 +181,13 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
   @Override
   public void handleFailure(Throwable t) {
     if (t instanceof CancellationException) {
-      boolean interrupt = Thread.currentThread().isInterrupted();
-      if (! cancel(interrupt)) {
-        // may have been overriden, go ahead and complete the future into a cancel state
-        internalCancel(interrupt);
+      if (cancelStateMessage == null) {
+        cancelStateMessage = t.getMessage() == null ? EMPTY_CANCEL_STATE_MESSAGE : t.getMessage();
+        boolean interrupt = Thread.currentThread().isInterrupted();
+        if (! cancel(interrupt)) {
+          // may have been overriden, go ahead and complete the future into a cancel state
+          internalCancel(interrupt);
+        }
       }
     } else {
       setFailure(t);
@@ -308,7 +316,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
 
   @Override
   public boolean isCancelled() {
-    return canceled;
+    return cancelStateMessage != null;
   }
   
   /**
@@ -334,7 +342,9 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
 
   // MUST be synchronized on resultLock before calling
   protected void setCanceled() {
-    this.canceled = true;
+    if (this.cancelStateMessage == null) { // may have been set earlier in the cancel process
+      this.cancelStateMessage = EMPTY_CANCEL_STATE_MESSAGE;
+    }
     
     setDone(null);
   }
@@ -360,16 +370,13 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
     return done;
   }
   
-  /**
-   * Invoked when a {@link CancellationException} is constructed.  By default this will return 
-   * {@code null}, but it may be overriden if a custom message wants to be included with the 
-   * {@link CancellationException}.  This can be useful for extending the class and recording 
-   * state when a cancel occurs, then later providing this state as a message in the exception.
-   * 
-   * @return The message to be provided to the {@link CancellationException} constructor, or {@code null}
-   */
+  @Override
   protected String getCancellationExceptionMessage() {
-    return null;
+    String result = cancelStateMessage;
+    if (result == EMPTY_CANCEL_STATE_MESSAGE) { // identity check is best here
+      return null;
+    }
+    return result;
   }
 
   @Override
@@ -381,7 +388,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       
       if (failure != null) {
         throw new ExecutionException(failure);
-      } else if (canceled) {
+      } else if (cancelStateMessage != null) {
         throw new CancellationException(getCancellationExceptionMessage());
       } else if (resultCleared) {
         throw new IllegalStateException("Result cleared, future get's not possible");
@@ -405,7 +412,7 @@ public class SettableListenableFuture<T> implements ListenableFuture<T>, FutureC
       
       if (failure != null) {
         throw new ExecutionException(failure);
-      } else if (canceled) {
+      } else if (cancelStateMessage != null) {
         throw new CancellationException(getCancellationExceptionMessage());
       } else if (done) {
         if (resultCleared) {

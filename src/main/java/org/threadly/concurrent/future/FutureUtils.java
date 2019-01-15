@@ -499,7 +499,7 @@ public class FutureUtils extends InternalFutureUtils {
           // propagate error
           ListenableFuture<?> f = failedFutures.get(0);
           if (f.isCancelled()) {
-            return immediateCanceledFuture();
+            return new ImmediateCanceledListenableFuture<>(null);
           } else {
             f.get();  // will throw ExecutionException to be handled below
           }
@@ -1316,7 +1316,7 @@ public class FutureUtils extends InternalFutureUtils {
                                                             Predicate<? super T> doneTest) {
     if (startingFuture.isDone()) {
       if (startingFuture.isCancelled()) {
-        return immediateCanceledFuture();
+        return new ImmediateCanceledListenableFuture<>(null);
       }
       try {
         if (! doneTest.test(startingFuture.get())) {

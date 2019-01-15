@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
@@ -416,6 +417,148 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     assertTrue(asyncSLF.isCancelled());
   }
   
+  private static void verifyCancelationExceptionMessageOnGet(String msg, ListenableFuture<?> lf) throws InterruptedException {
+    try {
+      lf.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertEquals(msg, e.getCause().getMessage());
+    } catch (CancellationException e) {
+      assertEquals(msg, e.getMessage());
+    }
+  }
+  
+  private static void verifyCancelationExceptionMessageInCallback(String msg, ListenableFuture<?> lf) throws InterruptedException, TimeoutException {
+    AsyncVerifier av = new AsyncVerifier();
+    lf.addCallback(new FutureCallback<Object>() {
+      @Override
+      public void handleResult(Object result) {
+        av.fail();
+      }
+
+      @Override
+      public void handleFailure(Throwable t) {
+        av.assertEquals(msg, t.getMessage());
+        av.signalComplete();
+      }
+    });
+    av.waitForTest();
+  }
+  
+  @Test
+  public void cancelationExceptionMessageTest() throws InterruptedException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    slf.cancel(false);
+    
+    verifyCancelationExceptionMessageOnGet(msg, slf);
+  }
+  
+  @Test
+  public void futureCallbackCancelationExceptionMessageTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    slf.cancel(false);
+    
+    verifyCancelationExceptionMessageInCallback(msg, slf);
+  }
+  
+  @Test
+  public void mapCancelationExceptionMessageAlreadyDoneTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    slf.cancel(false);
+    ListenableFuture<Void> mappedFuture = slf.map((v) -> v);
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void mapCancelationExceptionMessageTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    ListenableFuture<Void> mappedFuture = slf.map((v) -> v);
+    slf.cancel(false);
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void flatMapCancelationExceptionMessageAlreadyDoneTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    slf.cancel(false);
+    ListenableFuture<Void> mappedFuture = slf.flatMap((v) -> FutureUtils.immediateResultFuture(null));
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void flatMapCancelationExceptionMessageTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    ListenableFuture<Void> mappedFuture = slf.flatMap((v) -> FutureUtils.immediateResultFuture(null));
+    slf.cancel(false);
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void failureMapCancelationExceptionMessageAlreadyDoneTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    slf.cancel(false);
+    ListenableFuture<Void> mappedFuture = slf.mapFailure(CancellationException.class, 
+                                                         (c) -> { 
+                                                           throw c;
+                                                         });
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void failureMapCancelationExceptionMessageTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    ListenableFuture<Void> mappedFuture = slf.mapFailure(CancellationException.class, 
+                                                         (c) -> { 
+                                                           throw c;
+                                                         });
+    slf.cancel(false);
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void failureFlatMapCancelationExceptionMessageAlreadyDoneTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    slf.cancel(false);
+    ListenableFuture<Void> mappedFuture = slf.flatMapFailure(CancellationException.class, 
+                                                             (c) -> FutureUtils.immediateFailureFuture(c));
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void failureFlatMapCancelationExceptionMessageTest() throws InterruptedException, TimeoutException {
+    String msg = StringUtils.makeRandomString(5);
+    SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
+    ListenableFuture<Void> mappedFuture = slf.flatMapFailure(CancellationException.class, 
+                                                             (c) -> FutureUtils.immediateFailureFuture(c));
+    slf.cancel(false);
+
+    verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
+    verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
   @Test
   public void getRunningStackTraceTest() {
     assertNull(slf.getRunningStackTrace());
@@ -478,6 +621,19 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
       SettableListenableFuture<T> slf = new SettableListenableFuture<>();
       slf.handleResult(result);
       return slf;
+    }
+  }
+  
+  private static class CancelMessageTestSettableListenableFuture extends SettableListenableFuture<Void> {
+    private final String msg;
+    
+    public CancelMessageTestSettableListenableFuture(String msg) {
+      this.msg = msg;
+    }
+    
+    @Override
+    protected String getCancellationExceptionMessage() {
+      return msg;
     }
   }
 }

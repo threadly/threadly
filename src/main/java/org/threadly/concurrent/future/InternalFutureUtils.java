@@ -8,9 +8,12 @@ import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
+
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.util.ExceptionUtils;
@@ -24,12 +27,6 @@ import org.threadly.util.SuppressedStackRuntimeException;
  * @since 5.29
  */
 class InternalFutureUtils {
-  protected static <T> ListenableFuture<T> immediateCanceledFuture() {
-    SettableListenableFuture<T> slf = new SettableListenableFuture<>();
-    slf.cancel(false);
-    return slf;
-  }
-  
   /**
    * Transform a future's result into another future by applying the provided transformation 
    * function.  If the future completed in error, then the mapper will not be invoked, and instead 
@@ -49,22 +46,24 @@ class InternalFutureUtils {
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
    * @param <RT> The result type for the object returned from the mapper
    * @param sourceFuture Future to source input into transformation function
-   * @param transformer Function to apply result from future into returned future
+   * @param mapper Function to apply result from future into returned future
    * @param reportedTransformedExceptions {@code true} to indicate transformer is not expected to throw exception.
    *                                          If any are thrown they will be delegated to 
    *                                          {@link ExceptionUtils#handleException(Throwable)}.
    * @param executor Executor to execute transformation function on, or {@code null}
+   * @param optimizeExecution Optionally optimize the execution on to the source futures thread if possible
    * @return Future with result of transformation function or respective error
    */
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
-                                                           Function<? super ST, ? extends RT> transformer, 
+                                                           Supplier<String> cancelationMessageProvider, 
+                                                           Function<? super ST, ? extends RT> mapper, 
                                                            boolean reportedTransformedExceptions, 
                                                            Executor executor, 
                                                            ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       try { // optimized path for already complete futures which we can now process in thread
-        return FutureUtils.immediateResultFuture(transformer.apply(sourceFuture.get()));
+        return FutureUtils.immediateResultFuture(mapper.apply(sourceFuture.get()));
       } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
       } catch (ExecutionException e) { // failure in getting result from future, transfer failure
@@ -79,7 +78,8 @@ class InternalFutureUtils {
         return FutureUtils.immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-      return immediateCanceledFuture();
+      return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
+                                                       null : cancelationMessageProvider.get());
     } else {
       SettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
@@ -89,7 +89,7 @@ class InternalFutureUtils {
         public void handleResult(ST result) {
           try {
             slf.setRunningThread(Thread.currentThread());
-            slf.setResult(transformer.apply(result));
+            slf.setResult(mapper.apply(result));
           } catch (Throwable t) {
             if (reportedTransformedExceptions) {
               // failure calculating transformation, let handler get a chance to see the uncaught exception
@@ -115,18 +115,20 @@ class InternalFutureUtils {
    * @param <ST> The source type for the object returned from the future and inputed into the mapper
    * @param <RT> The result type for the object contained in the future returned from the mapper
    * @param sourceFuture Future to source input into transformation function
-   * @param transformer Function to apply result from future into returned future
+   * @param mapper Function to apply result from future into returned future
    * @param executor Executor to execute transformation function on, or {@code null}
+   * @param optimizeExecution Optionally optimize the execution on to the source futures thread if possible
    * @return Future with result of transformation function or respective error
    */
   protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<? extends ST> sourceFuture, 
-                                                               Function<? super ST, ListenableFuture<RT>> transformer, 
+                                                               Supplier<String> cancelationMessageProvider, 
+                                                               Function<? super ST, ListenableFuture<RT>> mapper, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       try { // optimized path for already complete futures which we can now process in thread
-        return transformer.apply(sourceFuture.get());
+        return mapper.apply(sourceFuture.get());
       } catch (InterruptedException e) {  // should not be possible
         throw new RuntimeException(e);
       } catch (ExecutionException e) { // failure in getting result from future, transfer failure
@@ -139,7 +141,8 @@ class InternalFutureUtils {
         return FutureUtils.immediateFailureFuture(t);
       }
     } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-      return immediateCanceledFuture();
+      return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
+                                                       null : cancelationMessageProvider.get());
     } else {
       CancelDelegateSettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
@@ -148,7 +151,7 @@ class InternalFutureUtils {
         public void handleResult(ST result) {
           try {
             slf.setRunningThread(Thread.currentThread());
-            ListenableFuture<? extends RT> mapFuture = transformer.apply(result);
+            ListenableFuture<? extends RT> mapFuture = mapper.apply(result);
             slf.updateDelegateFuture(mapFuture);
             mapFuture.addCallback(slf);
             slf.setRunningThread(null); // may be processing async now
@@ -181,24 +184,25 @@ class InternalFutureUtils {
    * @param <TT> The type of throwable that should be handled
    * @param <RT> The result type for the object returned from the mapper
    * @param sourceFuture Future to source input into transformation function
-   * @param transformer Function to apply result from future into returned future
-   * @param reportedTransformedExceptions {@code true} to indicate transformer is not expected to throw exception.
-   *                                          If any are thrown they will be delegated to 
-   *                                          {@link ExceptionUtils#handleException(Throwable)}.
+   * @param mapper Function to apply result from future into returned future
+   * @param throwableType The type of throwable that the {@code mapper} can accept
    * @param executor Executor to execute transformation function on, or {@code null}
+   * @param optimizeExecution Optionally optimize the execution on to the source futures thread if possible
+   * @param cancelationMessageSupplier an optional supplier for a message when a cancel is generated
    * @return Future with result of transformation function or respective error
    */
   @SuppressWarnings("unchecked")
   protected static <TT extends Throwable, RT> ListenableFuture<RT> 
-      failureTransform(ListenableFuture<RT> sourceFuture, Function<? super TT, ? extends RT> mapper,
-                       Class<TT> throwableType, Executor executor, 
-                       ListenerOptimizationStrategy optimizeExecution) {
+      failureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageProvider,
+                       Function<? super TT, ? extends RT> mapper, Class<TT> throwableType, 
+                       Executor executor, ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
-            return FutureUtils.immediateResultFuture(mapper.apply((TT)new CancellationException()));
+            String msg = cancelationMessageProvider == null ? null : cancelationMessageProvider.get();
+            return FutureUtils.immediateResultFuture(mapper.apply((TT)new CancellationException(msg)));
           } catch (Throwable t) {
             return FutureUtils.immediateFailureFuture(t);
           }
@@ -261,24 +265,25 @@ class InternalFutureUtils {
    * @param <TT> The type of throwable that should be handled
    * @param <RT> The result type for the object contained in the future returned from the mapper
    * @param sourceFuture Future to source input into transformation function
-   * @param transformer Function to apply result from future into returned future
-   * @param reportedTransformedExceptions {@code true} to indicate transformer is not expected to throw exception.
-   *                                          If any are thrown they will be delegated to 
-   *                                          {@link ExceptionUtils#handleException(Throwable)}.
+   * @param cancelationMessageSupplier an optional supplier for a message when a cancel is generated
+   * @param mapper Function to apply result from future into returned future
+   * @param throwableType The type of throwable that the {@code mapper} can accept
    * @param executor Executor to execute transformation function on, or {@code null}
+   * @param optimizeExecution Optionally optimize the execution on to the source futures thread if possible
    * @return Future with result of transformation function or respective error
    */
   @SuppressWarnings("unchecked")
   protected static <TT extends Throwable, RT> ListenableFuture<RT> 
-      flatFailureTransform(ListenableFuture<RT> sourceFuture, Function<? super TT, ListenableFuture<RT>> mapper,
-                           Class<TT> throwableType, Executor executor, 
-                           ListenerOptimizationStrategy optimizeExecution) {
+      flatFailureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageSupplier,
+                           Function<? super TT, ListenableFuture<RT>> mapper, Class<TT> throwableType, 
+                           Executor executor, ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
-            return mapper.apply((TT)new CancellationException());
+            String msg = cancelationMessageSupplier == null ? null : cancelationMessageSupplier.get();
+            return mapper.apply((TT)new CancellationException(msg));
           } catch (Throwable t) {
             return FutureUtils.immediateFailureFuture(t);
           }
@@ -831,6 +836,64 @@ class InternalFutureUtils {
       if (! canceled.get() && canceled.compareAndSet(false, true)) {
         FutureUtils.cancelIncompleteFutures(futures, interruptThread);
       }
+    }
+  }
+  
+  /**
+   * Similar to {@link ImmediateFailureListenableFuture} except that the state is as if the future 
+   * had been canceled.  This is an internal class due to no foreseeable need of this by users of 
+   * the library.  This is used mostly in communicating state / messages from other futures.
+   * 
+   * @since 5.32
+   * @param <T> The result object type returned by this future
+   */
+  protected static class ImmediateCanceledListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
+    protected final String cancelMessage;
+    
+    /**
+     * Constructs a completed future in a canceled state.
+     * 
+     * @param cancelMessage to provide to the {@link CancellationException}
+     */
+    public ImmediateCanceledListenableFuture(String cancelMessage) {
+      this.cancelMessage = cancelMessage;
+    }
+    
+    @Override
+    protected String getCancellationExceptionMessage() {
+      return cancelMessage;
+    }
+    
+    @Override
+    public boolean isCancelled() {
+      return true;
+    }
+
+    @Override
+    public void addCallback(FutureCallback<? super T> callback) {
+      callback.handleFailure(new CancellationException(cancelMessage));
+    }
+
+    @Override
+    public void addCallback(FutureCallback<? super T> callback, Executor executor, 
+                            ListenerOptimizationStrategy optimize) {
+      CancellationException e = new CancellationException(cancelMessage);
+      if (executor == null | 
+          optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+        callback.handleFailure(e);
+      } else {
+        executor.execute(() -> callback.handleFailure(e));
+      }
+    }
+
+    @Override
+    public T get() throws ExecutionException {
+      throw new CancellationException(cancelMessage);
+    }
+
+    @Override
+    public T get(long timeout, TimeUnit unit) throws ExecutionException {
+      throw new CancellationException(cancelMessage);
     }
   }
 }

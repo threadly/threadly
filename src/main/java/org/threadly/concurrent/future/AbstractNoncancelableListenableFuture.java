@@ -6,7 +6,8 @@ package org.threadly.concurrent.future;
  * @since 2.1.0
  * @param <T> The result object type returned by this future
  */
-abstract class AbstractNoncancelableListenableFuture<T> implements ListenableFuture<T> {
+abstract class AbstractNoncancelableListenableFuture<T> extends AbstractCancellationMessageProvidingListenableFuture<T>
+                                                        implements ListenableFuture<T> {
   /**
    * This has no effect in this implementation, as this future can not be canceled.
    * 
