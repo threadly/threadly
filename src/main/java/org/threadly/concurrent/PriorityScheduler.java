@@ -803,6 +803,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
               }
             } else if (nextTask.canExecute(executeReference)) {
               return nextTask;
+            } else {
+              // threading conflict when trying to consume tasks, back thread off with a yield
+              // This helps with a potential tight loop resulting in issues with safe points
+              Thread.yield();
             }
           }
           // reset interrupted status if we may block and have not checked
