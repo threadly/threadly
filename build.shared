@@ -9,6 +9,12 @@ dependencies {
   testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
+// Set compatibility to 1.8 so jdk 9+ can be used to compile this project with binary compatibility Java 8
+tasks.withType(JavaCompile) {
+  sourceCompatibility = '1.8'
+  targetCompatibility = '1.8'
+}
+
 compileJava {
   options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
 

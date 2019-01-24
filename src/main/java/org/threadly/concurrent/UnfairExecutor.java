@@ -241,7 +241,8 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       throw new RejectedExecutionException("Pool is shutdown");
     }
     
-    schedulers[(int)Math.floorMod(stripeGenerator.getStripe(task), schedulers.length)].addTask(task);
+    // Cast schedulers.length to (long) to ensure 1.8 API is used as a Math.floorMod overload was added for Java 1.9 with (int) second parameter
+    schedulers[(int)Math.floorMod(stripeGenerator.getStripe(task), (long)schedulers.length)].addTask(task);
   }
 
   /**
