@@ -744,13 +744,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         }
       }
       
-      boolean interruptedChecked = false;
       boolean queued = false;
       try {
         while (true) {
           TaskWrapper nextTask = queueManager.getNextTask();
           if (nextTask == null) {
             if (queued) { // we can only park after we have queued, then checked again for a result
+              Thread.interrupted(); // reset interrupted status before we block
               LockSupport.park();
               worker.waitingForUnpark = false;
               continue;
@@ -784,6 +784,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
                 continue;
               }
               if (queued) {
+                Thread.interrupted(); // reset interrupted status before we block
                 if (nextTask.getPureRunTime() < workerTimedParkRunTime) {
                   // we can only park after we have queued, then checked again for a result
                   workerTimedParkRunTime = nextTask.getPureRunTime();
@@ -809,11 +810,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
               Thread.yield();
             }
           }
-          // reset interrupted status if we may block and have not checked
-          if (queued & ! interruptedChecked) {
-            interruptedChecked = true;
-            Thread.interrupted();  // reset interrupted status if set
-          }
         } // end pollTask loop
       } finally {
         // if queued, we must now remove ourselves, since worker is about to either shutdown or become active
@@ -824,9 +820,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         // wake up next worker so it can check if tasks are ready to consume
         handleQueueUpdate();
         
-        if (! interruptedChecked) {
-          Thread.interrupted();  // reset interrupted status if set
-        }
+        Thread.interrupted();  // reset interrupted status if set
       }
     }
 
