@@ -8,3 +8,9 @@
 .gradle
 build
 /.nb-gradle/
+
+# Don't bring in project level folders due to different environments. Gradle should configure project as needed
+.idea
+.settings
+.project
+.classpath
