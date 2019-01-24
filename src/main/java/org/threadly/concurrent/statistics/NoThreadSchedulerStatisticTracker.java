@@ -5,8 +5,7 @@ import java.util.Map;
 
 import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.collections.ConcurrentArrayList;
-import org.threadly.concurrent.statistics.PriorityStatisticManager.TaskStatWrapper;
+import org.threadly.concurrent.statistics.StatisticWriter.TaskStatWrapper;
 import org.threadly.util.Clock;
 import org.threadly.util.Pair;
 
@@ -236,13 +235,8 @@ public class NoThreadSchedulerStatisticTracker extends NoThreadScheduler
     if (result != null && result.getContainedRunnable() instanceof TaskStatWrapper) {
       long taskDelay = Clock.lastKnownForwardProgressingMillis() - result.getPureRunTime();
       TaskStatWrapper statWrapper = (TaskStatWrapper)result.getContainedRunnable();
-      ConcurrentArrayList<Long> priorityStats = 
-          statsManager.getExecutionDelaySamplesInternal(statWrapper.priority);
-
-      synchronized (priorityStats.getModificationLock()) {
-        priorityStats.add(taskDelay);
-        statsManager.trimWindow(priorityStats);
-      }
+  
+      statsManager.addDelayDuration(taskDelay, statWrapper.priority);
     }
     
     return result;

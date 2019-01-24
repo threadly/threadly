@@ -1,21 +1,16 @@
 package org.threadly.concurrent.statistics;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.LongAdder;
-
 import org.threadly.concurrent.RunnableCallableAdapter;
-import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.Clock;
 import org.threadly.util.Pair;
 import org.threadly.util.StatisticsUtils;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * This class primarily holds the structures used to store the statistics.  These can not be 
@@ -26,7 +21,7 @@ import org.threadly.util.StatisticsUtils;
  * 
  * @since 4.5.0
  */
-class PriorityStatisticManager {
+class PriorityStatisticManager implements StatisticWriter {
   protected final int maxWindowSize;
   protected final boolean accurateTime;
   protected final LongAdder totalHighPriorityExecutions;
@@ -112,31 +107,44 @@ class PriorityStatisticManager {
     }
   }
 
-  /**
-   * Called at the start of execution to track statistics around task execution.
-   * 
-   * @param taskPair Wrapper that is about to be executed
-   */
-  protected void trackTaskStart(Pair<Thread, TaskStatWrapper> taskPair) {
+  @Override
+  public void trackTaskStart(TaskStatWrapper task) {
+    Pair<Thread, TaskStatWrapper> taskPair = new Pair<>(Thread.currentThread(), task);
+    
     getExecutionCount(taskPair.getRight().priority).increment();
     
     runningTasks.put(taskPair, Clock.accurateForwardProgressingMillis());
   }
+    
+    
+    public void addDelayDuration(Long taskDelay, TaskPriority taskPriority) {
+        ConcurrentArrayList<Long> priorityStats =
+                getExecutionDelaySamplesInternal(taskPriority);
+        
+        synchronized (priorityStats.getModificationLock()) {
+            priorityStats.add(taskDelay);
+            trimWindow(priorityStats);
+        }
+    }
   
-  /**
-   * Used to track how long tasks are tacking to complete.
-   * 
-   * @param taskPair wrapper for task that completed
-   */
-  protected void trackTaskFinish(Pair<Thread, TaskStatWrapper> taskPair) {
+  @Override
+  public void trackTaskFinish(TaskStatWrapper task) {
     long finishTime = accurateTime ? 
-                        Clock.accurateForwardProgressingMillis() : 
+                        Clock.accurateForwardProgressingMillis() :
                         Clock.lastKnownForwardProgressingMillis();
     
-    ConcurrentArrayList<Long> runDurations = getExecutionDurationSamplesInternal(taskPair.getRight().priority);
+    
+    Pair<Thread, TaskStatWrapper> taskPair = new Pair<>(Thread.currentThread(), task);
     
     Long startTime = runningTasks.remove(taskPair);
     
+    addRunDuration(startTime, finishTime, taskPair.getRight().priority);
+  }
+  
+  
+  protected void addRunDuration(Long startTime, long finishTime, TaskPriority taskPriority) {
+    ConcurrentArrayList<Long> runDurations = getExecutionDurationSamplesInternal(taskPriority);
+  
     synchronized (runDurations.getModificationLock()) {
       runDurations.add(finishTime - startTime);
       trimWindow(runDurations);
@@ -323,38 +331,5 @@ class PriorityStatisticManager {
       return getTotalExecutionCount();
     }
     return getExecutionCount(priority).sum();
-  }
-  
-  /**
-   * Wrapper for {@link Runnable} for tracking statistics.
-   * 
-   * @since 4.5.0
-   */
-  protected static class TaskStatWrapper implements Runnable, RunnableContainer {
-    protected final PriorityStatisticManager statsManager;
-    protected final TaskPriority priority;
-    protected final Runnable task;
-    
-    public TaskStatWrapper(PriorityStatisticManager statsManager, TaskPriority priority, Runnable toRun) {
-      this.statsManager = statsManager;
-      this.priority = priority;
-      this.task = toRun;
-    }
-    
-    @Override
-    public void run() {
-      Pair<Thread, TaskStatWrapper> taskPair = new Pair<>(Thread.currentThread(), this);
-      statsManager.trackTaskStart(taskPair);
-      try {
-        task.run();
-      } finally {
-        statsManager.trackTaskFinish(taskPair);
-      }
-    }
-
-    @Override
-    public Runnable getContainedRunnable() {
-      return task;
-    }
   }
 }

@@ -10,7 +10,7 @@ import java.util.concurrent.ThreadFactory;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.statistics.PriorityStatisticManager.TaskStatWrapper;
+import org.threadly.concurrent.statistics.StatisticWriter.TaskStatWrapper;
 import org.threadly.util.Pair;
 
 /**

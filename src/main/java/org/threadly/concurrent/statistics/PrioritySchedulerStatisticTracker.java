@@ -1,19 +1,17 @@
 package org.threadly.concurrent.statistics;
 
+import org.threadly.concurrent.ConfigurableThreadFactory;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.TaskPriority;
+import org.threadly.concurrent.statistics.StatisticWriter.TaskStatWrapper;
+import org.threadly.util.Pair;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
-
-import org.threadly.concurrent.ConfigurableThreadFactory;
-import org.threadly.concurrent.PriorityScheduler;
-import org.threadly.concurrent.TaskPriority;
-import org.threadly.concurrent.collections.ConcurrentArrayList;
-import org.threadly.concurrent.statistics.PriorityStatisticManager.TaskStatWrapper;
-import org.threadly.util.Clock;
-import org.threadly.util.Pair;
 
 /**
  * An implementation of {@link PriorityScheduler} which tracks run and usage statistics.  This is 
@@ -25,7 +23,7 @@ import org.threadly.util.Pair;
  * 
  * @since 4.5.0 (since 1.0.0 at org.threadly.concurrent)
  */
-public class PrioritySchedulerStatisticTracker extends PriorityScheduler 
+public class PrioritySchedulerStatisticTracker extends PrioritySchedulerStatisticWriter
                                                implements StatisticPriorityScheduler {
   protected final PriorityStatisticManager statsManager;
   
@@ -332,7 +330,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
                                   new PriorityStatisticManager(maxStatisticWindowSize, accurateTime)), 
           defaultPriority, maxWaitForLowPriorityInMs);
     
-    this.statsManager = ((StatisticWorkerPool)workerPool).statsManager;
+    this.statsManager = (PriorityStatisticManager)((StatisticWorkerPool)workerPool).statsWriter;
   }
   
   @Override
@@ -480,44 +478,5 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   @Override
   public long getTotalExecutionCount(TaskPriority priority) {
     return statsManager.getTotalExecutionCount(priority);
-  }
-  
-  /**
-   * An extending class of {@link WorkerPool}, allowing us to gather statistics about how workers 
-   * are used in the executor.  An example of such statistics are how long tasks are delayed from 
-   * their desired execution.  Another example is how often a worker can be reused vs how often 
-   * they have to be created.
-   * 
-   * @since 4.5.0
-   */
-  protected static class StatisticWorkerPool extends WorkerPool {
-    protected final PriorityStatisticManager statsManager;
-  
-    protected StatisticWorkerPool(ThreadFactory threadFactory, int poolSize, 
-                                  PriorityStatisticManager statsManager) {
-      super(threadFactory, poolSize);
-      
-      this.statsManager = statsManager;
-    }
-    
-    @Override
-    public TaskWrapper workerIdle(Worker worker) {
-      TaskWrapper result = super.workerIdle(worker);
-
-      // may not be a wrapper for internal tasks like shutdown
-      if (result != null && result.getContainedRunnable() instanceof TaskStatWrapper) {
-        long taskDelay = Clock.lastKnownForwardProgressingMillis() - result.getPureRunTime();
-        TaskStatWrapper statWrapper = (TaskStatWrapper)result.getContainedRunnable();
-        ConcurrentArrayList<Long> priorityStats = 
-            statsManager.getExecutionDelaySamplesInternal(statWrapper.priority);
-  
-        synchronized (priorityStats.getModificationLock()) {
-          priorityStats.add(taskDelay);
-          statsManager.trimWindow(priorityStats);
-        }
-      }
-      
-      return result;
-    }
   }
 }
