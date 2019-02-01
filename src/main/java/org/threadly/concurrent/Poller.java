@@ -153,7 +153,7 @@ public class Poller {
         }
       } else {
         ListenableRunnableFuture<T> result = new ListenableFutureAdapterTask<T>(f);
-        polls.add(new Pair<>(result, () -> f.isDone()));
+        polls.add(new Pair<>(result, f::isDone));
         signalToRun();
         return result;
       }
