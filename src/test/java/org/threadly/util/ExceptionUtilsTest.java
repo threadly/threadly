@@ -343,6 +343,16 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void getRootCauseCycleTest() {
+    Exception rootCause = new Exception();
+    Exception e1 = new Exception(rootCause);
+    Exception e2 = new Exception(e1);
+    rootCause.initCause(e2);
+    
+    assertTrue(ExceptionUtils.getRootCause(e2) == rootCause);
+  }
+  
+  @Test
   public void getCauseOfTypeNoInputTest() {
     assertNull(ExceptionUtils.getCauseOfType(null, Exception.class));
   }
@@ -361,6 +371,17 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void getCauseOfTypeCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new Exception(rootCause);
+    Exception e2 = new Exception(e1);
+    rootCause.initCause(e2);
+    
+    assertNull(ExceptionUtils.getCauseOfType(e2, UnsupportedOperationException.class));
+    assertTrue(rootCause == ExceptionUtils.getCauseOfType(e2, IllegalArgumentException.class));
+  }
+  
+  @Test
   public void hasCauseOfTypeNoInputTest() {
     assertFalse(ExceptionUtils.hasCauseOfType(null, Exception.class));
   }
@@ -375,6 +396,17 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   public void hasCauseOfTypeTest() {
     Exception e = new Exception(new IllegalArgumentException(new Exception()));
     assertTrue(ExceptionUtils.hasCauseOfType(e, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void hasCauseOfTypeCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new Exception(rootCause);
+    Exception e2 = new Exception(e1);
+    rootCause.initCause(e2);
+
+    assertFalse(ExceptionUtils.hasCauseOfType(e2, UnsupportedOperationException.class));
+    assertTrue(ExceptionUtils.hasCauseOfType(e2, IllegalArgumentException.class));
   }
   
   @Test

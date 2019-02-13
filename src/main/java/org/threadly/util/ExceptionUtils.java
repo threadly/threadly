@@ -214,6 +214,10 @@ public class ExceptionUtils {
   /**
    * Gets the root cause of a provided {@link Throwable}.  If there is no cause for the 
    * {@link Throwable} provided into this function, the original {@link Throwable} is returned.
+   * <p>
+   * This function does basic circular cause detection in that it will detect a cycle to the 
+   * originally provided {@link Throwable}.  But other circular chains of causes may result in an 
+   * infinite loop.
    * 
    * @param throwable starting {@link Throwable}
    * @return root cause {@link Throwable}
@@ -222,8 +226,9 @@ public class ExceptionUtils {
     ArgumentVerifier.assertNotNull(throwable, "throwable");
     
     Throwable result = throwable;
-    while (result.getCause() != null) {
-      result = result.getCause();
+    Throwable cause;
+    while ((cause = result.getCause()) != null && cause != throwable) {
+      result = cause;
     }
     
     return result;
@@ -236,6 +241,10 @@ public class ExceptionUtils {
    * {@link #hasCauseOfTypes(Throwable, Iterable)}.  If you are only comparing against one exception 
    * type {@link #getCauseOfType(Throwable, Class)} is a better option (and will return without the 
    * need to cast, type thanks to generics).
+   * <p>
+   * This function does basic circular cause detection in that it will detect a cycle to the 
+   * originally provided {@link Throwable}.  But other circular chains of causes may result in an 
+   * infinite loop.
    * 
    * @param rootError Throwable to start search from
    * @param types Types of throwable classes looking to match against
@@ -244,16 +253,19 @@ public class ExceptionUtils {
   public static Throwable getCauseOfTypes(Throwable rootError, 
                                           Iterable<? extends Class<? extends Throwable>> types) {
     ArgumentVerifier.assertNotNull(types, "types");
+    if (rootError == null) {
+      return null;
+    }
     
     Throwable t = rootError;
-    while (t != null) {
+    do {
       for (Class<?> c : types) {
         if (c.isInstance(t)) {
           return t;
         }
       }
       t = t.getCause();
-    }
+    } while (t != null && t != rootError);
     return null;
   }
   
@@ -279,6 +291,10 @@ public class ExceptionUtils {
    * provided type.  This can be useful when trying to truncate an exception chain to only the 
    * relevant information.  If the goal is only to determine if it exists or not consider using 
    * {@link #hasCauseOfType(Throwable, Class)}.
+   * <p>
+   * This function does basic circular cause detection in that it will detect a cycle to the 
+   * originally provided {@link Throwable}.  But other circular chains of causes may result in an 
+   * infinite loop.
    * 
    * @param rootError Throwable to start search from
    * @param type Type of throwable classes looking to match against
@@ -289,13 +305,17 @@ public class ExceptionUtils {
   public static <T extends Throwable> T getCauseOfType(Throwable rootError, 
                                                        Class<? extends T> type) {
     ArgumentVerifier.assertNotNull(type, "type");
+    if (rootError == null) {
+      return null;
+    }
+    
     Throwable t = rootError;
-    while (t != null) {
+    do {
       if (type.isInstance(t)) {
         return (T)t;
       }
       t = t.getCause();
-    }
+    } while (t != null && t != rootError);
     return null;
   }
   
