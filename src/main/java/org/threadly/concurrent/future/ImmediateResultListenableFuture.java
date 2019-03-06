@@ -39,6 +39,14 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
    */
   public static final ImmediateResultListenableFuture<Boolean> BOOLEAN_FALSE_RESULT = 
       new ImmediateResultListenableFuture<>(Boolean.FALSE);
+  /**
+   * Static instance of {@link ImmediateResultListenableFuture} which provides an empty 
+   * {@link String} as the result.
+   * 
+   * @since 5.34
+   */
+  public static final ImmediateResultListenableFuture<String> EMPTY_STRING_RESULT = 
+      new ImmediateResultListenableFuture<>("");
   
   protected final T result;
   
