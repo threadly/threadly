@@ -5,6 +5,9 @@ import static org.junit.Assert.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
@@ -1004,6 +1007,122 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
                 ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
     
     av.waitForTest(10_000, 3);
+  }
+  
+  public static void mapStackDepthTest(ListenableFuture<Object> future, 
+                                       Runnable futureCompleteTask, 
+                                       int incompleteExpectedStackDepth, 
+                                       int completedExpectedStackDepth) throws InterruptedException, TimeoutException {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      AsyncVerifier av1 = new AsyncVerifier();
+      ListenableFuture<Object> mappedFuture = future;
+      for (int i = 0; i < 10; i++) {
+        mappedFuture = mappedFuture.map((ignored) -> null);
+      }
+      mappedFuture.listener(() -> {
+        int stackDepth = Thread.currentThread().getStackTrace().length;
+        av1.assertEquals(incompleteExpectedStackDepth, stackDepth);
+        av1.signalComplete();
+      });
+      
+      scheduler.execute(futureCompleteTask);
+      
+      av1.waitForTest();
+      
+      // now verify already completed stack depth
+      AsyncVerifier av2 = new AsyncVerifier();
+      scheduler.execute(() -> {
+        AtomicInteger mapCount = new AtomicInteger();
+        AtomicReference<ListenableFuture<Object>> currFuture = new AtomicReference<>(future);
+        Function<Object, Object> recurrsiveMapper = new Function<Object, Object>() {
+          @Override
+          public Object apply(Object arg0) {
+            if (mapCount.incrementAndGet() < 10) {
+              currFuture.set(currFuture.get().map(this));
+            } else {
+              av2.assertEquals(completedExpectedStackDepth, Thread.currentThread().getStackTrace().length);
+              av2.signalComplete();
+            }
+            return null;
+          }
+        };
+        future.map(recurrsiveMapper);
+      });
+      av2.waitForTest();
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  public static void mapFailureStackDepthTest(ListenableFuture<Object> future, 
+                                              Runnable futureCompleteTask, 
+                                              int expectedStackDepth) throws InterruptedException, TimeoutException {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      AsyncVerifier av = new AsyncVerifier();
+      ListenableFuture<Object> mappedFuture = future;
+      for (int i = 0; i < 10; i++) {
+        mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; });
+      }
+      mappedFuture.listener(() -> {
+        int stackDepth = Thread.currentThread().getStackTrace().length;
+        av.assertEquals(expectedStackDepth, stackDepth);
+        av.signalComplete();
+      });
+      
+      scheduler.execute(futureCompleteTask);
+      
+      av.waitForTest();
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  public static void flatMapStackDepthTest(ListenableFuture<Object> future, 
+                                           Runnable futureCompleteTask, 
+                                           int incompleteExpectedStackDepth, 
+                                           int completedExpectedStackDepth) throws InterruptedException, TimeoutException {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      AsyncVerifier av1 = new AsyncVerifier();
+      ListenableFuture<Object> mappedFuture = future;
+      for (int i = 0; i < 10; i++) {
+        mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null));
+      }
+      mappedFuture.listener(() -> {
+        int stackDepth = Thread.currentThread().getStackTrace().length;
+        av1.assertEquals(incompleteExpectedStackDepth, stackDepth);
+        av1.signalComplete();
+      });
+      
+      scheduler.execute(futureCompleteTask);
+      
+      av1.waitForTest();
+      
+      // now verify already completed stack depth
+      AsyncVerifier av2 = new AsyncVerifier();
+      scheduler.execute(() -> {
+        AtomicInteger mapCount = new AtomicInteger();
+        AtomicReference<ListenableFuture<Object>> currFuture = new AtomicReference<>(future);
+        Function<Object, ListenableFuture<Object>> recurrsiveMapper = new Function<Object, ListenableFuture<Object>>() {
+          @Override
+          public ListenableFuture<Object> apply(Object arg0) {
+            if (mapCount.incrementAndGet() < 2) {
+              currFuture.set(currFuture.get().flatMap(this));
+            } else {
+              av2.assertEquals(completedExpectedStackDepth, Thread.currentThread().getStackTrace().length);
+              av2.signalComplete();
+            }
+            return FutureUtils.immediateResultFuture(null);
+          }
+        };
+        future.flatMap(recurrsiveMapper);
+      });
+      av2.waitForTest();
+    } finally {
+      scheduler.shutdown();
+    }
   }
   
   private static void verifyFutureFailure(ListenableFuture<?> f, Exception failure) throws InterruptedException {

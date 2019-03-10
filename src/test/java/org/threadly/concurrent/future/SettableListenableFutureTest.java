@@ -486,6 +486,18 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   }
   
   @Test
+  public void mapStackSizeTest() throws InterruptedException, TimeoutException {
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    ListenableFutureInterfaceTest.mapStackDepthTest(slf, () -> slf.setResult(null), 61, 47);
+  }
+  
+  @Test
+  public void mapFailureStackSize() throws InterruptedException, TimeoutException {
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(slf, () -> slf.setFailure(new RuntimeException()), 61);
+  }
+  
+  @Test
   public void flatMapCancelationExceptionMessageAlreadyDoneTest() throws InterruptedException, TimeoutException {
     String msg = StringUtils.makeRandomString(5);
     SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
@@ -505,6 +517,12 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
 
     verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
     verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(slf, () -> slf.setResult(null), 81, 17);
   }
   
   @Test
