@@ -51,6 +51,14 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     tfc = new TestFutureCallback();
     testFuture.callback(tfc, new SameThreadSubmitterExecutor());
     assertTrue(tfc.getLastResult() == expectedResult);
+    
+    tfc = new TestFutureCallback();
+    testFuture.resultCallback(tfc::handleResult, null);
+    assertTrue(tfc.getLastResult() == expectedResult);
+    
+    tfc = new TestFutureCallback();
+    testFuture.resultCallback(tfc::handleResult, new SameThreadSubmitterExecutor());
+    assertTrue(tfc.getLastResult() == expectedResult);
   }
   
   public static void failureTest(ListenableFuture<?> testFuture, Throwable expectedFailure) {
@@ -86,6 +94,14 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     
     tfc = new TestFutureCallback();
     testFuture.callback(tfc, new SameThreadSubmitterExecutor());
+    assertTrue(tfc.getLastFailure() == expectedFailure);
+    
+    tfc = new TestFutureCallback();
+    testFuture.failureCallback(tfc::handleFailure, null);
+    assertTrue(tfc.getLastFailure() == expectedFailure);
+    
+    tfc = new TestFutureCallback();
+    testFuture.failureCallback(tfc::handleFailure, new SameThreadSubmitterExecutor());
     assertTrue(tfc.getLastFailure() == expectedFailure);
   }
   

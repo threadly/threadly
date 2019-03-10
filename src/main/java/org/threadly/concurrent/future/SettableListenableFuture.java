@@ -5,6 +5,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
+
 import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
@@ -136,6 +138,73 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
                                    callback.handleFailure(new CancellationException(getCancellationExceptionMessage()));
                                  } else {
                                    callback.handleResult(result);
+                                 }
+                               }, 
+                               executor == executingExecutor && 
+                                   (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
+                                    optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
+                                 null : executor, 
+                               optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
+                                 null : executor);
+    
+    return this;
+  }
+  
+  @Override
+  public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
+                                            ListenerOptimizationStrategy optimize) {
+    if (executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+      // can't check `done` without synchronizing, but we can check final states optimistically
+      // because a `null` result requires us to check `done` (which needs to synchronize or we may 
+      // see an inconsistent final state), this only works for non-null results
+      if (result != null) {
+        callback.accept(result);
+        return this;
+      }
+    }
+    // This allows us to avoid synchronization (since listeners wont be invoked till final / 
+    // result state has all be set and synced).  So this allows us to avoid synchronization (which 
+    // is important as we don't want to hold the lock while invoking into the callback
+    listenerHelper.addListener(() -> {
+                                 if (failure == null && cancelStateMessage == null) {
+                                   callback.accept(result);
+                                 }
+                               }, 
+                               executor == executingExecutor && 
+                                   (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
+                                    optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
+                                 null : executor, 
+                               optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
+                                 null : executor);
+    
+    return this;
+  }
+  
+  @Override
+  public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
+                                             ListenerOptimizationStrategy optimize) {
+    if (executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+      // can't check `done` without synchronizing, but we can check final states optimistically
+      // because a `null` result requires us to check `done` (which needs to synchronize or we may 
+      // see an inconsistent final state), this only works for non-null results
+      if (result != null) {
+        return this;
+      } else if (failure != null) {
+        callback.accept(failure);
+        return this;
+      } else if (cancelStateMessage != null) {
+        callback.accept(new CancellationException(getCancellationExceptionMessage()));
+        return this;
+      }
+    }
+    // This allows us to avoid synchronization (since listeners wont be invoked till final / 
+    // result state has all be set and synced).  So this allows us to avoid synchronization (which 
+    // is important as we don't want to hold the lock while invoking into the callback
+    listenerHelper.addListener(() -> {
+                                 if (failure != null) {
+                                   callback.accept(failure);
+                                 } else if (cancelStateMessage != null) {
+                                   callback.accept(new CancellationException(getCancellationExceptionMessage()));
                                  }
                                }, 
                                executor == executingExecutor && 

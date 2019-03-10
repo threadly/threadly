@@ -1,5 +1,9 @@
 package org.threadly.concurrent.future;
 
+import static org.junit.Assert.*;
+
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 
@@ -33,6 +37,16 @@ public class ImmediateFailureListenableFutureTest extends ThreadlyTester {
     ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<>(failure);
     
     ImmediateListenableFutureTest.failureCallbackTest(testFuture, failure);
+  }
+  
+  @Test
+  public void resultCallbackTest() {
+    Throwable failure = new Exception();
+    ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<>(failure);
+    
+    AtomicBoolean ran = new AtomicBoolean();
+    assertTrue(testFuture == testFuture.resultCallback((ignored) -> ran.set(true)));
+    assertFalse(ran.get());
   }
   
   @Test

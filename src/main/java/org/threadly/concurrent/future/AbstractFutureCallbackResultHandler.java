@@ -11,9 +11,13 @@ package org.threadly.concurrent.future;
  * <p>
  * For a simpler construction using a lambda look at {@link FutureCallbackResultHandler}.
  * 
+ * @deprecated Instead use a {@link java.util.function.Consumer} provided to 
+ *               {@link ListenableFuture#resultCallback(java.util.function.Consumer)}
+ * 
  * @param <T> Type of result returned
  * @since 4.4.0
  */
+@Deprecated
 public abstract class AbstractFutureCallbackResultHandler<T> implements FutureCallback<T> {
   @Override
   public void handleFailure(Throwable t) {

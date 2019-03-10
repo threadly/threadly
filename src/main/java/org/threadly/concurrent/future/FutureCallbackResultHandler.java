@@ -11,9 +11,13 @@ import org.threadly.util.ArgumentVerifier;
  * See {@link AbstractFutureCallbackResultHandler} for a similar implementation except using an 
  * abstract class rather than accepting a lambda.
  * 
+ * @deprecated Instead provide {@link Consumer} directly to 
+ *               {@link ListenableFuture#resultCallback(java.util.function.Consumer)}
+ * 
  * @param <T> Type of result returned
  * @since 5.0
  */
+@Deprecated
 public class FutureCallbackResultHandler<T> extends AbstractFutureCallbackResultHandler<T> {
   private final Consumer<T> resultHandler;
   

@@ -150,11 +150,41 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   @Test
+  public void resultCallbackTest() {
+    TestCallable tc = new TestCallable();
+    ListenableFutureTask<Object> future = makeFutureTask(tc);
+    TestFutureCallback tfc = new TestFutureCallback();
+    future.resultCallback(tfc::handleResult);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    future.run();
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(tc.getReturnedResult() == tfc.getLastResult());
+  }
+  
+  @Test
   public void callbackExecutionExceptionTest() {
     RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
     TestFutureCallback tfc = new TestFutureCallback();
     future.callback(tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    future.run();
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void failureCallbackExecutionExceptionTest() {
+    RuntimeException failure = new SuppressedStackRuntimeException();
+    ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
+    TestFutureCallback tfc = new TestFutureCallback();
+    future.failureCallback(tfc::handleFailure);
     
     assertEquals(0, tfc.getCallCount());
     
@@ -199,19 +229,19 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   @Test
   public void mapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 64, 37);
+    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 66, 37);
   }
   
   @Test
   public void mapFailureStackSize() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(() -> { throw new RuntimeException(); }, null);
-    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 64);
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 66);
   }
   
   @Test
   public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 84, 15);
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 86, 15);
   }
   
   @Test

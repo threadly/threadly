@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -444,7 +445,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         resultFuture.setFailure(t);
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -539,7 +540,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         resultFuture.setFailure(t);
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -682,7 +683,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         result.setFailure(t);
       }
-    });
+    }, null, null);
     return result;
   }
   
@@ -731,13 +732,13 @@ public class FutureUtils extends InternalFutureUtils {
       futuresCopy = null;
       callbackFutures = futures;
     }
-    CancelOnErrorFutureCallback cancelingCallback = 
+    Consumer<Throwable> cancelingCallback = 
         new CancelOnErrorFutureCallback(callbackFutures, interruptThread);
     for (ListenableFuture<?> f : futures) {
       if (copy) {
         futuresCopy.add(f);
       }
-      f.callback(cancelingCallback);
+      f.failureCallback(cancelingCallback);
     }
   }
   
@@ -1136,7 +1137,7 @@ public class FutureUtils extends InternalFutureUtils {
           resultFuture.setFailure(t);
         }
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -1283,7 +1284,7 @@ public class FutureUtils extends InternalFutureUtils {
               }
             } else {
               resultFuture.updateDelegateFuture(lf);
-              lf.callback(this);
+              lf.callback(this, null, null);
               return;
             }
           }
@@ -1300,7 +1301,7 @@ public class FutureUtils extends InternalFutureUtils {
           resultFuture.setRunningThread(null);
         }
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   

@@ -186,10 +186,38 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   }
   
   @Test
+  public void resultCallbackTest() {
+    String result = StringUtils.makeRandomString(5);
+    TestFutureCallback tfc = new TestFutureCallback();
+    slf.resultCallback(tfc::handleResult);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    slf.setResult(result);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
   public void callbackExecutionExceptionTest() {
     Throwable failure = new Exception();
     TestFutureCallback tfc = new TestFutureCallback();
     slf.callback(tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    slf.setFailure(failure);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void failureCallbackExecutionExceptionTest() {
+    Throwable failure = new Exception();
+    TestFutureCallback tfc = new TestFutureCallback();
+    slf.failureCallback(tfc::handleFailure);
     
     assertEquals(0, tfc.getCallCount());
     
@@ -488,13 +516,13 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void mapStackSizeTest() throws InterruptedException, TimeoutException {
     SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
-    ListenableFutureInterfaceTest.mapStackDepthTest(slf, () -> slf.setResult(null), 61, 47);
+    ListenableFutureInterfaceTest.mapStackDepthTest(slf, () -> slf.setResult(null), 63, 47);
   }
   
   @Test
   public void mapFailureStackSize() throws InterruptedException, TimeoutException {
     SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
-    ListenableFutureInterfaceTest.mapFailureStackDepthTest(slf, () -> slf.setFailure(new RuntimeException()), 61);
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(slf, () -> slf.setFailure(new RuntimeException()), 63);
   }
   
   @Test
@@ -522,7 +550,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
     SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
-    ListenableFutureInterfaceTest.flatMapStackDepthTest(slf, () -> slf.setResult(null), 81, 17);
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(slf, () -> slf.setResult(null), 83, 17);
   }
   
   @Test

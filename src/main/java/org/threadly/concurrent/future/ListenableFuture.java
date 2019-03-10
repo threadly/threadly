@@ -4,6 +4,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -730,6 +731,10 @@ public interface ListenableFuture<T> extends Future<T> {
    * The callback from this call will execute on the same thread the result was produced on, or on 
    * the adding thread if the future is already complete.  If the callback has high complexity, 
    * consider passing an executor in for it to be called on.
+   * <p>
+   * If you only care about the success result case please see {@link #resultCallback(Consumer)} or 
+   * conversely if you only want to be invoked for failure cases please see 
+   * {@link #failureCallback(Consumer)}.
    * 
    * @since 5.34
    * @param callback to be invoked when the computation is complete
@@ -746,6 +751,10 @@ public interface ListenableFuture<T> extends Future<T> {
    * If the provided {@link Executor} is null, the callback will execute on the thread which 
    * computed the original future (once it is done).  If the future has already completed, the 
    * callback will execute immediately on the thread which is adding the callback.
+   * <p>
+   * If you only care about the success result case please see 
+   * {@link #resultCallback(Consumer, Executor)} or conversely if you only want to be invoked for 
+   * failure cases please see {@link #failureCallback(Consumer, Executor)}.
    * 
    * @since 5.34
    * @param callback to be invoked when the computation is complete
@@ -771,6 +780,11 @@ public interface ListenableFuture<T> extends Future<T> {
    * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
    * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
    * details of what optimizations are available.
+   * <p>
+   * If you only care about the success result case please see 
+   * {@link #resultCallback(Consumer, Executor, ListenerOptimizationStrategy)} or conversely if you 
+   * only want to be invoked for failure cases please see 
+   * {@link #failureCallback(Consumer, Executor, ListenerOptimizationStrategy)}.
    * 
    * @since 5.34
    * @param callback to be invoked when the computation is complete
@@ -806,6 +820,192 @@ public interface ListenableFuture<T> extends Future<T> {
           callback.handleFailure(e.getCause());
         } catch (CancellationException e) {
           callback.handleFailure(e);
+        }
+      }, executor, optimizeExecution);
+    }
+    
+    return this;
+  }
+  
+  /**
+   * Add a {@link Consumer} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.  Assuming the future has completed without 
+   * error, the result will be provided to the {@link Consumer}, otherwise it will go un-invoked.
+   * <p>
+   * The callback from this call will execute on the same thread the result was produced on, or on 
+   * the adding thread if the future is already complete.  If the callback has high complexity, 
+   * consider passing an executor in for it to be called on.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> resultCallback(Consumer<? super T> callback) {
+    return resultCallback(callback, null, null);
+  }
+  
+  /**
+   * Add a {@link Consumer} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.  Assuming the future has completed without 
+   * error, the result will be provided to the {@link Consumer}, otherwise it will go un-invoked.
+   * <p>
+   * If the provided {@link Executor} is null, the callback will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * callback will execute immediately on the thread which is adding the callback.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @param executor {@link Executor} the callback should be ran on, or {@code null}
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor) {
+    return resultCallback(callback, executor, null);
+  }
+  
+  /**
+   * Add a {@link Consumer} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.  Assuming the future has completed without 
+   * error, the result will be provided to the {@link Consumer}, otherwise it will go un-invoked.
+   * <p>
+   * If the provided {@link Executor} is null, the callback will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * callback will execute immediately on the thread which is adding the callback.
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
+   * details of what optimizations are available.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @param executor {@link Executor} the callback should be ran on, or {@code null}
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
+                                             ListenerOptimizationStrategy optimizeExecution) {
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
+        isDone()) {
+      if (! isCancelled()) {
+        // no need to construct anything, just invoke directly
+        try {
+          callback.accept(get());
+        } catch (InterruptedException e) {
+          // should not be possible
+          Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+          // ignored
+        }
+      }
+    } else {
+      listener(() -> {
+        if (! isCancelled()) {
+          try {
+            callback.accept(get());
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          } catch (ExecutionException e) {
+            // ignored
+          }
+        }
+      }, executor, optimizeExecution);
+    }
+    
+    return this;
+  }
+  
+  /**
+   * Add a {@link Consumer} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.  Assuming the future has completed with an 
+   * error, the {@link Throwable} will be provided to the {@link Consumer}, otherwise if no error 
+   * occurred, the callback will go un-invoked.
+   * <p>
+   * The callback from this call will execute on the same thread the result was produced on, or on 
+   * the adding thread if the future is already complete.  If the callback has high complexity, 
+   * consider passing an executor in for it to be called on.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> failureCallback(Consumer<Throwable> callback) {
+    return failureCallback(callback, null, null);
+  }
+  
+  /**
+   * Add a {@link Consumer} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.  Assuming the future has completed with an 
+   * error, the {@link Throwable} will be provided to the {@link Consumer}, otherwise if no error 
+   * occurred, the callback will go un-invoked.
+   * <p>
+   * If the provided {@link Executor} is null, the callback will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * callback will execute immediately on the thread which is adding the callback.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @param executor {@link Executor} the callback should be ran on, or {@code null}
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor) {
+    return failureCallback(callback, executor, null);
+  }
+  
+  /**
+   * Add a {@link Consumer} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.  Assuming the future has completed with an 
+   * error, the {@link Throwable} will be provided to the {@link Consumer}, otherwise if no error 
+   * occurred, the callback will go un-invoked.
+   * <p>
+   * If the provided {@link Executor} is null, the callback will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * callback will execute immediately on the thread which is adding the callback.
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
+   * details of what optimizations are available.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @param executor {@link Executor} the callback should be ran on, or {@code null}
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
+                                              ListenerOptimizationStrategy optimizeExecution) {
+    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
+        isDone()) {
+      // no need to construct anything, just invoke directly
+      try {
+        get();  // ignore result if provided
+      } catch (InterruptedException e) {
+        // should not be possible
+        Thread.currentThread().interrupt();
+        callback.accept(e);
+      } catch (ExecutionException e) {
+        callback.accept(e.getCause());
+      } catch (CancellationException e) {
+        callback.accept(e);
+      }
+    } else {
+      listener(() -> {
+        try {
+          get();  // ignore result if provided
+        } catch (InterruptedException e) {
+          // should not be possible
+          Thread.currentThread().interrupt();
+          callback.accept(e);
+        } catch (ExecutionException e) {
+          callback.accept(e.getCause());
+        } catch (CancellationException e) {
+          callback.accept(e);
         }
       }, executor, optimizeExecution);
     }

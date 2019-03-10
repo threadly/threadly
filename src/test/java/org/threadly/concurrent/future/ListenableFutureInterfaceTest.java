@@ -106,6 +106,21 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   }
   
   @Test
+  public void resultCallbackAlreadyDoneFutureTest() {
+    String result = StringUtils.makeRandomString(5);
+    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(result);
+    
+    TestFutureCallback tfc = new TestFutureCallback();
+    lf.resultCallback(tfc::handleResult);
+    lf.resultCallback(tfc::handleResult, SameThreadSubmitterExecutor.instance());
+    lf.resultCallback(tfc::handleResult, SameThreadSubmitterExecutor.instance(), 
+                      ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    
+    assertEquals(3, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
   public void callbackExecutionExceptionAlreadyDoneTest() {
     Exception failure = new Exception();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
@@ -115,6 +130,21 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     lf.callback(tfc, SameThreadSubmitterExecutor.instance());
     lf.callback(tfc, SameThreadSubmitterExecutor.instance(), 
                 ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    
+    assertEquals(3, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void failureCallbackExecutionExceptionAlreadyDoneTest() {
+    Exception failure = new Exception();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
+    
+    TestFutureCallback tfc = new TestFutureCallback();
+    lf.failureCallback(tfc::handleFailure);
+    lf.failureCallback(tfc::handleFailure, SameThreadSubmitterExecutor.instance());
+    lf.failureCallback(tfc::handleFailure, SameThreadSubmitterExecutor.instance(), 
+                       ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
     assertEquals(3, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
@@ -1018,7 +1048,14 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
       AsyncVerifier av1 = new AsyncVerifier();
       ListenableFuture<Object> mappedFuture = future;
       for (int i = 0; i < 10; i++) {
-        mappedFuture = mappedFuture.map((ignored) -> null);
+        if (i == 0) {
+          mappedFuture = mappedFuture.map((ignored) -> null, SameThreadSubmitterExecutor.instance(), 
+                                          ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+        } else if (i == 1) {
+          mappedFuture = mappedFuture.map((ignored) -> null, SameThreadSubmitterExecutor.instance());
+        } else {
+          mappedFuture = mappedFuture.map((ignored) -> null);
+        }
       }
       mappedFuture.listener(() -> {
         int stackDepth = Thread.currentThread().getStackTrace().length;
@@ -1063,7 +1100,16 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
       AsyncVerifier av = new AsyncVerifier();
       ListenableFuture<Object> mappedFuture = future;
       for (int i = 0; i < 10; i++) {
-        mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; });
+        if (i == 0) {
+          mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; }, 
+                                                 SameThreadSubmitterExecutor.instance(), 
+                                                 ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+        } else if (i == 1) {
+          mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; }, 
+                                                 SameThreadSubmitterExecutor.instance());
+        } else {
+          mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; });
+        }
       }
       mappedFuture.listener(() -> {
         int stackDepth = Thread.currentThread().getStackTrace().length;
@@ -1088,7 +1134,16 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
       AsyncVerifier av1 = new AsyncVerifier();
       ListenableFuture<Object> mappedFuture = future;
       for (int i = 0; i < 10; i++) {
-        mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null));
+        if (i == 0) {
+          mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null), 
+                                              SameThreadSubmitterExecutor.instance(), 
+                                              ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+        } else if (i == 1) {
+          mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null), 
+                                              SameThreadSubmitterExecutor.instance());
+        } else {
+          mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null));
+        }
       }
       mappedFuture.listener(() -> {
         int stackDepth = Thread.currentThread().getStackTrace().length;

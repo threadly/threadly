@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SchedulerService;
@@ -330,6 +331,22 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                         ListenerOptimizationStrategy optimizeExecution) {
       futureImp.callback(callback, executor, optimizeExecution);
+      
+      return this;
+    }
+
+    @Override
+    public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
+                                              ListenerOptimizationStrategy optimizeExecution) {
+      futureImp.resultCallback(callback, executor, optimizeExecution);
+      
+      return this;
+    }
+
+    @Override
+    public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
+                                               ListenerOptimizationStrategy optimizeExecution) {
+      futureImp.failureCallback(callback, executor, optimizeExecution);
       
       return this;
     }
