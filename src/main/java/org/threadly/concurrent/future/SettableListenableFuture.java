@@ -95,8 +95,8 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> listener(Runnable listener, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     listenerHelper.addListener(listener, 
                                executor == executingExecutor && 
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
@@ -104,24 +104,26 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
                                  null : executor, 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
+    
+    return this;
   }
   
   @Override
-  public void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     if (executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
       // can't check `done` without synchronizing, but we can check final states optimistically
       // because a `null` result requires us to check `done` (which needs to synchronize or we may 
       // see an inconsistent final state), this only works for non-null results
       if (result != null) {
         callback.handleResult(result);
-        return;
+        return this;
       } else if (failure != null) {
         callback.handleFailure(failure);
-        return;
+        return this;
       } else if (cancelStateMessage != null) {
         callback.handleFailure(new CancellationException(getCancellationExceptionMessage()));
-        return;
+        return this;
       }
     }
     // This allows us to avoid synchronization (since listeners wont be invoked till final / 
@@ -142,6 +144,8 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
                                  null : executor, 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
+    
+    return this;
   }
   
   /**

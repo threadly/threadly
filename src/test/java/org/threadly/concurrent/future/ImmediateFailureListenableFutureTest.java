@@ -21,18 +21,18 @@ public class ImmediateFailureListenableFutureTest extends ThreadlyTester {
   }
   
   @Test
-  public void addListenerTest() {
+  public void listenerTest() {
     ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<>(null);
     
-    ImmediateListenableFutureTest.addListenerTest(testFuture);
+    ImmediateListenableFutureTest.listenerTest(testFuture);
   }
   
   @Test
-  public void addCallbackTest() {
+  public void callbackTest() {
     Throwable failure = new Exception();
     ListenableFuture<?> testFuture = new ImmediateFailureListenableFuture<>(failure);
     
-    ImmediateListenableFutureTest.failureAddCallbackTest(testFuture, failure);
+    ImmediateListenableFutureTest.failureCallbackTest(testFuture, failure);
   }
   
   @Test

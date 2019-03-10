@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
-import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -32,8 +31,8 @@ public class PrioritySchedulerServiceWrapperTest extends ScheduledExecutorServic
     try {
       PrioritySchedulerServiceWrapper wrapper = new PrioritySchedulerServiceWrapper(executor);
       TestRunnable futureListener = new TestRunnable();
-      ListenableFuture<?> future = wrapper.submit(DoNothingRunnable.instance());
-      future.addListener(futureListener);
+      wrapper.submit(DoNothingRunnable.instance())
+             .listener(futureListener);
       
       futureListener.blockTillFinished(); // throws exception if never called
     } finally {

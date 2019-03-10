@@ -84,7 +84,7 @@ class InternalFutureUtils {
       SettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
       // may still process in thread if future completed after check and executor is null
-      sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
+      sourceFuture.callback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
         public void handleResult(ST result) {
           try {
@@ -146,14 +146,14 @@ class InternalFutureUtils {
     } else {
       CancelDelegateSettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
-      sourceFuture.addCallback(new FailurePropogatingFutureCallback<ST>(slf) {
+      sourceFuture.callback(new FailurePropogatingFutureCallback<ST>(slf) {
         @Override
         public void handleResult(ST result) {
           try {
             slf.setRunningThread(Thread.currentThread());
             ListenableFuture<? extends RT> mapFuture = mapper.apply(result);
             slf.updateDelegateFuture(mapFuture);
-            mapFuture.addCallback(slf);
+            mapFuture.callback(slf);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable t) {
             // failure calculating transformation, let handler get a chance to see the uncaught exception
@@ -232,7 +232,7 @@ class InternalFutureUtils {
     SettableListenableFuture<RT> slf = 
         new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
     // may still process in thread if future completed after check and executor is null
-    sourceFuture.addCallback(new FutureCallback<RT>() {
+    sourceFuture.callback(new FutureCallback<RT>() {
       @Override
       public void handleResult(RT result) {
         slf.setResult(result);
@@ -313,7 +313,7 @@ class InternalFutureUtils {
     CancelDelegateSettableListenableFuture<RT> slf = 
         new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
     // may still process in thread if future completed after check and executor is null
-    sourceFuture.addCallback(new FutureCallback<RT>() {
+    sourceFuture.callback(new FutureCallback<RT>() {
       @Override
       public void handleResult(RT result) {
         slf.setResult(result);
@@ -326,7 +326,7 @@ class InternalFutureUtils {
             slf.setRunningThread(Thread.currentThread());
             ListenableFuture<RT> mapFuture = mapper.apply((TT)t);
             slf.updateDelegateFuture(mapFuture);
-            mapFuture.addCallback(slf);
+            mapFuture.callback(slf);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable newT) {
             slf.setFailure(newT);
@@ -519,7 +519,7 @@ class InternalFutureUtils {
         futures.trimToSize();
       }
       
-      addListener(() -> futures = null);
+      listener(() -> futures = null);
     }
     
     /**
@@ -565,7 +565,7 @@ class InternalFutureUtils {
      * @param index The index associated to the future
      */
     protected void attachFutureDoneTask(ListenableFuture<? extends T> f, int index) {
-      f.addListener(new FutureDoneTask(f, index), SameThreadSubmitterExecutor.instance());
+      f.listener(new FutureDoneTask(f, index), SameThreadSubmitterExecutor.instance());
     }
     
     @Override
@@ -673,7 +673,7 @@ class InternalFutureUtils {
         };
       }
       
-      f.addListener(doneTaskSingleton, SameThreadSubmitterExecutor.instance());
+      f.listener(doneTaskSingleton, SameThreadSubmitterExecutor.instance());
     }
   }
   
@@ -870,13 +870,15 @@ class InternalFutureUtils {
     }
 
     @Override
-    public void addCallback(FutureCallback<? super T> callback) {
+    public ListenableFuture<T> callback(FutureCallback<? super T> callback) {
       callback.handleFailure(new CancellationException(cancelMessage));
+      
+      return this;
     }
 
     @Override
-    public void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                            ListenerOptimizationStrategy optimize) {
+    public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                        ListenerOptimizationStrategy optimize) {
       CancellationException e = new CancellationException(cancelMessage);
       if (executor == null | 
           optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
@@ -884,6 +886,8 @@ class InternalFutureUtils {
       } else {
         executor.execute(() -> callback.handleFailure(e));
       }
+      
+      return this;
     }
 
     @Override

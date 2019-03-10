@@ -541,12 +541,15 @@ public interface ListenableFuture<T> extends Future<T> {
    * <p>
    * The listener from this call will execute on the same thread the result was produced on, or on 
    * the adding thread if the future is already complete.  If the runnable has high complexity, 
-   * consider using {@link #addListener(Runnable, Executor)}.
+   * consider using {@link #listener(Runnable, Executor)}.
+   * 
+   * @deprecated Please use {@link #listener(Runnable)}
    * 
    * @param listener the listener to run when the computation is complete
    */
+  @Deprecated
   default void addListener(Runnable listener) {
-    addListener(listener, null, null);
+    listener(listener, null, null);
   }
   
   /**
@@ -557,11 +560,14 @@ public interface ListenableFuture<T> extends Future<T> {
    * computed the original future (once it is done).  If the future has already completed, the 
    * listener will execute immediately on the thread which is adding the listener.
    * 
+   * @deprecated Please use {@link #listener(Runnable, Executor)}
+   * 
    * @param listener the listener to run when the computation is complete
    * @param executor {@link Executor} the listener should be ran on, or {@code null}
    */
+  @Deprecated
   default void addListener(Runnable listener, Executor executor) {
-    addListener(listener, executor, null);
+    listener(listener, executor, null);
   }
   
   /**
@@ -580,13 +586,18 @@ public interface ListenableFuture<T> extends Future<T> {
    * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
    * details of what optimizations are available.
    * 
+   * @deprecated Please use {@link #listener(Runnable, Executor, ListenerOptimizationStrategy)}
+   * 
    * @since 5.10
    * @param listener the listener to run when the computation is complete
    * @param executor {@link Executor} the listener should be ran on, or {@code null}
    * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
    */
-  public void addListener(Runnable listener, Executor executor, 
-                          ListenerOptimizationStrategy optimizeExecution);
+  @Deprecated
+  default void addListener(Runnable listener, Executor executor, 
+                           ListenerOptimizationStrategy optimizeExecution) {
+    listener(listener, executor, optimizeExecution);
+  }
   
   /**
    * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
@@ -596,11 +607,14 @@ public interface ListenableFuture<T> extends Future<T> {
    * the adding thread if the future is already complete.  If the callback has high complexity, 
    * consider passing an executor in for it to be called on.
    * 
+   * @deprecated Please use {@link #callback(FutureCallback)}
+   * 
    * @since 1.2.0
    * @param callback to be invoked when the computation is complete
    */
+  @Deprecated
   default void addCallback(FutureCallback<? super T> callback) {
-    addCallback(callback, null, null);
+    callback(callback, null, null);
   }
   
   /**
@@ -611,12 +625,15 @@ public interface ListenableFuture<T> extends Future<T> {
    * computed the original future (once it is done).  If the future has already completed, the 
    * callback will execute immediately on the thread which is adding the callback.
    * 
+   * @deprecated Please use {@link #callback(FutureCallback, Executor)}
+   * 
    * @since 1.2.0
    * @param callback to be invoked when the computation is complete
    * @param executor {@link Executor} the callback should be ran on, or {@code null}
    */
+  @Deprecated
   default void addCallback(FutureCallback<? super T> callback, Executor executor) {
-    addCallback(callback, executor, null);
+    callback(callback, executor, null);
   }
   
   /**
@@ -635,14 +652,134 @@ public interface ListenableFuture<T> extends Future<T> {
    * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
    * details of what optimizations are available.
    * 
+   * @deprecated Please use {@link #callback(FutureCallback, Executor, ListenerOptimizationStrategy)}
+   * 
    * @since 5.10
    * @param callback to be invoked when the computation is complete
    * @param executor {@link Executor} the callback should be ran on, or {@code null}
    * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
    */
-  @SuppressWarnings("deprecation")
+  @Deprecated
   default void addCallback(FutureCallback<? super T> callback, Executor executor, 
                            ListenerOptimizationStrategy optimizeExecution) {
+    callback(callback, executor, optimizeExecution);
+  }
+  
+  /**
+   * Add a listener to be called once the future has completed.  If the future has already 
+   * finished, this will be called immediately.
+   * <p>
+   * The listener from this call will execute on the same thread the result was produced on, or on 
+   * the adding thread if the future is already complete.  If the runnable has high complexity, 
+   * consider using {@link #listener(Runnable, Executor)}.
+   * 
+   * @since 5.34
+   * @param listener the listener to run when the computation is complete
+   * @return Exactly {@code this} instance to add more listeners or other functional operations
+   */
+  default ListenableFuture<T> listener(Runnable listener) {
+    return listener(listener, null, null);
+  }
+  
+  /**
+   * Add a listener to be called once the future has completed.  If the future has already 
+   * finished, this will be called immediately.
+   * <p>
+   * If the provided {@link Executor} is null, the listener will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * listener will execute immediately on the thread which is adding the listener.
+   * 
+   * @since 5.34
+   * @param listener the listener to run when the computation is complete
+   * @param executor {@link Executor} the listener should be ran on, or {@code null}
+   * @return Exactly {@code this} instance to add more listeners or other functional operations
+   */
+  default ListenableFuture<T> listener(Runnable listener, Executor executor) {
+    return listener(listener, executor, null);
+  }
+  
+  /**
+   * Add a listener to be called once the future has completed.  If the future has already 
+   * finished, this will be called immediately.
+   * <p>
+   * If the provided {@link Executor} is null, the listener will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * listener will execute immediately on the thread which is adding the listener.
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
+   * details of what optimizations are available.
+   * 
+   * @since 5.34
+   * @param listener the listener to run when the computation is complete
+   * @param executor {@link Executor} the listener should be ran on, or {@code null}
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return Exactly {@code this} instance to add more listeners or other functional operations
+   */
+  public ListenableFuture<T> listener(Runnable listener, Executor executor, 
+                                      ListenerOptimizationStrategy optimizeExecution);
+  
+  /**
+   * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.
+   * <p>
+   * The callback from this call will execute on the same thread the result was produced on, or on 
+   * the adding thread if the future is already complete.  If the callback has high complexity, 
+   * consider passing an executor in for it to be called on.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> callback(FutureCallback<? super T> callback) {
+    return callback(callback, null, null);
+  }
+  
+  /**
+   * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.
+   * <p>
+   * If the provided {@link Executor} is null, the callback will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * callback will execute immediately on the thread which is adding the callback.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @param executor {@link Executor} the callback should be ran on, or {@code null}
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor) {
+    return callback(callback, executor, null);
+  }
+  
+  /**
+   * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
+   * already finished, this will be called immediately.
+   * <p>
+   * If the provided {@link Executor} is null, the callback will execute on the thread which 
+   * computed the original future (once it is done).  If the future has already completed, the 
+   * callback will execute immediately on the thread which is adding the callback.
+   * <p>
+   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
+   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
+   * it will prevent other listeners from potentially being invoked until it completes.  However 
+   * if the listener is small / fast, this can provide significant performance gains.  It should 
+   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
+   * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
+   * details of what optimizations are available.
+   * 
+   * @since 5.34
+   * @param callback to be invoked when the computation is complete
+   * @param executor {@link Executor} the callback should be ran on, or {@code null}
+   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
+   * @return Exactly {@code this} instance to add more callbacks or other functional operations
+   */
+  default ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                       ListenerOptimizationStrategy optimizeExecution) {
     if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
         isDone()) {
       // no need to construct anything, just invoke directly
@@ -658,7 +795,7 @@ public interface ListenableFuture<T> extends Future<T> {
         callback.handleFailure(e);
       }
     } else {
-      addListener(() -> {
+      listener(() -> {
         try {
           callback.handleResult(get());
         } catch (InterruptedException e) {
@@ -672,6 +809,8 @@ public interface ListenableFuture<T> extends Future<T> {
         }
       }, executor, optimizeExecution);
     }
+    
+    return this;
   }
   
   /**

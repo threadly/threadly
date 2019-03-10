@@ -17,17 +17,17 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     assertFalse(testFuture.isCancelled());
   }
   
-  public static void addListenerTest(ListenableFuture<?> testFuture) {
+  public static void listenerTest(ListenableFuture<?> testFuture) {
     TestRunnable tr = new TestRunnable();
-    testFuture.addListener(tr);
+    testFuture.listener(tr);
     assertTrue(tr.ranOnce());
     
     tr = new TestRunnable();
-    testFuture.addListener(tr, null);
+    testFuture.listener(tr, null);
     assertTrue(tr.ranOnce());
     
     tr = new TestRunnable();
-    testFuture.addListener(tr, new SameThreadSubmitterExecutor());
+    testFuture.listener(tr, new SameThreadSubmitterExecutor());
     assertTrue(tr.ranOnce());
   }
   
@@ -39,17 +39,17 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     assertTrue(testFuture.get(1, TimeUnit.MILLISECONDS) == expectedResult);
   }
   
-  public static void resultAddCallbackTest(ListenableFuture<?> testFuture, Object expectedResult) {
+  public static void resultCallbackTest(ListenableFuture<?> testFuture, Object expectedResult) {
     TestFutureCallback tfc = new TestFutureCallback();
-    testFuture.addCallback(tfc);
+    testFuture.callback(tfc);
     assertTrue(tfc.getLastResult() == expectedResult);
     
     tfc = new TestFutureCallback();
-    testFuture.addCallback(tfc, null);
+    testFuture.callback(tfc, null);
     assertTrue(tfc.getLastResult() == expectedResult);
     
     tfc = new TestFutureCallback();
-    testFuture.addCallback(tfc, new SameThreadSubmitterExecutor());
+    testFuture.callback(tfc, new SameThreadSubmitterExecutor());
     assertTrue(tfc.getLastResult() == expectedResult);
   }
   
@@ -75,17 +75,17 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     }
   }
   
-  public static void failureAddCallbackTest(ListenableFuture<?> testFuture, Throwable expectedFailure) {
+  public static void failureCallbackTest(ListenableFuture<?> testFuture, Throwable expectedFailure) {
     TestFutureCallback tfc = new TestFutureCallback();
-    testFuture.addCallback(tfc);
+    testFuture.callback(tfc);
     assertTrue(tfc.getLastFailure() == expectedFailure);
     
     tfc = new TestFutureCallback();
-    testFuture.addCallback(tfc, null);
+    testFuture.callback(tfc, null);
     assertTrue(tfc.getLastFailure() == expectedFailure);
     
     tfc = new TestFutureCallback();
-    testFuture.addCallback(tfc, new SameThreadSubmitterExecutor());
+    testFuture.callback(tfc, new SameThreadSubmitterExecutor());
     assertTrue(tfc.getLastFailure() == expectedFailure);
   }
   

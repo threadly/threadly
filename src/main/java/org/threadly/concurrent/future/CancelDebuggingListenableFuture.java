@@ -88,9 +88,11 @@ public class CancelDebuggingListenableFuture<T> implements ListenableFuture<T> {
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor,
-                          ListenerOptimizationStrategy optimizeExecution) {
-    delegateFuture.addListener(listener, executor, optimizeExecution);
+  public ListenableFuture<T> listener(Runnable listener, Executor executor,
+                                      ListenerOptimizationStrategy optimizeExecution) {
+    delegateFuture.listener(listener, executor, optimizeExecution);
+    
+    return this;
   }
 
   @Override

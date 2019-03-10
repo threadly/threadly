@@ -136,14 +136,14 @@ public class ScheduledFutureDelegateTest extends ThreadlyTester {
   }
 
   @Test
-  public void addListenerTest() {
+  public void listenerTest() {
     TestFutureImp future = new TestFutureImp(false);
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     TestRunnable firstListener = new TestRunnable();
     TestRunnable secondListener = new TestRunnable();
-    future.addListener(firstListener);
-    testItem.addListener(secondListener);
+    future.listener(firstListener);
+    testItem.listener(secondListener);
     
     assertEquals(2, future.listeners.size());
     assertTrue(future.listeners.contains(firstListener));
@@ -151,14 +151,14 @@ public class ScheduledFutureDelegateTest extends ThreadlyTester {
   }
 
   @Test
-  public void addListenerExecutorTest() {
+  public void listenerExecutorTest() {
     TestFutureImp future = new TestFutureImp(false);
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
     TestRunnable firstListener = new TestRunnable();
     TestRunnable secondListener = new TestRunnable();
-    future.addListener(firstListener, null);
-    testItem.addListener(secondListener, null);
+    future.listener(firstListener, null);
+    testItem.listener(secondListener, null);
     
     assertEquals(2, future.listeners.size());
     assertTrue(future.listeners.contains(firstListener));
@@ -166,22 +166,22 @@ public class ScheduledFutureDelegateTest extends ThreadlyTester {
   }
   
   @Test
-  public void addCallbackAlreadyDoneTest() {
+  public void callbackAlreadyDoneTest() {
     TestFutureImp future = new TestFutureImp(false);
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
-    testItem.addCallback(new TestFutureCallback());
+    testItem.callback(new TestFutureCallback());
     
     assertEquals(0, future.listeners.size());
   }
   
   @Test
-  public void addCallbackExecutorTest() {
+  public void callbackExecutorTest() {
     TestFutureImp future = new TestFutureImp(false);
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
-    testItem.addCallback(new TestFutureCallback(), 
-                         SameThreadSubmitterExecutor.instance()); // trick so already-done optimization does not kick in
+    testItem.callback(new TestFutureCallback(), 
+                      SameThreadSubmitterExecutor.instance()); // trick so already-done optimization does not kick in
     
     assertEquals(1, future.listeners.size());
   }

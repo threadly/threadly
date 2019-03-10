@@ -39,18 +39,18 @@ public class ImmediateResultListenableFutureTest extends ThreadlyTester {
   }
   
   @Test
-  public void addListenerTest() {
+  public void listenerTest() {
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(null);
     
-    ImmediateListenableFutureTest.addListenerTest(testFuture);
+    ImmediateListenableFutureTest.listenerTest(testFuture);
   }
   
   @Test
-  public void addCallbackTest() {
+  public void callbackTest() {
     Object result = new Object();
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(result);
     
-    ImmediateListenableFutureTest.resultAddCallbackTest(testFuture, result);
+    ImmediateListenableFutureTest.resultCallbackTest(testFuture, result);
   }
   
   @Test

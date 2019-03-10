@@ -16,19 +16,23 @@ abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelabl
   }
 
   @Override
-  public void addListener(Runnable listener) {
+  public ListenableFuture<T> listener(Runnable listener) {
     listener.run();
+    
+    return this;
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> listener(Runnable listener, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     if (executor != null && 
         optimize != ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
       executor.execute(listener);
     } else {
       listener.run();
     }
+    
+    return this;
   }
 
   @Override

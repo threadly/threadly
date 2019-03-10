@@ -53,7 +53,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   public void addNullListenerTest() {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     
-    future.addListener(null);
+    future.listener(null);
     // no exception should have been thrown
   }
   
@@ -67,7 +67,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     
     TestRunnable listener = new TestRunnable();
     
-    future.addListener(listener);
+    future.listener(listener);
     
     assertEquals(1, future.listenerHelper.registeredListenerCount()); // should now have once now that the runnable has not run yet
     
@@ -79,7 +79,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     
     TestRunnable postRunListener = new TestRunnable();
     
-    future.addListener(postRunListener);
+    future.listener(postRunListener);
     
     assertTrue(postRunListener.ranOnce()); // verify listener was called
     
@@ -88,7 +88,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     // verify run on correct executor
     TestRunnable executorListener = new TestRunnable();
     TestExecutor executor = new TestExecutor();
-    future.addListener(executorListener, executor);
+    future.listener(executorListener, executor);
     
     assertEquals(1, executor.providedRunnables.size());
     assertTrue(executor.providedRunnables.get(0) == executorListener);
@@ -98,7 +98,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   public void cancelRunsListenersTest() {
     TestRunnable tr = new TestRunnable();
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    future.addListener(tr);
+    future.listener(tr);
     
     future.cancel(false);
     
@@ -111,7 +111,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     
-    future.addListener(listener);
+    future.listener(listener);
     future.run();
     
     assertTrue(listener.ranOnce());
@@ -125,7 +125,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     
     future.run();
     try {
-      future.addListener(listener);
+      future.listener(listener);
       fail("Exception should have thrown");
     } catch (RuntimeException e) {
       // expected
@@ -135,11 +135,11 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   @Test
-  public void addCallbackTest() {
+  public void callbackTest() {
     TestCallable tc = new TestCallable();
     ListenableFutureTask<Object> future = makeFutureTask(tc);
     TestFutureCallback tfc = new TestFutureCallback();
-    future.addCallback(tfc);
+    future.callback(tfc);
     
     assertEquals(0, tfc.getCallCount());
     
@@ -150,11 +150,11 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   @Test
-  public void addCallbackExecutionExceptionTest() {
+  public void callbackExecutionExceptionTest() {
     RuntimeException failure = new SuppressedStackRuntimeException();
     ListenableFutureTask<Object> future = makeFutureTask(new TestRuntimeFailureRunnable(failure), null);
     TestFutureCallback tfc = new TestFutureCallback();
-    future.addCallback(tfc);
+    future.callback(tfc);
     
     assertEquals(0, tfc.getCallCount());
     

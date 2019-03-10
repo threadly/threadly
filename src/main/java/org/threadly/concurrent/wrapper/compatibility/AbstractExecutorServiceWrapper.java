@@ -319,15 +319,19 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     }
 
     @Override
-    public void addListener(Runnable listener, Executor executor, 
-                            ListenerOptimizationStrategy optimizeExecution) {
-      futureImp.addListener(listener, executor, optimizeExecution);
+    public ListenableFuture<T> listener(Runnable listener, Executor executor, 
+                                        ListenerOptimizationStrategy optimizeExecution) {
+      futureImp.listener(listener, executor, optimizeExecution);
+      
+      return this;
     }
 
     @Override
-    public void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                            ListenerOptimizationStrategy optimizeExecution) {
-      futureImp.addCallback(callback, executor, optimizeExecution);
+    public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                        ListenerOptimizationStrategy optimizeExecution) {
+      futureImp.callback(callback, executor, optimizeExecution);
+      
+      return this;
     }
 
     @Override

@@ -31,19 +31,23 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   }
 
   @Override
-  public void addCallback(FutureCallback<? super T> callback) {
+  public ListenableFuture<T> callback(FutureCallback<? super T> callback) {
     callback.handleFailure(failure);
+    
+    return this;
   }
 
   @Override
-  public void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     if (executor == null | 
         optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
       callback.handleFailure(failure);
     } else {
       executor.execute(new CallbackInvokingTask(callback));
     }
+    
+    return this;
   }
 
   @Override
