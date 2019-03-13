@@ -1080,6 +1080,43 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void immediateResultFutureEmptyStringResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ListenableFuture<String> testFuture = FutureUtils.immediateResultFuture("");
+    
+    ImmediateListenableFutureTest.resultTest(testFuture, "");
+    assertTrue(testFuture == ImmediateResultListenableFuture.EMPTY_STRING_RESULT);
+  }
+  
+  @Test
+  public void immediateResultFutureBooleanTrueResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ListenableFuture<Boolean> testFuture = FutureUtils.immediateResultFuture(true);
+    
+    ImmediateListenableFutureTest.resultTest(testFuture, true);
+    assertTrue(testFuture == ImmediateResultListenableFuture.BOOLEAN_TRUE_RESULT);
+  }
+  
+  @Test
+  public void immediateResultFutureBooleanFalseResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ListenableFuture<Boolean> testFuture = FutureUtils.immediateResultFuture(false);
+    
+    ImmediateListenableFutureTest.resultTest(testFuture, false);
+    assertTrue(testFuture == ImmediateResultListenableFuture.BOOLEAN_FALSE_RESULT);
+  }
+  
+  @Test
+  public void immediateResultFutureEmptyOptionalResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ListenableFuture<Optional<String>> testFuture = FutureUtils.immediateResultFuture(Optional.empty());
+    
+    ImmediateListenableFutureTest.resultTest(testFuture, Optional.<String>empty());
+    assertTrue(testFuture == ImmediateResultListenableFuture.EMPTY_OPTIONAL_RESULT);
+    
+    testFuture = FutureUtils.immediateResultFuture(Optional.of("").map((ignored) -> null));
+    
+    ImmediateListenableFutureTest.resultTest(testFuture, Optional.<String>empty());
+    assertTrue(testFuture == ImmediateResultListenableFuture.EMPTY_OPTIONAL_RESULT);
+  }
+  
+  @Test
   public void immediateResultFutureTest() throws InterruptedException, ExecutionException, TimeoutException {
     Object result = new Object();
     ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(result);

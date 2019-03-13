@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -746,7 +747,12 @@ public class FutureUtils extends InternalFutureUtils {
    * Thus the resulting future can not error, block, or be canceled.  
    * <p>
    * If {@code null} is provided here the static instance of 
-   * {@link ImmediateResultListenableFuture#NULL_RESULT} will be returned to reduce GC overhead.
+   * {@link ImmediateResultListenableFuture#NULL_RESULT} will be returned to reduce GC overhead.  
+   * This function may additionally try to optimize the references to other common cases (like 
+   * {@link Boolean} results) when performance permits it.  Those de-duplications may change based 
+   * off benchmarking results, so be careful about depending on them.  If no de-duplication is 
+   * desired (ie the Future is used as a key in a {@code Map}), then manually construct a new 
+   * {@link ImmediateResultListenableFuture}.
    * 
    * @since 1.2.0
    * @param <T> The result object type returned by the returned future
@@ -757,6 +763,21 @@ public class FutureUtils extends InternalFutureUtils {
   public static <T> ListenableFuture<T> immediateResultFuture(T result) {
     if (result == null) {
       return (ListenableFuture<T>)ImmediateResultListenableFuture.NULL_RESULT;
+    } else if (result == Optional.empty()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_OPTIONAL_RESULT;
+    } else if (result == Boolean.TRUE) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.BOOLEAN_TRUE_RESULT;
+    } else if (result == Boolean.FALSE) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.BOOLEAN_FALSE_RESULT;
+    } else if (result == "") { // equality check is ideal since the JVM will de-duplicate literal strings
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_STRING_RESULT;
+    /* The below seem to impact performance a surprising amount
+    } else if (result == Collections.emptyList()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    } else if (result == Collections.emptyMap()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_MAP_RESULT;
+    } else if (result == Collections.emptySet()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_SET_RESULT;*/
     } else {
       return new ImmediateResultListenableFuture<>(result);
     }
