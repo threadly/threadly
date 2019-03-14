@@ -493,7 +493,7 @@ class InternalFutureUtils {
     
     
     @SuppressWarnings("unchecked")
-    protected FutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+    protected FutureCollection(Iterator<? extends ListenableFuture<? extends T>> it) {
       super(false);
       
       remainingResult = new AtomicInteger(0); // may go negative if results finish before all are added
@@ -501,14 +501,11 @@ class InternalFutureUtils {
       buildingResult = EMPTY_ARRAY;
 
       int count = 0;
-      if (source != null) {
-        Iterator<? extends ListenableFuture<? extends T>> it = source.iterator();
-        while (it.hasNext()) {
-          ListenableFuture<? extends T> f = it.next();
-          futures.add(f);
-          attachFutureDoneTask(f, count++);
+      while (it.hasNext()) {
+        ListenableFuture<? extends T> f = it.next();
+        futures.add(f);
+        attachFutureDoneTask(f, count++);
         }
-      }
       
       init(count);
       
@@ -640,7 +637,7 @@ class InternalFutureUtils {
   protected static class EmptyFutureCollection extends FutureCollection<Object> {
     private Runnable doneTaskSingleton;
     
-    protected EmptyFutureCollection(Iterable<? extends ListenableFuture<?>> source) {
+    protected EmptyFutureCollection(Iterator<? extends ListenableFuture<?>> source) {
       super(source);
     }
     
@@ -687,7 +684,7 @@ class InternalFutureUtils {
    * @param <T> The result object type returned from the futures
    */
   protected static class AllFutureCollection<T> extends FutureCollection<T> {
-    protected AllFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+    protected AllFutureCollection(Iterator<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
 
@@ -705,7 +702,7 @@ class InternalFutureUtils {
    * @param <T> The result object type returned from the futures
    */
   protected abstract static class PartialFutureCollection<T> extends FutureCollection<T> {
-    protected PartialFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+    protected PartialFutureCollection(Iterator<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
     
@@ -747,7 +744,7 @@ class InternalFutureUtils {
    * @param <T> The result object type returned from the futures
    */
   protected static class SuccessFutureCollection<T> extends PartialFutureCollection<T> {
-    protected SuccessFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+    protected SuccessFutureCollection(Iterator<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
 
@@ -784,7 +781,7 @@ class InternalFutureUtils {
    * @param <T> The result object type returned from the futures
    */
   protected static class FailureFutureCollection<T> extends PartialFutureCollection<T> {
-    protected FailureFutureCollection(Iterable<? extends ListenableFuture<? extends T>> source) {
+    protected FailureFutureCollection(Iterator<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
     
