@@ -261,7 +261,7 @@ public class FutureUtilsTest extends ThreadlyTester {
                                            final List<? extends ListenableFuture<?>> futures) throws InterruptedException, TimeoutException {
     final AsyncVerifier av = new AsyncVerifier();
     
-    f.addListener(new Runnable() {
+    f.listener(new Runnable() {
       @Override
       public void run() {
         av.assertTrue(f.isDone());
@@ -1132,18 +1132,18 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void immediateResultFutureAddListenerTest() {
+  public void immediateResultFutureListenerTest() {
     ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(null);
     
-    ImmediateListenableFutureTest.addListenerTest(testFuture);
+    ImmediateListenableFutureTest.listenerTest(testFuture);
   }
   
   @Test
-  public void immediateResultFutureAddCallbackTest() {
+  public void immediateResultFutureCallbackTest() {
     Object result = new Object();
     ListenableFuture<?> testFuture = FutureUtils.immediateResultFuture(result);
     
-    ImmediateListenableFutureTest.resultAddCallbackTest(testFuture, result);
+    ImmediateListenableFutureTest.resultCallbackTest(testFuture, result);
   }
   
   @Test
@@ -1162,18 +1162,18 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void immediateFailureFutureAddListenerTest() {
+  public void immediateFailureFutureListenerTest() {
     ListenableFuture<?> testFuture = FutureUtils.immediateFailureFuture(null);
     
-    ImmediateListenableFutureTest.addListenerTest(testFuture);
+    ImmediateListenableFutureTest.listenerTest(testFuture);
   }
   
   @Test
-  public void immediateFailureFutureAddCallbackTest() {
+  public void immediateFailureFutureCallbackTest() {
     Throwable failure = new Exception();
     ListenableFuture<?> testFuture = FutureUtils.immediateFailureFuture(failure);
     
-    ImmediateListenableFutureTest.failureAddCallbackTest(testFuture, failure);
+    ImmediateListenableFutureTest.failureCallbackTest(testFuture, failure);
   }
 
   @Test

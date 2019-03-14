@@ -3,6 +3,7 @@ package org.threadly.concurrent.future;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Completed implementation of {@link ListenableFuture} that will immediately provide a failure 
@@ -31,19 +32,36 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   }
 
   @Override
-  public void addCallback(FutureCallback<? super T> callback) {
-    callback.handleFailure(failure);
-  }
-
-  @Override
-  public void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     if (executor == null | 
         optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
       callback.handleFailure(failure);
     } else {
-      executor.execute(new CallbackInvokingTask(callback));
+      executor.execute(() -> callback.handleFailure(failure));
     }
+    
+    return this;
+  }
+
+  @Override
+  public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
+                                            ListenerOptimizationStrategy optimize) {
+    // ignored
+    return this;
+  }
+
+  @Override
+  public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
+                                             ListenerOptimizationStrategy optimize) {
+    if (executor == null | 
+        optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+      callback.accept(failure);
+    } else {
+      executor.execute(() -> callback.accept(failure));
+    }
+    
+    return this;
   }
 
   @Override
@@ -54,23 +72,5 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   @Override
   public T get(long timeout, TimeUnit unit) throws ExecutionException {
     throw new ExecutionException(failure);
-  }
-  
-  /**
-   * Small class to invoke callback with stored failure.
-   *
-   * @since 4.9.0
-   */
-  protected class CallbackInvokingTask implements Runnable {
-    protected final FutureCallback<? super T> callback;
-    
-    public CallbackInvokingTask(FutureCallback<? super T> callback) {
-      this.callback = callback;
-    }
-    
-    @Override
-    public void run() {
-      callback.handleFailure(failure);
-    }
   }
 }

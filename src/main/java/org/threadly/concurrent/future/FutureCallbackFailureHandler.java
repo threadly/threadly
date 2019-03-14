@@ -12,8 +12,12 @@ import org.threadly.util.ArgumentVerifier;
  * See {@link AbstractFutureCallbackFailureHandler} for a similar implementation except using an 
  * abstract class rather than accepting a lambda.
  * 
+ * @deprecated Instead provide {@link Consumer} directly to 
+ *               {@link ListenableFuture#failureCallback(java.util.function.Consumer)}
+ * 
  * @since 5.0
  */
+@Deprecated
 public class FutureCallbackFailureHandler extends AbstractFutureCallbackFailureHandler {
   private final Consumer<Throwable> failureHandler;
   

@@ -125,8 +125,8 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> listener(Runnable listener, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     listenerHelper.addListener(listener, 
                                executor == executingExecutor && 
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
@@ -134,10 +134,11 @@ public class ListenableFutureTask<T> extends FutureTask<T>
                                  null : executor, 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
+    return this;
   }
   
   /**
-   * Can not be overridden, please use {@link #addListener(Runnable)} as an alternative.
+   * Can not be overridden, please use {@link #listener(Runnable)} as an alternative.
    */
   @Override
   protected final void done() {

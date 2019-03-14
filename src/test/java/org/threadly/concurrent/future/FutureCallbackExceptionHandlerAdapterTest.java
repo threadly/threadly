@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.util.TestExceptionHandler;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class FutureCallbackExceptionHandlerAdapterTest extends ThreadlyTester {
   @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)

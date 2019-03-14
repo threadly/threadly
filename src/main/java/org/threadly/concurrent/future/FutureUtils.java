@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -259,7 +260,7 @@ public class FutureUtils extends InternalFutureUtils {
    * implementation of {@link #blockTillAllComplete(Iterable)}.  If the listener needs to be 
    * invoked on another thread than one of the provided futures please use 
    * {@link #invokeAfterAllComplete(Collection, Runnable, Executor)}.  Please see 
-   * {@link ListenableFuture#addListener(Runnable)} for more information on execution without an 
+   * {@link ListenableFuture#listener(Runnable)} for more information on execution without an 
    * {@link Executor}.
    * <p>
    * It is critical that the collection is NOT modified while this is invoked.  A change in the 
@@ -286,7 +287,7 @@ public class FutureUtils extends InternalFutureUtils {
    * @param futures Futures that must complete before listener is invoked
    * @param listener Invoked once all the provided futures have completed
    * @param executor Executor (or {@code null}) to invoke listener on, see 
-   *                    {@link ListenableFuture#addListener(Runnable, Executor)}
+   *                    {@link ListenableFuture#listener(Runnable, Executor)}
    */
   public static void invokeAfterAllComplete(Collection<? extends ListenableFuture<?>> futures, 
                                             Runnable listener, Executor executor) {
@@ -300,7 +301,7 @@ public class FutureUtils extends InternalFutureUtils {
         executor.execute(listener);
       }
     } else if (size == 1) {
-      futures.iterator().next().addListener(listener, executor);
+      futures.iterator().next().listener(listener, executor);
     } else {
       AtomicInteger remaining = new AtomicInteger(size);
       Runnable decrementingListener = () -> {
@@ -313,7 +314,7 @@ public class FutureUtils extends InternalFutureUtils {
         }
       };
       for (ListenableFuture<?> lf : futures) {
-        lf.addListener(decrementingListener);
+        lf.listener(decrementingListener);
       }
     }
   }
@@ -445,7 +446,7 @@ public class FutureUtils extends InternalFutureUtils {
     
     final SettableListenableFuture<T> resultFuture = 
         new CancelDelegateSettableListenableFuture<>(efc, null);
-    efc.addCallback(new FutureCallback<Object>() {
+    efc.callback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object ignored) {
         resultFuture.setResult(result);
@@ -455,7 +456,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         resultFuture.setFailure(t);
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -531,7 +532,7 @@ public class FutureUtils extends InternalFutureUtils {
     
     final CancelDelegateSettableListenableFuture<T> resultFuture = 
         new CancelDelegateSettableListenableFuture<>(ffc, null);
-    ffc.addCallback(new FutureCallback<List<ListenableFuture<?>>>() {
+    ffc.callback(new FutureCallback<List<ListenableFuture<?>>>() {
       @Override
       public void handleResult(List<ListenableFuture<?>> failedFutures) {
         if (failedFutures.isEmpty()) {
@@ -557,7 +558,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         resultFuture.setFailure(t);
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -689,7 +690,7 @@ public class FutureUtils extends InternalFutureUtils {
     final SettableListenableFuture<List<T>> result = 
         new CancelDelegateSettableListenableFuture<>(completeFuture, null);
     
-    completeFuture.addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
+    completeFuture.callback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
       @Override
       public void handleResult(List<ListenableFuture<? extends T>> resultFutures) {
         boolean needToCancel = false;
@@ -729,7 +730,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         result.setFailure(t);
       }
-    });
+    }, null, null);
     return result;
   }
   
@@ -778,13 +779,13 @@ public class FutureUtils extends InternalFutureUtils {
       futuresCopy = null;
       callbackFutures = futures;
     }
-    CancelOnErrorFutureCallback cancelingCallback = 
+    Consumer<Throwable> cancelingCallback = 
         new CancelOnErrorFutureCallback(callbackFutures, interruptThread);
     for (ListenableFuture<?> f : futures) {
       if (copy) {
         futuresCopy.add(f);
       }
-      f.addCallback(cancelingCallback);
+      f.failureCallback(cancelingCallback);
     }
   }
   
@@ -1175,7 +1176,7 @@ public class FutureUtils extends InternalFutureUtils {
       }
     };
     
-    startingFuture.addCallback(new FailurePropogatingFutureCallback<T>(resultFuture) {
+    startingFuture.callback(new FailurePropogatingFutureCallback<T>(resultFuture) {
       @Override
       public void handleResult(T result) {
         try {
@@ -1190,7 +1191,7 @@ public class FutureUtils extends InternalFutureUtils {
                 scheduler.submitScheduled(cancelCheckingTask, scheduleDelayMillis);
             resultFuture.updateDelegateFuture(lf);
             // TODO - if future is always already complete, this may StackOverflow
-            lf.addCallback(this);  // add this to check again once execution completes
+            lf.callback(this);  // add this to check again once execution completes
           } else {
             // once we have our result, this will end our loop
             resultFuture.setResult(result);
@@ -1203,7 +1204,7 @@ public class FutureUtils extends InternalFutureUtils {
           resultFuture.setFailure(t);
         }
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -1320,7 +1321,7 @@ public class FutureUtils extends InternalFutureUtils {
     CancelDelegateSettableListenableFuture<T> resultFuture = 
         new CancelDelegateSettableListenableFuture<>(startingFuture, null);
     
-    startingFuture.addCallback(new FailurePropogatingFutureCallback<T>(resultFuture) {
+    startingFuture.callback(new FailurePropogatingFutureCallback<T>(resultFuture) {
       @Override
       public void handleResult(T result) {
         resultFuture.setRunningThread(Thread.currentThread());
@@ -1350,7 +1351,7 @@ public class FutureUtils extends InternalFutureUtils {
               }
             } else {
               resultFuture.updateDelegateFuture(lf);
-              lf.addCallback(this);
+              lf.callback(this, null, null);
               return;
             }
           }
@@ -1367,7 +1368,7 @@ public class FutureUtils extends InternalFutureUtils {
           resultFuture.setRunningThread(null);
         }
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   

@@ -214,7 +214,7 @@ public class ExecutorLimiter implements SubmitterExecutor {
       // we will release the limit restriction as soon as the future completes.
       // listeners should be invoked in order, so we just need to be the first listener here
       // We add a `SameThreadSubmitterExecutor` so that we get executed first as if it was async
-      future.addListener(this::releaseExecutionLimit, SameThreadSubmitterExecutor.instance());
+      future.listener(this::releaseExecutionLimit, SameThreadSubmitterExecutor.instance());
 
       if (canRunTask()) {
         executor.execute(task);

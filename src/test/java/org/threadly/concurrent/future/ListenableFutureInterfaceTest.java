@@ -5,11 +5,15 @@ import static org.junit.Assert.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -26,37 +30,151 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   protected abstract ListenableFutureFactory makeListenableFutureFactory();
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackAlreadyDoneFutureTest() {
     String result = StringUtils.makeRandomString(5);
     ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(result);
     
     TestFutureCallback tfc = new TestFutureCallback();
     lf.addCallback(tfc);
+    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance());
+    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance(), 
+                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
-    assertEquals(1, tfc.getCallCount());
+    assertEquals(3, tfc.getCallCount());
     assertTrue(result == tfc.getLastResult());
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addCallbackExecutionExceptionAlreadyDoneTest() {
     Exception failure = new Exception();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
     
     TestFutureCallback tfc = new TestFutureCallback();
     lf.addCallback(tfc);
+    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance());
+    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance(), 
+                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
-    assertEquals(1, tfc.getCallCount());
+    assertEquals(3, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
   }
   
   @Test
+  @SuppressWarnings("deprecation")
   public void addListenerAlreadyCanceledTest() {
     ListenableFuture<?> lf = makeListenableFutureFactory().makeCanceled();
     
     TestRunnable tr = new TestRunnable();
     lf.addListener(tr);
+    lf.addListener(tr, SameThreadSubmitterExecutor.instance());
+    lf.addListener(tr, SameThreadSubmitterExecutor.instance(), 
+                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+
+    assertEquals(3, tr.getRunCount());
+  }
+  
+  @Test
+  @SuppressWarnings("deprecation")
+  public void addListenerExecutionExceptionAlreadyDoneTest() {
+    Exception failure = new Exception();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
+
+    TestRunnable tr = new TestRunnable();
+    lf.addListener(tr);
+    lf.addListener(tr, SameThreadSubmitterExecutor.instance());
+    lf.addListener(tr, SameThreadSubmitterExecutor.instance(), 
+                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+
+    assertEquals(3, tr.getRunCount());
+  }
+  
+  @Test
+  public void callbackAlreadyDoneFutureTest() {
+    String result = StringUtils.makeRandomString(5);
+    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(result);
     
-    assertTrue(tr.ranOnce());
+    TestFutureCallback tfc = new TestFutureCallback();
+    lf.callback(tfc);
+    lf.callback(tfc, SameThreadSubmitterExecutor.instance());
+    lf.callback(tfc, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    
+    assertEquals(3, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
+  public void resultCallbackAlreadyDoneFutureTest() {
+    String result = StringUtils.makeRandomString(5);
+    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(result);
+    
+    TestFutureCallback tfc = new TestFutureCallback();
+    lf.resultCallback(tfc::handleResult);
+    lf.resultCallback(tfc::handleResult, SameThreadSubmitterExecutor.instance());
+    lf.resultCallback(tfc::handleResult, SameThreadSubmitterExecutor.instance(), 
+                      ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    
+    assertEquals(3, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
+  public void callbackExecutionExceptionAlreadyDoneTest() {
+    Exception failure = new Exception();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
+    
+    TestFutureCallback tfc = new TestFutureCallback();
+    lf.callback(tfc);
+    lf.callback(tfc, SameThreadSubmitterExecutor.instance());
+    lf.callback(tfc, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    
+    assertEquals(3, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void failureCallbackExecutionExceptionAlreadyDoneTest() {
+    Exception failure = new Exception();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
+    
+    TestFutureCallback tfc = new TestFutureCallback();
+    lf.failureCallback(tfc::handleFailure);
+    lf.failureCallback(tfc::handleFailure, SameThreadSubmitterExecutor.instance());
+    lf.failureCallback(tfc::handleFailure, SameThreadSubmitterExecutor.instance(), 
+                       ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    
+    assertEquals(3, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void listenerAlreadyCanceledTest() {
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeCanceled();
+    
+    TestRunnable tr = new TestRunnable();
+    lf.listener(tr);
+    lf.listener(tr, SameThreadSubmitterExecutor.instance());
+    lf.listener(tr, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+
+    assertEquals(3, tr.getRunCount());
+  }
+  
+  @Test
+  public void listenerExecutionExceptionAlreadyDoneTest() {
+    Exception failure = new Exception();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
+
+    TestRunnable tr = new TestRunnable();
+    lf.listener(tr);
+    lf.listener(tr, SameThreadSubmitterExecutor.instance());
+    lf.listener(tr, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+
+    assertEquals(3, tr.getRunCount());
   }
   
   @Test
@@ -899,9 +1017,9 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     AsyncVerifier av = new AsyncVerifier();
     Thread t = Thread.currentThread();
     
-    lf.addListener(() -> {av.assertTrue(Thread.currentThread() == t) ; av.signalComplete();}, 
-                   CentralThreadlyPool.computationPool(), 
-                   ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
+    lf.listener(() -> {av.assertTrue(Thread.currentThread() == t) ; av.signalComplete();}, 
+                CentralThreadlyPool.computationPool(), 
+                ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
     av.waitForTest();
   }
@@ -912,13 +1030,154 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     Runnable threadTester = 
         () -> {av.assertFalse(Thread.currentThread() == t) ; av.signalComplete();};
 
-    lf.addListener(threadTester, CentralThreadlyPool.computationPool(), null);
-    lf.addListener(threadTester, CentralThreadlyPool.computationPool(), 
-                   ListenerOptimizationStrategy.None);
-    lf.addListener(threadTester, CentralThreadlyPool.computationPool(), 
-                   ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+    lf.listener(threadTester, CentralThreadlyPool.computationPool(), null);
+    lf.listener(threadTester, CentralThreadlyPool.computationPool(), 
+                ListenerOptimizationStrategy.None);
+    lf.listener(threadTester, CentralThreadlyPool.computationPool(), 
+                ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
     
     av.waitForTest(10_000, 3);
+  }
+  
+  public static void mapStackDepthTest(ListenableFuture<Object> future, 
+                                       Runnable futureCompleteTask, 
+                                       int incompleteExpectedStackDepth, 
+                                       int completedExpectedStackDepth) throws InterruptedException, TimeoutException {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      AsyncVerifier av1 = new AsyncVerifier();
+      ListenableFuture<Object> mappedFuture = future;
+      for (int i = 0; i < 10; i++) {
+        if (i == 0) {
+          mappedFuture = mappedFuture.map((ignored) -> null, SameThreadSubmitterExecutor.instance(), 
+                                          ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+        } else if (i == 1) {
+          mappedFuture = mappedFuture.map((ignored) -> null, SameThreadSubmitterExecutor.instance());
+        } else {
+          mappedFuture = mappedFuture.map((ignored) -> null);
+        }
+      }
+      mappedFuture.listener(() -> {
+        int stackDepth = Thread.currentThread().getStackTrace().length;
+        av1.assertEquals(incompleteExpectedStackDepth, stackDepth);
+        av1.signalComplete();
+      });
+      
+      scheduler.execute(futureCompleteTask);
+      
+      av1.waitForTest();
+      
+      // now verify already completed stack depth
+      AsyncVerifier av2 = new AsyncVerifier();
+      scheduler.execute(() -> {
+        AtomicInteger mapCount = new AtomicInteger();
+        AtomicReference<ListenableFuture<Object>> currFuture = new AtomicReference<>(future);
+        Function<Object, Object> recurrsiveMapper = new Function<Object, Object>() {
+          @Override
+          public Object apply(Object arg0) {
+            if (mapCount.incrementAndGet() < 10) {
+              currFuture.set(currFuture.get().map(this));
+            } else {
+              av2.assertEquals(completedExpectedStackDepth, Thread.currentThread().getStackTrace().length);
+              av2.signalComplete();
+            }
+            return null;
+          }
+        };
+        future.map(recurrsiveMapper);
+      });
+      av2.waitForTest();
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  public static void mapFailureStackDepthTest(ListenableFuture<Object> future, 
+                                              Runnable futureCompleteTask, 
+                                              int expectedStackDepth) throws InterruptedException, TimeoutException {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      AsyncVerifier av = new AsyncVerifier();
+      ListenableFuture<Object> mappedFuture = future;
+      for (int i = 0; i < 10; i++) {
+        if (i == 0) {
+          mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; }, 
+                                                 SameThreadSubmitterExecutor.instance(), 
+                                                 ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+        } else if (i == 1) {
+          mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; }, 
+                                                 SameThreadSubmitterExecutor.instance());
+        } else {
+          mappedFuture = mappedFuture.mapFailure(RuntimeException.class, (e) -> { throw e; });
+        }
+      }
+      mappedFuture.listener(() -> {
+        int stackDepth = Thread.currentThread().getStackTrace().length;
+        av.assertEquals(expectedStackDepth, stackDepth);
+        av.signalComplete();
+      });
+      
+      scheduler.execute(futureCompleteTask);
+      
+      av.waitForTest();
+    } finally {
+      scheduler.shutdown();
+    }
+  }
+  
+  public static void flatMapStackDepthTest(ListenableFuture<Object> future, 
+                                           Runnable futureCompleteTask, 
+                                           int incompleteExpectedStackDepth, 
+                                           int completedExpectedStackDepth) throws InterruptedException, TimeoutException {
+    SingleThreadScheduler scheduler = new SingleThreadScheduler();
+    try {
+      AsyncVerifier av1 = new AsyncVerifier();
+      ListenableFuture<Object> mappedFuture = future;
+      for (int i = 0; i < 10; i++) {
+        if (i == 0) {
+          mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null), 
+                                              SameThreadSubmitterExecutor.instance(), 
+                                              ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+        } else if (i == 1) {
+          mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null), 
+                                              SameThreadSubmitterExecutor.instance());
+        } else {
+          mappedFuture = mappedFuture.flatMap((ignored) -> FutureUtils.immediateResultFuture(null));
+        }
+      }
+      mappedFuture.listener(() -> {
+        int stackDepth = Thread.currentThread().getStackTrace().length;
+        av1.assertEquals(incompleteExpectedStackDepth, stackDepth);
+        av1.signalComplete();
+      });
+      
+      scheduler.execute(futureCompleteTask);
+      
+      av1.waitForTest();
+      
+      // now verify already completed stack depth
+      AsyncVerifier av2 = new AsyncVerifier();
+      scheduler.execute(() -> {
+        AtomicInteger mapCount = new AtomicInteger();
+        AtomicReference<ListenableFuture<Object>> currFuture = new AtomicReference<>(future);
+        Function<Object, ListenableFuture<Object>> recurrsiveMapper = new Function<Object, ListenableFuture<Object>>() {
+          @Override
+          public ListenableFuture<Object> apply(Object arg0) {
+            if (mapCount.incrementAndGet() < 2) {
+              currFuture.set(currFuture.get().flatMap(this));
+            } else {
+              av2.assertEquals(completedExpectedStackDepth, Thread.currentThread().getStackTrace().length);
+              av2.signalComplete();
+            }
+            return FutureUtils.immediateResultFuture(null);
+          }
+        };
+        future.flatMap(recurrsiveMapper);
+      });
+      av2.waitForTest();
+    } finally {
+      scheduler.shutdown();
+    }
   }
   
   private static void verifyFutureFailure(ListenableFuture<?> f, Exception failure) throws InterruptedException {

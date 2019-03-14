@@ -12,6 +12,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -184,19 +185,36 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   }
 
   @Override
-  public void addCallback(FutureCallback<? super T> callback) {
-    callback.handleResult(result);
-  }
-
-  @Override
-  public void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     if (executor == null | 
         optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
       callback.handleResult(result);
     } else {
-      executor.execute(new CallbackInvokingTask(callback));
+      executor.execute(() -> callback.handleResult(result));
     }
+    
+    return this;
+  }
+
+  @Override
+  public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
+                                            ListenerOptimizationStrategy optimize) {
+    if (executor == null | 
+        optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+      callback.accept(result);
+    } else {
+      executor.execute(() -> callback.accept(result));
+    }
+    
+    return this;
+  }
+
+  @Override
+  public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
+                                             ListenerOptimizationStrategy optimize) {
+    // ignored
+    return this;
   }
   
   @Override
@@ -207,23 +225,5 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   @Override
   public T get(long timeout, TimeUnit unit) {
     return result;
-  }
-  
-  /**
-   * Small class to invoke callback with stored result.
-   *
-   * @since 4.9.0
-   */
-  protected class CallbackInvokingTask implements Runnable {
-    protected final FutureCallback<? super T> callback;
-    
-    public CallbackInvokingTask(FutureCallback<? super T> callback) {
-      this.callback = callback;
-    }
-    
-    @Override
-    public void run() {
-      callback.handleResult(result);
-    }
   }
 }

@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
@@ -100,18 +101,28 @@ public class ImmediateResultListenableFutureTest extends ThreadlyTester {
   }
   
   @Test
-  public void addListenerTest() {
+  public void listenerTest() {
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(null);
     
-    ImmediateListenableFutureTest.addListenerTest(testFuture);
+    ImmediateListenableFutureTest.listenerTest(testFuture);
   }
   
   @Test
-  public void addCallbackTest() {
+  public void callbackTest() {
     Object result = new Object();
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(result);
     
-    ImmediateListenableFutureTest.resultAddCallbackTest(testFuture, result);
+    ImmediateListenableFutureTest.resultCallbackTest(testFuture, result);
+  }
+  
+  @Test
+  public void failureCallbackTest() {
+    Object result = new Object();
+    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(result);
+    
+    AtomicBoolean ran = new AtomicBoolean();
+    assertTrue(testFuture == testFuture.failureCallback((ignored) -> ran.set(true)));
+    assertFalse(ran.get());
   }
   
   @Test
