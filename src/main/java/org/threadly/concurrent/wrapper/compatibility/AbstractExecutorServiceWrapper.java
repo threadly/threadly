@@ -409,7 +409,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     public CancelRemovingListenableFutureTask(SchedulerService scheduler, 
                                               boolean recurring, Runnable task, 
                                               Executor executingExecutor) {
-      super(recurring, task, executingExecutor);
+      super(recurring, task, null, executingExecutor);
       
       this.scheduler = scheduler;
     }

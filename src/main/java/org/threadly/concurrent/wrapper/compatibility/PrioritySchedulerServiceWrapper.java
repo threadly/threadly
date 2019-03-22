@@ -85,7 +85,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
 
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
-    ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<>(false, task, pScheduler);
+    ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<>(false, task, null, pScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, 
                                                                  taskPriority, delayInMillis);
     
