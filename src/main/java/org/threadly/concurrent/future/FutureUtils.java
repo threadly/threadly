@@ -523,10 +523,10 @@ public class FutureUtils extends InternalFutureUtils {
             f.get();  // will throw ExecutionException to be handled below
           }
         }
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
       } catch (ExecutionException e) {
         return immediateFailureFuture(e.getCause());
+      } catch (InterruptedException e) {  // should not be possible
+        throw new RuntimeException(e);
       }
     }
     
@@ -1392,8 +1392,6 @@ public class FutureUtils extends InternalFutureUtils {
         }
       } catch (ExecutionException e) {
         return immediateFailureFuture(e.getCause());
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
       } catch (Throwable t) {
         ExceptionUtils.handleException(t);
         return immediateFailureFuture(t);

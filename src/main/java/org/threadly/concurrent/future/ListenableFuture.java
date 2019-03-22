@@ -799,26 +799,22 @@ public interface ListenableFuture<T> extends Future<T> {
       // no need to construct anything, just invoke directly
       try {
         callback.handleResult(get());
-      } catch (InterruptedException e) {
-        // should not be possible
-        Thread.currentThread().interrupt();
-        callback.handleFailure(e);
       } catch (ExecutionException e) {
         callback.handleFailure(e.getCause());
       } catch (CancellationException e) {
+        callback.handleFailure(e);
+      } catch (InterruptedException e) { // should not be possible
         callback.handleFailure(e);
       }
     } else {
       listener(() -> {
         try {
           callback.handleResult(get());
-        } catch (InterruptedException e) {
-          // should not be possible
-          Thread.currentThread().interrupt();
-          callback.handleFailure(e);
         } catch (ExecutionException e) {
           callback.handleFailure(e.getCause());
         } catch (CancellationException e) {
+          callback.handleFailure(e);
+        } catch (InterruptedException e) { // should not be possible
           callback.handleFailure(e);
         }
       }, executor, optimizeExecution);
@@ -893,11 +889,10 @@ public interface ListenableFuture<T> extends Future<T> {
         // no need to construct anything, just invoke directly
         try {
           callback.accept(get());
-        } catch (InterruptedException e) {
-          // should not be possible
-          Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
           // ignored
+        } catch (InterruptedException e) {
+          // should not be possible
         }
       }
     } else {
@@ -905,10 +900,10 @@ public interface ListenableFuture<T> extends Future<T> {
         if (! isCancelled()) {
           try {
             callback.accept(get());
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
           } catch (ExecutionException e) {
             // ignored
+          } catch (InterruptedException e) {
+            // should not be possible
           }
         }
       }, executor, optimizeExecution);
@@ -985,26 +980,22 @@ public interface ListenableFuture<T> extends Future<T> {
       // no need to construct anything, just invoke directly
       try {
         get();  // ignore result if provided
-      } catch (InterruptedException e) {
-        // should not be possible
-        Thread.currentThread().interrupt();
-        callback.accept(e);
       } catch (ExecutionException e) {
         callback.accept(e.getCause());
       } catch (CancellationException e) {
+        callback.accept(e);
+      } catch (InterruptedException e) { // should not be possible
         callback.accept(e);
       }
     } else {
       listener(() -> {
         try {
           get();  // ignore result if provided
-        } catch (InterruptedException e) {
-          // should not be possible
-          Thread.currentThread().interrupt();
-          callback.accept(e);
         } catch (ExecutionException e) {
           callback.accept(e.getCause());
         } catch (CancellationException e) {
+          callback.accept(e);
+        } catch (InterruptedException e) { // should not be possible
           callback.accept(e);
         }
       }, executor, optimizeExecution);

@@ -144,12 +144,10 @@ public class Poller {
         }
         try {
           return FutureUtils.immediateResultFuture(f.get());
-        } catch (InterruptedException e) {
-          // should not be possible
-          throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-          // failure in getting result from future, transfer failure
+        } catch (ExecutionException e) { // failure in getting result from future, transfer failure
           return FutureUtils.immediateFailureFuture(e.getCause());
+        } catch (InterruptedException e) { // should not be possible
+          throw new RuntimeException(e);
         }
       } else {
         ListenableRunnableFuture<T> result = new ListenableFutureAdapterTask<T>(f);

@@ -65,8 +65,6 @@ class InternalFutureUtils {
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       try { // optimized path for already complete futures which we can now process in thread
         return FutureUtils.immediateResultFuture(mapper.apply(sourceFuture.get()));
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
       } catch (ExecutionException e) { // failure in getting result from future, transfer failure
         return FutureUtils.immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
@@ -130,8 +128,6 @@ class InternalFutureUtils {
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       try { // optimized path for already complete futures which we can now process in thread
         return mapper.apply(sourceFuture.get());
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
       } catch (ExecutionException e) { // failure in getting result from future, transfer failure
         return FutureUtils.immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
@@ -214,8 +210,6 @@ class InternalFutureUtils {
         try {
           sourceFuture.get();
           return sourceFuture;  // no error
-        } catch (InterruptedException e) {  // should not be possible
-          throw new RuntimeException(e);
         } catch (ExecutionException e) {
           if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
             try {
@@ -226,6 +220,8 @@ class InternalFutureUtils {
           } else {
             return sourceFuture;
           }
+        } catch (InterruptedException e) {  // should not be possible
+          throw new RuntimeException(e);
         }
       }
     }
@@ -295,8 +291,6 @@ class InternalFutureUtils {
         try {
           sourceFuture.get();
           return sourceFuture;  // no error
-        } catch (InterruptedException e) {  // should not be possible
-          throw new RuntimeException(e);
         } catch (ExecutionException e) {
           if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
             try {
@@ -307,6 +301,8 @@ class InternalFutureUtils {
           } else {
             return sourceFuture;
           }
+        } catch (InterruptedException e) {  // should not be possible
+          throw new RuntimeException(e);
         }
       }
     }
@@ -759,14 +755,13 @@ class InternalFutureUtils {
       try {
         f.get();
         addResult(f, index);  // if no exception thrown, add future
-      } catch (InterruptedException e) {
-        // should not be possible since this should only be called once the future is already done
-        Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         // ignored
       } catch (CancellationException e) {
         // should not be possible due check at start on what should be an already done future
         throw e;
+      } catch (InterruptedException e) {
+        // should not be possible since this should only be called once the future is already done
       }
     }
   }
@@ -800,14 +795,13 @@ class InternalFutureUtils {
       }
       try {
         f.get();
-      } catch (InterruptedException e) {
-        // should not be possible since this should only be called once the future is already done
-        Thread.currentThread().interrupt();
       } catch (ExecutionException e) {
         addResult(f, index); // failed so add it
       } catch (CancellationException e) {
         // should not be possible due check at start on what should be an already done future
         throw e;
+      } catch (InterruptedException e) {
+        // should not be possible since this should only be called once the future is already done
       }
     }
   }
