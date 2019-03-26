@@ -1,7 +1,9 @@
 package org.threadly.util.debug;
 
 import java.util.Iterator;
+import org.threadly.util.ExceptionUtils;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -26,18 +28,18 @@ public class FilteredStackProfiler extends Profiler {
    * {@link StackTraceElement} matches this regular expression will be counted.
    */
   public FilteredStackProfiler(String pattern) {
-    this(Pattern.compile(pattern));
+    this(regexPredicate(pattern));
   }
 
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to
    * call {@code #dump()} with a provided output stream to get the results to.
    *
-   * @param pattern Only stack traces where the string representation of a
-   * {@link StackTraceElement} matches this regular expression will be counted.
+   * @param filter Only stack traces where at least one {@link StackTraceElement} for which this
+   * predicate returns true will be counted.
    */
-  public FilteredStackProfiler(Pattern pattern) {
-    this(DEFAULT_POLL_INTERVAL_IN_MILLIS, pattern);
+  public FilteredStackProfiler(Predicate<StackTraceElement> filter) {
+    this(DEFAULT_POLL_INTERVAL_IN_MILLIS, filter);
   }
 
   /**
@@ -49,7 +51,7 @@ public class FilteredStackProfiler extends Profiler {
    * {@link StackTraceElement} matches this regular expression will be counted.
    */
   public FilteredStackProfiler(int pollIntervalInMs, String pattern) {
-    this(pollIntervalInMs, Pattern.compile(pattern));
+    this(pollIntervalInMs, regexPredicate(pattern));
   }
 
   /**
@@ -57,13 +59,18 @@ public class FilteredStackProfiler extends Profiler {
    * call {@code #dump()} with a provided output stream to get the results to.
    *
    * @param pollIntervalInMs frequency to check running threads
-   * @param pattern Only stack traces where the string representation of a
-   * {@link StackTraceElement} matches this regular expression will be counted.
+   * @param filter Only stack traces where at least one {@link StackTraceElement} for which this
+   * predicate returns true will be counted.
    */
-  public FilteredStackProfiler(int pollIntervalInMs, Pattern pattern) {
-    super(new FilteredStackProfileStorage(pollIntervalInMs, pattern));
+  public FilteredStackProfiler(int pollIntervalInMs, Predicate<StackTraceElement> filter) {
+    super(new FilteredStackProfileStorage(pollIntervalInMs, filter));
 
     this.filteredThreadStore = (FilteredStackProfileStorage)super.pStore;
+  }
+
+  private static Predicate<StackTraceElement> regexPredicate(String pattern) {
+    final Pattern compiled = Pattern.compile(pattern);
+    return element -> compiled.matcher(element.toString()).find();
   }
 
   /**
@@ -74,21 +81,21 @@ public class FilteredStackProfiler extends Profiler {
    * @since 3.35.0
    */
   protected static class FilteredStackProfileStorage extends ProfileStorage {
-    protected final Pattern pattern;
+    protected final Predicate<StackTraceElement> filter;
 
-    public FilteredStackProfileStorage(int pollIntervalInMs, Pattern pattern) {
+    public FilteredStackProfileStorage(int pollIntervalInMs, Predicate<StackTraceElement> filter) {
       super(pollIntervalInMs);
 
-      if (null == pattern) {
-        throw new NullPointerException("pattern");
+      if (null == filter) {
+        throw new NullPointerException("filter");
       }
 
-      this.pattern = pattern;
+      this.filter = filter;
     }
 
     @Override
     protected Iterator<? extends ThreadSample> getProfileThreadsIterator() {
-      return new FilteredStackSampleIterator(super.getProfileThreadsIterator(), pattern);
+      return new FilteredStackSampleIterator(super.getProfileThreadsIterator(), filter);
     }
   }
 
@@ -97,15 +104,15 @@ public class FilteredStackProfiler extends Profiler {
    */
   private static class FilteredStackSampleIterator implements Iterator<ThreadSample> {
     private final Iterator<? extends ThreadSample> delegate;
-    private final Pattern pattern;
+    private final Predicate<StackTraceElement> filter;
     private ThreadSample next;
 
     FilteredStackSampleIterator(
       Iterator<? extends ThreadSample> delegate,
-      Pattern pattern
+      Predicate<StackTraceElement> filter
     ) {
       this.delegate = delegate;
-      this.pattern = pattern;
+      this.filter = filter;
 
       findNext();
     }
@@ -137,13 +144,23 @@ public class FilteredStackProfiler extends Profiler {
         // recording it in the profiler.
         next = new CachedThreadSample(delegate.next());
         for (StackTraceElement element: next.getStackTrace()) {
-          if (pattern.matcher(element.toString()).find()) {
+          if (accept(element)) {
             return;
           }
         }
       }
 
       next = null;
+    }
+
+    private boolean accept(StackTraceElement element) {
+      try {
+        return filter.test(element);
+      } catch (Throwable t) {
+        ExceptionUtils.handleException(t);
+        // Be conservative and include the data
+        return true;
+      }
     }
   }
 

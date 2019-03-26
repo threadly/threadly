@@ -34,18 +34,22 @@ public class FilteredStackProfilerTest extends ProfilerTest {
     assertNull(p.filteredThreadStore.collectorThread.get());
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
-    assertTrue(p.filteredThreadStore.pattern.matcher("org.threadly.SomeClass.run").find());
-    assertFalse(p.filteredThreadStore.pattern.matcher("java.lang.Thread.run").find());
+    assertTrue(p.filteredThreadStore.filter.test(
+                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+    assertFalse(p.filteredThreadStore.filter.test(
+                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
 
-    p = new FilteredStackProfiler(Pattern.compile("^org\\.threadly\\."));
+    p = new FilteredStackProfiler(e -> e.getClassName().startsWith("org.threadly."));
     assertNotNull(p.filteredThreadStore.threadTraces);
     assertTrue(p.filteredThreadStore.threadTraces.isEmpty());
     assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.filteredThreadStore.pollIntervalInMs);
     assertNull(p.filteredThreadStore.collectorThread.get());
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
-    assertTrue(p.filteredThreadStore.pattern.matcher("org.threadly.SomeClass.run").find());
-    assertFalse(p.filteredThreadStore.pattern.matcher("java.lang.Thread.run").find());
+    assertTrue(p.filteredThreadStore.filter.test(
+                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+    assertFalse(p.filteredThreadStore.filter.test(
+                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
 
     p = new FilteredStackProfiler(testPollInterval, "^org\\.threadly\\.");
     assertNotNull(p.filteredThreadStore.threadTraces);
@@ -54,18 +58,23 @@ public class FilteredStackProfilerTest extends ProfilerTest {
     assertNull(p.filteredThreadStore.collectorThread.get());
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
-    assertTrue(p.filteredThreadStore.pattern.matcher("org.threadly.SomeClass.run").find());
-    assertFalse(p.filteredThreadStore.pattern.matcher("java.lang.Thread.run").find());
+    assertTrue(p.filteredThreadStore.filter.test(
+                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+    assertFalse(p.filteredThreadStore.filter.test(
+                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
 
-    p = new FilteredStackProfiler(testPollInterval, Pattern.compile("^org\\.threadly\\."));
+    p = new FilteredStackProfiler(
+      testPollInterval, e -> e.getClassName().startsWith("org.threadly."));
     assertNotNull(p.filteredThreadStore.threadTraces);
     assertTrue(p.filteredThreadStore.threadTraces.isEmpty());
     assertEquals(testPollInterval, p.filteredThreadStore.pollIntervalInMs);
     assertNull(p.filteredThreadStore.collectorThread.get());
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
-    assertTrue(p.filteredThreadStore.pattern.matcher("org.threadly.SomeClass.run").find());
-    assertFalse(p.filteredThreadStore.pattern.matcher("java.lang.Thread.run").find());
+    assertTrue(p.filteredThreadStore.filter.test(
+                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+    assertFalse(p.filteredThreadStore.filter.test(
+                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
   }
 
   @Test
