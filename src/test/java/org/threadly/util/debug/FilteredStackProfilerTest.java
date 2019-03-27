@@ -2,9 +2,8 @@ package org.threadly.util.debug;
 
 import static org.junit.Assert.*;
 
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.regex.Pattern;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,9 +11,6 @@ import org.threadly.util.debug.Profiler.ThreadSample;
 
 @SuppressWarnings("javadoc")
 public class FilteredStackProfilerTest extends ProfilerTest {
-  private static final int POLL_INTERVAL = 1;
-  private static final int WAIT_TIME_FOR_COLLECTION = 50;
-
   @Before
   @Override
   public void setup() {
@@ -35,11 +31,11 @@ public class FilteredStackProfilerTest extends ProfilerTest {
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
     assertTrue(p.filteredThreadStore.filter.test(
-                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+                 new StackTraceElement[] { new StackTraceElement("org.threadly.SomeClass", "run", null, 42) }));
     assertFalse(p.filteredThreadStore.filter.test(
-                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
+                  new StackTraceElement[] { new StackTraceElement("java.lang.Thread", "run", null, 456) }));
 
-    p = new FilteredStackProfiler(e -> e.getClassName().startsWith("org.threadly."));
+    p = new FilteredStackProfiler(stack -> Arrays.stream(stack).anyMatch(e -> e.getClassName().startsWith("org.threadly.")));
     assertNotNull(p.filteredThreadStore.threadTraces);
     assertTrue(p.filteredThreadStore.threadTraces.isEmpty());
     assertEquals(Profiler.DEFAULT_POLL_INTERVAL_IN_MILLIS, p.filteredThreadStore.pollIntervalInMs);
@@ -47,9 +43,9 @@ public class FilteredStackProfilerTest extends ProfilerTest {
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
     assertTrue(p.filteredThreadStore.filter.test(
-                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+                 new StackTraceElement[] { new StackTraceElement("org.threadly.SomeClass", "run", null, 42) }));
     assertFalse(p.filteredThreadStore.filter.test(
-                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
+                  new StackTraceElement[] { new StackTraceElement("java.lang.Thread", "run", null, 456) }));
 
     p = new FilteredStackProfiler(testPollInterval, "^org\\.threadly\\.");
     assertNotNull(p.filteredThreadStore.threadTraces);
@@ -59,12 +55,12 @@ public class FilteredStackProfilerTest extends ProfilerTest {
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
     assertTrue(p.filteredThreadStore.filter.test(
-                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+                 new StackTraceElement[] { new StackTraceElement("org.threadly.SomeClass", "run", null, 42) }));
     assertFalse(p.filteredThreadStore.filter.test(
-                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
+                  new StackTraceElement[] { new StackTraceElement("java.lang.Thread", "run", null, 456) }));
 
     p = new FilteredStackProfiler(
-      testPollInterval, e -> e.getClassName().startsWith("org.threadly."));
+      testPollInterval, stack -> Arrays.stream(stack).anyMatch(e -> e.getClassName().startsWith("org.threadly.")));
     assertNotNull(p.filteredThreadStore.threadTraces);
     assertTrue(p.filteredThreadStore.threadTraces.isEmpty());
     assertEquals(testPollInterval, p.filteredThreadStore.pollIntervalInMs);
@@ -72,9 +68,9 @@ public class FilteredStackProfilerTest extends ProfilerTest {
     assertNull(p.filteredThreadStore.dumpingThread);
     assertNotNull(p.startStopLock);
     assertTrue(p.filteredThreadStore.filter.test(
-                 new StackTraceElement("org.threadly.SomeClass", "run", null, 42)));
+                 new StackTraceElement[] { new StackTraceElement("org.threadly.SomeClass", "run", null, 42) }));
     assertFalse(p.filteredThreadStore.filter.test(
-                  new StackTraceElement("java.lang.Thread", "run", null, 456)));
+                  new StackTraceElement[] { new StackTraceElement("java.lang.Thread", "run", null, 456) }));
   }
 
   @Test
@@ -86,6 +82,7 @@ public class FilteredStackProfilerTest extends ProfilerTest {
     assertFalse(it.hasNext());
   }
 
+  @Override
   @Test
   public void getProfileThreadsIteratorTest() {
     // This should only see this one thread executing this one particular test

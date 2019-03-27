@@ -27,7 +27,7 @@ public class FilteredStackProfiler extends Profiler {
    * call {@code #dump()} with a provided output stream to get the results to.
    *
    * @param pattern Only stack traces where the string representation of a
-   * {@link StackTraceElement} matches this regular expression will be counted.
+   *                  {@link StackTraceElement} matches this regular expression will be counted.
    */
   public FilteredStackProfiler(String pattern) {
     this(regexPredicate(pattern));
@@ -37,10 +37,9 @@ public class FilteredStackProfiler extends Profiler {
    * Constructs a new profiler instance.  The only way to get results from this instance is to
    * call {@code #dump()} with a provided output stream to get the results to.
    *
-   * @param filter Only stack traces where at least one {@link StackTraceElement} for which this
-   *                 predicate returns true will be counted.
+   * @param filter Only stack traces where the predicate returns {@code true} will be included
    */
-  public FilteredStackProfiler(Predicate<StackTraceElement> filter) {
+  public FilteredStackProfiler(Predicate<StackTraceElement[]> filter) {
     this(DEFAULT_POLL_INTERVAL_IN_MILLIS, filter);
   }
 
@@ -61,18 +60,24 @@ public class FilteredStackProfiler extends Profiler {
    * call {@code #dump()} with a provided output stream to get the results to.
    *
    * @param pollIntervalInMs frequency to check running threads
-   * @param filter Only stack traces where at least one {@link StackTraceElement} for which this
-   *                 predicate returns true will be counted.
+   * @param filter Only stack traces where the predicate returns {@code true} will be included
    */
-  public FilteredStackProfiler(int pollIntervalInMs, Predicate<StackTraceElement> filter) {
+  public FilteredStackProfiler(int pollIntervalInMs, Predicate<StackTraceElement[]> filter) {
     super(new FilteredStackProfileStorage(pollIntervalInMs, filter));
 
     this.filteredThreadStore = (FilteredStackProfileStorage)super.pStore;
   }
 
-  private static Predicate<StackTraceElement> regexPredicate(String pattern) {
+  private static Predicate<StackTraceElement[]> regexPredicate(String pattern) {
     final Pattern compiled = Pattern.compile(pattern);
-    return (element) -> compiled.matcher(element.toString()).find();
+    return (stack) -> {
+      for (StackTraceElement element : stack) {
+        if (compiled.matcher(element.toString()).find()) {
+          return true;
+        }
+      }
+      return false;
+    };
   }
 
   /**
@@ -83,9 +88,9 @@ public class FilteredStackProfiler extends Profiler {
    * @since 3.35
    */
   protected static class FilteredStackProfileStorage extends ProfileStorage {
-    protected final Predicate<StackTraceElement> filter;
+    protected final Predicate<StackTraceElement[]> filter;
 
-    public FilteredStackProfileStorage(int pollIntervalInMs, Predicate<StackTraceElement> filter) {
+    public FilteredStackProfileStorage(int pollIntervalInMs, Predicate<StackTraceElement[]> filter) {
       super(pollIntervalInMs);
       
       ArgumentVerifier.assertNotNull(filter, "filter");
@@ -106,11 +111,11 @@ public class FilteredStackProfiler extends Profiler {
    */
   private static class FilteredStackSampleIterator implements Iterator<ThreadSample> {
     private final Iterator<? extends ThreadSample> delegate;
-    private final Predicate<StackTraceElement> filter;
+    private final Predicate<StackTraceElement[]> filter;
     private ThreadSample next;
 
     FilteredStackSampleIterator(Iterator<? extends ThreadSample> delegate,
-                                Predicate<StackTraceElement> filter) {
+                                Predicate<StackTraceElement[]> filter) {
       this.delegate = delegate;
       this.filter = filter;
 
@@ -143,24 +148,18 @@ public class FilteredStackProfiler extends Profiler {
         // We need to cache the stack trace so that it doesn't change between filtering it and
         // recording it in the profiler.
         next = delegate.next();
-        for (StackTraceElement element : next.getStackTrace()) {
-          if (accept(element)) {
+
+        try {
+          if (filter.test(next.getStackTrace())) {
             return;
           }
+        } catch (Throwable t) {
+          ExceptionUtils.handleException(t);
+          return; // Be conservative and include the data
         }
       }
 
       next = null;
-    }
-
-    private boolean accept(StackTraceElement element) {
-      try {
-        return filter.test(element);
-      } catch (Throwable t) {
-        ExceptionUtils.handleException(t);
-        // Be conservative and include the data
-        return true;
-      }
     }
   }
 }
