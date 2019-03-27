@@ -142,7 +142,7 @@ public class FilteredStackProfiler extends Profiler {
       while (delegate.hasNext()) {
         // We need to cache the stack trace so that it doesn't change between filtering it and
         // recording it in the profiler.
-        next = new CachedThreadSample(delegate.next());
+        next = delegate.next();
         for (StackTraceElement element : next.getStackTrace()) {
           if (accept(element)) {
             return;
@@ -161,50 +161,6 @@ public class FilteredStackProfiler extends Profiler {
         // Be conservative and include the data
         return true;
       }
-    }
-  }
-
-  /**
-   * A {@code ThreadSample} with a precalculated stack trace.
-   * <p>
-   * This is used internally so that the stack trace is the same when we apply the filter and
-   * then later add it to the profile.
-   * 
-   * @since 3.35
-   */
-  private static class CachedThreadSample implements ThreadSample {
-    private final Thread thread;
-    private final StackTraceElement[] stackTrace;
-
-    CachedThreadSample(ThreadSample orig) {
-      this.thread = orig.getThread();
-      this.stackTrace = orig.getStackTrace();
-    }
-
-    @Override
-    public Thread getThread() {
-      return thread;
-    }
-
-    @Override
-    public StackTraceElement[] getStackTrace() {
-      return stackTrace;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (o == this) {
-        return true;
-      } else if (o instanceof ThreadSample) {
-        return ((ThreadSample)o).getThread() == thread;
-      } else {
-        return false;
-      }
-    }
-
-    @Override
-    public int hashCode() {
-      return thread.hashCode();
     }
   }
 }
