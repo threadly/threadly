@@ -1,6 +1,8 @@
 package org.threadly.util.debug;
 
 import java.util.Iterator;
+
+import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
@@ -10,12 +12,12 @@ import java.util.regex.Pattern;
  * This class functions very similar to the {@link Profiler}.  The difference between the two is
  * that this class only counts samples whose stack trace contains an entry matching a particular
  * pattern.
- *
- * <p>This is useful for drilling down into particular regions of code within an application also
- * busy doing other things; for exmaple, a production HTTP API may have many endpoints, but you
+ * <p>
+ * This is useful for drilling down into particular regions of code within an application also
+ * busy doing other things; for example, a production HTTP API may have many endpoints, but you
  * only want to know what one of them spends its time doing.
  *
- * @since 5.35.0
+ * @since 5.35
  */
 public class FilteredStackProfiler extends Profiler {
   protected final FilteredStackProfileStorage filteredThreadStore;
@@ -36,7 +38,7 @@ public class FilteredStackProfiler extends Profiler {
    * call {@code #dump()} with a provided output stream to get the results to.
    *
    * @param filter Only stack traces where at least one {@link StackTraceElement} for which this
-   * predicate returns true will be counted.
+   *                 predicate returns true will be counted.
    */
   public FilteredStackProfiler(Predicate<StackTraceElement> filter) {
     this(DEFAULT_POLL_INTERVAL_IN_MILLIS, filter);
@@ -48,7 +50,7 @@ public class FilteredStackProfiler extends Profiler {
    *
    * @param pollIntervalInMs frequency to check running threads
    * @param pattern Only stack traces where the string representation of a
-   * {@link StackTraceElement} matches this regular expression will be counted.
+   *                  {@link StackTraceElement} matches this regular expression will be counted.
    */
   public FilteredStackProfiler(int pollIntervalInMs, String pattern) {
     this(pollIntervalInMs, regexPredicate(pattern));
@@ -60,7 +62,7 @@ public class FilteredStackProfiler extends Profiler {
    *
    * @param pollIntervalInMs frequency to check running threads
    * @param filter Only stack traces where at least one {@link StackTraceElement} for which this
-   * predicate returns true will be counted.
+   *                 predicate returns true will be counted.
    */
   public FilteredStackProfiler(int pollIntervalInMs, Predicate<StackTraceElement> filter) {
     super(new FilteredStackProfileStorage(pollIntervalInMs, filter));
@@ -70,7 +72,7 @@ public class FilteredStackProfiler extends Profiler {
 
   private static Predicate<StackTraceElement> regexPredicate(String pattern) {
     final Pattern compiled = Pattern.compile(pattern);
-    return element -> compiled.matcher(element.toString()).find();
+    return (element) -> compiled.matcher(element.toString()).find();
   }
 
   /**
@@ -78,17 +80,15 @@ public class FilteredStackProfiler extends Profiler {
    * {@link #getProfileThreadsIterator()}.  It controls it so that only samples which match the
    * desired pattern are returned to the profiler.
    *
-   * @since 3.35.0
+   * @since 3.35
    */
   protected static class FilteredStackProfileStorage extends ProfileStorage {
     protected final Predicate<StackTraceElement> filter;
 
     public FilteredStackProfileStorage(int pollIntervalInMs, Predicate<StackTraceElement> filter) {
       super(pollIntervalInMs);
-
-      if (null == filter) {
-        throw new NullPointerException("filter");
-      }
+      
+      ArgumentVerifier.assertNotNull(filter, "filter");
 
       this.filter = filter;
     }
@@ -101,16 +101,16 @@ public class FilteredStackProfiler extends Profiler {
 
   /**
    * Adapts a {@code ThreadSample} iterator to only return samples matching the desired pattern.
+   * 
+   * @since 3.35
    */
   private static class FilteredStackSampleIterator implements Iterator<ThreadSample> {
     private final Iterator<? extends ThreadSample> delegate;
     private final Predicate<StackTraceElement> filter;
     private ThreadSample next;
 
-    FilteredStackSampleIterator(
-      Iterator<? extends ThreadSample> delegate,
-      Predicate<StackTraceElement> filter
-    ) {
+    FilteredStackSampleIterator(Iterator<? extends ThreadSample> delegate,
+                                Predicate<StackTraceElement> filter) {
       this.delegate = delegate;
       this.filter = filter;
 
@@ -143,7 +143,7 @@ public class FilteredStackProfiler extends Profiler {
         // We need to cache the stack trace so that it doesn't change between filtering it and
         // recording it in the profiler.
         next = new CachedThreadSample(delegate.next());
-        for (StackTraceElement element: next.getStackTrace()) {
+        for (StackTraceElement element : next.getStackTrace()) {
           if (accept(element)) {
             return;
           }
@@ -166,9 +166,11 @@ public class FilteredStackProfiler extends Profiler {
 
   /**
    * A {@code ThreadSample} with a precalculated stack trace.
-   *
-   * <p>This is used internally so that the stack trace is the same when we apply the filter and
+   * <p>
+   * This is used internally so that the stack trace is the same when we apply the filter and
    * then later add it to the profile.
+   * 
+   * @since 3.35
    */
   private static class CachedThreadSample implements ThreadSample {
     private final Thread thread;
