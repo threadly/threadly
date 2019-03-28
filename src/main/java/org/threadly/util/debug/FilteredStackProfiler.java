@@ -1,12 +1,12 @@
 package org.threadly.util.debug;
 
 import java.util.Iterator;
-
-import org.threadly.util.ArgumentVerifier;
-import org.threadly.util.ExceptionUtils;
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+
+import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.ExceptionUtils;
 
 /**
  * This class functions very similar to the {@link Profiler}.  The difference between the two is
