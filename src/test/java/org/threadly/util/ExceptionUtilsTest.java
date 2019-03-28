@@ -343,13 +343,34 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void getRootCauseCycleTest() {
-    Exception rootCause = new Exception();
-    Exception e1 = new Exception(rootCause);
-    Exception e2 = new Exception(e1);
+  public void getRootCauseStartCycleTest() {
+    Exception rootCause = new SuppressedStackRuntimeException();
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
     rootCause.initCause(e2);
     
     assertTrue(ExceptionUtils.getRootCause(e2) == rootCause);
+  }
+  
+  @Test
+  public void getRootCauseMidCycleTest() {
+    Exception rootCause = new SuppressedStackRuntimeException();
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
+    rootCause.initCause(e2);
+    
+    assertTrue(ExceptionUtils.getRootCause(new SuppressedStackRuntimeException(e2)) == rootCause);
+  }
+  
+  @Test
+  public void getRootCauseLongChainNoCycleTest() {
+    Exception rootCause = new SuppressedStackRuntimeException();
+    Exception e = new SuppressedStackRuntimeException(rootCause);
+    for (int i = 0; i < ExceptionUtils.CAUSE_CYCLE_DEPTH_TRIGGER * 2; i++) {
+      e = new SuppressedStackRuntimeException(e);
+    }
+    
+    assertTrue(ExceptionUtils.getRootCause(e) == rootCause);
   }
   
   @Test
@@ -360,6 +381,7 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   @Test
   public void getCauseOfTypeMissingTest() {
     Exception e = new Exception(new SuppressedStackRuntimeException(new SuppressedStackRuntimeException()));
+    
     assertNull(ExceptionUtils.getCauseOfType(e, IllegalArgumentException.class));
   }
   
@@ -367,18 +389,42 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   public void getCauseOfTypeTest() {
     IllegalArgumentException expected = new IllegalArgumentException(new Exception());
     Exception e = new Exception(expected);
+    
     assertTrue(expected == ExceptionUtils.getCauseOfType(e, IllegalArgumentException.class));
   }
   
   @Test
-  public void getCauseOfTypeCycleTest() {
+  public void getCauseOfTypeStartCycleTest() {
     IllegalArgumentException rootCause = new IllegalArgumentException();
-    Exception e1 = new Exception(rootCause);
-    Exception e2 = new Exception(e1);
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
     rootCause.initCause(e2);
     
     assertNull(ExceptionUtils.getCauseOfType(e2, UnsupportedOperationException.class));
     assertTrue(rootCause == ExceptionUtils.getCauseOfType(e2, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void getCauseOfTypeMidCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
+    rootCause.initCause(e2);
+    Exception headE = new SuppressedStackRuntimeException(e2);
+    
+    assertNull(ExceptionUtils.getCauseOfType(headE, UnsupportedOperationException.class));
+    assertTrue(rootCause == ExceptionUtils.getCauseOfType(headE, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void getCauseOfTypeLongChainNoCycleTest() {
+    IllegalArgumentException expected = new IllegalArgumentException(new SuppressedStackRuntimeException());
+    Exception e = new SuppressedStackRuntimeException(expected);
+    for (int i = 0; i < ExceptionUtils.CAUSE_CYCLE_DEPTH_TRIGGER * 2; i++) {
+      e = new SuppressedStackRuntimeException(e);
+    }
+    
+    assertTrue(expected == ExceptionUtils.getCauseOfType(e, IllegalArgumentException.class));
   }
   
   @Test
@@ -399,14 +445,38 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void hasCauseOfTypeCycleTest() {
+  public void hasCauseOfTypeStartCycleTest() {
     IllegalArgumentException rootCause = new IllegalArgumentException();
-    Exception e1 = new Exception(rootCause);
-    Exception e2 = new Exception(e1);
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
     rootCause.initCause(e2);
 
     assertFalse(ExceptionUtils.hasCauseOfType(e2, UnsupportedOperationException.class));
     assertTrue(ExceptionUtils.hasCauseOfType(e2, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void hasCauseOfTypeMidCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
+    rootCause.initCause(e2);
+    Exception headE = new SuppressedStackRuntimeException(e2);
+
+    assertFalse(ExceptionUtils.hasCauseOfType(headE, UnsupportedOperationException.class));
+    assertTrue(ExceptionUtils.hasCauseOfType(headE, IllegalArgumentException.class));
+  }
+  
+  @Test
+  public void hasCauseOfTypeLongChainNoCycleTest() {
+    IllegalArgumentException expected = new IllegalArgumentException(new SuppressedStackRuntimeException());
+    Exception e = new SuppressedStackRuntimeException(expected);
+    for (int i = 0; i < ExceptionUtils.CAUSE_CYCLE_DEPTH_TRIGGER * 2; i++) {
+      e = new SuppressedStackRuntimeException(e);
+    }
+
+    assertFalse(ExceptionUtils.hasCauseOfType(e, UnsupportedOperationException.class));
+    assertTrue(ExceptionUtils.hasCauseOfType(e, IllegalArgumentException.class));
   }
   
   @Test
@@ -428,6 +498,40 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void getCauseOfTypesStartCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
+    rootCause.initCause(e2);
+    
+    assertNull(ExceptionUtils.getCauseOfTypes(e2, Collections.singleton(UnsupportedOperationException.class)));
+    assertTrue(rootCause == ExceptionUtils.getCauseOfTypes(e2, Collections.singleton(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void getCauseOfTypesMidCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new SuppressedStackRuntimeException(rootCause);
+    Exception e2 = new SuppressedStackRuntimeException(e1);
+    rootCause.initCause(e2);
+    Exception headE = new SuppressedStackRuntimeException(e2);
+    
+    assertNull(ExceptionUtils.getCauseOfTypes(headE, Collections.singleton(UnsupportedOperationException.class)));
+    assertTrue(rootCause == ExceptionUtils.getCauseOfTypes(headE, Collections.singleton(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void getCauseOfTypesLongChainNoCycleTest() {
+    IllegalArgumentException expected = new IllegalArgumentException(new SuppressedStackRuntimeException());
+    Exception e = new SuppressedStackRuntimeException(expected);
+    for (int i = 0; i < ExceptionUtils.CAUSE_CYCLE_DEPTH_TRIGGER * 2; i++) {
+      e = new SuppressedStackRuntimeException(e);
+    }
+    
+    assertTrue(expected == ExceptionUtils.getCauseOfTypes(e, Collections.singleton(IllegalArgumentException.class)));
+  }
+  
+  @Test
   public void hasCauseOfTypesNoInputTest() {
     assertFalse(ExceptionUtils.hasCauseOfTypes(null, Collections.singletonList(Exception.class)));
   }
@@ -442,6 +546,41 @@ public class ExceptionUtilsTest extends ThreadlyTester {
   public void hasCauseOfTypesTest() {
     Exception e = new Exception(new IllegalArgumentException(new Exception()));
     assertTrue(ExceptionUtils.hasCauseOfTypes(e, Collections.singletonList(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void hasCauseOfTypesStartCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new Exception(rootCause);
+    Exception e2 = new Exception(e1);
+    rootCause.initCause(e2);
+
+    assertFalse(ExceptionUtils.hasCauseOfTypes(e2, Collections.singleton(UnsupportedOperationException.class)));
+    assertTrue(ExceptionUtils.hasCauseOfTypes(e2, Collections.singleton(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void hasCauseOfTypesMidCycleTest() {
+    IllegalArgumentException rootCause = new IllegalArgumentException();
+    Exception e1 = new Exception(rootCause);
+    Exception e2 = new Exception(e1);
+    rootCause.initCause(e2);
+    Exception headE = new Exception(e2);
+
+    assertFalse(ExceptionUtils.hasCauseOfTypes(headE, Collections.singleton(UnsupportedOperationException.class)));
+    assertTrue(ExceptionUtils.hasCauseOfTypes(headE, Collections.singleton(IllegalArgumentException.class)));
+  }
+  
+  @Test
+  public void hasCauseOfTypesLongChainNoCycleTest() {
+    IllegalArgumentException expected = new IllegalArgumentException(new SuppressedStackRuntimeException());
+    Exception e = new SuppressedStackRuntimeException(expected);
+    for (int i = 0; i < ExceptionUtils.CAUSE_CYCLE_DEPTH_TRIGGER * 2; i++) {
+      e = new SuppressedStackRuntimeException(e);
+    }
+
+    assertFalse(ExceptionUtils.hasCauseOfTypes(e, Collections.singleton(UnsupportedOperationException.class)));
+    assertTrue(ExceptionUtils.hasCauseOfTypes(e, Collections.singleton(IllegalArgumentException.class)));
   }
   
   @Test
