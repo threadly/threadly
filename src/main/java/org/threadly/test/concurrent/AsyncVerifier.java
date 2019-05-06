@@ -236,11 +236,11 @@ public class AsyncVerifier {
   }
   
   /**
-   * Small exception to represent when a test failure occurs.
+   * Exception to represent a failure in a test assertion.
    * 
    * @since 1.0.0
    */
-  protected static class TestFailure extends RuntimeException {
+  public static class TestFailure extends RuntimeException {
     private static final long serialVersionUID = -4683332806581392944L;
 
     private TestFailure(String failureMsg) {
