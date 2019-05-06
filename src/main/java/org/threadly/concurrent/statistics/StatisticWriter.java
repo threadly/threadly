@@ -58,7 +58,19 @@ public interface StatisticWriter {
       this.priority = priority;
       this.task = toRun;
     }
-    
+  
+    public StatisticWriter getStatsManager() {
+      return statsManager;
+    }
+  
+    public Runnable getTask() {
+      return task;
+    }
+  
+    public TaskPriority getPriority() {
+      return priority;
+    }
+  
     @Override
     public void run() {
       statsManager.trackTaskStart(this);
