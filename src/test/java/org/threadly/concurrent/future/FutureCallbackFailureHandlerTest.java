@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class FutureCallbackFailureHandlerTest extends ThreadlyTester {
   @Test
   public void resultIgnoredTest() {

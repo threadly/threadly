@@ -3,6 +3,7 @@ package org.threadly.util;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
 
 /**
  * Utilities for doing basic operations with exceptions.
@@ -12,6 +13,7 @@ import java.lang.Thread.UncaughtExceptionHandler;
 public class ExceptionUtils {
   protected static final short INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE = 16;
   protected static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 64;
+  protected static final short CAUSE_CYCLE_DEPTH_TRIGGER = 20;
   protected static final ThreadLocal<ExceptionHandler> THREAD_LOCAL_EXCEPTION_HANDLER;
   protected static final InheritableThreadLocal<ExceptionHandler> INHERITED_EXCEPTION_HANDLER;
   protected static volatile ExceptionHandler defaultExceptionHandler = null;
@@ -214,6 +216,11 @@ public class ExceptionUtils {
   /**
    * Gets the root cause of a provided {@link Throwable}.  If there is no cause for the 
    * {@link Throwable} provided into this function, the original {@link Throwable} is returned.
+   * <p>
+   * If a cyclic exception chain is detected this function will return the cause where the cycle 
+   * end, and thus the returned Throwable will have a cause associated to it (specifically a cause 
+   * which is one that was seen earlier in the chain).  If no cycle exists this will return a 
+   * Throwable which contains no cause.
    * 
    * @param throwable starting {@link Throwable}
    * @return root cause {@link Throwable}
@@ -222,11 +229,45 @@ public class ExceptionUtils {
     ArgumentVerifier.assertNotNull(throwable, "throwable");
     
     Throwable result = throwable;
-    while (result.getCause() != null) {
-      result = result.getCause();
+    Throwable cause;
+    int depth = 0;
+    while ((cause = result.getCause()) != null) {
+      result = cause;
+      
+      if (++depth > CAUSE_CYCLE_DEPTH_TRIGGER) {
+        // must restart in case we already passed the source of the start of the cycle
+        ArrayList<Throwable> causeChain = unwrapThrowableCycleAwareCauseChain(throwable);
+        return causeChain.get(causeChain.size() - 1);
+      }
     }
     
     return result;
+  }
+  
+  /**
+   * Unwraps the causes of the provided {@link Throwable} into a {@link ArrayList}.  As this list 
+   * is built it checks for possible cycles which might exist in the causes.  The returned list 
+   * will not contain any cycles.  If the last exception in the list has a cause, it will point 
+   * to a {@link Throwable} that is already contained in the list.
+   * 
+   * @param throwable Throwable to start search from, and first one included in result list
+   * @return List of causes from the source {@link Throwable}
+   */
+  protected static ArrayList<Throwable> unwrapThrowableCycleAwareCauseChain(Throwable throwable) {
+    ArrayList<Throwable> causeChain = new ArrayList<>();
+    causeChain.add(throwable);
+    Throwable cause = throwable;
+    while ((cause = cause.getCause()) != null) {
+      // slightly more efficient than `contains` and handles any odd overrides of `equals` in the throwable
+      // search backwards to optimize cycles towards end of chain
+      for (int i = causeChain.size() - 1; i > -1; i--) {
+        if (causeChain.get(i) == cause) {
+          return causeChain;
+        }
+      }
+      causeChain.add(cause);
+    }
+    return causeChain;
   }
   
   /**
@@ -244,16 +285,34 @@ public class ExceptionUtils {
   public static Throwable getCauseOfTypes(Throwable rootError, 
                                           Iterable<? extends Class<? extends Throwable>> types) {
     ArgumentVerifier.assertNotNull(types, "types");
+    if (rootError == null) {
+      return null;
+    }
     
     Throwable t = rootError;
-    while (t != null) {
+    int depth = 0;
+    do {
       for (Class<?> c : types) {
         if (c.isInstance(t)) {
           return t;
         }
       }
+
+      if (++depth > CAUSE_CYCLE_DEPTH_TRIGGER) {
+        ArrayList<Throwable> causeChain = unwrapThrowableCycleAwareCauseChain(t);
+        for (int i = causeChain.size() - 1; i > 0 /* already checked head of chain */; i--) {
+          t = causeChain.get(i);
+          for (Class<?> c : types) {
+            if (c.isInstance(t)) {
+              return t;
+            }
+          }
+        }
+        return null;
+      }
+      
       t = t.getCause();
-    }
+    } while (t != null && t != rootError);
     return null;
   }
   
@@ -289,13 +348,28 @@ public class ExceptionUtils {
   public static <T extends Throwable> T getCauseOfType(Throwable rootError, 
                                                        Class<? extends T> type) {
     ArgumentVerifier.assertNotNull(type, "type");
+    if (rootError == null) {
+      return null;
+    }
+    
     Throwable t = rootError;
-    while (t != null) {
+    int depth = 0;
+    do {
       if (type.isInstance(t)) {
         return (T)t;
+      } else if (++depth > CAUSE_CYCLE_DEPTH_TRIGGER) {
+        ArrayList<Throwable> causeChain = unwrapThrowableCycleAwareCauseChain(t);
+        for (int i = causeChain.size() - 1; i > 0 /* already checked head of chain */; i--) {
+          t = causeChain.get(i);
+          if (type.isInstance(t)) {
+            return (T)t;
+          }
+        }
+        return null;
       }
+      
       t = t.getCause();
-    }
+    } while (t != null && t != rootError);
     return null;
   }
   

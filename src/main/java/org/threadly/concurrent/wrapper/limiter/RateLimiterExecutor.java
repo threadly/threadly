@@ -176,7 +176,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
     if (currentMinimumDelay == 0) {
       return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance(), this);
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance(), null, this);
       
       long futureDelay;
       if (maximumDelay > 0 && currentMinimumDelay > maximumDelay) {

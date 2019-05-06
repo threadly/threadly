@@ -9,8 +9,12 @@ import org.threadly.util.ExceptionHandler;
  * handle results, as well as have failures mapped you can override 
  * {@link FutureCallback#handleResult(Object)}.
  * 
+ * @deprecated Instead provide the {@link ExceptionHandler} directly into 
+ *               {@link ListenableFuture#failureCallback(java.util.function.Consumer)}
+ * 
  * @since 4.4.0
  */
+@Deprecated
 public class FutureCallbackExceptionHandlerAdapter extends AbstractFutureCallbackFailureHandler {
   private final ExceptionHandler handler;
   

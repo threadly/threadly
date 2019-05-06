@@ -242,7 +242,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
         @Override
         public void run() {
           if (Thread.currentThread() == callingThread) {
-            limiter.submit(DoNothingRunnable.instance()).addListener(this);
+            limiter.submit(DoNothingRunnable.instance()).listener(this);
           } else {
             btr.run();
           }

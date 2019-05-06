@@ -2,8 +2,11 @@ package org.threadly.concurrent.future;
 
 import static org.junit.Assert.*;
 
+import java.util.Collections;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
@@ -24,6 +27,65 @@ public class ImmediateResultListenableFutureTest extends ThreadlyTester {
   }
   
   @Test
+  public void emptyStringResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_STRING_RESULT, "");
+  }
+  
+  @Test
+  public void emptyOptionalResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_OPTIONAL_RESULT, 
+                                             Optional.empty());
+  }
+  
+  @Test
+  public void emptyListResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_LIST_RESULT, 
+                                             Collections.emptyList());
+  }
+  
+  @Test
+  public void emptyMapResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_MAP_RESULT, 
+                                             Collections.emptyMap());
+  }
+  
+  @Test
+  public void emptySetResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_SET_RESULT, 
+                                             Collections.emptySet());
+  }
+  
+  @Test
+  public void emptySortedMapResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_SORTED_MAP_RESULT, 
+                                             Collections.emptySortedMap());
+  }
+  
+  @Test
+  public void emptySort6edSetResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_SORTED_SET_RESULT, 
+                                             Collections.emptySortedSet());
+  }
+  
+  @Test
+  public void emptyIteratorResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_ITERATOR_RESULT, 
+                                             Collections.emptyIterator());
+  }
+  
+  @Test
+  public void emptyListIteratorResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_LIST_ITERATOR_RESULT, 
+                                             Collections.emptyListIterator());
+  }
+  
+  @Test
+  public void emptyEnumerationResultTest() throws InterruptedException, ExecutionException, TimeoutException {
+    ImmediateListenableFutureTest.resultTest(ImmediateResultListenableFuture.EMPTY_ENUMERATION_RESULT, 
+                                             Collections.emptyEnumeration());
+  }
+  
+  @Test
   public void nonNullResultTest() throws InterruptedException, ExecutionException, TimeoutException {
     Object result = new Object();
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(result);
@@ -39,18 +101,28 @@ public class ImmediateResultListenableFutureTest extends ThreadlyTester {
   }
   
   @Test
-  public void addListenerTest() {
+  public void listenerTest() {
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(null);
     
-    ImmediateListenableFutureTest.addListenerTest(testFuture);
+    ImmediateListenableFutureTest.listenerTest(testFuture);
   }
   
   @Test
-  public void addCallbackTest() {
+  public void callbackTest() {
     Object result = new Object();
     ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(result);
     
-    ImmediateListenableFutureTest.resultAddCallbackTest(testFuture, result);
+    ImmediateListenableFutureTest.resultCallbackTest(testFuture, result);
+  }
+  
+  @Test
+  public void failureCallbackTest() {
+    Object result = new Object();
+    ListenableFuture<?> testFuture = new ImmediateResultListenableFuture<>(result);
+    
+    AtomicBoolean ran = new AtomicBoolean();
+    assertTrue(testFuture == testFuture.failureCallback((ignored) -> ran.set(true)));
+    assertFalse(ran.get());
   }
   
   @Test

@@ -118,7 +118,7 @@ public class Watchdog {
     final FutureWrapper fw = new FutureWrapper(future);
     futures.add(fw);
     // we attempt to remove the future on completion to reduce inspection needed
-    future.addListener(new WrapperRemover(fw), SameThreadSubmitterExecutor.instance());
+    future.listener(new WrapperRemover(fw), SameThreadSubmitterExecutor.instance());
     
     checkRunner.signalToRun();
   }

@@ -155,7 +155,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   public void listenersCalledTest(boolean failure) {
     TestRunnable tr = new TestRunnable();
-    slf.addListener(tr);
+    slf.listener(tr);
     
     if (failure) {
       slf.setFailure(null);
@@ -167,15 +167,15 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     
     // verify new additions also get called
     tr = new TestRunnable();
-    slf.addListener(tr);
+    slf.listener(tr);
     assertTrue(tr.ranOnce());
   }
   
   @Test
-  public void addCallbackTest() {
+  public void callbackTest() {
     String result = StringUtils.makeRandomString(5);
     TestFutureCallback tfc = new TestFutureCallback();
-    slf.addCallback(tfc);
+    slf.callback(tfc);
     
     assertEquals(0, tfc.getCallCount());
     
@@ -186,10 +186,38 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   }
   
   @Test
-  public void addCallbackExecutionExceptionTest() {
+  public void resultCallbackTest() {
+    String result = StringUtils.makeRandomString(5);
+    TestFutureCallback tfc = new TestFutureCallback();
+    slf.resultCallback(tfc::handleResult);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    slf.setResult(result);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(result == tfc.getLastResult());
+  }
+  
+  @Test
+  public void callbackExecutionExceptionTest() {
     Throwable failure = new Exception();
     TestFutureCallback tfc = new TestFutureCallback();
-    slf.addCallback(tfc);
+    slf.callback(tfc);
+    
+    assertEquals(0, tfc.getCallCount());
+    
+    slf.setFailure(failure);
+    
+    assertEquals(1, tfc.getCallCount());
+    assertTrue(failure == tfc.getLastFailure());
+  }
+  
+  @Test
+  public void failureCallbackExecutionExceptionTest() {
+    Throwable failure = new Exception();
+    TestFutureCallback tfc = new TestFutureCallback();
+    slf.failureCallback(tfc::handleFailure);
     
     assertEquals(0, tfc.getCallCount());
     
@@ -204,7 +232,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     String testResult = StringUtils.makeRandomString(5);
     ListenableFuture<String> resultFuture = new ImmediateResultListenableFuture<>(testResult);
     
-    resultFuture.addCallback(slf);
+    resultFuture.callback(slf);
     
     assertTrue(slf.isDone());
     assertEquals(testResult, slf.get());
@@ -215,7 +243,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     Exception e = new Exception();
     ListenableFuture<String> failureFuture = new ImmediateFailureListenableFuture<>(e);
     
-    failureFuture.addCallback(slf);
+    failureFuture.callback(slf);
     
     assertTrue(slf.isDone());
     try {
@@ -238,7 +266,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void cancelRunsListenersTest() {
     TestRunnable tr = new TestRunnable();
-    slf.addListener(tr);
+    slf.listener(tr);
     
     slf.cancel(false);
     
@@ -391,7 +419,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     SettableListenableFuture<String> canceledSlf = new SettableListenableFuture<>();
     assertTrue(canceledSlf.cancel(false));
     
-    canceledSlf.addCallback(slf);
+    canceledSlf.callback(slf);
     
     assertTrue(slf.isCancelled());
   }
@@ -400,7 +428,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   public void cancelChainedFutureTest() {
     SettableListenableFuture<String> canceledSlf = new SettableListenableFuture<>();
     
-    canceledSlf.addCallback(slf);
+    canceledSlf.callback(slf);
     assertTrue(canceledSlf.cancel(false));
     
     assertTrue(slf.isCancelled());
@@ -430,7 +458,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   private static void verifyCancelationExceptionMessageInCallback(String msg, ListenableFuture<?> lf) throws InterruptedException, TimeoutException {
     AsyncVerifier av = new AsyncVerifier();
-    lf.addCallback(new FutureCallback<Object>() {
+    lf.callback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object result) {
         av.fail();
@@ -486,6 +514,18 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   }
   
   @Test
+  public void mapStackSizeTest() throws InterruptedException, TimeoutException {
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    ListenableFutureInterfaceTest.mapStackDepthTest(slf, () -> slf.setResult(null), 63, 47);
+  }
+  
+  @Test
+  public void mapFailureStackSize() throws InterruptedException, TimeoutException {
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(slf, () -> slf.setFailure(new RuntimeException()), 63);
+  }
+  
+  @Test
   public void flatMapCancelationExceptionMessageAlreadyDoneTest() throws InterruptedException, TimeoutException {
     String msg = StringUtils.makeRandomString(5);
     SettableListenableFuture<Void> slf = new CancelMessageTestSettableListenableFuture(msg);
@@ -505,6 +545,12 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
 
     verifyCancelationExceptionMessageOnGet(msg, mappedFuture);
     verifyCancelationExceptionMessageInCallback(msg, mappedFuture);
+  }
+  
+  @Test
+  public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
+    SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(slf, () -> slf.setResult(null), 83, 17);
   }
   
   @Test

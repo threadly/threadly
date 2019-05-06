@@ -5,6 +5,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
  * Implementation of the {@link ListenableScheduledFuture} interface.  This design delegates 
@@ -69,15 +70,35 @@ public class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> 
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, 
-                          ListenerOptimizationStrategy optimizeExecution) {
-    futureImp.addListener(listener, executor, optimizeExecution);
+  public ListenableFuture<T> listener(Runnable listener, Executor executor, 
+                                      ListenerOptimizationStrategy optimizeExecution) {
+    futureImp.listener(listener, executor, optimizeExecution);
+    
+    return this;
   }
 
   @Override
-  public void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                          ListenerOptimizationStrategy optimizeExecution) {
-    futureImp.addCallback(callback, executor, optimizeExecution);
+  public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
+                                      ListenerOptimizationStrategy optimizeExecution) {
+    futureImp.callback(callback, executor, optimizeExecution);
+    
+    return this;
+  }
+
+  @Override
+  public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
+                                            ListenerOptimizationStrategy optimizeExecution) {
+    futureImp.resultCallback(callback, executor, optimizeExecution);
+    
+    return this;
+  }
+
+  @Override
+  public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
+                                             ListenerOptimizationStrategy optimizeExecution) {
+    futureImp.failureCallback(callback, executor, optimizeExecution);
+    
+    return this;
   }
 
   @Override

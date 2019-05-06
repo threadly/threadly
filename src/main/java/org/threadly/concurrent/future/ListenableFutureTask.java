@@ -79,10 +79,13 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   /**
    * Constructs a runnable future with a runnable work unit.
    * 
+   * @deprecated Please use {@link #ListenableFutureTask(boolean, Runnable, Object, Executor)}
+   * 
    * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task runnable to be run
    * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
    */
+  @Deprecated
   public ListenableFutureTask(boolean recurring, Runnable task, Executor executingExecutor) {
     this(recurring, task, null, executingExecutor);
   }
@@ -125,8 +128,8 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   }
 
   @Override
-  public void addListener(Runnable listener, Executor executor, 
-                          ListenerOptimizationStrategy optimize) {
+  public ListenableFuture<T> listener(Runnable listener, Executor executor, 
+                                      ListenerOptimizationStrategy optimize) {
     listenerHelper.addListener(listener, 
                                executor == executingExecutor && 
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
@@ -134,10 +137,11 @@ public class ListenableFutureTask<T> extends FutureTask<T>
                                  null : executor, 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
+    return this;
   }
   
   /**
-   * Can not be overridden, please use {@link #addListener(Runnable)} as an alternative.
+   * Can not be overridden, please use {@link #listener(Runnable)} as an alternative.
    */
   @Override
   protected final void done() {

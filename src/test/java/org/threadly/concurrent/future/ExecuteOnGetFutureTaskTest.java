@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -48,6 +49,27 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
     geft.run();
     
     assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  @Override
+  public void mapStackSizeTest() throws InterruptedException, TimeoutException {
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
+    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 68, 37);
+  }
+  
+  @Test
+  @Override
+  public void mapFailureStackSize() throws InterruptedException, TimeoutException {
+    ListenableFutureTask<Object> future = makeFutureTask(() -> { throw new RuntimeException(); }, null);
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 68);
+  }
+  
+  @Test
+  @Override
+  public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 88, 15);
   }
   
   private class Factory implements ExecuteOnGetFutureFactory {

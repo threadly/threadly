@@ -630,6 +630,51 @@ public class Profiler {
      */
     public StackTraceElement[] getStackTrace();
   }
+
+  /**
+   * A {@code ThreadSample} with a precalculated stack trace.
+   * <p>
+   * This is helps verify that the stack trace remains the same when we apply the filter and
+   * then later add it to the profile.  This is important for implementations like 
+   * {@link FilteredStackProfiler}.
+   * 
+   * @since 3.35
+   */
+  protected static class CachedThreadSample implements ThreadSample {
+    private final Thread thread;
+    private final StackTraceElement[] cachedStackTrace;
+
+    protected CachedThreadSample(Thread thread, StackTraceElement[] cachedStackTrace) {
+      this.thread = thread;
+      this.cachedStackTrace = cachedStackTrace;
+    }
+    
+    @Override
+    public Thread getThread() {
+      return thread;
+    }
+    
+    @Override
+    public StackTraceElement[] getStackTrace() {
+      return cachedStackTrace;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      } else if (o instanceof ThreadSample) {
+        return ((ThreadSample)o).getThread() == thread;
+      } else {
+        return false;
+      }
+    }
+
+    @Override
+    public int hashCode() {
+      return thread.hashCode();
+    }
+  }
   
   /**
    * An iterator which will enumerate all the running threads within the VM.  It is expected that 
@@ -674,17 +719,7 @@ public class Profiler {
         next = null;
       }
       
-      return new ThreadSample() {
-        @Override
-        public Thread getThread() {
-          return entry.getKey();
-        }
-        
-        @Override
-        public StackTraceElement[] getStackTrace() {
-          return entry.getValue();
-        }
-      };
+      return new CachedThreadSample(entry.getKey(), entry.getValue());
     }
 
     @Override

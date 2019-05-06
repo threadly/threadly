@@ -2,9 +2,9 @@ package org.threadly.concurrent.future;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -13,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -259,7 +260,7 @@ public class FutureUtils extends InternalFutureUtils {
    * implementation of {@link #blockTillAllComplete(Iterable)}.  If the listener needs to be 
    * invoked on another thread than one of the provided futures please use 
    * {@link #invokeAfterAllComplete(Collection, Runnable, Executor)}.  Please see 
-   * {@link ListenableFuture#addListener(Runnable)} for more information on execution without an 
+   * {@link ListenableFuture#listener(Runnable)} for more information on execution without an 
    * {@link Executor}.
    * <p>
    * It is critical that the collection is NOT modified while this is invoked.  A change in the 
@@ -286,7 +287,7 @@ public class FutureUtils extends InternalFutureUtils {
    * @param futures Futures that must complete before listener is invoked
    * @param listener Invoked once all the provided futures have completed
    * @param executor Executor (or {@code null}) to invoke listener on, see 
-   *                    {@link ListenableFuture#addListener(Runnable, Executor)}
+   *                    {@link ListenableFuture#listener(Runnable, Executor)}
    */
   public static void invokeAfterAllComplete(Collection<? extends ListenableFuture<?>> futures, 
                                             Runnable listener, Executor executor) {
@@ -300,7 +301,7 @@ public class FutureUtils extends InternalFutureUtils {
         executor.execute(listener);
       }
     } else if (size == 1) {
-      futures.iterator().next().addListener(listener, executor);
+      futures.iterator().next().listener(listener, executor);
     } else {
       AtomicInteger remaining = new AtomicInteger(size);
       Runnable decrementingListener = () -> {
@@ -313,7 +314,7 @@ public class FutureUtils extends InternalFutureUtils {
         }
       };
       for (ListenableFuture<?> lf : futures) {
-        lf.addListener(decrementingListener);
+        lf.listener(decrementingListener);
       }
     }
   }
@@ -393,9 +394,16 @@ public class FutureUtils extends InternalFutureUtils {
    * @return ListenableFuture which will be done once all futures provided are done
    */
   public static ListenableFuture<?> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures) {
-    ListenableFuture<?> result = new EmptyFutureCollection(futures);
+    if (futures == null) {
+      return ImmediateResultListenableFuture.NULL_RESULT;
+    }
+    Iterator<? extends ListenableFuture<?>> it = futures.iterator();
+    if (! it.hasNext()) {
+      return ImmediateResultListenableFuture.NULL_RESULT;
+    }
+    ListenableFuture<?> result = new EmptyFutureCollection(it);
     if (result.isDone()) {
-      return ImmediateResultListenableFuture.NULL_RESULT; // might as well return a cheaper option
+      return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
       return result;
     }
@@ -424,17 +432,21 @@ public class FutureUtils extends InternalFutureUtils {
   @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<T> makeCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                                            final T result) {
-    if (result == null) {
-      return (ListenableFuture<T>)makeCompleteFuture(futures);
+    if (futures == null) {
+      return immediateResultFuture(result);
     }
-    final EmptyFutureCollection efc = new EmptyFutureCollection(futures);
+    Iterator<? extends ListenableFuture<?>> it = futures.iterator();
+    if (! it.hasNext()) {
+      return immediateResultFuture(result);
+    }
+    final EmptyFutureCollection efc = new EmptyFutureCollection(it);
     if (efc.isDone()) {
       return immediateResultFuture(result);
     }
     
     final SettableListenableFuture<T> resultFuture = 
         new CancelDelegateSettableListenableFuture<>(efc, null);
-    efc.addCallback(new FutureCallback<Object>() {
+    efc.callback(new FutureCallback<Object>() {
       @Override
       public void handleResult(Object ignored) {
         resultFuture.setResult(result);
@@ -444,7 +456,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         resultFuture.setFailure(t);
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -488,7 +500,14 @@ public class FutureUtils extends InternalFutureUtils {
   public static <T> ListenableFuture<T> 
       makeFailurePropagatingCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                            final T result) {
-    FailureFutureCollection<Object> ffc = new FailureFutureCollection<>(futures);
+    if (futures == null) {
+      return immediateResultFuture(result);
+    }
+    Iterator<? extends ListenableFuture<?>> it = futures.iterator();
+    if (! it.hasNext()) {
+      return immediateResultFuture(result);
+    }
+    FailureFutureCollection<Object> ffc = new FailureFutureCollection<>(it);
     if (ffc.isDone()) {
       // optimize already done case
       try {
@@ -504,16 +523,16 @@ public class FutureUtils extends InternalFutureUtils {
             f.get();  // will throw ExecutionException to be handled below
           }
         }
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
       } catch (ExecutionException e) {
         return immediateFailureFuture(e.getCause());
+      } catch (InterruptedException e) {  // should not be possible
+        throw new RuntimeException(e);
       }
     }
     
     final CancelDelegateSettableListenableFuture<T> resultFuture = 
         new CancelDelegateSettableListenableFuture<>(ffc, null);
-    ffc.addCallback(new FutureCallback<List<ListenableFuture<?>>>() {
+    ffc.callback(new FutureCallback<List<ListenableFuture<?>>>() {
       @Override
       public void handleResult(List<ListenableFuture<?>> failedFutures) {
         if (failedFutures.isEmpty()) {
@@ -539,7 +558,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         resultFuture.setFailure(t);
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -558,9 +577,17 @@ public class FutureUtils extends InternalFutureUtils {
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
       makeCompleteListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
-    return new AllFutureCollection<>(futures);
+    if (futures == null) {
+      return (ListenableFuture<List<ListenableFuture<? extends T>>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    }
+    Iterator<? extends ListenableFuture<? extends T>> it = futures.iterator();
+    if (! it.hasNext()) {
+      return (ListenableFuture<List<ListenableFuture<? extends T>>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    }
+    return new AllFutureCollection<>(it);
   }
   
   /**
@@ -579,9 +606,17 @@ public class FutureUtils extends InternalFutureUtils {
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
       makeSuccessListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
-    return new SuccessFutureCollection<>(futures);
+    if (futures == null) {
+      return (ListenableFuture<List<ListenableFuture<? extends T>>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    }
+    Iterator<? extends ListenableFuture<? extends T>> it = futures.iterator();
+    if (! it.hasNext()) {
+      return (ListenableFuture<List<ListenableFuture<? extends T>>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    }
+    return new SuccessFutureCollection<>(it);
   }
   
   /**
@@ -600,9 +635,17 @@ public class FutureUtils extends InternalFutureUtils {
    * @param futures Structure of futures to iterate over
    * @return ListenableFuture which will be done once all futures provided are done
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<List<ListenableFuture<? extends T>>> 
       makeFailureListFuture(Iterable<? extends ListenableFuture<? extends T>> futures) {
-    return new FailureFutureCollection<>(futures);
+    if (futures == null) {
+      return (ListenableFuture<List<ListenableFuture<? extends T>>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    }
+    Iterator<? extends ListenableFuture<? extends T>> it = futures.iterator();
+    if (! it.hasNext()) {
+      return (ListenableFuture<List<ListenableFuture<? extends T>>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    }
+    return new FailureFutureCollection<>(it);
   }
   
   /**
@@ -631,18 +674,23 @@ public class FutureUtils extends InternalFutureUtils {
    * @param ignoreFailedFutures {@code true} to ignore any failed or canceled futures
    * @return A {@link ListenableFuture} which will provide a list of the results from the provided futures
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<List<T>> 
       makeResultListFuture(Iterable<? extends ListenableFuture<? extends T>> futures, 
                            final boolean ignoreFailedFutures) {
     if (futures == null) {
-      return immediateResultFuture(Collections.<T>emptyList());
+      return (ListenableFuture<List<T>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    }
+    Iterator<? extends ListenableFuture<? extends T>> it = futures.iterator();
+    if (! it.hasNext()) {
+      return (ListenableFuture<List<T>>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
     }
     ListenableFuture<List<ListenableFuture<? extends T>>> completeFuture = 
-        makeCompleteListFuture(futures);
+        new AllFutureCollection<>(it);
     final SettableListenableFuture<List<T>> result = 
         new CancelDelegateSettableListenableFuture<>(completeFuture, null);
     
-    completeFuture.addCallback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
+    completeFuture.callback(new FutureCallback<List<ListenableFuture<? extends T>>>() {
       @Override
       public void handleResult(List<ListenableFuture<? extends T>> resultFutures) {
         boolean needToCancel = false;
@@ -682,7 +730,7 @@ public class FutureUtils extends InternalFutureUtils {
       public void handleFailure(Throwable t) {
         result.setFailure(t);
       }
-    });
+    }, null, null);
     return result;
   }
   
@@ -731,13 +779,13 @@ public class FutureUtils extends InternalFutureUtils {
       futuresCopy = null;
       callbackFutures = futures;
     }
-    CancelOnErrorFutureCallback cancelingCallback = 
+    Consumer<Throwable> cancelingCallback = 
         new CancelOnErrorFutureCallback(callbackFutures, interruptThread);
     for (ListenableFuture<?> f : futures) {
       if (copy) {
         futuresCopy.add(f);
       }
-      f.addCallback(cancelingCallback);
+      f.failureCallback(cancelingCallback);
     }
   }
   
@@ -746,7 +794,12 @@ public class FutureUtils extends InternalFutureUtils {
    * Thus the resulting future can not error, block, or be canceled.  
    * <p>
    * If {@code null} is provided here the static instance of 
-   * {@link ImmediateResultListenableFuture#NULL_RESULT} will be returned to reduce GC overhead.
+   * {@link ImmediateResultListenableFuture#NULL_RESULT} will be returned to reduce GC overhead.  
+   * This function may additionally try to optimize the references to other common cases (like 
+   * {@link Boolean} results) when performance permits it.  Those de-duplications may change based 
+   * off benchmarking results, so be careful about depending on them.  If no de-duplication is 
+   * desired (ie the Future is used as a key in a {@code Map}), then manually construct a new 
+   * {@link ImmediateResultListenableFuture}.
    * 
    * @since 1.2.0
    * @param <T> The result object type returned by the returned future
@@ -757,6 +810,21 @@ public class FutureUtils extends InternalFutureUtils {
   public static <T> ListenableFuture<T> immediateResultFuture(T result) {
     if (result == null) {
       return (ListenableFuture<T>)ImmediateResultListenableFuture.NULL_RESULT;
+    } else if (result == Optional.empty()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_OPTIONAL_RESULT;
+    } else if (result == Boolean.TRUE) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.BOOLEAN_TRUE_RESULT;
+    } else if (result == Boolean.FALSE) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.BOOLEAN_FALSE_RESULT;
+    } else if (result == "") { // equality check is ideal since the JVM will de-duplicate literal strings
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_STRING_RESULT;
+    /* The below seem to impact performance a surprising amount
+    } else if (result == Collections.emptyList()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_LIST_RESULT;
+    } else if (result == Collections.emptyMap()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_MAP_RESULT;
+    } else if (result == Collections.emptySet()) {
+      return (ListenableFuture<T>)ImmediateResultListenableFuture.EMPTY_SET_RESULT;*/
     } else {
       return new ImmediateResultListenableFuture<>(result);
     }
@@ -1108,7 +1176,7 @@ public class FutureUtils extends InternalFutureUtils {
       }
     };
     
-    startingFuture.addCallback(new FailurePropogatingFutureCallback<T>(resultFuture) {
+    startingFuture.callback(new FailurePropogatingFutureCallback<T>(resultFuture) {
       @Override
       public void handleResult(T result) {
         try {
@@ -1123,7 +1191,7 @@ public class FutureUtils extends InternalFutureUtils {
                 scheduler.submitScheduled(cancelCheckingTask, scheduleDelayMillis);
             resultFuture.updateDelegateFuture(lf);
             // TODO - if future is always already complete, this may StackOverflow
-            lf.addCallback(this);  // add this to check again once execution completes
+            lf.callback(this);  // add this to check again once execution completes
           } else {
             // once we have our result, this will end our loop
             resultFuture.setResult(result);
@@ -1136,7 +1204,7 @@ public class FutureUtils extends InternalFutureUtils {
           resultFuture.setFailure(t);
         }
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -1253,7 +1321,7 @@ public class FutureUtils extends InternalFutureUtils {
     CancelDelegateSettableListenableFuture<T> resultFuture = 
         new CancelDelegateSettableListenableFuture<>(startingFuture, null);
     
-    startingFuture.addCallback(new FailurePropogatingFutureCallback<T>(resultFuture) {
+    startingFuture.callback(new FailurePropogatingFutureCallback<T>(resultFuture) {
       @Override
       public void handleResult(T result) {
         resultFuture.setRunningThread(Thread.currentThread());
@@ -1283,7 +1351,7 @@ public class FutureUtils extends InternalFutureUtils {
               }
             } else {
               resultFuture.updateDelegateFuture(lf);
-              lf.addCallback(this);
+              lf.callback(this, null, null);
               return;
             }
           }
@@ -1300,7 +1368,7 @@ public class FutureUtils extends InternalFutureUtils {
           resultFuture.setRunningThread(null);
         }
       }
-    });
+    }, null, null);
     return resultFuture;
   }
   
@@ -1324,8 +1392,6 @@ public class FutureUtils extends InternalFutureUtils {
         }
       } catch (ExecutionException e) {
         return immediateFailureFuture(e.getCause());
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
       } catch (Throwable t) {
         ExceptionUtils.handleException(t);
         return immediateFailureFuture(t);
