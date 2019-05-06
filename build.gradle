@@ -1,6 +1,48 @@
 apply from: 'build.shared'
 apply plugin: 'checkstyle'
 apply plugin: 'jacoco'
+apply plugin: 'maven-publish'
+
+
+jar.baseName="threadly"
+
+// Add buildscript repository so gradle build process can bring in dependencies to execute tasks with
+buildscript {
+  repositories {
+    maven {
+      url "https://mvn.office.veloxity.com/artifactory/all/"
+      credentials {
+        username = artifactoryUsername
+        password = artifactoryPassword
+      }
+    }
+  }
+}
+
+// Add repository for regular dependency management
+repositories {
+  maven {
+    url "https://mvn.office.veloxity.com/artifactory/all/"
+    credentials {
+      username = artifactoryUsername
+      password = artifactoryPassword
+    }
+  }
+}
+
+// Define where to publish artifacts
+publishing {
+  repositories {
+    maven {
+      url version.endsWith('-SNAPSHOT') ?
+              "https://mvn.office.veloxity.com/artifactory/VeloxitySnapshots" : "https://mvn.office.veloxity.com/artifactory/VeloxityInternal"
+      credentials {
+        username = artifactoryUsername
+        password = artifactoryPassword
+      }
+    }
+  }
+}
 
 plugins.withType(JavaPlugin) {
   checkstyle.sourceSets = [sourceSets.main]
@@ -64,5 +106,18 @@ jacocoTestCoverageVerification {
     }
   }
 }
-
 check.dependsOn jacocoTestCoverageVerification
+
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      artifactId = jar.baseName
+      from components.java
+
+
+      artifact sourcesJar
+      artifact javadocJar
+    }
+  }
+}
