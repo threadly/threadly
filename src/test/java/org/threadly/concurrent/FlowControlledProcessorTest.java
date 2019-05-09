@@ -55,7 +55,7 @@ public class FlowControlledProcessorTest {
       }
 
       @Override
-      protected ListenableFuture<Void> next() throws Exception {
+      protected ListenableFuture<Void> next() {
         verifier.assertTrue(running.incrementAndGet() <= maxRunning);
         Runnable task;
         if (count++ % 2 == 0) {
@@ -109,7 +109,7 @@ public class FlowControlledProcessorTest {
       }
 
       @Override
-      protected ListenableFuture<Integer> next() throws Exception {
+      protected ListenableFuture<Integer> next() {
         return scheduler.submitScheduled(DoNothingRunnable.instance(), ++count, 
                                          ThreadLocalRandom.current().nextInt(20));
       }
@@ -159,7 +159,7 @@ public class FlowControlledProcessorTest {
       }
 
       @Override
-      protected ListenableFuture<Void> next() throws Exception {
+      protected ListenableFuture<Void> next() {
         if (ThreadLocalRandom.current().nextBoolean()) {
           count++;
           throw expectedException;

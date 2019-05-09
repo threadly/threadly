@@ -29,7 +29,7 @@ import org.threadly.util.ArgumentVerifier;
  * @param <T> The type of result produced / accepted
  */
 public abstract class FlowControlledProcessor<T> {
-  private final int maxRunningTasks;
+  protected final int maxRunningTasks;
   private final SettableListenableFuture<Void> completeFuture;
   private final ProcessingMonitor futureMonitor;
   private boolean started = false;
@@ -91,9 +91,8 @@ public abstract class FlowControlledProcessor<T> {
    * invoked with the failure.
    * 
    * @return A non-null {@link ListenableFuture} for when the processing completes
-   * @throws Exception if thrown, delegated to {@link #handleFailure(Throwable)}
    */
-  protected abstract ListenableFuture<? extends T> next() throws Exception;
+  protected abstract ListenableFuture<? extends T> next();
   
   /**
    * Invoked when the processing is completed.  If this class is constructed to allow out of order 
@@ -116,9 +115,19 @@ public abstract class FlowControlledProcessor<T> {
    */
   protected abstract boolean handleFailure(Throwable t);
   
+  /**
+   * Class for monitoring tasks submitted and when they can start new ones.  This is where the end 
+   * of events will eventually be handled, and complete the final {@link #completeFuture}.
+   * 
+   * @since 5.37
+   */
   protected class ProcessingMonitor implements FutureCallback<T> {
     private int currentRunningTasks = 0;
     
+    /**
+     * Starts running the initial tasks, once initial calls to {@link #next()} are done this will 
+     * return.
+     */
     public void start() {
       List<ListenableFuture<? extends T>> futures = new ArrayList<>(maxRunningTasks); 
       while (currentRunningTasks < maxRunningTasks && ! completeFuture.isDone() && hasNext()) {
@@ -140,7 +149,8 @@ public abstract class FlowControlledProcessor<T> {
       }
     }
     
-    protected ListenableFuture<? extends T> next() throws Exception {
+    // defined so it can be overriden
+    protected ListenableFuture<? extends T> next() {
       return FlowControlledProcessor.this.next();
     }
     
@@ -163,6 +173,11 @@ public abstract class FlowControlledProcessor<T> {
       }
     }
     
+    /**
+     * Invoked once processing has completed and we are ready to start the next one.  This may be 
+     * called concurrently.  Once there is no remaining work and all processing has completed this 
+     * will set the {@link completeFuture} with a {@code null} result.
+     */
     protected void readyForNext() {
       ListenableFuture<? extends T> nextFuture; // return to avoid `null` conditions with nextFuture
       synchronized (FlowControlledProcessor.this) {
@@ -186,8 +201,15 @@ public abstract class FlowControlledProcessor<T> {
     }
   }
   
+  /**
+   * Extending implementation where results (failed or not) will be provided in the order they were 
+   * submitted for execution (rather than the order they complete).
+   * 
+   * @since 5.37
+   */
   protected class InOrderProcessingMonitor extends ProcessingMonitor {
     protected final ReschedulingOperation futureConsumer = 
+        // ReschedulingOperation to provide non-concurrent providing results from completed futures
         new ReschedulingOperation(SameThreadSubmitterExecutor.instance()) {
           @Override
           protected void run() {
@@ -229,20 +251,24 @@ public abstract class FlowControlledProcessor<T> {
     
     @Override
     public void handleResult(T result) {
-      futureConsumer.signalToRun();
-      
-      readyForNext();
+      try {
+        futureConsumer.signalToRun();
+      } finally {
+        readyForNext();
+      }
     }
 
     @Override
     public void handleFailure(Throwable t) {
-      futureConsumer.signalToRun();
-      
-      readyForNext();
+      try {
+        futureConsumer.signalToRun();
+      } finally {
+        readyForNext();
+      }
     }
     
     @Override
-    protected ListenableFuture<? extends T> next() throws Exception {
+    protected ListenableFuture<? extends T> next() {
       ListenableFuture<? extends T> result;
       try {
         result = FlowControlledProcessor.this.next();
