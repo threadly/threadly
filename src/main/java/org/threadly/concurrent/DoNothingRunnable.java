@@ -5,7 +5,7 @@ package org.threadly.concurrent;
  * 
  * @since 4.1.0
  */
-public class DoNothingRunnable implements Runnable {
+public final class DoNothingRunnable implements Runnable {
   private static final DoNothingRunnable DEFAULT_INSTANCE = new DoNothingRunnable();
   
   /**
@@ -29,7 +29,7 @@ public class DoNothingRunnable implements Runnable {
   }
   
   @Override
-  public void run() {
+  public final void run() {
     // as the name suggests, do nothing
   }
 }

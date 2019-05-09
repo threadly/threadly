@@ -909,7 +909,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @since 1.0.0
    */
-  protected static class ShutdownRunnable implements InternalRunnable {
+  protected static final class ShutdownRunnable implements InternalRunnable {
     private final WorkerPool wm;
     
     protected ShutdownRunnable(WorkerPool wm) {

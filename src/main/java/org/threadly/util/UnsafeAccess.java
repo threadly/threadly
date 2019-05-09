@@ -14,7 +14,7 @@ import sun.misc.Unsafe;
  * 
  * @since 5.28
  */
-public class UnsafeAccess {
+public final class UnsafeAccess {
   private static final Unsafe UNSAFE;
   private static final Method SET_ACCESSIBLE;
   

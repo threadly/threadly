@@ -83,7 +83,7 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
    * 
    * @since 5.26
    */
-  protected static class DoNothingCallable implements Callable<Object> {
+  protected final static class DoNothingCallable implements Callable<Object> {
     protected static final DoNothingCallable INSTANCE = new DoNothingCallable();
     
     private DoNothingCallable() {
@@ -91,7 +91,7 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
     }
     
     @Override
-    public Object call() {
+    public final Object call() {
       return null;
     }
   }

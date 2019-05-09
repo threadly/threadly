@@ -118,8 +118,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   @Override
   public <T> T invokeAny(Collection<? extends Callable<T>> tasks, 
                          long timeout, TimeUnit unit) throws InterruptedException,
-                                                             ExecutionException, 
-                                                             TimeoutException {
+                                                             ExecutionException, TimeoutException {
     if (tasks.size() < 1) {
       throw new IllegalArgumentException("Empty task list provided");
     }
@@ -267,7 +266,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @since 5.22 (since 1.0.0 under org.threadly.concurrent.future package)
    * @param <T> The result object type returned by this future
    */
-  protected static class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
+  protected static final class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
     protected final ListenableFuture<? extends T> futureImp;
     protected final Delayed delayed;
     
@@ -366,7 +365,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * 
    * @since 2.1.0
    */
-  protected static class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
+  protected static final class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
     private final SchedulerService scheduler;
     private final Runnable task;
     
@@ -403,7 +402,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @since 4.4.3
    * @param <T> The result object type returned by this future
    */
-  protected static class CancelRemovingListenableFutureTask<T> extends ListenableFutureTask<T> {
+  protected static final class CancelRemovingListenableFutureTask<T> extends ListenableFutureTask<T> {
     private final SchedulerService scheduler;
 
     public CancelRemovingListenableFutureTask(SchedulerService scheduler, 

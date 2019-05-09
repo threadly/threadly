@@ -776,14 +776,13 @@ public class Profiler {
    * 
    * @since 5.25
    */
-  protected static class ExecutorRunnerTask implements Runnable {
+  protected static final class ExecutorRunnerTask implements Runnable {
     private final ProfileStorage pStore;
     private final SettableListenableFuture<?> runningThreadFuture;
     private final ProfilerRunner pr;
     
     public ExecutorRunnerTask(ProfileStorage pStore, 
-                              SettableListenableFuture<?> runningThreadFuture, 
-                              ProfilerRunner pr) {
+                              SettableListenableFuture<?> runningThreadFuture, ProfilerRunner pr) {
       this.pStore = pStore;
       this.runningThreadFuture = runningThreadFuture;
       this.pr = pr;
@@ -816,7 +815,6 @@ public class Profiler {
         currentThread.setName(originalName);
       }
     }
-    
   }
   
   /**
@@ -824,7 +822,7 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class ProfilerRunner implements Runnable {
+  protected static final class ProfilerRunner implements Runnable {
     private final ProfileStorage pStore;
     
     protected ProfilerRunner(ProfileStorage pStore) {
@@ -883,7 +881,7 @@ public class Profiler {
    * 
    * @since 5.25
    */
-  protected static class ThreadSamples {
+  protected static final class ThreadSamples {
     private final Map<Trace, Trace> traces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE);
     private final Set<String> threadNames = ConcurrentHashMap.newKeySet(1);
     private volatile String cachedThreadNames = null;
@@ -958,7 +956,7 @@ public class Profiler {
    * 
    * @since 4.9.0
    */
-  protected static class ThreadIdentifier {
+  protected static final class ThreadIdentifier {
     private final long threadId;
     private final int hashCode;
     
@@ -1005,7 +1003,7 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class Trace extends ComparableTrace {
+  protected static final class Trace extends ComparableTrace {
     /* threadSeenCount is how many times this trace has been seen in a specific thread.  It should 
      * only be incremented by a single thread, but can be read from any thread.
      */
@@ -1039,7 +1037,7 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class Function {
+  protected static final class Function {
     protected final String className;
     protected final String function;
     protected final int hashCode;
@@ -1098,8 +1096,7 @@ public class Profiler {
         try {
           Function m = (Function) o;
           return m.hashCode == hashCode && 
-                   m.className.equals(className) && 
-                   m.function.equals(function);
+                   m.className.equals(className) && m.function.equals(function);
         } catch (ClassCastException e) {
           return false;
         }

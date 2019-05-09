@@ -22,7 +22,7 @@ import org.threadly.util.Clock;
  * 
  * @since 4.6.0
  */
-public class ThreadlyInternalAccessor {
+public final class ThreadlyInternalAccessor {
   /**
    * Used for gaining compatibility with java.util.concurrent when a {@link Delayed} object is 
    * needed.
@@ -140,7 +140,7 @@ public class ThreadlyInternalAccessor {
    * 
    * @since 4.6.0
    */
-  protected static class DelayedTaskWrapper implements Delayed {
+  protected static final class DelayedTaskWrapper implements Delayed {
     private final TaskWrapper task;
     
     public DelayedTaskWrapper(TaskWrapper task) {

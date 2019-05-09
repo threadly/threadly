@@ -7,12 +7,13 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * Class which is designed to help with determining if a Runnable or Callable is contained at some 
- * point within a chain of {@link CallableContainer} or {@link RunnableContainer}.
+ * Typically used only internally by the threadly library.  This class is designed to help with 
+ * determining if a Runnable or Callable is contained at some  point within a chain of 
+ * {@link CallableContainer} or {@link RunnableContainer}.
  * 
  * @since 1.0.0
  */
-public class ContainerHelper {
+public final class ContainerHelper {
   /**
    * Attempts to remove the provided runnable from the source collection.  This uses the 
    * {@link Collection#remove(Object)} function to remove the container if it is found.

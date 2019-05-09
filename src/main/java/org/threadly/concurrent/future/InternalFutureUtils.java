@@ -373,7 +373,7 @@ class InternalFutureUtils {
    * @since 4.1.0
    * @param <T> The result object type returned from the futures
    */
-  protected static class CancelDelegateSettableListenableFuture<T> extends SettableListenableFuture<T> {
+  protected static final class CancelDelegateSettableListenableFuture<T> extends SettableListenableFuture<T> {
     private volatile ListenableFuture<?> delegateFuture;
 
     protected CancelDelegateSettableListenableFuture(ListenableFuture<?> lf, 
@@ -631,7 +631,7 @@ class InternalFutureUtils {
    * 
    * @since 1.2.0
    */
-  protected static class EmptyFutureCollection extends FutureCollection<Object> {
+  protected static final class EmptyFutureCollection extends FutureCollection<Object> {
     private Runnable doneTaskSingleton;
     
     protected EmptyFutureCollection(Iterator<? extends ListenableFuture<?>> source) {
@@ -680,7 +680,7 @@ class InternalFutureUtils {
    * @since 1.2.0
    * @param <T> The result object type returned from the futures
    */
-  protected static class AllFutureCollection<T> extends FutureCollection<T> {
+  protected static final class AllFutureCollection<T> extends FutureCollection<T> {
     protected AllFutureCollection(Iterator<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
@@ -740,7 +740,7 @@ class InternalFutureUtils {
    * @since 1.2.0
    * @param <T> The result object type returned from the futures
    */
-  protected static class SuccessFutureCollection<T> extends PartialFutureCollection<T> {
+  protected static final class SuccessFutureCollection<T> extends PartialFutureCollection<T> {
     protected SuccessFutureCollection(Iterator<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
@@ -776,7 +776,7 @@ class InternalFutureUtils {
    * @since 1.2.0
    * @param <T> The result object type returned from the futures
    */
-  protected static class FailureFutureCollection<T> extends PartialFutureCollection<T> {
+  protected static final class FailureFutureCollection<T> extends PartialFutureCollection<T> {
     protected FailureFutureCollection(Iterator<? extends ListenableFuture<? extends T>> source) {
       super(source);
     }
@@ -839,7 +839,7 @@ class InternalFutureUtils {
    * @since 5.32
    * @param <T> The result object type returned by this future
    */
-  protected static class ImmediateCanceledListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
+  protected static final class ImmediateCanceledListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
     protected final String cancelMessage;
     
     /**

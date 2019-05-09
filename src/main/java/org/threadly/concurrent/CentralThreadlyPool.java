@@ -795,7 +795,7 @@ public class CentralThreadlyPool {
    * need to have a shutdown action on returned pools.  In addition a delay in reducing a pool size 
    * down is desirable to reduce potential thread churn of the central pool.
    */
-  protected static class PoolResizer {
+  protected static final class PoolResizer {
     private final int amount;
     
     public PoolResizer(int amount) {
@@ -815,7 +815,7 @@ public class CentralThreadlyPool {
    * primary job is sending updates to that scheduler so that the applications needs are met, but 
    * churn is minimized.
    */
-  protected static class PoolResizeUpdater extends ReschedulingOperation {
+  protected static final class PoolResizeUpdater extends ReschedulingOperation {
     protected static final int POOL_SIZE_UPDATE_DELAY = 120_000; // delayed pool size changes reduce churn
     
     protected LongAdder poolSizeChange;
