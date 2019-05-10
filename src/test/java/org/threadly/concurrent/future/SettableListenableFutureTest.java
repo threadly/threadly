@@ -11,10 +11,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
+import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.Clock;
 import org.threadly.util.StringUtils;
 
@@ -645,6 +648,19 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
 
     slf.setResult(null);
     assertNull(mappedFuture.getRunningStackTrace());
+  }
+  
+  @Test
+  public void dontOptimizeListenerNotDoneTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    SettableListenableFuture<Object> slf = 
+        new SettableListenableFuture<>(true, scheduler);
+    
+    slf.listener(DoNothingRunnable.instance(), scheduler, ListenerOptimizationStrategy.InvokingThreadIfDone);
+    
+    slf.handleResult(null);  // we lied what thread it completes on
+    
+    assertEquals(1, scheduler.tick());  // one task for listener, despite scheduler match
   }
   
   private static class SettableListenableFutureFactory implements ListenableFutureFactory {

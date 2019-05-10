@@ -135,6 +135,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
                                  null : executor, 
+                               optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
     return this;

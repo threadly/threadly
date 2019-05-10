@@ -29,6 +29,22 @@ import org.threadly.util.SuppressedStackRuntimeException;
  */
 class InternalFutureUtils {
   /**
+   * Call to check if a listener or callback trying to execute on a done {@link ListenableFuture} 
+   * should be invoked immediately on the calling thread rather than provided to the passed in 
+   * executor.
+   * 
+   * @param executor Executor that would be used or {@code null} if none is available
+   * @param optimize Optimization that is being applied
+   * @return {@code true} if the {@code executor} should be ignored and instead just invoke directly
+   */
+  protected static boolean invokeCompletedDirectly(Executor executor, 
+                                                   ListenerOptimizationStrategy optimize) {
+    return executor == null || 
+             optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
+             optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone;
+  }
+  
+  /**
    * Transform a future's result into another future by applying the provided transformation 
    * function.  If the future completed in error, then the mapper will not be invoked, and instead 
    * the returned future will be completed in the same error state this future resulted in.  If the 
@@ -124,7 +140,7 @@ class InternalFutureUtils {
                                                                Function<? super ST, ListenableFuture<RT>> mapper, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
+    if (invokeCompletedDirectly(executor, optimizeExecution) && 
         sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
       try { // optimized path for already complete futures which we can now process in thread
         return mapper.apply(sourceFuture.get());
@@ -193,7 +209,7 @@ class InternalFutureUtils {
       failureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageProvider,
                        Function<? super TT, ? extends RT> mapper, Class<TT> throwableType, 
                        Executor executor, ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
+    if (invokeCompletedDirectly(executor, optimizeExecution) && 
         sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
@@ -274,7 +290,7 @@ class InternalFutureUtils {
       flatFailureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageSupplier,
                            Function<? super TT, ListenableFuture<RT>> mapper, Class<TT> throwableType, 
                            Executor executor, ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
+    if (invokeCompletedDirectly(executor, optimizeExecution) && 
         sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
@@ -839,7 +855,7 @@ class InternalFutureUtils {
    * @since 5.32
    * @param <T> The result object type returned by this future
    */
-  protected static final class ImmediateCanceledListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
+  protected static final class ImmediateCanceledListenableFuture<T> extends AbstractCompletedListenableFuture<T> {
     protected final String cancelMessage;
     
     /**
@@ -865,8 +881,7 @@ class InternalFutureUtils {
     public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                         ListenerOptimizationStrategy optimize) {
       CancellationException e = new CancellationException(cancelMessage);
-      if (executor == null | 
-          optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+      if (invokeCompletedDirectly(executor, optimize)) {
         callback.handleFailure(e);
       } else {
         executor.execute(() -> callback.handleFailure(e));
@@ -886,8 +901,7 @@ class InternalFutureUtils {
     public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
                                                ListenerOptimizationStrategy optimize) {
       CancellationException e = new CancellationException(cancelMessage);
-      if (executor == null | 
-          optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+      if (invokeCompletedDirectly(executor, optimize)) {
         callback.accept(e);
       } else {
         executor.execute(() -> callback.accept(e));

@@ -1,5 +1,7 @@
 package org.threadly.concurrent.future;
 
+import static org.threadly.concurrent.future.InternalFutureUtils.invokeCompletedDirectly;
+
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -104,6 +106,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
                                  null : executor, 
+                               optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
     
@@ -113,7 +116,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
   @Override
   public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                       ListenerOptimizationStrategy optimize) {
-    if (executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+    if (invokeCompletedDirectly(executor, optimize)) {
       // can't check `done` without synchronizing, but we can check final states optimistically
       // because a `null` result requires us to check `done` (which needs to synchronize or we may 
       // see an inconsistent final state), this only works for non-null results
@@ -144,6 +147,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
                                  null : executor, 
+                               optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
     
@@ -153,7 +157,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
   @Override
   public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
                                             ListenerOptimizationStrategy optimize) {
-    if (executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+    if (invokeCompletedDirectly(executor, optimize)) {
       // can't check `done` without synchronizing, but we can check final states optimistically
       // because a `null` result requires us to check `done` (which needs to synchronize or we may 
       // see an inconsistent final state), this only works for non-null results
@@ -174,6 +178,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
                                  null : executor, 
+                               optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
     
@@ -183,7 +188,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
   @Override
   public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
                                              ListenerOptimizationStrategy optimize) {
-    if (executor == null | optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+    if (invokeCompletedDirectly(executor, optimize)) {
       // can't check `done` without synchronizing, but we can check final states optimistically
       // because a `null` result requires us to check `done` (which needs to synchronize or we may 
       // see an inconsistent final state), this only works for non-null results
@@ -211,6 +216,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
                                  null : executor, 
+                               optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
     

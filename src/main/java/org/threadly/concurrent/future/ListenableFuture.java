@@ -1,5 +1,7 @@
 package org.threadly.concurrent.future;
 
+import static org.threadly.concurrent.future.InternalFutureUtils.invokeCompletedDirectly;
+
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -33,6 +35,14 @@ public interface ListenableFuture<T> extends Future<T> {
      * block or otherwise require the executor to be provided to always be respected.
      */
     None, 
+    /**
+     * If the future has already completed, this optimization will ignore the executor passed in 
+     * and will instead invoke the listener / callback on the invoking thread trying to add the 
+     * listener.  This is similar to {@link #SingleThreadIfExecutorMatchOrDone} except that it will 
+     * still execute out on the executor if they match (which facilitates cases where  concurrency 
+     * of multiple threads on the same pool is desired).
+     */
+    InvokingThreadIfDone,
     /**
      * This will optimize away the executor if the executor provided is the same one that the task 
      * WILL complete on.  If the task is already completed then it is assumed that execution can 
@@ -794,8 +804,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                        ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        isDone()) {
+    if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       // no need to construct anything, just invoke directly
       try {
         callback.handleResult(get());
@@ -883,8 +892,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
                                              ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        isDone()) {
+    if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       if (! isCancelled()) {
         // no need to construct anything, just invoke directly
         try {
@@ -975,8 +983,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
                                               ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        isDone()) {
+    if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       // no need to construct anything, just invoke directly
       try {
         get();  // ignore result if provided

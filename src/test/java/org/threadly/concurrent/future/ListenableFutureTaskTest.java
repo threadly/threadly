@@ -19,7 +19,9 @@ import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
+import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.SuppressedStackRuntimeException;
 
 @SuppressWarnings("javadoc")
@@ -304,6 +306,19 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
       btr.unblock();
       sts.shutdown();
     }
+  }
+  
+  @Test
+  public void dontOptimizeListenerNotDoneTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    ListenableFutureTask<Object> lf = 
+        new ListenableFutureTask<>(false, DoNothingRunnable.instance(), null, scheduler);
+    
+    lf.listener(DoNothingRunnable.instance(), scheduler, ListenerOptimizationStrategy.InvokingThreadIfDone);
+    
+    lf.run();  // we lied what thread it completes on
+    
+    assertEquals(1, scheduler.tick());  // one task for listener, despite scheduler match
   }
   
   private class ListenableFutureTaskFactory implements ExecuteOnGetFutureFactory {

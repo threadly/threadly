@@ -1,5 +1,7 @@
 package org.threadly.concurrent.future;
 
+import static org.threadly.concurrent.future.InternalFutureUtils.invokeCompletedDirectly;
+
 import java.util.concurrent.Executor;
 
 /**
@@ -8,8 +10,9 @@ import java.util.concurrent.Executor;
  * @since 1.3.0
  * @param <T> The result object type returned by this future
  */
-abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
+abstract class AbstractCompletedListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
                                                     implements ListenableFuture<T> {
+  
   @Override
   public boolean isDone() {
     return true;
@@ -25,11 +28,10 @@ abstract class AbstractImmediateListenableFuture<T> extends AbstractNoncancelabl
   @Override
   public ListenableFuture<T> listener(Runnable listener, Executor executor, 
                                       ListenerOptimizationStrategy optimize) {
-    if (executor != null && 
-        optimize != ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
-      executor.execute(listener);
-    } else {
+    if (invokeCompletedDirectly(executor, optimize)) {
       listener.run();
+    } else {
+      executor.execute(listener);
     }
     
     return this;

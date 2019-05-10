@@ -99,9 +99,11 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     lf.callback(tfc);
     lf.callback(tfc, SameThreadSubmitterExecutor.instance());
     lf.callback(tfc, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.InvokingThreadIfDone);
+    lf.callback(tfc, SameThreadSubmitterExecutor.instance(), 
                 ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
-    assertEquals(3, tfc.getCallCount());
+    assertEquals(4, tfc.getCallCount());
     assertTrue(result == tfc.getLastResult());
   }
   
@@ -114,9 +116,11 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     lf.resultCallback(tfc::handleResult);
     lf.resultCallback(tfc::handleResult, SameThreadSubmitterExecutor.instance());
     lf.resultCallback(tfc::handleResult, SameThreadSubmitterExecutor.instance(), 
+                      ListenableFuture.ListenerOptimizationStrategy.InvokingThreadIfDone);
+    lf.resultCallback(tfc::handleResult, SameThreadSubmitterExecutor.instance(), 
                       ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
-    assertEquals(3, tfc.getCallCount());
+    assertEquals(4, tfc.getCallCount());
     assertTrue(result == tfc.getLastResult());
   }
   
@@ -129,9 +133,11 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     lf.callback(tfc);
     lf.callback(tfc, SameThreadSubmitterExecutor.instance());
     lf.callback(tfc, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.InvokingThreadIfDone);
+    lf.callback(tfc, SameThreadSubmitterExecutor.instance(), 
                 ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
-    assertEquals(3, tfc.getCallCount());
+    assertEquals(4, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
   }
   
@@ -144,9 +150,11 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     lf.failureCallback(tfc::handleFailure);
     lf.failureCallback(tfc::handleFailure, SameThreadSubmitterExecutor.instance());
     lf.failureCallback(tfc::handleFailure, SameThreadSubmitterExecutor.instance(), 
+                       ListenableFuture.ListenerOptimizationStrategy.InvokingThreadIfDone);
+    lf.failureCallback(tfc::handleFailure, SameThreadSubmitterExecutor.instance(), 
                        ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
-    assertEquals(3, tfc.getCallCount());
+    assertEquals(4, tfc.getCallCount());
     assertTrue(failure == tfc.getLastFailure());
   }
   
@@ -158,9 +166,11 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     lf.listener(tr);
     lf.listener(tr, SameThreadSubmitterExecutor.instance());
     lf.listener(tr, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.InvokingThreadIfDone);
+    lf.listener(tr, SameThreadSubmitterExecutor.instance(), 
                 ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
 
-    assertEquals(3, tr.getRunCount());
+    assertEquals(4, tr.getRunCount());
   }
   
   @Test
@@ -172,9 +182,11 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     lf.listener(tr);
     lf.listener(tr, SameThreadSubmitterExecutor.instance());
     lf.listener(tr, SameThreadSubmitterExecutor.instance(), 
+                ListenableFuture.ListenerOptimizationStrategy.InvokingThreadIfDone);
+    lf.listener(tr, SameThreadSubmitterExecutor.instance(), 
                 ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
 
-    assertEquals(3, tr.getRunCount());
+    assertEquals(4, tr.getRunCount());
   }
   
   @Test
@@ -1016,12 +1028,14 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   public static void optimizeDoneListenerExecutorTest(ListenableFuture<?> lf) throws InterruptedException, TimeoutException {
     AsyncVerifier av = new AsyncVerifier();
     Thread t = Thread.currentThread();
+    Runnable listener = () -> {av.assertTrue(Thread.currentThread() == t) ; av.signalComplete();};
     
-    lf.listener(() -> {av.assertTrue(Thread.currentThread() == t) ; av.signalComplete();}, 
-                CentralThreadlyPool.computationPool(), 
+    lf.listener(listener, CentralThreadlyPool.computationPool(), 
+                ListenerOptimizationStrategy.InvokingThreadIfDone);
+    lf.listener(listener, CentralThreadlyPool.computationPool(), 
                 ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
     
-    av.waitForTest();
+    av.waitForTest(10_000, 2);
   }
   
   public static void dontOptimizeDoneListenerExecutorTest(ListenableFuture<?> lf) throws InterruptedException, TimeoutException {
