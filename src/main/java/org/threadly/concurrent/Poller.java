@@ -46,7 +46,7 @@ public class Poller {
    * @param scheduler Scheduler to run polling task on
    * @param pollFrequency Time in milliseconds to wait between polling events
    */
-  public Poller(SchedulerService scheduler, long pollFrequency) {
+  public Poller(SubmitterScheduler scheduler, long pollFrequency) {
     this(scheduler, pollFrequency, -1);
   }
 
@@ -62,7 +62,7 @@ public class Poller {
    * @param pollFrequency Time in milliseconds to wait between polling events
    * @param maxWaitTime Maximum time in milliseconds till returned futures should be canceled
    */
-  public Poller(SchedulerService scheduler, long pollFrequency, long maxWaitTime) {
+  public Poller(SubmitterScheduler scheduler, long pollFrequency, long maxWaitTime) {
     if (maxWaitTime > 0 && maxWaitTime != Long.MAX_VALUE) {
       futureWatchdog = new Watchdog(scheduler, maxWaitTime, false);
     } else {
@@ -128,7 +128,7 @@ public class Poller {
         return ImmediateResultListenableFuture.NULL_RESULT;
       } else {
         ListenableRunnableFuture<?> result =
-            new ListenableFutureTask<>(false, DoNothingRunnable.instance());
+            new ListenableFutureTask<>(false, DoNothingRunnable.instance(), null, executor);
         polls.add(new Pair<>(result, p));
         signalToRun();
         return result;
