@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.processing;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -7,6 +7,8 @@ import java.util.Queue;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
+import org.threadly.concurrent.ReschedulingOperation;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.FutureCallback;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -53,10 +55,14 @@ public abstract class FlowControlledProcessor<T> {
   /**
    * Start processing tasks.  The returned future wont complete until task execution has completed 
    * or unless {@link #handleFailure(Throwable)} returns {@code false} indicating an error is not 
-   * able to be handled.  In the case of an unhandled error the returned future will finish with 
-   * the error condition.
+   * able to be handled.
+   * <p>
+   * In the case of an unhandled error the returned future will finish with the error condition.  
+   * Because of that, it's important the returned futures state is checked to verify an unhandled 
+   * error did not occur.  This can be done easily with 
+   * {@link ListenableFuture#failureCallback(java.util.function.Consumer)}.
    *   
-   * @return Future to indicate state of completion
+   * @return Future to indicate state of completion.  This future's result 
    */
   public ListenableFuture<?> start() {
     synchronized (this) {
