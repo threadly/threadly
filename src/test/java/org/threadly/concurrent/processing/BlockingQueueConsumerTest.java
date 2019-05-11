@@ -1,18 +1,19 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.processing;
 
 import static org.junit.Assert.*;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
+import java.util.function.Consumer;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
-import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
+import org.threadly.concurrent.ConfigurableThreadFactory;
+import org.threadly.concurrent.StartingThreadFactory;
 import org.threadly.test.concurrent.TestCondition;
-import org.threadly.util.ExceptionUtils;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings({"javadoc", "deprecation"})
@@ -25,7 +26,8 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
   public void setup() {
     queue = new SynchronousQueue<>();
     acceptor = new TestAcceptor();
-    queueConsumer = new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), queue, acceptor);
+    queueConsumer = BlockingQueueConsumer.makeForHandlers(new ConfigurableThreadFactory(), queue, 
+                                                          acceptor, null);
   }
   
   @After
@@ -40,19 +42,22 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
   @Test
   public void constructorFail() {
     try {
-      new BlockingQueueConsumer<>(null, new SynchronousQueue<>(), new TestAcceptor());
+      BlockingQueueConsumer.makeForHandlers(null, new SynchronousQueue<>(), 
+                                            new TestAcceptor(), null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), new SynchronousQueue<>(), null);
+      BlockingQueueConsumer.makeForHandlers(new ConfigurableThreadFactory(), new SynchronousQueue<>(), 
+                                            null, null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), null, new TestAcceptor());
+      BlockingQueueConsumer.makeForHandlers(new ConfigurableThreadFactory(), null, 
+                                            new TestAcceptor(), null);
       fail("Exception should have been thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -76,7 +81,7 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
   public void startFail() {
     StartingThreadFactory threadFactory = new StartingThreadFactory();
     try {
-      queueConsumer = new BlockingQueueConsumer<>(threadFactory, queue, acceptor);
+      queueConsumer = BlockingQueueConsumer.makeForHandlers(threadFactory, queue, acceptor, null);
       queueConsumer.start();
     } finally {
       threadFactory.killThreads();
@@ -115,15 +120,10 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
   @Test
   public void consumeExceptionTest() throws InterruptedException {
     final TestExceptionHandler teh = new TestExceptionHandler();
-    ExceptionUtils.setInheritableExceptionHandler(teh);
-    final Exception e = new Exception();
-    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), 
-                                                                              queue, new ConsumerAcceptor<Object>() {
-      @Override
-      public void acceptConsumedItem(Object item) throws Exception {
-        throw e;
-      }
-    });
+    final RuntimeException e = new RuntimeException();
+    BlockingQueueConsumer<Object> queueConsumer = 
+        BlockingQueueConsumer.makeForHandlers(new ConfigurableThreadFactory(), 
+                                              queue, (item) -> { throw e; }, teh);
     try {
       queueConsumer.start();
       
@@ -132,16 +132,19 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
       
       // will throw exception if test fails
       new TestCondition(teh::getLastThrowable, (t) -> t == e).blockTillTrue();
+      
+      // verify thread did not die
+      assertTrue(queueConsumer.runningThread.isAlive());
     } finally {
       queueConsumer.stop();
     }
   }
   
-  private static class TestAcceptor extends TestCondition implements ConsumerAcceptor<Object> {
+  private static class TestAcceptor extends TestCondition implements Consumer<Object> {
     private final List<Object> acceptedItems = new LinkedList<>();
     
     @Override
-    public void acceptConsumedItem(Object item) {
+    public void accept(Object item) {
       synchronized (this) {
         acceptedItems.add(item);
       }
