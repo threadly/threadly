@@ -2,19 +2,25 @@ package org.threadly.concurrent;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.threadly.concurrent.future.FutureCallback;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ImmediateResultListenableFuture;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.concurrent.future.ListenableFutureAdapterTask;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.concurrent.future.Watchdog;
+import org.threadly.util.ExceptionHandler;
+import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
 
 /**
@@ -36,6 +42,7 @@ import org.threadly.util.Pair;
  * @since 5.0
  */
 public class Poller {
+  protected final SubmitterScheduler scheduler;
   private final Watchdog futureWatchdog;
   private final PollRunner runner;
 
@@ -63,6 +70,7 @@ public class Poller {
    * @param maxWaitTime Maximum time in milliseconds till returned futures should be canceled
    */
   public Poller(SubmitterScheduler scheduler, long pollFrequency, long maxWaitTime) {
+    this.scheduler = scheduler;
     if (maxWaitTime > 0 && maxWaitTime != Long.MAX_VALUE) {
       futureWatchdog = new Watchdog(scheduler, maxWaitTime, false);
     } else {
@@ -108,6 +116,103 @@ public class Poller {
     if (futureWatchdog != null) {
       futureWatchdog.watch(result);
     }
+    return result;
+  }
+  
+  /**
+   * Consumes from a queue, checking for items and providing them to a {@link Consumer} as they 
+   * become available.  The poll interval is not the minimum consumption speed, but rather the 
+   * resolution / delay that will occur after the queue is seen in an empty state.  If items are 
+   * available they will be provided to the {@link Consumer} as fast as possible.  The
+   * {@link Consumer} will not be invoked in parallel, so if concurrent consumption is desired it 
+   * must execute to a pool.
+   * <p>
+   * Because queue consumption is likely a long running process, this operation will ignore any 
+   * timeout provided to the {@link #Poller(SubmitterScheduler, long, long)} constructor.
+   * <p>
+   * The returned future will never complete on its own.  It can only be used for stopping the 
+   * consumption from the queue by invoking {@link ListenableFuture#cancel(boolean)}.  If 
+   * you never want to stop the queue consumption then the returned {@link ListenableFuture} can be 
+   * ignored.
+   * <p>
+   * If any errors occur {@link ExceptionUtils#handleException(Throwable)} will be invoked.
+   * 
+   * @since 5.37
+   * @param queue The queue to poll items from as they are available
+   * @param consumer The {@link Consumer} to provide items to as they are available
+   * @return A future which can stop consumption through {@code cancel(boolean)}
+   */
+  public <T> ListenableFuture<?> consumeQueue(Queue<? extends T> queue, 
+                                              Consumer<? super T> consumer) {
+    return consumeQueue(queue, consumer, ExceptionUtils::handleException);
+  }
+  
+  /**
+   * Consumes from a queue, checking for items and providing them to a {@link Consumer} as they 
+   * become available.  The poll interval is not the minimum consumption speed, but rather the 
+   * resolution / delay that will occur after the queue is seen in an empty state.  If items are 
+   * available they will be provided to the {@link Consumer} as fast as possible.  The
+   * {@link Consumer} will not be invoked in parallel, so if concurrent consumption is desired it 
+   * must execute to a pool.
+   * <p>
+   * Because queue consumption is likely a long running process, this operation will ignore any 
+   * timeout provided to the {@link #Poller(SubmitterScheduler, long, long)} constructor.
+   * <p>
+   * The returned future may never complete.  It will only complete if an error occurs (and 
+   * parameter {@code exceptionHandler} was {@code null}), or if it is canceled.  Invoking 
+   * {@link ListenableFuture#cancel(boolean)} on the returned future is how you would stop 
+   * providing queue items to the {@link Consumer}.  If an {@code exceptionHandler} is provided, 
+   * and you  never want to stop with a {@code cancel(boolean)}, the returned future can be 
+   * ignored.
+   * 
+   * @since 5.37
+   * @param queue The queue to poll items from as they are available
+   * @param consumer The {@link Consumer} to provide items to as they are available
+   * @param exceptionHandler An optional handler for unexpected errors, or {@code null} to stop consumption on error
+   * @return A future which can stop consumption through {@code cancel(boolean)}, and will report unhandled errors
+   */
+  public <T> ListenableFuture<?> consumeQueue(Queue<? extends T> queue, 
+                                              Consumer<? super T> consumer, 
+                                              ExceptionHandler exceptionHandler) {
+    SettableListenableFuture<?> result = new SettableListenableFuture<>(false);
+    Supplier<Boolean> readyTest = () -> ! queue.isEmpty() || result.isDone();
+    
+    runner.watch(readyTest).callback(new FutureCallback<Object>() {
+      @Override
+      public void handleResult(Object ignored) {
+        try {
+          ListenableFuture<?> nextReadyLF;
+          do {  // loop to reduce risk of StackOverflow
+            if (result.isDone()) {
+              return; // canceled to indicate stop or completed in error
+            }
+            
+            T item = queue.remove();  // remove before we start next watch
+            nextReadyLF = runner.watch(readyTest);
+            consumer.accept(item);
+          } while (nextReadyLF.isDone());
+          
+          nextReadyLF.callback(this, scheduler, ListenerOptimizationStrategy.InvokingThreadIfDone);
+        } catch (Throwable t) {
+          handleFailure(t);
+        }
+      }
+
+      @Override
+      public void handleFailure(Throwable t) {
+        if (exceptionHandler == null) {
+          result.setFailure(t);
+        } else {
+          try {
+            exceptionHandler.handleException(t);
+          } finally {
+            runner.watch(readyTest)
+                  .callback(this, scheduler, ListenerOptimizationStrategy.InvokingThreadIfDone);
+          }
+        }
+      }
+    }, scheduler);
+    
     return result;
   }
 
