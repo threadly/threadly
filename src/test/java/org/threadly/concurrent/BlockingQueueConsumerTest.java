@@ -10,7 +10,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
-import org.threadly.concurrent.BlockingQueueConsumer.ConsumerAcceptor;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.TestExceptionHandler;
@@ -117,13 +116,14 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
     final TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setInheritableExceptionHandler(teh);
     final Exception e = new Exception();
-    BlockingQueueConsumer<Object> queueConsumer = new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), 
-                                                                              queue, new ConsumerAcceptor<Object>() {
-      @Override
-      public void acceptConsumedItem(Object item) throws Exception {
-        throw e;
-      }
-    });
+    BlockingQueueConsumer<Object> queueConsumer = 
+        new BlockingQueueConsumer<>(new ConfigurableThreadFactory(), queue, 
+            new BlockingQueueConsumer.ConsumerAcceptor<Object>() {
+          @Override
+          public void acceptConsumedItem(Object item) throws Exception {
+            throw e;
+          }
+        });
     try {
       queueConsumer.start();
       
@@ -137,7 +137,8 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
     }
   }
   
-  private static class TestAcceptor extends TestCondition implements ConsumerAcceptor<Object> {
+  private static class TestAcceptor extends TestCondition 
+                                    implements BlockingQueueConsumer.ConsumerAcceptor<Object> {
     private final List<Object> acceptedItems = new LinkedList<>();
     
     @Override

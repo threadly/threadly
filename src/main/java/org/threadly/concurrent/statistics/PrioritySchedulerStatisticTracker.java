@@ -367,13 +367,10 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * @return Runnable which is our wrapped implementation
    */
   private Runnable wrap(Runnable task, TaskPriority priority) {
-    if (priority == null) {
-      priority = getDefaultPriority();
-    }
     if (task == null) {
       return null;
     } else {
-      return new TaskStatWrapper(statsManager, priority, task);
+      return new TaskStatWrapper(statsManager, priority == null ? getDefaultPriority() : priority, task);
     }
   }
 
