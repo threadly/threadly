@@ -34,6 +34,7 @@ public abstract class BlockingQueueConsumer<T> extends AbstractService {
    * Construct a new {@link BlockingQueueConsumer} in case an abstract implementation is not 
    * preferred.
    * 
+   * @param <T> The type of object to consume from the queue
    * @param threadFactory ThreadFactory to construct new thread for consumer to run on 
    * @param queue Queue to consume items from
    * @param consumer Consumer to provide items from queue on

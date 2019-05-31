@@ -15,6 +15,7 @@ public class ArrayIterator<T> implements Iterator<T> {
   /**
    * Construct a new {@link Iterator} that will start at position zero of the provided array.
    * 
+   * @param <T> The type of object to iterate over
    * @param array Array to iterate over
    * @return An {@link Iterator} that will go over the provided array
    */
@@ -30,6 +31,7 @@ public class ArrayIterator<T> implements Iterator<T> {
    * calling {@link #makeIterable(Object[], boolean)} with a {@code true} to specify new instances 
    * on iteration.
    *  
+   * @param <T> The type of object to iterate over
    * @param array Array to be iterated over
    * @return An {@link Iterable} that will go over the array
    */
@@ -44,7 +46,8 @@ public class ArrayIterator<T> implements Iterator<T> {
    * {@code true} is specified then a new instance will be returned on every invocation, allowing 
    * for the iterator to be created concurrently and not have the state of each iterator be impacted.
    * If {@code false} is provided then the returned {@link Iterator} will be reset each time.
-   *  
+   * 
+   * @param <T> The type of object to iterate over
    * @param array Array to be iterated over
    * @param newInstanceOnCall {@code true} to create new instances on each invocation of {@link Iterable#iterator()}
    * @return An {@link Iterable} that will go over the array

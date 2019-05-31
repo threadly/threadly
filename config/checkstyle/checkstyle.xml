@@ -71,7 +71,7 @@
     <module name="EqualsHashCode"/>
     <module name="IllegalThrows">
       <property name="illegalClassNames" value="java.lang.Throwable, java.lang.Error, java.lang.RuntimeException,java.lang.Exception"/>
-      <property name="ignoredMethodNames" value="finalize, call, acceptConsumedItem"/>
+      <property name="ignoredMethodNames" value="finalize, call, acceptConsumedItem, accept"/>
     </module>
     <module name="MagicNumber">
       <property name="ignoreNumbers" value="-2, -1, 0, 1, 2, 4, 10, 100, 1000"/>

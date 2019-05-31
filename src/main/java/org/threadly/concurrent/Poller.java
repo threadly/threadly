@@ -138,6 +138,7 @@ public class Poller {
    * If any errors occur {@link ExceptionUtils#handleException(Throwable)} will be invoked.
    * 
    * @since 5.37
+   * @param <T> The type of object to consume from the queue
    * @param queue The queue to poll items from as they are available
    * @param consumer The {@link Consumer} to provide items to as they are available
    * @return A future which can stop consumption through {@code cancel(boolean)}
@@ -166,6 +167,7 @@ public class Poller {
    * ignored.
    * 
    * @since 5.37
+   * @param <T> The type of object to consume from the queue
    * @param queue The queue to poll items from as they are available
    * @param consumer The {@link Consumer} to provide items to as they are available
    * @param exceptionHandler An optional handler for unexpected errors, or {@code null} to stop consumption on error
