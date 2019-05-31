@@ -21,6 +21,7 @@ import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.ArrayIterator;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -86,6 +87,22 @@ public class FutureUtils extends InternalFutureUtils {
    * If you need to specify a timeout to control how long to block, consider using 
    * {@link #blockTillAllComplete(Iterable, long)}.
    * 
+   * @param futures Futures to block till they complete
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future
+   */
+  public static void blockTillAllComplete(Future<?> ... futures) throws InterruptedException {
+    countFuturesWithResult(ArrayIterator.makeIterable(futures), null);
+  }
+  
+  /**
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error, the {@link ExecutionException} is swallowed.  Meaning that this does not attempt to 
+   * verify that all futures completed successfully.  If you need to know if any failed, please 
+   * use {@link #blockTillAllCompleteOrFirstError(Iterable)}.  
+   * <p>
+   * If you need to specify a timeout to control how long to block, consider using 
+   * {@link #blockTillAllComplete(Iterable, long)}.
+   * 
    * @param futures Structure of futures to iterate over
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
    */
@@ -108,6 +125,24 @@ public class FutureUtils extends InternalFutureUtils {
   public static void blockTillAllComplete(Iterable<? extends Future<?>> futures, long timeoutInMillis) 
       throws InterruptedException, TimeoutException {
     countFuturesWithResult(futures, null, timeoutInMillis);
+  }
+
+  /**
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error an {@link ExecutionException} is thrown.  If this exception is thrown, all futures 
+   * may or may not be completed, the exception is thrown as soon as it is hit.  There also may be 
+   * additional futures that errored (but were not hit yet).  
+   * <p>
+   * If you need to specify a timeout to control how long to block, consider using 
+   * {@link #blockTillAllCompleteOrFirstError(Iterable, long)}.
+   * 
+   * @param futures Futures to iterate over
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future
+   * @throws ExecutionException Thrown if future throws exception on .get() call
+   */
+  public static void blockTillAllCompleteOrFirstError(Future<?> ... futures) 
+      throws InterruptedException, ExecutionException {
+    blockTillAllCompleteOrFirstError(ArrayIterator.makeIterable(futures));
   }
 
   /**
@@ -390,6 +425,28 @@ public class FutureUtils extends InternalFutureUtils {
    * except it will put the returned future into an error state if any of the provided futures error.
    * 
    * @since 1.2.0
+   * @param futures Futures that must finish before returned future is satisfied
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static ListenableFuture<?> makeCompleteFuture(ListenableFuture<?> ... futures) {
+    return makeCompleteFuture(ArrayIterator.makeIterable(futures));
+  }
+  
+  /**
+   * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
+   * when all futures are complete without blocking.  Unlike 
+   * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
+   * {@link ListenableFuture}'s.  But will return immediately, providing a new 
+   * {@link ListenableFuture} that will be called once all the provided futures have finished.  
+   * <p>
+   * The future returned will provide a {@code null} result, it is the responsibility of the 
+   * caller to get the actual results from the provided futures.  This is designed to just be an 
+   * indicator as to when they have finished.  If you need the results from the provided futures, 
+   * consider using {@link #makeCompleteListFuture(Iterable)}.  You should also consider using 
+   * {@link #makeFailurePropagatingCompleteFuture(Iterable)}, it has the same semantics as this one 
+   * except it will put the returned future into an error state if any of the provided futures error.
+   * 
+   * @since 1.2.0
    * @param futures Collection of futures that must finish before returned future is satisfied
    * @return ListenableFuture which will be done once all futures provided are done
    */
@@ -458,6 +515,26 @@ public class FutureUtils extends InternalFutureUtils {
       }
     }, null, null);
     return resultFuture;
+  }
+  
+  /**
+   * Similar to {@link #makeCompleteFuture(Iterable)} in that the returned future wont complete 
+   * until all the provided futures complete.  However this implementation will check if any 
+   * futures failed or were canceled once all have completed.  If any did not complete normally 
+   * then the returned futures state will match the state of one of the futures that did not 
+   * normally (randomly chosen).
+   * <p>
+   * Since the returned future wont complete until all futures complete, you may want to consider 
+   * using {@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)} in addition to 
+   * this so that the future will resolve as soon as any failures occur. 
+   * 
+   * @since 5.0
+   * @param futures Collection of futures that must finish before returned future is satisfied
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static ListenableFuture<?> 
+      makeFailurePropagatingCompleteFuture(ListenableFuture<?> ... futures) {
+    return makeFailurePropagatingCompleteFuture(ArrayIterator.makeIterable(futures), null);
   }
   
   /**

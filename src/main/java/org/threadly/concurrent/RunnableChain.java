@@ -31,8 +31,7 @@ public class RunnableChain implements Runnable {
    * @param exceptionStopsChain {@code true} for uncaught exception stops the execution of the chain
    * @param toRun Iterable collection of runnables to run
    */
-  public RunnableChain(boolean exceptionStopsChain, 
-                       Iterable<? extends Runnable> toRun) {
+  public RunnableChain(boolean exceptionStopsChain, Iterable<? extends Runnable> toRun) {
     if (toRun == null) {
       toRun = Collections.emptyList();
     }

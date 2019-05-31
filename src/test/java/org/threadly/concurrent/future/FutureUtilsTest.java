@@ -43,7 +43,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void blockTillAllCompleteNullTest() throws InterruptedException {
-    FutureUtils.blockTillAllComplete(null); // should return immediately
+    FutureUtils.blockTillAllComplete((Iterable<Future<?>>)null); // should return immediately
   }
   
   @Test
@@ -121,7 +121,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void blockTillAllCompleteOrFirstErrorNullTest() throws InterruptedException, ExecutionException {
-    FutureUtils.blockTillAllCompleteOrFirstError(null); // should return immediately
+    FutureUtils.blockTillAllCompleteOrFirstError((Iterable<Future<?>>)null); // should return immediately
   }
   
   @Test
@@ -334,7 +334,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void makeCompleteFutureNullTest() {
-    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(null);
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture((Iterable<ListenableFuture<?>>)null);
     
     assertTrue(f.isDone());
   }
@@ -468,7 +468,8 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void makeFailurePropagatingCompleteFutureNullTest() {
-    ListenableFuture<?> f = FutureUtils.makeFailurePropagatingCompleteFuture(null);
+    ListenableFuture<?> f = 
+        FutureUtils.makeFailurePropagatingCompleteFuture((Iterable<ListenableFuture<?>>)null);
     
     assertTrue(f.isDone());
   }
