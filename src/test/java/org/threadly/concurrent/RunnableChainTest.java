@@ -22,8 +22,8 @@ public class RunnableChainTest extends ThreadlyTester {
   
   @Test
   public void constructorTest() {
-    new RunnableChain(false, null).run();
-    new RunnableChain(true, null).run();
+    new RunnableChain(false, DoNothingRunnable.instance()).run();
+    new RunnableChain(true, DoNothingRunnable.instance()).run();
   }
   
   @Test

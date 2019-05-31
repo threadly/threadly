@@ -3,6 +3,7 @@ package org.threadly.concurrent;
 import java.util.Collections;
 import java.util.Iterator;
 
+import org.threadly.util.ArrayIterator;
 import org.threadly.util.ExceptionUtils;
 
 /**
@@ -13,6 +14,16 @@ import org.threadly.util.ExceptionUtils;
 public class RunnableChain implements Runnable {
   protected final boolean exceptionStopsChain;
   private final Iterable<? extends Runnable> toRun;
+
+  /**
+   * Constructs a runnable chain with a provided list of runnables to iterate over.
+   * 
+   * @param exceptionStopsChain {@code true} for uncaught exception stops the execution of the chain
+   * @param runnables Runnables to execute in chain
+   */
+  public RunnableChain(boolean exceptionStopsChain, Runnable ... runnables) {
+    this(exceptionStopsChain, ArrayIterator.makeIterable(runnables));
+  }
   
   /**
    * Constructs a runnable chain with a provided list of runnables to iterate over.
