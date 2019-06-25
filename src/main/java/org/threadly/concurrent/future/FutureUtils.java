@@ -373,7 +373,6 @@ public class FutureUtils extends InternalFutureUtils {
    * which might have a result.  If there is no concern for other results, then you likely will 
    * want to interrupt started futures.
    * 
-   * 
    * @since 5.38
    * @param <T> type of result provided in the returned future
    * @param c Collection of futures to monitor for result
