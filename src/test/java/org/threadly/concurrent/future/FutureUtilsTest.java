@@ -333,6 +333,101 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void makeFirstResultFutureTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(false);
+  }
+
+  @Test
+  public void makeFirstResultFutureIgnoreErrorWithoutErrorTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(true);
+  }
+  
+  private static void makeFirstResultFutureTest(boolean ignoreError) throws InterruptedException, ExecutionException {
+    SettableListenableFuture<String> slf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(slf);
+    futureList.add(new SettableListenableFuture<>());
+    
+    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, ignoreError, false);
+    slf.setResult(StringUtils.makeRandomString(5));
+    
+    assertTrue(firstResult.isDone());
+    assertEquals(slf.get(), firstResult.get());
+    
+    for (ListenableFuture<?> lf : futureList) {
+      assertTrue(lf.isDone());
+      if (lf != slf) {
+        assertTrue(lf.isCancelled());
+      }
+    }
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorTest() throws InterruptedException, ExecutionException {
+    SettableListenableFuture<String> slf = new SettableListenableFuture<>();
+    SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(slf);
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(errorSlf);
+    futureList.add(new SettableListenableFuture<>());
+    
+    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, true, false);
+    errorSlf.setFailure(new Exception());
+    
+    assertFalse(firstResult.isDone());
+    
+    slf.setResult(StringUtils.makeRandomString(5));
+    
+    assertTrue(firstResult.isDone());
+    assertEquals(slf.get(), firstResult.get());
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorFinalErrorTest() throws InterruptedException, TimeoutException {
+    Exception error = new Exception();
+    SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(errorSlf);
+    
+    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, true, false);
+    errorSlf.setFailure(error);
+    
+    assertTrue(firstResult.isDone());
+    AsyncVerifier av = new AsyncVerifier();
+    firstResult.resultCallback((ignored) -> av.fail("Completed with result"));
+    firstResult.failureCallback((t) -> {
+      av.assertTrue(t == error);
+      av.signalComplete();
+    });
+    av.waitForTest(); // technically should already be done
+  }
+  
+  @Test
+  public void makeFirstResultFutureErrorTest() throws InterruptedException, TimeoutException {
+    Exception error = new Exception();
+    SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(errorSlf);
+    futureList.add(new SettableListenableFuture<>());
+    
+    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, false, false);
+    errorSlf.setFailure(error);
+    
+    assertTrue(firstResult.isDone());
+    AsyncVerifier av = new AsyncVerifier();
+    firstResult.resultCallback((ignored) -> av.fail("Completed with result"));
+    firstResult.failureCallback((t) -> {
+      av.assertTrue(t == error);
+      av.signalComplete();
+    });
+    av.waitForTest(); // technically should already be done
+  }
+  
+  @Test
   public void makeCompleteFutureNullTest() {
     ListenableFuture<?> f = FutureUtils.makeCompleteFuture((Iterable<ListenableFuture<?>>)null);
     

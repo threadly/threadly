@@ -51,6 +51,7 @@ import org.threadly.util.ExceptionUtils;
  * <li>{@link #countFuturesWithResult(Iterable, Object, long)}
  * <li>{@link #invokeAfterAllComplete(Collection, Runnable)}
  * <li>{@link #invokeAfterAllComplete(Collection, Runnable, Executor)}
+ * <li>{@link #makeFirstResultFuture(Collection, boolean, boolean)}
  * <li>{@link #makeCompleteFuture(Iterable)}
  * <li>{@link #makeCompleteFuture(Iterable, Object)}
  * <li>{@link #makeFailurePropagatingCompleteFuture(Iterable)}
@@ -352,6 +353,77 @@ public class FutureUtils extends InternalFutureUtils {
         lf.listener(decrementingListener);
       }
     }
+  }
+  
+  /**
+   * Converts a collection of {@link ListenableFuture}'s into a single {@link ListenableFuture} 
+   * where the result will be the first result provided from the collection.
+   * <p>
+   * If {@code ignoreErrors} is {@code false} the returned future will complete as soon as the 
+   * first future completes, if it completes in error then the error would be returned.  If 
+   * {@code ignoreErrors} is {@code true} then the returned future will complete once a result is 
+   * provided, or once all futures have completed in error.  If all futures did complete in error 
+   * then the last error state will be specified to the resulting {@link ListenableFuture}.  This 
+   * minor bookkeeping to ignore errors does incur a slight overhead.
+   * <p>
+   * It is expected that the first result is the only result desired, once it is found this will 
+   * attempt to cancel all remaining futures.  If you may want other results which were in 
+   * progress, then specifying {@code interruptOnCancel} as {@code false} will mean that any 
+   * futures which started can complete.  You can then inspect the collection for done futures 
+   * which might have a result.  If there is no concern for other results, then you likely will 
+   * want to interrupt started futures.
+   * 
+   * 
+   * @since 5.38
+   * @param <T> type of result provided in the returned future
+   * @param c Collection of futures to monitor for result
+   * @param ignoreErrors {@code false} to communicate the first completed future state, even if in error
+   * @param interruptOnCancel {@code true} to send a interrupt on any running futures after we have a result
+   * @return A future which will be provided the first result from any in the provided {@link Collection}
+   */
+  public static <T> ListenableFuture<T> makeFirstResultFuture(Collection<? extends ListenableFuture<? extends T>> c, 
+                                                              boolean ignoreErrors, boolean interruptOnCancel) {
+    SettableListenableFuture<T> result = new SettableListenableFuture<>(false);
+    FutureCallback<T> callback;
+    if (ignoreErrors) {
+      AtomicInteger errorsRemaining = new AtomicInteger(c.size());
+      callback = new FutureCallback<T>() {
+        @Override
+        public void handleResult(T t) {
+          if (result.setResult(t)) {
+            FutureUtils.cancelIncompleteFutures(c, interruptOnCancel);
+          }
+        }
+
+        @Override
+        public void handleFailure(Throwable t) {
+          if (errorsRemaining.decrementAndGet() == 0) {
+            // ignore failures till we reach the last failure
+            result.setFailure(t);
+          }
+        }
+      };
+    } else {
+      callback = new FutureCallback<T>() {
+        @Override
+        public void handleResult(T t) {
+          if (result.setResult(t)) {
+            FutureUtils.cancelIncompleteFutures(c, interruptOnCancel);
+          }
+        }
+
+        @Override
+        public void handleFailure(Throwable t) {
+          if (result.setFailure(t)) {
+            FutureUtils.cancelIncompleteFutures(c, interruptOnCancel);
+          }
+        }
+      };
+    }
+    
+    c.forEach((lf) -> lf.callback(callback));
+
+    return result;
   }
   
   /**
