@@ -77,8 +77,11 @@ class InternalFutureUtils {
                                                            boolean reportedTransformedExceptions, 
                                                            Executor executor, 
                                                            ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
+      if (sourceFuture.isCancelled()) { // avoid CancellationException generation
+        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
+                                                         null : cancelationMessageProvider.get());
+      }
       try { // optimized path for already complete futures which we can now process in thread
         return FutureUtils.immediateResultFuture(mapper.apply(sourceFuture.get()));
       } catch (ExecutionException e) { // failure in getting result from future, transfer failure
@@ -140,8 +143,11 @@ class InternalFutureUtils {
                                                                Function<? super ST, ListenableFuture<RT>> mapper, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
-    if (invokeCompletedDirectly(executor, optimizeExecution) && 
-        sourceFuture.isDone() && ! sourceFuture.isCancelled()) {
+    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
+      if (sourceFuture.isCancelled()) { // avoid CancellationException generation
+        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
+                                                         null : cancelationMessageProvider.get());
+      }
       try { // optimized path for already complete futures which we can now process in thread
         return mapper.apply(sourceFuture.get());
       } catch (ExecutionException e) { // failure in getting result from future, transfer failure
@@ -209,9 +215,9 @@ class InternalFutureUtils {
       failureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageProvider,
                        Function<? super TT, ? extends RT> mapper, Class<TT> throwableType, 
                        Executor executor, ListenerOptimizationStrategy optimizeExecution) {
-    if (invokeCompletedDirectly(executor, optimizeExecution) && 
-        sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
-      if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
+    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
+      // optimized path for already complete futures which we can now process in thread
+      if (sourceFuture.isCancelled()) { // avoid CancellationException generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
             String msg = cancelationMessageProvider == null ? null : cancelationMessageProvider.get();
@@ -222,23 +228,22 @@ class InternalFutureUtils {
         } else {
           return sourceFuture;
         }
-      } else {
-        try {
-          sourceFuture.get();
-          return sourceFuture;  // no error
-        } catch (ExecutionException e) {
-          if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
-            try {
-              return FutureUtils.immediateResultFuture(mapper.apply((TT)e.getCause()));
-            } catch (Throwable t) {
-              return FutureUtils.immediateFailureFuture(t);
-            }
-          } else {
-            return sourceFuture;
+      }
+      try {
+        sourceFuture.get();
+        return sourceFuture;  // no error
+      } catch (ExecutionException e) {
+        if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
+          try {
+            return FutureUtils.immediateResultFuture(mapper.apply((TT)e.getCause()));
+          } catch (Throwable t) {
+            return FutureUtils.immediateFailureFuture(t);
           }
-        } catch (InterruptedException e) {  // should not be possible
-          throw new RuntimeException(e);
+        } else {
+          return sourceFuture;
         }
+      } catch (InterruptedException e) {  // should not be possible
+        throw new RuntimeException(e);
       }
     }
     
@@ -290,8 +295,8 @@ class InternalFutureUtils {
       flatFailureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageSupplier,
                            Function<? super TT, ListenableFuture<RT>> mapper, Class<TT> throwableType, 
                            Executor executor, ListenerOptimizationStrategy optimizeExecution) {
-    if (invokeCompletedDirectly(executor, optimizeExecution) && 
-        sourceFuture.isDone()) { // optimized path for already complete futures which we can now process in thread
+    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
+      // optimized path for already complete futures which we can now process in thread
       if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
@@ -303,23 +308,22 @@ class InternalFutureUtils {
         } else {
           return sourceFuture;
         }
-      } else {
-        try {
-          sourceFuture.get();
-          return sourceFuture;  // no error
-        } catch (ExecutionException e) {
-          if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
-            try {
-              return mapper.apply((TT)e.getCause());
-            } catch (Throwable t) {
-              return FutureUtils.immediateFailureFuture(t);
-            }
-          } else {
-            return sourceFuture;
+      }
+      try {
+        sourceFuture.get();
+        return sourceFuture;  // no error
+      } catch (ExecutionException e) {
+        if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
+          try {
+            return mapper.apply((TT)e.getCause());
+          } catch (Throwable t) {
+            return FutureUtils.immediateFailureFuture(t);
           }
-        } catch (InterruptedException e) {  // should not be possible
-          throw new RuntimeException(e);
+        } else {
+          return sourceFuture;
         }
+      } catch (InterruptedException e) {  // should not be possible
+        throw new RuntimeException(e);
       }
     }
     
