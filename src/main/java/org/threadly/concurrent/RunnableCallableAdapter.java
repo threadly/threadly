@@ -39,28 +39,12 @@ public class RunnableCallableAdapter<T> implements Callable<T>, RunnableContaine
   protected final T result;
   
   /**
-   * Constructs a new adapter with a provided runnable to execute.  The returned result from this 
-   * callable will be {@code null}.
-   * 
-   * @deprecated Please use static function {@link RunnableCallableAdapter#adapt(Runnable, Object)}
-   * 
-   * @param runnable Runnable to be invoked when this adapter is ran
-   */
-  @Deprecated
-  public RunnableCallableAdapter(Runnable runnable) {
-    this(runnable, null);
-  }
-  
-  /**
    * Constructs a new adapter with a provided runnable to execute, and an optional result.
-   * 
-   * @deprecated Please use static function {@link RunnableCallableAdapter#adapt(Runnable, Object)}
    * 
    * @param runnable Runnable to be invoked when this adapter is ran
    * @param result Result to return from Callable or {@code null}
    */
-  @Deprecated
-  public RunnableCallableAdapter(Runnable runnable, T result) {
+  protected RunnableCallableAdapter(Runnable runnable, T result) {
     ArgumentVerifier.assertNotNull(runnable, "runnable");
     
     this.runnable = runnable;
