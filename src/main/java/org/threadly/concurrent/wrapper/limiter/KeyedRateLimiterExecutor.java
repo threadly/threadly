@@ -189,40 +189,6 @@ public class KeyedRateLimiterExecutor {
   }
   
   /**
-   * Constructs a new key rate limiting executor.  This constructor allows you to set both the 
-   * thread naming behavior as well as the level of parallelism expected for task submission.  
-   * <p>
-   * This constructor accepts a maximum schedule delay.  If a task requires being scheduled out 
-   * beyond this delay, then a {@link java.util.concurrent.RejectedExecutionException} will be 
-   * thrown instead of scheduling the task.
-   * <p>
-   * The parallelism value should be a factor of how many keys are submitted to the pool during any 
-   * given period of time.  Depending on task execution duration, and quantity of threads executing 
-   * tasks this value may be able to be smaller than expected.  Higher values result in less lock 
-   * contention, but more memory usage.  Most systems will run fine with this anywhere from 4 to 64.
-   * 
-   * @deprecated Please use constructor without the {@code expectedParallism} field
-   * 
-   * @since 4.8.0
-   * @param scheduler Scheduler to defer executions to
-   * @param permitsPerSecond how many permits should be allowed per second per key
-   * @param maxScheduleDelayMillis Maximum amount of time delay tasks in order to maintain rate
-   * @param rejectedExecutionHandler Handler to accept tasks which could not be executed
-   * @param subPoolName Prefix to give threads while executing tasks submitted through this limiter
-   * @param addKeyToThreadName {@code true} to append the task's key to the thread name
-   * @param expectedParallism IGNORED AND DEPRECATED
-   */
-  @Deprecated
-  public KeyedRateLimiterExecutor(SubmitterScheduler scheduler, double permitsPerSecond, 
-                                  long maxScheduleDelayMillis, 
-                                  RejectedExecutionHandler rejectedExecutionHandler, 
-                                  String subPoolName, boolean addKeyToThreadName, 
-                                  @SuppressWarnings("unused") int expectedParallism) {
-    this(scheduler, permitsPerSecond, maxScheduleDelayMillis, rejectedExecutionHandler, 
-         subPoolName, addKeyToThreadName);
-  }
-  
-  /**
    * Check how many keys are currently being restricted or monitored.  This number is particularly 
    * relevant for when checking the queued tasks of the parent scheduler.  As part of the inner 
    * workings of this limiter, a task will exist for each key.  Because of that there will be 

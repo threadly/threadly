@@ -60,21 +60,6 @@ public class ControlledThreadProfiler extends Profiler {
    * Removed a thread from the set of tracked threads.  It is good practice to remove a thread 
    * from the profiler if it is no longer alive.  This profiler makes NO attempt to automatically 
    * remove dead threads.
-   *
-   * @deprecated Please use {@link #removeProfiledThread(Thread)}
-   * 
-   * @param t Thread to remove from tracked set
-   * @return {@code true} if the thread was found and removed.
-   */
-  @Deprecated
-  public boolean removedProfiledThread(Thread t) {
-    return removeProfiledThread(t);
-  }
-  
-  /**
-   * Removed a thread from the set of tracked threads.  It is good practice to remove a thread 
-   * from the profiler if it is no longer alive.  This profiler makes NO attempt to automatically 
-   * remove dead threads.
    * 
    * @param t Thread to remove from tracked set
    * @return {@code true} if the thread was found and removed.

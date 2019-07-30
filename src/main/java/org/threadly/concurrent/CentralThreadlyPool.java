@@ -26,7 +26,7 @@ import org.threadly.util.StringUtils;
  * Most users will find themselves sticking to the simple pools this provides:
  * <ul>
  * <li>{@link #computationPool()} for doing CPU bound computational tasks
- * <li>{@link #lowPriorityPool(boolean)} for doing low priority maintenance tasks
+ * <li>{@link #lowPriorityPool()} for doing low priority maintenance tasks
  * <li>{@link #singleThreadPool()} as a way to gain access to an efficient priority respected single thread pool
  * <li>{@link #threadPool(int)} and {@link #threadPool(TaskPriority, int)} to have a multi-threaded pool
  * <li>{@link #isolatedTaskPool()} For single / isolated tasks against the central pool
@@ -183,44 +183,6 @@ public class CentralThreadlyPool {
       return LOW_PRIORITY_POOL;
     } else {
       return new ThreadRenamingSchedulerService(LOW_PRIORITY_POOL, threadName, false);
-    }
-  }
-  
-  /**
-   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
-   * delayed.  If not single threaded this pool will execute only on any general processing threads 
-   * which are available.  By default there is only one, but it can be increased by invoking 
-   * {@link #increaseGenericThreads(int)}.
-   * 
-   * @deprecated use {@link #lowPrioritySingleThreadPool()} or {@link #lowPriorityPool()}
-   * 
-   * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
-   * @return Pool for running or scheduling out low priority tasks
-   */
-  @Deprecated
-  public static SchedulerService lowPriorityPool(boolean singleThreaded) {
-    return lowPriorityPool(singleThreaded, null);
-  }
-  
-  /**
-   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
-   * delayed.  If not single threaded this pool will execute only on any general processing threads 
-   * which are available.  By default there is only one, but it can be increased by invoking 
-   * {@link #increaseGenericThreads(int)}.
-   * 
-   * @deprecated use {@link #lowPrioritySingleThreadPool(String)} or {@link #lowPriorityPool(String)}
-   * 
-   * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
-   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
-   * @return Pool for running or scheduling out low priority tasks
-   */
-  @Deprecated
-  public static SchedulerService lowPriorityPool(boolean singleThreaded, String threadName) {
-    SchedulerService scheduler = singleThreaded ? SINGLE_THREADED_LOW_PRIORITY_POOL : LOW_PRIORITY_POOL;
-    if (StringUtils.isNullOrEmpty(threadName)) {
-      return scheduler;
-    } else {
-      return new ThreadRenamingSchedulerService(scheduler, threadName, false);
     }
   }
 
