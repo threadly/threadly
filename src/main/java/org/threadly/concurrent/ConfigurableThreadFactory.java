@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
+
 /**
  * Implementation of {@link ThreadFactory} which is configurable for the most common use cases.  
  * Specifically, it allows you several options for how to prefix the name of threads, if returned 
@@ -19,6 +20,116 @@ import org.threadly.util.ExceptionUtils;
 public class ConfigurableThreadFactory implements ThreadFactory {
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = false;
   private static final AtomicInteger NEXT_POOL_NUMBER = new AtomicInteger(1);
+  
+  /**
+   * Construct a new builder as an alternative to the large full parameter constructor when multiple 
+   * features are needing to be configured.
+   * <p>
+   * Defaults (equivalent to {@link #ConfigurableThreadFactory()}):
+   * <ul>
+   * <li>{@code threadNamePrefix}: "pool-"
+   * <li>{@code appendPoolIdToPrefix}: {@code true}
+   * <li>{@code useDaemonThreads}: {@code false}
+   * <li>{@code threadPriority}: {@link Thread#NORM_PRIORITY}
+   * <li>{@code threadlyExceptionHandler}: {@code null}
+   * </ul>
+   * 
+   * @since 5.39
+   * @return A new builder which can be configured then finally constructed using {@code build()}
+   */
+  public static ConfigurableThreadFactoryBuilder builder() {
+    return new ConfigurableThreadFactoryBuilder();
+  }
+  
+  /**
+   * Builder for configuring a new {@link ConfigurableThreadFactory}.  When ready invoke 
+   * {@link #build()} to construct the new factory.
+   * 
+   * @since 5.39
+   */
+  public static class ConfigurableThreadFactoryBuilder {
+    protected String threadNamePrefix = null;
+    protected boolean appendPoolIdToPrefix = true; 
+    protected boolean useDaemonThreads = DEFAULT_NEW_THREADS_DAEMON;
+    protected int threadPriority = Thread.NORM_PRIORITY;
+    protected ExceptionHandler threadlyExceptionHandler = null;
+    
+    /**
+     * Call to set the prefix for newly created threads names.  By default this will be 
+     * {@code "pool-"}.  See {@link #appendPoolIdToPrefix(boolean)} for determining the behavior 
+     * of a pool ID following this prefix. 
+     * 
+     * @param threadNamePrefix Prefix for thread name or {@code null} to use the default
+     * @return {@code this} instance
+     */
+    public ConfigurableThreadFactoryBuilder threadNamePrefix(String threadNamePrefix) {
+      this.threadNamePrefix = threadNamePrefix;
+      return this;
+    }
+    
+    /**
+     * Sets if a unique pool id should be appended to the prefix of thread names.  By default this 
+     * will append a pool id so that all threads are uniquely identifiable by name.
+     * 
+     * @param appendPoolIdToPrefix True to indicate an auto incrementing pool id should be included in the name
+     * @return {@code this} instance
+     */
+    public ConfigurableThreadFactoryBuilder appendPoolIdToPrefix(boolean appendPoolIdToPrefix) {
+      this.appendPoolIdToPrefix = appendPoolIdToPrefix;
+      return this;
+    }
+    
+    /**
+     * Sets of the created threads should be started with daemon status.  By default threads will 
+     * be started in daemon status.
+     * 
+     * @param useDaemonThreads True if started threads should be set as daemon
+     * @return {@code this} instance
+     */
+    public ConfigurableThreadFactoryBuilder useDaemonThreads(boolean useDaemonThreads) {
+      this.useDaemonThreads = useDaemonThreads;
+      return this;
+    }
+    
+    /**
+     * Sets the priority associated to the thread.  Depending on OS and JVM settings this priority 
+     * may be ignored (see java documentation about thread priorities).  This value should be 
+     * between {@link Thread#MIN_PRIORITY} and {@link Thread#MAX_PRIORITY}.
+     * 
+     * @param threadPriority The priority value to be set on new threads
+     * @return {@code this} instance
+     */
+    public ConfigurableThreadFactoryBuilder threadPriority(int threadPriority) {
+      this.threadPriority = threadPriority;
+      return this;
+    }
+    
+    /**
+     * Sets an {@link ExceptionHandler} to be set for these newly created threads.  Typically 
+     * {@link ExceptionUtils#setInheritableExceptionHandler(ExceptionHandler)} or 
+     * {@link ExceptionUtils#setDefaultExceptionHandler(ExceptionHandler)} are better options.  
+     * However this allows you to set an {@link ExceptionHandler} for threads specifically created 
+     * from this ThreadFactory.
+     * 
+     * @param exceptionHandler Handler to be delegated to for errors in produced threads
+     * @return {@code this} instance
+     */
+    public ConfigurableThreadFactoryBuilder exceptionHandler(ExceptionHandler exceptionHandler) {
+      this.threadlyExceptionHandler = exceptionHandler;
+      return this;
+    }
+    
+    /**
+     * Call to construct the {@link ConfigurableThreadFactory} when configuration is ready.
+     * 
+     * @return Newly constructed ThreadFactory
+     */
+    public ConfigurableThreadFactory build() {
+      return new ConfigurableThreadFactory(threadNamePrefix, appendPoolIdToPrefix, 
+                                           useDaemonThreads, threadPriority, null, 
+                                           threadlyExceptionHandler);
+    }
+  }
   
   protected final ThreadGroup group;
   protected final String threadNamePrefix;
@@ -182,7 +293,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * 
    * @since 2.4.0
    */
-  protected class ExceptionHandlerSettingRunnable implements Runnable {
+  protected class ExceptionHandlerSettingRunnable implements Runnable, RunnableContainer {
     private final Runnable toRun;
     
     protected ExceptionHandlerSettingRunnable(Runnable r) {
@@ -193,6 +304,11 @@ public class ConfigurableThreadFactory implements ThreadFactory {
     public void run() {
       ExceptionUtils.setThreadExceptionHandler(defaultThreadlyExceptionHandler);
       toRun.run();
+    }
+
+    @Override
+    public Runnable getContainedRunnable() {
+      return toRun;
     }
   }
 }

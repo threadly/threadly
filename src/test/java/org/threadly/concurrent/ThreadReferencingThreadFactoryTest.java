@@ -6,10 +6,16 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 
 import org.junit.Test;
+import org.threadly.concurrent.ConfigurableThreadFactory.ConfigurableThreadFactoryBuilder;
 import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ThreadReferencingThreadFactoryTest extends ConfigurableThreadFactoryTest {
+  @Override
+  protected ConfigurableThreadFactoryBuilder makeBuilder() {
+    return ThreadReferencingThreadFactory.builder();
+  }
+  
   @Override
   protected ThreadReferencingThreadFactory makeThreadFactory() {
     return new ThreadReferencingThreadFactory();

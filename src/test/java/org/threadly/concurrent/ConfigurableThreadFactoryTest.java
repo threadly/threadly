@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
+import org.threadly.concurrent.ConfigurableThreadFactory.ConfigurableThreadFactoryBuilder;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
@@ -17,6 +18,10 @@ import org.threadly.util.TestUncaughtExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ConfigurableThreadFactoryTest extends ThreadlyTester {
+  protected ConfigurableThreadFactoryBuilder makeBuilder() {
+    return ConfigurableThreadFactory.builder();
+  }
+  
   protected ConfigurableThreadFactory makeThreadFactory() {
     return new ConfigurableThreadFactory();
   }
@@ -64,6 +69,70 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
     assertTrue(defaultThread.getUncaughtExceptionHandler() == configurableThread.getUncaughtExceptionHandler());
     assertTrue(defaultThread.getThreadGroup() == configurableThread.getThreadGroup());
     assertFalse(configurableThread.isAlive());
+  }
+  
+  @Test
+  public void defaultBuilderTest() {
+    ConfigurableThreadFactory builderFactory = makeBuilder().build();
+    ConfigurableThreadFactory defaultFactory = makeThreadFactory();
+    
+    assertTrue(builderFactory.threadNamePrefix.startsWith("pool-"));  // if updated, change javadocs
+    assertEquals(defaultFactory.useDaemonThreads, builderFactory.useDaemonThreads);
+    assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
+    assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
+    assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+  }
+  
+  @Test
+  public void builderPrefixTest() {
+    String prefix = "prefix-" + StringUtils.makeRandomString(2);
+    ConfigurableThreadFactory builderFactory = 
+        makeBuilder().threadNamePrefix(prefix).appendPoolIdToPrefix(false).build();
+    ConfigurableThreadFactory defaultFactory = makeThreadFactory();
+    
+    assertTrue(builderFactory.threadNamePrefix.equals(prefix));
+    assertEquals(defaultFactory.useDaemonThreads, builderFactory.useDaemonThreads);
+    assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
+    assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
+    assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+  }
+  
+  @Test
+  public void builderDaemonTest() {
+    ConfigurableThreadFactory defaultFactory = makeThreadFactory();
+    boolean daemonThreads = ! defaultFactory.useDaemonThreads;
+    ConfigurableThreadFactory builderFactory = 
+        makeBuilder().useDaemonThreads(daemonThreads).build();
+    
+    assertEquals(daemonThreads, builderFactory.useDaemonThreads);
+    assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
+    assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
+    assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+  }
+  
+  @Test
+  public void builderPriorityTest() {
+    ConfigurableThreadFactory builderFactory = 
+        makeBuilder().threadPriority(Thread.MIN_PRIORITY).build();
+    ConfigurableThreadFactory defaultFactory = makeThreadFactory();
+    
+    assertEquals(defaultFactory.useDaemonThreads, builderFactory.useDaemonThreads);
+    assertEquals(Thread.MIN_PRIORITY, builderFactory.threadPriority);
+    assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
+    assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+  }
+  
+  @Test
+  public void builderExceptionHandlerTest() {
+    ExceptionHandler newHandler = (e) -> { throw new RuntimeException(e); };
+    ConfigurableThreadFactory builderFactory = 
+        makeBuilder().exceptionHandler(newHandler).build();
+    ConfigurableThreadFactory defaultFactory = makeThreadFactory();
+    
+    assertEquals(defaultFactory.useDaemonThreads, builderFactory.useDaemonThreads);
+    assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
+    assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
+    assertTrue(newHandler == builderFactory.defaultThreadlyExceptionHandler);
   }
   
   @Test

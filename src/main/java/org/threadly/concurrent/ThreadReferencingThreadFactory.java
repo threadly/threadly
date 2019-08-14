@@ -19,6 +19,69 @@ import org.threadly.util.ExceptionHandler;
  */
 public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
   private static final int REFERENCE_QUEUE_CHECK_INTERVAL_MILLIS = 10_000;
+
+  /**
+   * Construct a new builder as an alternative to the large full parameter constructor when multiple 
+   * features are needing to be configured.
+   * <p>
+   * See {@link ConfigurableThreadFactory#builder()} for a list of default values.
+   * 
+   * @since 5.39
+   * @return A new builder which can be configured then finally constructed using {@code build()}
+   */
+  public static ThreadReferencingThreadFactoryBuilder builder() {
+    return new ThreadReferencingThreadFactoryBuilder();
+  }
+  
+  /**
+   * Builder for configuring a new {@link ThreadReferencingThreadFactory}.  When ready invoke 
+   * {@link #build()} to construct the new factory.
+   * 
+   * @since 5.39
+   */
+  public static class ThreadReferencingThreadFactoryBuilder extends ConfigurableThreadFactoryBuilder {
+    @Override
+    public ThreadReferencingThreadFactoryBuilder threadNamePrefix(String threadNamePrefix) {
+      this.threadNamePrefix = threadNamePrefix;
+      return this;
+    }
+    
+    @Override
+    public ThreadReferencingThreadFactoryBuilder appendPoolIdToPrefix(boolean appendPoolIdToPrefix) {
+      this.appendPoolIdToPrefix = appendPoolIdToPrefix;
+      return this;
+    }
+    
+    @Override
+    public ThreadReferencingThreadFactoryBuilder useDaemonThreads(boolean useDaemonThreads) {
+      this.useDaemonThreads = useDaemonThreads;
+      return this;
+    }
+    
+    @Override
+    public ThreadReferencingThreadFactoryBuilder threadPriority(int threadPriority) {
+      this.threadPriority = threadPriority;
+      return this;
+    }
+    
+    @Override
+    public ThreadReferencingThreadFactoryBuilder exceptionHandler(ExceptionHandler exceptionHandler) {
+      this.threadlyExceptionHandler = exceptionHandler;
+      return this;
+    }
+    
+    /**
+     * Call to construct the {@link ThreadReferencingThreadFactory} when configuration is ready.
+     * 
+     * @return Newly constructed ThreadFactory
+     */
+    @Override
+    public ThreadReferencingThreadFactory build() {
+      return new ThreadReferencingThreadFactory(threadNamePrefix, appendPoolIdToPrefix, 
+                                                useDaemonThreads, threadPriority, null, 
+                                                threadlyExceptionHandler);
+    }
+  }
   
   private final Collection<WeakReference<Thread>> threads = new ConcurrentLinkedQueue<>();
   private volatile long lastCleanupTime = Clock.lastKnownForwardProgressingMillis();
