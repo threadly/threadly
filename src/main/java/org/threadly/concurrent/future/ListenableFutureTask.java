@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
+
 import org.threadly.concurrent.CallableContainer;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.event.RunnableListenerHelper;
@@ -21,7 +22,6 @@ import org.threadly.util.UnsafeAccess;
 public class ListenableFutureTask<T> extends FutureTask<T> 
                                      implements ListenableRunnableFuture<T>, 
                                                 CallableContainer<T> {
-
   private static final Field RUNNING_THREAD_FIELD;
   
   static {

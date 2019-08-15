@@ -41,9 +41,12 @@
     <module name="LocalVariableName"/>
     <module name="TypeName"/>
     <module name="AvoidStarImport"/>
-    <module name="ImportOrder">
-      <property name="option" value="above"/>
-      <property name="separated" value="true"/>
+    <module name="CustomImportOrder">
+      <property name="customImportOrderRules"
+                value="STATIC###STANDARD_JAVA_PACKAGE###SPECIAL_IMPORTS"/>
+      <property name="specialImportsRegExp" value="^org\.threadly\."/>
+      <property name="sortImportsInGroupAlphabetically" value="true"/>
+      <property name="separateLineBetweenGroups" value="true"/>
     </module>
     <module name="RedundantImport"/>
     <module name="UnusedImports"/>
