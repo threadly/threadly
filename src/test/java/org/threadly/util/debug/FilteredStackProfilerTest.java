@@ -87,7 +87,7 @@ public class FilteredStackProfilerTest extends ProfilerTest {
   public void getProfileThreadsIteratorTest() {
     // This should only see this one thread executing this one particular test
     FilteredStackProfiler profiler = new FilteredStackProfiler(
-      "^org\\.threadly\\.util\\.debug\\.FilteredStackProfilerTest\\.getProfileThreadsIteratorTest");
+      "^(app//)?org\\.threadly\\.util\\.debug\\.FilteredStackProfilerTest\\.getProfileThreadsIteratorTest");
     Iterator<? extends ThreadSample> it = profiler.pStore.getProfileThreadsIterator();
 
     assertNotNull(it);
