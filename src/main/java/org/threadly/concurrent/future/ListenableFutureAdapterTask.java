@@ -4,7 +4,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 /**
  * Adapter from java's {@link Future} to threadly's {@link ListenableFuture}.  This transfers the 
@@ -41,7 +41,7 @@ public class ListenableFutureAdapterTask<T> extends ListenableFutureTask<T> {
           if (cause instanceof Exception) {
             throw (Exception)cause;
           } else {
-            throw new SuppressedStackRuntimeException(cause);
+            throw new StackSuppressedRuntimeException(cause);
           }
         }
       }

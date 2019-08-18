@@ -19,7 +19,7 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class TestableSchedulerTest extends ThreadlyTester {
@@ -69,7 +69,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void advanceWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -82,7 +82,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void advanceHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
@@ -99,7 +99,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void tickWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -112,7 +112,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void tickHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     

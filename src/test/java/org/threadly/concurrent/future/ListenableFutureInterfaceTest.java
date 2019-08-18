@@ -22,7 +22,7 @@ import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.StringUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
@@ -238,7 +238,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   public void mapAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
     TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setDefaultExceptionHandler(teh);
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.map((o) -> { throw failure; });
 
@@ -306,7 +306,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setDefaultExceptionHandler(teh);
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.map((o) -> { throw failure; }, scheduler);
   
@@ -417,7 +417,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   public void throwMapAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
     TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setDefaultExceptionHandler(teh);
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.throwMap((o) -> { throw failure; });
 
@@ -485,7 +485,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setDefaultExceptionHandler(teh);
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.throwMap((o) -> { throw failure; }, scheduler);
   
@@ -543,7 +543,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   
   @Test
   public void flatMapAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.flatMap((o) -> { throw failure; });
 
@@ -553,7 +553,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   
   @Test
   public void flatMapAlreadyDoneMapperReturnFailedFutureTest() throws InterruptedException {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.flatMap((o) -> FutureUtils.immediateFailureFuture(failure));
 
@@ -684,7 +684,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   @Test
   public void flatMapWithExecutorAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.flatMap((o) -> { throw failure; }, scheduler);
   
@@ -697,7 +697,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   @Test
   public void flatMapWithExecutorAlreadyDoneMapperReturnFailedFutureTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.flatMap((o) -> FutureUtils.immediateFailureFuture(failure), scheduler);
   

@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 
-@SuppressWarnings("javadoc")
+@SuppressWarnings({"javadoc", "deprecation"})
 public class SuppressedStackRuntimeExceptionTest extends ThreadlyTester {
   @Test
   public void suppressTest() {

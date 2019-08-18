@@ -7,19 +7,14 @@ package org.threadly.util;
  * communication of state).  In those select conditions using or extending this type of exception 
  * can provide a significant performance gain.
  * 
+ * @deprecated Renamed to {@link StackSuppressedRuntimeException}
+ * 
  * @since 4.8.0
  */
-public class SuppressedStackRuntimeException extends RuntimeException {
+@Deprecated
+public class SuppressedStackRuntimeException extends StackSuppressedRuntimeException {
   private static final long serialVersionUID = -3253477627669379892L;
   
-  protected static final StackTraceElement[] STATIC_STACK;
-
-  static {
-    STATIC_STACK = new StackTraceElement[] {
-        new StackTraceElement(SuppressedStackRuntimeException.class.getName(), "suppressedStack",
-                              SuppressedStackRuntimeException.class.getSimpleName() + ".java", 0)};
-  }
-
   /**
    * Construct a new exception with no message or cause.  The cause is not initialized, and may 
    * subsequently be initialized by invoking {@link #initCause}.
@@ -55,29 +50,5 @@ public class SuppressedStackRuntimeException extends RuntimeException {
    */
   public SuppressedStackRuntimeException(String msg, Throwable cause) {
     super(msg, cause);
-  }
-
-  /**
-   * Checked at construction if a true stack should be provided or not.  This can overridden to
-   * provide {@code false} result so that the real stack trace can be reported.  Otherwise this will
-   * default to doing what this class is designed to do (avoid stack generation).  
-   * <p>
-   * If overriding be aware that this is checked very early on, before any dynamic class values can 
-   * be set, and thus should be referencing a constant (static) value.
-   *
-   * @return {@code true} to indicate that the suppressed stack should be used
-   */
-  protected boolean suppressStackGeneration() {
-    return true;
-  }
-
-  @Override
-  public Throwable fillInStackTrace() {
-    if (suppressStackGeneration()) {
-      this.setStackTrace(STATIC_STACK);
-      return this;
-    } else {
-      return super.fillInStackTrace();
-    }
   }
 }

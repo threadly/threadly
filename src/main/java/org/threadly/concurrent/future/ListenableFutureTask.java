@@ -9,7 +9,7 @@ import org.threadly.concurrent.CallableContainer;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.event.RunnableListenerHelper;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 import org.threadly.util.UnsafeAccess;
 
 /**
@@ -173,7 +173,7 @@ public class ListenableFutureTask<T> extends FutureTask<T>
       }
     } catch (RuntimeException | IllegalAccessException  e) {
       ExceptionUtils.handleException(
-          new SuppressedStackRuntimeException("Stack access not supported, returning null" + 
+          new StackSuppressedRuntimeException("Stack access not supported, returning null" + 
                                                 "...Please see first exception for more details", e));
       return null;
     }

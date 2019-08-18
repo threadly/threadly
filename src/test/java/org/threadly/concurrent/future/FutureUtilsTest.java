@@ -23,7 +23,7 @@ import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StringUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest extends ThreadlyTester {
@@ -1351,7 +1351,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileTaskResultNullTaskFailureInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     @SuppressWarnings("deprecation")
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, false, () -> { throw failure; });
@@ -1368,7 +1368,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileTaskResultNullTaskFailureOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     @SuppressWarnings("deprecation")
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, true, () -> { throw failure; });
@@ -1474,7 +1474,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileTaskFailureInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, false, () -> { throw failure; }, (o) -> false);
     
@@ -1490,7 +1490,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileTaskFailureOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, true, () -> { throw failure; }, (o) -> false);
 
@@ -1542,7 +1542,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhilePredicateThrowsInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.scheduleWhile(scheduler, 2, false, () -> null, (o) -> { throw failure; });
     
@@ -1558,7 +1558,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhilePredicateThrowsOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.scheduleWhile(scheduler, 2, true, () -> null, (o) -> { throw failure; });
 
@@ -1588,7 +1588,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileAlreadyDoneWithFailureTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.scheduleWhile(scheduler, 2, FutureUtils.immediateFailureFuture(failure), 
                                   () -> null, (o) -> false);
@@ -1666,7 +1666,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhileTaskFailureInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, false, () -> { throw failure; }, () -> false);
     
@@ -1682,7 +1682,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhileTaskFailureOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, true, () -> { throw failure; }, () -> false);
 
@@ -1720,7 +1720,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhilePredicateThrowsInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 2, false, DoNothingRunnable.instance(), () -> { throw failure; });
     
@@ -1736,7 +1736,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhilePredicateThrowsOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 2, true, DoNothingRunnable.instance(), () -> { throw failure; });
 
@@ -1803,7 +1803,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void executeWhileTaskFailureTest() throws InterruptedException {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.executeWhile(FutureUtils.immediateResultFuture(null), 
                                  () -> { throw failure; }, 
@@ -1844,7 +1844,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void executeWhilePredicateThrowsTest() throws InterruptedException {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.executeWhile(() -> FutureUtils.immediateResultFuture(null), (o) -> { throw failure; });
     

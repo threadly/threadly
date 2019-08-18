@@ -1,7 +1,7 @@
 package org.threadly.concurrent;
 
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class TestRuntimeFailureRunnable extends TestRunnable {
@@ -30,7 +30,7 @@ public class TestRuntimeFailureRunnable extends TestRunnable {
     if (toThrowException != null) {
       throw toThrowException;
     } else {
-      throw new SuppressedStackRuntimeException();
+      throw new StackSuppressedRuntimeException();
     }
   }
 }

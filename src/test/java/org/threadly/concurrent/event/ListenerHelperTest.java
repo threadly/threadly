@@ -13,7 +13,7 @@ import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
 import org.threadly.util.StringUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
@@ -321,7 +321,7 @@ public class ListenerHelperTest extends ThreadlyTester {
     String testStr = StringUtils.makeRandomString(10);
     TestExceptionHandler teh = new TestExceptionHandler();
     ExceptionUtils.setThreadExceptionHandler(teh);
-    final RuntimeException e = new SuppressedStackRuntimeException();
+    final RuntimeException e = new StackSuppressedRuntimeException();
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     ch.addListener(new TestInterface() {
       @Override

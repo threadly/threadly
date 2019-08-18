@@ -8,7 +8,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 /**
  * Wrapper for a {@link ListenableFuture} to provide enhanced features for debugging the state at 
@@ -104,7 +104,7 @@ public class CancelDebuggingListenableFuture<T> implements ListenableFuture<T> {
    * Throwable that is not thrown, but instead added as a cause to indicate the processing stack 
    * trace at the time of cancellation.
    */
-  public static class FutureProcessingStack extends SuppressedStackRuntimeException {
+  public static class FutureProcessingStack extends StackSuppressedRuntimeException {
     private static final long serialVersionUID = 5326874345871027481L;
 
     protected FutureProcessingStack(StackTraceElement[] cancelStack) {

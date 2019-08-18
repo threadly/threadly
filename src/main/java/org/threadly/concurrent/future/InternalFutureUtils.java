@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 /**
  * Package protected utility classes and functions for operating on Futures.  Implementation 
@@ -368,7 +368,7 @@ class InternalFutureUtils {
      * The instance of the only exception which this callback will not propagate.  It must be the 
      * exact exception, and can not be hidden inside a cause chain.
      */
-    protected static final RuntimeException IGNORED_FAILURE = new SuppressedStackRuntimeException();
+    protected static final RuntimeException IGNORED_FAILURE = new StackSuppressedRuntimeException();
     
     private final SettableListenableFuture<?> settableFuture;
     
