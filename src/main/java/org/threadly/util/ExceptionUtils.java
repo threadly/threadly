@@ -5,6 +5,9 @@ import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 
+import org.threadly.concurrent.CentralThreadlyPool;
+import org.threadly.concurrent.SchedulerService;
+
 /**
  * Utilities for doing basic operations with exceptions.
  * 
@@ -17,10 +20,49 @@ public class ExceptionUtils {
   protected static final ThreadLocal<ExceptionHandler> THREAD_LOCAL_EXCEPTION_HANDLER;
   protected static final InheritableThreadLocal<ExceptionHandler> INHERITED_EXCEPTION_HANDLER;
   protected static volatile ExceptionHandler defaultExceptionHandler = null;
+  private static final SchedulerService EXCEPTION_SCHEDULER = 
+      CentralThreadlyPool.isolatedTaskPool(); // low overhead due to rare task submission
+  private static final Runnable STACK_OVERFLOW_TASK;
+  private static volatile StackOverflowError handledOverflow = null;
+  private static volatile Throwable handledOverflowCause = null;
   
   static {
     THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<>();
     INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<>();
+    STACK_OVERFLOW_TASK = () -> {
+      if (handledOverflow != null) {
+        StackSuppressedRuntimeException stackOverflow = 
+            new StackSuppressedRuntimeException("Swallowed StackOverflowError (others may have been missed)", 
+                                                handledOverflowCause);
+        stackOverflow.setStackTrace(handledOverflow.getStackTrace());
+        
+        handledOverflowCause = null;
+        handledOverflow = null;
+        
+        handleException(stackOverflow);
+      }
+    };
+    changeStackOverflowCheckFrequency(10_000);
+  }
+  
+  /**
+   * Update how often the check for StackOverflowErrors being produced in 
+   * {@link #handleException(Throwable)}.  It is important that {@link #handleException(Throwable)} 
+   * never throws an exception, however due to the nature of {@link StackOverflowError} there may 
+   * be issues in properly reporting the issue.  Instead they will be stored internally with a 
+   * best effort reporting to indicate that they have been occurring (but only one instance per 
+   * frequency will be reported).  By default they are checked every 10 seconds to see if any were 
+   * thrown.  If there was any {@link StackOverflowError} they will be provided back to 
+   * {@link #handleException(Throwable)} on an async thread (as to provide a fresh / shortened 
+   * stack).
+   * 
+   * @param frequencyMillis Milliseconds between checks for overflow, or negative to disable checks
+   */
+  public static synchronized void changeStackOverflowCheckFrequency(int frequencyMillis) {
+    EXCEPTION_SCHEDULER.remove(STACK_OVERFLOW_TASK);
+    if (frequencyMillis > 0) {
+      EXCEPTION_SCHEDULER.scheduleAtFixedRate(STACK_OVERFLOW_TASK, frequencyMillis, frequencyMillis);
+    }
   }
   
   /**
@@ -129,12 +171,18 @@ public class ExceptionUtils {
         UncaughtExceptionHandler ueHandler = currentThread.getUncaughtExceptionHandler();
         ueHandler.uncaughtException(currentThread, t);
       }
+    } catch (StackOverflowError soe) {
+      handledOverflowCause = t; // must be set first
+      handledOverflow = soe;
     } catch (Throwable handlerThrown) {
       try {
         System.err.println("Error handling exception: ");
         t.printStackTrace();
         System.err.println("Error thrown when handling exception: ");
         handlerThrown.printStackTrace();
+      } catch (StackOverflowError soe) {
+        handledOverflowCause = t; // must be set first
+        handledOverflow = soe;
       } catch (Throwable ignored) {
         // sigh...I give up
       }
@@ -511,7 +559,7 @@ public class ExceptionUtils {
    * 
    * @since 4.8.0
    */
-  public static class TransformedSuppressedStackException extends SuppressedStackRuntimeException {
+  public static class TransformedSuppressedStackException extends StackSuppressedRuntimeException {
     private static final long serialVersionUID = 6501962264714125183L;
 
     /**

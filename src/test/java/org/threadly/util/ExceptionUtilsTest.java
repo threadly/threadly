@@ -7,12 +7,14 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.ExceptionUtils.TransformedException;
 import org.threadly.util.ExceptionUtils.TransformedSuppressedStackException;
@@ -315,6 +317,31 @@ public class ExceptionUtilsTest extends ThreadlyTester {
     
     // no exception should be thrown or called
     assertEquals(0, teh.getCallCount());
+  }
+  
+  @Test
+  public void handleExceptionStackOverflowTest() throws InterruptedException, TimeoutException {
+    Exception error = new StackSuppressedRuntimeException();
+    AsyncVerifier av = new AsyncVerifier();
+    ExceptionUtils.setDefaultExceptionHandler((e) -> {
+      if (e == error) {
+        stackOverflow();
+      } else {
+        av.assertTrue(e.getCause() == error);
+        av.signalComplete();
+      }
+    });
+    
+    ExceptionUtils.changeStackOverflowCheckFrequency(1_000);
+    
+    ExceptionUtils.handleException(error);
+    // no exception thrown
+    
+    av.waitForTest();
+  }
+  
+  private void stackOverflow() {
+    stackOverflow();
   }
   
   @Test (expected = IllegalArgumentException.class)
