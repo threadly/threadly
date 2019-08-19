@@ -540,8 +540,10 @@ public class CentralThreadlyPool {
       result = MASTER_SCHEDULER;
     } else if (defaultPriority ==  TaskPriority.Low) {
       result = LOW_PRIORITY_MASTER_SCHEDULER;
-    } else {
+    } else if (defaultPriority == TaskPriority.Starvable) {
       result = STARVABLE_PRIORITY_MASTER_SCHEDULER;
+    } else {
+      throw new IllegalArgumentException("Unknown TaskPriority: " + defaultPriority);
     }
     if (StringUtils.isNullOrEmpty(threadName)) {
       return result;

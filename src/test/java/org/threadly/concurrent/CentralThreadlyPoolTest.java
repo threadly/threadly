@@ -90,6 +90,11 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
     av.waitForTest();
   }
   
+  @Test (expected = IllegalArgumentException.class)
+  public void rangedThreadPoolNullPriorityFail() {
+    CentralThreadlyPool.rangedThreadPool((TaskPriority)null, 0, 2, null);
+  }
+  
   @Test
   public void lowPrioritySingleThreadExecuteTest() throws InterruptedException, TimeoutException {
     AsyncVerifier av = new AsyncVerifier();
@@ -180,6 +185,11 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
       av.signalComplete();
     });
     av.waitForTest();
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void threadPoolNullPriorityFail() {
+    CentralThreadlyPool.threadPool((TaskPriority)null, 2, null);
   }
   
   @Test
