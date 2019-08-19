@@ -23,21 +23,24 @@ public class ExceptionUtils {
   private static final SchedulerService EXCEPTION_SCHEDULER = 
       CentralThreadlyPool.isolatedTaskPool(); // low overhead due to rare task submission
   private static final Runnable STACK_OVERFLOW_TASK;
-  private static volatile StackOverflowError handledOverflow = null;
-  private static volatile Throwable handledOverflowCause = null;
+  private static volatile Error handledError = null;
+  private static volatile Throwable handledErrorCause = null;
   
   static {
     THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<>();
     INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<>();
     STACK_OVERFLOW_TASK = () -> {
-      if (handledOverflow != null) {
-        StackSuppressedRuntimeException stackOverflow = 
-            new StackSuppressedRuntimeException("Swallowed StackOverflowError (others may have been missed)", 
-                                                handledOverflowCause);
-        stackOverflow.setStackTrace(handledOverflow.getStackTrace());
+      if (handledError != null) {
+        Error toReportError = handledError;
         
-        handledOverflowCause = null;
-        handledOverflow = null;
+        StackSuppressedRuntimeException stackOverflow = 
+            new StackSuppressedRuntimeException("Swallowed " + toReportError.getClass().getSimpleName() + 
+                                                  " (others may have been missed)", 
+                                                handledErrorCause);
+        stackOverflow.setStackTrace(toReportError.getStackTrace());
+        
+        handledErrorCause = null;
+        handledError = null;
         
         handleException(stackOverflow);
       }
@@ -172,17 +175,17 @@ public class ExceptionUtils {
         ueHandler.uncaughtException(currentThread, t);
       }
     } catch (StackOverflowError soe) {
-      handledOverflowCause = t; // must be set first
-      handledOverflow = soe;
+      handledErrorCause = t; // must be set first
+      handledError = soe;
     } catch (Throwable handlerThrown) {
       try {
         System.err.println("Error handling exception: ");
         t.printStackTrace();
         System.err.println("Error thrown when handling exception: ");
         handlerThrown.printStackTrace();
-      } catch (StackOverflowError soe) {
-        handledOverflowCause = t; // must be set first
-        handledOverflow = soe;
+      } catch (Error soe) {
+        handledErrorCause = t; // must be set first
+        handledError = soe;
       } catch (Throwable ignored) {
         // sigh...I give up
       }
