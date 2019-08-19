@@ -11,7 +11,7 @@ import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestDelayed;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings({"javadoc", "deprecation"})
 public class ScheduledFutureDelegateTest extends ThreadlyTester {
@@ -109,7 +109,7 @@ public class ScheduledFutureDelegateTest extends ThreadlyTester {
     TestFutureImp future = new TestFutureImp(false) {
       @Override
       public Object get() throws ExecutionException {
-        throw new ExecutionException(new SuppressedStackRuntimeException());
+        throw new ExecutionException(new StackSuppressedRuntimeException());
       }
     };
     ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
