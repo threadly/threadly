@@ -55,21 +55,21 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Override
   public void mapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 68, 37);
+    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 57, 37);
   }
   
   @Test
   @Override
   public void mapFailureStackSize() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(() -> { throw new RuntimeException(); }, null);
-    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 68);
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 57);
   }
   
   @Test
   @Override
   public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 88, 15);
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 77, 15);
   }
   
   private class Factory implements ExecuteOnGetFutureFactory {

@@ -77,6 +77,8 @@ public class RunnableListenerHelper {
    * subsequent calls. 
    */
   public void callListeners() {
+    // CODE BELOW MUST MATCH AsyncCallRunnableListenerHelper
+    // DUPLICATED TO MINIMIZE STACK SIZE
     synchronized (listenersLock) {
       if (callOnce) {
         if (done) {
@@ -85,46 +87,34 @@ public class RunnableListenerHelper {
           done = true;
         }
       }
+
+      if (executorListeners != null) {
+        List<Pair<Runnable, Executor>> executorListeners = this.executorListeners;
+        // only list types will be able to efficiently retrieve by index, avoid iterator creation
+        for (int i = 0; i < executorListeners.size(); i++) {
+          try {
+            Pair<Runnable, Executor> listener = executorListeners.get(i);
+            listener.getRight().execute(listener.getLeft());
+          } catch (Throwable t) {
+            ExceptionUtils.handleException(t);
+          }
+        }
+      }
+      if (inThreadListeners != null) {
+        List<Runnable> inThreadListeners = this.inThreadListeners;
+        for (int i = 0; i < inThreadListeners.size(); i++) {
+          try {
+            inThreadListeners.get(i).run();
+          } catch (Throwable t) {
+            ExceptionUtils.handleException(t);
+          }
+        }
+      }
       
-      doCallListeners();
-    }
-  }
-  
-  /**
-   * {@code listenersLock} MUST BE SYNCHRONIZED BEFORE INVOKING THIS.
-   * <p>
-   * This calls the listeners without any safety checks as to weather it is safe to do so or not.  
-   * It is expected that those checks occurred prior to calling this function (either in a 
-   * different thread, or at some point earlier to avoid breaking logic around construction with 
-   * call listeners once design).
-   */
-  protected void doCallListeners() {
-    if (executorListeners != null) {
-      List<Pair<Runnable, Executor>> executorListeners = this.executorListeners;
-      // only list types will be able to efficiently retrieve by index, avoid iterator creation
-      for (int i = 0; i < executorListeners.size(); i++) {
-        try {
-          Pair<Runnable, Executor> listener = executorListeners.get(i);
-          listener.getRight().execute(listener.getLeft());
-        } catch (Throwable t) {
-          ExceptionUtils.handleException(t);
-        }
+      if (callOnce) {
+        executorListeners = null;
+        inThreadListeners = null;
       }
-    }
-    if (inThreadListeners != null) {
-      List<Runnable> inThreadListeners = this.inThreadListeners;
-      for (int i = 0; i < inThreadListeners.size(); i++) {
-        try {
-          inThreadListeners.get(i).run();
-        } catch (Throwable t) {
-          ExceptionUtils.handleException(t);
-        }
-      }
-    }
-    
-    if (callOnce) {
-      executorListeners = null;
-      inThreadListeners = null;
     }
   }
 

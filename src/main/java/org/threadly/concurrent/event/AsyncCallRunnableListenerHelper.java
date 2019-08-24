@@ -1,8 +1,11 @@
 package org.threadly.concurrent.event;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.ExceptionUtils;
+import org.threadly.util.Pair;
 
 /**
  * This class changes the behavior of how listeners are called from the parent class 
@@ -54,12 +57,23 @@ public class AsyncCallRunnableListenerHelper extends RunnableListenerHelper {
   }
   
   @Override
-  protected void doCallListeners() {
+  public void callListeners() {
+    synchronized (listenersLock) {
+      if (callOnce) {
+        if (done) {
+          throw new IllegalStateException("Already called listeners");
+        } else {
+          done = true;
+        }
+      }
+    }
+    
     executor.execute(callListenersTask);
   }
   
   /**
-   * Task to call listeners in super class.
+   * Task to call listeners in super class.  Implementation should match exactly 
+   * RunnableListerHelper.  Duplicated to minimize the stack for in-thread implementation. 
    * 
    * @since 4.9.0
    */
@@ -67,7 +81,33 @@ public class AsyncCallRunnableListenerHelper extends RunnableListenerHelper {
     @Override
     public void run() {
       synchronized (listenersLock) {
-        AsyncCallRunnableListenerHelper.super.doCallListeners();
+        if (executorListeners != null) {
+          List<Pair<Runnable, Executor>> executorListeners = AsyncCallRunnableListenerHelper.this.executorListeners;
+          // only list types will be able to efficiently retrieve by index, avoid iterator creation
+          for (int i = 0; i < executorListeners.size(); i++) {
+            try {
+              Pair<Runnable, Executor> listener = executorListeners.get(i);
+              listener.getRight().execute(listener.getLeft());
+            } catch (Throwable t) {
+              ExceptionUtils.handleException(t);
+            }
+          }
+        }
+        if (inThreadListeners != null) {
+          List<Runnable> inThreadListeners = AsyncCallRunnableListenerHelper.this.inThreadListeners;
+          for (int i = 0; i < inThreadListeners.size(); i++) {
+            try {
+              inThreadListeners.get(i).run();
+            } catch (Throwable t) {
+              ExceptionUtils.handleException(t);
+            }
+          }
+        }
+        
+        if (callOnce) {
+          executorListeners = null;
+          inThreadListeners = null;
+        }
       }
     }
   }
