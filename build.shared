@@ -50,7 +50,7 @@ task sourcesJar(type: Jar) {
 }
 
 artifacts {
-  archives jar
+  //archives jar // already specified by default
   archives javadocJar
   archives sourcesJar
 }
