@@ -177,23 +177,7 @@ public class RunnableListenerHelper {
       synchronized (listenersLock) {
         // done should only be set to true if we are only calling listeners once
         if (! (runListener = done)) {
-          if (queueExecutor != null) {
-            if (addingFromCallingThread && executorListeners != null) {
-              // copy to prevent a ConcurrentModificationException
-              executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, queueExecutor));
-            } else {
-              if (executorListeners == null) {
-                executorListeners = Collections.singletonList(new Pair<>(listener, queueExecutor));
-              } else if (executorListeners.size() == 1) {
-                Pair<Runnable, Executor> firstP = executorListeners.get(0);
-                executorListeners = new ArrayList<>(4);
-                executorListeners.add(firstP);
-                executorListeners.add(new Pair<>(listener, queueExecutor));
-              } else {
-                executorListeners.add(new Pair<>(listener, queueExecutor));
-              }
-            }
-          } else {
+          if (queueExecutor == null) {
             if (addingFromCallingThread && inThreadListeners != null) {
               // copy to prevent a ConcurrentModificationException
               inThreadListeners = copyAndAdd(inThreadListeners, listener);
@@ -207,6 +191,22 @@ public class RunnableListenerHelper {
                 inThreadListeners.add(listener);
               } else {
                 inThreadListeners.add(listener);
+              }
+            }
+          } else {
+            if (addingFromCallingThread && executorListeners != null) {
+              // copy to prevent a ConcurrentModificationException
+              executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, queueExecutor));
+            } else {
+              if (executorListeners == null) {
+                executorListeners = Collections.singletonList(new Pair<>(listener, queueExecutor));
+              } else if (executorListeners.size() == 1) {
+                Pair<Runnable, Executor> firstP = executorListeners.get(0);
+                executorListeners = new ArrayList<>(4);
+                executorListeners.add(firstP);
+                executorListeners.add(new Pair<>(listener, queueExecutor));
+              } else {
+                executorListeners.add(new Pair<>(listener, queueExecutor));
               }
             }
           }
