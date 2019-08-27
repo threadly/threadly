@@ -46,7 +46,7 @@ public class WatchdogCacheTest extends ThreadlyTester {
   @Test
   public void alreadyDoneFutureWatchTest() {
     ListenableFuture<Object> future = FutureUtils.immediateResultFuture(null);
-    watchdog.watch(future, TIMEOUT);
+    watchdog.watch(TIMEOUT, future);
     
     assertTrue(watchdog.cachedDogs.isEmpty());
   }
@@ -54,7 +54,7 @@ public class WatchdogCacheTest extends ThreadlyTester {
   @Test
   public void expiredFutureTest() {
     SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
-    watchdog.watch(slf, TIMEOUT);
+    watchdog.watch(TIMEOUT, slf);
     
     TestUtils.blockTillClockAdvances();
     
@@ -66,7 +66,7 @@ public class WatchdogCacheTest extends ThreadlyTester {
   @Test
   public void cacheCleanTest() {
     SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
-    watchdog.watch(slf, TIMEOUT);
+    watchdog.watch(TIMEOUT, slf);
     assertFalse(watchdog.cachedDogs.isEmpty());
     
     TestUtils.blockTillClockAdvances();
@@ -80,13 +80,13 @@ public class WatchdogCacheTest extends ThreadlyTester {
   public void resolutionTest() {
     watchdog = new WatchdogCache(scheduler, true);
     SettableListenableFuture<Object> slf = new SettableListenableFuture<>();
-    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS);
-    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS / 2);
-    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS / 4);
+    watchdog.watch(WatchdogCache.DEFAULT_RESOLUTION_MILLIS, slf);
+    watchdog.watch(WatchdogCache.DEFAULT_RESOLUTION_MILLIS / 2, slf);
+    watchdog.watch(WatchdogCache.DEFAULT_RESOLUTION_MILLIS / 4, slf);
     
     assertEquals(1, watchdog.cachedDogs.size());
     
-    watchdog.watch(slf, WatchdogCache.DEFAULT_RESOLUTION_MILLIS + 1);
+    watchdog.watch(WatchdogCache.DEFAULT_RESOLUTION_MILLIS + 1, slf);
     
     assertEquals(2, watchdog.cachedDogs.size());
   }

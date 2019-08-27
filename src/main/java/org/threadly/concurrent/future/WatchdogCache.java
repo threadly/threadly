@@ -134,10 +134,27 @@ public class WatchdogCache {
    * {@code false} will be provided to interrupt the running thread is dependent on how this 
    * {@link WatchdogCache} was constructed.
    * 
+   * @deprecated Please re-order arguments to use {@link #watch(long, ListenableFuture)}
+   * 
    * @param future Future to inspect to ensure completion
    * @param timeoutInMillis Time in milliseconds that future should be completed within
    */
+  @Deprecated
   public void watch(ListenableFuture<?> future, long timeoutInMillis) {
+    watch(timeoutInMillis, future);
+  }
+  
+  /**
+   * Watch a given {@link ListenableFuture} to ensure that it completes within the provided 
+   * time limit.  If the future is not marked as done by the time limit then it will be 
+   * completed by invoking {@link ListenableFuture#cancel(boolean)}.  Weather a {@code true} or 
+   * {@code false} will be provided to interrupt the running thread is dependent on how this 
+   * {@link WatchdogCache} was constructed.
+   * 
+   * @param timeoutInMillis Time in milliseconds that future should be completed within
+   * @param future Future to inspect to ensure completion
+   */
+  public void watch(long timeoutInMillis, ListenableFuture<?> future) {
     long adjustedTimeout = timeoutInMillis / resolutionMillis;
     adjustedTimeout *= resolutionMillis; // int division to zero out
     if (adjustedTimeout != timeoutInMillis) {
