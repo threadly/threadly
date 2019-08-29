@@ -20,6 +20,7 @@ public class ExceptionUtils {
   protected static final ThreadLocal<ExceptionHandler> THREAD_LOCAL_EXCEPTION_HANDLER;
   protected static final InheritableThreadLocal<ExceptionHandler> INHERITED_EXCEPTION_HANDLER;
   protected static volatile ExceptionHandler defaultExceptionHandler = null;
+  private static final int DEFAULT_OVERFLOW_CHECK_MILLIS = 10_000;
   private static final SchedulerService EXCEPTION_SCHEDULER = 
       CentralThreadlyPool.isolatedTaskPool(); // low overhead due to rare task submission
   private static final Runnable STACK_OVERFLOW_TASK;
@@ -45,7 +46,7 @@ public class ExceptionUtils {
         handleException(stackOverflow);
       }
     };
-    changeStackOverflowCheckFrequency(10_000);
+    changeStackOverflowCheckFrequency(DEFAULT_OVERFLOW_CHECK_MILLIS);
   }
   
   /**
