@@ -1,4 +1,4 @@
-package org.threadly.concurrent.future;
+package org.threadly.concurrent.future.watchdog;
 
 import static org.junit.Assert.*;
 
@@ -7,25 +7,39 @@ import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.NoThreadScheduler;
+import org.threadly.concurrent.future.FutureUtils;
+import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.SettableListenableFuture;
 import org.threadly.test.concurrent.TestUtils;
+import org.threadly.util.Clock;
 
-@SuppressWarnings({"javadoc", "deprecation"})
-public class WatchdogTest extends ThreadlyTester {
-  private static final int TIMEOUT = 1;
+@SuppressWarnings("javadoc")
+public class ConstantTimeWatchdogTest extends ThreadlyTester {
+  private static final int TIMEOUT = 2;
   
   private NoThreadScheduler scheduler;
-  private Watchdog watchdog;
+  private ConstantTimeWatchdog watchdog;
   
   @Before
   public void setup() {
     scheduler = new NoThreadScheduler();
-    watchdog = new Watchdog(scheduler, TIMEOUT, true);
+    watchdog = new ConstantTimeWatchdog(scheduler, TIMEOUT, true);
   }
   
   @After
   public void cleanup() {
     scheduler = null;
     watchdog = null;
+  }
+  
+  @SuppressWarnings("unused")
+  private static void waitForTimeout() {
+    if (TIMEOUT > 1) {
+      TestUtils.sleep(TIMEOUT);
+      Clock.accurateTimeNanos();
+    } else {
+      TestUtils.blockTillClockAdvances();
+    }
   }
   
   @Test
@@ -47,7 +61,7 @@ public class WatchdogTest extends ThreadlyTester {
 
     assertTrue(watchdog.isActive());
     
-    TestUtils.blockTillClockAdvances();
+    waitForTimeout();
     assertEquals(1, scheduler.tick(null));
     
     assertFalse(watchdog.isActive());
@@ -57,7 +71,7 @@ public class WatchdogTest extends ThreadlyTester {
   public void alreadyDoneFutureWatchTest() {
     ListenableFuture<?> future = FutureUtils.immediateResultFuture(null);
     watchdog.watch(future);
-    
+
     assertEquals(0, watchdog.getWatchingCount());
   }
   
@@ -78,8 +92,8 @@ public class WatchdogTest extends ThreadlyTester {
   public void expiredFutureTest() {
     SettableListenableFuture<?> slf = new SettableListenableFuture<>();
     watchdog.watch(slf);
-    
-    TestUtils.blockTillClockAdvances();
+
+    waitForTimeout();
     
     assertEquals(1, scheduler.tick(null));
     
@@ -90,7 +104,7 @@ public class WatchdogTest extends ThreadlyTester {
   @Test
   public void rescheduledFutureCheckTest() throws InterruptedException {
     long delayTime = 100; // longer than constants DELAY_TIME to ensure we can tick BEFORE the second future times out
-    watchdog = new Watchdog(scheduler, delayTime * 2, true);
+    watchdog = new ConstantTimeWatchdog(scheduler, delayTime * 2, true);
     SettableListenableFuture<?> slf1 = new SettableListenableFuture<>();
     watchdog.watch(slf1);
     TestUtils.sleep(delayTime);

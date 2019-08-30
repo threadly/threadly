@@ -18,7 +18,7 @@ import org.threadly.concurrent.future.ListenableFutureAdapterTask;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.concurrent.future.ListenableRunnableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
-import org.threadly.concurrent.future.Watchdog;
+import org.threadly.concurrent.future.watchdog.ConstantTimeWatchdog;
 import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
@@ -43,7 +43,7 @@ import org.threadly.util.Pair;
  */
 public class Poller {
   protected final SubmitterScheduler scheduler;
-  private final Watchdog futureWatchdog;
+  private final ConstantTimeWatchdog futureWatchdog;
   private final PollRunner runner;
 
   /**
@@ -72,7 +72,7 @@ public class Poller {
   public Poller(SubmitterScheduler scheduler, long pollFrequency, long maxWaitTime) {
     this.scheduler = scheduler;
     if (maxWaitTime > 0 && maxWaitTime != Long.MAX_VALUE) {
-      futureWatchdog = new Watchdog(scheduler, maxWaitTime, false);
+      futureWatchdog = new ConstantTimeWatchdog(scheduler, maxWaitTime, false);
     } else {
       futureWatchdog = null;
     }

@@ -1,14 +1,10 @@
 package org.threadly.concurrent.future;
 
-import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 
+import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.SubmitterScheduler;
-import org.threadly.util.ArgumentVerifier;
+import org.threadly.concurrent.future.watchdog.MixedTimeWatchdog;
 
 /**
  * A class which handles a collection of  {@link Watchdog} instances.  Because the timeout for 
@@ -18,17 +14,29 @@ import org.threadly.util.ArgumentVerifier;
  * Using {@link CancelDebuggingListenableFuture} to wrap the futures before providing to this class 
  * can provide an easier understanding of the state of a Future when it was timed out by this class.
  * 
+ * @deprecated Moved to {@link org.threadly.concurrent.future.watchdog.MixedTimeWatchdog}
+ * 
  * @since 4.0.0
  */
-public class WatchdogCache {
-  protected static final int INSPECTION_INTERVAL_MILLIS = 10_000;
-  protected static final int DEFAULT_RESOLUTION_MILLIS = 200;
-
+@Deprecated
+public class WatchdogCache extends MixedTimeWatchdog {
   private static final AtomicReference<WatchdogCache> INTERRUPTING_WATCHDOG_CACHE = 
       new AtomicReference<>();
   private static final AtomicReference<WatchdogCache> NONINTERRUPTING_WATCHDOG_CACHE = 
       new AtomicReference<>();
+  private static final AtomicReference<SubmitterScheduler> STATIC_SCHEDULER = 
+      new AtomicReference<>();
   
+  protected static final SubmitterScheduler getStaticScheduler() {
+    SubmitterScheduler ss = STATIC_SCHEDULER.get();
+    if (ss == null) {
+      STATIC_SCHEDULER.compareAndSet(null, CentralThreadlyPool.threadPool(2, "WatchdogDefaultScheduler"));
+      ss = STATIC_SCHEDULER.get();
+    }
+    
+    return ss;
+  }
+
   /**
    * Return a static / shared {@link WatchdogCache} instance.  This instance is backed by the 
    * {@link org.threadly.concurrent.CentralThreadlyPool} which should be fine in most cases, but if 
@@ -50,21 +58,13 @@ public class WatchdogCache {
                                           INTERRUPTING_WATCHDOG_CACHE : NONINTERRUPTING_WATCHDOG_CACHE;
     WatchdogCache wd = ar.get();
     if (wd == null) {
-      ar.compareAndSet(null, new WatchdogCache(Watchdog.getStaticScheduler(), 
+      ar.compareAndSet(null, new WatchdogCache(getStaticScheduler(), 
                                                sendInterruptOnFutureCancel));
       wd = ar.get();
     }
     
     return wd;
   }
-  
-  protected final SubmitterScheduler scheduler;
-  protected final boolean sendInterruptOnFutureCancel;
-  protected final ConcurrentMap<Long, Watchdog> cachedDogs;
-  protected final Function<Long, Watchdog> watchdogProducer;
-  protected final Runnable cacheCleaner;
-  protected final long resolutionMillis;
-  private final AtomicBoolean cleanerScheduled;
   
   /**
    * Constructs a new {@link WatchdogCache}.  This constructor will use a default static scheduler 
@@ -79,7 +79,7 @@ public class WatchdogCache {
    */
   @Deprecated
   public WatchdogCache(boolean sendInterruptOnFutureCancel) {
-    this(Watchdog.getStaticScheduler(), sendInterruptOnFutureCancel, DEFAULT_RESOLUTION_MILLIS);
+    super(getStaticScheduler(), sendInterruptOnFutureCancel, DEFAULT_RESOLUTION_MILLIS);
   }
 
   /**
@@ -93,7 +93,7 @@ public class WatchdogCache {
    *                                      an interrupt will be sent on timeout
    */
   public WatchdogCache(SubmitterScheduler scheduler, boolean sendInterruptOnFutureCancel) {
-    this(scheduler, sendInterruptOnFutureCancel, DEFAULT_RESOLUTION_MILLIS);
+    super(scheduler, sendInterruptOnFutureCancel, DEFAULT_RESOLUTION_MILLIS);
   }
 
   /**
@@ -113,18 +113,7 @@ public class WatchdogCache {
    */
   public WatchdogCache(SubmitterScheduler scheduler, boolean sendInterruptOnFutureCancel, 
                        long resolutionMillis) {
-    ArgumentVerifier.assertGreaterThanZero(resolutionMillis, "resolutionMillis");
-    
-    this.scheduler = scheduler;
-    this.sendInterruptOnFutureCancel = sendInterruptOnFutureCancel;
-    cachedDogs = new ConcurrentHashMap<>();
-    watchdogProducer = (timeout) -> {
-      maybeScheduleCleaner();
-      return new Watchdog(scheduler, timeout, sendInterruptOnFutureCancel);
-    };
-    cacheCleaner = new CleanRunner();
-    cleanerScheduled = new AtomicBoolean(false);
-    this.resolutionMillis = resolutionMillis;
+    super(scheduler, sendInterruptOnFutureCancel, resolutionMillis);
   }
   
   /**
@@ -142,63 +131,5 @@ public class WatchdogCache {
   @Deprecated
   public void watch(ListenableFuture<?> future, long timeoutInMillis) {
     watch(timeoutInMillis, future);
-  }
-  
-  /**
-   * Watch a given {@link ListenableFuture} to ensure that it completes within the provided 
-   * time limit.  If the future is not marked as done by the time limit then it will be 
-   * completed by invoking {@link ListenableFuture#cancel(boolean)}.  Weather a {@code true} or 
-   * {@code false} will be provided to interrupt the running thread is dependent on how this 
-   * {@link WatchdogCache} was constructed.
-   * 
-   * @param timeoutInMillis Time in milliseconds that future should be completed within
-   * @param future Future to inspect to ensure completion
-   */
-  public void watch(long timeoutInMillis, ListenableFuture<?> future) {
-    long adjustedTimeout = timeoutInMillis / resolutionMillis;
-    adjustedTimeout *= resolutionMillis; // int division to zero out
-    if (adjustedTimeout != timeoutInMillis) {
-      adjustedTimeout += resolutionMillis;  // prefer timing out later rather than early
-    }
-    
-    // attempt around a cheap shortcut
-    if (future == null || future.isDone()) {
-      return;
-    }
-    
-    cachedDogs.computeIfAbsent(adjustedTimeout, watchdogProducer)
-              .watch(future);
-  }
-  
-  private void maybeScheduleCleaner() {
-    if (! cleanerScheduled.get() && cleanerScheduled.compareAndSet(false, true)) {
-      scheduler.schedule(cacheCleaner, INSPECTION_INTERVAL_MILLIS);
-    }
-  }
-  
-  /**
-   * Runnable which looks over all cached {@link Watchdog} instances to see if any are no longer 
-   * active.  Removing the inactive ones as they are found.  This also handles rescheduling itself 
-   * if future inspection may be needed.
-   * 
-   * @since 4.0.0
-   */
-  private class CleanRunner implements Runnable {
-    @Override
-    public void run() {
-      Iterator<Watchdog> it = cachedDogs.values().iterator();
-      while (it.hasNext()) {
-        if (! it.next().isActive()) {
-          it.remove();
-        }
-      }
-      
-      // must set unscheduled before checking if we need to reschedule
-      cleanerScheduled.set(false);
-      
-      if (! cachedDogs.isEmpty()) {
-        maybeScheduleCleaner();
-      }
-    }
   }
 }
