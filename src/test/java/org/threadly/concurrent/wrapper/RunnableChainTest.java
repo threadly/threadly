@@ -1,4 +1,4 @@
-package org.threadly.concurrent;
+package org.threadly.concurrent.wrapper;
 
 import static org.junit.Assert.*;
 
@@ -8,10 +8,11 @@ import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StackSuppressedRuntimeException;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class RunnableChainTest extends ThreadlyTester {
   @BeforeClass
   public static void setupClass() {
