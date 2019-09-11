@@ -80,8 +80,8 @@ public class ArrayIterator<T> implements Iterator<T> {
 
   @Override
   public T next() {
-    if (! hasNext()) {
-      throw new NoSuchElementException();
+    if (pos == array.length) {
+      throw new NoSuchElementException("No elements remaining: " + pos);
     }
     return array[pos++];
   }
