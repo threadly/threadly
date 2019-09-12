@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
@@ -36,6 +37,11 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   // tuned for performance of scheduled tasks
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
+
+  static {
+    @SuppressWarnings("unused") // https://bugs.openjdk.java.net/browse/JDK-8074773
+    Class<?> ensureLoaded = LockSupport.class;
+  }
 
   protected final TaskPriority defaultPriority;
   
