@@ -820,7 +820,7 @@ public class CentralThreadlyPool {
   protected static final class PoolResizeUpdater extends ReschedulingOperation {
     protected static final int POOL_SIZE_UPDATE_DELAY = 120_000; // delayed pool size changes reduce churn
     
-    protected LongAdder poolSizeChange;
+    protected final LongAdder poolSizeChange;
 
     protected PoolResizeUpdater(SubmitterScheduler scheduler) {
       super(scheduler, POOL_SIZE_UPDATE_DELAY);
