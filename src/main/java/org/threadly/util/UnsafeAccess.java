@@ -12,8 +12,11 @@ import sun.misc.Unsafe;
  * Used for internal access to UNSAFE actions.  This uses the {@link sun.misc.Unsafe} class to do 
  * visibility modifications and potentially other low level access.
  * 
+ * @deprecated To be removed due to lack of JVM support
+ * 
  * @since 5.28
  */
+@Deprecated
 public final class UnsafeAccess {
   private static final Unsafe UNSAFE;
   private static final Method SET_ACCESSIBLE;
