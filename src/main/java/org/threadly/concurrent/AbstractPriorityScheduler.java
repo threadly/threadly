@@ -699,7 +699,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     protected final Queue<? extends TaskWrapper> taskQueue;
     protected final long runTime;
     // optimization to avoid queue traversal on failure to remove, cheaper than AtomicBoolean
-    private volatile boolean executed;
+    protected volatile boolean executed;
     
     protected OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task);
@@ -756,7 +756,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * @since 5.26
    */
   protected static class ImmediateTaskWrapper extends OneTimeTaskWrapper {
-    protected ImmediateTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue) {
+    public ImmediateTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue) {
       super(task, taskQueue, Clock.lastKnownForwardProgressingMillis());
     }
     

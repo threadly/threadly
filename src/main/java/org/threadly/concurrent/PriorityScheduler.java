@@ -390,7 +390,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     private volatile long workerTimedParkRunTime;
     private QueueManager queueManager;  // set before any threads started
     
-    protected WorkerPool(ThreadFactory threadFactory, int poolSize) {
+    public WorkerPool(ThreadFactory threadFactory, int poolSize) {
       ArgumentVerifier.assertGreaterThanZero(poolSize, "poolSize");
       if (threadFactory == null) {
         threadFactory = new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", true);
@@ -862,7 +862,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected volatile Worker nextIdleWorker;
     protected volatile boolean waitingForUnpark;
     
-    protected Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
+    public Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;
       thread = threadFactory.newThread(this);
       if (thread.isAlive()) {
