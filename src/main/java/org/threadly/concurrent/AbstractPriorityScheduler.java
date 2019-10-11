@@ -523,19 +523,16 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       
       if (nextTask == null) {
         return starvablePriorityQueueSet.getNextTask();
-      } else {
-        long nextTaskDelay = nextTask.getScheduleDelay();
-        if (nextTaskDelay > 0) {
-          TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
-          if (nextStarvableTask != null && 
-              nextStarvableTask.getPureRunTime() < nextTask.getPureRunTime()) {
-            return nextStarvableTask;
-          } else {
-            return nextTask;
-          }
+      } else if (nextTask.getScheduleDelay() > 0) {
+        TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
+        if (nextStarvableTask != null && 
+            nextStarvableTask.getPureRunTime() < nextTask.getPureRunTime()) {
+          return nextStarvableTask;
         } else {
           return nextTask;
         }
+      } else {
+        return nextTask;
       }
     }
     
