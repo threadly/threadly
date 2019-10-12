@@ -63,7 +63,7 @@ public class CentralThreadlyPool {
     genericThreadCount = 1; // must have at least one
     MASTER_SCHEDULER = // start with computation + 1 for interior management tasks and + 1 for shared use
         new PriorityScheduler(cpuCount + genericThreadCount + 1, 
-                              TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, 
+                              TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, false, 
                               new ConfigurableThreadFactory("CentralThreadlyPool-", false, 
                                                             true, Thread.NORM_PRIORITY, null, null));
     LOW_PRIORITY_MASTER_SCHEDULER = 

@@ -18,7 +18,7 @@ public class PrioritySchedulerWorkerPoolTest extends ThreadlyTester {
   
   @Before
   public void setup() {
-    workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1);
+    workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1, true);
     qm = new QueueManager(workerPool, 1000);
     
     workerPool.start(qm);

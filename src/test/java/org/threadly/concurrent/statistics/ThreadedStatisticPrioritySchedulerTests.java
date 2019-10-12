@@ -47,7 +47,9 @@ public class ThreadedStatisticPrioritySchedulerTests extends ThreadlyTester {
     scheduler.resetCollectedStats();
     
     assertEquals(-1, scheduler.getAverageExecutionDuration(), 0);
+    assertEquals(-1, scheduler.getAverageExecutionDelay(), 0);
     for (TaskPriority p : TaskPriority.values()) {
+      assertEquals(-1, scheduler.getAverageExecutionDuration(p), 0);
       assertEquals(-1, scheduler.getAverageExecutionDelay(p), 0);
     }
   }

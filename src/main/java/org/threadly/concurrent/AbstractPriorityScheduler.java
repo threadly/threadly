@@ -485,9 +485,10 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * just queued.  If a queue update comes in, this must be re-invoked to see what task is now 
      * next.  If there are no tasks ready to be executed this will simply return {@code null}.
      * 
+     * @param allowStarvable {@code true} to return starvable tasks if no other task is available and ready
      * @return Task to be executed next, or {@code null} if no tasks at all are queued
      */
-    public TaskWrapper getNextTask() {
+    public TaskWrapper getNextTask(boolean allowStarvable) {
       // First compare between high and low priority task queues
       // then depending on that state, we may check starvable
       TaskWrapper nextTask;
@@ -521,7 +522,9 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         nextTask = nextHighPriorityTask;
       }
       
-      if (nextTask == null) {
+      if (! allowStarvable) {
+        return nextTask;
+      } else if (nextTask == null) {
         return starvablePriorityQueueSet.getNextTask();
       } else if (nextTask.getScheduleDelay() > 0) {
         TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();

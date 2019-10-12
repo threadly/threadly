@@ -69,7 +69,7 @@ public class StrictPriorityScheduler extends PriorityScheduler {
   public StrictPriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs, 
                                  boolean useDaemonThreads) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, 
          new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
                                        true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
   }
@@ -88,7 +88,27 @@ public class StrictPriorityScheduler extends PriorityScheduler {
    */
   public StrictPriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(new WorkerPool(threadFactory, poolSize), defaultPriority, maxWaitForLowPriorityInMs);
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, threadFactory);
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param stavableStartsThreads {@code true} to have TaskPriority.Starvable tasks start new threads
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public StrictPriorityScheduler(int poolSize, TaskPriority defaultPriority, 
+                                 long maxWaitForLowPriorityInMs, 
+                                 boolean stavableStartsThreads, ThreadFactory threadFactory) {
+    super(new WorkerPool(threadFactory, poolSize, stavableStartsThreads), 
+          defaultPriority, maxWaitForLowPriorityInMs);
   }
   
   private static void verifyOneTimeTaskQueueSet(QueueSet queueSet, OneTimeTaskWrapper task) {

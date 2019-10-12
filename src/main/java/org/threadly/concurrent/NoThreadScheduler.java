@@ -214,7 +214,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
           } else if (currentThread.isInterrupted()) {
             throw new InterruptedException();
           }
-          TaskWrapper nextTask = queueManager.getNextTask();
+          TaskWrapper nextTask = queueManager.getNextTask(true);
           if (nextTask == null) {
               LockSupport.park();
           } else {
@@ -314,7 +314,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return next ready task, or {@code null} if there are none
    */
   protected TaskWrapper getNextReadyTask() {
-    TaskWrapper tw = queueManager.getNextTask();
+    TaskWrapper tw = queueManager.getNextTask(true);
     if (tw == null || tw.getScheduleDelay() > 0) {
       return null;
     } else {
@@ -375,7 +375,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return Milliseconds till the next task is ready to run
    */
   public long getDelayTillNextTask() {
-    TaskWrapper tw = queueManager.getNextTask();
+    TaskWrapper tw = queueManager.getNextTask(true);
     if (tw != null) {
       return tw.getRunTime() - nowInMillis(true);
     } else {

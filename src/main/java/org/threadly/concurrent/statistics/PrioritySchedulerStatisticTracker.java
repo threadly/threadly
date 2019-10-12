@@ -101,7 +101,30 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            boolean useDaemonThreads) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads, 1000);
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, useDaemonThreads, 1000, false);
+  }
+  
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
+   * also makes low priority tasks execution time less predictable.    This will by 
+   * default start threads for {@link TaskPriority#Low} and higher priority tasks.
+   * <p>
+   * This defaults to inaccurate time.  Meaning that durations and delays may under report (but 
+   * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
+   * accurate time consider using one of the constructors that accepts a boolean for accurate time.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
+                                           long maxWaitForLowPriorityInMs, 
+                                           ThreadFactory threadFactory) {
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, threadFactory);
   }
   
   /**
@@ -118,12 +141,15 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param stavableStartsThreads {@code true} to have TaskPriority.Starvable tasks start new threads
    * @param threadFactory thread factory for producing new threads within executor
    */
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
+                                           boolean stavableStartsThreads,  
                                            ThreadFactory threadFactory) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, threadFactory, 1000);
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, stavableStartsThreads,  
+         threadFactory, 1000, false);
   }
   
   /**
@@ -136,9 +162,12 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
    * 
+   * @deprecated Please use {@link #PrioritySchedulerStatisticTracker(int, int, boolean)}
+   * 
    * @param poolSize Thread pool size that should be maintained
    * @param maxStatisticWindowSize maximum number of samples to keep internally
    */
+  @Deprecated
   public PrioritySchedulerStatisticTracker(int poolSize, int maxStatisticWindowSize) {
     this(poolSize, DEFAULT_PRIORITY, 
          DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, DEFAULT_NEW_THREADS_DAEMON, maxStatisticWindowSize);
@@ -153,10 +182,13 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
    * 
+   * @deprecated Please use {@link #PrioritySchedulerStatisticTracker(int, boolean, int, boolean)}
+   * 
    * @param poolSize Thread pool size that should be maintained
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    * @param maxStatisticWindowSize maximum number of samples to keep internally
    */
+  @Deprecated
   public PrioritySchedulerStatisticTracker(int poolSize, boolean useDaemonThreads, 
                                            int maxStatisticWindowSize) {
     this(poolSize, DEFAULT_PRIORITY, DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, 
@@ -174,11 +206,14 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
    * 
+   * @deprecated Please use {@link #PrioritySchedulerStatisticTracker(int, TaskPriority, long, int, boolean)}
+   * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    * @param maxStatisticWindowSize maximum number of samples to keep internally
    */
+  @Deprecated
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            int maxStatisticWindowSize) {
@@ -197,12 +232,15 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
    * 
+   * @deprecated Please use {@link #PrioritySchedulerStatisticTracker(int, TaskPriority, long, boolean, int, boolean)}
+   * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    * @param useDaemonThreads {@code true} if newly created threads should be daemon
    * @param maxStatisticWindowSize maximum number of samples to keep internally
    */
+  @Deprecated
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            boolean useDaemonThreads, int maxStatisticWindowSize) {
@@ -221,12 +259,16 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * NEVER OVER what they actually were).  This has the least performance impact.  If you want more 
    * accurate time consider using one of the constructors that accepts a boolean for accurate time.
    * 
+   * @deprecated Please use 
+   *    {@link #PrioritySchedulerStatisticTracker(int, TaskPriority, long, ThreadFactory, int, boolean)}
+   * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
    * @param threadFactory thread factory for producing new threads within executor
    * @param maxStatisticWindowSize maximum number of samples to keep internally
    */
+  @Deprecated
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            ThreadFactory threadFactory, 
@@ -283,7 +325,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs,
          DEFAULT_NEW_THREADS_DAEMON, maxStatisticWindowSize, accurateTime);
   }
   
@@ -292,7 +334,8 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * request.  This provides the extra parameters to tune what tasks submitted without a priority 
    * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
    * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
-   * also makes low priority tasks execution time less predictable.
+   * also makes low priority tasks execution time less predictable.  This will by 
+   * default start threads for {@link TaskPriority#Low} and higher priority tasks.
    * 
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
@@ -305,8 +348,33 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
                                            long maxWaitForLowPriorityInMs, boolean useDaemonThreads, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
     this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+         DEFAULT_STARVABLE_STARTS_THREADS, 
          new ConfigurableThreadFactory(PrioritySchedulerStatisticTracker.class.getSimpleName() + "-", 
                                        true, useDaemonThreads, Thread.NORM_PRIORITY, null, null), 
+         maxStatisticWindowSize, accurateTime);
+  }
+  
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
+   * also makes low priority tasks execution time less predictable.  This will by 
+   * default start threads for {@link TaskPriority#Low} and higher priority tasks.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param threadFactory thread factory for producing new threads within executor
+   * @param maxStatisticWindowSize maximum number of samples to keep internally
+   * @param accurateTime {@code true} to ensure that delays and durations are not under reported
+   */
+  public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
+                                           long maxWaitForLowPriorityInMs, 
+                                           ThreadFactory threadFactory, 
+                                           int maxStatisticWindowSize, boolean accurateTime) {
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+         DEFAULT_STARVABLE_STARTS_THREADS, threadFactory, 
          maxStatisticWindowSize, accurateTime);
   }
   
@@ -320,15 +388,17 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
    * @param poolSize Thread pool size that should be maintained
    * @param defaultPriority priority to give tasks which do not specify it
    * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param stavableStartsThreads {@code true} to have TaskPriority.Starvable tasks start new threads
    * @param threadFactory thread factory for producing new threads within executor
    * @param maxStatisticWindowSize maximum number of samples to keep internally
    * @param accurateTime {@code true} to ensure that delays and durations are not under reported
    */
   public PrioritySchedulerStatisticTracker(int poolSize, TaskPriority defaultPriority, 
                                            long maxWaitForLowPriorityInMs, 
+                                           boolean stavableStartsThreads,
                                            ThreadFactory threadFactory, 
                                            int maxStatisticWindowSize, boolean accurateTime) {
-    super(new StatisticWorkerPool(threadFactory, poolSize, 
+    super(new StatisticWorkerPool(threadFactory, poolSize, stavableStartsThreads, 
                                   new PriorityStatisticManager(maxStatisticWindowSize, accurateTime)), 
           defaultPriority, maxWaitForLowPriorityInMs);
     
@@ -491,8 +561,9 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
     protected final PriorityStatisticManager statsManager;
   
     protected StatisticWorkerPool(ThreadFactory threadFactory, int poolSize, 
+                                  boolean stavableStartsThreads, 
                                   PriorityStatisticManager statsManager) {
-      super(threadFactory, poolSize);
+      super(threadFactory, poolSize, stavableStartsThreads);
       
       this.statsManager = statsManager;
     }

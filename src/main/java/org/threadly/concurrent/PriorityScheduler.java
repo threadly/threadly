@@ -39,6 +39,7 @@ import org.threadly.util.Clock;
  */
 public class PriorityScheduler extends AbstractPriorityScheduler {
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
+  protected static final boolean DEFAULT_STARVABLE_STARTS_THREADS = false;
   
   protected final WorkerPool workerPool;
   protected final QueueManager taskQueueManager;
@@ -93,7 +94,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, 
          new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
                                        true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
   }
@@ -110,7 +111,24 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    this(new WorkerPool(threadFactory, poolSize), 
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+         DEFAULT_STARVABLE_STARTS_THREADS, threadFactory);
+  }
+
+  /**
+   * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
+   * run.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   * @param stavableStartsThreads {@code true} to have TaskPriority.Starvable tasks start new threads
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public PriorityScheduler(int poolSize, TaskPriority defaultPriority, long maxWaitForLowPriorityInMs, 
+                           boolean stavableStartsThreads, ThreadFactory threadFactory) {
+    this(new WorkerPool(threadFactory, poolSize, stavableStartsThreads), 
          defaultPriority, maxWaitForLowPriorityInMs);
   }
   
@@ -215,11 +233,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
    */
   public void shutdown() {
-    if (workerPool.startShutdown()) {
-      ShutdownRunnable sr = new ShutdownRunnable(workerPool);
-      taskQueueManager.lowPriorityQueueSet
-                      .addExecute(new ImmediateTaskWrapper(sr, taskQueueManager.lowPriorityQueueSet.executeQueue));
-    }
+    workerPool.startShutdown();
   }
 
   /**
@@ -378,6 +392,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   protected static class WorkerPool implements QueueSetListener {
     protected final ThreadFactory threadFactory;
+    protected final boolean stavableStartsThreads;
     protected final Object poolSizeChangeLock;
     protected final Object idleWorkerDequeLock;
     protected final LongAdder idleWorkerCount;
@@ -390,7 +405,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     private volatile long workerTimedParkRunTime;
     private QueueManager queueManager;  // set before any threads started
     
-    public WorkerPool(ThreadFactory threadFactory, int poolSize) {
+    public WorkerPool(ThreadFactory threadFactory, int poolSize, boolean stavableStartsThreads) {
       ArgumentVerifier.assertGreaterThanZero(poolSize, "poolSize");
       if (threadFactory == null) {
         threadFactory = new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", true);
@@ -404,6 +419,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       workerStopNotifyLock = new Object();
       
       this.threadFactory = threadFactory;
+      this.stavableStartsThreads = stavableStartsThreads;
       this.maxPoolSize = poolSize;
       this.workerTimedParkRunTime = Long.MAX_VALUE;
       shutdownStarted = new AtomicBoolean(false);
@@ -459,7 +475,14 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if this call initiates the shutdown, {@code false} if the shutdown has already started
      */
     public boolean startShutdown() {
-      return ! shutdownStarted.getAndSet(true);
+      if (shutdownStarted.getAndSet(true)) {
+        return false; // shutdown already started
+      } else {
+        ShutdownRunnable sr = new ShutdownRunnable(this);
+        queueManager.lowPriorityQueueSet
+                    .addExecute(new ImmediateTaskWrapper(sr, queueManager.lowPriorityQueueSet.executeQueue));
+        return true;
+      }
     }
   
     /**
@@ -478,7 +501,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      */
     public void finishShutdown() {
       shutdownFinishing = true;
-
+      
+      // submit task to wake up workers and start final consumption of tasks / thread shutdowns
       addPoolStateChangeTask(new InternalRunnable() {
         @Override
         public void run() {
@@ -607,8 +631,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         });
       }
     }
-    
-    
 
     /**
      * Check for the current quantity of threads running in this pool (either active or idle).
@@ -727,8 +749,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
        * break out of the task polling loop below.  This is done as an optimization, to avoid 
        * needing to check these on every loop (since they rarely change)
        */
+      int casPoolSize;
       while (true) {
-        int casPoolSize;
         if (shutdownFinishing) {
           currentPoolSize.decrementAndGet();
           worker.stopIfRunning();
@@ -747,7 +769,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       boolean queued = false;
       try {
         while (true) {
-          TaskWrapper nextTask = queueManager.getNextTask();
+          TaskWrapper nextTask = 
+              queueManager.getNextTask(stavableStartsThreads || casPoolSize == 1 || 
+                                       currentPoolSize.get() >= maxPoolSize ||
+                                       worker.nextIdleWorker != null ||
+                                       shutdownStarted.get());
+
           if (nextTask == null) {
             if (queued) { // we can only park after we have queued, then checked again for a result
               Thread.interrupted(); // reset interrupted status before we block
@@ -830,7 +857,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         Worker nextIdleWorker = idleWorker.get();
         if (nextIdleWorker == null) {
           int casSize = currentPoolSize.get();
-          if (casSize < maxPoolSize & ! shutdownFinishing) {
+          if (casSize < maxPoolSize && ! shutdownFinishing) {
             if (currentPoolSize.compareAndSet(casSize, casSize + 1)) {
               // start a new worker for the next task
               makeNewWorker();

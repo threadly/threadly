@@ -15,6 +15,7 @@ public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends Pr
   @Override
   public void setup() {
     workerPool = localWorkerPool = new StatisticWorkerPool(new ConfigurableThreadFactory(), 1, 
+                                                           true, 
                                                            new PriorityStatisticManager(100, false));
     qm = new VisibilityPriorityScheduler.VisibilityQueueManager(workerPool, 1000);
     
