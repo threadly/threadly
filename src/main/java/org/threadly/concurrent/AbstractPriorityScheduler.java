@@ -47,9 +47,10 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   
   protected AbstractPriorityScheduler(TaskPriority defaultPriority) {
     if (defaultPriority == null) {
-      defaultPriority = DEFAULT_PRIORITY;
+      this.defaultPriority = DEFAULT_PRIORITY;
+    } else {
+      this.defaultPriority = defaultPriority;
     }
-    this.defaultPriority = defaultPriority;
   }
   
   /**
@@ -433,7 +434,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     protected final QueueSet highPriorityQueueSet;
     protected final QueueSet lowPriorityQueueSet;
     protected final QueueSet starvablePriorityQueueSet;
-    private volatile long maxWaitForLowPriorityInMs;
+    private volatile long maxLowPriorityWaitMillis;
     
     public QueueManager(QueueSetListener queueSetListener, long maxWaitForLowPriorityInMs) {
       this.highPriorityQueueSet = new QueueSet(queueSetListener);
@@ -492,34 +493,28 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       // First compare between high and low priority task queues
       // then depending on that state, we may check starvable
       TaskWrapper nextTask;
-      TaskWrapper nextHighPriorityTask = highPriorityQueueSet.getNextTask();
-      TaskWrapper nextLowPriorityTask = lowPriorityQueueSet.getNextTask();
-      if (nextLowPriorityTask == null) {
-        nextTask = nextHighPriorityTask;
-      } else if (nextHighPriorityTask == null) {
-        nextTask = nextLowPriorityTask;
-      } else if (nextHighPriorityTask.getRunTime() <= nextLowPriorityTask.getRunTime()) {
-        nextTask = nextHighPriorityTask;
-      } else if (nextHighPriorityTask.getScheduleDelay() > 0 || 
+      TaskWrapper nextHighTask = highPriorityQueueSet.getNextTask();
+      TaskWrapper nextLowTask = lowPriorityQueueSet.getNextTask();
+      if (nextLowTask == null) {
+        nextTask = nextHighTask;
+      } else if (nextHighTask == null) {
+        nextTask = nextLowTask;
+      } else if (nextHighTask.getRunTime() <= nextLowTask.getRunTime()) {
+        nextTask = nextHighTask;
+      } else if (nextLowTask.getPureRunTime() + maxLowPriorityWaitMillis < nextHighTask.getPureRunTime() ||
           // before the above check we know the low priority has been waiting longer than the high 
-          // priority, but since the high priority is not ready to run, we can just return the low 
-          // priority a clock call was invoked IF the high priority task was not already known to 
-          // be ready to run
+          // priority.  If the low priority has been waiting longer than the timeout, it can now 
+          // be returned as the next ready task
           //
           // OR
           //
-          // at this point we know the high task is ready to run
-          // but the low priority task has been waiting LONGER (and thus also ready to run)
-          // So we will return the low priority task IF it has been waiting over the max wait time
-          // At this point there may or may not have been a single clock invocation to check if the 
-          // high priority task was ready (if it was known ready, none was invoked)
-          // because of that we _may_ have to invoke the clock here
-          Clock.lastKnownForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs || 
-          Clock.accurateForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs) {
-        nextTask = nextLowPriorityTask;
+          // If the high priority task is not ready to execute anyways, then we will provide the 
+          // low.  The low priority will either be ready to run, or will be ready to run sooner.
+          nextHighTask.getScheduleDelay() > 0) {
+        nextTask = nextLowTask;
       } else {
         // task is ready to run, low priority is also ready, but has not been waiting long enough
-        nextTask = nextHighPriorityTask;
+        nextTask = nextHighTask;
       }
       
       if (! allowStarvable) {
@@ -583,7 +578,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
       ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
       
-      this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
+      this.maxLowPriorityWaitMillis = maxWaitForLowPriorityInMs;
     }
     
     /**
@@ -593,7 +588,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * @return currently set max wait for low priority task
      */
     public long getMaxWaitForLowPriority() {
-      return maxWaitForLowPriorityInMs;
+      return maxLowPriorityWaitMillis;
     }
   }
   
@@ -701,7 +696,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     // optimization to avoid queue traversal on failure to remove, cheaper than AtomicBoolean
     protected volatile boolean executed;
     
-    protected OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
+    public OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task);
       
       this.taskQueue = taskQueue;
@@ -780,7 +775,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     // only changed when queue is locked...overflow is fine
     private volatile short executeFlipCounter;
     
-    protected RecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
+    public RecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
       super(task);
       
       this.queueSet = queueSet;
@@ -920,8 +915,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   protected static class RecurringDelayTaskWrapper extends RecurringTaskWrapper {
     protected final long recurringDelay;
     
-    protected RecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, 
-                                        long firstRunTime, long recurringDelay) {
+    public RecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, 
+                                     long firstRunTime, long recurringDelay) {
       super(task, queueSet, firstRunTime);
       
       this.recurringDelay = recurringDelay;
@@ -941,8 +936,8 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   protected static class RecurringRateTaskWrapper extends RecurringTaskWrapper {
     protected final long period;
     
-    protected RecurringRateTaskWrapper(Runnable task, QueueSet queueSet, 
-                                       long firstRunTime, long period) {
+    public RecurringRateTaskWrapper(Runnable task, QueueSet queueSet, 
+                                    long firstRunTime, long period) {
       super(task, queueSet, firstRunTime);
       
       this.period = period;
