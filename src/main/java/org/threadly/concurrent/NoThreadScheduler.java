@@ -249,10 +249,12 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     QueueSet queueSet = queueManager.getQueueSet(priority);
     OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
-      queueSet.addExecute((result = new NoThreadOneTimeTaskWrapper(task, queueSet.executeQueue, 
+      queueSet.addExecute((result = new NoThreadOneTimeTaskWrapper(task, 
+                                                                   queueSet.executeQueue, 
                                                                    nowInMillis(false))));
     } else {
-      queueSet.addScheduled((result = new NoThreadOneTimeTaskWrapper(task, queueSet.scheduleQueue, 
+      queueSet.addScheduled((result = new NoThreadOneTimeTaskWrapper(task,  
+                                                                     queueSet.scheduleQueue, 
                                                                      nowInMillis(true) + delayInMillis)));
     }
     return result;
@@ -407,7 +409,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @since 1.0.0
    */
   protected class NoThreadOneTimeTaskWrapper extends OneTimeTaskWrapper {
-    protected NoThreadOneTimeTaskWrapper(Runnable task, 
+    protected NoThreadOneTimeTaskWrapper(Runnable task,  
                                          Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task, taskQueue, runTime);
     }
@@ -436,7 +438,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @since 4.3.0
    */
   protected abstract class NoThreadRecurringTaskWrapper extends RecurringTaskWrapper {
-    protected NoThreadRecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
+    protected NoThreadRecurringTaskWrapper(Runnable task,  
+                                           QueueSet queueSet, long firstRunTime) {
       super(task, queueSet, firstRunTime);
     }
     

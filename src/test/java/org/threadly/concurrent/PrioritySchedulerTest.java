@@ -10,7 +10,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.BlockingTestRunnable;
-import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
+import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -482,19 +482,19 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
     
     PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     try {
-      scheduler.addToScheduleQueue(scheduler.taskQueueManager.highPriorityQueueSet, 
-                                   new OneTimeTaskWrapper(new TestRunnable(), null, 
-                                                          Clock.lastKnownForwardProgressingMillis() + taskDelay));
+      scheduler.queueScheduled(scheduler.queueManager.highPriorityQueueSet, 
+                                   new AccurateOneTimeTaskWrapper(new TestRunnable(), null, 
+                                                                  Clock.lastKnownForwardProgressingMillis() + taskDelay));
 
-      assertEquals(1, scheduler.taskQueueManager.highPriorityQueueSet.scheduleQueue.size());
-      assertEquals(0, scheduler.taskQueueManager.lowPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.queueManager.highPriorityQueueSet.scheduleQueue.size());
+      assertEquals(0, scheduler.queueManager.lowPriorityQueueSet.scheduleQueue.size());
       
-      scheduler.addToScheduleQueue(scheduler.taskQueueManager.lowPriorityQueueSet, 
-                                   new OneTimeTaskWrapper(new TestRunnable(), null, 
-                                                          Clock.lastKnownForwardProgressingMillis() + taskDelay));
+      scheduler.queueScheduled(scheduler.queueManager.lowPriorityQueueSet, 
+                                   new AccurateOneTimeTaskWrapper(new TestRunnable(), null, 
+                                                                  Clock.lastKnownForwardProgressingMillis() + taskDelay));
 
-      assertEquals(1, scheduler.taskQueueManager.highPriorityQueueSet.scheduleQueue.size());
-      assertEquals(1, scheduler.taskQueueManager.lowPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.queueManager.highPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.queueManager.lowPriorityQueueSet.scheduleQueue.size());
     } finally {
       factory.shutdown();
     }

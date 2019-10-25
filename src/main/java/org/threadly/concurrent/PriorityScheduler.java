@@ -42,7 +42,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
   protected static final boolean DEFAULT_STARVABLE_STARTS_THREADS = false;
   
   protected final WorkerPool workerPool;
-  protected final QueueManager taskQueueManager;
+  protected final QueueManager queueManager;
 
   /**
    * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
@@ -145,9 +145,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     super(defaultPriority);
     
     this.workerPool = workerPool;
-    taskQueueManager = new QueueManager(workerPool, maxWaitForLowPriorityInMs);
+    queueManager = new QueueManager(workerPool, maxWaitForLowPriorityInMs);
     
-    workerPool.start(taskQueueManager);
+    workerPool.start(queueManager);
   }
   
   /**
@@ -248,7 +248,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public List<Runnable> shutdownNow() {
     workerPool.startShutdown();
-    List<Runnable> awaitingTasks = taskQueueManager.clearQueue();
+    List<Runnable> awaitingTasks = queueManager.clearQueue();
     workerPool.finishShutdown();
     
     return awaitingTasks;
@@ -291,16 +291,29 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
 
   @Override
   protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
-    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
     OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
-      addToExecuteQueue(queueSet, 
-                        (result = new ImmediateTaskWrapper(task, queueSet.executeQueue)));
+      QueueSet queueSet = queueManager.getQueueSet(priority);
+      queueExecute(queueSet, (result = new ImmediateTaskWrapper(task, queueSet.executeQueue)));
+      // bellow are optimized for scheduled tasks
+    } else if (priority == TaskPriority.High) {
+      queueScheduled(queueManager.highPriorityQueueSet, 
+                     (result = new AccurateOneTimeTaskWrapper(task, queueManager.highPriorityQueueSet
+                                                                                .scheduleQueue, 
+                                                              Clock.accurateForwardProgressingMillis() + 
+                                                                delayInMillis)));
+    } else if (priority == TaskPriority.Low) {
+      queueScheduled(queueManager.lowPriorityQueueSet, 
+                     (result = new GuessOneTimeTaskWrapper(task, queueManager.lowPriorityQueueSet
+                                                                             .scheduleQueue, 
+                                                           Clock.accurateForwardProgressingMillis() + 
+                                                             delayInMillis)));
     } else {
-      addToScheduleQueue(queueSet, 
-                         (result = new OneTimeTaskWrapper(task, queueSet.scheduleQueue, 
-                                                          Clock.accurateForwardProgressingMillis() + 
-                                                            delayInMillis)));
+      queueScheduled(queueManager.starvablePriorityQueueSet, 
+                     (result = new GuessOneTimeTaskWrapper(task, queueManager.starvablePriorityQueueSet
+                                                                             .scheduleQueue, 
+                                                           Clock.accurateForwardProgressingMillis() + 
+                                                             delayInMillis)));
     }
     return result;
   }
@@ -315,12 +328,25 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       priority = defaultPriority;
     }
 
-    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
-    addToScheduleQueue(queueSet, 
-                       new RecurringDelayTaskWrapper(task, queueSet, 
-                                                     Clock.accurateForwardProgressingMillis() + 
-                                                       initialDelay, 
-                                                     recurringDelay));
+    if (priority == TaskPriority.High) {
+      queueScheduled(queueManager.highPriorityQueueSet, 
+                     new AccurateRecurringDelayTaskWrapper(task, queueManager.highPriorityQueueSet, 
+                                                           Clock.accurateForwardProgressingMillis() + 
+                                                             initialDelay, 
+                                                           recurringDelay));
+    } else if (priority == TaskPriority.Low) {
+      queueScheduled(queueManager.lowPriorityQueueSet, 
+                     new GuessRecurringDelayTaskWrapper(task, queueManager.lowPriorityQueueSet, 
+                                                        Clock.accurateForwardProgressingMillis() + 
+                                                          initialDelay, 
+                                                        recurringDelay));
+    } else {
+      queueScheduled(queueManager.starvablePriorityQueueSet, 
+                     new GuessRecurringDelayTaskWrapper(task, queueManager.starvablePriorityQueueSet, 
+                                                        Clock.accurateForwardProgressingMillis() + 
+                                                          initialDelay, 
+                                                        recurringDelay));
+    }
   }
 
   @Override
@@ -333,11 +359,25 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       priority = defaultPriority;
     }
 
-    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
-    addToScheduleQueue(queueSet, 
-                       new RecurringRateTaskWrapper(task, queueSet, 
-                                                    Clock.accurateForwardProgressingMillis() + initialDelay, 
-                                                    period));
+    if (priority == TaskPriority.High) {
+      queueScheduled(queueManager.highPriorityQueueSet, 
+                     new AccurateRecurringRateTaskWrapper(task, queueManager.highPriorityQueueSet, 
+                                                          Clock.accurateForwardProgressingMillis() + 
+                                                            initialDelay, 
+                                                          period));
+    } else if (priority == TaskPriority.Low) {
+      queueScheduled(queueManager.lowPriorityQueueSet, 
+                     new GuessRecurringRateTaskWrapper(task, queueManager.lowPriorityQueueSet, 
+                                                       Clock.accurateForwardProgressingMillis() + 
+                                                         initialDelay, 
+                                                       period));
+    } else {
+      queueScheduled(queueManager.starvablePriorityQueueSet, 
+                     new GuessRecurringRateTaskWrapper(task, queueManager.starvablePriorityQueueSet, 
+                                                       Clock.accurateForwardProgressingMillis() + 
+                                                         initialDelay, 
+                                                       period));
+    }
   }
   
   /**
@@ -348,7 +388,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
    */
-  protected void addToExecuteQueue(QueueSet queueSet, OneTimeTaskWrapper task) {
+  protected void queueExecute(QueueSet queueSet, OneTimeTaskWrapper task) {
     if (workerPool.isShutdownStarted()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
@@ -364,7 +404,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
    */
-  protected void addToScheduleQueue(QueueSet queueSet, TaskWrapper task) {
+  protected void queueScheduled(QueueSet queueSet, TaskWrapper task) {
     if (workerPool.isShutdownStarted()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
@@ -380,7 +420,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
 
   @Override
   protected QueueManager getQueueManager() {
-    return taskQueueManager;
+    return queueManager;
   }
   
   /**
@@ -453,11 +493,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         }
       };
       queueManager.starvablePriorityQueueSet
-                  .scheduleQueue.add(new RecurringRateTaskWrapper(doNothingRunnable, 
-                                                                  queueManager.starvablePriorityQueueSet, 
-                                                                  Clock.lastKnownForwardProgressingMillis() + 
-                                                                    Integer.MAX_VALUE, 
-                                                                  Integer.MAX_VALUE));
+                  .scheduleQueue.add(new GuessRecurringRateTaskWrapper(doNothingRunnable, 
+                                                                       queueManager.starvablePriorityQueueSet, 
+                                                                       Clock.lastKnownForwardProgressingMillis() + 
+                                                                         Integer.MAX_VALUE, 
+                                                                       Integer.MAX_VALUE));
     }
 
     /**
