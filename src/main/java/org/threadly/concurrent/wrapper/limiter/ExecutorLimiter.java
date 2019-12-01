@@ -192,6 +192,18 @@ public class ExecutorLimiter implements SubmitterExecutor {
    * Called to indicate that hold for the task execution should be released. 
    */
   private void releaseExecutionLimit() {
+    if (! waitingTasks.isEmpty()) {
+      Runnable nextTask;
+      synchronized (this) {
+        nextTask = waitingTasks.poll();
+      }
+      if (nextTask != null) {
+        executor.execute(nextTask);
+        return; // was able to shortcut next execution
+      }
+    }
+    
+    // if not returned above, release running count and do a final queue check
     currentlyRunning.decrementAndGet();
     
     consumeAvailable(); // allow any waiting tasks to run
