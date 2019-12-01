@@ -75,7 +75,6 @@ public abstract class AbstractService implements Service {
   
   @Override
   protected void finalize() throws Throwable {
-    super.finalize();
     if (isRunning()) {
       ExceptionUtils.handleException(new IllegalStateException(getClass() + " was not stopped before GC"));
     }

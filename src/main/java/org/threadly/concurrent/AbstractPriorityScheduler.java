@@ -802,7 +802,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    */
   protected abstract static class RecurringTaskWrapper extends TaskWrapper {
     protected final QueueSet queueSet;
-    protected volatile boolean executing;
+    protected volatile boolean executing; // improves performance compared to executeFlipCounter % 2 == 1
     protected long nextRunTime;
     // executeFlipCounter is used to prevent multiple executions when consumed concurrently
     // only changed when queue is locked...overflow is fine
