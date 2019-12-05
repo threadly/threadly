@@ -144,8 +144,10 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       scheduler.setPoolSize(10);
       
       scheduler.execute(btr);
-      TestUtils.sleep(DELAY_TIME);  // make sure only one thread wakes up before we submit a second task
+      // make sure only one thread wakes up before we submit a second task
+      new TestCondition(() -> scheduler.workerPool.idleWorker.get() != null).blockTillTrue();
       scheduler.execute(btr);  // executed twice since effect is only after the second thread
+      new TestCondition(() -> scheduler.workerPool.idleWorker.get() != null).blockTillTrue();
       
       TestRunnable tr = new TestRunnable();
       scheduler.execute(tr, TaskPriority.Starvable);
