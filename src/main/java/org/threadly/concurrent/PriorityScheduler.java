@@ -746,6 +746,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected void removeWorkerFromIdleChain(Worker worker) {
       idleWorkerCount.decrement();
       
+      // TODO - can we improve this by removing the lock
+      
       /* We must lock here to avoid thread contention when removing from the chain.  This is 
        * the one place where we set the reference to a workers "nextIdleWorker" from a thread 
        * outside of the workers thread.  If we don't synchronize here, we may end up 
@@ -755,6 +757,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         Worker holdingWorker = idleWorker.get();
         if (holdingWorker == worker) {
           if (idleWorker.compareAndSet(worker, worker.nextIdleWorker)) {
+            worker.nextIdleWorker = null;
             return;
           } else {
             /* because we can only queue in parallel, we know that the conflict was a newly queued 
