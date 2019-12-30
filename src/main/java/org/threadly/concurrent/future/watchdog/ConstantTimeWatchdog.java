@@ -133,10 +133,11 @@ public class ConstantTimeWatchdog extends AbstractWatchdog {
     protected void run() {
       TimeoutFutureWrapper fw = null;
       Iterator<TimeoutFutureWrapper> it = futures.iterator();
-      long now = Clock.accurateForwardProgressingMillis();
+      long now = -1;  // set negative to force refresh on first check
       while (it.hasNext()) {
         fw = it.next();
-        if (now >= fw.expireTime || (now = Clock.accurateForwardProgressingMillis()) >= fw.expireTime) {
+        if (now >= fw.expireTime || 
+            (now = Clock.accurateForwardProgressingMillis()) >= fw.expireTime) {
           it.remove();
           fw.future.cancel(sendInterruptToTrackedThreads);
           fw = null;
