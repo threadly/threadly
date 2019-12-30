@@ -229,7 +229,8 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
    * {@link ListenableFuture} implementation.  
    * <p>
    * This should never be invoked by the implementor, this should only be invoked by other 
-   * {@link ListenableFuture}'s.  
+   * {@link ListenableFuture}'s through the use of providing this to 
+   * {@link ListenableFuture#callback(FutureCallback)}.  
    * <p>
    * If this is being used to chain together {@link ListenableFuture}'s, 
    * {@link #setResult(Object)}/{@link #setFailure(Throwable)} should never be called manually (or 
@@ -249,7 +250,8 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
    * implementation will attempt to cancel the future as well.
    * <p>
    * This should never be invoked by the implementor, this should only be invoked by other 
-   * {@link ListenableFuture}'s.  
+   * {@link ListenableFuture}'s through the use of providing this to 
+   * {@link ListenableFuture#callback(FutureCallback)}.  
    * <p>
    * If this is being used to chain together {@link ListenableFuture}'s, 
    * {@link #setResult(Object)}/{@link #setFailure(Throwable)} should never be called manually (or 
