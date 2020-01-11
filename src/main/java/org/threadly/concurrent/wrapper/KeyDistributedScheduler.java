@@ -308,7 +308,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (initialDelay == 0) {
       addTask(threadKey, rdt, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rdt), initialDelay);
+      scheduler.schedule(rdt.addTask, initialDelay);
     }
   }
   
@@ -334,7 +334,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (initialDelay == 0) {
       addTask(threadKey, rrt, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rrt), initialDelay);
+      scheduler.schedule(rrt.addTask, initialDelay);
     }
   }
   
@@ -369,12 +369,12 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @since 3.1.0
    */
   protected class RecrringDelayTask implements Runnable, RunnableContainer {
-    protected final Object key;
+    protected final AddTask addTask;
     protected final Runnable task;
     protected final long recurringDelay;
     
     protected RecrringDelayTask(Object key, Runnable task, long recurringDelay) {
-      this.key = key;
+      this.addTask = new AddTask(key, this);
       this.task = task;
       this.recurringDelay = recurringDelay;
     }
@@ -384,7 +384,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
       try {
         task.run();
       } finally {
-        scheduler.schedule(new AddTask(key, this), recurringDelay);
+        scheduler.schedule(addTask, recurringDelay);
       }
     }
 
@@ -400,19 +400,19 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @since 3.1.0
    */
   protected class RecrringRateTask implements Runnable, RunnableContainer {
-    protected final Object key;
+    protected final AddTask addTask;
     protected final Runnable task;
     protected final long recurringPeriod;
     
     protected RecrringRateTask(Object key, Runnable task, long recurringPeriod) {
-      this.key = key;
+      this.addTask = new AddTask(key, this);
       this.task = task;
       this.recurringPeriod = recurringPeriod;
     }
     
     @Override
     public void run() {
-      scheduler.schedule(new AddTask(key, this), recurringPeriod);
+      scheduler.schedule(addTask, recurringPeriod);
       task.run();
     }
 
