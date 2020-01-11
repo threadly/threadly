@@ -298,7 +298,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void invokeAfterAllCompleteTest() {
+  public void invokeAfterSingleCompleteTest() {
     List<SettableListenableFuture<Void>> futures = 
         Collections.singletonList(new SettableListenableFuture<>());
     TestRunnable tr = new TestRunnable();
@@ -308,6 +308,25 @@ public class FutureUtilsTest extends ThreadlyTester {
     assertEquals(0, tr.getRunCount());
     
     futures.get(0).setResult(null);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void invokeAfterAllCompleteTest() {
+    SettableListenableFuture<Void> slf1 = new SettableListenableFuture<>();
+    SettableListenableFuture<Void> slf2 = new SettableListenableFuture<>();
+    List<SettableListenableFuture<Void>> futures = new ArrayList<>();
+    futures.add(slf1);
+    futures.add(slf2);
+    TestRunnable tr = new TestRunnable();
+    
+    FutureUtils.invokeAfterAllComplete(futures, tr);
+    
+    assertEquals(0, tr.getRunCount());
+    slf1.setResult(null);
+    assertEquals(0, tr.getRunCount());
+    slf2.setResult(null);
     
     assertTrue(tr.ranOnce());
   }
