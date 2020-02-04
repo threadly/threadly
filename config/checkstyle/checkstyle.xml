@@ -53,10 +53,6 @@
     <module name="AnonInnerLength">
       <property name="max" value="50"/>
     </module>
-    <module name="LineLength">
-      <property name="max" value="120"/>
-      <property name="tabWidth" value="2"/>
-    </module>
     <module name="MethodLength"/>
     <module name="ParameterNumber">
       <property name="max" value="10"/>
@@ -93,6 +89,10 @@
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
     </module>
     <module name="ModifierOrder"/>
+  </module>
+  <module name="LineLength">
+    <property name="max" value="120"/>
+    <property name="tabWidth" value="2"/>
   </module>
   <module name="JavadocPackage"/>
   <module name="FileLength"/>

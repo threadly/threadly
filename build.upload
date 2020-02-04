@@ -74,7 +74,7 @@ publishing {
             distribution = 'repo'
           }
         }
-   
+ 
         developers {
           developer {
             id = 'jent'
