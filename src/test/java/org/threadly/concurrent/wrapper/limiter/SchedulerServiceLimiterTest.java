@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
@@ -16,6 +15,7 @@ import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TestCallable;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 

@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestCondition.ConditionTimeoutException;
 import org.threadly.util.Clock;
@@ -22,17 +21,6 @@ public class TestRunnableTest extends ThreadlyTester {
   @After
   public void cleanup() {
     instance = null;
-  }
-  
-  @Test
-  public void constructorTest() {
-    assertEquals(0, instance.getRunCount());
-    assertFalse(instance.ranOnce());
-    assertFalse(instance.ranConcurrently());
-    assertEquals(0, instance.getRunDelayInMillis());
-    
-    instance = new TestRunnable(DELAY_TIME);
-    assertEquals(DELAY_TIME, instance.getRunDelayInMillis());
   }
   
   @Test
@@ -67,20 +55,6 @@ public class TestRunnableTest extends ThreadlyTester {
     long now = Clock.accurateForwardProgressingMillis();
     assertTrue(ttr.getDelayTillRun(2) <= now - start);
     assertTrue(ttr.getDelayTillRun(2) > ttr.getDelayTillFirstRun());
-  }
-  
-  @Test
-  public void runWithDelay() {
-    int runCount = TEST_QTY / 2;
-    instance.setRunDelayInMillis(DELAY_TIME);
-    
-    long startTime = Clock.accurateForwardProgressingMillis();
-    for (int i = 0; i < runCount; i++) {
-      instance.run();
-    }
-    long endTime = Clock.accurateForwardProgressingMillis();
-    
-    assertTrue(endTime - startTime >= ((DELAY_TIME * runCount)- ALLOWED_VARIANCE));
   }
   
   @Test

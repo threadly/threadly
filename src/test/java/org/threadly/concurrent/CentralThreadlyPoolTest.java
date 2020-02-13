@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.StringUtils;

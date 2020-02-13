@@ -10,11 +10,11 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
