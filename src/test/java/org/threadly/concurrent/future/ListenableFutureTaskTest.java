@@ -13,13 +13,13 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StackSuppressedRuntimeException;

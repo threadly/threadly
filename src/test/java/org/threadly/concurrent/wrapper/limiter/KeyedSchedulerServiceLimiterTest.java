@@ -5,11 +5,11 @@ import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.TestCallable;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.StringUtils;
 

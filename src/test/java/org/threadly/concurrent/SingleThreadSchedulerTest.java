@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;

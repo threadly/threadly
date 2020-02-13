@@ -38,12 +38,6 @@ public class TestConditionTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = RuntimeException.class)
-  public void defaultConstructorFail() {
-    TestCondition tc = new TestCondition();
-    tc.get();
-  }
-  
   @Test
   public void supplierPredicateTest() {
     Queue<String> values = new ArrayDeque<>(8);

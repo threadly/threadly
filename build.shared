@@ -5,7 +5,10 @@ repositories {
 }
 
 dependencies {
-  testImplementation group: 'junit', name: 'junit', version: '4.12'
+  testImplementation (
+    "junit:junit:4.12",
+    "org.threadly:threadly-test:0.1"
+  )
 }
 
 compileJava {
@@ -49,6 +52,13 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 task sourcesJar(type: Jar) {
   from sourceSets.main.allSource
   classifier = 'sources'
+}
+
+build.dependsOn("copyLibs");
+
+task copyLibs(type: Copy) {
+  into "$buildDir/dependencies/"
+  from configurations.testRuntimeClasspath
 }
 
 artifacts {

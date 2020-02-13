@@ -15,11 +15,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StringUtils;

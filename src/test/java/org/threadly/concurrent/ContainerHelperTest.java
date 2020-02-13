@@ -89,7 +89,6 @@ public class ContainerHelperTest extends ThreadlyTester {
   private static class TestRunnableContainer implements RunnableContainer, Runnable {
     private final Runnable r;
     
-    @SuppressWarnings("deprecation")
     private TestRunnableContainer(Runnable r) {
       this.r = r;
     }
@@ -109,7 +108,6 @@ public class ContainerHelperTest extends ThreadlyTester {
   private static class TestCallableContainer implements CallableContainer, Runnable {
     private final Callable<?> c;
 
-    @SuppressWarnings("deprecation")
     private TestCallableContainer(Callable<?> c) {
       this.c = c;
     }

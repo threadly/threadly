@@ -16,7 +16,7 @@ import org.threadly.concurrent.StartingThreadFactory;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.util.TestExceptionHandler;
 
-@SuppressWarnings({"javadoc", "deprecation"})
+@SuppressWarnings("javadoc")
 public class BlockingQueueConsumerTest extends ThreadlyTester {
    private SynchronousQueue<Object> queue;
    private TestAcceptor acceptor;

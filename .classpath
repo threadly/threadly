@@ -2,7 +2,12 @@
 <classpath>
 	<classpathentry kind="src" output="build/classes/test" path="src/test/java"/>
 	<classpathentry kind="src" output="build/classes/main" path="src/main/java"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="build/dependencies/threadly-test-0.1.jar"/>
 	<classpathentry kind="output" path="build/classes/bin"/>
 </classpath>
