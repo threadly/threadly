@@ -12,8 +12,11 @@ import org.threadly.util.Clock;
  * This structure is used extensively within threadly's own unit tests.  Please use those as 
  * examples using this class.
  * 
+ * @deprecated Now provided by org.threadly:threadly-test:0,1 artifact
+ * 
  * @since 1.0.0
  */
+@Deprecated
 public class TestRunnable implements Runnable {
   protected static final int DEFAULT_TIMEOUT_PER_RUN = 10 * 1000;
   protected static final int RUN_CONDITION_POLL_INTERVAL = 20;

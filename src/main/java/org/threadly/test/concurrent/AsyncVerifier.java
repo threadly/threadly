@@ -12,8 +12,11 @@ import org.threadly.util.Clock;
  * This class also provides a way to control the flow of a unit test by blocking main test thread 
  * until {@link #signalComplete()} is called from the other thread.
  * 
+ * @deprecated Now provided by org.threadly:threadly-test:0,1 artifact
+ * 
  * @since 1.0.0
  */
+@Deprecated
 public class AsyncVerifier {
   protected static final int DEFAULT_TIMEOUT = 10_000;
   

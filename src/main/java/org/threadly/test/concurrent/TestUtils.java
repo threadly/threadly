@@ -5,8 +5,11 @@ import org.threadly.util.Clock;
 /**
  * Generic tools to be used in unit testing.
  * 
+ * @deprecated Now provided by org.threadly:threadly-test:0,1 artifact
+ * 
  * @since 1.0.0
  */
+@Deprecated
 public class TestUtils {
   /**
    * Since sleeps are sometimes necessary, this makes an easy way to ignore InterruptedException's.

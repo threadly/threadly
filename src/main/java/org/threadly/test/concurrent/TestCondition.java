@@ -16,8 +16,11 @@ import org.threadly.util.Clock;
  * This tool is used often within threadly's own unit tests.  Please use those as examples using 
  * this class.
  * 
+ * @deprecated Now provided by org.threadly:threadly-test:0,1 artifact
+ * 
  * @since 1.0.0
  */
+@Deprecated
 public class TestCondition {
   protected static final int DEFAULT_POLL_INTERVAL = 10;
   protected static final int DEFAULT_TIMEOUT = 10_000;

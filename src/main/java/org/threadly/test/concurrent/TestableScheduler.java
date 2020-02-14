@@ -20,8 +20,11 @@ import org.threadly.util.ExceptionHandler;
  * from sub tasks will block (possibly forever).  The call to {@link #tick()} will not unblock 
  * till there is no more work for the scheduler to currently handle.
  * 
+ * @deprecated Now provided by org.threadly:threadly-test:0,1 artifact
+ * 
  * @since 2.0.0
  */
+@Deprecated
 public class TestableScheduler extends AbstractPriorityScheduler {
   private final InternalScheduler scheduler;
   private long nowInMillis;
