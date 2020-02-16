@@ -15,7 +15,6 @@ import org.threadly.concurrent.future.ListenableFuture;
  * @param <T> The result object type returned by this future
  */
 @SuppressWarnings("deprecation")
-public interface ListenableScheduledFuture<T> extends ScheduledFuture<T>, ListenableFuture<T>, 
-                                                      org.threadly.concurrent.future.ListenableScheduledFuture<T> {
+public interface ListenableScheduledFuture<T> extends ScheduledFuture<T>, ListenableFuture<T> {
   // nothing added here
 }

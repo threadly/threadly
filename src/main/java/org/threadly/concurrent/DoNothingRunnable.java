@@ -10,12 +10,9 @@ public final class DoNothingRunnable implements Runnable {
   
   /**
    * Constructs a new {@link DoNothingRunnable}.
-   * 
-   * @deprecated Please use {@link DoNothingRunnable#instance()} instead
    */
-  @Deprecated
-  public DoNothingRunnable() {
-    // nothing here by default
+  protected DoNothingRunnable() {
+    // nothing to construct
   }
 
   /**

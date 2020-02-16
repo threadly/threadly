@@ -30,67 +30,6 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   protected abstract ListenableFutureFactory makeListenableFutureFactory();
   
   @Test
-  @SuppressWarnings("deprecation")
-  public void addCallbackAlreadyDoneFutureTest() {
-    String result = StringUtils.makeRandomString(5);
-    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(result);
-    
-    TestFutureCallback tfc = new TestFutureCallback();
-    lf.addCallback(tfc);
-    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance());
-    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance(), 
-                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
-    
-    assertEquals(3, tfc.getCallCount());
-    assertTrue(result == tfc.getLastResult());
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void addCallbackExecutionExceptionAlreadyDoneTest() {
-    Exception failure = new Exception();
-    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
-    
-    TestFutureCallback tfc = new TestFutureCallback();
-    lf.addCallback(tfc);
-    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance());
-    lf.addCallback(tfc, SameThreadSubmitterExecutor.instance(), 
-                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
-    
-    assertEquals(3, tfc.getCallCount());
-    assertTrue(failure == tfc.getLastFailure());
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void addListenerAlreadyCanceledTest() {
-    ListenableFuture<?> lf = makeListenableFutureFactory().makeCanceled();
-    
-    TestRunnable tr = new TestRunnable();
-    lf.addListener(tr);
-    lf.addListener(tr, SameThreadSubmitterExecutor.instance());
-    lf.addListener(tr, SameThreadSubmitterExecutor.instance(), 
-                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
-
-    assertEquals(3, tr.getRunCount());
-  }
-  
-  @Test
-  @SuppressWarnings("deprecation")
-  public void addListenerExecutionExceptionAlreadyDoneTest() {
-    Exception failure = new Exception();
-    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(failure);
-
-    TestRunnable tr = new TestRunnable();
-    lf.addListener(tr);
-    lf.addListener(tr, SameThreadSubmitterExecutor.instance());
-    lf.addListener(tr, SameThreadSubmitterExecutor.instance(), 
-                   ListenableFuture.ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone);
-
-    assertEquals(3, tr.getRunCount());
-  }
-  
-  @Test
   public void callbackAlreadyDoneFutureTest() {
     String result = StringUtils.makeRandomString(5);
     ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(result);

@@ -5,7 +5,7 @@ import static org.junit.Assert.*;
 import java.util.concurrent.Callable;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;

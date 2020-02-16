@@ -18,10 +18,10 @@ public class RunnableCallableAdapterTest extends ThreadlyTester {
     assertTrue(result == rca.result);
   }
   
-  @SuppressWarnings({ "unused", "deprecation" })
+  @SuppressWarnings("unused")
   @Test (expected = IllegalArgumentException.class)
   public void constructorFail() {
-    new RunnableCallableAdapter<>(null);
+    new RunnableCallableAdapter<>(null, null);
     fail("Exception should have thrown");
   }
 

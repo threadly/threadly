@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.UnfairExecutor.TaskStripeGenerator;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 

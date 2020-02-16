@@ -15,11 +15,11 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StringUtils;
@@ -1309,132 +1309,6 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void immediateFailureFutureDontOptimizeListenerExecutorTest() throws InterruptedException, TimeoutException {
     ListenableFutureInterfaceTest.dontOptimizeDoneListenerExecutorTest(FutureUtils.immediateFailureFuture(null));
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullFirstRunInThreadTest() throws Exception {
-    int scheduleDelayMillis = 10;
-    TestableScheduler scheduler = new TestableScheduler();
-    Object result = new Object();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, scheduleDelayMillis, false, 
-                                                new Callable<Object>() {
-      private boolean first = true;
-      @Override
-      public Object call() throws Exception {
-        if (first) {
-          first = false;
-          return null;
-        } else {
-          return result;
-        }
-      }
-    });
-
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.advance(scheduleDelayMillis));
-    assertTrue(f.isDone());
-    assertTrue(result == f.get());
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullFirstRunOnSchedulerTest() throws Exception {
-    int scheduleDelayMillis = 10;
-    TestableScheduler scheduler = new TestableScheduler();
-    Object result = new Object();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, scheduleDelayMillis, true, 
-                                                new Callable<Object>() {
-      private boolean first = true;
-      @Override
-      public Object call() throws Exception {
-        if (first) {
-          first = false;
-          return null;
-        } else {
-          return result;
-        }
-      }
-    });
-
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.tick());  // first run async
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.advance(scheduleDelayMillis));
-    assertTrue(f.isDone());
-    assertTrue(result == f.get());
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullTaskFailureInThreadTest() throws InterruptedException {
-    TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new StackSuppressedRuntimeException();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, false, () -> { throw failure; });
-    
-    assertTrue(f.isDone());
-    try {
-      f.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() == failure);
-    }
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullTaskFailureOnSchedulerTest() throws InterruptedException {
-    TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new StackSuppressedRuntimeException();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, true, () -> { throw failure; });
-
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.tick());  // first run async
-    assertTrue(f.isDone());
-    try {
-      f.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() == failure);
-    }
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullTimeoutTest() throws Exception {
-    SingleThreadScheduler scheduler = new SingleThreadScheduler();
-    try {
-      @SuppressWarnings("deprecation")
-      ListenableFuture<?> f = 
-          FutureUtils.scheduleWhileTaskResultNull(scheduler, 2, true, () -> null, DELAY_TIME);
-      
-      assertNull(f.get(DELAY_TIME + 1_000, TimeUnit.MILLISECONDS));
-    } finally {
-      scheduler.shutdownNow();
-    }
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullCancelReturnedFutureTest() {
-    TestableScheduler scheduler = new TestableScheduler();
-    AtomicInteger runCount = new AtomicInteger();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, 1, false, () -> {
-          runCount.incrementAndGet();
-          return null;
-        });
-    
-    assertEquals(1, scheduler.advance(1));
-    int startCount = runCount.get();
-    f.cancel(false);
-    assertEquals(1, scheduler.advance(1));  // should be task realizing it was canceled
-    // verify task did not run
-    assertEquals(startCount, runCount.get());
-    assertEquals(0, scheduler.advance(100));  // should never run again
   }
   
   @Test
