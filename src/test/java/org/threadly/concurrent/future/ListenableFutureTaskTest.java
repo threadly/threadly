@@ -229,6 +229,21 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   @Test
+  public void flatMapReturnNullFail() throws InterruptedException {
+    try {
+      ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
+      ListenableFuture<Void> mappedLF = future.flatMap((o) -> null);
+      future.run();
+      mappedLF.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      assertTrue(cause instanceof NullPointerException);
+      assertTrue(cause.getMessage().startsWith(InternalFutureUtils.NULL_FUTURE_MAP_RESULT_ERROR_PREFIX));
+    }
+  }
+  
+  @Test
   public void mapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 55, 37);

@@ -448,6 +448,34 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     assertTrue(asyncSLF.isCancelled());
   }
   
+  @Test
+  public void flatMapReturnNullFail() throws InterruptedException {
+    try {
+      ListenableFuture<Void> mappedLF = slf.flatMap((o) -> null);
+      slf.setResult(null);
+      mappedLF.get(); // retrieve error state set from mapper
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      assertTrue(cause instanceof NullPointerException);
+      assertTrue(cause.getMessage().startsWith(InternalFutureUtils.NULL_FUTURE_MAP_RESULT_ERROR_PREFIX));
+    }
+  }
+  
+  @Test
+  public void flatMapFailureReturnNullFail() throws InterruptedException {
+    try {
+      ListenableFuture<?> mappedLF = slf.flatMapFailure(Exception.class, (o) -> null);
+      slf.setFailure(new Exception());
+      mappedLF.get(); // retrieve error state set from mapper
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      assertTrue(cause instanceof NullPointerException);
+      assertTrue(cause.getMessage().startsWith(InternalFutureUtils.NULL_FUTURE_MAP_RESULT_ERROR_PREFIX));
+    }
+  }
+  
   private static void verifyCancelationExceptionMessageOnGet(String msg, ListenableFuture<?> lf) throws InterruptedException {
     try {
       lf.get();

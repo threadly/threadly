@@ -28,6 +28,9 @@ import org.threadly.util.StackSuppressedRuntimeException;
  * @since 5.29
  */
 class InternalFutureUtils {
+  protected static final String NULL_FUTURE_MAP_RESULT_ERROR_PREFIX = 
+      "ListenableFuture flatMap mapper returned null (need future): ";
+  
   /**
    * Call to check if a listener or callback trying to execute on a done {@link ListenableFuture} 
    * should be invoked immediately on the calling thread rather than provided to the passed in 
@@ -149,7 +152,12 @@ class InternalFutureUtils {
                                                          null : cancelationMessageProvider.get());
       }
       try { // optimized path for already complete futures which we can now process in thread
-        return mapper.apply(sourceFuture.get());
+        ListenableFuture<RT> result = mapper.apply(sourceFuture.get());
+        if (result == null) {
+          return FutureUtils.immediateFailureFuture(
+                   new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+        }
+        return result;
       } catch (ExecutionException e) { // failure in getting result from future, transfer failure
         return FutureUtils.immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
@@ -171,6 +179,10 @@ class InternalFutureUtils {
           try {
             slf.setRunningThread(Thread.currentThread());
             ListenableFuture<? extends RT> mapFuture = mapper.apply(result);
+            if (mapFuture == null) {
+              slf.setFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+              return;
+            }
             slf.updateDelegateFuture(mapFuture);
             mapFuture.callback(slf, null, null);
             slf.setRunningThread(null); // may be processing async now
@@ -301,7 +313,12 @@ class InternalFutureUtils {
         if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
           try {
             String msg = cancelationMessageSupplier == null ? null : cancelationMessageSupplier.get();
-            return mapper.apply((TT)new CancellationException(msg));
+            ListenableFuture<RT> result = mapper.apply((TT)new CancellationException(msg));
+            if (result == null) {
+              return FutureUtils.immediateFailureFuture(
+                       new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+            }
+            return result;
           } catch (Throwable t) {
             return FutureUtils.immediateFailureFuture(t);
           }
@@ -315,7 +332,12 @@ class InternalFutureUtils {
       } catch (ExecutionException e) {
         if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
           try {
-            return mapper.apply((TT)e.getCause());
+            ListenableFuture<RT> result = mapper.apply((TT)e.getCause());
+            if (result == null) {
+              return FutureUtils.immediateFailureFuture(
+                        new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+            }
+            return result;
           } catch (Throwable t) {
             return FutureUtils.immediateFailureFuture(t);
           }
@@ -342,6 +364,10 @@ class InternalFutureUtils {
           try {
             slf.setRunningThread(Thread.currentThread());
             ListenableFuture<RT> mapFuture = mapper.apply((TT)t);
+            if (mapFuture == null) {
+              slf.setFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+              return;
+            }
             slf.updateDelegateFuture(mapFuture);
             mapFuture.callback(slf, null, null);
             slf.setRunningThread(null); // may be processing async now
