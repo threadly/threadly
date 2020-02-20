@@ -310,7 +310,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
     
-    assertTrue(profiler.dump(false).startsWith("Combined profile for all threads"));
+    assertTrue(profiler.dump(false, 1).startsWith("Combined profile for all threads"));
   }
   
   protected static void verifyDumpStr(String resultStr) {
@@ -321,7 +321,7 @@ public class ProfilerTest extends ThreadlyTester {
   }
   
   private void verifyDumpContains(String str) {
-    new TestCondition(() -> profiler.dump(false), (s) -> s.contains(str)).blockTillTrue();
+    new TestCondition(() -> profiler.dump(false, 1), (s) -> s.contains(str)).blockTillTrue();
   }
   
   @Test
@@ -332,7 +332,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
     
-    new TestCondition(() -> profiler.dump(false), 
+    new TestCondition(() -> profiler.dump(false, 1), 
                       (s) -> s.contains("PriorityScheduler idle thread (stack 1)") &&
                              s.contains("PriorityScheduler idle thread (stack 2)"))
         .blockTillTrue();

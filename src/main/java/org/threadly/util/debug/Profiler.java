@@ -368,7 +368,20 @@ public class Profiler {
    * @return The dumped results as a single String
    */
   public String dump() {
-    return dump(true);
+    return dump(true, 1);
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output stream.
+   * 
+   * @deprecated Use {@link #dump(boolean, int)} with a value of {@code 1}
+   * 
+   * @return The dumped results as a single String
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   */
+  @Deprecated
+  public String dump(boolean dumpIndividualThreads) {
+    return dump(dumpIndividualThreads, 1);
   }
   
   /**
@@ -376,10 +389,11 @@ public class Profiler {
    * 
    * @return The dumped results as a single String
    * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
-  public String dump(boolean dumpIndividualThreads) {
+  public String dump(boolean dumpIndividualThreads, int minimumStackWitnessCount) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    dump(new BufferedOutputStream(baos), dumpIndividualThreads);
+    dump(new BufferedOutputStream(baos), dumpIndividualThreads, minimumStackWitnessCount);
     
     return baos.toString();
   }
@@ -390,7 +404,20 @@ public class Profiler {
    * @param out OutputStream to write results to
    */
   public void dump(OutputStream out) {
-    dump(out, true);
+    dump(out, true, 1);
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output stream.
+   * 
+   * @deprecated Use {@link #dump(OutputStream, boolean, int)} with a value of {@code 1}
+   * 
+   * @param out OutputStream to write results to
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   */
+  @Deprecated
+  public void dump(OutputStream out, boolean dumpIndividualThreads) {
+    dump(out, dumpIndividualThreads, 1);
   }
   
   /**
@@ -398,9 +425,10 @@ public class Profiler {
    * 
    * @param out OutputStream to write results to
    * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
-  public void dump(OutputStream out, boolean dumpIndividualThreads) {
-    dump(new PrintStream(out, false), dumpIndividualThreads);
+  public void dump(OutputStream out, boolean dumpIndividualThreads, int minimumStackWitnessCount) {
+    dump(new PrintStream(out, false), dumpIndividualThreads, minimumStackWitnessCount);
   }
   
   /**
@@ -409,16 +437,30 @@ public class Profiler {
    * @param ps PrintStream to write results to
    */
   public void dump(PrintStream ps) {
-    dump(ps, true);
+    dump(ps, true, 1);
+  }
+  
+  /**
+   * Output all the currently collected statistics to the provided output stream.
+   * 
+   * @deprecated Use {@link #dump(PrintStream, boolean, int)} with a value of {@code 1}
+   * 
+   * @param ps PrintStream to write results to
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   */
+  @Deprecated
+  public void dump(PrintStream ps, boolean dumpIndividualThreads) {
+    dump(ps, dumpIndividualThreads, 1);
   }
   
   /**
    * Output all the currently collected statistics to the provided output stream.
    * 
    * @param ps PrintStream to write results to
-   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual mthreads is also dumped
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
-  public void dump(PrintStream ps, boolean dumpIndividualThreads) {
+  public void dump(PrintStream ps, boolean dumpIndividualThreads, int minimumStackWitnessCount) {
     pStore.dumpingThread = Thread.currentThread();
     try {
       Map<Trace, Integer> globalTraces = new HashMap<>();
@@ -433,7 +475,7 @@ public class Profiler {
         if (dumpIndividualThreads) {
           ps.println("Profile for thread: " + 
                         entry.getRight().threadNames() + ';' + entry.getLeft().threadId);
-          dumpTraces(entry.getRight().traceSet(), null, ps);
+          dumpTraces(entry.getRight().traceSet(), null, ps, minimumStackWitnessCount);
         }
         
         // add in this threads trace data to the global trace map
@@ -452,7 +494,7 @@ public class Profiler {
       // log out global data
       if (globalTraces.size() > 1 || ! dumpIndividualThreads) {
         ps.println("Combined profile for all threads....");
-        dumpTraces(globalTraces.keySet(), globalTraces, ps);
+        dumpTraces(globalTraces.keySet(), globalTraces, ps, minimumStackWitnessCount);
       }
       
       ps.flush();
@@ -467,9 +509,11 @@ public class Profiler {
    * @param traces Set to examine traces to dump statistics about
    * @param globalCount {@code true} to examine the global counts of the traces
    * @param out Output to dump results to
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
   private static void dumpTraces(Set<Trace> traces, 
-                                 final Map<Trace, Integer> globalCounts, PrintStream out) {
+                                 final Map<Trace, Integer> globalCounts, PrintStream out, 
+                                 int minimumStackWitnessCount) {
     Map<Function, Function> methods = new HashMap<>();
     Trace[] traceArray = traces.toArray(new Trace[traces.size()]);
     int total = 0;
@@ -549,6 +593,9 @@ public class Profiler {
         count = globalCounts.get(t);
       } else {
         count = t.getThreadCount();
+      }
+      if (count < minimumStackWitnessCount) {
+        break;
       }
       out.println(count + " time(s):");
 
