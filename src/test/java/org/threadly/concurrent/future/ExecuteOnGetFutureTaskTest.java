@@ -39,6 +39,16 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   }
   
   @Test
+  public void executeInvokedByGetFailureTest() throws InterruptedException {
+    TestRunnable tr = new TestRunnable();
+    ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<>(tr);
+    
+    assertNull(geft.getFailure());
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
   public void executeOnceTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRunnable();
     ExecuteOnGetFutureTask<?> geft = new ExecuteOnGetFutureTask<>(tr);
@@ -46,6 +56,7 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
     geft.get();
     geft.run();
     geft.get(); // multiple get calls should not execute again either
+    geft.getFailure();
     geft.run();
     
     assertTrue(tr.ranOnce());

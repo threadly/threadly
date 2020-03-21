@@ -908,6 +908,11 @@ class InternalFutureUtils {
     }
 
     @Override
+    public boolean isCompletedExceptionally() {
+      return true;
+    }
+
+    @Override
     public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                         ListenerOptimizationStrategy optimize) {
       CancellationException e = new CancellationException(cancelMessage);
@@ -941,13 +946,23 @@ class InternalFutureUtils {
     }
 
     @Override
-    public T get() throws ExecutionException {
+    public T get() {
       throw new CancellationException(cancelMessage);
     }
 
     @Override
-    public T get(long timeout, TimeUnit unit) throws ExecutionException {
+    public T get(long timeout, TimeUnit unit) {
       throw new CancellationException(cancelMessage);
+    }
+
+    @Override
+    public Throwable getFailure() {
+      return new CancellationException(cancelMessage);
+    }
+
+    @Override
+    public Throwable getFailure(long timeout, TimeUnit unit) {
+      return new CancellationException(cancelMessage);
     }
   }
 }

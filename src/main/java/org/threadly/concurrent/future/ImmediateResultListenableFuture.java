@@ -143,6 +143,11 @@ public class ImmediateResultListenableFuture<T> extends AbstractCompletedListena
   public ImmediateResultListenableFuture(T result) {
     this.result = result;
   }
+
+  @Override
+  public boolean isCompletedExceptionally() {
+    return false;
+  }
   
   @Override
   public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
@@ -225,5 +230,15 @@ public class ImmediateResultListenableFuture<T> extends AbstractCompletedListena
   @Override
   public T get(long timeout, TimeUnit unit) {
     return result;
+  }
+
+  @Override
+  public Throwable getFailure() {
+    return null;
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) {
+    return null;
   }
 }

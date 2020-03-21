@@ -71,4 +71,18 @@ public final class UnsafeAccess {
                                     "...Could not set Field to public: " + f, e);
     }
   }
+  
+  /**
+   * Takes in a {@link Method} and sets the accessibility to be public.
+   * 
+   * @param m Method to be modified
+   */
+  public static void setMethodToPublic(Method m) {
+    try {
+      SET_ACCESSIBLE.invoke(m, true);
+    } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+      throw new RuntimeException("Unsupported JVM version, please update threadly or file an issue" + 
+                                    "...Could not set Field to public: " + m, e);
+    }
+  }
 }

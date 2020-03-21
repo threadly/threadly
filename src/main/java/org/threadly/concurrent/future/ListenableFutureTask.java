@@ -1,9 +1,14 @@
 package org.threadly.concurrent.future;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.threadly.concurrent.CallableContainer;
 import org.threadly.concurrent.RunnableCallableAdapter;
@@ -23,20 +28,36 @@ public class ListenableFutureTask<T> extends FutureTask<T>
                                      implements ListenableRunnableFuture<T>, 
                                                 CallableContainer<T> {
   private static final Field RUNNING_THREAD_FIELD;
+  private static final Field STATE_FIELD;
+  private static final Field OUTCOME_FIELD;
+  private static final Method AWAIT_DONE_METHOD;
+  private static final int STATE_ERROR_VALUE = 3;
+  private static final int STATE_CANCEL_THRESHOLD_VALUE = 4;
   
   static {
     Field runningThreadField = null;
+    Field stateField = null;
+    Field outcomeField = null;
+    Method awaitDoneMethod = null;
     try {
       runningThreadField = FutureTask.class.getDeclaredField("runner");
       UnsafeAccess.setFieldToPublic(runningThreadField);
-    } catch (NoSuchFieldException | SecurityException e) {
+      stateField = FutureTask.class.getDeclaredField("state");
+      UnsafeAccess.setFieldToPublic(stateField);
+      outcomeField = FutureTask.class.getDeclaredField("outcome");
+      UnsafeAccess.setFieldToPublic(outcomeField);
+      awaitDoneMethod = FutureTask.class.getDeclaredMethod("awaitDone", boolean.class, long.class);
+      UnsafeAccess.setMethodToPublic(awaitDoneMethod);
+    } catch (NoSuchFieldException | NoSuchMethodException | SecurityException e) {
       ExceptionUtils.handleException(
-          new RuntimeException("Unsupported JVM version, please update threadly or file an issue" + 
-                                 "...Can not get running thread reference", e));
+          new RuntimeException("Unsupported JVM version, please update threadly or file an issue", e));
     } catch (RuntimeException e) {  // wrapped exception thrown from UnsafeAccess
       ExceptionUtils.handleException(e);
     } finally {
       RUNNING_THREAD_FIELD = runningThreadField;
+      STATE_FIELD = stateField;
+      OUTCOME_FIELD = outcomeField;
+      AWAIT_DONE_METHOD = awaitDoneMethod;
     }
   }
   
@@ -162,6 +183,65 @@ public class ListenableFutureTask<T> extends FutureTask<T>
           new StackSuppressedRuntimeException("Stack access not supported, returning null" + 
                                                 "...Please see first exception for more details", e));
       return null;
+    }
+  }
+  
+
+  @Override
+  public boolean isCompletedExceptionally() {
+    try {
+      int state = STATE_FIELD.getInt(this);
+      return state >= STATE_ERROR_VALUE;
+    } catch (IllegalArgumentException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to read JVM FutureTask state, please upgrade threadly", e);
+    }
+  }
+  
+  private int awaitDoneState(long awaitNanos) throws IllegalAccessException, IllegalArgumentException, InterruptedException {
+    try {
+      return ((Integer)AWAIT_DONE_METHOD.invoke(this, awaitNanos > 0, awaitNanos)).intValue();
+    } catch (InvocationTargetException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof InterruptedException) {
+        throw (InterruptedException)cause;
+      } else {
+        throw new RuntimeException(cause);
+      }
+    }
+  }
+
+  @Override
+  public Throwable getFailure() throws InterruptedException {
+    try {
+      int state = awaitDoneState(0L);
+      if (state == STATE_ERROR_VALUE) {
+        return (Throwable)OUTCOME_FIELD.get(this);
+      } else if (state >= STATE_CANCEL_THRESHOLD_VALUE) {
+        return new CancellationException();
+      } else {
+        return null;
+      }
+    } catch (IllegalArgumentException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to read JVM FutureTask outcome", e);
+    }
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
+                                                                  TimeoutException {
+    try {
+      int state = awaitDoneState(unit.toNanos(timeout));
+      if (state <= 1) {
+        throw new TimeoutException();
+      } else if (state == STATE_ERROR_VALUE) {
+        return (Throwable)OUTCOME_FIELD.get(this);
+      } else if (state >= STATE_CANCEL_THRESHOLD_VALUE) {
+        return new CancellationException();
+      } else {
+        return null;
+      }
+    } catch (IllegalArgumentException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to read JVM FutureTask outcome", e);
     }
   }
 }

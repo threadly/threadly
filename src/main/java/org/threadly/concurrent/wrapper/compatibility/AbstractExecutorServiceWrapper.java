@@ -308,6 +308,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     }
 
     @Override
+    public boolean isCompletedExceptionally() {
+      return futureImp.isCompletedExceptionally();
+    }
+
+    @Override
     public T get() throws InterruptedException, ExecutionException {
       return futureImp.get();
     }
@@ -316,6 +321,17 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     public T get(long timeout, TimeUnit unit) throws InterruptedException, 
                                                      ExecutionException, TimeoutException {
       return futureImp.get(timeout, unit);
+    }
+
+    @Override
+    public Throwable getFailure() throws InterruptedException {
+      return futureImp.getFailure();
+    }
+
+    @Override
+    public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
+                                                                    TimeoutException {
+      return futureImp.getFailure(timeout, unit);
     }
 
     @Override

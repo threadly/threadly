@@ -69,10 +69,29 @@ public class CancelDebuggingListenableFuture<T> implements ListenableFuture<T> {
       throw e;
     }
   }
+
+  @Override
+  public Throwable getFailure() throws InterruptedException {
+    Throwable result = delegateFuture.getFailure();
+    if (result instanceof CancellationException) {
+      prepareCancellationException(result);
+    }
+    return result;
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
+                                                                  TimeoutException {
+    Throwable result = delegateFuture.getFailure(timeout, unit);
+    if (result instanceof CancellationException) {
+      prepareCancellationException(result);
+    }
+    return result;
+  }
   
-  private void prepareCancellationException(CancellationException e) {
+  private void prepareCancellationException(Throwable t) {
     if (cancelStack != null) {
-      Throwable rootCause = ExceptionUtils.getRootCause(e);
+      Throwable rootCause = ExceptionUtils.getRootCause(t);
       rootCause.initCause(new FutureProcessingStack(cancelStack));
     }
   }
@@ -85,6 +104,11 @@ public class CancelDebuggingListenableFuture<T> implements ListenableFuture<T> {
   @Override
   public boolean isDone() {
     return delegateFuture.isDone();
+  }
+
+  @Override
+  public boolean isCompletedExceptionally() {
+    return delegateFuture.isCompletedExceptionally();
   }
 
   @Override

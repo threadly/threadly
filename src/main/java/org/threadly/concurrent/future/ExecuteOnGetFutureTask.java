@@ -76,4 +76,11 @@ public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
     
     return super.get();
   }
+  
+  @Override
+  public Throwable getFailure() throws InterruptedException {
+    executeIfNotStarted();
+    
+    return super.getFailure();
+  }
 }

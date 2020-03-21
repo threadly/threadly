@@ -19,6 +19,7 @@ import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.Clock;
+import org.threadly.util.StackSuppressedRuntimeException;
 import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
@@ -56,7 +57,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test (expected = IllegalStateException.class)
   public void setFailureResultFail() {
-    slf.setFailure(null);
+    slf.setFailure(new StackSuppressedRuntimeException());
     slf.setResult(null);
     fail("Should have thrown exception");
   }
@@ -64,7 +65,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void setFailureResultTest() {
     slf = new SettableListenableFuture<>(false);
-    assertTrue(slf.setFailure(null));
+    assertTrue(slf.setFailure(new StackSuppressedRuntimeException()));
     assertFalse(slf.setResult(null));
   }
   
@@ -84,7 +85,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test (expected = IllegalStateException.class)
   public void setFailureFailureFail() {
-    slf.setFailure(null);
+    slf.setFailure(new StackSuppressedRuntimeException());
     slf.setFailure(null);
     fail("Should have thrown exception");
   }
@@ -92,7 +93,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void setFailureFailureTest() {
     slf = new SettableListenableFuture<>(false);
-    assertTrue(slf.setFailure(null));
+    assertTrue(slf.setFailure(new StackSuppressedRuntimeException()));
     assertFalse(slf.setFailure(null));
   }
   
@@ -124,6 +125,29 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     assertFalse(slf.setFailure(null));
   }
   
+  @Test
+  public void isCompletedExceptionallyWithFailureTest() {
+    assertFalse(slf.isCompletedExceptionally());
+    slf.setFailure(new StackSuppressedRuntimeException());
+    assertTrue(slf.isCompletedExceptionally());
+  }
+  
+  @Test
+  public void isCompletedExceptionallyWithResultTest() {
+    slf.setResult(null);
+    assertFalse(slf.isCompletedExceptionally());
+  }
+  
+  @Test
+  public void isDoneByCancelTest() {
+    assertFalse(slf.isDone());
+    
+    assertTrue(slf.cancel(false));
+    
+    assertTrue(slf.isDone());
+    assertTrue(slf.isCompletedExceptionally());
+  }
+  
   @Test (expected = IllegalStateException.class)
   public void clearResultFail() {
     slf.clearResult();
@@ -140,7 +164,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test (expected = IllegalStateException.class)
   public void getAfterClearFailureResultFail() throws InterruptedException, ExecutionException {
-    slf.setFailure(null);
+    slf.setFailure(new StackSuppressedRuntimeException());
     slf.clearResult();
     slf.get();
     fail("Should have thrown exception");
@@ -161,7 +185,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     slf.listener(tr);
     
     if (failure) {
-      slf.setFailure(null);
+      slf.setFailure(new StackSuppressedRuntimeException());
     } else {
       slf.setResult(null);
     }
@@ -204,7 +228,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void callbackExecutionExceptionTest() {
-    Throwable failure = new Exception();
+    Throwable failure = new StackSuppressedRuntimeException();
     TestFutureCallback tfc = new TestFutureCallback();
     slf.callback(tfc);
     
@@ -218,7 +242,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void failureCallbackExecutionExceptionTest() {
-    Throwable failure = new Exception();
+    Throwable failure = new StackSuppressedRuntimeException();
     TestFutureCallback tfc = new TestFutureCallback();
     slf.failureCallback(tfc::handleFailure);
     
@@ -243,7 +267,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   
   @Test
   public void addAsCallbackFailureTest() throws InterruptedException {
-    Exception e = new Exception();
+    Exception e = new StackSuppressedRuntimeException();
     ListenableFuture<String> failureFuture = new ImmediateFailureListenableFuture<>(e);
     
     failureFuture.callback(slf);
@@ -303,6 +327,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
     assertTrue(slf.isDone());
   }
   
+  @Override
   @Test
   public void getResultTest() throws InterruptedException, ExecutionException {
     final String testResult = StringUtils.makeRandomString(5);
@@ -382,7 +407,7 @@ public class SettableListenableFutureTest extends ListenableFutureInterfaceTest 
   @Test
   public void getWithTimeoutExecutionExceptionTest() throws InterruptedException, 
                                                             TimeoutException {
-    Exception failure = new Exception();
+    Exception failure = new StackSuppressedRuntimeException();
     slf.setFailure(failure);
     
     try {

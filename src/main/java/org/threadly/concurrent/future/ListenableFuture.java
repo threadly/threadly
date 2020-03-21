@@ -6,6 +6,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -59,6 +61,40 @@ public interface ListenableFuture<T> extends Future<T> {
      */
     SingleThreadIfExecutorMatchOrDone
   }
+  
+  /**
+   * Returns {@code true} if the future is both done and has completed with an error or was 
+   * canceled.  If this returns {@code true} the {@link Throwable} responsible for the error can 
+   * be retrieved using {@link #getFailure()};
+   * 
+   * @return {@code true} if this ListenableFuture completed by a thrown Exception or was canceled
+   */
+  public boolean isCompletedExceptionally();
+  
+  /**
+   * Similar to {@link #get()} except instead of providing a result, this will provide a thrown 
+   * exception if {@link #isCompletedExceptionally()} returns {@code true}.  If the future has not 
+   * completed yet this function will block until completion.  If the future completed normally, 
+   * this will return {@code null}.
+   * 
+   * @return Throwable thrown in computing the future or {@code null} if completed normally
+   * @throws InterruptedException If the current thread was interrupted while blocking
+   */
+  public Throwable getFailure() throws InterruptedException;
+  
+  /**
+   * Similar to {@link #get(long, TimeUnit)} except instead of providing a result, this will 
+   * provide a thrown exception if {@link #isCompletedExceptionally()} returns {@code true}.  If 
+   * the future has not completed yet this function will block until completion.  If the future 
+   * completed normally, this will return {@code null}.
+   * 
+   * @param timeout The maximum time to wait
+   * @param unit The time unit of the timeout argument
+   * @return Throwable thrown in computing the future or {@code null} if completed normally
+   * @throws InterruptedException If the current thread was interrupted while blocking
+   * @throws TimeoutException If the timeout was reached before the future completed
+   */
+  public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
   
   /**
    * Transform this future's result into another result by applying the provided mapper function.  

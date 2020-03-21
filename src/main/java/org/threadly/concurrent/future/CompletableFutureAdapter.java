@@ -3,6 +3,8 @@ package org.threadly.concurrent.future;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class helps in converting between threadly's {@link ListenableFuture} and java's provided 
@@ -93,6 +95,17 @@ public class CompletableFutureAdapter {
     @Override
     public StackTraceElement[] getRunningStackTrace() {
       return lf.getRunningStackTrace();
+    }
+
+    @Override
+    public Throwable getFailure() throws InterruptedException {
+      return lf.getFailure();
+    }
+
+    @Override
+    public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
+                                                                    TimeoutException {
+      return lf.getFailure(timeout, unit);
     }
   }
 

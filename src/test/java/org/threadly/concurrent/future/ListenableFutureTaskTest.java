@@ -196,6 +196,29 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     assertTrue(failure == tfc.getLastFailure());
   }
   
+  @Test
+  public void isCompletedExceptionallyTest() {
+    TestRunnable tr = new TestRuntimeFailureRunnable();
+    
+    ListenableFutureTask<Object> future = makeFutureTask(tr, null);
+    
+    assertFalse(future.isCompletedExceptionally());
+    future.run();
+    assertTrue(future.isCompletedExceptionally());
+  }
+  
+  @Test
+  public void isDoneByCancelTest() {
+    ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
+    
+    assertFalse(future.isDone());
+    
+    assertTrue(future.cancel(false));
+    
+    assertTrue(future.isDone());
+    assertTrue(future.isCompletedExceptionally());
+  }
+  
   @Test (expected = ExecutionException.class)
   public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
     TestRunnable tr = new TestRuntimeFailureRunnable();

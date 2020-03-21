@@ -37,6 +37,11 @@ public class TestFutureImp implements ListenableFuture<Object> {
   }
 
   @Override
+  public boolean isCompletedExceptionally() {
+    return canceled;
+  }
+
+  @Override
   public Object get() throws ExecutionException {
     if (canceled) {
       throw new CancellationException();
@@ -45,11 +50,27 @@ public class TestFutureImp implements ListenableFuture<Object> {
   }
 
   @Override
-  public Object get(long timeout, TimeUnit unit) throws TimeoutException {
+  public Object get(long timeout, TimeUnit unit) throws ExecutionException, TimeoutException {
     if (canceled) {
       throw new CancellationException();
     }
     return result;
+  }
+
+  @Override
+  public Throwable getFailure() {
+    if (canceled) {
+      return new CancellationException();
+    }
+    return null;
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) throws TimeoutException {
+    if (canceled) {
+      return new CancellationException();
+    }
+    return null;
   }
 
   @Override

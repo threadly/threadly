@@ -34,6 +34,11 @@ public class ImmediateFailureListenableFuture<T> extends AbstractCompletedListen
   }
 
   @Override
+  public boolean isCompletedExceptionally() {
+    return true;
+  }
+
+  @Override
   public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                       ListenerOptimizationStrategy optimize) {
     if (invokeCompletedDirectly(executor, optimize)) {
@@ -72,5 +77,15 @@ public class ImmediateFailureListenableFuture<T> extends AbstractCompletedListen
   @Override
   public T get(long timeout, TimeUnit unit) throws ExecutionException {
     throw new ExecutionException(failure);
+  }
+
+  @Override
+  public Throwable getFailure() {
+    return failure;
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) {
+    return failure;
   }
 }

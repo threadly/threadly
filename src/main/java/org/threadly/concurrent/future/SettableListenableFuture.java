@@ -450,6 +450,11 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
   public boolean isDone() {
     return done;
   }
+
+  @Override
+  public boolean isCompletedExceptionally() {
+    return failure != null || cancelStateMessage != null;
+  }
   
   @Override
   protected String getCancellationExceptionMessage() {
@@ -459,13 +464,36 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
     }
     return result;
   }
+  
+  /**
+   * Wait till the future has completed.  MUST synchronize on {@code resultLock} before invoking.
+   * 
+   * @throws InterruptedException Thrown if thread is interrupted while waiting
+   */
+  private void awaitDone() throws InterruptedException {
+    while (! done) {
+      resultLock.wait();
+    }
+  }
+  
+  /**
+   * Wait till the future has completed.  MUST synchronize on {@code resultLock} before invoking.
+   * 
+   * @param timeoutMillis
+   * @throws InterruptedException Thrown if thread is interrupted while waiting
+   */
+  private void awaitDone(long startTime, long timeoutMillis) throws InterruptedException {
+    long remainingInMs;
+    while (! done && 
+           (remainingInMs = timeoutMillis - (Clock.accurateForwardProgressingMillis() - startTime)) > 0) {
+      resultLock.wait(remainingInMs);
+    }
+  }
 
   @Override
   public T get() throws InterruptedException, ExecutionException {
     synchronized (resultLock) {
-      while (! done) {
-        resultLock.wait();
-      }
+      awaitDone();
       
       if (failure != null) {
         throw new ExecutionException(failure);
@@ -485,11 +513,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
     long startTime = Clock.accurateForwardProgressingMillis();
     long timeoutInMs = unit.toMillis(timeout);
     synchronized (resultLock) {
-      long remainingInMs;
-      while (! done && 
-             (remainingInMs = timeoutInMs - (Clock.accurateForwardProgressingMillis() - startTime)) > 0) {
-        resultLock.wait(remainingInMs);
-      }
+      awaitDone(startTime, timeoutInMs);
       
       if (failure != null) {
         throw new ExecutionException(failure);
@@ -503,6 +527,33 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
       } else {
         throw new TimeoutException();
       }
+    }
+  }
+
+  @Override
+  public Throwable getFailure() throws InterruptedException {
+    synchronized (resultLock) {
+      awaitDone();
+
+      if (cancelStateMessage != null) {
+        return new CancellationException(getCancellationExceptionMessage());
+      }
+      return failure;
+    }
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
+                                                                  TimeoutException {
+    long startTime = Clock.accurateForwardProgressingMillis();
+    long timeoutInMs = unit.toMillis(timeout);
+    synchronized (resultLock) {
+      awaitDone(startTime, timeoutInMs);
+
+      if (cancelStateMessage != null) {
+        return new CancellationException(getCancellationExceptionMessage());
+      }
+      return failure;
     }
   }
 
