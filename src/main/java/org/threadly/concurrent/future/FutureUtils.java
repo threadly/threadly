@@ -692,9 +692,7 @@ public class FutureUtils extends InternalFutureUtils {
             resultFuture.cancelRegardlessOfDelegateFutureState(false);
           } else {
             try {
-              f.get();
-            } catch (ExecutionException e) {
-              resultFuture.setFailure(e.getCause());
+              resultFuture.setFailure(f.getFailure());
             } catch (InterruptedException e) {  // should not be possible
               throw new RuntimeException(e);
             }
@@ -853,15 +851,19 @@ public class FutureUtils extends InternalFutureUtils {
             continue;
           }
           try {
-            results.add(f.get());
-          } catch (ExecutionException e) {
-            if (! ignoreFailedFutures) {
-              result.setFailure(e.getCause());
-              return;
+            Throwable failure = f.getFailure();
+            if (failure != null) {
+              if (! ignoreFailedFutures) {
+                result.setFailure(failure);
+                return;
+              } else {
+                continue;
+              }
             }
+            results.add(f.get());
           } catch (Exception e) {
-            // should not be possible, future is done, cancel checked first, and ExecutionException caught
-            result.setFailure(new Exception(e));
+            // should not be possible, future is done, cancel checked first, and failure also checked
+            result.setFailure(e);
             return;
           }
         }
@@ -1413,13 +1415,12 @@ public class FutureUtils extends InternalFutureUtils {
             }
             ListenableFuture<? extends T> lf = asyncTask.call();
             if (lf.isDone()) {  // prevent StackOverflow when already done futures are returned
-              try {
+              if (lf.isCompletedExceptionally()) {
+                resultFuture.setFailure(lf.getFailure());
+                return;
+              } else {
                 result = lf.get();
                 continue;
-              } catch (ExecutionException e) {
-                // uncaught exception already handled, don't handle twice
-                resultFuture.setFailure(e.getCause());
-                return;
               }
             } else {
               resultFuture.updateDelegateFuture(lf);
@@ -1459,11 +1460,12 @@ public class FutureUtils extends InternalFutureUtils {
         return new ImmediateCanceledListenableFuture<>(null);
       }
       try {
-        if (! doneTest.test(startingFuture.get())) {
+        Throwable failure = startingFuture.getFailure();
+        if (failure != null) {
+          return immediateFailureFuture(failure);
+        } else if (! doneTest.test(startingFuture.get())) {
           return immediateResultFuture(startingFuture.get());
         }
-      } catch (ExecutionException e) {
-        return immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
         ExceptionUtils.handleException(t);
         return immediateFailureFuture(t);

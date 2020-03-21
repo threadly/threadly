@@ -197,7 +197,8 @@ public class ListenableFutureTask<T> extends FutureTask<T>
     }
   }
   
-  private int awaitDoneState(long awaitNanos) throws IllegalAccessException, IllegalArgumentException, InterruptedException {
+  private int awaitDoneState(long awaitNanos) throws IllegalAccessException, 
+                                                     IllegalArgumentException, InterruptedException {
     try {
       return ((Integer)AWAIT_DONE_METHOD.invoke(this, awaitNanos > 0, awaitNanos)).intValue();
     } catch (InvocationTargetException e) {

@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 import org.threadly.concurrent.ReschedulingOperation;
@@ -222,14 +221,15 @@ public abstract class FlowControlledProcessor<T> {
             ListenableFuture<? extends T> lf;
             while ((lf = nextReadyFuture()) != null) {
               try {
+                Throwable failure = lf.getFailure();
+                if (failure != null) {
+                  handleInOrderFailure(failure);
+                  continue;
+                }
                 try {
                   FlowControlledProcessor.this.handleResult(lf.get());
-                } catch (ExecutionException e) {
-                  handleInOrderFailure(e.getCause());
-                } catch (CancellationException e) {
-                  handleInOrderFailure(e);
-                } catch (InterruptedException e) {
-                  // not possible
+                } catch (ExecutionException | InterruptedException e) {
+                  // should not be possible with above checks
                   throw new RuntimeException(e);
                 }
               } catch (Throwable t) {

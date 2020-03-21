@@ -713,23 +713,25 @@ public interface ListenableFuture<T> extends Future<T> {
     if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       // no need to construct anything, just invoke directly
       try {
-        callback.handleResult(get());
-      } catch (ExecutionException e) {
-        callback.handleFailure(e.getCause());
-      } catch (CancellationException e) {
-        callback.handleFailure(e);
-      } catch (InterruptedException e) { // should not be possible
+        Throwable failure = getFailure();
+        if (failure != null) {
+          callback.handleFailure(failure);
+        } else {
+          callback.handleResult(get());
+        }
+      } catch (ExecutionException | InterruptedException e) { // should not be possible
         callback.handleFailure(e);
       }
     } else {
       listener(() -> {
         try {
-          callback.handleResult(get());
-        } catch (ExecutionException e) {
-          callback.handleFailure(e.getCause());
-        } catch (CancellationException e) {
-          callback.handleFailure(e);
-        } catch (InterruptedException e) { // should not be possible
+          Throwable failure = getFailure();
+          if (failure != null) {
+            callback.handleFailure(failure);
+          } else {
+            callback.handleResult(get());
+          }
+        } catch (ExecutionException | InterruptedException e) { // should not be possible
           callback.handleFailure(e);
         }
       }, executor, optimizeExecution);
@@ -799,24 +801,20 @@ public interface ListenableFuture<T> extends Future<T> {
   default ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
                                              ListenerOptimizationStrategy optimizeExecution) {
     if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
-      if (! isCancelled()) {
+      if (! isCompletedExceptionally()) {
         // no need to construct anything, just invoke directly
         try {
           callback.accept(get());
-        } catch (ExecutionException e) {
-          // ignored
-        } catch (InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) {
           // should not be possible
         }
       }
     } else {
       listener(() -> {
-        if (! isCancelled()) {
+        if (! isCompletedExceptionally()) {
           try {
             callback.accept(get());
-          } catch (ExecutionException e) {
-            // ignored
-          } catch (InterruptedException e) {
+          } catch (ExecutionException | InterruptedException e) {
             // should not be possible
           }
         }
@@ -892,23 +890,19 @@ public interface ListenableFuture<T> extends Future<T> {
     if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       // no need to construct anything, just invoke directly
       try {
-        get();  // ignore result if provided
-      } catch (ExecutionException e) {
-        callback.accept(e.getCause());
-      } catch (CancellationException e) {
-        callback.accept(e);
-      } catch (InterruptedException e) { // should not be possible
+        if (isCompletedExceptionally()) {
+          callback.accept(getFailure());
+        }
+      } catch (CancellationException | InterruptedException e) { // should not be possible
         callback.accept(e);
       }
     } else {
       listener(() -> {
         try {
-          get();  // ignore result if provided
-        } catch (ExecutionException e) {
-          callback.accept(e.getCause());
-        } catch (CancellationException e) {
-          callback.accept(e);
-        } catch (InterruptedException e) { // should not be possible
+          if (isCompletedExceptionally()) {
+            callback.accept(getFailure());
+          }
+        } catch (CancellationException | InterruptedException e) { // should not be possible
           callback.accept(e);
         }
       }, executor, optimizeExecution);

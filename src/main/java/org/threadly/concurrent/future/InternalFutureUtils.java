@@ -548,7 +548,7 @@ class InternalFutureUtils {
         ListenableFuture<? extends T> f = it.next();
         futures.add(f);
         attachFutureDoneTask(f, count++);
-        }
+      }
       
       init(count);
       
@@ -793,21 +793,8 @@ class InternalFutureUtils {
 
     @Override
     protected void handleFutureDone(ListenableFuture<? extends T> f, int index) {
-      if (f.isCancelled()) {
-        // detect canceled conditions before an exception would have otherwise thrown
-        // canceled futures are ignored
-        return;
-      }
-      try {
-        f.get();
+      if (! f.isCompletedExceptionally()) {
         addResult(f, index);  // if no exception thrown, add future
-      } catch (ExecutionException e) {
-        // ignored
-      } catch (CancellationException e) {
-        // should not be possible due check at start on what should be an already done future
-        throw e;
-      } catch (InterruptedException e) {
-        // should not be possible since this should only be called once the future is already done
       }
     }
   }
@@ -834,20 +821,8 @@ class InternalFutureUtils {
 
     @Override
     protected void handleFutureDone(ListenableFuture<? extends T> f, int index) {
-      if (f.isCancelled()) {
-        // detect canceled conditions before an exception would have otherwise thrown 
-        addResult(f, index);
-        return;
-      }
-      try {
-        f.get();
-      } catch (ExecutionException e) {
+      if (f.isCompletedExceptionally()) {
         addResult(f, index); // failed so add it
-      } catch (CancellationException e) {
-        // should not be possible due check at start on what should be an already done future
-        throw e;
-      } catch (InterruptedException e) {
-        // should not be possible since this should only be called once the future is already done
       }
     }
   }
