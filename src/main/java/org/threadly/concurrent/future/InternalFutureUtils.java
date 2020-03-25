@@ -74,34 +74,61 @@ class InternalFutureUtils {
    * @param optimizeExecution Optionally optimize the execution on to the source futures thread if possible
    * @return Future with result of transformation function or respective error
    */
+  @SuppressWarnings("unchecked")
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
                                                            Supplier<String> cancelationMessageProvider, 
                                                            Function<? super ST, ? extends RT> mapper, 
                                                            boolean reportedTransformedExceptions, 
                                                            Executor executor, 
                                                            ListenerOptimizationStrategy optimizeExecution) {
-    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
-      if (sourceFuture.isCancelled()) { // avoid CancellationException generation
-        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
-                                                         null : cancelationMessageProvider.get());
+    if (sourceFuture.isDone()) {
+      // optimized path for already complete futures
+      if (cancelationMessageProvider != null && sourceFuture.isCancelled()) {
+        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider.get());
+      } else if (sourceFuture.isCompletedExceptionally()) {
+        return (ListenableFuture<RT>) sourceFuture;
       }
-      try { // optimized path for already complete futures which we can now process in thread
-        return FutureUtils.immediateResultFuture(mapper.apply(sourceFuture.get()));
-      } catch (ExecutionException e) { // failure in getting result from future, transfer failure
-        return FutureUtils.immediateFailureFuture(e.getCause());
-      } catch (Throwable t) {
-        if (reportedTransformedExceptions) {
-          // failure calculating transformation, let handler get a chance to see the uncaught exception
-          // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
-          ExceptionUtils.handleException(t);
-        }
+      
+      ST sourceResult;
+      try {
+        sourceResult = sourceFuture.get();
+      } catch (ExecutionException | InterruptedException e) { // should not be possible
+        ExceptionUtils.handleException(e);
         
-        return FutureUtils.immediateFailureFuture(t);
+        return FutureUtils.immediateFailureFuture(e);
       }
-    } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-      return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
-                                                       null : cancelationMessageProvider.get());
-    } else {
+      
+      if (invokeCompletedDirectly(executor, optimizeExecution)) {
+        // can invoke entirely in thread
+        try {
+          return FutureUtils.immediateResultFuture(mapper.apply(sourceResult));
+        } catch (Throwable t) {
+          if (reportedTransformedExceptions) {
+            // failure calculating transformation, let handler get a chance to see the uncaught exception
+            // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+            ExceptionUtils.handleException(t);
+          }
+          
+          return FutureUtils.immediateFailureFuture(t);
+        }
+      } else {  // executor is available to optimize our object construction
+        ListenableFutureTask<RT> futureTask = new ListenableFutureTask<>(false, () -> {
+          try {
+            return mapper.apply(sourceResult);
+          } catch (Throwable t) {
+            if (reportedTransformedExceptions) {
+              // failure calculating transformation, let handler get a chance to see the uncaught exception
+              // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+              ExceptionUtils.handleException(t);
+            }
+            
+            throw t;
+          }
+        }, executor);
+        executor.execute(futureTask);
+        return futureTask;
+      }
+    }  else {  // map still waiting future
       SettableListenableFuture<RT> slf = 
           new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
       // may still process in thread if future completed after check and executor is null
@@ -141,62 +168,60 @@ class InternalFutureUtils {
    * @param optimizeExecution Optionally optimize the execution on to the source futures thread if possible
    * @return Future with result of transformation function or respective error
    */
+  @SuppressWarnings("unchecked")
   protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<? extends ST> sourceFuture, 
                                                                Supplier<String> cancelationMessageProvider, 
                                                                Function<? super ST, ListenableFuture<RT>> mapper, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
-    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
-      if (sourceFuture.isCancelled()) { // avoid CancellationException generation
-        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
-                                                         null : cancelationMessageProvider.get());
-      }
-      try { // optimized path for already complete futures which we can now process in thread
-        ListenableFuture<RT> result = mapper.apply(sourceFuture.get());
-        if (result == null) {
-          return FutureUtils.immediateFailureFuture(
-                   new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
-        }
-        return result;
-      } catch (ExecutionException e) { // failure in getting result from future, transfer failure
-        return FutureUtils.immediateFailureFuture(e.getCause());
-      } catch (Throwable t) {
-        // failure calculating transformation, let handler get a chance to see the uncaught exception
-        // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
-        ExceptionUtils.handleException(t);
-        
-        return FutureUtils.immediateFailureFuture(t);
-      }
-    } else if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-      return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider == null ? 
-                                                       null : cancelationMessageProvider.get());
-    } else {
-      CancelDelegateSettableListenableFuture<RT> slf = 
-          new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
-      sourceFuture.callback(new FailurePropogatingFutureCallback<ST>(slf) {
-        @Override
-        public void handleResult(ST result) {
-          try {
-            slf.setRunningThread(Thread.currentThread());
-            ListenableFuture<? extends RT> mapFuture = mapper.apply(result);
-            if (mapFuture == null) {
-              slf.setFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
-              return;
-            }
-            slf.updateDelegateFuture(mapFuture);
-            mapFuture.callback(slf, null, null);
-            slf.setRunningThread(null); // may be processing async now
-          } catch (Throwable t) {
-            // failure calculating transformation, let handler get a chance to see the uncaught exception
-            // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
-            ExceptionUtils.handleException(t);
-            
-            slf.setFailure(t);
+    if (sourceFuture.isDone()) {
+      if (cancelationMessageProvider != null && sourceFuture.isCancelled()) {
+        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider.get());
+      } else if (sourceFuture.isCompletedExceptionally()) {
+        return (ListenableFuture<RT>) sourceFuture;
+      } else if (invokeCompletedDirectly(executor, optimizeExecution)) {
+        try { // optimized path for already complete futures which we can now process in thread
+          ListenableFuture<RT> result = mapper.apply(sourceFuture.get());
+          if (result == null) {
+            return FutureUtils.immediateFailureFuture(
+                     new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
           }
+          return result;
+        } catch (Throwable t) {
+          // failure calculating transformation, let handler get a chance to see the uncaught exception
+          // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+          ExceptionUtils.handleException(t);
+          
+          return FutureUtils.immediateFailureFuture(t);
         }
-      }, executor, optimizeExecution);
-      return slf;
+      } // else, just defer to logic below
     }
+    
+    CancelDelegateSettableListenableFuture<RT> slf = 
+        new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
+    sourceFuture.callback(new FailurePropogatingFutureCallback<ST>(slf) {
+      @Override
+      public void handleResult(ST result) {
+        try {
+          slf.setRunningThread(Thread.currentThread());
+          ListenableFuture<? extends RT> mapFuture = mapper.apply(result);
+          if (mapFuture == null) {
+            slf.setFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+            return;
+          }
+          slf.updateDelegateFuture(mapFuture);
+          mapFuture.callback(slf, null, null);
+          slf.setRunningThread(null); // may be processing async now
+        } catch (Throwable t) {
+          // failure calculating transformation, let handler get a chance to see the uncaught exception
+          // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
+          ExceptionUtils.handleException(t);
+          
+          slf.setFailure(t);
+        }
+      }
+    }, executor, optimizeExecution);
+    return slf;
   }
 
   /**
@@ -222,67 +247,58 @@ class InternalFutureUtils {
    * @param cancelationMessageSupplier an optional supplier for a message when a cancel is generated
    * @return Future with result of transformation function or respective error
    */
-  @SuppressWarnings("unchecked")
   protected static <TT extends Throwable, RT> ListenableFuture<RT> 
-      failureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageProvider,
+      failureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageSupplier,
                        Function<? super TT, ? extends RT> mapper, Class<TT> throwableType, 
                        Executor executor, ListenerOptimizationStrategy optimizeExecution) {
-    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
+    if (sourceFuture.isDone()) {
       // optimized path for already complete futures which we can now process in thread
-      if (sourceFuture.isCancelled()) { // avoid CancellationException generation
-        if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
-          try {
-            String msg = cancelationMessageProvider == null ? null : cancelationMessageProvider.get();
-            return FutureUtils.immediateResultFuture(mapper.apply((TT)new CancellationException(msg)));
-          } catch (Throwable t) {
-            return FutureUtils.immediateFailureFuture(t);
-          }
-        } else {
-          return sourceFuture;
-        }
+      TT cause = 
+          extractThrowableFromDoneFuture(sourceFuture, cancelationMessageSupplier, throwableType);
+      if (cause == null) {  // not in error or error did not match requirements
+        return sourceFuture;
       }
-      try {
-        sourceFuture.get();
-        return sourceFuture;  // no error
-      } catch (ExecutionException e) {
-        if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
-          try {
-            return FutureUtils.immediateResultFuture(mapper.apply((TT)e.getCause()));
-          } catch (Throwable t) {
-            return FutureUtils.immediateFailureFuture(t);
-          }
-        } else {
-          return sourceFuture;
+        
+      // error needs to be mapped
+      if (invokeCompletedDirectly(executor, optimizeExecution)) {
+        try {
+          return FutureUtils.immediateResultFuture(mapper.apply(cause));
+        } catch (Throwable t) {
+          return FutureUtils.immediateFailureFuture(t);
         }
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
+      } else {  // executor is available to optimize our object construction
+        ListenableFutureTask<RT> futureTask = 
+            new ListenableFutureTask<>(false, () -> mapper.apply(cause), executor);
+        executor.execute(futureTask);
+        return futureTask;
       }
+    } else {  // map still waiting future
+      SettableListenableFuture<RT> slf = 
+          new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
+      // may still process in thread if future completed after check and executor is null
+      sourceFuture.callback(new FutureCallback<RT>() {
+        @Override
+        public void handleResult(RT result) {
+          slf.setResult(result);
+        }
+        
+        @Override
+        @SuppressWarnings("unchecked")
+        public void handleFailure(Throwable t) {
+          if (throwableType == null || throwableType.isAssignableFrom(t.getClass())) {
+            try {
+              slf.setRunningThread(Thread.currentThread());
+              slf.setResult(mapper.apply((TT)t));
+            } catch (Throwable newT) {
+              slf.setFailure(newT);
+            }
+          } else {
+            slf.setFailure(t);
+          }
+        }
+      }, executor, optimizeExecution);
+      return slf;
     }
-    
-    SettableListenableFuture<RT> slf = 
-        new CancelDelegateSettableListenableFuture<>(sourceFuture, executor);
-    // may still process in thread if future completed after check and executor is null
-    sourceFuture.callback(new FutureCallback<RT>() {
-      @Override
-      public void handleResult(RT result) {
-        slf.setResult(result);
-      }
-      
-      @Override
-      public void handleFailure(Throwable t) {
-        if (throwableType == null || throwableType.isAssignableFrom(t.getClass())) {
-          try {
-            slf.setRunningThread(Thread.currentThread());
-            slf.setResult(mapper.apply((TT)t));
-          } catch (Throwable newT) {
-            slf.setFailure(newT);
-          }
-        } else {
-          slf.setFailure(t);
-        }
-      }
-    }, executor, optimizeExecution);
-    return slf;
   }
 
   /**
@@ -302,50 +318,37 @@ class InternalFutureUtils {
    * @param optimizeExecution Optionally optimize the execution on to the source futures thread if possible
    * @return Future with result of transformation function or respective error
    */
-  @SuppressWarnings("unchecked")
   protected static <TT extends Throwable, RT> ListenableFuture<RT> 
       flatFailureTransform(ListenableFuture<RT> sourceFuture, Supplier<String> cancelationMessageSupplier,
                            Function<? super TT, ListenableFuture<RT>> mapper, Class<TT> throwableType, 
                            Executor executor, ListenerOptimizationStrategy optimizeExecution) {
-    if (invokeCompletedDirectly(executor, optimizeExecution) && sourceFuture.isDone()) {
+    if (sourceFuture.isDone()) {
       // optimized path for already complete futures which we can now process in thread
-      if (sourceFuture.isCancelled()) { // shortcut to avoid exception generation
-        if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
-          try {
-            String msg = cancelationMessageSupplier == null ? null : cancelationMessageSupplier.get();
-            ListenableFuture<RT> result = mapper.apply((TT)new CancellationException(msg));
-            if (result == null) {
-              return FutureUtils.immediateFailureFuture(
-                       new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
-            }
-            return result;
-          } catch (Throwable t) {
-            return FutureUtils.immediateFailureFuture(t);
-          }
-        } else {
-          return sourceFuture;
-        }
+      TT cause = 
+          extractThrowableFromDoneFuture(sourceFuture, cancelationMessageSupplier, throwableType);
+      if (cause == null) {  // not in error or error did not match requirements
+        return sourceFuture;
       }
-      try {
-        sourceFuture.get();
-        return sourceFuture;  // no error
-      } catch (ExecutionException e) {
-        if (throwableType == null || throwableType.isAssignableFrom(e.getCause().getClass())) {
-          try {
-            ListenableFuture<RT> result = mapper.apply((TT)e.getCause());
-            if (result == null) {
-              return FutureUtils.immediateFailureFuture(
-                        new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
-            }
+        
+      // error needs to be mapped
+      if (invokeCompletedDirectly(executor, optimizeExecution)) {
+        try {
+          ListenableFuture<RT> result = mapper.apply(cause);
+          if (result == null) {
+            return FutureUtils.immediateFailureFuture(
+                     new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+          } else {
             return result;
-          } catch (Throwable t) {
-            return FutureUtils.immediateFailureFuture(t);
           }
-        } else {
-          return sourceFuture;
+        } catch (Throwable t) {
+          return FutureUtils.immediateFailureFuture(t);
         }
-      } catch (InterruptedException e) {  // should not be possible
-        throw new RuntimeException(e);
+      } else {
+        if (sourceFuture.isCancelled()) {
+          // replace future instance to avoid recreating the CancellationException
+          sourceFuture = new ImmediateFailureListenableFuture<>(cause);
+        }
+        // defer to to logic below
       }
     }
     
@@ -359,6 +362,7 @@ class InternalFutureUtils {
       }
       
       @Override
+      @SuppressWarnings("unchecked")
       public void handleFailure(Throwable t) {
         if (throwableType == null || throwableType.isAssignableFrom(t.getClass())) {
           try {
@@ -380,6 +384,44 @@ class InternalFutureUtils {
       }
     }, executor, optimizeExecution);
     return slf;
+  }
+  
+  /**
+   * Extract the failure from an already done ListenableFuture if it completed in error and that 
+   * Throwable class is assignable to the one provided.  If any of these conditions are not true 
+   * the result will be {@code null}
+   *  
+   * @param sourceFuture Future to extra Throwable from
+   * @param cancelationMessageSupplier an optional supplier for a message when a cancel is generated
+   * @param throwableType The type of throwable that should be returned
+   * @param TT class type of throwable
+   * @return Throwable if conditions match otherwise {@code null}
+   */
+  @SuppressWarnings("unchecked")
+  private static <TT extends Throwable> TT 
+      extractThrowableFromDoneFuture(ListenableFuture<?> sourceFuture, 
+                                     Supplier<String> cancelationMessageSupplier,
+                                     Class<TT> throwableType) {
+    try {
+      if (sourceFuture.isCancelled()) { // avoid CancellationException generation
+        if (throwableType == null || throwableType.isAssignableFrom(CancellationException.class)) {
+          String msg = cancelationMessageSupplier == null ? null : cancelationMessageSupplier.get();
+          return (TT) new CancellationException(msg);
+        } else {
+          return null;
+        }
+      } else {
+        Throwable cause = sourceFuture.getFailure();
+        if (cause != null && // will be null if completed without error
+            (throwableType == null || throwableType.isAssignableFrom(cause.getClass()))) {
+          return (TT) cause;
+        } else {
+          return null;
+        }
+      }
+    } catch (InterruptedException e) { // should not be possible if future was done
+      throw new RuntimeException(e);
+    }
   }
   
   /**

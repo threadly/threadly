@@ -296,7 +296,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
       return null;
     }, scheduler);
     
-    assertEquals(1, scheduler.tick());
+    assertEquals(0, scheduler.tick());  // not executed, instead error is detected and returned in thread
 
     assertTrue(mappedLF.isDone());
     verifyFutureFailure(mappedLF, failure);
@@ -378,7 +378,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
       }, sts);
       
       new TestCondition(() -> started.get()).blockTillTrue();
-      assertFalse(mappedLF.cancel(false));
+      assertTrue(mappedLF.cancel(false));
       new TestCondition(() -> completed.get()).blockTillTrue();
     } finally {
       sts.shutdownNow();
@@ -475,7 +475,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
       return null;
     }, scheduler);
     
-    assertEquals(1, scheduler.tick());
+    assertEquals(0, scheduler.tick());  // not executed, instead error is detected and returned in thread
 
     assertTrue(mappedLF.isDone());
     verifyFutureFailure(mappedLF, failure);
@@ -689,7 +689,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
       return FutureUtils.immediateResultFuture(null);
     }, scheduler);
     
-    assertEquals(1, scheduler.tick());
+    assertEquals(0, scheduler.tick());  // failure state should be detected without execution
 
     assertTrue(mappedLF.isDone());
     verifyFutureFailure(mappedLF, failure);
@@ -908,11 +908,8 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
                                                      (t) -> { mapped.set(true); return new Object(); }, 
                                                      scheduler);
 
-    assertTrue(finalLF != lf);
-    assertFalse(finalLF.isDone());
-    assertEquals(1, scheduler.tick());
-    assertFalse(mapped.get());
-    assertTrue(finalLF.isDone());
+    assertTrue(finalLF == lf);  // optimized, no mapping, no new future needed
+    assertEquals(0, scheduler.tick());
   }
   
   @Test
@@ -924,12 +921,8 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
                                                 (t) -> { mapped.set(true); return null; }, 
                                                 scheduler);
 
-    assertTrue(finalLF != lf);
-    assertFalse(finalLF.isDone());
-    assertEquals(1, scheduler.tick());
-    assertTrue(finalLF.isDone());
-    assertFalse(mapped.get());
-    assertTrue(finalLF.isDone());
+    assertTrue(finalLF == lf);  // optimized, no mapping, no new future needed
+    assertEquals(0, scheduler.tick());
   }
   
   @Test
@@ -977,12 +970,8 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
                           (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(new Object()); }, 
                           scheduler);
 
-    assertTrue(finalLF != lf);
-    assertFalse(finalLF.isDone());
-    assertEquals(1, scheduler.tick());
-    assertTrue(finalLF.isDone());
-    assertFalse(mapped.get());
-    assertTrue(finalLF.isDone());
+    assertTrue(finalLF == lf);
+    assertEquals(0, scheduler.tick());
   }
   
   @Test
@@ -995,12 +984,8 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
                           (t) -> { mapped.set(true); return FutureUtils.immediateResultFuture(null); }, 
                           scheduler);
 
-    assertTrue(finalLF != lf);
-    assertFalse(finalLF.isDone());
-    assertEquals(1, scheduler.tick());
-    assertTrue(finalLF.isDone());
-    assertFalse(mapped.get());
-    assertTrue(finalLF.isDone());
+    assertTrue(finalLF == lf);
+    assertEquals(0, scheduler.tick());
   }
   
   @Test
