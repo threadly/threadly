@@ -12,7 +12,6 @@ import java.util.concurrent.Executor;
  */
 abstract class AbstractCompletedListenableFuture<T> extends AbstractNoncancelableListenableFuture<T>
                                                     implements ListenableFuture<T> {
-  
   @Override
   public boolean isDone() {
     return true;
