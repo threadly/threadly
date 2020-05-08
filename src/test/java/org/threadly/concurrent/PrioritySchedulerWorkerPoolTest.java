@@ -95,8 +95,9 @@ public class PrioritySchedulerWorkerPoolTest extends ThreadlyTester {
   
   @Test
   public void workerIdleTest() {
+    workerPool.currentPoolSize.incrementAndGet();
     final Worker w = new Worker(workerPool, workerPool.threadFactory);
-    w.start();
+    w.startWorker();
 
     // wait for worker to become idle
     new TestCondition(() -> workerPool.idleWorker.get(), (o) -> o == w).blockTillTrue();
