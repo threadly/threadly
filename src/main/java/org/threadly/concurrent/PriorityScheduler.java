@@ -450,8 +450,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final AtomicInteger currentPoolSize;
     protected final Object workerStopNotifyLock;
     private final AtomicBoolean shutdownStarted;
-    private volatile boolean shutdownFinishing; // once true, never goes to false
-    private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
+    // can only be changed when poolSizeChangeLock locked, when 0 shutdown has completed
+    private volatile int maxPoolSize;
     private volatile long workerTimedParkRunTime;
     private QueueManager queueManager;  // set before any threads started
     
@@ -473,7 +473,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       this.maxPoolSize = poolSize;
       this.workerTimedParkRunTime = Long.MAX_VALUE;
       shutdownStarted = new AtomicBoolean(false);
-      shutdownFinishing = false;
     }
 
     /**
@@ -542,7 +541,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if the scheduler is finishing its shutdown
      */
     public boolean isShutdownFinished() {
-      return shutdownFinishing;
+      return maxPoolSize == 0;
     }
 
     /**
@@ -551,8 +550,6 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      */
     public void finishShutdown() {
       synchronized (poolSizeChangeLock) {
-        shutdownFinishing = true;
-        
         this.maxPoolSize = 0;
       }
       
@@ -590,13 +587,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         Clock.accurateForwardProgressingMillis() : Clock.lastKnownForwardProgressingMillis();
       synchronized (workerStopNotifyLock) {
         long remainingMillis;
-        while ((! shutdownFinishing || currentPoolSize.get() > 0) && 
+        while ((maxPoolSize > 0 || currentPoolSize.get() > 0) && 
                (remainingMillis = timeoutMillis - (Clock.lastKnownForwardProgressingMillis() - start)) > 0) {
           workerStopNotifyLock.wait(remainingMillis);
         }
       }
       
-      return shutdownFinishing && currentPoolSize.get() == 0;
+      return maxPoolSize == 0 && currentPoolSize.get() == 0;
     }
 
     /**
@@ -629,7 +626,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       boolean poolSizeIncrease;
       synchronized (poolSizeChangeLock) {
-        if (shutdownFinishing) {
+        if (maxPoolSize == 0) {
           throw new IllegalStateException("Can not adjust pool size during or after shutdown");
         }
         
@@ -653,7 +650,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       }
       
       synchronized (poolSizeChangeLock) {
-        if (shutdownFinishing) {
+        if (maxPoolSize == 0) {
           throw new IllegalStateException("Can not adjust pool size during or after shutdown");
         } else if (maxPoolSize + delta < 1) {
           throw new IllegalStateException(maxPoolSize + " " + delta + " must be at least 1");
