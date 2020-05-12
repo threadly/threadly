@@ -28,6 +28,9 @@ import org.threadly.util.ArgumentVerifier;
  * <p>
  * If limiting to a single thread, please see {@link SingleThreadSchedulerSubPool} as a possible 
  * alternative.
+ * <p>
+ * If you wish to have the tasks execute in an order other than FIFO please see 
+ * {@link OrderedExecutorLimiter}.
  * 
  * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent.limiter)
  */
@@ -67,11 +70,33 @@ public class ExecutorLimiter implements SubmitterExecutor {
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency, 
                          boolean limitFutureListenersExecution) {
+    this(executor, maxConcurrency, limitFutureListenersExecution, null);
+  }
+  
+  /**
+   * Construct a new execution limiter that implements the {@link Executor} interface.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param executor {@link Executor} to submit task executions to.
+   * @param maxConcurrency maximum quantity of tasks to run in parallel
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   * @param waitingTasks queue used for tasks waiting for execution
+   */
+  protected ExecutorLimiter(Executor executor, int maxConcurrency, 
+                            boolean limitFutureListenersExecution, 
+                            Queue<RunnableRunnableContainer> waitingTasks) {
     ArgumentVerifier.assertNotNull(executor, "executor");
     ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
 
     this.executor = executor;
-    this.waitingTasks = new ConcurrentLinkedQueue<>();
+    this.waitingTasks = waitingTasks == null ? new ConcurrentLinkedQueue<>() : waitingTasks;
     this.limitFutureListenersExecution = limitFutureListenersExecution;
     this.currentlyRunning = new AtomicInteger(0);
     this.maxConcurrency = maxConcurrency;

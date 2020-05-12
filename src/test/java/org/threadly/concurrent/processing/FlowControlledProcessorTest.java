@@ -14,7 +14,6 @@ import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
-import org.threadly.concurrent.processing.FlowControlledProcessor;
 import org.threadly.test.concurrent.AsyncVerifier;
 
 @SuppressWarnings("javadoc")
