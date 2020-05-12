@@ -213,10 +213,10 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   public void prestartExecutionThread(boolean blockTillStarted) {
     if (sManager.startIfNotRunning()) {
       sManager.scheduler.execute(DoNothingRunnable.instance());
-      if (blockTillStarted) {
-        while (! sManager.execThread.isAlive() && sManager.state.get() < 1) {
-          Thread.yield();
-        }
+    }
+    if (blockTillStarted) {
+      while (! sManager.execThread.isAlive() && sManager.state.get() < 1) {
+        Thread.yield();
       }
     }
   }
