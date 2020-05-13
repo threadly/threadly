@@ -1,10 +1,14 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.Comparator;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import org.threadly.concurrent.RunnableCallableAdapter;
+import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.future.ListenableFuture;
+import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -62,9 +66,25 @@ public class OrderedExecutorLimiter<T extends Runnable> {
     ArgumentVerifier.assertNotNull(sorter, "sorter");
     
     limiter = new ExecutorLimiter(executor, maxConcurrency, limitFutureListenersExecution, 
-                                  new PriorityBlockingQueue<>(INITIAL_QUEUE_SIZE, (rc1, rc2) -> 
-                                          sorter.compare((T)rc1.getContainedRunnable(), 
-                                                         (T)rc2.getContainedRunnable())));
+                                  new PriorityBlockingQueue<>(INITIAL_QUEUE_SIZE, (rc1, rc2) -> {
+                                    T r1 = runnableTypeFromContainer(rc1);
+                                    T r2 = runnableTypeFromContainer(rc2);
+                                    return sorter.compare(r1, r2);
+                                  }));
+  }
+  
+  @SuppressWarnings("unchecked")
+  private T runnableTypeFromContainer(RunnableContainer rc) {
+    Runnable r = rc.getContainedRunnable();
+    if (r instanceof ListenableFutureTask) {
+      Callable<?> c = ((ListenableFutureTask<?>)r).getContainedCallable();
+      if (c instanceof RunnableCallableAdapter) {
+        r = ((RunnableCallableAdapter<?>)c).getContainedRunnable();
+      } else {
+        throw new IllegalStateException("Unexpected callable type: " + c.getClass());
+      }
+    }
+    return (T)r;
   }
   
   /**

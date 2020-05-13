@@ -2,12 +2,16 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.wrapper.SubmitterExecutorAdapter;
 
@@ -69,6 +73,37 @@ public class OrderedExecutorLimiterTest extends ExecutorLimiterTest {
   @Override
   public void futureListenerUnlimitedTest() {
     // ignored, may not complete due to task order
+  }
+  
+  @Test
+  public void nonRunnableTypeExecuteTest() {
+    nonRunnableTypeTest(false);
+  }
+  
+  @Test
+  public void nonRunnableTypeSubmitTest() {
+    nonRunnableTypeTest(true);
+  }
+  
+  private static void nonRunnableTypeTest(boolean submit) {
+    TestableScheduler scheduler = new TestableScheduler();
+    OrderedExecutorLimiter<TestRunnable> limiter = new OrderedExecutorLimiter<>(scheduler, 1, 
+        (r1, r2) -> r1.getRunCount() - r2.getRunCount());
+    List<TestRunnable> runnables = new ArrayList<>(TEST_QTY);
+    for (int i = 0; i < TEST_QTY; i++) {
+      TestRunnable tr = new TestRunnable();
+      runnables.add(tr);
+      if (submit) {
+        limiter.submit(tr);
+      } else {
+        limiter.execute(tr);
+      }
+    }
+    
+    assertEquals(TEST_QTY, scheduler.tick());
+    for (TestRunnable tr : runnables) {
+      assertEquals(1, tr.getRunCount());
+    }
   }
 
   protected static class OrderedExecutorLimiterFactory implements SubmitterExecutorFactory {
