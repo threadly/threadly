@@ -14,7 +14,8 @@ public class FilteredStackProfilerTest extends ProfilerTest {
   @Before
   @Override
   public void setup() {
-    profiler = new FilteredStackProfiler(".");
+    profiler = new FilteredStackProfiler(POLL_INTERVAL, (p) -> startFutureResultSupplier.get(), ".");
+    startFutureResultSupplier = profiler::dump;
   }
 
   @Test

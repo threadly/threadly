@@ -1,8 +1,12 @@
 package org.threadly.util.debug;
 
+import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
+import org.threadly.concurrent.future.ListenableFuture;
 
 /**
  * This class functions very similar to the {@link Profiler}.  The difference between the two is 
@@ -21,7 +25,7 @@ public class ControlledThreadProfiler extends Profiler {
    * call {@code #dump()} with a provided output stream to get the results to.
    */
   public ControlledThreadProfiler() {
-    this(DEFAULT_POLL_INTERVAL_IN_MILLIS);
+    this(DEFAULT_POLL_INTERVAL_IN_MILLIS, null);
   }
   
   /**
@@ -31,7 +35,25 @@ public class ControlledThreadProfiler extends Profiler {
    * @param pollIntervalInMs frequency to check running threads
    */
   public ControlledThreadProfiler(int pollIntervalInMs) {
-    super(new ControlledThreadProfileStorage(pollIntervalInMs));
+    this(pollIntervalInMs, null);
+  }
+  
+  /**
+   * Constructs a new profiler instance.  The only way to get results from this instance is to call 
+   * {@code #dump()} with a provided output stream to get the results to.
+   * <p>
+   * This constructor allows you to change the behavior of the {@link ListenableFuture} result when 
+   * {@link #start(long)} or {@link #start(Executor, long)} is used.  Generally this will provide 
+   * the complete result of {@link #dump()}.  This can be replaced with calling 
+   * {@link #dump(OutputStream, boolean, int)} with parameters to reduce the output, or even 
+   * {@code null} so long as the consumers of the future can handle a null result.
+   * 
+   * @param pollIntervalInMs frequency to check running threads
+   * @param startFutureResultSupplier Supplier to be used for providing future results
+   */
+  public ControlledThreadProfiler(int pollIntervalInMs, 
+                                  Function<? super Profiler, String> startFutureResultSupplier) {
+    super(new ControlledThreadProfileStorage(pollIntervalInMs), startFutureResultSupplier);
     
     controledThreadStore = (ControlledThreadProfileStorage)super.pStore;
   }

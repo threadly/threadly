@@ -14,6 +14,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,14 +35,16 @@ import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ProfilerTest extends ThreadlyTester {
-  private static final int POLL_INTERVAL = 1;
+  protected static final int POLL_INTERVAL = 1;
   private static final int MIN_RESPONSE_LENGTH = 10;
   
   protected Profiler profiler;
+  protected Supplier<String> startFutureResultSupplier;
   
   @Before
   public void setup() {
-    profiler = new Profiler(POLL_INTERVAL);
+    profiler = new Profiler(POLL_INTERVAL, (p) -> startFutureResultSupplier.get());
+    startFutureResultSupplier = profiler::dump;
   }
   
   @After
@@ -209,6 +212,13 @@ public class ProfilerTest extends ThreadlyTester {
     } finally {
       ps.shutdownNow();
     }
+  }
+  
+  @Test
+  public void startFutureResultSupplierOverrideTest() throws InterruptedException, ExecutionException {
+    startFutureResultSupplier = () -> null;
+    ListenableFuture<String> lf = profiler.start(SameThreadSubmitterExecutor.instance(), 10);
+    assertNull(lf.get());
   }
 
   @Test

@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -79,6 +80,7 @@ public class Profiler {
   protected final Object startStopLock;
   protected final ProfileStorage pStore;
   protected final List<WeakReference<SettableListenableFuture<String>>> stopFutures; // guarded by startStopLock
+  private final Function<? super Profiler, String> startFutureResultSupplier;
   
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
@@ -87,7 +89,7 @@ public class Profiler {
    * This uses a default poll interval of 100 milliseconds.
    */
   public Profiler() {
-    this(DEFAULT_POLL_INTERVAL_IN_MILLIS);
+    this(DEFAULT_POLL_INTERVAL_IN_MILLIS, null);
   }
   
   /**
@@ -97,20 +99,42 @@ public class Profiler {
    * @param pollIntervalInMs frequency to check running threads
    */
   public Profiler(int pollIntervalInMs) {
-    this(new ProfileStorage(pollIntervalInMs));
+    this(pollIntervalInMs, null);
+  }
+  
+  /**
+   * Constructs a new profiler instance.  The only way to get results from this instance is to 
+   * call {@link #dump()} with a provided output stream to get the results to.
+   * <p>
+   * This constructor allows you to change the behavior of the {@link ListenableFuture} result when 
+   * {@link #start(long)} or {@link #start(Executor, long)} is used.  Generally this will provide 
+   * the complete result of {@link #dump()}.  This can be replaced with calling 
+   * {@link #dump(OutputStream, boolean, int)} with parameters to reduce the output, or even 
+   * {@code null} so long as the consumers of the future can handle a null result.
+   * 
+   * @param pollIntervalInMs frequency to check running threads
+   * @param startFutureResultSupplier Supplier to be used for providing future results
+   */
+  public Profiler(int pollIntervalInMs, Function<? super Profiler, String> startFutureResultSupplier) {
+    this(new ProfileStorage(pollIntervalInMs), startFutureResultSupplier);
   }
   
   /**
    * This constructor allows extending classes to provide their own implementation of the 
    * {@link ProfileStorage}.  Ultimately all constructors will default to this one.
    * 
-   * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
    * @param pStore Storage to be used for holding profile results and getting the Iterator for threads
+   * @param startFutureResultSupplier Supplier to be used for providing future results
    */
-  protected Profiler(ProfileStorage pStore) {
+  protected Profiler(ProfileStorage pStore, Function<? super Profiler, String> startFutureResultSupplier) {
     this.startStopLock = new Object();
     this.pStore = pStore;
     this.stopFutures = new ArrayList<>(2);
+    if (startFutureResultSupplier == null) {
+      this.startFutureResultSupplier = Profiler::dump;
+    } else {
+      this.startFutureResultSupplier = startFutureResultSupplier;
+    }
   }
   
   /**
@@ -345,13 +369,15 @@ public class Profiler {
         pStore.collectorThread.set(null);
         
         if (! stopFutures.isEmpty()) {
+          boolean needToGenerateResult = true;
           String result = null;
           Iterator<WeakReference<SettableListenableFuture<String>>> it = stopFutures.iterator();
           while (it.hasNext()) {
             SettableListenableFuture<String> slf = it.next().get();
             if (slf != null) {
-              if (result == null) {
-                result = dump();
+              if (needToGenerateResult) {
+                needToGenerateResult = false;
+                result = startFutureResultSupplier.apply(this);
               }
               slf.setResult(result);
             }
@@ -514,7 +540,7 @@ public class Profiler {
   private static void dumpTraces(Set<Trace> traces, 
                                  final Map<Trace, Integer> globalCounts, PrintStream out, 
                                  int minimumStackWitnessCount) {
-    Map<Function, Function> methods = new HashMap<>();
+    Map<WitnessedFunction, WitnessedFunction> methods = new HashMap<>();
     Trace[] traceArray = traces.toArray(new Trace[traces.size()]);
     int total = 0;
     int nativeCount = 0;
@@ -535,8 +561,8 @@ public class Profiler {
       }
       
       for (int i = 0; i < t.elements.length; ++i) {
-        Function n = new Function(t.elements[i].getClassName(), t.elements[i].getMethodName());
-        Function f = methods.get(n);
+        WitnessedFunction n = new WitnessedFunction(t.elements[i].getClassName(), t.elements[i].getMethodName());
+        WitnessedFunction f = methods.get(n);
         if (f == null) {
           methods.put(n, n);
           f = n;
@@ -549,7 +575,7 @@ public class Profiler {
       }
     }
     
-    Function[] methodArray = methods.keySet().toArray(new Function[methods.size()]);
+    WitnessedFunction[] methodArray = methods.keySet().toArray(new WitnessedFunction[methods.size()]);
     
     out.println(" total count: " + StringUtils.padStart(Integer.toString(total), 
                                                         NUMBER_TARGET_LINE_LENGTH, ' '));
@@ -637,7 +663,7 @@ public class Profiler {
    * @param f Function to format for
    * @param out PrintStream to print out to
    */
-  private static void dumpFunction(Function f, PrintStream out) {
+  private static void dumpFunction(WitnessedFunction f, PrintStream out) {
     out.print(StringUtils.padStart(Integer.toString(f.getCount()), 
                                    NUMBER_TARGET_LINE_LENGTH, ' '));
     out.print(StringUtils.padStart(Integer.toString(f.getStackTopCount()), 
@@ -1084,14 +1110,14 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static final class Function {
+  protected static final class WitnessedFunction {
     protected final String className;
     protected final String function;
     protected final int hashCode;
     private int count;
     private int childCount;
     
-    public Function(String className, String funtion) {
+    public WitnessedFunction(String className, String funtion) {
       this.className = className;
       this.function = funtion;
       this.hashCode = className.hashCode() ^ function.hashCode();
@@ -1141,7 +1167,7 @@ public class Profiler {
         return true;
       } else {
         try {
-          Function m = (Function) o;
+          WitnessedFunction m = (WitnessedFunction) o;
           return m.hashCode == hashCode && 
                    m.className.equals(className) && m.function.equals(function);
         } catch (ClassCastException e) {
