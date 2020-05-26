@@ -36,8 +36,7 @@ public class OrderedExecutorLimiter<T extends Runnable> {
    * @param sorter Implementation of {@link Comparator} to sort the task queue being limited
    */
   @SuppressWarnings("unchecked")
-  public OrderedExecutorLimiter(Executor executor, int maxConcurrency, 
-                                final Comparator<? super T> sorter) {
+  public OrderedExecutorLimiter(Executor executor, int maxConcurrency, Comparator<? super T> sorter) {
     this(executor, maxConcurrency, ExecutorLimiter.DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION, sorter);
   }
   
@@ -70,7 +69,13 @@ public class OrderedExecutorLimiter<T extends Runnable> {
                                     T r1 = runnableTypeFromContainer(rc1);
                                     T r2 = runnableTypeFromContainer(rc2);
                                     return sorter.compare(r1, r2);
-                                  }));
+                                  })) {
+      @Override
+      protected boolean taskCapacity() {
+        checkTaskCapacity();
+        return super.taskCapacity();
+      }
+    };
   }
   
   @SuppressWarnings("unchecked")
@@ -85,6 +90,42 @@ public class OrderedExecutorLimiter<T extends Runnable> {
       }
     }
     return (T)r;
+  }
+  
+  /**
+   * Call to check what the maximum concurrency this limiter will allow.
+   * <p>
+   * See {@link ExecutorLimiter#getMaxConcurrency()}.
+   * 
+   * @since 6.3
+   * @return maximum concurrent tasks to be run
+   */
+  public int getMaxConcurrency() {
+    return limiter.getMaxConcurrency();
+  }
+  
+  /**
+   * Updates the concurrency limit for this limiter.
+   * <p>
+   * See {@link ExecutorLimiter#setMaxConcurrency(int)}.
+   * 
+   * @since 6.3
+   * @param maxConcurrency maximum quantity of tasks to run in parallel
+   */
+  public void setMaxConcurrency(int maxConcurrency) {
+    limiter.setMaxConcurrency(maxConcurrency);
+  }
+  
+  /**
+   * Query how many tasks are being withheld from the parent scheduler.
+   * <p>
+   * See {@link ExecutorLimiter#getUnsubmittedTaskCount()}.
+   * 
+   * @since 6.3
+   * @return Quantity of tasks queued in this limiter
+   */
+  public int getUnsubmittedTaskCount() {
+    return limiter.getUnsubmittedTaskCount();
   }
   
   /**
@@ -118,5 +159,16 @@ public class OrderedExecutorLimiter<T extends Runnable> {
    */
   public void execute(T task) {
     limiter.execute(task);
+  }
+  
+  /**
+   * A protected function to provide overriding capabilities similar to 
+   * {@link ExecutorLimiter#taskCapacity()}.  This is invoked before the limiter is checked if a 
+   * task can be executed, providing an opportunity to adjust the limits before they are checked.
+   * 
+   * @since 6.3
+   */
+  protected void checkTaskCapacity() {
+    // ignored by default
   }
 }

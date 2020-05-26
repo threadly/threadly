@@ -740,13 +740,13 @@ public class CentralThreadlyPool {
     }
 
     @Override
-    protected boolean canSubmitTaskToPool() {
+    protected boolean taskCapacity() {
       int allowedConcurrency = Math.min(maxThreads, guaranteedThreads + genericThreadCount);
       if (allowedConcurrency != getMaxConcurrency()) {
         setMaxConcurrency(allowedConcurrency);
       }
       
-      return super.canSubmitTaskToPool();
+      return super.taskCapacity();
     }
   }
   

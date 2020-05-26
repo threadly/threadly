@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
+import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
@@ -17,11 +19,15 @@ import org.threadly.concurrent.wrapper.SubmitterExecutorAdapter;
 
 @SuppressWarnings("javadoc")
 public class OrderedExecutorLimiterTest extends ExecutorLimiterTest {
+  protected OrderedExecutorLimiter<Runnable> getOrderedLimiter(int parallelCount, 
+                                                               boolean limitFutureListenersExecution) {
+    return new OrderedExecutorLimiter<>(scheduler, parallelCount, limitFutureListenersExecution, 
+                                        (r1, r2) -> System.identityHashCode(r1) - System.identityHashCode(r2));
+  }
+  
   @Override
   protected ExecutorLimiter getLimiter(int parallelCount, boolean limitFutureListenersExecution) {
-    return new OrderedExecutorLimiter<>(scheduler, parallelCount, 
-                                        (r1, r2) -> System.identityHashCode(r1) - System.identityHashCode(r2))
-                 .limiter;
+    return getOrderedLimiter(parallelCount, limitFutureListenersExecution).limiter;
   }
   
   @Override
@@ -55,6 +61,59 @@ public class OrderedExecutorLimiterTest extends ExecutorLimiterTest {
   
   @Test
   @Override
+  public void getAndSetMaxConcurrencyTest() {
+    OrderedExecutorLimiter<Runnable> limiter = getOrderedLimiter(PARALLEL_COUNT, true);
+    assertEquals(PARALLEL_COUNT, limiter.getMaxConcurrency());
+    limiter.setMaxConcurrency(1);
+    assertEquals(1, limiter.getMaxConcurrency());
+  }
+  
+  @Test
+  @Override
+  public void increaseMaxConcurrencyTest() {
+    OrderedExecutorLimiter<Runnable> limiter = getOrderedLimiter(1, true);
+
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      limiter.execute(btr);
+      // block till started so that our entire limit is used up
+      btr.blockTillStarted();
+      
+      TestRunnable tr = new TestRunnable();
+      limiter.execute(tr);  // wont be able to run
+      
+      limiter.setMaxConcurrency(2);
+      
+      tr.blockTillFinished();  // should be able to complete now that limit was increased
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test
+  @Override
+  public void getUnsubmittedTaskCountTest() {
+    OrderedExecutorLimiter<Runnable> limiter = getOrderedLimiter(1, true);
+    
+    assertEquals(0, limiter.getUnsubmittedTaskCount());
+    
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      limiter.execute(btr);
+      // block till started, and first check should still be zero
+      btr.blockTillStarted();
+      
+      for (int i = 0; i < TEST_QTY; i ++) {
+        assertEquals(i, limiter.getUnsubmittedTaskCount());
+        limiter.execute(DoNothingRunnable.instance());
+      }
+    } finally {
+      btr.unblock();
+    }
+  }
+  
+  @Test
+  @Override
   public void executeInOrderTest() throws InterruptedException, TimeoutException {
     // we should not be executing in order since order is defined as the identity hash
     // so instead we verify that the executeInOrderTest() will fail
@@ -67,12 +126,6 @@ public class OrderedExecutorLimiterTest extends ExecutorLimiterTest {
     } catch (AsyncVerifier.TestFailure expectedFailure) {
       // break loop
     }
-  }
-  
-  @Test
-  @Override
-  public void futureListenerUnlimitedTest() {
-    // ignored, may not complete due to task order
   }
   
   @Test
