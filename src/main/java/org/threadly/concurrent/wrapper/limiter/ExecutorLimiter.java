@@ -118,11 +118,15 @@ public class ExecutorLimiter implements SubmitterExecutor {
   public <T> ListenableFuture<T> submit(Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, this);
+    ListenableFutureTask<T> lft = makeListenableFutureTask(task);
     
     executeOrQueue(lft, lft);
     
     return lft;
+  }
+  
+  protected <T> ListenableFutureTask<T> makeListenableFutureTask(Callable<T> task) {
+    return new ListenableFutureTask<>(false, task, this);
   }
   
   /**

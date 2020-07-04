@@ -15,6 +15,7 @@ import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.SubmitterExecutorAdapter;
 
 @SuppressWarnings("javadoc")
@@ -157,6 +158,24 @@ public class OrderedExecutorLimiterTest extends ExecutorLimiterTest {
     for (TestRunnable tr : runnables) {
       assertEquals(1, tr.getRunCount());
     }
+  }
+  
+  // will cause NPE if callable in future is cleared on cancel
+  @Test
+  public void sortAfterCancelingFutureTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    OrderedExecutorLimiter<TestRunnable> limiter = new OrderedExecutorLimiter<>(scheduler, 1, 
+        (r1, r2) -> r1.getRunCount() - r2.getRunCount());
+
+    limiter.execute(new TestRunnable());  // will be submitted to scheduler
+    ListenableFuture<?> lf = limiter.submit(new TestRunnable());
+    assertTrue(lf.cancel(false));
+    
+    limiter.execute(new TestRunnable());
+    limiter.submit(new TestRunnable());
+    
+    // -1 task count because the canceled future was removed from the queue
+    assertEquals(3, scheduler.tick());
   }
 
   protected static class OrderedExecutorLimiterFactory implements SubmitterExecutorFactory {

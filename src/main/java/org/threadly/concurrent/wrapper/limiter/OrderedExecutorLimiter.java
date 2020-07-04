@@ -1,12 +1,15 @@
 package org.threadly.concurrent.wrapper.limiter;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import org.threadly.concurrent.ContainerHelper;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
@@ -71,6 +74,12 @@ public class OrderedExecutorLimiter<T extends Runnable> {
                                     return sorter.compare(r1, r2);
                                   })) {
       @Override
+      protected <FT> ListenableFutureTask<FT> makeListenableFutureTask(Callable<FT> task) {
+        // fix possible NPE on sorting by callable if the future completes (cancel) while still in queue
+        return new OrderedListenableFutureTask<>(limiter.waitingTasks, task, this);
+      }
+      
+      @Override
       protected boolean taskCapacity() {
         checkTaskCapacity();
         return super.taskCapacity();
@@ -81,12 +90,13 @@ public class OrderedExecutorLimiter<T extends Runnable> {
   @SuppressWarnings("unchecked")
   private T runnableTypeFromContainer(RunnableContainer rc) {
     Runnable r = rc.getContainedRunnable();
-    if (r instanceof ListenableFutureTask) {
+    if (r instanceof OrderedListenableFutureTask) {
       Callable<?> c = ((ListenableFutureTask<?>)r).getContainedCallable();
       if (c instanceof RunnableCallableAdapter) {
         r = ((RunnableCallableAdapter<?>)c).getContainedRunnable();
       } else {
-        throw new IllegalStateException("Unexpected callable type: " + c.getClass());
+        throw new IllegalStateException("Unexpected callable type: " + 
+                                          (c == null ? "null" : c.getClass().toString()));
       }
     }
     return (T)r;
@@ -170,5 +180,36 @@ public class OrderedExecutorLimiter<T extends Runnable> {
    */
   protected void checkTaskCapacity() {
     // ignored by default
+  }
+  
+  /**
+   * Implementation of {@link ListenableFutureTask} which can still provide the contained 
+   * {@link Callable} after being canceled.  This is necessary so that the 
+   * {@link OrderedExecutorLimiter} can still sort the canceled task.
+   * 
+   * @param <FT> Type of result provided from the future.
+   */
+  protected static class OrderedListenableFutureTask<FT> extends ListenableFutureTask<FT> {
+    private Callable<FT> task;
+    
+    public OrderedListenableFutureTask(Collection<? extends RunnableContainer> taskQueue, 
+                                       Callable<FT> task, Executor executingExecutor) {
+      super(false, task, executingExecutor);
+      
+      this.task = task;
+      
+      listener(() -> {
+        if (isCancelled()) {
+          // ensure this is removed from the queue before we can clear the task reference
+          ContainerHelper.remove(taskQueue, OrderedListenableFutureTask.this);
+        }
+        this.task = null;
+      }, SameThreadSubmitterExecutor.instance());
+    }
+
+    @Override
+    public Callable<FT> getContainedCallable() {
+      return task;
+    }
   }
 }
