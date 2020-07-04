@@ -9,7 +9,7 @@ Include the threadly library into your project from maven central:
 <dependency>
 	<groupId>org.threadly</groupId>
 	<artifactId>threadly</artifactId>
-	<version>6.3</version>
+	<version>6.4</version>
 </dependency>
 ```
 
@@ -39,7 +39,7 @@ The other large difference compared to `ScheduledThreadPoolExecutor` is that the
 
 *    `UnfairExecutor` - A VERY high performance executor implementation.  This executor has few features, and relaxed garuntees (particularly around execution order), in order to gain the highest task throughput possible.  Since this pool works best for tasks with similar computational complexity it can be an excellent backing pool for handling client requests (ie servlets).
 
-*    `ExecutorLimiter`, `SimpleSchedulerLimiter`, `SchedulerServiceLimiter `- These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
+*    `ExecutorLimiter`, `OrderedExecutorLimiter`, `SimpleSchedulerLimiter`, `SchedulerServiceLimiter `- These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
 
 The design is such so that you create one large pool, and then wrap it in one of these two wrappers.  You then pass the wrapper to your different parts of code.  It relies on the large pool in order to actually get a thread, but this prevents any one section of code from completely dominating the thread pool.
 
