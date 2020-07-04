@@ -4,6 +4,7 @@ import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPT
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_FORK_JOIN_POOL;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1;
@@ -651,6 +652,8 @@ public class Profiler {
         out.println("\tScheduledThreadPoolExecutor idle thread (stack 1)\n");
       } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.equals(t)) {
         out.println("\tScheduledThreadPoolExecutor idle thread (stack 2)\n");
+      } else if (IDLE_THREAD_TRACE_FORK_JOIN_POOL.equals(t)) {
+        out.println("\tForkJoinPool idle thread\n");
       } else {
         out.println(ExceptionUtils.stackToString(t.elements));
       }
@@ -993,6 +996,8 @@ public class Profiler {
           trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1.elements);
         } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.elements);
+        } else if (IDLE_THREAD_TRACE_FORK_JOIN_POOL.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_FORK_JOIN_POOL.elements);
         }
         
         traces.put(trace, trace);

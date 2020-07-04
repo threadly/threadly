@@ -3,6 +3,9 @@ package org.threadly.util.debug;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
@@ -36,6 +39,7 @@ class CommonStacktraces {
   protected static final ComparableTrace IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE;
   protected static final ComparableTrace IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1;
   protected static final ComparableTrace IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2;
+  protected static final ComparableTrace IDLE_THREAD_TRACE_FORK_JOIN_POOL;
   
   static {
     AtomicReference<Thread> psSchedulerThread = new AtomicReference<>();
@@ -44,6 +48,7 @@ class CommonStacktraces {
     AtomicReference<Thread> threadPoolExecutorArrayBlockingQueueThread = new AtomicReference<>();
     AtomicReference<Thread> threadPoolExecutorLinkedBlockingQueueThread = new AtomicReference<>();
     AtomicReference<Thread> scheduledThreadPoolExecutorThread = new AtomicReference<>();
+    AtomicReference<Thread> forkJoinPoolThread = new AtomicReference<>();
     PriorityScheduler ps = new PriorityScheduler(1, null, 100, (r) -> {
       Thread t = new Thread(r);
       t.setDaemon(true);
@@ -83,6 +88,13 @@ class CommonStacktraces {
       scheduledThreadPoolExecutorThread.set(t);
       return t;
     });
+    ForkJoinPool fjp = new ForkJoinPool(1, (pool) -> {
+      ForkJoinWorkerThread t = 
+          new ForkJoinWorkerThread(pool) { /* nothing added, need protected visibility */ };
+      t.setDaemon(true);
+      forkJoinPoolThread.set(t);
+      return t;
+    }, null, true);
     try {
       sts.prestartExecutionThread(false);
       ps.prestartAllThreads();
@@ -105,26 +117,25 @@ class CommonStacktraces {
       tpeAQ.prestartCoreThread();
       tpeLQ.prestartCoreThread();
       stpe.prestartCoreThread();
+      fjp.invoke(ForkJoinTask.adapt(DoNothingRunnable.instance()));
       
       Thread sqThread = getParkedThread(threadPoolExecutorSynchronousQueueThread, null);
       Thread aqThread = getParkedThread(threadPoolExecutorArrayBlockingQueueThread, null);
       Thread lqThread = getParkedThread(threadPoolExecutorLinkedBlockingQueueThread, null);
       Thread stpeThread = getParkedThread(scheduledThreadPoolExecutorThread, null);
+      Thread fjpThread = getParkedThread(forkJoinPoolThread, null);
 
       IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE = new ComparableTrace(sqThread.getStackTrace());
       IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE = new ComparableTrace(aqThread.getStackTrace());
       IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE = new ComparableTrace(lqThread.getStackTrace());
       IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1 = new ComparableTrace(stpeThread.getStackTrace());
+      IDLE_THREAD_TRACE_FORK_JOIN_POOL = new ComparableTrace(fjpThread.getStackTrace());
       
       stpe.schedule(DoNothingRunnable.instance(), 1, TimeUnit.HOURS);
       stpe.submit(DoNothingRunnable.instance()).get(); // make sure we execute so the next park is our ideal state
       
-      while (! isParkedStack(stsThread.getStackTrace())) {
-        Thread.yield();
-      }
-      while (! isParkedStack(stpeThread.getStackTrace())) {
-        Thread.yield();
-      }
+      waitForParkedStack(stsThread);
+      waitForParkedStack(stpeThread);
       
       IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stsThread.getStackTrace());
       IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2 = new ComparableTrace(stpeThread.getStackTrace());
@@ -185,7 +196,11 @@ class CommonStacktraces {
               try {
                 tpeLQ.shutdownNow();
               } finally {
-                stpe.shutdownNow();
+                try {
+                  stpe.shutdownNow();
+                } finally {
+                  fjp.shutdownNow();
+                }
               }
             }
           }
@@ -207,6 +222,12 @@ class CommonStacktraces {
       Thread.yield();
     }
     return thread;
+  }
+  
+  private static void waitForParkedStack(Thread t) {
+    while (! isParkedStack(t.getStackTrace())) {
+      Thread.yield();
+    }
   }
   
   private static boolean isParkedStack(StackTraceElement[] stackTrace) {

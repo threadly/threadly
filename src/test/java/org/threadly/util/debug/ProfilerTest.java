@@ -8,6 +8,9 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
@@ -440,5 +443,39 @@ public class ProfilerTest extends ThreadlyTester {
     blockForProfilerSample();
 
     verifyDumpContains("ScheduledThreadPoolExecutor idle thread");
+  }
+  
+  @Test
+  public void idleForkJoinPoolTest() {
+    ForkJoinPool fjp = new ForkJoinPool(1, (pool) -> {
+      ForkJoinWorkerThread t = 
+          new ForkJoinWorkerThread(pool) { /* nothing added, need protected visibility */ };
+      t.setDaemon(true);
+      return t;
+    }, null, false);
+    
+    profilingExecutor((r) -> fjp.invoke(ForkJoinTask.adapt(r)));
+    fjp.invoke(ForkJoinTask.adapt(DoNothingRunnable.instance()));
+    profiler.start();
+    blockForProfilerSample();
+
+    verifyDumpContains("ForkJoinPool idle thread");
+  }
+  
+  @Test
+  public void idleAsyncForkJoinPoolTest() {
+    ForkJoinPool fjp = new ForkJoinPool(1, (pool) -> {
+      ForkJoinWorkerThread t = 
+          new ForkJoinWorkerThread(pool) { /* nothing added, need protected visibility */ };
+      t.setDaemon(true);
+      return t;
+    }, null, true);
+
+    profilingExecutor((r) -> fjp.invoke(ForkJoinTask.adapt(r)));
+    fjp.invoke(ForkJoinTask.adapt(DoNothingRunnable.instance()));
+    profiler.start();
+    blockForProfilerSample();
+
+    verifyDumpContains("ForkJoinPool idle thread");
   }
 }
