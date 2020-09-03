@@ -20,6 +20,7 @@ public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceT
   }
   
   @Before
+  @SuppressWarnings("deprecation")
   public void setup() {
     executor = new SameThreadSubmitterExecutor();
   }

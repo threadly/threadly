@@ -27,6 +27,7 @@ import org.threadly.util.ArgumentVerifier;
 public abstract class ReschedulingOperation {
   protected final Executor executor;  // never null
   private final SubmitterScheduler scheduler; // may be null
+  private final int maxOperationLoops;
   // -1 = not scheduled, 0 = scheduled, 1 = running, 2 = updated while running
   private final AtomicInteger taskState;
   private final CheckRunner runner;
@@ -35,13 +36,38 @@ public abstract class ReschedulingOperation {
   /**
    * Construct a new operation with an executor to execute on.  Because this takes an executor and 
    * not a scheduler an {@link UnsupportedOperationException} will be thrown if 
-   * {@link #setScheduleDelay(long)} updates the schedule to be anything non-zero. 
+   * {@link #setScheduleDelay(long)} updates the schedule to be anything non-zero.
+   * <p>
+   * This executor delegates to {@link #ReschedulingOperation(Executor, int)} with a default of 
+   * {@code 1000} allowed loops.  This should be good in most cases, but small or single threaded 
+   * pools may want a lower value to let the thread become available for other tasks.  Other 
+   * implementations may want this to be higher to further reduce the overheads of queuing on the 
+   * pool.
    * 
    * @since 5.15
    * @param executor Executor to execute on
    */
   protected ReschedulingOperation(Executor executor) {
-    this(executor, null, 0);
+    this(executor, 1000, null, 0);
+  }
+  
+  /**
+   * Construct a new operation with an executor to execute on.  Because this takes an executor and 
+   * not a scheduler an {@link UnsupportedOperationException} will be thrown if 
+   * {@link #setScheduleDelay(long)} updates the schedule to be anything non-zero.
+   * <p>
+   * This constructor allows you to set how many operation loops are allowed before the operation 
+   * must re-queue on the {@link Executor}.  Looping is more efficient and faster, but will continue 
+   * to hold the thread preventing other tasks from running on the {@link Executor}.  Setting to 1 
+   * or lower will result in the task always being submitted on the {@link Executor}.
+   * 
+   * @since 6.5
+   * @param maxOperationLoops Maximum loops before re-executing on the Executor
+   * @param executor Executor to execute on
+   */
+  // arg order logically reversed to avoid conflict with SubmitterScheduler constructor
+  protected ReschedulingOperation(int maxOperationLoops, Executor executor) {
+    this(executor, maxOperationLoops, null, 0);
     
     ArgumentVerifier.assertNotNull(executor, "executor");
   }
@@ -53,16 +79,20 @@ public abstract class ReschedulingOperation {
    * @param scheduleDelay Delay in milliseconds to schedule operation out when has stuff to do
    */
   protected ReschedulingOperation(SubmitterScheduler scheduler, long scheduleDelay) {
-    this(scheduler, scheduler, scheduleDelay);
+    this(scheduler, 0, scheduler, scheduleDelay);
     
     ArgumentVerifier.assertNotNull(scheduler, "scheduler");
   }
   
-  private ReschedulingOperation(Executor executor, SubmitterScheduler scheduler, long scheduleDelay) {
+  private ReschedulingOperation(Executor executor, int maxOperationLoops, 
+                                SubmitterScheduler scheduler, long scheduleDelay) {
     ArgumentVerifier.assertNotNegative(scheduleDelay, "scheduleDelay");
     
     this.executor = executor;
     this.scheduler = scheduler;
+    this.maxOperationLoops = 
+        // forcing the loop for SameThreadSubmitterExecutor can avoid a stack overflow condition
+        executor == SameThreadSubmitterExecutor.instance() ? Integer.MAX_VALUE : maxOperationLoops;
     this.taskState = new AtomicInteger(-1);
     this.runner = new CheckRunner();
     this.scheduleDelay = scheduleDelay;
@@ -138,15 +168,11 @@ public abstract class ReschedulingOperation {
    */
   public void signalToRun() {
     if (firstSignal()) {
-      executeRunner();
-    }
-  }
-  
-  private void executeRunner() {
-    if (scheduler != null) {
-      scheduler.schedule(runner, scheduleDelay);
-    } else {
-      executor.execute(runner);
+      if (scheduler != null) {
+        scheduler.schedule(runner, scheduleDelay);
+      } else {
+        executor.execute(runner);
+      }
     }
   }
   
@@ -169,20 +195,32 @@ public abstract class ReschedulingOperation {
   protected class CheckRunner implements Runnable {
     @Override
     public void run() {
-      taskState.set(1);
-
-      try {
-        ReschedulingOperation.this.run();
-      } finally {
-        while (true) {
-          if (taskState.get() == 1) {
-            if (taskState.compareAndSet(1, -1)) {
-              // set back to idle state, we are done
-              break;
+      int loopCount = 0;
+      runLoop: while (true) {
+        taskState.set(1);
+  
+        try {
+          ReschedulingOperation.this.run();
+        } finally {
+          casLoop: while (true) {
+            if (taskState.get() == 1) {
+              if (taskState.compareAndSet(1, -1)) {
+                // set back to idle state, we are done
+                break runLoop;
+              }
+            } else if (taskState.get() == 2) { // will be set back to 1 when this loops or re-executes
+              if (scheduleDelay == 0) {
+                if (++loopCount < maxOperationLoops) {
+                  // break casLoop so we can loop again in the runLoop
+                  break casLoop;
+                } else {
+                  executor.execute(this);
+                }
+              } else {
+                scheduler.schedule(this, scheduleDelay);
+              }
+              break runLoop;
             }
-          } else if (taskState.get() == 2) { // will be set back to 1 when this restarts
-            executeRunner();
-            break;
           }
         }
       }
@@ -190,7 +228,7 @@ public abstract class ReschedulingOperation {
     
     @Override
     public String toString() {
-      return "CheckRunner for: " + ReschedulingOperation.this.toString();
+      return "ReschedulingOperationRunner for: " + ReschedulingOperation.this.toString();
     }
   }
 }

@@ -1,9 +1,10 @@
 package org.threadly.concurrent.wrapper.limiter;
 
+import java.util.concurrent.Executor;
+
 import org.threadly.concurrent.AbstractPriorityScheduler;
 import org.threadly.concurrent.ReschedulingOperation;
 import org.threadly.concurrent.SchedulerService;
-import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.util.ExceptionUtils;
 
@@ -109,8 +110,8 @@ public class SingleThreadSchedulerSubPool extends AbstractPriorityScheduler {
    * NoThreadScheduler.  This will ensure that the scheduler is ticked in a single threaded manner.
    */
   private class TickTask extends ReschedulingOperation {
-    protected TickTask(SubmitterScheduler delegateScheduler) {
-      super(delegateScheduler, 0);
+    protected TickTask(Executor delegateExecutor) {
+      super(Integer.MAX_VALUE, delegateExecutor);
     }
 
     @Override
