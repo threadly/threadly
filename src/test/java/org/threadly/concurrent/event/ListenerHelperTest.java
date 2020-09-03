@@ -10,6 +10,7 @@ import java.util.concurrent.Executor;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
+import org.threadly.concurrent.TestSameThreadSubmitterExecutor;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
 import org.threadly.util.StringUtils;
@@ -102,7 +103,7 @@ public class ListenerHelperTest extends ThreadlyTester {
   public void addListenerWithExecutorTest() {
     ListenerHelper<TestInterface> ch = makeListenerHelper(TestInterface.class);
     TestImp ti = new TestImp();
-    Executor executor = new SameThreadSubmitterExecutor();
+    Executor executor = TestSameThreadSubmitterExecutor.instance();
     ch.addListener(ti, executor);
 
     assertEquals(1, ch.registeredListenerCount());

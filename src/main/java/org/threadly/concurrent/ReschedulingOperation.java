@@ -48,7 +48,7 @@ public abstract class ReschedulingOperation {
    * @param executor Executor to execute on
    */
   protected ReschedulingOperation(Executor executor) {
-    this(executor, 1000, null, 0);
+    this(1000, executor);
   }
   
   /**
