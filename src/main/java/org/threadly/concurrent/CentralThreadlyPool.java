@@ -65,7 +65,7 @@ public class CentralThreadlyPool {
         new PriorityScheduler(cpuCount + genericThreadCount + 1, 
                               TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, false, 
                               new ConfigurableThreadFactory("CentralThreadlyPool-", false, 
-                                                            true, Thread.NORM_PRIORITY, null, null));
+                                                            true, Thread.NORM_PRIORITY, null, null, null));
     LOW_PRIORITY_MASTER_SCHEDULER = 
         new DefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Low);
     STARVABLE_PRIORITY_MASTER_SCHEDULER = 

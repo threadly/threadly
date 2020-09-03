@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
@@ -69,6 +70,12 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
       this.threadlyExceptionHandler = exceptionHandler;
       return this;
     }
+
+    @Override
+    public ConfigurableThreadFactoryBuilder onThreadCreation(Consumer<Thread> notifyThreadCreation) {
+      this.notifyThreadCreation = notifyThreadCreation;
+      return this;
+    }
     
     /**
      * Call to construct the {@link ThreadReferencingThreadFactory} when configuration is ready.
@@ -79,7 +86,7 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
     public ThreadReferencingThreadFactory build() {
       return new ThreadReferencingThreadFactory(threadNamePrefix, appendPoolIdToPrefix, 
                                                 useDaemonThreads, threadPriority, null, 
-                                                threadlyExceptionHandler);
+                                                threadlyExceptionHandler, notifyThreadCreation);
     }
   }
   
@@ -93,7 +100,7 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
    * {@link ThreadReferencingThreadFactory} instances.
    */
   public ThreadReferencingThreadFactory() {
-    this(null, true, DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null, null);
+    this(null, true, DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null, null, null);
   }
   
   /**
@@ -112,7 +119,7 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
    */
   public ThreadReferencingThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix) {
     this(threadNamePrefix, appendPoolIdToPrefix, 
-         DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null, null);
+         DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, null, null, null);
   }
   
   /**
@@ -122,7 +129,7 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
    * @param useDaemonThreads {@code true} if produced threads should be daemon threads
    */
   public ThreadReferencingThreadFactory(boolean useDaemonThreads) {
-    this(null, true, useDaemonThreads, Thread.NORM_PRIORITY, null, null);
+    this(null, true, useDaemonThreads, Thread.NORM_PRIORITY, null, null, null);
   }
   
   /**
@@ -135,7 +142,7 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
    * @param threadPriority Priority for newly created threads
    */
   public ThreadReferencingThreadFactory(int threadPriority) {
-    this(null, true, DEFAULT_NEW_THREADS_DAEMON, threadPriority, null, null);
+    this(null, true, DEFAULT_NEW_THREADS_DAEMON, threadPriority, null, null, null);
   }
   
   /**
@@ -146,18 +153,66 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
    */
   public ThreadReferencingThreadFactory(UncaughtExceptionHandler defaultUncaughtExceptionHandler) {
     this(null, true, DEFAULT_NEW_THREADS_DAEMON, 
-         Thread.NORM_PRIORITY, defaultUncaughtExceptionHandler, null);
+         Thread.NORM_PRIORITY, defaultUncaughtExceptionHandler, null, null);
   }
   
   /**
-   * Constructs a new {@link ConfigurableThreadFactory} specifying an {@link ExceptionHandler} 
+   * Constructs a new {@link ThreadReferencingThreadFactory} specifying an {@link ExceptionHandler} 
    * that will be provided to all newly created threads.
    * 
    * @param defaultThreadlyExceptionHandler {@link ExceptionHandler} to provide to newly created threads
    */
   public ThreadReferencingThreadFactory(ExceptionHandler defaultThreadlyExceptionHandler) {
     this(null, true, DEFAULT_NEW_THREADS_DAEMON, 
-         Thread.NORM_PRIORITY, null, defaultThreadlyExceptionHandler);
+         Thread.NORM_PRIORITY, null, defaultThreadlyExceptionHandler, null);
+  }
+  
+  /**
+   * Constructs a new {@link ThreadReferencingThreadFactory} specifying a {@link Consumer} that will 
+   * be provided threads as they created.
+   * 
+   * @param notifyThreadCreation Consumer to be provided whenever a new thread is about to be returned or {@code null}
+   */
+  public ThreadReferencingThreadFactory(Consumer<Thread> notifyThreadCreation) {
+    this(null, true, DEFAULT_NEW_THREADS_DAEMON, Thread.NORM_PRIORITY, 
+         null, null, notifyThreadCreation);
+  }
+  
+  /**
+   * Constructs a new {@link ThreadReferencingThreadFactory} allowing you to provide specific values 
+   * for everything which this class allows to be configured.  You must use this constructor if 
+   * you need to adjust two or more values.  
+   * <p>
+   * If specified with {@code true} for {@code appendPoolIdToPrefix} it will append a unique 
+   * "pool" id to the prefix, giving it the format of 
+   * {@code threadNamePrefix + UNIQUE_POOL_ID + "-thread-"}.  If {@code appendPoolIdToPrefix} is 
+   * specified as {@code false}, only a unique thread id will be appended to the prefix.  In 
+   * either case, the produced threads name will be appended with a unique thread id for the 
+   * factory instance.
+   * <p>
+   * If the priority is below or above the max available thread priority, this will be adjusted to 
+   * the limit of the system.
+   * 
+   * @deprecated Replaced by constructor which accepts a {@link Consumer} for created threads.  
+   *               Specifying {@code null} will provide a direct replacement, or alternatively a 
+   *               builder can be used from {@link #builder()}.
+   *               
+   * @param threadNamePrefix prefix for all threads created, {@code null} to match default
+   * @param appendPoolIdToPrefix {@code true} to append a unique pool id to the thread prefix, 
+   *                             {@code true} to match default
+   * @param useDaemonThreads true if produced threads should be daemon threads, false to match default
+   * @param threadPriority Priority for newly created threads, {@code Thread.NORM_PRIORITY} to match default
+   * @param uncaughtExceptionHandler UncaughtExceptionHandler to provide to newly created threads, 
+   *                                 {@code null} to match default
+   * @param defaultThreadlyExceptionHandler {@link ExceptionHandler} to provide to newly created threads
+   */
+  @Deprecated
+  public ThreadReferencingThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix, 
+                                        boolean useDaemonThreads, int threadPriority, 
+                                        UncaughtExceptionHandler uncaughtExceptionHandler, 
+                                        ExceptionHandler defaultThreadlyExceptionHandler) {
+    super(threadNamePrefix, appendPoolIdToPrefix, useDaemonThreads, threadPriority, 
+          uncaughtExceptionHandler, defaultThreadlyExceptionHandler);
   }
   
   /**
@@ -183,13 +238,15 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
    * @param uncaughtExceptionHandler UncaughtExceptionHandler to provide to newly created threads, 
    *                                 {@code null} to match default
    * @param defaultThreadlyExceptionHandler {@link ExceptionHandler} to provide to newly created threads
+   * @param notifyThreadCreation Consumer to be provided whenever a new thread is about to be returned or {@code null}
    */
   public ThreadReferencingThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix, 
                                         boolean useDaemonThreads, int threadPriority, 
                                         UncaughtExceptionHandler uncaughtExceptionHandler, 
-                                        ExceptionHandler defaultThreadlyExceptionHandler) {
+                                        ExceptionHandler defaultThreadlyExceptionHandler, 
+                                        Consumer<Thread> notifyThreadCreation) {
     super(threadNamePrefix, appendPoolIdToPrefix, useDaemonThreads, threadPriority, 
-          uncaughtExceptionHandler, defaultThreadlyExceptionHandler);
+          uncaughtExceptionHandler, defaultThreadlyExceptionHandler, notifyThreadCreation);
   }
   
   /**

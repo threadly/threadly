@@ -276,7 +276,7 @@ public class SingleThreadSchedulerStatisticTracker extends SingleThreadScheduler
                                                int maxStatisticWindowSize, boolean accurateTime) {
     this(defaultPriority, maxWaitForLowPriorityInMs, 
          new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
-                                       true, daemonThread, Thread.NORM_PRIORITY, null, null), 
+                                       true, daemonThread, Thread.NORM_PRIORITY, null, null, null), 
          maxStatisticWindowSize, accurateTime);
   }
   

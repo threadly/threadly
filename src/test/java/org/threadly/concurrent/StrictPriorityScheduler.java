@@ -75,7 +75,7 @@ public class StrictPriorityScheduler extends PriorityScheduler {
                                  boolean useDaemonThreads) {
     this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, 
          new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null, null));
   }
 
   /**

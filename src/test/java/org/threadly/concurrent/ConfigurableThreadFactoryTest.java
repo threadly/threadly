@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
@@ -45,6 +46,10 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
   protected ConfigurableThreadFactory makeThreadFactory(ExceptionHandler eh) {
     return new ConfigurableThreadFactory(eh);
   }
+
+  protected ConfigurableThreadFactory makeNotifyingThreadFactory(Consumer<Thread> threadConsumer) {
+    return new ConfigurableThreadFactory(threadConsumer);
+  }
   
   @Test
   public void emptyConstructorTest() {
@@ -81,6 +86,7 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
     assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
     assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
     assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+    assertTrue(defaultFactory.notifyThreadCreation == builderFactory.notifyThreadCreation);
   }
   
   @Test
@@ -95,6 +101,7 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
     assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
     assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
     assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+    assertTrue(defaultFactory.notifyThreadCreation == builderFactory.notifyThreadCreation);
   }
   
   @Test
@@ -108,6 +115,7 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
     assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
     assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
     assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+    assertTrue(defaultFactory.notifyThreadCreation == builderFactory.notifyThreadCreation);
   }
   
   @Test
@@ -120,6 +128,7 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
     assertEquals(Thread.MIN_PRIORITY, builderFactory.threadPriority);
     assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
     assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+    assertTrue(defaultFactory.notifyThreadCreation == builderFactory.notifyThreadCreation);
   }
   
   @Test
@@ -133,6 +142,23 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
     assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
     assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
     assertTrue(newHandler == builderFactory.defaultThreadlyExceptionHandler);
+    assertTrue(defaultFactory.notifyThreadCreation == builderFactory.notifyThreadCreation);
+  }
+  
+  @Test
+  public void builderThreadConsumerTest() {
+    Consumer<Thread> threadConsumer = (t) -> {
+      // ignored
+    };
+    ConfigurableThreadFactory builderFactory = 
+        makeBuilder().onThreadCreation(threadConsumer).build();
+    ConfigurableThreadFactory defaultFactory = makeThreadFactory();
+    
+    assertEquals(defaultFactory.useDaemonThreads, builderFactory.useDaemonThreads);
+    assertEquals(defaultFactory.threadPriority, builderFactory.threadPriority);
+    assertTrue(defaultFactory.defaultUncaughtExceptionHandler == builderFactory.defaultUncaughtExceptionHandler);
+    assertTrue(defaultFactory.defaultThreadlyExceptionHandler == builderFactory.defaultThreadlyExceptionHandler);
+    assertTrue(threadConsumer == builderFactory.notifyThreadCreation);
   }
   
   @Test
@@ -229,5 +255,18 @@ public class ConfigurableThreadFactoryTest extends ThreadlyTester {
     tr.blockTillFinished();
     
     assertTrue(ehi.get() == teh);
+  }
+  
+  @Test
+  public void setThreadConsumerTest() {
+    AtomicReference<Thread> lastCreatedThread = new AtomicReference<>();
+    Consumer<Thread> threadConsumer = lastCreatedThread::set;
+    ConfigurableThreadFactory ctf = makeNotifyingThreadFactory(threadConsumer);
+    
+    assertEquals(threadConsumer, ctf.notifyThreadCreation);
+    
+    Thread t = ctf.newThread(DoNothingRunnable.instance());
+    
+    assertEquals(t, lastCreatedThread.get());
   }
 }

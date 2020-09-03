@@ -60,7 +60,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
                                long maxWaitForLowPriorityInMs, boolean daemonThread) {
     this(defaultPriority, maxWaitForLowPriorityInMs, 
          new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
-                                       true, daemonThread, Thread.NORM_PRIORITY, null, null));
+                                       true, daemonThread, Thread.NORM_PRIORITY, null, null, null));
   }
   
   /**

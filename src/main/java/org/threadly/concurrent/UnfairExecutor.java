@@ -178,7 +178,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
                         TaskStripeGenerator stripeGenerator) {
     this(threadCount, 
          new ConfigurableThreadFactory(UnfairExecutor.class.getSimpleName() + "-", true, 
-                                       useDaemonThreads, Thread.NORM_PRIORITY, null, null), 
+                                       useDaemonThreads, Thread.NORM_PRIORITY, null, null, null), 
          stripeGenerator);
   }
 

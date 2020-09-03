@@ -12,6 +12,10 @@ import org.threadly.concurrent.future.ListenableFuture;
  * This class functions very similar to the {@link Profiler}.  The difference between the two is 
  * while the {@link Profiler} profiles all running threads on the VM.  This implementation only 
  * profiles threads which you explicitly add to be profiled.
+ * <p>
+ * It can be useful to use a {@link org.threadly.concurrent.ConfigurableThreadFactory} where 
+ * {@link #addProfiledThread(Thread)} is provided as the {@link java.util.function.Consumer} on 
+ * thread creation.
  * 
  * @since 1.0.0
  */

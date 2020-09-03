@@ -225,7 +225,7 @@ public class PrioritySchedulerStatisticTracker extends PriorityScheduler
     this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
          DEFAULT_STARVABLE_STARTS_THREADS, 
          new ConfigurableThreadFactory(PrioritySchedulerStatisticTracker.class.getSimpleName() + "-", 
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null), 
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null, null), 
          maxStatisticWindowSize, accurateTime);
   }
   
