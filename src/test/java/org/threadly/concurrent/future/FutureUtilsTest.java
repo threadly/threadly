@@ -447,6 +447,14 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void makeFirstResultEmptyCollectionTest() throws InterruptedException {
+    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(Collections.emptyList(), false, false);
+    
+    assertTrue(firstResult.isDone());
+    assertTrue(firstResult.getFailure() != null);
+  }
+  
+  @Test
   public void makeCompleteFutureNullTest() {
     ListenableFuture<?> f = FutureUtils.makeCompleteFuture((Iterable<ListenableFuture<?>>)null);
     

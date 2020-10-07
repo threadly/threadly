@@ -420,7 +420,14 @@ public class FutureUtils extends InternalFutureUtils {
       };
     }
     
-    c.forEach((lf) -> lf.callback(callback));
+    boolean noCallback = true;
+    for (ListenableFuture<? extends T> lf : c) {
+      noCallback = false;
+      lf.callback(callback);
+    }
+    if (noCallback) {
+      result.setFailure(new IllegalArgumentException("Empty collection"));
+    }
 
     return result;
   }
