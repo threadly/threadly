@@ -51,6 +51,7 @@ import org.threadly.util.ExceptionUtils;
  * <li>{@link #countFuturesWithResult(Iterable, Object, long)}
  * <li>{@link #invokeAfterAllComplete(Collection, Runnable)}
  * <li>{@link #invokeAfterAllComplete(Collection, Runnable, Executor)}
+ * <li>{@link #makeFirstResultFuture(Collection, boolean)}
  * <li>{@link #makeFirstResultFuture(Collection, boolean, boolean)}
  * <li>{@link #makeCompleteFuture(Iterable)}
  * <li>{@link #makeCompleteFuture(Iterable, Object)}
@@ -365,6 +366,64 @@ public class FutureUtils extends InternalFutureUtils {
    * provided, or once all futures have completed in error.  If all futures did complete in error 
    * then the last error state will be specified to the resulting {@link ListenableFuture}.  This 
    * minor bookkeeping to ignore errors does incur a slight overhead.
+   * 
+   * @since 6.6
+   * @param <T> type of result provided in the returned future
+   * @param c Collection of futures to monitor for result
+   * @param ignoreErrors {@code false} to communicate the first completed future state, even if in error
+   * @return A future which will be provided the first result from any in the provided {@link Collection}
+   */
+  public static <T> ListenableFuture<T> makeFirstResultFuture(Collection<? extends ListenableFuture<? extends T>> c, 
+                                                              boolean ignoreErrors) {
+    SettableListenableFuture<T> result = new SettableListenableFuture<>(false);
+    FutureCallback<T> callback;
+    int expectedSize = 0;
+    AtomicInteger atomicSize = null;
+    if (ignoreErrors) {
+      expectedSize = c.size();
+      AtomicInteger errorsRemaining = atomicSize = new AtomicInteger(expectedSize);
+      callback = new FutureCallback<T>() {
+        @Override
+        public void handleResult(T t) {
+          result.setResult(t);
+        }
+
+        @Override
+        public void handleFailure(Throwable t) {
+          if (errorsRemaining.decrementAndGet() == 0) {
+            // ignore failures till we reach the last failure
+            result.setFailure(t);
+          }
+        }
+      };
+    } else {
+      callback = result;
+    }
+    
+    int callbackCount = 0;
+    for (ListenableFuture<? extends T> lf : c) {
+      callbackCount++;
+      lf.callback(callback);
+    }
+    if (callbackCount == 0) {
+      result.setFailure(new IllegalArgumentException("Empty collection"));
+    } else if (atomicSize != null && expectedSize != callbackCount) {
+      atomicSize.addAndGet(callbackCount - expectedSize);
+    }
+
+    return result;
+  }
+  
+  /**
+   * Converts a collection of {@link ListenableFuture}'s into a single {@link ListenableFuture} 
+   * where the result will be the first result provided from the collection.
+   * <p>
+   * If {@code ignoreErrors} is {@code false} the returned future will complete as soon as the 
+   * first future completes, if it completes in error then the error would be returned.  If 
+   * {@code ignoreErrors} is {@code true} then the returned future will complete once a result is 
+   * provided, or once all futures have completed in error.  If all futures did complete in error 
+   * then the last error state will be specified to the resulting {@link ListenableFuture}.  This 
+   * minor bookkeeping to ignore errors does incur a slight overhead.
    * <p>
    * It is expected that the first result is the only result desired, once it is found this will 
    * attempt to cancel all remaining futures.  If you may want other results which were in 
@@ -384,8 +443,11 @@ public class FutureUtils extends InternalFutureUtils {
                                                               boolean ignoreErrors, boolean interruptOnCancel) {
     SettableListenableFuture<T> result = new SettableListenableFuture<>(false);
     FutureCallback<T> callback;
+    int expectedSize = 0;
+    AtomicInteger atomicSize = null;
     if (ignoreErrors) {
-      AtomicInteger errorsRemaining = new AtomicInteger(c.size());
+      expectedSize = c.size();
+      AtomicInteger errorsRemaining = atomicSize = new AtomicInteger(expectedSize);
       callback = new FutureCallback<T>() {
         @Override
         public void handleResult(T t) {
@@ -419,14 +481,16 @@ public class FutureUtils extends InternalFutureUtils {
         }
       };
     }
-    
-    boolean noCallback = true;
+
+    int callbackCount = 0;
     for (ListenableFuture<? extends T> lf : c) {
-      noCallback = false;
+      callbackCount++;
       lf.callback(callback);
     }
-    if (noCallback) {
+    if (callbackCount == 0) {
       result.setFailure(new IllegalArgumentException("Empty collection"));
+    } else if (atomicSize != null && expectedSize != callbackCount) {
+      atomicSize.addAndGet(callbackCount - expectedSize);
     }
 
     return result;

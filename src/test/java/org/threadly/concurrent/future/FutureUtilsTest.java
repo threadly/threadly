@@ -353,37 +353,61 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void makeFirstResultFutureTest() throws InterruptedException, ExecutionException {
-    makeFirstResultFutureTest(false);
+    makeFirstResultFutureTest(false, false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureCancelMethodTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(false, true);
   }
 
   @Test
   public void makeFirstResultFutureIgnoreErrorWithoutErrorTest() throws InterruptedException, ExecutionException {
-    makeFirstResultFutureTest(true);
+    makeFirstResultFutureTest(true, false);
+  }
+
+  @Test
+  public void makeFirstResultFutureIgnoreErrorWithoutErrorCancelMethodTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(true, true);
   }
   
-  private static void makeFirstResultFutureTest(boolean ignoreError) throws InterruptedException, ExecutionException {
+  private static void makeFirstResultFutureTest(boolean ignoreError, boolean cancelMethod) throws InterruptedException, ExecutionException {
     SettableListenableFuture<String> slf = new SettableListenableFuture<>();
     List<ListenableFuture<String>> futureList = new ArrayList<>();
     futureList.add(new SettableListenableFuture<>());
     futureList.add(slf);
     futureList.add(new SettableListenableFuture<>());
     
-    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, ignoreError, false);
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, ignoreError, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, ignoreError);
     slf.setResult(StringUtils.makeRandomString(5));
     
     assertTrue(firstResult.isDone());
     assertEquals(slf.get(), firstResult.get());
     
-    for (ListenableFuture<?> lf : futureList) {
-      assertTrue(lf.isDone());
-      if (lf != slf) {
-        assertTrue(lf.isCancelled());
+    if (cancelMethod) {
+      for (ListenableFuture<?> lf : futureList) {
+        assertTrue(lf.isDone());
+        if (lf != slf) {
+          assertTrue(lf.isCancelled());
+        }
       }
     }
   }
   
   @Test
   public void makeFirstResultFutureIgnoreErrorTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureIgnoreErrorTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorCancelMethodTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureIgnoreErrorTest(true);
+  }
+  
+  public void makeFirstResultFutureIgnoreErrorTest(boolean cancelMethod) throws InterruptedException, ExecutionException {
     SettableListenableFuture<String> slf = new SettableListenableFuture<>();
     SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
     List<ListenableFuture<String>> futureList = new ArrayList<>();
@@ -393,7 +417,10 @@ public class FutureUtilsTest extends ThreadlyTester {
     futureList.add(errorSlf);
     futureList.add(new SettableListenableFuture<>());
     
-    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, true, false);
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, true, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, true);
     errorSlf.setFailure(new Exception());
     
     assertFalse(firstResult.isDone());
@@ -406,12 +433,24 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void makeFirstResultFutureIgnoreErrorFinalErrorTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureIgnoreErrorFinalErrorTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorFinalErrorCancelMethodTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureIgnoreErrorFinalErrorTest(true);
+  }
+  
+  private static void makeFirstResultFutureIgnoreErrorFinalErrorTest(boolean cancelMethod) throws InterruptedException, TimeoutException {
     Exception error = new Exception();
     SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
     List<ListenableFuture<String>> futureList = new ArrayList<>();
     futureList.add(errorSlf);
     
-    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, true, false);
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, true, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, true);
     errorSlf.setFailure(error);
     
     assertTrue(firstResult.isDone());
@@ -426,6 +465,15 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void makeFirstResultFutureErrorTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureErrorTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureErrorCancelMethodTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureErrorTest(true);
+  }
+  
+  private static void makeFirstResultFutureErrorTest(boolean cancelMethod) throws InterruptedException, TimeoutException {
     Exception error = new Exception();
     SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
     List<ListenableFuture<String>> futureList = new ArrayList<>();
@@ -433,7 +481,10 @@ public class FutureUtilsTest extends ThreadlyTester {
     futureList.add(errorSlf);
     futureList.add(new SettableListenableFuture<>());
     
-    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(futureList, false, false);
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, false, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, false);
     errorSlf.setFailure(error);
     
     assertTrue(firstResult.isDone());
@@ -448,7 +499,19 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void makeFirstResultEmptyCollectionTest() throws InterruptedException {
-    ListenableFuture<String> firstResult = FutureUtils.makeFirstResultFuture(Collections.emptyList(), false, false);
+    makeFirstResultEmptyCollectionTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultEmptyCollectionCancelMethodTest() throws InterruptedException {
+    makeFirstResultEmptyCollectionTest(true);
+  }
+  
+  private static void makeFirstResultEmptyCollectionTest(boolean cancelMethod) throws InterruptedException {
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(Collections.emptyList(), false, false) : 
+            FutureUtils.makeFirstResultFuture(Collections.emptyList(), false);
     
     assertTrue(firstResult.isDone());
     assertTrue(firstResult.getFailure() != null);
