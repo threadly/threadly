@@ -939,8 +939,8 @@ public class FutureUtils extends InternalFutureUtils {
           }
         }
         if (needToCancel) {
-          if (! result.cancel(false)) {
-            throw new IllegalStateException();
+          if (! result.cancel(true)) {
+            result.setFailure(new IllegalStateException("Failed to cancel after dependent future was canceled"));
           }
         } else {
           result.setResult(results);
