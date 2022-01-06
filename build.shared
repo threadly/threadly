@@ -6,7 +6,7 @@ repositories {
 
 dependencies {
   testImplementation (
-    "junit:junit:4.13",
+    "junit:junit:4.13.2",
     "org.threadly:threadly-test:1.0"
   )
 }
@@ -26,7 +26,7 @@ compileTestJava {
 test {
   getReports().getJunitXml().setDestination(file("$buildDir/reports/tests/xml"))
   getReports().getHtml().setDestination(file("$buildDir/reports/tests/html"))
-  setBinResultsDir(file("$buildDir/reports/tests/bin"))
+  setBinaryResultsDirectory(file("$buildDir/reports/tests/bin"))
 }
 
 jar {
@@ -54,12 +54,12 @@ task sourcesJar(type: Jar) {
   classifier = 'sources'
 }
 
-build.dependsOn("copyLibs");
-
 task copyLibs(type: Copy) {
   into "$buildDir/dependencies/"
   from configurations.testRuntimeClasspath
 }
+
+build.finalizedBy("copyLibs")
 
 artifacts {
   //archives jar // already specified by default

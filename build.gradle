@@ -14,14 +14,14 @@ test {
   }
 }
 
-build.dependsOn jacocoTestReport
+test.dependsOn("jar")
 
 jacocoTestReport {
   reports {
-    csv.enabled = false
-    xml.enabled = true
+    csv.required = false
+    xml.required = true
     xml.destination = file("$buildDir/reports/jacoco/jacoco.xml")
-    html.enabled = true
+    html.required = true
     html.destination = file("$buildDir/reports/jacoco/html")
   }
   doLast {
@@ -31,6 +31,8 @@ jacocoTestReport {
     println "html - $buildDir/reports/jacoco/html/index.html"
   }
 }
+
+test.finalizedBy("jacocoTestReport")
 
 jacocoTestCoverageVerification {
   violationRules {
@@ -61,4 +63,4 @@ jacocoTestCoverageVerification {
   }
 }
 
-check.dependsOn jacocoTestCoverageVerification
+jacocoTestReport.finalizedBy("jacocoTestCoverageVerification")

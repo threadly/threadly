@@ -18,7 +18,6 @@
     <module name="JavadocMethod">
       <property name="scope" value="public"/>
       <property name="excludeScope" value="private"/>
-      <property name="suppressLoadErrors" value="true"/>
     </module>
     <module name="JavadocStyle"/>
     <module name="JavadocType"/>
