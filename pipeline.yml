@@ -3,6 +3,8 @@ steps:
     label: "compile"
     artifact_paths: "build/libs/*.jar"
     timeout: 10
+    agents:
+      jvm: "8"
 
   - wait
 
@@ -10,6 +12,8 @@ steps:
     label: "unit tests"
     artifact_paths: "build/reports/tests/xml/*.xml"
     timeout: 20
+    agents:
+      jvm: "8"
 
   - wait: ~
     continue_on_failure: true
@@ -21,7 +25,11 @@ steps:
   - command: "./gradlew checkstyleMain"
     label: "checkstyle"
     timeout: 10
+    agents:
+      jvm: "8"
 
   - command: "./gradlew jacocoTestCoverageVerification"
     label: "jacoco"
     timeout: 10
+    agents:
+      jvm: "8"
