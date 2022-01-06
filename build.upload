@@ -9,6 +9,8 @@ test {
   maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2))
 }
 
+test.dependsOn("jar")
+
 def findJVM() {
   String[] java8Paths = new String[5]
   java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/"
