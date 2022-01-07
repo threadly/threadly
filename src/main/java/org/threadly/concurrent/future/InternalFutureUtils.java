@@ -888,7 +888,7 @@ class InternalFutureUtils {
 
     @Override
     public void accept(Throwable t) {
-      if (! canceled.get() && canceled.compareAndSet(false, true)) {
+      if (! canceled.getPlain() && canceled.compareAndSet(false, true)) {
         FutureUtils.cancelIncompleteFutures(futures, interruptThread);
       }
     }
