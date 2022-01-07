@@ -299,7 +299,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if scheduler was started.
      */
     public boolean startIfNotRunning() {
-      if (state.get() == -1 && state.compareAndSet(-1, 0)) {
+      if (state.getPlain() == -1 && state.compareAndSet(-1, 0)) {
         execThread.start();
         
         return true;
