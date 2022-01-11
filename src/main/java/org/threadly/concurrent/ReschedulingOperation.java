@@ -127,11 +127,11 @@ public abstract class ReschedulingOperation {
     while (true) {
       int casState = taskState.get();
       if (casState == -1) {
-        if (taskState.compareAndSet(-1, 0)) {
+        if (taskState.weakCompareAndSetVolatile(-1, 0)) {
           return true;
         }
       } else if (casState == 1) {
-        if (taskState.compareAndSet(1, 2)) {
+        if (taskState.weakCompareAndSetVolatile(1, 2)) {
           return false;
         }
       } else {
@@ -204,7 +204,7 @@ public abstract class ReschedulingOperation {
         } finally {
           casLoop: while (true) {
             if (taskState.get() == 1) {
-              if (taskState.compareAndSet(1, -1)) {
+              if (taskState.weakCompareAndSetVolatile(1, -1)) {
                 // set back to idle state, we are done
                 break runLoop;
               }

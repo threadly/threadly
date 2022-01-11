@@ -321,7 +321,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
     public List<Runnable> stop(boolean stopImmediately) {
       int stateVal = state.get();
       while (stateVal < 1) {
-        if (state.compareAndSet(stateVal, 1)) {
+        if (state.weakCompareAndSetVolatile(stateVal, 1)) {
           // we finish the shutdown immediately if requested, or if it was never started
           if (stopImmediately || stateVal == -1) {
             return finishShutdown();

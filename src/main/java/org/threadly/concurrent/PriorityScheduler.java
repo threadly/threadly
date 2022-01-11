@@ -701,7 +701,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public void prestartAllThreads() {
       int casPoolSize;
       while ((casPoolSize = currentPoolSize.get()) < maxPoolSize) {
-        if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize + 1)) {
+        if (currentPoolSize.weakCompareAndSetVolatile(casPoolSize, casPoolSize + 1)) {
           makeNewWorker();
         }
       }
@@ -798,7 +798,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       int casPoolSize;
       while (true) {
         if ((casPoolSize = currentPoolSize.get()) > maxPoolSize) {
-          if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize - 1)) {
+          if (currentPoolSize.weakCompareAndSetVolatile(casPoolSize, casPoolSize - 1)) {
             worker.stopWorker();
             return null;
           } // else, retry, see if we need to shutdown
@@ -900,7 +900,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         if (nextIdleWorker == null) {
           int casSize = currentPoolSize.get();
           if (casSize < maxPoolSize) {
-            if (currentPoolSize.compareAndSet(casSize, casSize + 1)) {
+            if (currentPoolSize.weakCompareAndSetVolatile(casSize, casSize + 1)) {
               // start a new worker for the next task
               makeNewWorker();
               break;

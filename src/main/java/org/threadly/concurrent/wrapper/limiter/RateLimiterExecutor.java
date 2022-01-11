@@ -322,14 +322,14 @@ public class RateLimiterExecutor implements SubmitterExecutor {
       if (scheduleDelay > maxScheduleDelayMillis) {
         return -1 ;  // let rejection handler invoke outside of lock
       } else {
-        if (scheduleDelay < 0) {
-          if (lastScheduleTime.compareAndSet(casLong, 
-                                             Double.doubleToRawLongBits(now + effectiveDelay))) {
+        if (scheduleDelay <= 0) {
+          if (lastScheduleTime.weakCompareAndSetVolatile(casLong, 
+                                                         Double.doubleToRawLongBits(now + effectiveDelay))) {
             return 0;
           } // else loop and retry
         } else {
-          if (lastScheduleTime.compareAndSet(casLong, 
-                                             Double.doubleToRawLongBits(lastTimeDouble + effectiveDelay))) {
+          if (lastScheduleTime.weakCompareAndSetVolatile(casLong, 
+                                                         Double.doubleToRawLongBits(lastTimeDouble + effectiveDelay))) {
             return (long)scheduleDelay;
           } // else loop and retry
         }
