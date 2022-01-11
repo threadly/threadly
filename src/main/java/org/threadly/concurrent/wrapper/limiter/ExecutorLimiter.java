@@ -182,7 +182,7 @@ public class ExecutorLimiter implements SubmitterExecutor {
     while (true) {  // loop till we have a result
       int currentValue = currentlyRunning.get();
       if (currentValue < maxConcurrency) {
-        if (currentlyRunning.compareAndSet(currentValue, currentValue + 1)) {
+        if (currentlyRunning.weakCompareAndSetVolatile(currentValue, currentValue + 1)) {
           return true;
         } // else retry in while loop
       } else {
