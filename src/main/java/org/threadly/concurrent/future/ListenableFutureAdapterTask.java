@@ -31,7 +31,7 @@ public class ListenableFutureAdapterTask<T> extends ListenableFutureTask<T> {
    * @param f Future to get result and source final state from
    */
   public ListenableFutureAdapterTask(final Future<? extends T> f) {
-    super(false, new Callable<T>() {
+    super(new Callable<T>() {
       @Override
       public T call() throws Exception {
         try {

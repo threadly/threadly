@@ -37,11 +37,11 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   protected <T> ListenableFutureTask<T> makeFutureTask(Runnable runnable, T result) {
-    return new ListenableFutureTask<>(false, runnable, result);
+    return new ListenableFutureTask<>(runnable, result);
   }
   
   protected <T> ListenableFutureTask<T> makeFutureTask(Callable<T> task) {
-    return new ListenableFutureTask<>(false, task);
+    return new ListenableFutureTask<>(task);
   }
   
   @Test
@@ -350,7 +350,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   public void dontOptimizeListenerNotDoneTest() {
     TestableScheduler scheduler = new TestableScheduler();
     ListenableFutureTask<Object> lf = 
-        new ListenableFutureTask<>(false, DoNothingRunnable.instance(), null, scheduler);
+        new ListenableFutureTask<>(DoNothingRunnable.instance(), null, scheduler);
     
     lf.listener(DoNothingRunnable.instance(), scheduler, ListenerOptimizationStrategy.InvokingThreadIfDone);
     
@@ -362,36 +362,36 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   private class ListenableFutureTaskFactory implements ExecuteOnGetFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
-      return new ListenableFutureTask<>(false, run);
+      return new ListenableFutureTask<>(run);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Runnable run, T result) {
-      return new ListenableFutureTask<>(false, run, result);
+      return new ListenableFutureTask<>(run, result);
     }
 
     @Override
     public <T> RunnableFuture<T> make(Callable<T> callable) {
-      return new ListenableFutureTask<>(false, callable);
+      return new ListenableFutureTask<>(callable);
     }
 
     @Override
     public ListenableFuture<?> makeCanceled() {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance());
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(DoNothingRunnable.instance());
       lft.cancel(false);
       return lft;
     }
 
     @Override
     public ListenableFuture<Object> makeWithFailure(Exception e) {
-      ListenableFutureTask<Object> lft = new ListenableFutureTask<>(false, () -> { throw e; });
+      ListenableFutureTask<Object> lft = new ListenableFutureTask<>(() -> { throw e; });
       lft.run();
       return lft;
     }
 
     @Override
     public <T> ListenableFuture<T> makeWithResult(T result) {
-      ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, () -> result);
+      ListenableFutureTask<T> lft = new ListenableFutureTask<>(() -> result);
       lft.run();
       return lft;
     }

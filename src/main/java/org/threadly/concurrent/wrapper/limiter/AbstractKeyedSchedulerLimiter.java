@@ -95,7 +95,7 @@ abstract class AbstractKeyedSchedulerLimiter<T extends SubmitterSchedulerLimiter
   public <TT> ListenableFuture<TT> submitScheduled(Object taskKey, Callable<TT> task, long delayInMs) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<TT> ft = new ListenableFutureTask<>(false, task);
+    ListenableFutureTask<TT> ft = new ListenableFutureTask<>(task);
     
     doSchedule(taskKey, ft, ft, delayInMs);
     

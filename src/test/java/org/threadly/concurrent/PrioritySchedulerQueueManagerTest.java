@@ -40,7 +40,7 @@ public class PrioritySchedulerQueueManagerTest extends ThreadlyTester {
   @Test
   public void removeCallableTest() {
     TestCallable callable = new TestCallable();
-    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(new ListenableFutureTask<>(false, callable), 
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(new ListenableFutureTask<>(callable), 
                                                              null, Clock.lastKnownForwardProgressingMillis());
     
     assertFalse(queueManager.remove(callable));

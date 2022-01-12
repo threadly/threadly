@@ -69,9 +69,21 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   /**
    * Constructs a runnable future with a runnable work unit.
    * 
+   * @param task runnable to be run
+   */
+  public ListenableFutureTask(Runnable task) {
+    this(task, null, null);
+  }
+  
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @deprecated Recurring tasks not supported in 7.0 switch to {@link #ListenableFutureTask(Runnable)}
+   * 
    * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task runnable to be run
    */
+  @Deprecated
   public ListenableFutureTask(boolean recurring, Runnable task) {
     this(recurring, task, null, null);
   }
@@ -79,10 +91,23 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   /**
    * Constructs a runnable future with a runnable work unit.
    * 
+   * @param task runnable to be run
+   * @param result result to be provide after run has completed
+   */
+  public ListenableFutureTask(Runnable task, T result) {
+    this(task, result, null);
+  }
+  
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @deprecated Recurring tasks not supported in 7.0 switch to {@link #ListenableFutureTask(Runnable, Object)}
+   * 
    * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task runnable to be run
    * @param result result to be provide after run has completed
    */
+  @Deprecated
   public ListenableFutureTask(boolean recurring, Runnable task, T result) {
     this(recurring, task, result, null);
   }
@@ -90,9 +115,21 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   /**
    * Constructs a runnable future with a callable work unit.
    * 
+   * @param task callable to be run
+   */
+  public ListenableFutureTask(Callable<T> task) {
+    this(task, null);
+  }
+
+  /**
+   * Constructs a runnable future with a callable work unit.
+   * 
+   * @deprecated Recurring tasks not supported in 7.0 switch to {@link #ListenableFutureTask(Callable)}
+   * 
    * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task callable to be run
    */
+  @Deprecated
   public ListenableFutureTask(boolean recurring, Callable<T> task) {
     this(recurring, task, null);
   }
@@ -100,11 +137,25 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   /**
    * Constructs a runnable future with a runnable work unit.
    * 
+   * @param task runnable to be run
+   * @param result result to be provide after run has completed
+   * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
+   */
+  public ListenableFutureTask(Runnable task, T result, Executor executingExecutor) {
+    this(RunnableCallableAdapter.adapt(task, result), executingExecutor);
+  }
+  
+  /**
+   * Constructs a runnable future with a runnable work unit.
+   * 
+   * @deprecated Recurring tasks not supported in 7.0 use {@link #ListenableFutureTask(Runnable, Object, Executor)}
+   * 
    * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task runnable to be run
    * @param result result to be provide after run has completed
    * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
    */
+  @Deprecated
   public ListenableFutureTask(boolean recurring, Runnable task, T result, Executor executingExecutor) {
     this(recurring, RunnableCallableAdapter.adapt(task, result), executingExecutor);
   }
@@ -112,10 +163,23 @@ public class ListenableFutureTask<T> extends FutureTask<T>
   /**
    * Constructs a runnable future with a callable work unit.
    * 
+   * @param task callable to be run
+   * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
+   */
+  public ListenableFutureTask(Callable<T> task, Executor executingExecutor) {
+    this(false, task, executingExecutor);
+  }
+
+  /**
+   * Constructs a runnable future with a callable work unit.
+   * 
+   * @deprecated Recurring tasks not supported in 7.0 switch to {@link #ListenableFutureTask(Callable, Executor)}
+   * 
    * @param recurring boolean to indicate if this task can run multiple times, and thus must be reset after each run
    * @param task callable to be run
    * @param executingExecutor Executor task will be run on for possible listener optimization, or {@code null}
    */
+  @Deprecated
   public ListenableFutureTask(boolean recurring, Callable<T> task, Executor executingExecutor) {
     super(task);
 

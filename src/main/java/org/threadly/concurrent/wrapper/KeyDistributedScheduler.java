@@ -185,7 +185,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(task);
     
     if (delayInMs == 0) {
       addTask(threadKey, rf, executor);

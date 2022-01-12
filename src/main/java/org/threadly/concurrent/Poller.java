@@ -235,7 +235,7 @@ public class Poller {
         return ImmediateResultListenableFuture.NULL_RESULT;
       } else {
         ListenableRunnableFuture<?> result =
-            new ListenableFutureTask<>(false, DoNothingRunnable.instance(), null, executor);
+            new ListenableFutureTask<>(DoNothingRunnable.instance(), null, executor);
         polls.add(new Pair<>(result, p));
         signalToRun();
         return result;

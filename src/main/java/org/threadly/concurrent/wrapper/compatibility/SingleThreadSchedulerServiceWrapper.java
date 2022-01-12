@@ -71,7 +71,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
-    ListenableFutureTask<Void> lft = new ListenableFutureTask<>(false, task, null, singleThreadScheduler);
+    ListenableFutureTask<Void> lft = new ListenableFutureTask<>(task, null, singleThreadScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
                                                                  lft, taskPriority, delayInMillis);
     
@@ -80,7 +80,7 @@ public class SingleThreadSchedulerServiceWrapper extends AbstractExecutorService
 
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
-    ListenableFutureTask<V> lft = new ListenableFutureTask<>(false, callable, singleThreadScheduler);
+    ListenableFutureTask<V> lft = new ListenableFutureTask<>(callable, singleThreadScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(singleThreadScheduler, 
                                                                  lft, taskPriority, delayInMillis);
     

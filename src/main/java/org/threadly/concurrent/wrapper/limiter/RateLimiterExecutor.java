@@ -175,7 +175,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
     if (currentMinimumDelay == 0) {
       return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance(), null, this);
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(DoNothingRunnable.instance(), null, this);
       
       long futureDelay;
       if (maximumDelay > 0 && currentMinimumDelay > maximumDelay) {
@@ -258,7 +258,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
         // don't even need to burden the scheduler
         return FutureUtils.immediateResultFuture(result);
       } else {
-        ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
+        ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, result, this);
         
         if (taskDelay < 0) {
           rejectedExecutionHandler.handleRejectedTask(lft);
@@ -269,7 +269,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
         return lft;
       }
     } else {
-      ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
+      ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, result, this);
       
       doExecute(permits, lft);
       
@@ -296,7 +296,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, this);
     
     doExecute(permits, lft);
     

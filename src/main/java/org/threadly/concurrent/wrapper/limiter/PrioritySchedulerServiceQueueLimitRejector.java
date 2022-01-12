@@ -137,7 +137,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
   public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(task, this);
     
     doSchedule(lft, 0, priority);
     
@@ -169,7 +169,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(task, this);
 
     doSchedule(lft, delayInMs, priority);
     

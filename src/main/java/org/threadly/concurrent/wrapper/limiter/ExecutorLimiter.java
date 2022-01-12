@@ -126,7 +126,7 @@ public class ExecutorLimiter implements SubmitterExecutor {
   }
   
   protected <T> ListenableFutureTask<T> makeListenableFutureTask(Callable<T> task) {
-    return new ListenableFutureTask<>(false, task, this);
+    return new ListenableFutureTask<>(task, this);
   }
   
   /**

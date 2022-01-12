@@ -33,7 +33,7 @@ public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
    * @param task runnable to be run
    */
   public ExecuteOnGetFutureTask(Runnable task) {
-    super(false, task);
+    super(task);
   }
   
   /**
@@ -43,7 +43,7 @@ public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
    * @param result result to be provide after run has completed
    */
   public ExecuteOnGetFutureTask(Runnable task, T result) {
-    super(false, task, result);
+    super(task, result);
   }
 
   /**
@@ -52,7 +52,7 @@ public class ExecuteOnGetFutureTask<T> extends ListenableFutureTask<T> {
    * @param task callable to be run
    */
   public ExecuteOnGetFutureTask(Callable<T> task) {
-    super(false, task);
+    super(task);
   }
   
   /**

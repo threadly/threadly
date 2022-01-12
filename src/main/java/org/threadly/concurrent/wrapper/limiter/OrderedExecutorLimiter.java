@@ -194,7 +194,7 @@ public class OrderedExecutorLimiter<T extends Runnable> {
     
     public OrderedListenableFutureTask(Collection<? extends RunnableContainer> taskQueue, 
                                        Callable<FT> task, Executor executingExecutor) {
-      super(false, task, executingExecutor);
+      super(task, executingExecutor);
       
       this.task = task;
       

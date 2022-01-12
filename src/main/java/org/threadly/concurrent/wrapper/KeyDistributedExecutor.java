@@ -295,7 +295,7 @@ public class KeyDistributedExecutor {
     ArgumentVerifier.assertNotNull(threadKey, "threadKey");
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(task);
     
     addTask(threadKey, rf, executor);
     

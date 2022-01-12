@@ -78,7 +78,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> ft = new ListenableFutureTask<>(false, task, this);
+    ListenableFutureTask<T> ft = new ListenableFutureTask<>(task, this);
     
     doSchedule(ft, ft, delayInMs);
     

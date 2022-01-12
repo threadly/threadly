@@ -387,6 +387,7 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
     }
     
     if (canceled) {
+      // TODO - what about the invoking thread? https://github.com/threadly/threadly/issues/274
       // call outside of lock
       listenerHelper.callListeners();
       runningThread = null;
@@ -482,7 +483,11 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
    * @param timeoutMillis
    * @throws InterruptedException Thrown if thread is interrupted while waiting
    */
-  private void awaitDone(long startTime, long timeoutMillis) throws InterruptedException {
+  private void awaitDone(long timeoutMillis) throws InterruptedException {
+    if (done || timeoutMillis <= 0) {
+      return; // shortcut clock call
+    }
+    final long startTime = Clock.accurateForwardProgressingMillis();
     long remainingInMs;
     while (! done && 
            (remainingInMs = timeoutMillis - (Clock.accurateForwardProgressingMillis() - startTime)) > 0) {
@@ -510,10 +515,9 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
   @Override
   public T get(long timeout, TimeUnit unit) throws InterruptedException, 
                                                    ExecutionException, TimeoutException {
-    long startTime = Clock.accurateForwardProgressingMillis();
     long timeoutInMs = unit.toMillis(timeout);
     synchronized (resultLock) {
-      awaitDone(startTime, timeoutInMs);
+      awaitDone(timeoutInMs);
       
       if (failure != null) {
         throw new ExecutionException(failure);
@@ -545,10 +549,9 @@ public class SettableListenableFuture<T> extends AbstractCancellationMessageProv
   @Override
   public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
                                                                   TimeoutException {
-    long startTime = Clock.accurateForwardProgressingMillis();
     long timeoutInMs = unit.toMillis(timeout);
     synchronized (resultLock) {
-      awaitDone(startTime, timeoutInMs);
+      awaitDone(timeoutInMs);
 
       if (cancelStateMessage != null) {
         return new CancellationException(getCancellationExceptionMessage());

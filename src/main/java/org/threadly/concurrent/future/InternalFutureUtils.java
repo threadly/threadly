@@ -112,7 +112,7 @@ class InternalFutureUtils {
           return FutureUtils.immediateFailureFuture(t);
         }
       } else {  // executor is available to optimize our object construction
-        ListenableFutureTask<RT> futureTask = new ListenableFutureTask<>(false, () -> {
+        ListenableFutureTask<RT> futureTask = new ListenableFutureTask<>(() -> {
           try {
             return mapper.apply(sourceResult);
           } catch (Throwable t) {
@@ -268,7 +268,7 @@ class InternalFutureUtils {
         }
       } else {  // executor is available to optimize our object construction
         ListenableFutureTask<RT> futureTask = 
-            new ListenableFutureTask<>(false, () -> mapper.apply(cause), executor);
+            new ListenableFutureTask<>(() -> mapper.apply(cause), executor);
         executor.execute(futureTask);
         return futureTask;
       }
