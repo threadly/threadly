@@ -241,7 +241,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
       throw new RejectedExecutionException("Pool is shutdown");
     }
     
-    schedulers[(int)Math.floorMod(stripeGenerator.getStripe(task), schedulers.length)].addTask(task);
+    schedulers[Math.floorMod(stripeGenerator.getStripe(task), schedulers.length)].addTask(task);
   }
 
   /**
@@ -333,7 +333,6 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
   @Override
   protected void finalize() throws Throwable {
     shutdown();
-    super.finalize();
   }
   
   /**
