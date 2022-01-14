@@ -2,8 +2,8 @@ apply from: 'build.shared'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
 
 test {
   maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2))
@@ -12,13 +12,12 @@ test {
 test.dependsOn("jar")
 
 def findJVM() {
-  String[] java8Paths = new String[5]
-  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/"
-  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/"
-  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/"
-  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/"
-  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/"
-  for (String path : java8Paths) {
+  String[] java11Paths = new String[4]
+  java11Paths[0] = "/usr/lib/jvm/java-11-openjdk-amd64/lib/"
+  java11Paths[1] = "/usr/lib/jvm/java-11-openjdk/lib/"
+  java11Paths[2] = "/usr/lib/jvm/openjdk-11/lib/"
+  java11Paths[3] = "/usr/lib/jvm/java-11-sun/lib/"
+  for (String path : java11Paths) {
     if (new java.io.File(path).exists()) {
       return path
     }
@@ -29,11 +28,11 @@ def findJVM() {
 compileJava {
   def jvmPath = findJVM()
   if (jvmPath == null) {
-    println 'Unable to find java 8 rt.jar, will cause failure so exiting now'
+    println 'Unable to find java 11 install, will cause failure so exiting now'
     println ''
     System.exit(1)
   }
-  println 'Using java 8: ' + jvmPath
+  println 'Using java 11: ' + jvmPath
   options.bootstrapClasspath = fileTree(include: ['*.jar'], dir: jvmPath)
 }
 
