@@ -8,7 +8,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RunnableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.BeforeClass;
@@ -18,10 +17,8 @@ import org.threadly.concurrent.RunnableContainer;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
-import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
@@ -32,7 +29,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   @Override
-  protected ExecuteOnGetFutureFactory makeFutureFactory() {
+  protected ListenableRunnableFutureFactory makeRunnableFutureFactory() {
     return new ListenableFutureTaskFactory();
   }
   
@@ -219,27 +216,8 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     assertTrue(future.isCompletedExceptionally());
   }
   
-  @Test (expected = ExecutionException.class)
-  public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
-    TestRunnable tr = new TestRuntimeFailureRunnable();
-    
-    ListenableFutureTask<Object> future = makeFutureTask(tr, null);
-    
-    future.run();
-    future.get();
-  }
-  
-  @Test (expected = ExecutionException.class)
-  public void getWithTimeoutExecutionExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
-    TestRunnable tr = new TestRuntimeFailureRunnable();
-    
-    ListenableFutureTask<Object> future = makeFutureTask(tr, null);
-    
-    future.run();
-    future.get(100, TimeUnit.MILLISECONDS);
-  }
-  
   @Test
+  @Override
   public void cancelFlatMappedAsyncFutureTest() {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
     SettableListenableFuture<Void> asyncSLF = new SettableListenableFuture<>();
@@ -252,6 +230,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   }
   
   @Test
+  @Override
   public void flatMapReturnNullFail() throws InterruptedException {
     try {
       ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
@@ -269,19 +248,19 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
   @Test
   public void mapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 55, 37);
+    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 52, 37);
   }
   
   @Test
   public void mapFailureStackSize() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(() -> { throw new RuntimeException(); }, null);
-    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 55);
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 52);
   }
   
   @Test
   public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 75, 15);
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 72, 15);
   }
   
   @Test
@@ -346,20 +325,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     }
   }
   
-  @Test
-  public void dontOptimizeListenerNotDoneTest() {
-    TestableScheduler scheduler = new TestableScheduler();
-    ListenableFutureTask<Object> lf = 
-        new ListenableFutureTask<>(DoNothingRunnable.instance(), null, scheduler);
-    
-    lf.listener(DoNothingRunnable.instance(), scheduler, ListenerOptimizationStrategy.InvokingThreadIfDone);
-    
-    lf.run();  // we lied what thread it completes on
-    
-    assertEquals(1, scheduler.tick());  // one task for listener, despite scheduler match
-  }
-  
-  private class ListenableFutureTaskFactory implements ExecuteOnGetFutureFactory {
+  private class ListenableFutureTaskFactory implements ListenableRunnableFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
       return new ListenableFutureTask<>(run);
@@ -376,21 +342,26 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     }
 
     @Override
-    public ListenableFuture<?> makeCanceled() {
+    public <T> ListenableFutureTask<T> makeNewCompletable() {
+      return new ListenableFutureTask<>(DoNothingRunnable.instance());
+    }
+
+    @Override
+    public ListenableFutureTask<?> makeCanceledCompletable() {
       ListenableFutureTask<?> lft = new ListenableFutureTask<>(DoNothingRunnable.instance());
       lft.cancel(false);
       return lft;
     }
 
     @Override
-    public ListenableFuture<Object> makeWithFailure(Exception e) {
+    public ListenableFutureTask<Object> makeWithFailureCompletable(Exception e) {
       ListenableFutureTask<Object> lft = new ListenableFutureTask<>(() -> { throw e; });
       lft.run();
       return lft;
     }
 
     @Override
-    public <T> ListenableFuture<T> makeWithResult(T result) {
+    public <T> ListenableFutureTask<T> makeWithResultCompletable(T result) {
       ListenableFutureTask<T> lft = new ListenableFutureTask<>(() -> result);
       lft.run();
       return lft;

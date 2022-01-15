@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import org.junit.After;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.CentralThreadlyPool;
@@ -19,6 +20,7 @@ import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
@@ -30,6 +32,11 @@ import org.threadly.util.TestExceptionHandler;
 @SuppressWarnings("javadoc")
 public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   protected abstract ListenableFutureFactory makeListenableFutureFactory();
+  
+  @After
+  public void cleanup() {
+    ExceptionUtils.setThreadExceptionHandler(null);
+  }
   
   @Test
   public void isDoneWithResultTest() {
@@ -254,7 +261,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   @Test
   public void mapAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
     TestExceptionHandler teh = new TestExceptionHandler();
-    ExceptionUtils.setDefaultExceptionHandler(teh);
+    ExceptionUtils.setThreadExceptionHandler(teh);
     RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.map((o) -> { throw failure; });
@@ -321,7 +328,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   @Test
   public void mapWithExecutorAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
     TestExceptionHandler teh = new TestExceptionHandler();
-    ExceptionUtils.setDefaultExceptionHandler(teh);
+    ExceptionUtils.setThreadExceptionHandler(teh);
     TestableScheduler scheduler = new TestableScheduler();
     RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
@@ -386,6 +393,25 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   }
   
   @Test
+  public void throwMapBasicTest() throws InterruptedException, ExecutionException {
+    String sourceObject = StringUtils.makeRandomString(5);
+    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(sourceObject);
+    String translatedObject = StringUtils.makeRandomString(10);
+    Function<String, String> mapper = (s) -> {
+      if (s == sourceObject) {
+        return translatedObject;
+      } else {
+        // test failure
+        return null;
+      }
+    };
+   
+    assertTrue(translatedObject == lf.throwMap(mapper).get());
+    assertTrue(translatedObject == lf.throwMap(mapper, SameThreadSubmitterExecutor.instance()).get());
+    assertTrue(translatedObject == lf.throwMap(mapper, SameThreadSubmitterExecutor.instance(), null).get());
+  }
+  
+  @Test
   public void throwMapAlreadyDoneTest() throws InterruptedException, ExecutionException {
     String sourceObject = StringUtils.makeRandomString(5);
     ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(sourceObject);
@@ -433,7 +459,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   @Test
   public void throwMapAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
     TestExceptionHandler teh = new TestExceptionHandler();
-    ExceptionUtils.setDefaultExceptionHandler(teh);
+    ExceptionUtils.setThreadExceptionHandler(teh);
     RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
     ListenableFuture<Void> mappedLF = lf.throwMap((o) -> { throw failure; });
@@ -500,7 +526,7 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   @Test
   public void throwMapWithExecutorAlreadyDoneMapperThrowExceptionTest() throws InterruptedException {
     TestExceptionHandler teh = new TestExceptionHandler();
-    ExceptionUtils.setDefaultExceptionHandler(teh);
+    ExceptionUtils.setThreadExceptionHandler(teh);
     TestableScheduler scheduler = new TestableScheduler();
     RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
@@ -621,22 +647,24 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     SingleThreadScheduler sts = new SingleThreadScheduler();
     try {
       AtomicBoolean started = new AtomicBoolean();
+      BlockingTestRunnable btr = new BlockingTestRunnable();
       AtomicBoolean completed = new AtomicBoolean();
       ListenableFuture<?> lf = makeListenableFutureFactory().makeWithResult(null);
       ListenableFuture<Void> mappedLF = lf.flatMap((o) -> {
         started.set(true);
-        try {
-          Thread.sleep(DELAY_TIME * 10);
-          completed.set(true);
-        } catch (InterruptedException e) {
-          // should not occur, if it does completed will never set
-        }
+        btr.run(); // block till ready
+        completed.set(true);
         return FutureUtils.immediateResultFuture(null);
       }, sts);
       
-      new TestCondition(() -> started.get()).blockTillTrue();
-      assertFalse(mappedLF.cancel(false));
-      new TestCondition(() -> completed.get()).blockTillTrue();
+      try {
+        new TestCondition(() -> started.get()).blockTillTrue();
+        assertFalse(mappedLF.cancel(false));
+        btr.unblock();
+        new TestCondition(() -> completed.get()).blockTillTrue();
+      } finally {
+        btr.unblock();
+      }
     } finally {
       sts.shutdownNow();
     }
@@ -738,6 +766,27 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   }
   
   @Test
+  public void mapFailureAlreadyDoneBasicTest() throws InterruptedException {
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new StackSuppressedRuntimeException());
+    ListenableFuture<?> finalLF;
+    
+    finalLF = lf.mapFailure(Exception.class, (t) -> { throw finalException; });
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+
+    finalLF = lf.mapFailure(Exception.class, (t) -> { throw finalException; }, 
+                            SameThreadSubmitterExecutor.instance());
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+    
+    finalLF = lf.mapFailure(Exception.class, (t) -> { throw finalException; }, 
+                            SameThreadSubmitterExecutor.instance(), null);
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+  }
+  
+  @Test
   public void mapFailureAlreadyDoneIgnoredTest() {
     ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
     AtomicBoolean mapped = new AtomicBoolean(false);
@@ -819,6 +868,27 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     assertTrue(mapped.get());
     assertTrue(finalLF != lf);
     assertNull(finalLF.get());
+  }
+  
+  @Test
+  public void flatMapFailureBasicTest() throws InterruptedException {
+    RuntimeException finalException = new RuntimeException();
+    ListenableFuture<?> lf = makeListenableFutureFactory().makeWithFailure(new StackSuppressedRuntimeException());
+    ListenableFuture<?> finalLF;
+    
+    finalLF = lf.flatMapFailure(Exception.class, (t) -> { throw finalException; });
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+    
+    finalLF = lf.flatMapFailure(Exception.class, (t) -> { throw finalException; }, 
+                                SameThreadSubmitterExecutor.instance());
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
+    
+    finalLF = lf.flatMapFailure(Exception.class, (t) -> { throw finalException; }, 
+                                SameThreadSubmitterExecutor.instance(), null);
+    assertTrue(finalLF != lf);
+    verifyFailureConditionFuture(finalLF, finalException);
   }
   
   @Test

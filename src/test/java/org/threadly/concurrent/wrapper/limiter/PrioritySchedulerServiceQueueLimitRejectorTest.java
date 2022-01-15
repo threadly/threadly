@@ -14,6 +14,7 @@ import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.concurrent.TestCallable;
+import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
@@ -35,6 +36,38 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
   }
   
   @Test
+  public void basicExecuteTest() {
+    TestRunnable tr = new TestRunnable();
+    TestableScheduler testableScheduler = new TestableScheduler();
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+
+    queueRejector.execute(tr);
+    queueRejector.execute(tr, TaskPriority.Low);
+    queueRejector.submit(tr);
+    queueRejector.submit(tr, TaskPriority.Low);
+    
+    assertEquals(4, testableScheduler.tick());
+    assertEquals(4, tr.getRunCount());
+  }
+  
+  @Test
+  public void basicScheduleTest() {
+    TestRunnable tr = new TestRunnable();
+    TestableScheduler testableScheduler = new TestableScheduler();
+    PrioritySchedulerServiceQueueLimitRejector queueRejector = 
+        new PrioritySchedulerServiceQueueLimitRejector(testableScheduler, TEST_QTY);
+
+    queueRejector.schedule(tr, DELAY_TIME);
+    queueRejector.schedule(tr, DELAY_TIME, TaskPriority.Low);
+    queueRejector.submitScheduled(tr, DELAY_TIME);
+    queueRejector.submitScheduled(tr, DELAY_TIME, TaskPriority.Low);
+    
+    assertEquals(4, testableScheduler.advance(DELAY_TIME));
+    assertEquals(4, tr.getRunCount());
+  }
+  
+  @Test
   public void getSetQueueLimitTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     PrioritySchedulerServiceQueueLimitRejector queueRejector = 
@@ -46,8 +79,8 @@ public class PrioritySchedulerServiceQueueLimitRejectorTest extends SchedulerSer
     assertEquals(TEST_QTY * 2, queueRejector.getQueueLimit());
   }
   
-  @Override
   @Test
+  @Override
   public void getQueuedTaskCountTest() {
     TestableScheduler testableScheduler = new TestableScheduler();
     PrioritySchedulerServiceQueueLimitRejector queueRejector = 

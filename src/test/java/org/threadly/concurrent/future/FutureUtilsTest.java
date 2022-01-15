@@ -1835,7 +1835,7 @@ public class FutureUtilsTest extends ThreadlyTester {
 
       StackTraceElement[] stack = future.getRunningStackTrace();
       assertNotNull(stack);
-      assertEquals(this.getClass().getName(), stack[3].getClassName());
+      assertEquals(this.getClass().getName(), stack[4].getClassName());
     } finally {
       runningFuture.setResult(false);
     }
