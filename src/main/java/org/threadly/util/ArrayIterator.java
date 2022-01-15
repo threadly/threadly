@@ -62,7 +62,7 @@ public class ArrayIterator<T> implements Iterator<T> {
   }
   
   protected final T[] array;
-  private int pos = 0;
+  private int pos;  // default 0
   
   /**
    * Construct a new {@link Iterator} that will start at position zero of the provided array.

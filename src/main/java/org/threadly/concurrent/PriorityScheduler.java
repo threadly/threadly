@@ -929,8 +929,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final WorkerPool workerPool;
     protected final Thread thread;
     protected volatile Worker nextIdleWorker = null;
-    protected volatile boolean waitingForUnpark = false;
-    private volatile boolean running = false;
+    protected volatile boolean waitingForUnpark; // default false
+    private volatile boolean running; // default false
     
     public Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;
