@@ -716,6 +716,7 @@ public class FutureUtils extends InternalFutureUtils {
    * @param result Result to provide returned future once all futures complete
    * @return ListenableFuture which will be done once all futures provided are done
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<T> 
       makeFailurePropagatingCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                            final T result) {
@@ -734,13 +735,8 @@ public class FutureUtils extends InternalFutureUtils {
         if (failedFutures.isEmpty()) {
           return immediateResultFuture(result);
         } else {
-          // propagate error
-          ListenableFuture<?> f = failedFutures.get(0);
-          if (f.isCancelled()) {
-            return new ImmediateCanceledListenableFuture<>(null);
-          } else {
-            f.get();  // will throw ExecutionException to be handled below
-          }
+          // propagate first error
+          return (ListenableFuture<T>) failedFutures.get(0);
         }
       } catch (ExecutionException e) {
         return immediateFailureFuture(e.getCause());
@@ -760,7 +756,7 @@ public class FutureUtils extends InternalFutureUtils {
           // propagate error
           ListenableFuture<?> f = failedFutures.get(0);
           if (f.isCancelled()) {
-            resultFuture.cancelRegardlessOfDelegateFutureState(false);
+            resultFuture.cancel(false);
           } else {
             try {
               resultFuture.setFailure(f.getFailure());
@@ -1524,16 +1520,13 @@ public class FutureUtils extends InternalFutureUtils {
    * @param doneTest Test to see if the initial result is valid
    * @return A future that is already complete with the existing result, otherwise {@code null}
    */
+  @SuppressWarnings("unchecked")
   private static <T> ListenableFuture<T> shortcutAsyncWhile(ListenableFuture<? extends T> startingFuture, 
                                                             Predicate<? super T> doneTest) {
     if (startingFuture.isDone()) {
-      if (startingFuture.isCancelled()) {
-        return new ImmediateCanceledListenableFuture<>(null);
-      }
       try {
-        Throwable failure = startingFuture.getFailure();
-        if (failure != null) {
-          return immediateFailureFuture(failure);
+        if (startingFuture.isCompletedExceptionally()) {
+          return (ListenableFuture<T>) startingFuture;
         } else if (! doneTest.test(startingFuture.get())) {
           return immediateResultFuture(startingFuture.get());
         }

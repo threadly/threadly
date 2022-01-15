@@ -14,8 +14,8 @@ import org.threadly.test.concurrent.TestRunnable;
 @SuppressWarnings("javadoc")
 public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Override
-  protected ExecuteOnGetFutureFactory makeFutureFactory() {
-    return new Factory();
+  protected ExecuteOnGetFutureFactory makeRunnableFutureFactory() {
+    return new ExecuteOnGetFutureFactory();
   }
 
   @Override
@@ -66,24 +66,24 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
   @Override
   public void mapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 57, 37);
+    ListenableFutureInterfaceTest.mapStackDepthTest(future, future, 54, 37);
   }
   
   @Test
   @Override
   public void mapFailureStackSize() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(() -> { throw new RuntimeException(); }, null);
-    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 57);
+    ListenableFutureInterfaceTest.mapFailureStackDepthTest(future, future, 54);
   }
   
   @Test
   @Override
   public void flatMapStackSizeTest() throws InterruptedException, TimeoutException {
     ListenableFutureTask<Object> future = makeFutureTask(DoNothingRunnable.instance(), null);
-    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 77, 15);
+    ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 74, 15);
   }
   
-  private class Factory implements ExecuteOnGetFutureFactory {
+  private class ExecuteOnGetFutureFactory implements ListenableRunnableFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
       return new ExecuteOnGetFutureTask<>(run);
@@ -100,22 +100,27 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
     }
 
     @Override
-    public ListenableFuture<?> makeCanceled() {
-      ListenableFutureTask<?> lft = new ExecuteOnGetFutureTask<>(DoNothingRunnable.instance());
+    public <T> ExecuteOnGetFutureTask<T> makeNewCompletable() {
+      return new ExecuteOnGetFutureTask<>(DoNothingRunnable.instance());
+    }
+
+    @Override
+    public ExecuteOnGetFutureTask<?> makeCanceledCompletable() {
+      ExecuteOnGetFutureTask<?> lft = new ExecuteOnGetFutureTask<>(DoNothingRunnable.instance());
       lft.cancel(false);
       return lft;
     }
 
     @Override
-    public ListenableFuture<Object> makeWithFailure(Exception t) {
-      ListenableFutureTask<Object> lft = new ExecuteOnGetFutureTask<>(() -> { throw t; });
+    public ExecuteOnGetFutureTask<Object> makeWithFailureCompletable(Exception t) {
+      ExecuteOnGetFutureTask<Object> lft = new ExecuteOnGetFutureTask<>(() -> { throw t; });
       lft.run();
       return lft;
     }
 
     @Override
-    public <T> ListenableFuture<T> makeWithResult(T result) {
-      ListenableFutureTask<T> lft = new ExecuteOnGetFutureTask<>(() -> result);
+    public <T> ExecuteOnGetFutureTask<T> makeWithResultCompletable(T result) {
+      ExecuteOnGetFutureTask<T> lft = new ExecuteOnGetFutureTask<>(() -> result);
       lft.run();
       return lft;
     }

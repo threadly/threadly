@@ -41,6 +41,9 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
         int startingQueueCount = executor.getQueuedTaskCount();
         executor.execute(DoNothingRunnable.instance());
         TestUtils.sleep(DELAY_TIME);
+        // XXX: Slightly flakey test
+        // Because SchedulerServiceLimiter.getQueuedTaskCount() includes queued tasks of the parent 
+        // scheduler, there is the possibility the executor queuedTaskCount is higher than expected
         assertEquals(startingQueueCount + 1, executor.getQueuedTaskCount());
         
         // verify we can still execute on pool with existing threads

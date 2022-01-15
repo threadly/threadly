@@ -8,9 +8,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -77,23 +75,20 @@ class InternalFutureUtils {
    */
   @SuppressWarnings("unchecked")
   protected static <ST, RT> ListenableFuture<RT> transform(ListenableFuture<ST> sourceFuture, 
-                                                           Supplier<String> cancelationMessageProvider, 
                                                            Function<? super ST, ? extends RT> mapper, 
                                                            boolean reportedTransformedExceptions, 
                                                            Executor executor, 
                                                            ListenerOptimizationStrategy optimizeExecution) {
     if (sourceFuture.isDone()) {
       // optimized path for already complete futures
-      if (cancelationMessageProvider != null && sourceFuture.isCancelled()) {
-        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider.get());
-      } else if (sourceFuture.isCompletedExceptionally()) {
+      if (sourceFuture.isCompletedExceptionally()) {
         return (ListenableFuture<RT>) sourceFuture;
       }
       
       ST sourceResult;
       try {
         sourceResult = sourceFuture.get();
-      } catch (ExecutionException | InterruptedException e) { // should not be possible
+      } catch (Exception e) {
         ExceptionUtils.handleException(e);
         
         return FutureUtils.immediateFailureFuture(e);
@@ -138,7 +133,8 @@ class InternalFutureUtils {
         public void handleResult(ST result) {
           try {
             slf.setRunningThread(Thread.currentThread());
-            slf.setResult(mapper.apply(result));
+            // we invoke completeWithResult
+            slf.completeWithResult(mapper.apply(result));
           } catch (Throwable t) {
             if (reportedTransformedExceptions) {
               // failure calculating transformation, let handler get a chance to see the uncaught exception
@@ -146,7 +142,7 @@ class InternalFutureUtils {
               ExceptionUtils.handleException(t);
             }
             
-            slf.setFailure(t);
+            slf.completeWithFailure(t);
           }
         }
       }, executor, optimizeExecution);
@@ -171,14 +167,11 @@ class InternalFutureUtils {
    */
   @SuppressWarnings("unchecked")
   protected static <ST, RT> ListenableFuture<RT> flatTransform(ListenableFuture<? extends ST> sourceFuture, 
-                                                               Supplier<String> cancelationMessageProvider, 
                                                                Function<? super ST, ListenableFuture<RT>> mapper, 
                                                                Executor executor, 
                                                                ListenerOptimizationStrategy optimizeExecution) {
     if (sourceFuture.isDone()) {
-      if (cancelationMessageProvider != null && sourceFuture.isCancelled()) {
-        return new ImmediateCanceledListenableFuture<>(cancelationMessageProvider.get());
-      } else if (sourceFuture.isCompletedExceptionally()) {
+      if (sourceFuture.isCompletedExceptionally()) {
         return (ListenableFuture<RT>) sourceFuture;
       } else if (invokeCompletedDirectly(executor, optimizeExecution)) {
         try { // optimized path for already complete futures which we can now process in thread
@@ -207,7 +200,7 @@ class InternalFutureUtils {
           slf.setRunningThread(Thread.currentThread());
           ListenableFuture<? extends RT> mapFuture = mapper.apply(result);
           if (mapFuture == null) {
-            slf.setFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+            slf.completeWithFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
             return;
           }
           slf.updateDelegateFuture(mapFuture);
@@ -218,7 +211,7 @@ class InternalFutureUtils {
           // This makes the behavior closer to if the exception was thrown from a task submitted to the pool
           ExceptionUtils.handleException(t);
           
-          slf.setFailure(t);
+          slf.completeWithFailure(t);
         }
       }
     }, executor, optimizeExecution);
@@ -280,7 +273,7 @@ class InternalFutureUtils {
       sourceFuture.callback(new FutureCallback<RT>() {
         @Override
         public void handleResult(RT result) {
-          slf.setResult(result);
+          slf.completeWithResult(result);
         }
         
         @Override
@@ -289,12 +282,12 @@ class InternalFutureUtils {
           if (throwableType == null || throwableType.isAssignableFrom(t.getClass())) {
             try {
               slf.setRunningThread(Thread.currentThread());
-              slf.setResult(mapper.apply((TT)t));
+              slf.completeWithResult(mapper.apply((TT)t));
             } catch (Throwable newT) {
-              slf.setFailure(newT);
+              slf.completeWithFailure(newT);
             }
           } else {
-            slf.setFailure(t);
+            slf.completeWithFailure(t);
           }
         }
       }, executor, optimizeExecution);
@@ -359,7 +352,7 @@ class InternalFutureUtils {
     sourceFuture.callback(new FutureCallback<RT>() {
       @Override
       public void handleResult(RT result) {
-        slf.setResult(result);
+        slf.completeWithResult(result);
       }
       
       @Override
@@ -370,17 +363,17 @@ class InternalFutureUtils {
             slf.setRunningThread(Thread.currentThread());
             ListenableFuture<RT> mapFuture = mapper.apply((TT)t);
             if (mapFuture == null) {
-              slf.setFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
+              slf.completeWithFailure(new NullPointerException(NULL_FUTURE_MAP_RESULT_ERROR_PREFIX + mapper));
               return;
             }
             slf.updateDelegateFuture(mapFuture);
             mapFuture.callback(slf, null, null);
             slf.setRunningThread(null); // may be processing async now
           } catch (Throwable newT) {
-            slf.setFailure(newT);
+            slf.completeWithFailure(newT);
           }
         } else {
-          slf.setFailure(t);
+          slf.completeWithFailure(t);
         }
       }
     }, executor, optimizeExecution);
@@ -477,13 +470,9 @@ class InternalFutureUtils {
     }
     
     @Override
-    protected boolean setDone(Throwable cause) {
-      if (super.setDone(cause)) {
-        delegateFuture = null;
-        return true;
-      } else {
-        return false;
-      }
+    protected void handleCompleteState() {
+      super.handleCompleteState();
+      delegateFuture = null;
     }
 
     @Override
@@ -497,67 +486,28 @@ class InternalFutureUtils {
       }
       return super.getRunningStackTrace();
     }
-    
-    protected boolean cancelRegardlessOfDelegateFutureState(boolean interruptThread) {
-      ListenableFuture<?> cancelDelegateFuture = this.delegateFuture;
-      if (super.cancel(interruptThread)) {
-        cancelDelegateFuture.cancel(interruptThread);
-        return true;
-      } else {
-        return false;
-      }
-    }
 
     @Override
     public boolean cancel(boolean interruptThread) {
+      // must get reference before we cancel ourselves (which will set the reference to null)
+      ListenableFuture<?> cancelFuture = delegateFuture;
       if (interruptThread) {
-        // if we want to interrupt, we want to try to cancel ourselves even if our delegate has 
-        // already completed (in case there is processing associated to this future we can avoid)
-        return cancelRegardlessOfDelegateFutureState(true);
-      }
-      /**
-       * The below code is inspired from the `super` implementation.  We must re-implement it in 
-       * order to handle the case where canceling the delegate future may cancel ourselves (due to 
-       * being a listener).  To solve this we synchronize the `resultLock` first, and know if we 
-       * transition to `done` while holding the lock, it must be because we are a listener.
-       * 
-       * A simple nieve implementation may look like:
-         if (cancelDelegateFuture.cancel(false)) {
-           super.cancel(false);
-           return true;
-         } else {
-           return false;
-         }
-       * This solves the listener problem by ignoring the need for `super` to cancel.  This likely 
-       * will work for most situations, but has the risk that this future may have completed 
-       * unexpectedly and we signal that it was canceled when really it completed with a result or 
-       * failure.
-       */
-      if (isDone()) {
-        return false;
-      }
-      
-      boolean canceled = false;
-      boolean callListeners = false;
-      synchronized (resultLock) {
-        if (! isDone()) {
-          if (delegateFuture.cancel(false)) {
-            canceled = true;
-            if (! isDone()) { // may have transitioned to canceled already as a listener (within lock)
-              callListeners = true;
-              setCanceled();
-            }
-          }
+        if (super.cancel(true)) {
+          cancelFuture.cancel(true);
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        // If the delegate future is done we are waiting on a mapped result to complete this future
+        // for that reason we attempt to cancel our delegate first to make sure it is not complete
+        if (cancelFuture != null && cancelFuture.cancel(false)) {
+          super.cancel(false);  // may have already completed if a listener
+          return true;
+        } else {
+          return false;
         }
       }
-      
-      if (callListeners) {
-        // call outside of lock
-        listenerHelper.callListeners();
-        runningThread = null;
-      }
-      
-      return canceled;
     }
   }
   
@@ -576,7 +526,6 @@ class InternalFutureUtils {
     protected final AtomicInteger remainingResult;
     private ArrayList<ListenableFuture<? extends T>> futures;
     protected ListenableFuture<? extends T>[] buildingResult;
-    
     
     @SuppressWarnings("unchecked")
     protected FutureCollection(Iterator<? extends ListenableFuture<? extends T>> it) {
@@ -597,7 +546,7 @@ class InternalFutureUtils {
       
       // we need to verify that all futures have not already completed
       if (remainingResult.addAndGet(count) == 0) {
-        setResult(getFinalResultList());
+        completeWithResult(getFinalResultList());
       } else {
         futures.trimToSize();
       }
@@ -708,7 +657,7 @@ class InternalFutureUtils {
         } finally {
           // all futures are now done
           if (remainingResult.decrementAndGet() == 0) {
-            setResult(getFinalResultList());
+            completeWithResult(getFinalResultList());
           }
         }
       }
@@ -751,7 +700,7 @@ class InternalFutureUtils {
       if (doneTaskSingleton == null) {
         doneTaskSingleton = () -> {
           if (remainingResult.decrementAndGet() == 0) {
-            setResult(getFinalResultList());
+            completeWithResult(getFinalResultList());
           }
         };
       }
@@ -902,95 +851,6 @@ class InternalFutureUtils {
       if (! canceled && CANCELED.compareAndSet(this, false, true)) {
         FutureUtils.cancelIncompleteFutures(futures, interruptThread);
       }
-    }
-  }
-  
-  /**
-   * Similar to {@link ImmediateFailureListenableFuture} except that the state is as if the future 
-   * had been canceled.  This is an internal class due to no foreseeable need of this by users of 
-   * the library.  This is used mostly in communicating state / messages from other futures.
-   * 
-   * @since 5.32
-   * @param <T> The result object type returned by this future
-   */
-  protected static final class ImmediateCanceledListenableFuture<T> extends AbstractCompletedListenableFuture<T> {
-    protected final String cancelMessage;
-    
-    /**
-     * Constructs a completed future in a canceled state.
-     * 
-     * @param cancelMessage to provide to the {@link CancellationException}
-     */
-    public ImmediateCanceledListenableFuture(String cancelMessage) {
-      this.cancelMessage = cancelMessage;
-    }
-    
-    @Override
-    protected String getCancellationExceptionMessage() {
-      return cancelMessage;
-    }
-    
-    @Override
-    public boolean isCancelled() {
-      return true;
-    }
-
-    @Override
-    public boolean isCompletedExceptionally() {
-      return true;
-    }
-
-    @Override
-    public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
-                                        ListenerOptimizationStrategy optimize) {
-      CancellationException e = new CancellationException(cancelMessage);
-      if (invokeCompletedDirectly(executor, optimize)) {
-        callback.handleFailure(e);
-      } else {
-        executor.execute(() -> callback.handleFailure(e));
-      }
-      
-      return this;
-    }
-
-    @Override
-    public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
-                                              ListenerOptimizationStrategy optimize) {
-      // ignored
-      return this;
-    }
-
-    @Override
-    public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
-                                               ListenerOptimizationStrategy optimize) {
-      CancellationException e = new CancellationException(cancelMessage);
-      if (invokeCompletedDirectly(executor, optimize)) {
-        callback.accept(e);
-      } else {
-        executor.execute(() -> callback.accept(e));
-      }
-      
-      return this;
-    }
-
-    @Override
-    public T get() {
-      throw new CancellationException(cancelMessage);
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) {
-      throw new CancellationException(cancelMessage);
-    }
-
-    @Override
-    public Throwable getFailure() {
-      return new CancellationException(cancelMessage);
-    }
-
-    @Override
-    public Throwable getFailure(long timeout, TimeUnit unit) {
-      return new CancellationException(cancelMessage);
     }
   }
 }

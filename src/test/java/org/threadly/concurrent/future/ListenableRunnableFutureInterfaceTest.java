@@ -10,22 +10,24 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
 import org.threadly.concurrent.DoNothingRunnable;
+import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.test.concurrent.TestRunnable;
-import org.threadly.util.Clock;
+import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
-public abstract class ListenableRunnableFutureInterfaceTest extends ListenableFutureInterfaceTest {
-  protected abstract ExecuteOnGetFutureFactory makeFutureFactory();
+public abstract class ListenableRunnableFutureInterfaceTest extends CompletableListenableFutureInterfaceTest {
+  protected abstract ListenableRunnableFutureFactory makeRunnableFutureFactory();
   
   @Override
-  protected ListenableFutureFactory makeListenableFutureFactory() {
-    return makeFutureFactory();
+  protected ListenableRunnableFutureFactory makeCompletableListenableFutureFactory() {
+    return makeRunnableFutureFactory();
   }
   
   @Test
   public void getCallableResultTest() throws InterruptedException, ExecutionException {
-    ExecuteOnGetFutureFactory ff = makeFutureFactory();
+    ListenableRunnableFutureFactory ff = makeRunnableFutureFactory();
     final Object result = new Object();
     RunnableFuture<Object> future = ff.make(new Callable<Object>() {
       @Override
@@ -41,7 +43,7 @@ public abstract class ListenableRunnableFutureInterfaceTest extends ListenableFu
 
   @Test
   public void getRunnableResultTest() throws InterruptedException, ExecutionException {
-    ExecuteOnGetFutureFactory ff = makeFutureFactory();
+    ListenableRunnableFutureFactory ff = makeRunnableFutureFactory();
     final Object result = new Object();
     RunnableFuture<Object> future = ff.make(DoNothingRunnable.instance(), result);
     
@@ -52,7 +54,7 @@ public abstract class ListenableRunnableFutureInterfaceTest extends ListenableFu
 
   @Test
   public void isDoneTest() {
-    ExecuteOnGetFutureFactory ff = makeFutureFactory();
+    ListenableRunnableFutureFactory ff = makeRunnableFutureFactory();
     TestRunnable r = new TestRunnable();
     RunnableFuture<?> future = ff.make(r);
     future.run();
@@ -62,7 +64,7 @@ public abstract class ListenableRunnableFutureInterfaceTest extends ListenableFu
 
   @Test
   public void isDoneFail() {
-    ExecuteOnGetFutureFactory ff = makeFutureFactory();
+    ListenableRunnableFutureFactory ff = makeRunnableFutureFactory();
     TestRunnable r = new TestRuntimeFailureRunnable();
     RunnableFuture<?> future = ff.make(r);
     
@@ -70,26 +72,41 @@ public abstract class ListenableRunnableFutureInterfaceTest extends ListenableFu
     
     assertTrue(future.isDone());
   }
-
+  
   @Test
-  public void getTimeoutFail() throws InterruptedException, ExecutionException {
-    ExecuteOnGetFutureFactory ff = makeFutureFactory();
-    TestRunnable tr = new TestRunnable();
-    RunnableFuture<?> future = ff.make(tr);
+  public void getAsyncResultTest() throws InterruptedException, ExecutionException {
+    final String testResult = StringUtils.makeRandomString(5);
+    RunnableFuture<String> lf = makeRunnableFutureFactory().make(() -> testResult);
     
-    // we never run the future, so we have to timeout
-    
-    long startTime = Clock.accurateForwardProgressingMillis();
+    PriorityScheduler scheduler = new StrictPriorityScheduler(1);
     try {
-      future.get(DELAY_TIME, TimeUnit.MILLISECONDS);
-      fail("Exception should have been thrown");
-    } catch (TimeoutException e) {
-      long catchTime = Clock.accurateForwardProgressingMillis();
-      assertTrue(catchTime - startTime >= DELAY_TIME);
+      scheduler.schedule(lf, DELAY_TIME);
+      
+      assertTrue(lf.get() == testResult);
+    } finally {
+      scheduler.shutdownNow();
     }
   }
   
-  protected interface ExecuteOnGetFutureFactory extends ListenableFutureFactory {
+  @Test
+  public void getAsyncResultWithTimeoutTest() throws InterruptedException, 
+                                                     ExecutionException, 
+                                                     TimeoutException {
+    final String testResult = StringUtils.makeRandomString(5);
+    RunnableFuture<String> lf = makeRunnableFutureFactory().make(() -> testResult);
+    
+    PriorityScheduler scheduler = new StrictPriorityScheduler(1);
+    try {
+      scheduler.prestartAllThreads();
+      scheduler.schedule(lf, DELAY_TIME);
+      
+      assertTrue(lf.get(DELAY_TIME + (SLOW_MACHINE ? 2000 : 1000), TimeUnit.MILLISECONDS) == testResult);
+    } finally {
+      scheduler.shutdownNow();
+    }
+  }
+  
+  protected interface ListenableRunnableFutureFactory extends CompletableListenableFutureFactory {
     public RunnableFuture<?> make(Runnable run);
     public <T> RunnableFuture<T> make(Runnable run, T result);
     public <T> RunnableFuture<T> make(Callable<T> callable);
