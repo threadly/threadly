@@ -2,7 +2,6 @@ package org.threadly.concurrent.future;
 
 import static org.threadly.concurrent.future.InternalFutureUtils.invokeCompletedDirectly;
 
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -132,7 +131,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper) {
-    return InternalFutureUtils.transform(this, null, mapper, true, null, null);
+    return InternalFutureUtils.transform(this, mapper, true, null, null);
   }
   
   /**
@@ -164,7 +163,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
-    return InternalFutureUtils.transform(this, null, mapper, true, executor, null);
+    return InternalFutureUtils.transform(this, mapper, true, executor, null);
   }
   
   /**
@@ -206,7 +205,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor, 
                                       ListenerOptimizationStrategy optimizeExecution) {
-    return InternalFutureUtils.transform(this, null, mapper, true, executor, optimizeExecution);
+    return InternalFutureUtils.transform(this, mapper, true, executor, optimizeExecution);
   }
   
   /**
@@ -260,7 +259,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper) {
-    return InternalFutureUtils.transform(this, null, mapper, false, null, null);
+    return InternalFutureUtils.transform(this, mapper, false, null, null);
   }
   
   /**
@@ -291,7 +290,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, 
                                            Executor executor) {
-    return InternalFutureUtils.transform(this, null, mapper, false, executor, null);
+    return InternalFutureUtils.transform(this, mapper, false, executor, null);
   }
   
   /**
@@ -327,7 +326,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, Executor executor, 
                                            ListenerOptimizationStrategy optimizeExecution) {
-    return InternalFutureUtils.transform(this, null, mapper, false, executor, optimizeExecution);
+    return InternalFutureUtils.transform(this, mapper, false, executor, optimizeExecution);
   }
   
   /**
@@ -347,7 +346,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} that will complete when both this and the provided future does
    */
   default <R> ListenableFuture<R> flatMap(ListenableFuture<R> future) {
-    return InternalFutureUtils.flatTransform(this, null, (ignored) -> future, null, null);
+    return InternalFutureUtils.flatTransform(this, (ignored) -> future, null, null);
   }
   
   /**
@@ -377,7 +376,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper) {
-    return InternalFutureUtils.flatTransform(this, null, mapper, null, null);
+    return InternalFutureUtils.flatTransform(this, mapper, null, null);
   }
 
   /**
@@ -404,7 +403,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor) {
-    return InternalFutureUtils.flatTransform(this, null, mapper, executor, null);
+    return InternalFutureUtils.flatTransform(this, mapper, executor, null);
   }
 
   /**
@@ -441,7 +440,7 @@ public interface ListenableFuture<T> extends Future<T> {
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor, 
                                           ListenerOptimizationStrategy optimizeExecution) {
-    return InternalFutureUtils.flatTransform(this, null, mapper, executor, optimizeExecution);
+    return InternalFutureUtils.flatTransform(this, mapper, executor, optimizeExecution);
   }
   
   /**
@@ -711,7 +710,6 @@ public interface ListenableFuture<T> extends Future<T> {
   default ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                        ListenerOptimizationStrategy optimizeExecution) {
     if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
-      // no need to construct anything, just invoke directly
       try {
         Throwable failure = getFailure();
         if (failure != null) {
@@ -719,7 +717,7 @@ public interface ListenableFuture<T> extends Future<T> {
         } else {
           callback.handleResult(get());
         }
-      } catch (ExecutionException | InterruptedException e) { // should not be possible
+      } catch (Exception e) {
         callback.handleFailure(e);
       }
     } else {
@@ -731,7 +729,7 @@ public interface ListenableFuture<T> extends Future<T> {
           } else {
             callback.handleResult(get());
           }
-        } catch (ExecutionException | InterruptedException e) { // should not be possible
+        } catch (Exception e) {
           callback.handleFailure(e);
         }
       }, executor, optimizeExecution);
@@ -802,14 +800,13 @@ public interface ListenableFuture<T> extends Future<T> {
                                              ListenerOptimizationStrategy optimizeExecution) {
     if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       if (! isCompletedExceptionally()) {
-        // no need to construct anything, just invoke directly
         try {
           callback.accept(get());
         } catch (ExecutionException | InterruptedException e) {
           // should not be possible
         }
       }
-    } else {
+    } else if (! isCompletedExceptionally()) {
       listener(() -> {
         if (! isCompletedExceptionally()) {
           try {
@@ -888,12 +885,11 @@ public interface ListenableFuture<T> extends Future<T> {
   default ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
                                               ListenerOptimizationStrategy optimizeExecution) {
     if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
-      // no need to construct anything, just invoke directly
       try {
         if (isCompletedExceptionally()) {
           callback.accept(getFailure());
         }
-      } catch (CancellationException | InterruptedException e) { // should not be possible
+      } catch (Exception e) {
         callback.accept(e);
       }
     } else {
@@ -902,7 +898,7 @@ public interface ListenableFuture<T> extends Future<T> {
           if (isCompletedExceptionally()) {
             callback.accept(getFailure());
           }
-        } catch (CancellationException | InterruptedException e) { // should not be possible
+        } catch (Exception e) {
           callback.accept(e);
         }
       }, executor, optimizeExecution);

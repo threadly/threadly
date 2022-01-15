@@ -420,13 +420,25 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    */
   protected static final class CancelRemovingListenableFutureTask<T> extends ListenableFutureTask<T> {
     private final SchedulerService scheduler;
+    private final boolean recurring;
 
     public CancelRemovingListenableFutureTask(SchedulerService scheduler, 
                                               boolean recurring, Runnable task, 
                                               Executor executingExecutor) {
-      super(recurring, task, null, executingExecutor);
+      super(task, null, executingExecutor);
       
       this.scheduler = scheduler;
+      this.recurring = recurring;
+    }
+    
+    @Override
+    protected boolean completeWithResult(T result) {
+      if (recurring) {
+        // don't set the result so execution can re-occur
+        return false;
+      } else {
+        return super.completeWithResult(result);
+      }
     }
     
     @Override
