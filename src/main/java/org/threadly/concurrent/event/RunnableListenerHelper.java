@@ -24,9 +24,9 @@ import org.threadly.util.Pair;
 public class RunnableListenerHelper {
   protected final Object listenersLock;
   protected final boolean callOnce;
-  protected volatile boolean done;
-  protected List<Runnable> inThreadListeners;
-  protected List<Pair<Runnable, Executor>> executorListeners;
+  protected volatile boolean done;  // default false
+  protected List<Runnable> inThreadListeners; // default null
+  protected List<Pair<Runnable, Executor>> executorListeners; // default null
   
   /**
    * Constructs a new {@link RunnableListenerHelper}.  This can call listeners only once, or every 
@@ -37,9 +37,6 @@ public class RunnableListenerHelper {
   public RunnableListenerHelper(boolean callListenersOnce) {
     this.listenersLock = new Object();
     this.callOnce = callListenersOnce;
-    this.done = false;
-    this.inThreadListeners = null;
-    this.executorListeners = null;
   }
   
   /**
