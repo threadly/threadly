@@ -51,6 +51,7 @@ public class StringBuilderWriterTest extends ThreadlyTester {
   }
   
   @Test
+  @SuppressWarnings("resource")
   public void appendCharSquenceTest() {
     String testStr = "The quick brown fox jumped over the lazy dog!";
     
@@ -64,6 +65,7 @@ public class StringBuilderWriterTest extends ThreadlyTester {
   }
   
   @Test
+  @SuppressWarnings("resource")
   public void appendCharSquenceRangeTest() {
     int rangeStart = 0;
     int rangeEnd = 10;

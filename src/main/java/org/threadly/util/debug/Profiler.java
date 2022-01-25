@@ -401,19 +401,6 @@ public class Profiler {
   /**
    * Output all the currently collected statistics to the provided output stream.
    * 
-   * @deprecated Use {@link #dump(boolean, int)} with a value of {@code 1}
-   * 
-   * @return The dumped results as a single String
-   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
-   */
-  @Deprecated
-  public String dump(boolean dumpIndividualThreads) {
-    return dump(dumpIndividualThreads, 1);
-  }
-  
-  /**
-   * Output all the currently collected statistics to the provided output stream.
-   * 
    * @return The dumped results as a single String
    * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
    * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
@@ -437,19 +424,6 @@ public class Profiler {
   /**
    * Output all the currently collected statistics to the provided output stream.
    * 
-   * @deprecated Use {@link #dump(OutputStream, boolean, int)} with a value of {@code 1}
-   * 
-   * @param out OutputStream to write results to
-   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
-   */
-  @Deprecated
-  public void dump(OutputStream out, boolean dumpIndividualThreads) {
-    dump(out, dumpIndividualThreads, 1);
-  }
-  
-  /**
-   * Output all the currently collected statistics to the provided output stream.
-   * 
    * @param out OutputStream to write results to
    * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
    * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
@@ -465,19 +439,6 @@ public class Profiler {
    */
   public void dump(PrintStream ps) {
     dump(ps, true, 1);
-  }
-  
-  /**
-   * Output all the currently collected statistics to the provided output stream.
-   * 
-   * @deprecated Use {@link #dump(PrintStream, boolean, int)} with a value of {@code 1}
-   * 
-   * @param ps PrintStream to write results to
-   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
-   */
-  @Deprecated
-  public void dump(PrintStream ps, boolean dumpIndividualThreads) {
-    dump(ps, dumpIndividualThreads, 1);
   }
   
   /**

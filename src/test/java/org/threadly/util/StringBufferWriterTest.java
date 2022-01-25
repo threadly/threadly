@@ -51,6 +51,7 @@ public class StringBufferWriterTest extends ThreadlyTester {
   }
   
   @Test
+  @SuppressWarnings("resource")
   public void appendCharSquenceTest() {
     String testStr = StringUtils.makeRandomString(50);
     
@@ -64,6 +65,7 @@ public class StringBufferWriterTest extends ThreadlyTester {
   }
   
   @Test
+  @SuppressWarnings("resource")
   public void appendCharSquenceRangeTest() {
     int rangeStart = 0;
     int rangeEnd = 10;
