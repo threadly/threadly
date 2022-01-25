@@ -35,13 +35,10 @@ public class SameThreadSubmitterExecutor implements SubmitterExecutor {
   }
   
   /**
-   * Constructor, will become private.  Do not use.
-   * 
-   * @deprecated Use {@link SameThreadSubmitterExecutor#instance()}
+   * Do not use, instead use {@link SameThreadSubmitterExecutor#instance()}.
    */
-  @Deprecated
-  public SameThreadSubmitterExecutor() {
-    // TODO - force access through instance()
+  protected SameThreadSubmitterExecutor() {
+    // force access through instance()
   }
   
   @Override

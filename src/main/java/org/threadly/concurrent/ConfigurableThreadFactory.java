@@ -255,43 +255,6 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * If the priority is below or above the max available thread priority, this will be adjusted to 
    * the limit of the system.
    * 
-   * @deprecated Replaced by constructor which accepts a {@link Consumer} for created threads.  
-   *               Specifying {@code null} will provide a direct replacement, or alternatively a 
-   *               builder can be used from {@link #builder()}.
-   * 
-   * @param threadNamePrefix prefix for all threads created, {@code null} to match default
-   * @param appendPoolIdToPrefix {@code true} to append a unique pool id to the thread prefix, 
-   *                             {@code true} to match default
-   * @param useDaemonThreads true if produced threads should be daemon threads, false to match default
-   * @param threadPriority Priority for newly created threads, {@code Thread.NORM_PRIORITY} to match default
-   * @param uncaughtExceptionHandler UncaughtExceptionHandler to provide to newly created threads, 
-   *                                 {@code null} to match default
-   * @param defaultThreadlyExceptionHandler {@link ExceptionHandler} to provide to newly created threads
-   */
-  @Deprecated
-  public ConfigurableThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix, 
-                                   boolean useDaemonThreads, int threadPriority, 
-                                   UncaughtExceptionHandler uncaughtExceptionHandler, 
-                                   ExceptionHandler defaultThreadlyExceptionHandler) {
-    this(threadNamePrefix, appendPoolIdToPrefix, useDaemonThreads, threadPriority, 
-         uncaughtExceptionHandler, defaultThreadlyExceptionHandler, null);
-  }
-  
-  /**
-   * Constructs a new {@link ConfigurableThreadFactory} allowing you to provide specific values 
-   * for everything which this class allows to be configured.  You must use this constructor if 
-   * you need to adjust two or more values.  
-   * <p>
-   * If specified with {@code true} for {@code appendPoolIdToPrefix} it will append a unique 
-   * "pool" id to the prefix, giving it the format of 
-   * {@code threadNamePrefix + UNIQUE_POOL_ID + "-thread-"}.  If {@code appendPoolIdToPrefix} is 
-   * specified as {@code false}, only a unique thread id will be appended to the prefix.  In 
-   * either case, the produced threads name will be appended with a unique thread id for the 
-   * factory instance.
-   * <p>
-   * If the priority is below or above the max available thread priority, this will be adjusted to 
-   * the limit of the system.
-   * 
    * @param threadNamePrefix prefix for all threads created, {@code null} to match default
    * @param appendPoolIdToPrefix {@code true} to append a unique pool id to the thread prefix, 
    *                             {@code true} to match default
