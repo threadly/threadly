@@ -299,7 +299,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if scheduler was started.
      */
     public boolean startIfNotRunning() {
-      if (state.get() == -1 && state.compareAndSet(-1, 0)) {
+      if (state.getPlain() == -1 && state.compareAndSet(-1, 0)) {
         execThread.start();
         
         return true;
@@ -321,7 +321,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
     public List<Runnable> stop(boolean stopImmediately) {
       int stateVal = state.get();
       while (stateVal < 1) {
-        if (state.compareAndSet(stateVal, 1)) {
+        if (state.weakCompareAndSetVolatile(stateVal, 1)) {
           // we finish the shutdown immediately if requested, or if it was never started
           if (stopImmediately || stateVal == -1) {
             return finishShutdown();

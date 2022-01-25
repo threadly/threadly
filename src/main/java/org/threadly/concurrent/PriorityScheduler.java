@@ -701,7 +701,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public void prestartAllThreads() {
       int casPoolSize;
       while ((casPoolSize = currentPoolSize.get()) < maxPoolSize) {
-        if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize + 1)) {
+        if (currentPoolSize.weakCompareAndSetVolatile(casPoolSize, casPoolSize + 1)) {
           makeNewWorker();
         }
       }
@@ -725,13 +725,16 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected void addWorkerToIdleChain(Worker worker) {
       idleWorkerCount.increment();
       worker.waitingForUnpark = false;  // reset state before we park, avoid external interactions
-      
+
+      Worker casWorker = idleWorker.get();
       while (true) {
-        Worker casWorker = idleWorker.get();
         // we can freely set this value until we get into the idle linked queue
         worker.nextIdleWorker = casWorker;
-        if (idleWorker.compareAndSet(casWorker, worker)) {
+        Worker exchangeWorker = idleWorker.compareAndExchange(casWorker, worker);
+        if (exchangeWorker == casWorker) {
           break;
+        } else {
+          casWorker = exchangeWorker;
         }
       }
     }
@@ -755,16 +758,17 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       synchronized (idleWorkerDequeLock) {
         Worker holdingWorker = idleWorker.get();
         if (holdingWorker == worker) {
-          if (idleWorker.compareAndSet(worker, worker.nextIdleWorker)) {
+          holdingWorker = idleWorker.compareAndExchange(worker,  worker.nextIdleWorker);
+          if (holdingWorker == worker) {
+            // removed from chain atomically
             worker.nextIdleWorker = null;
             return;
-          } else {
-            /* because we can only queue in parallel, we know that the conflict was a newly queued 
-             * worker.  In addition since we know that queued workers are added at the start, all 
-             * that should be necessary is updating our holding worker reference
-             */
-            holdingWorker = idleWorker.get();
           }
+          /*else,
+           * Because of holding the idleWorkerDequeLock lock we know the only conflict was the
+           * adding of a new queued Worker.  Our holdingWorker reference was already updated in
+           * the exchange, so the worker we are searching for must be in the chain
+           */
         }
         
         // no need for null checks due to locking, we assume the worker is in the chain
@@ -794,7 +798,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       int casPoolSize;
       while (true) {
         if ((casPoolSize = currentPoolSize.get()) > maxPoolSize) {
-          if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize - 1)) {
+          if (currentPoolSize.weakCompareAndSetVolatile(casPoolSize, casPoolSize - 1)) {
             worker.stopWorker();
             return null;
           } // else, retry, see if we need to shutdown
@@ -896,7 +900,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         if (nextIdleWorker == null) {
           int casSize = currentPoolSize.get();
           if (casSize < maxPoolSize) {
-            if (currentPoolSize.compareAndSet(casSize, casSize + 1)) {
+            if (currentPoolSize.weakCompareAndSetVolatile(casSize, casSize + 1)) {
               // start a new worker for the next task
               makeNewWorker();
               break;
@@ -925,8 +929,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final WorkerPool workerPool;
     protected final Thread thread;
     protected volatile Worker nextIdleWorker = null;
-    protected volatile boolean waitingForUnpark = false;
-    private volatile boolean running = false;
+    protected volatile boolean waitingForUnpark; // default false
+    private volatile boolean running; // default false
     
     public Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;

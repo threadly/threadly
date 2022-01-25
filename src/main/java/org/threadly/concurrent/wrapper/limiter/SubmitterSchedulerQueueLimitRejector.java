@@ -109,7 +109,7 @@ public class SubmitterSchedulerQueueLimitRejector extends AbstractSubmitterSched
       if (casValue >= queuedTaskLimit) {
         rejectedExecutionHandler.handleRejectedTask(task);
         return; // in case handler did not throw exception
-      } else if (queuedTaskCount.compareAndSet(casValue, casValue + 1)) {
+      } else if (queuedTaskCount.weakCompareAndSetVolatile(casValue, casValue + 1)) {
         try {
           parentScheduler.schedule(new DecrementingRunnable(task, queuedTaskCount), delayInMillis);
         } catch (RejectedExecutionException e) {

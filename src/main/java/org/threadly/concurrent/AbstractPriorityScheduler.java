@@ -688,14 +688,13 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     protected final Queue<? extends TaskWrapper> taskQueue;
     protected final long runTime;
     // optimization to avoid queue traversal on failure to remove, cheaper than AtomicBoolean
-    protected volatile boolean executed;
+    protected volatile boolean executed;  // default false
     
     public OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task);
       
       this.taskQueue = taskQueue;
       this.runTime = runTime;
-      this.executed = false;
     }
     
     @Override
