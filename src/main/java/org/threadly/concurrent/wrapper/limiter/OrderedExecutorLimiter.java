@@ -9,7 +9,6 @@ import java.util.concurrent.PriorityBlockingQueue;
 import org.threadly.concurrent.ContainerHelper;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.RunnableContainer;
-import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
 import org.threadly.util.ArgumentVerifier;
@@ -190,26 +189,35 @@ public class OrderedExecutorLimiter<T extends Runnable> {
    * @param <FT> Type of result provided from the future.
    */
   protected static class OrderedListenableFutureTask<FT> extends ListenableFutureTask<FT> {
+    private Collection<? extends RunnableContainer> taskQueue;
     private Callable<FT> task;
     
     public OrderedListenableFutureTask(Collection<? extends RunnableContainer> taskQueue, 
                                        Callable<FT> task, Executor executingExecutor) {
       super(task, executingExecutor);
       
+      this.taskQueue = taskQueue;
       this.task = task;
-      
-      listener(() -> {
-        if (isCancelled()) {
-          // ensure this is removed from the queue before we can clear the task reference
-          ContainerHelper.remove(taskQueue, OrderedListenableFutureTask.this);
-        }
-        this.task = null;
-      }, SameThreadSubmitterExecutor.instance());
     }
 
     @Override
     public Callable<FT> getContainedCallable() {
       return task;
+    }
+    
+    @Override
+    protected void handleCompleteState() {
+      try {
+        if (isCancelled()) {
+          // ensure this is removed from the queue before we can clear the task reference
+          ContainerHelper.remove(taskQueue, OrderedListenableFutureTask.this);
+        }
+      } finally {
+        this.taskQueue = null;
+        this.task = null;
+        
+        super.handleCompleteState();
+      }
     }
   }
 }

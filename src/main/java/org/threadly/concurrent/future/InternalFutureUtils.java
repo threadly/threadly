@@ -550,8 +550,13 @@ class InternalFutureUtils {
       } else {
         futures.trimToSize();
       }
+    }
+    
+    @Override
+    protected void handleCompleteState() {
+      futures = null;
       
-      listener(() -> futures = null);
+      super.handleCompleteState();
     }
     
     /**
