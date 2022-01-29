@@ -6,7 +6,7 @@ sourceCompatibility = 1.11
 targetCompatibility = 1.11
 
 test {
-  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2))
+  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 4))
 }
 
 test.dependsOn("jar")
