@@ -17,7 +17,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
@@ -27,11 +26,12 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.concurrent.UnfairExecutor;
 import org.threadly.concurrent.wrapper.limiter.ExecutorLimiter;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 import org.threadly.util.TestExceptionHandler;
 
 @SuppressWarnings("javadoc")
@@ -328,7 +328,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   public void taskExceptionTest() {
     Integer key = 1;
     TestExceptionHandler teh = new TestExceptionHandler();
-    final RuntimeException testException = new SuppressedStackRuntimeException();
+    final RuntimeException testException = new StackSuppressedRuntimeException();
     ExceptionUtils.setDefaultExceptionHandler(teh);
     TestRunnable exceptionRunnable = new TestRuntimeFailureRunnable(testException);
     TestRunnable followRunnable = new TestRunnable();

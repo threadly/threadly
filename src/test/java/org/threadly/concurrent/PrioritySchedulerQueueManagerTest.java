@@ -6,6 +6,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
+import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
+import org.threadly.concurrent.AbstractPriorityScheduler.ImmediateTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueManager;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSet;
@@ -38,8 +40,8 @@ public class PrioritySchedulerQueueManagerTest extends ThreadlyTester {
   @Test
   public void removeCallableTest() {
     TestCallable callable = new TestCallable();
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new ListenableFutureTask<>(false, callable), 
-                                                     null, Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(new ListenableFutureTask<>(callable), 
+                                                             null, Clock.lastKnownForwardProgressingMillis());
     
     assertFalse(queueManager.remove(callable));
     
@@ -57,8 +59,8 @@ public class PrioritySchedulerQueueManagerTest extends ThreadlyTester {
   @Test
   public void removeRunnableTest() {
     TestRunnable runnable = new TestRunnable();
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(runnable, null, 
-                                                     Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(runnable, null, 
+                                                             Clock.lastKnownForwardProgressingMillis());
     
     assertFalse(queueManager.remove(runnable));
     
@@ -83,13 +85,29 @@ public class PrioritySchedulerQueueManagerTest extends ThreadlyTester {
     getNextReadyTaskExecuteTest(queueManager.lowPriorityQueueSet);
   }
   
+  @Test
+  public void getNextReadyTaskExecuteOnlyStavableTest() {
+    getNextReadyTaskExecuteTest(queueManager.starvablePriorityQueueSet);
+  }
+  
   private void getNextReadyTaskExecuteTest(QueueSet queueSet) {
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), queueSet.executeQueue, 
-                                                     Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                             queueSet.executeQueue, 
+                                                             Clock.lastKnownForwardProgressingMillis());
     
     queueSet.addExecute(task);
     
-    assertTrue(task == queueManager.getNextTask());
+    assertTrue(task == queueManager.getNextTask(true));
+  }
+  
+  @Test
+  public void getNextReadyTaskIgnoreStarvablePriorityTest() {
+    ImmediateTaskWrapper task = new ImmediateTaskWrapper(DoNothingRunnable.instance(), 
+                                                         queueManager.starvablePriorityQueueSet.executeQueue);
+    
+    queueManager.starvablePriorityQueueSet.addExecute(task);
+    
+    assertEquals(null, queueManager.getNextTask(false));
   }
   
   @Test
@@ -102,94 +120,100 @@ public class PrioritySchedulerQueueManagerTest extends ThreadlyTester {
     getNextReadyTaskScheduledTest(queueManager.lowPriorityQueueSet);
   }
   
+  @Test
+  public void getNextReadyTaskScheduleOnlyStaravableTest() {
+    getNextReadyTaskScheduledTest(queueManager.starvablePriorityQueueSet);
+  }
+  
   private void getNextReadyTaskScheduledTest(QueueSet queueSet) {
-    TaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), queueSet.scheduleQueue, 
-                                              Clock.lastKnownForwardProgressingMillis());
+    TaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                      queueSet.scheduleQueue, 
+                                                      Clock.lastKnownForwardProgressingMillis());
     
     queueSet.addScheduled(task);
     
-    assertTrue(task == queueManager.getNextTask());
+    assertTrue(task == queueManager.getNextTask(true));
   }
   
   @Test
   public void getNextReadyTaskExecuteAheadOfScheduledTest() {
-    OneTimeTaskWrapper executeTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                            queueManager.highPriorityQueueSet.executeQueue, 
-                                                            Clock.accurateForwardProgressingMillis());
+    OneTimeTaskWrapper executeTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                                    queueManager.highPriorityQueueSet.executeQueue, 
+                                                                    Clock.accurateForwardProgressingMillis());
     queueManager.highPriorityQueueSet.addExecute(executeTask);
     TestUtils.blockTillClockAdvances();
-    TaskWrapper scheduleTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                      queueManager.highPriorityQueueSet.scheduleQueue, 
-                                                      Clock.lastKnownForwardProgressingMillis());
+    TaskWrapper scheduleTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                              queueManager.highPriorityQueueSet.scheduleQueue, 
+                                                              Clock.lastKnownForwardProgressingMillis());
     queueManager.highPriorityQueueSet.addScheduled(scheduleTask);
 
-    assertTrue(executeTask == queueManager.getNextTask());
-    assertTrue(executeTask == queueManager.getNextTask());  // execute task has not been removed yet
+    assertTrue(executeTask == queueManager.getNextTask(true));
+    assertTrue(executeTask == queueManager.getNextTask(true));  // execute task has not been removed yet
     // this should remove the execute task so we can get the scheduled task
     assertTrue(executeTask.canExecute(executeTask.getExecuteReference()));
-    assertTrue(scheduleTask == queueManager.getNextTask());
+    assertTrue(scheduleTask == queueManager.getNextTask(true));
   }
   
   @Test
   public void getNextReadyTaskScheduledAheadOfExecuteTest() {
-    TaskWrapper scheduleTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                      queueManager.highPriorityQueueSet.scheduleQueue,
-                                                      Clock.accurateForwardProgressingMillis());
+    TaskWrapper scheduleTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                              queueManager.highPriorityQueueSet.scheduleQueue,
+                                                              Clock.accurateForwardProgressingMillis());
     queueManager.highPriorityQueueSet.addScheduled(scheduleTask);
     TestUtils.blockTillClockAdvances();
-    OneTimeTaskWrapper executeTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                            queueManager.highPriorityQueueSet.executeQueue, 
-                                                            Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper executeTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                                    queueManager.highPriorityQueueSet.executeQueue, 
+                                                                    Clock.lastKnownForwardProgressingMillis());
     queueManager.highPriorityQueueSet.addExecute(executeTask);
 
-    assertTrue(scheduleTask == queueManager.getNextTask());
-    assertTrue(scheduleTask == queueManager.getNextTask());  // schedule task has not been removed yet
+    assertTrue(scheduleTask == queueManager.getNextTask(true));
+    assertTrue(scheduleTask == queueManager.getNextTask(true));  // schedule task has not been removed yet
  // this should remove the schedule task so we can get the execute task
     assertTrue(scheduleTask.canExecute(executeTask.getExecuteReference()));
-    assertTrue(executeTask == queueManager.getNextTask());
+    assertTrue(executeTask == queueManager.getNextTask(true));
   }
   
   @Test
   public void getNextReadyTaskHighPriorityDelayedTest() {
-    TaskWrapper scheduleTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                      queueManager.highPriorityQueueSet.scheduleQueue, 
-                                                      Clock.accurateForwardProgressingMillis() + 1000);
+    TaskWrapper scheduleTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                              queueManager.highPriorityQueueSet.scheduleQueue, 
+                                                              Clock.accurateForwardProgressingMillis() + 1000);
     queueManager.highPriorityQueueSet.addScheduled(scheduleTask);
     TestUtils.blockTillClockAdvances();
-    OneTimeTaskWrapper executeTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                            queueManager.lowPriorityQueueSet.executeQueue, 
-                                                            Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper executeTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                                    queueManager.lowPriorityQueueSet.executeQueue, 
+                                                                    Clock.lastKnownForwardProgressingMillis());
     queueManager.lowPriorityQueueSet.addExecute(executeTask);
 
-    assertTrue(executeTask == queueManager.getNextTask());
+    assertTrue(executeTask == queueManager.getNextTask(true));
   }
   
   @Test
   public void getNextReadyTaskHighPriorityReadyFirstTest() {
-    TaskWrapper highTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                  queueManager.highPriorityQueueSet.scheduleQueue, 
-                                                  Clock.accurateForwardProgressingMillis() + DELAY_TIME);
-    TaskWrapper lowTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                 queueManager.lowPriorityQueueSet.scheduleQueue, 
-                                                 Clock.lastKnownForwardProgressingMillis() + (DELAY_TIME * 10));
+    TaskWrapper highTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                          queueManager.highPriorityQueueSet.scheduleQueue, 
+                                                          Clock.accurateForwardProgressingMillis() + DELAY_TIME);
+    TaskWrapper lowTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                         queueManager.lowPriorityQueueSet.scheduleQueue, 
+                                                         Clock.lastKnownForwardProgressingMillis() + (DELAY_TIME * 10));
     queueManager.highPriorityQueueSet.addScheduled(highTask);
     queueManager.lowPriorityQueueSet.addScheduled(lowTask);
 
-    assertTrue(highTask == queueManager.getNextTask());
+    assertTrue(highTask == queueManager.getNextTask(true));
   }
   
   @Test
   public void getNextReadyTaskLowPriorityReadyFirstTest() {
-    TaskWrapper highTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                  queueManager.highPriorityQueueSet.scheduleQueue, 
-                                                  Clock.accurateForwardProgressingMillis() + (DELAY_TIME * 10));
-    TaskWrapper lowTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                 queueManager.lowPriorityQueueSet.scheduleQueue, 
-                                                 Clock.lastKnownForwardProgressingMillis() + DELAY_TIME);
+    TaskWrapper highTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                          queueManager.highPriorityQueueSet.scheduleQueue, 
+                                                          Clock.accurateForwardProgressingMillis() + (DELAY_TIME * 10));
+    TaskWrapper lowTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                         queueManager.lowPriorityQueueSet.scheduleQueue, 
+                                                         Clock.lastKnownForwardProgressingMillis() + DELAY_TIME);
     queueManager.highPriorityQueueSet.addScheduled(highTask);
     queueManager.lowPriorityQueueSet.addScheduled(lowTask);
 
-    assertTrue(lowTask == queueManager.getNextTask());
+    assertTrue(lowTask == queueManager.getNextTask(true));
   }
   
   @Test

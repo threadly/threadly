@@ -1,6 +1,7 @@
 package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SubmitterExecutor;
@@ -32,10 +33,9 @@ import org.threadly.util.Clock;
 public class RateLimiterExecutor implements SubmitterExecutor {
   protected final SubmitterScheduler scheduler;
   protected final RejectedExecutionHandler rejectedExecutionHandler;
-  protected final Object permitLock;
   protected volatile double permitsPerSecond;
   protected volatile long maxScheduleDelayMillis;
-  private double lastScheduleTime;
+  private final AtomicLong lastScheduleTime;  // stored as a Double
   
   /**
    * Constructs a new {@link RateLimiterExecutor}.  Tasks will be scheduled on the provided 
@@ -96,8 +96,8 @@ public class RateLimiterExecutor implements SubmitterExecutor {
       rejectedExecutionHandler = RejectedExecutionHandler.THROW_REJECTED_EXECUTION_EXCEPTION;
     }
     this.rejectedExecutionHandler = rejectedExecutionHandler;
-    this.permitLock = new Object();
-    this.lastScheduleTime = Clock.lastKnownForwardProgressingMillis();
+    this.lastScheduleTime = 
+        new AtomicLong(Double.doubleToRawLongBits(Clock.lastKnownForwardProgressingMillis()));
     setPermitsPerSecond(permitsPerSecond);
     setMaxScheduleDelayMillis(maxScheduleDelayMillis);
   }
@@ -141,11 +141,12 @@ public class RateLimiterExecutor implements SubmitterExecutor {
    * @return minimum delay in milliseconds for the next task to be provided
    */
   public int getMinimumDelay() {
-    double accurateDelayMillis;
-    synchronized (permitLock) {
-      accurateDelayMillis = lastScheduleTime - Clock.lastKnownForwardProgressingMillis();
+    long delayMillis = getLastScheduleTime() - Clock.lastKnownForwardProgressingMillis();
+    if (delayMillis < 0) {
+      return 0;
+    } else {
+      return (int)delayMillis;
     }
-    return (int)Math.max(0, Math.ceil(accurateDelayMillis));
   }
   
   /**
@@ -155,9 +156,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
    * @return Time that last task was scheduled at
    */
   protected long getLastScheduleTime() {
-    synchronized (permitLock) {
-      return (long)lastScheduleTime;
-    }
+    return (long)Math.ceil(Double.longBitsToDouble(lastScheduleTime.get()));
   }
   
   /**
@@ -176,7 +175,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
     if (currentMinimumDelay == 0) {
       return ImmediateResultListenableFuture.NULL_RESULT;
     } else {
-      ListenableFutureTask<?> lft = new ListenableFutureTask<>(false, DoNothingRunnable.instance(), null, this);
+      ListenableFutureTask<?> lft = new ListenableFutureTask<>(DoNothingRunnable.instance(), null, this);
       
       long futureDelay;
       if (maximumDelay > 0 && currentMinimumDelay > maximumDelay) {
@@ -259,7 +258,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
         // don't even need to burden the scheduler
         return FutureUtils.immediateResultFuture(result);
       } else {
-        ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
+        ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, result, this);
         
         if (taskDelay < 0) {
           rejectedExecutionHandler.handleRejectedTask(lft);
@@ -270,7 +269,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
         return lft;
       }
     } else {
-      ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, result, this);
+      ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, result, this);
       
       doExecute(permits, lft);
       
@@ -297,7 +296,7 @@ public class RateLimiterExecutor implements SubmitterExecutor {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(permits, "permits");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, this);
     
     doExecute(permits, lft);
     
@@ -305,26 +304,34 @@ public class RateLimiterExecutor implements SubmitterExecutor {
   }
   
   private long taskDelayForPermits(double permits) {
-    double effectiveDelay = (permits / permitsPerSecond) * 1000;
-    synchronized (permitLock) {
-      if (permits == 0 && lastScheduleTime < Clock.lastKnownForwardProgressingMillis()) {
-        // shortcut
-        return 0;
+    if (permits == 0) { // shortcut since we don't need to update
+      long lastScheduleTimeLong = (long)Double.longBitsToDouble(lastScheduleTime.get());
+      if (lastScheduleTimeLong > Clock.lastKnownForwardProgressingMillis()) {
+        return Math.max(0, lastScheduleTimeLong - Clock.accurateForwardProgressingMillis());
       } else {
-        double scheduleDelay = lastScheduleTime - Clock.accurateForwardProgressingMillis();
-        if (scheduleDelay > maxScheduleDelayMillis) {
-          // let rejection handler invoke outside of lock
-          return -1;
-        } else if (scheduleDelay < 1) {
-          if (scheduleDelay < 0) {
-            lastScheduleTime = Clock.lastKnownForwardProgressingMillis() + effectiveDelay;
-          } else {
-            lastScheduleTime += effectiveDelay;
-          }
-          return 0;
+        return 0;
+      }
+    }
+    
+    double effectiveDelay = (permits / permitsPerSecond) * 1000;
+    long now = Clock.accurateForwardProgressingMillis();
+    while (true) {
+      long casLong = lastScheduleTime.get();
+      double lastTimeDouble = Double.longBitsToDouble(casLong);
+      double scheduleDelay = lastTimeDouble - now;
+      if (scheduleDelay > maxScheduleDelayMillis) {
+        return -1 ;  // let rejection handler invoke outside of lock
+      } else {
+        if (scheduleDelay <= 0) {
+          if (lastScheduleTime.weakCompareAndSetVolatile(casLong, 
+                                                         Double.doubleToRawLongBits(now + effectiveDelay))) {
+            return 0;
+          } // else loop and retry
         } else {
-          lastScheduleTime += effectiveDelay;
-          return (long)scheduleDelay;
+          if (lastScheduleTime.weakCompareAndSetVolatile(casLong, 
+                                                         Double.doubleToRawLongBits(lastTimeDouble + effectiveDelay))) {
+            return (long)scheduleDelay;
+          } // else loop and retry
         }
       }
     }

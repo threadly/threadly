@@ -4,17 +4,17 @@ import org.junit.Before;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerWorkerPoolTest;
-import org.threadly.concurrent.statistics.PrioritySchedulerStatisticTracker.StatisticWorkerPool;
 
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends PrioritySchedulerWorkerPoolTest {
   // needed because of visibility issues with protected inner class
-  private StatisticWorkerPool localWorkerPool;
+  private PrioritySchedulerStatisticWriter.StatisticWorkerPool localWorkerPool;
   
   @Before
   @Override
   public void setup() {
-    workerPool = localWorkerPool = new StatisticWorkerPool(new ConfigurableThreadFactory(), 1, 
+    workerPool = localWorkerPool = new PrioritySchedulerStatisticWriter.StatisticWorkerPool(new ConfigurableThreadFactory(), 1,
+                                                           true, 
                                                            new PriorityStatisticManager(100, false));
     qm = new VisibilityPriorityScheduler.VisibilityQueueManager(workerPool, 1000);
     

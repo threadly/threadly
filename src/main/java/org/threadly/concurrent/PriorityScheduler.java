@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.LockSupport;
 
-import org.threadly.util.AbstractService;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.Clock;
 
@@ -39,9 +38,10 @@ import org.threadly.util.Clock;
  */
 public class PriorityScheduler extends AbstractPriorityScheduler {
   protected static final boolean DEFAULT_NEW_THREADS_DAEMON = true;
+  protected static final boolean DEFAULT_STARVABLE_STARTS_THREADS = false;
   
   protected final WorkerPool workerPool;
-  protected final QueueManager taskQueueManager;
+  protected final QueueManager queueManager;
 
   /**
    * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
@@ -93,9 +93,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, boolean useDaemonThreads) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, 
          new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null, null));
   }
 
   /**
@@ -110,7 +110,24 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public PriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                            long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    this(new WorkerPool(threadFactory, poolSize), 
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+         DEFAULT_STARVABLE_STARTS_THREADS, threadFactory);
+  }
+
+  /**
+   * Constructs a new thread pool, though threads will be lazily started as it has tasks ready to 
+   * run.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority Default priority for tasks which are submitted without any specified priority
+   * @param maxWaitForLowPriorityInMs time low priority tasks to wait if there are high priority tasks ready to run
+   * @param stavableStartsThreads {@code true} to have TaskPriority.Starvable tasks start new threads
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public PriorityScheduler(int poolSize, TaskPriority defaultPriority, long maxWaitForLowPriorityInMs, 
+                           boolean stavableStartsThreads, ThreadFactory threadFactory) {
+    this(new WorkerPool(threadFactory, poolSize, stavableStartsThreads), 
          defaultPriority, maxWaitForLowPriorityInMs);
   }
   
@@ -127,9 +144,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     super(defaultPriority);
     
     this.workerPool = workerPool;
-    taskQueueManager = new QueueManager(workerPool, maxWaitForLowPriorityInMs);
+    queueManager = new QueueManager(workerPool, maxWaitForLowPriorityInMs);
     
-    workerPool.start(taskQueueManager);
+    workerPool.start(queueManager);
   }
   
   /**
@@ -215,11 +232,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * If you wish to not want to run any queued tasks you should use {@link #shutdownNow()}.
    */
   public void shutdown() {
-    if (workerPool.startShutdown()) {
-      ShutdownRunnable sr = new ShutdownRunnable(workerPool);
-      taskQueueManager.lowPriorityQueueSet
-                      .addExecute(new ImmediateTaskWrapper(sr, taskQueueManager.lowPriorityQueueSet.executeQueue));
-    }
+    workerPool.startShutdown();
   }
 
   /**
@@ -234,7 +247,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    */
   public List<Runnable> shutdownNow() {
     workerPool.startShutdown();
-    List<Runnable> awaitingTasks = taskQueueManager.clearQueue();
+    List<Runnable> awaitingTasks = queueManager.clearQueue();
     workerPool.finishShutdown();
     
     return awaitingTasks;
@@ -277,16 +290,29 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
 
   @Override
   protected OneTimeTaskWrapper doSchedule(Runnable task, long delayInMillis, TaskPriority priority) {
-    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
     OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
-      addToExecuteQueue(queueSet, 
-                        (result = new ImmediateTaskWrapper(task, queueSet.executeQueue)));
+      QueueSet queueSet = queueManager.getQueueSet(priority);
+      queueExecute(queueSet, (result = new ImmediateTaskWrapper(task, queueSet.executeQueue)));
+      // bellow are optimized for scheduled tasks
+    } else if (priority == TaskPriority.High) {
+      queueScheduled(queueManager.highPriorityQueueSet, 
+                     (result = new AccurateOneTimeTaskWrapper(task, queueManager.highPriorityQueueSet
+                                                                                .scheduleQueue, 
+                                                              Clock.accurateForwardProgressingMillis() + 
+                                                                delayInMillis)));
+    } else if (priority == TaskPriority.Low) {
+      queueScheduled(queueManager.lowPriorityQueueSet, 
+                     (result = new GuessOneTimeTaskWrapper(task, queueManager.lowPriorityQueueSet
+                                                                             .scheduleQueue, 
+                                                           Clock.accurateForwardProgressingMillis() + 
+                                                             delayInMillis)));
     } else {
-      addToScheduleQueue(queueSet, 
-                         (result = new OneTimeTaskWrapper(task, queueSet.scheduleQueue, 
-                                                          Clock.accurateForwardProgressingMillis() + 
-                                                            delayInMillis)));
+      queueScheduled(queueManager.starvablePriorityQueueSet, 
+                     (result = new GuessOneTimeTaskWrapper(task, queueManager.starvablePriorityQueueSet
+                                                                             .scheduleQueue, 
+                                                           Clock.accurateForwardProgressingMillis() + 
+                                                             delayInMillis)));
     }
     return result;
   }
@@ -301,12 +327,25 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       priority = defaultPriority;
     }
 
-    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
-    addToScheduleQueue(queueSet, 
-                       new RecurringDelayTaskWrapper(task, queueSet, 
-                                                     Clock.accurateForwardProgressingMillis() + 
-                                                       initialDelay, 
-                                                     recurringDelay));
+    if (priority == TaskPriority.High) {
+      queueScheduled(queueManager.highPriorityQueueSet, 
+                     new AccurateRecurringDelayTaskWrapper(task, queueManager.highPriorityQueueSet, 
+                                                           Clock.accurateForwardProgressingMillis() + 
+                                                             initialDelay, 
+                                                           recurringDelay));
+    } else if (priority == TaskPriority.Low) {
+      queueScheduled(queueManager.lowPriorityQueueSet, 
+                     new GuessRecurringDelayTaskWrapper(task, queueManager.lowPriorityQueueSet, 
+                                                        Clock.accurateForwardProgressingMillis() + 
+                                                          initialDelay, 
+                                                        recurringDelay));
+    } else {
+      queueScheduled(queueManager.starvablePriorityQueueSet, 
+                     new GuessRecurringDelayTaskWrapper(task, queueManager.starvablePriorityQueueSet, 
+                                                        Clock.accurateForwardProgressingMillis() + 
+                                                          initialDelay, 
+                                                        recurringDelay));
+    }
   }
 
   @Override
@@ -319,11 +358,25 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       priority = defaultPriority;
     }
 
-    QueueSet queueSet = taskQueueManager.getQueueSet(priority);
-    addToScheduleQueue(queueSet, 
-                       new RecurringRateTaskWrapper(task, queueSet, 
-                                                    Clock.accurateForwardProgressingMillis() + initialDelay, 
-                                                    period));
+    if (priority == TaskPriority.High) {
+      queueScheduled(queueManager.highPriorityQueueSet, 
+                     new AccurateRecurringRateTaskWrapper(task, queueManager.highPriorityQueueSet, 
+                                                          Clock.accurateForwardProgressingMillis() + 
+                                                            initialDelay, 
+                                                          period));
+    } else if (priority == TaskPriority.Low) {
+      queueScheduled(queueManager.lowPriorityQueueSet, 
+                     new GuessRecurringRateTaskWrapper(task, queueManager.lowPriorityQueueSet, 
+                                                       Clock.accurateForwardProgressingMillis() + 
+                                                         initialDelay, 
+                                                       period));
+    } else {
+      queueScheduled(queueManager.starvablePriorityQueueSet, 
+                     new GuessRecurringRateTaskWrapper(task, queueManager.starvablePriorityQueueSet, 
+                                                       Clock.accurateForwardProgressingMillis() + 
+                                                         initialDelay, 
+                                                       period));
+    }
   }
   
   /**
@@ -334,7 +387,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
    */
-  protected void addToExecuteQueue(QueueSet queueSet, OneTimeTaskWrapper task) {
+  protected void queueExecute(QueueSet queueSet, OneTimeTaskWrapper task) {
     if (workerPool.isShutdownStarted()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
@@ -350,7 +403,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @param task {@link TaskWrapper} to queue for the scheduler
    */
-  protected void addToScheduleQueue(QueueSet queueSet, TaskWrapper task) {
+  protected void queueScheduled(QueueSet queueSet, TaskWrapper task) {
     if (workerPool.isShutdownStarted()) {
       throw new RejectedExecutionException("Thread pool shutdown");
     }
@@ -366,7 +419,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
 
   @Override
   protected QueueManager getQueueManager() {
-    return taskQueueManager;
+    return queueManager;
   }
   
   /**
@@ -377,7 +430,19 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * @since 3.5.0
    */
   protected static class WorkerPool implements QueueSetListener {
+    private final InternalRunnable poolSizeChangeTask = new InternalRunnable() {
+      @Override
+      public void run() {
+        /* until the pool has reduced in size, we need to continue to add this task to 
+         * wake threads out of the poll task loop
+         */
+        if (currentPoolSize.get() > maxPoolSize) {
+          addPoolStateChangeTask(this);
+        }
+      }
+    };
     protected final ThreadFactory threadFactory;
+    protected final boolean stavableStartsThreads;
     protected final Object poolSizeChangeLock;
     protected final Object idleWorkerDequeLock;
     protected final LongAdder idleWorkerCount;
@@ -385,12 +450,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected final AtomicInteger currentPoolSize;
     protected final Object workerStopNotifyLock;
     private final AtomicBoolean shutdownStarted;
-    private volatile boolean shutdownFinishing; // once true, never goes to false
-    private volatile int maxPoolSize;  // can only be changed when poolSizeChangeLock locked
+    // can only be changed when poolSizeChangeLock locked, when 0 shutdown has completed
+    private volatile int maxPoolSize;
     private volatile long workerTimedParkRunTime;
     private QueueManager queueManager;  // set before any threads started
     
-    protected WorkerPool(ThreadFactory threadFactory, int poolSize) {
+    public WorkerPool(ThreadFactory threadFactory, int poolSize, boolean stavableStartsThreads) {
       ArgumentVerifier.assertGreaterThanZero(poolSize, "poolSize");
       if (threadFactory == null) {
         threadFactory = new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", true);
@@ -404,10 +469,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       workerStopNotifyLock = new Object();
       
       this.threadFactory = threadFactory;
+      this.stavableStartsThreads = stavableStartsThreads;
       this.maxPoolSize = poolSize;
       this.workerTimedParkRunTime = Long.MAX_VALUE;
       shutdownStarted = new AtomicBoolean(false);
-      shutdownFinishing = false;
     }
 
     /**
@@ -437,11 +502,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         }
       };
       queueManager.starvablePriorityQueueSet
-                  .scheduleQueue.add(new RecurringRateTaskWrapper(doNothingRunnable, 
-                                                                  queueManager.starvablePriorityQueueSet, 
-                                                                  Clock.lastKnownForwardProgressingMillis() + 
-                                                                    Integer.MAX_VALUE, 
-                                                                  Integer.MAX_VALUE));
+                  .scheduleQueue.add(new GuessRecurringRateTaskWrapper(doNothingRunnable, 
+                                                                       queueManager.starvablePriorityQueueSet, 
+                                                                       Clock.lastKnownForwardProgressingMillis() + 
+                                                                         Integer.MAX_VALUE, 
+                                                                       Integer.MAX_VALUE));
     }
 
     /**
@@ -459,7 +524,14 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if this call initiates the shutdown, {@code false} if the shutdown has already started
      */
     public boolean startShutdown() {
-      return ! shutdownStarted.getAndSet(true);
+      if (shutdownStarted.getAndSet(true)) {
+        return false; // shutdown already started
+      } else {
+        queueManager.lowPriorityQueueSet
+                    .addExecute(new ImmediateTaskWrapper(new ShutdownRunnable(this), 
+                                                         queueManager.lowPriorityQueueSet.executeQueue));
+        return true;
+      }
     }
   
     /**
@@ -469,7 +541,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if the scheduler is finishing its shutdown
      */
     public boolean isShutdownFinished() {
-      return shutdownFinishing;
+      return maxPoolSize == 0;
     }
 
     /**
@@ -477,17 +549,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      * killed.
      */
     public void finishShutdown() {
-      shutdownFinishing = true;
-
-      addPoolStateChangeTask(new InternalRunnable() {
-        @Override
-        public void run() {
-          /* as long as we are continuing to run, we need to re-add ourself to ensure 
-           * all threads are able to break out of task poll logic (once shutdown we stay shutdown)
-           */
-          addPoolStateChangeTask(this);
-        }
-      });
+      synchronized (poolSizeChangeLock) {
+        this.maxPoolSize = 0;
+      }
+      
+      handleMaxPoolSizeChange(false);
     }
     
     /**
@@ -521,13 +587,13 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         Clock.accurateForwardProgressingMillis() : Clock.lastKnownForwardProgressingMillis();
       synchronized (workerStopNotifyLock) {
         long remainingMillis;
-        while ((! shutdownFinishing || currentPoolSize.get() > 0) && 
+        while ((maxPoolSize > 0 || currentPoolSize.get() > 0) && 
                (remainingMillis = timeoutMillis - (Clock.lastKnownForwardProgressingMillis() - start)) > 0) {
           workerStopNotifyLock.wait(remainingMillis);
         }
       }
       
-      return shutdownFinishing && currentPoolSize.get() == 0;
+      return maxPoolSize == 0 && currentPoolSize.get() == 0;
     }
 
     /**
@@ -560,6 +626,10 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       
       boolean poolSizeIncrease;
       synchronized (poolSizeChangeLock) {
+        if (maxPoolSize == 0) {
+          throw new IllegalStateException("Can not adjust pool size during or after shutdown");
+        }
+        
         poolSizeIncrease = newPoolSize > this.maxPoolSize;
         
         this.maxPoolSize = newPoolSize;
@@ -580,9 +650,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       }
       
       synchronized (poolSizeChangeLock) {
-        if (maxPoolSize + delta < 1) {
+        if (maxPoolSize == 0) {
+          throw new IllegalStateException("Can not adjust pool size during or after shutdown");
+        } else if (maxPoolSize + delta < 1) {
           throw new IllegalStateException(maxPoolSize + " " + delta + " must be at least 1");
         }
+        
         this.maxPoolSize += delta;
       }
       
@@ -594,21 +667,9 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         // now that pool size increased, start a worker so workers we can for the waiting tasks
         handleQueueUpdate();
       } else if (currentPoolSize.get() > maxPoolSize) {
-        addPoolStateChangeTask(new InternalRunnable() {
-          @Override
-          public void run() {
-            /* until the pool has reduced in size, we need to continue to add this task to 
-             * wake threads out of the poll task loop
-             */
-            if (currentPoolSize.get() > maxPoolSize) {
-              addPoolStateChangeTask(this);
-            }
-          }
-        });
+        addPoolStateChangeTask(poolSizeChangeTask);
       }
     }
-    
-    
 
     /**
      * Check for the current quantity of threads running in this pool (either active or idle).
@@ -640,7 +701,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     public void prestartAllThreads() {
       int casPoolSize;
       while ((casPoolSize = currentPoolSize.get()) < maxPoolSize) {
-        if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize + 1)) {
+        if (currentPoolSize.weakCompareAndSetVolatile(casPoolSize, casPoolSize + 1)) {
           makeNewWorker();
         }
       }
@@ -653,7 +714,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
      */
     protected void makeNewWorker() {
       Worker w = new Worker(this, threadFactory);
-      w.start();
+      w.startWorker();
     }
     
     /**
@@ -664,13 +725,16 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected void addWorkerToIdleChain(Worker worker) {
       idleWorkerCount.increment();
       worker.waitingForUnpark = false;  // reset state before we park, avoid external interactions
-      
+
+      Worker casWorker = idleWorker.get();
       while (true) {
-        Worker casWorker = idleWorker.get();
         // we can freely set this value until we get into the idle linked queue
         worker.nextIdleWorker = casWorker;
-        if (idleWorker.compareAndSet(casWorker, worker)) {
+        Worker exchangeWorker = idleWorker.compareAndExchange(casWorker, worker);
+        if (exchangeWorker == casWorker) {
           break;
+        } else {
+          casWorker = exchangeWorker;
         }
       }
     }
@@ -684,6 +748,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     protected void removeWorkerFromIdleChain(Worker worker) {
       idleWorkerCount.decrement();
       
+      // TODO - can we improve this by removing the lock
+      
       /* We must lock here to avoid thread contention when removing from the chain.  This is 
        * the one place where we set the reference to a workers "nextIdleWorker" from a thread 
        * outside of the workers thread.  If we don't synchronize here, we may end up 
@@ -692,15 +758,17 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       synchronized (idleWorkerDequeLock) {
         Worker holdingWorker = idleWorker.get();
         if (holdingWorker == worker) {
-          if (idleWorker.compareAndSet(worker, worker.nextIdleWorker)) {
+          holdingWorker = idleWorker.compareAndExchange(worker,  worker.nextIdleWorker);
+          if (holdingWorker == worker) {
+            // removed from chain atomically
+            worker.nextIdleWorker = null;
             return;
-          } else {
-            /* because we can only queue in parallel, we know that the conflict was a newly queued 
-             * worker.  In addition since we know that queued workers are added at the start, all 
-             * that should be necessary is updating our holding worker reference
-             */
-            holdingWorker = idleWorker.get();
           }
+          /*else,
+           * Because of holding the idleWorkerDequeLock lock we know the only conflict was the
+           * adding of a new queued Worker.  Our holdingWorker reference was already updated in
+           * the exchange, so the worker we are searching for must be in the chain
+           */
         }
         
         // no need for null checks due to locking, we assume the worker is in the chain
@@ -727,15 +795,11 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
        * break out of the task polling loop below.  This is done as an optimization, to avoid 
        * needing to check these on every loop (since they rarely change)
        */
+      int casPoolSize;
       while (true) {
-        int casPoolSize;
-        if (shutdownFinishing) {
-          currentPoolSize.decrementAndGet();
-          worker.stopIfRunning();
-          return null;
-        } else if ((casPoolSize = currentPoolSize.get()) > maxPoolSize) {
-          if (currentPoolSize.compareAndSet(casPoolSize, casPoolSize - 1)) {
-            worker.stopIfRunning();
+        if ((casPoolSize = currentPoolSize.get()) > maxPoolSize) {
+          if (currentPoolSize.weakCompareAndSetVolatile(casPoolSize, casPoolSize - 1)) {
+            worker.stopWorker();
             return null;
           } // else, retry, see if we need to shutdown
         } else {
@@ -747,7 +811,12 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
       boolean queued = false;
       try {
         while (true) {
-          TaskWrapper nextTask = queueManager.getNextTask();
+          TaskWrapper nextTask = 
+              queueManager.getNextTask(stavableStartsThreads || casPoolSize == 1 || 
+                                       currentPoolSize.get() >= maxPoolSize ||
+                                       worker.nextIdleWorker != null ||
+                                       shutdownStarted.get());
+
           if (nextTask == null) {
             if (queued) { // we can only park after we have queued, then checked again for a result
               Thread.interrupted(); // reset interrupted status before we block
@@ -830,8 +899,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
         Worker nextIdleWorker = idleWorker.get();
         if (nextIdleWorker == null) {
           int casSize = currentPoolSize.get();
-          if (casSize < maxPoolSize & ! shutdownFinishing) {
-            if (currentPoolSize.compareAndSet(casSize, casSize + 1)) {
+          if (casSize < maxPoolSize) {
+            if (currentPoolSize.weakCompareAndSetVolatile(casSize, casSize + 1)) {
               // start a new worker for the next task
               makeNewWorker();
               break;
@@ -856,44 +925,39 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @since 1.0.0
    */
-  protected static class Worker extends AbstractService implements Runnable {
+  protected static class Worker implements Runnable {
     protected final WorkerPool workerPool;
     protected final Thread thread;
-    protected volatile Worker nextIdleWorker;
-    protected volatile boolean waitingForUnpark;
+    protected volatile Worker nextIdleWorker = null;
+    protected volatile boolean waitingForUnpark; // default false
+    private volatile boolean running; // default false
     
-    protected Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
+    public Worker(WorkerPool workerPool, ThreadFactory threadFactory) {
       this.workerPool = workerPool;
       thread = threadFactory.newThread(this);
       if (thread.isAlive()) {
         throw new IllegalThreadStateException();
       }
-      nextIdleWorker = null;
-      waitingForUnpark = false;
     }
 
-    @Override
-    protected void startupService() {
+    public void startWorker() {
+      running = true;
       thread.start();
     }
 
-    @Override
-    protected void shutdownService() {
+    public void stopWorker() {
+      running = false;
       LockSupport.unpark(thread);
     }
     
-    protected void executeTasksWhileRunning() {
-      while (isRunning()) {
+    @Override
+    public void run() {
+      while (running) {
         TaskWrapper nextTask = workerPool.workerIdle(this);
         if (nextTask != null) {  // may be null if we are shutting down
           nextTask.runTask();
         }
       }
-    }
-    
-    @Override
-    public void run() {
-      executeTasksWhileRunning();
       
       synchronized (workerPool.workerStopNotifyLock) {
         workerPool.workerStopNotifyLock.notifyAll();
@@ -909,7 +973,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * 
    * @since 1.0.0
    */
-  protected static class ShutdownRunnable implements InternalRunnable {
+  protected static final class ShutdownRunnable implements InternalRunnable {
     private final WorkerPool wm;
     
     protected ShutdownRunnable(WorkerPool wm) {

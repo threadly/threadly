@@ -8,6 +8,7 @@ import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Future;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
@@ -37,13 +38,19 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   protected static final int QUEUE_FRONT_PADDING = 0;
   protected static final int QUEUE_REAR_PADDING = 2;
 
+  static {
+    @SuppressWarnings("unused") // https://bugs.openjdk.java.net/browse/JDK-8074773
+    Class<?> ensureLoaded = LockSupport.class;
+  }
+
   protected final TaskPriority defaultPriority;
   
   protected AbstractPriorityScheduler(TaskPriority defaultPriority) {
     if (defaultPriority == null) {
-      defaultPriority = DEFAULT_PRIORITY;
+      this.defaultPriority = DEFAULT_PRIORITY;
+    } else {
+      this.defaultPriority = defaultPriority;
     }
-    this.defaultPriority = defaultPriority;
   }
   
   /**
@@ -128,7 +135,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
       priority = defaultPriority;
     }
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task, this);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(task, this);
     doSchedule(rf, delayInMs, priority);
     
     return rf;
@@ -427,7 +434,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     protected final QueueSet highPriorityQueueSet;
     protected final QueueSet lowPriorityQueueSet;
     protected final QueueSet starvablePriorityQueueSet;
-    private volatile long maxWaitForLowPriorityInMs;
+    private volatile long maxLowPriorityWaitMillis;
     
     public QueueManager(QueueSetListener queueSetListener, long maxWaitForLowPriorityInMs) {
       this.highPriorityQueueSet = new QueueSet(queueSetListener);
@@ -479,57 +486,51 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * just queued.  If a queue update comes in, this must be re-invoked to see what task is now 
      * next.  If there are no tasks ready to be executed this will simply return {@code null}.
      * 
+     * @param allowStarvable {@code true} to return starvable tasks if no other task is available and ready
      * @return Task to be executed next, or {@code null} if no tasks at all are queued
      */
-    public TaskWrapper getNextTask() {
+    public TaskWrapper getNextTask(boolean allowStarvable) {
       // First compare between high and low priority task queues
       // then depending on that state, we may check starvable
       TaskWrapper nextTask;
-      TaskWrapper nextHighPriorityTask = highPriorityQueueSet.getNextTask();
-      TaskWrapper nextLowPriorityTask = lowPriorityQueueSet.getNextTask();
-      if (nextLowPriorityTask == null) {
-        nextTask = nextHighPriorityTask;
-      } else if (nextHighPriorityTask == null) {
-        nextTask = nextLowPriorityTask;
-      } else if (nextHighPriorityTask.getRunTime() <= nextLowPriorityTask.getRunTime()) {
-        nextTask = nextHighPriorityTask;
-      } else if (nextHighPriorityTask.getScheduleDelay() > 0 || 
+      TaskWrapper nextHighTask = highPriorityQueueSet.getNextTask();
+      TaskWrapper nextLowTask = lowPriorityQueueSet.getNextTask();
+      if (nextLowTask == null) {
+        nextTask = nextHighTask;
+      } else if (nextHighTask == null) {
+        nextTask = nextLowTask;
+      } else if (nextHighTask.getRunTime() <= nextLowTask.getRunTime()) {
+        nextTask = nextHighTask;
+      } else if (nextLowTask.getPureRunTime() + maxLowPriorityWaitMillis < nextHighTask.getPureRunTime() ||
           // before the above check we know the low priority has been waiting longer than the high 
-          // priority, but since the high priority is not ready to run, we can just return the low 
-          // priority a clock call was invoked IF the high priority task was not already known to 
-          // be ready to run
+          // priority.  If the low priority has been waiting longer than the timeout, it can now 
+          // be returned as the next ready task
           //
           // OR
           //
-          // at this point we know the high task is ready to run
-          // but the low priority task has been waiting LONGER (and thus also ready to run)
-          // So we will return the low priority task IF it has been waiting over the max wait time
-          // At this point there may or may not have been a single clock invocation to check if the 
-          // high priority task was ready (if it was known ready, none was invoked)
-          // because of that we _may_ have to invoke the clock here
-          Clock.lastKnownForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs || 
-          Clock.accurateForwardProgressingMillis() - nextLowPriorityTask.getRunTime() > maxWaitForLowPriorityInMs) {
-        nextTask = nextLowPriorityTask;
+          // If the high priority task is not ready to execute anyways, then we will provide the 
+          // low.  The low priority will either be ready to run, or will be ready to run sooner.
+          nextHighTask.getScheduleDelay() > 0) {
+        nextTask = nextLowTask;
       } else {
         // task is ready to run, low priority is also ready, but has not been waiting long enough
-        nextTask = nextHighPriorityTask;
+        nextTask = nextHighTask;
       }
       
-      if (nextTask == null) {
+      if (! allowStarvable) {
+        return nextTask;
+      } else if (nextTask == null) {
         return starvablePriorityQueueSet.getNextTask();
-      } else {
-        long nextTaskDelay = nextTask.getScheduleDelay();
-        if (nextTaskDelay > 0) {
-          TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
-          if (nextStarvableTask != null && 
-              nextStarvableTask.getPureRunTime() < nextTask.getPureRunTime()) {
-            return nextStarvableTask;
-          } else {
-            return nextTask;
-          }
+      } else if (nextTask.getScheduleDelay() > 0) {
+        TaskWrapper nextStarvableTask = starvablePriorityQueueSet.getNextTask();
+        if (nextStarvableTask != null && 
+            nextStarvableTask.getPureRunTime() < nextTask.getPureRunTime()) {
+          return nextStarvableTask;
         } else {
           return nextTask;
         }
+      } else {
+        return nextTask;
       }
     }
     
@@ -577,7 +578,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     public void setMaxWaitForLowPriority(long maxWaitForLowPriorityInMs) {
       ArgumentVerifier.assertNotNegative(maxWaitForLowPriorityInMs, "maxWaitForLowPriorityInMs");
       
-      this.maxWaitForLowPriorityInMs = maxWaitForLowPriorityInMs;
+      this.maxLowPriorityWaitMillis = maxWaitForLowPriorityInMs;
     }
     
     /**
@@ -587,7 +588,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * @return currently set max wait for low priority task
      */
     public long getMaxWaitForLowPriority() {
-      return maxWaitForLowPriorityInMs;
+      return maxLowPriorityWaitMillis;
     }
   }
   
@@ -665,13 +666,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
      * 
      * @return delay in milliseconds till task can be run
      */
-    public long getScheduleDelay() {
-      if (getRunTime() > Clock.lastKnownForwardProgressingMillis()) {
-        return getRunTime() - Clock.accurateForwardProgressingMillis();
-      } else {
-        return 0;
-      }
-    }
+    public abstract long getScheduleDelay();
     
     @Override
     public String toString() {
@@ -689,18 +684,17 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * 
    * @since 1.0.0
    */
-  protected static class OneTimeTaskWrapper extends TaskWrapper {
+  protected abstract static class OneTimeTaskWrapper extends TaskWrapper {
     protected final Queue<? extends TaskWrapper> taskQueue;
     protected final long runTime;
     // optimization to avoid queue traversal on failure to remove, cheaper than AtomicBoolean
-    private volatile boolean executed;
+    protected volatile boolean executed;  // default false
     
-    protected OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
+    public OneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task);
       
       this.taskQueue = taskQueue;
       this.runTime = runTime;
-      this.executed = false;
     }
     
     @Override
@@ -743,6 +737,45 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
+   * Implementation of {@link OneTimeTaskWrapper} that provides an accurate schedule delay.
+   * 
+   * @since 5.41
+   */
+  protected static class AccurateOneTimeTaskWrapper extends OneTimeTaskWrapper {
+    public AccurateOneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue,
+                                      long runTime) {
+      super(task, taskQueue, runTime);
+    }
+
+    @Override
+    public long getScheduleDelay() {
+      if (runTime > Clock.lastKnownForwardProgressingMillis()) {
+        return runTime - Clock.accurateForwardProgressingMillis();
+      } else {
+        return 0;
+      }
+    }
+  }
+  
+  /**
+   * Implementation of {@link OneTimeTaskWrapper} that provides a schedule delay based off  
+   * {@link Clock#lastKnownForwardProgressingMillis()}.
+   * 
+   * @since 5.41
+   */
+  protected static class GuessOneTimeTaskWrapper extends OneTimeTaskWrapper {
+    public GuessOneTimeTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue,
+                                   long runTime) {
+      super(task, taskQueue, runTime);
+    }
+
+    @Override
+    public long getScheduleDelay() {
+      return runTime - Clock.lastKnownForwardProgressingMillis();
+    }
+  }
+  
+  /**
    * Similar to {@link OneTimeTaskWrapper} except that this task must always be eligible for 
    * execution immediately.  This allows for some minor assumptions to be made to facilitate 
    * performance.
@@ -750,7 +783,7 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    * @since 5.26
    */
   protected static class ImmediateTaskWrapper extends OneTimeTaskWrapper {
-    protected ImmediateTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue) {
+    public ImmediateTaskWrapper(Runnable task, Queue<? extends TaskWrapper> taskQueue) {
       super(task, taskQueue, Clock.lastKnownForwardProgressingMillis());
     }
     
@@ -768,13 +801,13 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
    */
   protected abstract static class RecurringTaskWrapper extends TaskWrapper {
     protected final QueueSet queueSet;
-    protected volatile boolean executing;
+    protected volatile boolean executing; // improves performance compared to executeFlipCounter % 2 == 1
     protected long nextRunTime;
     // executeFlipCounter is used to prevent multiple executions when consumed concurrently
     // only changed when queue is locked...overflow is fine
     private volatile short executeFlipCounter;
     
-    protected RecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
+    public RecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
       super(task);
       
       this.queueSet = queueSet;
@@ -794,18 +827,6 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
         return Long.MAX_VALUE;
       } else {
         return nextRunTime;
-      }
-    }
-    
-    @Override
-    public long getScheduleDelay() {
-      if (executing) {
-        // this would only be likely if two threads were trying to run the same task
-        return Long.MAX_VALUE;
-      } else if (nextRunTime > Clock.lastKnownForwardProgressingMillis()) {
-        return nextRunTime - Clock.accurateForwardProgressingMillis();
-      } else {
-        return 0;
       }
     }
     
@@ -907,15 +928,16 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
   }
   
   /**
-   * Container for tasks which run with a fixed delay after the previous run.
+   * Container for tasks which run with a fixed delay after the previous run.  This implementation 
+   * will provide an accurate {@link #getScheduleDelay()}.
    * 
-   * @since 3.1.0
+   * @since 5.41
    */
-  protected static class RecurringDelayTaskWrapper extends RecurringTaskWrapper {
+  protected static class AccurateRecurringDelayTaskWrapper extends RecurringTaskWrapper {
     protected final long recurringDelay;
     
-    protected RecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, 
-                                        long firstRunTime, long recurringDelay) {
+    public AccurateRecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, 
+                                             long firstRunTime, long recurringDelay) {
       super(task, queueSet, firstRunTime);
       
       this.recurringDelay = recurringDelay;
@@ -925,18 +947,63 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     protected void updateNextRunTime() {
       nextRunTime = Clock.accurateForwardProgressingMillis() + recurringDelay;
     }
+    
+    @Override
+    public long getScheduleDelay() {
+      if (executing) {
+        // this would only be likely if two threads were trying to run the same task
+        return Long.MAX_VALUE;
+      } else if (nextRunTime > Clock.lastKnownForwardProgressingMillis()) {
+        return nextRunTime - Clock.accurateForwardProgressingMillis();
+      } else {
+        return 0;
+      }
+    }
   }
   
   /**
-   * Wrapper for tasks which run at a fixed period (regardless of execution time).
+   * Container for tasks which run with a fixed delay after the previous run.  This implementation 
+   * provides a schedule delay based off {@link Clock#lastKnownForwardProgressingMillis()}.
    * 
-   * @since 3.1.0
+   * @since 5.41
    */
-  protected static class RecurringRateTaskWrapper extends RecurringTaskWrapper {
+  protected static class GuessRecurringDelayTaskWrapper extends RecurringTaskWrapper {
+    protected final long recurringDelay;
+    
+    public GuessRecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, 
+                                          long firstRunTime, long recurringDelay) {
+      super(task, queueSet, firstRunTime);
+      
+      this.recurringDelay = recurringDelay;
+    }
+    
+    @Override
+    protected void updateNextRunTime() {
+      nextRunTime = Clock.accurateForwardProgressingMillis() + recurringDelay;
+    }
+    
+    @Override
+    public long getScheduleDelay() {
+      if (executing) {
+        // this would only be likely if two threads were trying to run the same task
+        return Long.MAX_VALUE;
+      } else {
+        return nextRunTime - Clock.lastKnownForwardProgressingMillis();
+      }
+    }
+  }
+  
+  /**
+   * Wrapper for tasks which run at a fixed period (regardless of execution duration).  This 
+   * implementation will provide an accurate {@link #getScheduleDelay()}.
+   * 
+   * @since 5.41
+   */
+  protected static class AccurateRecurringRateTaskWrapper extends RecurringTaskWrapper {
     protected final long period;
     
-    protected RecurringRateTaskWrapper(Runnable task, QueueSet queueSet, 
-                                       long firstRunTime, long period) {
+    public AccurateRecurringRateTaskWrapper(Runnable task, QueueSet queueSet, 
+                                            long firstRunTime, long period) {
       super(task, queueSet, firstRunTime);
       
       this.period = period;
@@ -945,6 +1012,51 @@ public abstract class AbstractPriorityScheduler extends AbstractSubmitterSchedul
     @Override
     protected void updateNextRunTime() {
       nextRunTime += period;
+    }
+    
+    @Override
+    public long getScheduleDelay() {
+      if (executing) {
+        // this would only be likely if two threads were trying to run the same task
+        return Long.MAX_VALUE;
+      } else if (nextRunTime > Clock.lastKnownForwardProgressingMillis()) {
+        return nextRunTime - Clock.accurateForwardProgressingMillis();
+      } else {
+        return 0;
+      }
+    }
+  }
+  
+  /**
+   * Wrapper for tasks which run at a fixed period (regardless of execution time).  This 
+   * implementation provides a schedule delay based off 
+   * {@link Clock#lastKnownForwardProgressingMillis()}.
+   * 
+   * @since 5.41
+   */
+  protected static class GuessRecurringRateTaskWrapper extends RecurringTaskWrapper {
+    protected final long period;
+    
+    public GuessRecurringRateTaskWrapper(Runnable task, QueueSet queueSet, 
+                                         long firstRunTime, long period) {
+      super(task, queueSet, firstRunTime);
+      
+      this.period = period;
+    }
+    
+    @Override
+    protected void updateNextRunTime() {
+      nextRunTime += period;
+    }
+    
+    @Override
+    public long getScheduleDelay() {
+      if (executing) {
+        // this would only be likely if two threads were trying to run the same task
+        return Long.MAX_VALUE;
+      } else {
+        return nextRunTime - Clock.lastKnownForwardProgressingMillis();
+      }
     }
   }
   

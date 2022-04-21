@@ -8,7 +8,7 @@ import java.util.concurrent.TimeoutException;
 
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 /**
  * Wrapper for a {@link ListenableFuture} to provide enhanced features for debugging the state at 
@@ -69,10 +69,29 @@ public class CancelDebuggingListenableFuture<T> implements ListenableFuture<T> {
       throw e;
     }
   }
+
+  @Override
+  public Throwable getFailure() throws InterruptedException {
+    Throwable result = delegateFuture.getFailure();
+    if (result instanceof CancellationException) {
+      prepareCancellationException(result);
+    }
+    return result;
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
+                                                                  TimeoutException {
+    Throwable result = delegateFuture.getFailure(timeout, unit);
+    if (result instanceof CancellationException) {
+      prepareCancellationException(result);
+    }
+    return result;
+  }
   
-  private void prepareCancellationException(CancellationException e) {
+  private void prepareCancellationException(Throwable t) {
     if (cancelStack != null) {
-      Throwable rootCause = ExceptionUtils.getRootCause(e);
+      Throwable rootCause = ExceptionUtils.getRootCause(t);
       rootCause.initCause(new FutureProcessingStack(cancelStack));
     }
   }
@@ -85,6 +104,11 @@ public class CancelDebuggingListenableFuture<T> implements ListenableFuture<T> {
   @Override
   public boolean isDone() {
     return delegateFuture.isDone();
+  }
+
+  @Override
+  public boolean isCompletedExceptionally() {
+    return delegateFuture.isCompletedExceptionally();
   }
 
   @Override
@@ -104,7 +128,7 @@ public class CancelDebuggingListenableFuture<T> implements ListenableFuture<T> {
    * Throwable that is not thrown, but instead added as a cause to indicate the processing stack 
    * trace at the time of cancellation.
    */
-  public static class FutureProcessingStack extends SuppressedStackRuntimeException {
+  public static class FutureProcessingStack extends StackSuppressedRuntimeException {
     private static final long serialVersionUID = 5326874345871027481L;
 
     protected FutureProcessingStack(StackTraceElement[] cancelStack) {

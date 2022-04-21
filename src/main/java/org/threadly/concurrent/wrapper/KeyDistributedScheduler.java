@@ -104,97 +104,6 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
   }
   
   /**
-   * Constructor to use a provided scheduler implementation for running tasks.
-   * <p>
-   * This constructor does not attempt to have an accurate queue size for the 
-   * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * 
-   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler)}
-   * 
-   * @param expectedParallism IGNORED AND DEPRECATED
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
-   *                  possible threads as keys that will be used in parallel.
-   */
-  @Deprecated
-  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
-                                 SubmitterScheduler scheduler) {
-    this(scheduler, Integer.MAX_VALUE, false);
-  }
-  
-  /**
-   * Constructor to use a provided scheduler implementation for running tasks.
-   * <p>
-   * This constructor allows you to specify if you want accurate queue sizes to be tracked for 
-   * given thread keys.  There is a performance hit associated with this, so this should only be 
-   * enabled if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
-   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler, boolean)}
-   * 
-   * @param expectedParallism IGNORED AND DEPRECATED
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
-   *                  possible threads as keys that will be used in parallel.
-   * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
-   */
-  @Deprecated
-  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
-                                 SubmitterScheduler scheduler, boolean accurateQueueSize) {
-    this(scheduler, Integer.MAX_VALUE, accurateQueueSize);
-  }
-  
-  /**
-   * Constructor to use a provided scheduler implementation for running tasks.
-   * <p>
-   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
-   * to another key.  This can make it more fair, and make it so no single key can starve other 
-   * keys from running.  The lower this is set however, the less efficient it becomes in part 
-   * because it has to give up the thread and get it again, but also because it must copy the 
-   * subset of the task queue which it can run.
-   * <p>
-   * This constructor does not attempt to have an accurate queue size for the 
-   * {@link #getTaskQueueSize(Object)} call (thus preferring high performance).
-   * 
-   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler, int)}
-   * 
-   * @param expectedParallism IGNORED AND DEPRECATED
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
-   *                  possible threads as keys that will be used in parallel.
-   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   */
-  @Deprecated
-  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
-                                 SubmitterScheduler scheduler, int maxTasksPerCycle) {
-    this(scheduler, maxTasksPerCycle, false);
-  }
-  
-  /**
-   * Constructor to use a provided scheduler implementation for running tasks.
-   * <p>
-   * This constructor allows you to provide a maximum number of tasks for a key before it yields 
-   * to another key.  This can make it more fair, and make it so no single key can starve other 
-   * keys from running.  The lower this is set however, the less efficient it becomes in part 
-   * because it has to give up the thread and get it again, but also because it must copy the 
-   * subset of the task queue which it can run.
-   * <p>
-   * This also allows you to specify if you want accurate queue sizes to be tracked for given 
-   * thread keys.  There is a performance hit associated with this, so this should only be enabled 
-   * if {@link #getTaskQueueSize(Object)} calls will be used.
-   * 
-   * @deprecated Please use {@link #KeyDistributedScheduler(SubmitterScheduler, int, boolean)}
-   * 
-   * @param expectedParallism IGNORED AND DEPRECATED
-   * @param scheduler A multi-threaded scheduler to distribute tasks to.  Ideally has as many 
-   *                  possible threads as keys that will be used in parallel.
-   * @param maxTasksPerCycle maximum tasks run per key before yielding for other keys
-   * @param accurateQueueSize {@code true} to make {@link #getTaskQueueSize(Object)} more accurate
-   */
-  @Deprecated
-  public KeyDistributedScheduler(@SuppressWarnings("unused") int expectedParallism, 
-                                 SubmitterScheduler scheduler, 
-                                 int maxTasksPerCycle, boolean accurateQueueSize) {
-    this(scheduler, maxTasksPerCycle, accurateQueueSize);
-  }
-  
-  /**
    * Returns a scheduler implementation where all tasks submitted on this scheduler will run on 
    * the provided key.
    * 
@@ -276,7 +185,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
 
-    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(false, task);
+    ListenableRunnableFuture<T> rf = new ListenableFutureTask<>(task);
     
     if (delayInMs == 0) {
       addTask(threadKey, rf, executor);
@@ -308,7 +217,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (initialDelay == 0) {
       addTask(threadKey, rdt, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rdt), initialDelay);
+      scheduler.schedule(rdt.addTask, initialDelay);
     }
   }
   
@@ -334,7 +243,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
     if (initialDelay == 0) {
       addTask(threadKey, rrt, executor);
     } else {
-      scheduler.schedule(new AddTask(threadKey, rrt), initialDelay);
+      scheduler.schedule(rrt.addTask, initialDelay);
     }
   }
   
@@ -369,12 +278,12 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @since 3.1.0
    */
   protected class RecrringDelayTask implements Runnable, RunnableContainer {
-    protected final Object key;
+    protected final AddTask addTask;
     protected final Runnable task;
     protected final long recurringDelay;
     
     protected RecrringDelayTask(Object key, Runnable task, long recurringDelay) {
-      this.key = key;
+      this.addTask = new AddTask(key, this);
       this.task = task;
       this.recurringDelay = recurringDelay;
     }
@@ -384,7 +293,7 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
       try {
         task.run();
       } finally {
-        scheduler.schedule(new AddTask(key, this), recurringDelay);
+        scheduler.schedule(addTask, recurringDelay);
       }
     }
 
@@ -400,19 +309,19 @@ public class KeyDistributedScheduler extends KeyDistributedExecutor {
    * @since 3.1.0
    */
   protected class RecrringRateTask implements Runnable, RunnableContainer {
-    protected final Object key;
+    protected final AddTask addTask;
     protected final Runnable task;
     protected final long recurringPeriod;
     
     protected RecrringRateTask(Object key, Runnable task, long recurringPeriod) {
-      this.key = key;
+      this.addTask = new AddTask(key, this);
       this.task = task;
       this.recurringPeriod = recurringPeriod;
     }
     
     @Override
     public void run() {
-      scheduler.schedule(new AddTask(key, this), recurringPeriod);
+      scheduler.schedule(addTask, recurringPeriod);
       task.run();
     }
 

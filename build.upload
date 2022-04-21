@@ -1,106 +1,121 @@
 apply from: 'build.shared'
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
 
 test {
-  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2))
+  maxParallelForks = Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 4))
+}
+
+test.dependsOn("jar")
+
+def findJVM() {
+  String[] java11Paths = new String[4]
+  java11Paths[0] = "/usr/lib/jvm/java-11-openjdk-amd64/lib/"
+  java11Paths[1] = "/usr/lib/jvm/java-11-openjdk/lib/"
+  java11Paths[2] = "/usr/lib/jvm/openjdk-11/lib/"
+  java11Paths[3] = "/usr/lib/jvm/java-11-sun/lib/"
+  for (String path : java11Paths) {
+    if (new java.io.File(path).exists()) {
+      return path
+    }
+  }
+  return null
 }
 
 compileJava {
-  String[] java8Paths = new String[9]
-  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/"
-  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/"
-  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/"
-  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/"
-  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/"
-  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_122/jre/lib/"
-  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/"
-  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/"
-  java8Paths[8] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/"
-  for (String path : java8Paths) {
-    if (new java.io.File(path).exists()) {
-      println 'Using java 8: ' + path
-      options.bootstrapClasspath = fileTree(include: ['*.jar'], dir: path)
-      break
-    }
-  }
-  if (options.bootstrapClasspath == null) {
-    println 'Unable to find java 8 rt.jar, will cause failure so exiting now'
+  def jvmPath = findJVM()
+  if (jvmPath == null) {
+    println 'Unable to find java 11 install, will cause failure so exiting now'
     println ''
     System.exit(1)
   }
+  println 'Using java 11: ' + jvmPath
+  options.bootstrapClasspath = fileTree(include: ['*.jar'], dir: jvmPath)
 }
 
 compileTestJava {
   options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Werror"
 
-  String[] java8Paths = new String[9]
-  java8Paths[0] = "/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/"
-  java8Paths[1] = "/usr/lib/jvm/java-8-openjdk/jre/lib/"
-  java8Paths[2] = "/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/lib/"
-  java8Paths[3] = "/usr/lib/jvm/java-1.8.0-openjdk/jre/lib/"
-  java8Paths[4] = "/usr/lib/jvm/java-8-sun/jre/lib/"
-  java8Paths[5] = "/usr/lib/jvm/jdk1.8.0_122/jre/lib/"
-  java8Paths[6] = "/usr/lib/jvm/jdk1.8.0_65/jre/lib/"
-  java8Paths[7] = "/usr/lib/jvm/jdk1.8.0_45/jre/lib/"
-  java8Paths[8] = "/usr/lib/jvm/jdk1.8.0_20/jre/lib/"
-  for (String path : java8Paths) {
-    if (new java.io.File(path).exists()) {
-      options.bootstrapClasspath = fileTree(include: ['*.jar'], dir: path)
-      break
-    }
-  }
+  options.bootstrapClasspath = fileTree(include: ['*.jar'], dir: findJVM())
 }
 
 signing {
   sign configurations.archives
+  if (! version.contains('SNAPSHOT')) {
+    sign publishing.publications
+  }
 }
 
-uploadArchives {
-  repositories {
-    mavenDeployer {
-      beforeDeployment {
-        MavenDeployment deployment -> signing.signPom(deployment)
-      }
- 
-      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication(userName: sonatypeUsername, password: sonatypePassword)
-      }
-      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots") {
-        authentication(userName: sonatypeUsername, password: sonatypePassword)
-      }
- 
-      pom.project {
-        name 'Threadly'
-        packaging 'jar'
-        description 'A library of tools to assist with safe concurrent java development.  Providing a unique priority based thread pool, and ways to distrbute threaded work.'
-        url 'http://threadly.org/'
- 
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'Threadly'
+        description = 'A library of tools to assist with safe concurrent java development.'
+        url = 'http://threadly.org/'
+   
         scm {
-          url 'scm:git@github.com:threadly/threadly.git'
-          connection 'scm:git@github.com:threadly/threadly.git'
-          developerConnection 'scm:git@github.com:threadly/threadly.git'
+          url = 'scm:git@github.com:threadly/threadly.git'
+          connection = 'scm:git@github.com:threadly/threadly.git'
+          developerConnection = 'scm:git@github.com:threadly/threadly.git'
         }
- 
+   
+        issueManagement {
+          system = 'GitHub'
+          url = 'https://github.com/threadly/threadly/issues'
+        }
+
         licenses {
           license {
-            name 'Mozilla Public License Version 2.0'
-            url 'https://www.mozilla.org/MPL/2.0/'
-            distribution 'repo'
+            name = 'Mozilla Public License Version 2.0'
+            url = 'https://www.mozilla.org/MPL/2.0/'
+            distribution = 'repo'
           }
         }
  
         developers {
           developer {
-            id 'jent'
-            name 'Mike Jensen'
-            email 'jent@threadly.org'
+            id = 'jent'
+            name = 'Mike Jensen'
+            email = 'jent@threadly.org'
           }
         }
       }
+
+      from components.java
+
+      artifact(sourcesJar) {
+        classifier = 'sources'
+      }
+      artifact(javadocJar) {
+        classifier = 'javadoc'
+      }
     }
+  }
+  repositories {
+    maven {
+      def releasesRepoUrl =  "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+      def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+      url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+      credentials {
+        username sonatypeUsername
+        password sonatypePassword
+      }
+    }
+  }
+}
+
+model {
+  tasks.generatePomFileForMavenJavaPublication {
+    destination = file("$buildDir/generated-pom.xml")
+  }
+  tasks.publishMavenJavaPublicationToMavenLocal {
+    dependsOn project.tasks.signArchives
+  }
+  tasks.publishMavenJavaPublicationToMavenRepository {
+    dependsOn project.tasks.signArchives
   }
 }

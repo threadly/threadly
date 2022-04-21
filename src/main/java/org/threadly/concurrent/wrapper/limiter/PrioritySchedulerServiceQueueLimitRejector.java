@@ -2,6 +2,7 @@ package org.threadly.concurrent.wrapper.limiter;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.RejectedExecutionException;
+
 import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.TaskPriority;
@@ -102,7 +103,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
       if (casValue >= getQueueLimit()) {
         rejectedExecutionHandler.handleRejectedTask(task);
         return; // in case handler did not throw exception
-      } else if (queuedTaskCount.compareAndSet(casValue, casValue + 1)) {
+      } else if (queuedTaskCount.weakCompareAndSetVolatile(casValue, casValue + 1)) {
         try {
           parentScheduler.schedule(new DecrementingRunnable(task, queuedTaskCount), 
                                    delayInMillis, priority);
@@ -136,7 +137,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
   public <T> ListenableFuture<T> submit(Callable<T> task, TaskPriority priority) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(task, this);
     
     doSchedule(lft, 0, priority);
     
@@ -168,7 +169,7 @@ public class PrioritySchedulerServiceQueueLimitRejector extends SchedulerService
     ArgumentVerifier.assertNotNull(task, "task");
     ArgumentVerifier.assertNotNegative(delayInMs, "delayInMs");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<T>(task, this);
 
     doSchedule(lft, delayInMs, priority);
     

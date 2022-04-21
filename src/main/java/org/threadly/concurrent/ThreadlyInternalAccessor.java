@@ -3,9 +3,9 @@ package org.threadly.concurrent;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
+import org.threadly.concurrent.AbstractPriorityScheduler.AccurateRecurringDelayTaskWrapper;
+import org.threadly.concurrent.AbstractPriorityScheduler.AccurateRecurringRateTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSet;
-import org.threadly.concurrent.AbstractPriorityScheduler.RecurringDelayTaskWrapper;
-import org.threadly.concurrent.AbstractPriorityScheduler.RecurringRateTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.TaskWrapper;
 import org.threadly.concurrent.NoThreadScheduler.NoThreadRecurringDelayTaskWrapper;
 import org.threadly.concurrent.NoThreadScheduler.NoThreadRecurringRateTaskWrapper;
@@ -22,7 +22,7 @@ import org.threadly.util.Clock;
  * 
  * @since 4.6.0
  */
-public class ThreadlyInternalAccessor {
+public final class ThreadlyInternalAccessor {
   /**
    * Used for gaining compatibility with java.util.concurrent when a {@link Delayed} object is 
    * needed.
@@ -52,12 +52,12 @@ public class ThreadlyInternalAccessor {
   public static Delayed doScheduleAtFixedRateAndGetDelayed(PriorityScheduler pScheduler, 
                                                            Runnable task, TaskPriority priority, 
                                                            long initialDelay, long periodInMillis) {
-    QueueSet queueSet = pScheduler.taskQueueManager.getQueueSet(priority);
-    RecurringRateTaskWrapper rrtw = 
-        new RecurringRateTaskWrapper(task, queueSet,
-                                     Clock.accurateForwardProgressingMillis() + initialDelay, 
-                                     periodInMillis);
-    pScheduler.addToScheduleQueue(queueSet, rrtw);
+    QueueSet queueSet = pScheduler.queueManager.getQueueSet(priority);
+    AccurateRecurringRateTaskWrapper rrtw = 
+        new AccurateRecurringRateTaskWrapper(task, queueSet,
+                                             Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                             periodInMillis);
+    pScheduler.queueScheduled(queueSet, rrtw);
     return new DelayedTaskWrapper(rrtw);
   }
   
@@ -75,12 +75,12 @@ public class ThreadlyInternalAccessor {
   public static Delayed doScheduleWithFixedDelayAndGetDelayed(PriorityScheduler pScheduler, 
                                                               Runnable task, TaskPriority priority, 
                                                               long initialDelay, long delayInMs) {
-    QueueSet queueSet = pScheduler.taskQueueManager.getQueueSet(priority);
-    RecurringDelayTaskWrapper rdtw = 
-        new RecurringDelayTaskWrapper(task, queueSet,
-                                      Clock.accurateForwardProgressingMillis() + initialDelay, 
-                                      delayInMs);
-    pScheduler.addToScheduleQueue(queueSet, rdtw);
+    QueueSet queueSet = pScheduler.queueManager.getQueueSet(priority);
+    AccurateRecurringDelayTaskWrapper rdtw = 
+        new AccurateRecurringDelayTaskWrapper(task, queueSet,
+                                             Clock.accurateForwardProgressingMillis() + initialDelay, 
+                                             delayInMs);
+    pScheduler.queueScheduled(queueSet, rdtw);
     return new DelayedTaskWrapper(rdtw);
   }
   
@@ -140,7 +140,7 @@ public class ThreadlyInternalAccessor {
    * 
    * @since 4.6.0
    */
-  protected static class DelayedTaskWrapper implements Delayed {
+  protected static final class DelayedTaskWrapper implements Delayed {
     private final TaskWrapper task;
     
     public DelayedTaskWrapper(TaskWrapper task) {

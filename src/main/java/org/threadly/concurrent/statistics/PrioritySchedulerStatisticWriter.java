@@ -77,7 +77,7 @@ public class PrioritySchedulerStatisticWriter extends PriorityScheduler{
                                           StatisticWriter statsWriter) {
     this(poolSize, defaultPriority, maxWaitForLowPriorityInMs,
          new ConfigurableThreadFactory(PrioritySchedulerStatisticWriter.class.getSimpleName() + "-",
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null),
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null, null),
           statsWriter);
   }
   
@@ -96,7 +96,7 @@ public class PrioritySchedulerStatisticWriter extends PriorityScheduler{
   public PrioritySchedulerStatisticWriter(int poolSize, TaskPriority defaultPriority,
                                           long maxWaitForLowPriorityInMs,
                                           ThreadFactory threadFactory, StatisticWriter statsWriter) {
-    this(new StatisticWorkerPool(threadFactory, poolSize, statsWriter),
+    this(new StatisticWorkerPool(threadFactory, poolSize, false, statsWriter),
           defaultPriority, maxWaitForLowPriorityInMs);
   }
   
@@ -175,12 +175,12 @@ public class PrioritySchedulerStatisticWriter extends PriorityScheduler{
    * 
    * @since 5.33
    */
-  protected static class StatisticWorkerPool extends WorkerPool {
+  public static class StatisticWorkerPool extends WorkerPool {
     protected final StatisticWriter statsWriter;
   
-    protected StatisticWorkerPool(ThreadFactory threadFactory, int poolSize,
+    protected StatisticWorkerPool(ThreadFactory threadFactory, int poolSize, boolean stavableStartsThreads,
                                   StatisticWriter statsWriter) {
-      super(threadFactory, poolSize);
+      super(threadFactory, poolSize, stavableStartsThreads);
       
       this.statsWriter = statsWriter;
     }

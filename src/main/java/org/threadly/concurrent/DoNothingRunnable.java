@@ -5,17 +5,14 @@ package org.threadly.concurrent;
  * 
  * @since 4.1.0
  */
-public class DoNothingRunnable implements Runnable {
+public final class DoNothingRunnable implements Runnable {
   private static final DoNothingRunnable DEFAULT_INSTANCE = new DoNothingRunnable();
   
   /**
    * Constructs a new {@link DoNothingRunnable}.
-   * 
-   * @deprecated Please use {@link DoNothingRunnable#instance()} instead
    */
-  @Deprecated
-  public DoNothingRunnable() {
-    // nothing here by default
+  protected DoNothingRunnable() {
+    // nothing to construct
   }
 
   /**
@@ -29,7 +26,7 @@ public class DoNothingRunnable implements Runnable {
   }
   
   @Override
-  public void run() {
+  public final void run() {
     // as the name suggests, do nothing
   }
 }

@@ -136,23 +136,7 @@ public class ListenerHelper<T> {
     
     boolean addingFromCallingThread = Thread.holdsLock(listenersLock);
     synchronized (listenersLock) {
-      if (executor != null) {
-        if (addingFromCallingThread && executorListeners != null) {
-          // copy to prevent a ConcurrentModificationException
-          executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, executor));
-        } else {
-          if (executorListeners == null) {
-            executorListeners = Collections.singletonList(new Pair<>(listener, executor));
-          } else if (executorListeners.size() == 1) {
-            Pair<T, Executor> firstP = executorListeners.get(0);
-            executorListeners = new ArrayList<>(4);
-            executorListeners.add(firstP);
-            executorListeners.add(new Pair<>(listener, executor));
-          } else {
-            executorListeners.add(new Pair<>(listener, executor));
-          }
-        }
-      } else {
+      if (executor == null) {
         if (addingFromCallingThread && inThreadListeners != null) {
           // copy to prevent a ConcurrentModificationException
           inThreadListeners = copyAndAdd(inThreadListeners, listener);
@@ -166,6 +150,22 @@ public class ListenerHelper<T> {
             inThreadListeners.add(listener);
           } else {
             inThreadListeners.add(listener);
+          }
+        }
+      } else {
+        if (addingFromCallingThread && executorListeners != null) {
+          // copy to prevent a ConcurrentModificationException
+          executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, executor));
+        } else {
+          if (executorListeners == null) {
+            executorListeners = Collections.singletonList(new Pair<>(listener, executor));
+          } else if (executorListeners.size() == 1) {
+            Pair<T, Executor> firstP = executorListeners.get(0);
+            executorListeners = new ArrayList<>(4);
+            executorListeners.add(firstP);
+            executorListeners.add(new Pair<>(listener, executor));
+          } else {
+            executorListeners.add(new Pair<>(listener, executor));
           }
         }
       }

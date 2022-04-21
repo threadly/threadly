@@ -4,12 +4,19 @@ import static org.junit.Assert.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.junit.Test;
+import org.threadly.concurrent.ConfigurableThreadFactory.ConfigurableThreadFactoryBuilder;
 import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ThreadReferencingThreadFactoryTest extends ConfigurableThreadFactoryTest {
+  @Override
+  protected ConfigurableThreadFactoryBuilder makeBuilder() {
+    return ThreadReferencingThreadFactory.builder();
+  }
+  
   @Override
   protected ThreadReferencingThreadFactory makeThreadFactory() {
     return new ThreadReferencingThreadFactory();
@@ -38,6 +45,11 @@ public class ThreadReferencingThreadFactoryTest extends ConfigurableThreadFactor
   @Override
   protected ThreadReferencingThreadFactory makeThreadFactory(ExceptionHandler eh) {
     return new ThreadReferencingThreadFactory(eh);
+  }
+
+  @Override
+  protected ThreadReferencingThreadFactory makeNotifyingThreadFactory(Consumer<Thread> threadConsumer) {
+    return new ThreadReferencingThreadFactory(threadConsumer);
   }
   
   @Test

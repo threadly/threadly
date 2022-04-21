@@ -15,15 +15,15 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
 import org.threadly.util.StringUtils;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class FutureUtilsTest extends ThreadlyTester {
@@ -43,7 +43,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void blockTillAllCompleteNullTest() throws InterruptedException {
-    FutureUtils.blockTillAllComplete(null); // should return immediately
+    FutureUtils.blockTillAllComplete((Iterable<Future<?>>)null); // should return immediately
   }
   
   @Test
@@ -121,7 +121,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void blockTillAllCompleteOrFirstErrorNullTest() throws InterruptedException, ExecutionException {
-    FutureUtils.blockTillAllCompleteOrFirstError(null); // should return immediately
+    FutureUtils.blockTillAllCompleteOrFirstError((Iterable<Future<?>>)null); // should return immediately
   }
   
   @Test
@@ -298,7 +298,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void invokeAfterAllCompleteTest() {
+  public void invokeAfterSingleCompleteTest() {
     List<SettableListenableFuture<Void>> futures = 
         Collections.singletonList(new SettableListenableFuture<>());
     TestRunnable tr = new TestRunnable();
@@ -308,6 +308,25 @@ public class FutureUtilsTest extends ThreadlyTester {
     assertEquals(0, tr.getRunCount());
     
     futures.get(0).setResult(null);
+    
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void invokeAfterAllCompleteTest() {
+    SettableListenableFuture<Void> slf1 = new SettableListenableFuture<>();
+    SettableListenableFuture<Void> slf2 = new SettableListenableFuture<>();
+    List<SettableListenableFuture<Void>> futures = new ArrayList<>();
+    futures.add(slf1);
+    futures.add(slf2);
+    TestRunnable tr = new TestRunnable();
+    
+    FutureUtils.invokeAfterAllComplete(futures, tr);
+    
+    assertEquals(0, tr.getRunCount());
+    slf1.setResult(null);
+    assertEquals(0, tr.getRunCount());
+    slf2.setResult(null);
     
     assertTrue(tr.ranOnce());
   }
@@ -333,8 +352,174 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
+  public void makeFirstResultFutureTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(false, false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureCancelMethodTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(false, true);
+  }
+
+  @Test
+  public void makeFirstResultFutureIgnoreErrorWithoutErrorTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(true, false);
+  }
+
+  @Test
+  public void makeFirstResultFutureIgnoreErrorWithoutErrorCancelMethodTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureTest(true, true);
+  }
+  
+  private static void makeFirstResultFutureTest(boolean ignoreError, boolean cancelMethod) throws InterruptedException, ExecutionException {
+    SettableListenableFuture<String> slf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(slf);
+    futureList.add(new SettableListenableFuture<>());
+    
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, ignoreError, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, ignoreError);
+    slf.setResult(StringUtils.makeRandomString(5));
+    
+    assertTrue(firstResult.isDone());
+    assertEquals(slf.get(), firstResult.get());
+    
+    if (cancelMethod) {
+      for (ListenableFuture<?> lf : futureList) {
+        assertTrue(lf.isDone());
+        if (lf != slf) {
+          assertTrue(lf.isCancelled());
+        }
+      }
+    }
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureIgnoreErrorTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorCancelMethodTest() throws InterruptedException, ExecutionException {
+    makeFirstResultFutureIgnoreErrorTest(true);
+  }
+  
+  public void makeFirstResultFutureIgnoreErrorTest(boolean cancelMethod) throws InterruptedException, ExecutionException {
+    SettableListenableFuture<String> slf = new SettableListenableFuture<>();
+    SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(slf);
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(errorSlf);
+    futureList.add(new SettableListenableFuture<>());
+    
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, true, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, true);
+    errorSlf.setFailure(new Exception());
+    
+    assertFalse(firstResult.isDone());
+    
+    slf.setResult(StringUtils.makeRandomString(5));
+    
+    assertTrue(firstResult.isDone());
+    assertEquals(slf.get(), firstResult.get());
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorFinalErrorTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureIgnoreErrorFinalErrorTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureIgnoreErrorFinalErrorCancelMethodTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureIgnoreErrorFinalErrorTest(true);
+  }
+  
+  private static void makeFirstResultFutureIgnoreErrorFinalErrorTest(boolean cancelMethod) throws InterruptedException, TimeoutException {
+    Exception error = new Exception();
+    SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(errorSlf);
+    
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, true, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, true);
+    errorSlf.setFailure(error);
+    
+    assertTrue(firstResult.isDone());
+    AsyncVerifier av = new AsyncVerifier();
+    firstResult.resultCallback((ignored) -> av.fail("Completed with result"));
+    firstResult.failureCallback((t) -> {
+      av.assertTrue(t == error);
+      av.signalComplete();
+    });
+    av.waitForTest(); // technically should already be done
+  }
+  
+  @Test
+  public void makeFirstResultFutureErrorTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureErrorTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultFutureErrorCancelMethodTest() throws InterruptedException, TimeoutException {
+    makeFirstResultFutureErrorTest(true);
+  }
+  
+  private static void makeFirstResultFutureErrorTest(boolean cancelMethod) throws InterruptedException, TimeoutException {
+    Exception error = new Exception();
+    SettableListenableFuture<String> errorSlf = new SettableListenableFuture<>();
+    List<ListenableFuture<String>> futureList = new ArrayList<>();
+    futureList.add(new SettableListenableFuture<>());
+    futureList.add(errorSlf);
+    futureList.add(new SettableListenableFuture<>());
+    
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(futureList, false, false) : 
+            FutureUtils.makeFirstResultFuture(futureList, false);
+    errorSlf.setFailure(error);
+    
+    assertTrue(firstResult.isDone());
+    AsyncVerifier av = new AsyncVerifier();
+    firstResult.resultCallback((ignored) -> av.fail("Completed with result"));
+    firstResult.failureCallback((t) -> {
+      av.assertTrue(t == error);
+      av.signalComplete();
+    });
+    av.waitForTest(); // technically should already be done
+  }
+  
+  @Test
+  public void makeFirstResultEmptyCollectionTest() throws InterruptedException {
+    makeFirstResultEmptyCollectionTest(false);
+  }
+  
+  @Test
+  public void makeFirstResultEmptyCollectionCancelMethodTest() throws InterruptedException {
+    makeFirstResultEmptyCollectionTest(true);
+  }
+  
+  private static void makeFirstResultEmptyCollectionTest(boolean cancelMethod) throws InterruptedException {
+    ListenableFuture<String> firstResult = 
+        cancelMethod ? 
+            FutureUtils.makeFirstResultFuture(Collections.emptyList(), false, false) : 
+            FutureUtils.makeFirstResultFuture(Collections.emptyList(), false);
+    
+    assertTrue(firstResult.isDone());
+    assertTrue(firstResult.getFailure() != null);
+  }
+  
+  @Test
   public void makeCompleteFutureNullTest() {
-    ListenableFuture<?> f = FutureUtils.makeCompleteFuture(null);
+    ListenableFuture<?> f = FutureUtils.makeCompleteFuture((Iterable<ListenableFuture<?>>)null);
     
     assertTrue(f.isDone());
   }
@@ -468,7 +653,8 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void makeFailurePropagatingCompleteFutureNullTest() {
-    ListenableFuture<?> f = FutureUtils.makeFailurePropagatingCompleteFuture(null);
+    ListenableFuture<?> f = 
+        FutureUtils.makeFailurePropagatingCompleteFuture((Iterable<ListenableFuture<?>>)null);
     
     assertTrue(f.isDone());
   }
@@ -1197,132 +1383,6 @@ public class FutureUtilsTest extends ThreadlyTester {
   }
   
   @Test
-  public void scheduleWhileTaskResultNullFirstRunInThreadTest() throws Exception {
-    int scheduleDelayMillis = 10;
-    TestableScheduler scheduler = new TestableScheduler();
-    Object result = new Object();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, scheduleDelayMillis, false, 
-                                                new Callable<Object>() {
-      private boolean first = true;
-      @Override
-      public Object call() throws Exception {
-        if (first) {
-          first = false;
-          return null;
-        } else {
-          return result;
-        }
-      }
-    });
-
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.advance(scheduleDelayMillis));
-    assertTrue(f.isDone());
-    assertTrue(result == f.get());
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullFirstRunOnSchedulerTest() throws Exception {
-    int scheduleDelayMillis = 10;
-    TestableScheduler scheduler = new TestableScheduler();
-    Object result = new Object();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, scheduleDelayMillis, true, 
-                                                new Callable<Object>() {
-      private boolean first = true;
-      @Override
-      public Object call() throws Exception {
-        if (first) {
-          first = false;
-          return null;
-        } else {
-          return result;
-        }
-      }
-    });
-
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.tick());  // first run async
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.advance(scheduleDelayMillis));
-    assertTrue(f.isDone());
-    assertTrue(result == f.get());
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullTaskFailureInThreadTest() throws InterruptedException {
-    TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, false, () -> { throw failure; });
-    
-    assertTrue(f.isDone());
-    try {
-      f.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() == failure);
-    }
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullTaskFailureOnSchedulerTest() throws InterruptedException {
-    TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, 10, true, () -> { throw failure; });
-
-    assertFalse(f.isDone());
-    assertEquals(1, scheduler.tick());  // first run async
-    assertTrue(f.isDone());
-    try {
-      f.get();
-      fail("Exception should have thrown");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() == failure);
-    }
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullTimeoutTest() throws Exception {
-    SingleThreadScheduler scheduler = new SingleThreadScheduler();
-    try {
-      @SuppressWarnings("deprecation")
-      ListenableFuture<?> f = 
-          FutureUtils.scheduleWhileTaskResultNull(scheduler, 2, true, () -> null, DELAY_TIME);
-      
-      assertNull(f.get(DELAY_TIME + 1_000, TimeUnit.MILLISECONDS));
-    } finally {
-      scheduler.shutdownNow();
-    }
-  }
-  
-  @Test
-  public void scheduleWhileTaskResultNullCancelReturnedFutureTest() {
-    TestableScheduler scheduler = new TestableScheduler();
-    AtomicInteger runCount = new AtomicInteger();
-    @SuppressWarnings("deprecation")
-    ListenableFuture<?> f = 
-        FutureUtils.scheduleWhileTaskResultNull(scheduler, 1, false, () -> {
-          runCount.incrementAndGet();
-          return null;
-        });
-    
-    assertEquals(1, scheduler.advance(1));
-    int startCount = runCount.get();
-    f.cancel(false);
-    assertEquals(1, scheduler.advance(1));  // should be task realizing it was canceled
-    // verify task did not run
-    assertEquals(startCount, runCount.get());
-    assertEquals(0, scheduler.advance(100));  // should never run again
-  }
-  
-  @Test
   public void scheduleWhileFirstRunInThreadTest() throws Exception {
     int scheduleDelayMillis = 10;
     TestableScheduler scheduler = new TestableScheduler();
@@ -1378,7 +1438,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileTaskFailureInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, false, () -> { throw failure; }, (o) -> false);
     
@@ -1394,7 +1454,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileTaskFailureOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, true, () -> { throw failure; }, (o) -> false);
 
@@ -1446,7 +1506,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhilePredicateThrowsInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.scheduleWhile(scheduler, 2, false, () -> null, (o) -> { throw failure; });
     
@@ -1462,7 +1522,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhilePredicateThrowsOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.scheduleWhile(scheduler, 2, true, () -> null, (o) -> { throw failure; });
 
@@ -1492,7 +1552,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void scheduleWhileAlreadyDoneWithFailureTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.scheduleWhile(scheduler, 2, FutureUtils.immediateFailureFuture(failure), 
                                   () -> null, (o) -> false);
@@ -1570,7 +1630,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhileTaskFailureInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, false, () -> { throw failure; }, () -> false);
     
@@ -1586,7 +1646,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhileTaskFailureOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 10, true, () -> { throw failure; }, () -> false);
 
@@ -1624,7 +1684,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhilePredicateThrowsInThreadTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 2, false, DoNothingRunnable.instance(), () -> { throw failure; });
     
@@ -1640,7 +1700,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   @Test
   public void runnableScheduleWhilePredicateThrowsOnSchedulerTest() throws InterruptedException {
     TestableScheduler scheduler = new TestableScheduler();
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.scheduleWhile(scheduler, 2, true, DoNothingRunnable.instance(), () -> { throw failure; });
 
@@ -1707,7 +1767,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void executeWhileTaskFailureTest() throws InterruptedException {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<?> f = 
         FutureUtils.executeWhile(FutureUtils.immediateResultFuture(null), 
                                  () -> { throw failure; }, 
@@ -1748,7 +1808,7 @@ public class FutureUtilsTest extends ThreadlyTester {
   
   @Test
   public void executeWhilePredicateThrowsTest() throws InterruptedException {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     ListenableFuture<Object> f = 
         FutureUtils.executeWhile(() -> FutureUtils.immediateResultFuture(null), (o) -> { throw failure; });
     
@@ -1775,7 +1835,7 @@ public class FutureUtilsTest extends ThreadlyTester {
 
       StackTraceElement[] stack = future.getRunningStackTrace();
       assertNotNull(stack);
-      assertEquals(this.getClass().getName(), stack[3].getClassName());
+      assertEquals(this.getClass().getName(), stack[4].getClassName());
     } finally {
       runningFuture.setResult(false);
     }

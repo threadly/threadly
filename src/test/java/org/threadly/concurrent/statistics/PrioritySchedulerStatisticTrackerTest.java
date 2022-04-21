@@ -33,12 +33,6 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
     new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, false);
     new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 
                                           new ConfigurableThreadFactory());
-    new PrioritySchedulerStatisticTracker(1, 100);
-    new PrioritySchedulerStatisticTracker(1, false, 100);
-    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 100);
-    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, false, 100);
-    new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 
-                                          new ConfigurableThreadFactory(), 100);
     new PrioritySchedulerStatisticTracker(1, 100, true);
     new PrioritySchedulerStatisticTracker(1, false, 100, true);
     new PrioritySchedulerStatisticTracker(1, TaskPriority.High, 100, 100, true);
@@ -58,13 +52,13 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
   @SuppressWarnings("unused")
   public void constructorFail() {
     try {
-      new PrioritySchedulerStatisticTracker(0, TaskPriority.High, 1, null);
+      new PrioritySchedulerStatisticTracker(0, true);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new PrioritySchedulerStatisticTracker(1, TaskPriority.High, -1, null);
+      new PrioritySchedulerStatisticTracker(1, TaskPriority.High, -1);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -347,6 +341,18 @@ public class PrioritySchedulerStatisticTrackerTest extends PrioritySchedulerTest
                                                    long maxWaitForLowPriority) {
       PriorityScheduler result = new PrioritySchedulerStatisticTracker(poolSize, defaultPriority, 
                                                                        maxWaitForLowPriority);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority,
+                                                   long maxWaitForLowPriority,
+                                                   boolean stavableStartsThreads) {
+      PriorityScheduler result = new PrioritySchedulerStatisticTracker(poolSize, defaultPriority, 
+                                                                       maxWaitForLowPriority, 
+                                                                       stavableStartsThreads);
       executors.add(result);
       
       return result;

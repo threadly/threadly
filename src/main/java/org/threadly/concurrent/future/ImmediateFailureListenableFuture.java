@@ -1,5 +1,7 @@
 package org.threadly.concurrent.future;
 
+import static org.threadly.concurrent.future.InternalFutureUtils.invokeCompletedDirectly;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +16,7 @@ import java.util.function.Consumer;
  * @since 1.3.0
  * @param <T> The result object type returned by this future
  */
-public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
+public class ImmediateFailureListenableFuture<T> extends AbstractCompletedListenableFuture<T> {
   protected final Throwable failure;
   
   /**
@@ -32,10 +34,14 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   }
 
   @Override
+  public boolean isCompletedExceptionally() {
+    return true;
+  }
+
+  @Override
   public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                       ListenerOptimizationStrategy optimize) {
-    if (executor == null | 
-        optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+    if (invokeCompletedDirectly(executor, optimize)) {
       callback.handleFailure(failure);
     } else {
       executor.execute(() -> callback.handleFailure(failure));
@@ -54,8 +60,7 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   @Override
   public ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
                                              ListenerOptimizationStrategy optimize) {
-    if (executor == null | 
-        optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+    if (invokeCompletedDirectly(executor, optimize)) {
       callback.accept(failure);
     } else {
       executor.execute(() -> callback.accept(failure));
@@ -72,5 +77,15 @@ public class ImmediateFailureListenableFuture<T> extends AbstractImmediateListen
   @Override
   public T get(long timeout, TimeUnit unit) throws ExecutionException {
     throw new ExecutionException(failure);
+  }
+
+  @Override
+  public Throwable getFailure() {
+    return failure;
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) {
+    return failure;
   }
 }

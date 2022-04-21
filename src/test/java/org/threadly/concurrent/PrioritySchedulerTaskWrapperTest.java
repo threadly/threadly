@@ -76,5 +76,10 @@ public class PrioritySchedulerTaskWrapperTest extends ThreadlyTester {
       canExecuteCalled = true;
       return true;
     }
+
+    @Override
+    public long getScheduleDelay() {
+      return Clock.accurateForwardProgressingMillis() - getRunTime();
+    }
   }
 }

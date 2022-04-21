@@ -14,7 +14,7 @@ import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class RunnableListenerHelperTest extends ThreadlyTester {
@@ -110,7 +110,7 @@ public class RunnableListenerHelperTest extends ThreadlyTester {
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunFinish() {
-        throw new SuppressedStackRuntimeException();
+        throw new StackSuppressedRuntimeException();
       }
     };
     onceHelper.addListener(tr);
@@ -125,7 +125,7 @@ public class RunnableListenerHelperTest extends ThreadlyTester {
     TestRunnable tr = new TestRunnable() {
       @Override
       public void handleRunFinish() {
-        throw new SuppressedStackRuntimeException();
+        throw new StackSuppressedRuntimeException();
       }
     };
     onceHelper.addListener(tr);

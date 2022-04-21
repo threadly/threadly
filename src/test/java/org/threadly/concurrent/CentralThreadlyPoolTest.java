@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.StringUtils;
@@ -41,6 +41,9 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
         int startingQueueCount = executor.getQueuedTaskCount();
         executor.execute(DoNothingRunnable.instance());
         TestUtils.sleep(DELAY_TIME);
+        // XXX: Slightly flakey test
+        // Because SchedulerServiceLimiter.getQueuedTaskCount() includes queued tasks of the parent 
+        // scheduler, there is the possibility the executor queuedTaskCount is higher than expected
         assertEquals(startingQueueCount + 1, executor.getQueuedTaskCount());
         
         // verify we can still execute on pool with existing threads
@@ -88,6 +91,11 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
       av.signalComplete();
     });
     av.waitForTest();
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void rangedThreadPoolNullPriorityFail() {
+    CentralThreadlyPool.rangedThreadPool((TaskPriority)null, 0, 2, null);
   }
   
   @Test
@@ -180,6 +188,11 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
       av.signalComplete();
     });
     av.waitForTest();
+  }
+  
+  @Test (expected = IllegalArgumentException.class)
+  public void threadPoolNullPriorityFail() {
+    CentralThreadlyPool.threadPool((TaskPriority)null, 2, null);
   }
   
   @Test

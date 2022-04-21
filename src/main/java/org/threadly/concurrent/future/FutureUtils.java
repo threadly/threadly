@@ -21,6 +21,7 @@ import org.threadly.concurrent.RunnableCallableAdapter;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.util.ArgumentVerifier;
+import org.threadly.util.ArrayIterator;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionUtils;
 
@@ -50,6 +51,8 @@ import org.threadly.util.ExceptionUtils;
  * <li>{@link #countFuturesWithResult(Iterable, Object, long)}
  * <li>{@link #invokeAfterAllComplete(Collection, Runnable)}
  * <li>{@link #invokeAfterAllComplete(Collection, Runnable, Executor)}
+ * <li>{@link #makeFirstResultFuture(Collection, boolean)}
+ * <li>{@link #makeFirstResultFuture(Collection, boolean, boolean)}
  * <li>{@link #makeCompleteFuture(Iterable)}
  * <li>{@link #makeCompleteFuture(Iterable, Object)}
  * <li>{@link #makeFailurePropagatingCompleteFuture(Iterable)}
@@ -86,6 +89,22 @@ public class FutureUtils extends InternalFutureUtils {
    * If you need to specify a timeout to control how long to block, consider using 
    * {@link #blockTillAllComplete(Iterable, long)}.
    * 
+   * @param futures Futures to block till they complete
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future
+   */
+  public static void blockTillAllComplete(Future<?> ... futures) throws InterruptedException {
+    countFuturesWithResult(ArrayIterator.makeIterable(futures), null);
+  }
+  
+  /**
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error, the {@link ExecutionException} is swallowed.  Meaning that this does not attempt to 
+   * verify that all futures completed successfully.  If you need to know if any failed, please 
+   * use {@link #blockTillAllCompleteOrFirstError(Iterable)}.  
+   * <p>
+   * If you need to specify a timeout to control how long to block, consider using 
+   * {@link #blockTillAllComplete(Iterable, long)}.
+   * 
    * @param futures Structure of futures to iterate over
    * @throws InterruptedException Thrown if thread is interrupted while waiting on future
    */
@@ -108,6 +127,24 @@ public class FutureUtils extends InternalFutureUtils {
   public static void blockTillAllComplete(Iterable<? extends Future<?>> futures, long timeoutInMillis) 
       throws InterruptedException, TimeoutException {
     countFuturesWithResult(futures, null, timeoutInMillis);
+  }
+
+  /**
+   * This call blocks till all futures in the list have completed.  If the future completed with 
+   * an error an {@link ExecutionException} is thrown.  If this exception is thrown, all futures 
+   * may or may not be completed, the exception is thrown as soon as it is hit.  There also may be 
+   * additional futures that errored (but were not hit yet).  
+   * <p>
+   * If you need to specify a timeout to control how long to block, consider using 
+   * {@link #blockTillAllCompleteOrFirstError(Iterable, long)}.
+   * 
+   * @param futures Futures to iterate over
+   * @throws InterruptedException Thrown if thread is interrupted while waiting on future
+   * @throws ExecutionException Thrown if future throws exception on .get() call
+   */
+  public static void blockTillAllCompleteOrFirstError(Future<?> ... futures) 
+      throws InterruptedException, ExecutionException {
+    blockTillAllCompleteOrFirstError(ArrayIterator.makeIterable(futures));
   }
 
   /**
@@ -320,6 +357,146 @@ public class FutureUtils extends InternalFutureUtils {
   }
   
   /**
+   * Converts a collection of {@link ListenableFuture}'s into a single {@link ListenableFuture} 
+   * where the result will be the first result provided from the collection.
+   * <p>
+   * If {@code ignoreErrors} is {@code false} the returned future will complete as soon as the 
+   * first future completes, if it completes in error then the error would be returned.  If 
+   * {@code ignoreErrors} is {@code true} then the returned future will complete once a result is 
+   * provided, or once all futures have completed in error.  If all futures did complete in error 
+   * then the last error state will be specified to the resulting {@link ListenableFuture}.  This 
+   * minor bookkeeping to ignore errors does incur a slight overhead.
+   * 
+   * @since 6.6
+   * @param <T> type of result provided in the returned future
+   * @param c Collection of futures to monitor for result
+   * @param ignoreErrors {@code false} to communicate the first completed future state, even if in error
+   * @return A future which will be provided the first result from any in the provided {@link Collection}
+   */
+  public static <T> ListenableFuture<T> makeFirstResultFuture(Collection<? extends ListenableFuture<? extends T>> c, 
+                                                              boolean ignoreErrors) {
+    SettableListenableFuture<T> result = new SettableListenableFuture<>(false);
+    FutureCallback<T> callback;
+    int expectedSize = 0;
+    AtomicInteger atomicSize = null;
+    if (ignoreErrors) {
+      expectedSize = c.size();
+      AtomicInteger errorsRemaining = atomicSize = new AtomicInteger(expectedSize);
+      callback = new FutureCallback<T>() {
+        @Override
+        public void handleResult(T t) {
+          result.setResult(t);
+        }
+
+        @Override
+        public void handleFailure(Throwable t) {
+          if (errorsRemaining.decrementAndGet() == 0) {
+            // ignore failures till we reach the last failure
+            result.setFailure(t);
+          }
+        }
+      };
+    } else {
+      callback = result;
+    }
+    
+    int callbackCount = 0;
+    for (ListenableFuture<? extends T> lf : c) {
+      callbackCount++;
+      lf.callback(callback);
+    }
+    if (callbackCount == 0) {
+      result.setFailure(new IllegalArgumentException("Empty collection"));
+    } else if (atomicSize != null && expectedSize != callbackCount) {
+      atomicSize.addAndGet(callbackCount - expectedSize);
+    }
+
+    return result;
+  }
+  
+  /**
+   * Converts a collection of {@link ListenableFuture}'s into a single {@link ListenableFuture} 
+   * where the result will be the first result provided from the collection.
+   * <p>
+   * If {@code ignoreErrors} is {@code false} the returned future will complete as soon as the 
+   * first future completes, if it completes in error then the error would be returned.  If 
+   * {@code ignoreErrors} is {@code true} then the returned future will complete once a result is 
+   * provided, or once all futures have completed in error.  If all futures did complete in error 
+   * then the last error state will be specified to the resulting {@link ListenableFuture}.  This 
+   * minor bookkeeping to ignore errors does incur a slight overhead.
+   * <p>
+   * It is expected that the first result is the only result desired, once it is found this will 
+   * attempt to cancel all remaining futures.  If you may want other results which were in 
+   * progress, then specifying {@code interruptOnCancel} as {@code false} will mean that any 
+   * futures which started can complete.  You can then inspect the collection for done futures 
+   * which might have a result.  If there is no concern for other results, then you likely will 
+   * want to interrupt started futures.
+   * 
+   * @since 5.38
+   * @param <T> type of result provided in the returned future
+   * @param c Collection of futures to monitor for result
+   * @param ignoreErrors {@code false} to communicate the first completed future state, even if in error
+   * @param interruptOnCancel {@code true} to send a interrupt on any running futures after we have a result
+   * @return A future which will be provided the first result from any in the provided {@link Collection}
+   */
+  public static <T> ListenableFuture<T> makeFirstResultFuture(Collection<? extends ListenableFuture<? extends T>> c, 
+                                                              boolean ignoreErrors, boolean interruptOnCancel) {
+    SettableListenableFuture<T> result = new SettableListenableFuture<>(false);
+    FutureCallback<T> callback;
+    int expectedSize = 0;
+    AtomicInteger atomicSize = null;
+    if (ignoreErrors) {
+      expectedSize = c.size();
+      AtomicInteger errorsRemaining = atomicSize = new AtomicInteger(expectedSize);
+      callback = new FutureCallback<T>() {
+        @Override
+        public void handleResult(T t) {
+          if (result.setResult(t)) {
+            FutureUtils.cancelIncompleteFutures(c, interruptOnCancel);
+          }
+        }
+
+        @Override
+        public void handleFailure(Throwable t) {
+          if (errorsRemaining.decrementAndGet() == 0) {
+            // ignore failures till we reach the last failure
+            result.setFailure(t);
+          }
+        }
+      };
+    } else {
+      callback = new FutureCallback<T>() {
+        @Override
+        public void handleResult(T t) {
+          if (result.setResult(t)) {
+            FutureUtils.cancelIncompleteFutures(c, interruptOnCancel);
+          }
+        }
+
+        @Override
+        public void handleFailure(Throwable t) {
+          if (result.setFailure(t)) {
+            FutureUtils.cancelIncompleteFutures(c, interruptOnCancel);
+          }
+        }
+      };
+    }
+
+    int callbackCount = 0;
+    for (ListenableFuture<? extends T> lf : c) {
+      callbackCount++;
+      lf.callback(callback);
+    }
+    if (callbackCount == 0) {
+      result.setFailure(new IllegalArgumentException("Empty collection"));
+    } else if (atomicSize != null && expectedSize != callbackCount) {
+      atomicSize.addAndGet(callbackCount - expectedSize);
+    }
+
+    return result;
+  }
+  
+  /**
    * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
    * when all futures are complete without blocking.  Unlike 
    * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
@@ -373,6 +550,28 @@ public class FutureUtils extends InternalFutureUtils {
     } else {
       return makeCompleteFuture((Iterable<? extends ListenableFuture<?>>)futures);
     }
+  }
+  
+  /**
+   * An alternative to {@link #blockTillAllComplete(Iterable)}, this provides the ability to know 
+   * when all futures are complete without blocking.  Unlike 
+   * {@link #blockTillAllComplete(Iterable)}, this requires that you provide a collection of 
+   * {@link ListenableFuture}'s.  But will return immediately, providing a new 
+   * {@link ListenableFuture} that will be called once all the provided futures have finished.  
+   * <p>
+   * The future returned will provide a {@code null} result, it is the responsibility of the 
+   * caller to get the actual results from the provided futures.  This is designed to just be an 
+   * indicator as to when they have finished.  If you need the results from the provided futures, 
+   * consider using {@link #makeCompleteListFuture(Iterable)}.  You should also consider using 
+   * {@link #makeFailurePropagatingCompleteFuture(Iterable)}, it has the same semantics as this one 
+   * except it will put the returned future into an error state if any of the provided futures error.
+   * 
+   * @since 1.2.0
+   * @param futures Futures that must finish before returned future is satisfied
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static ListenableFuture<?> makeCompleteFuture(ListenableFuture<?> ... futures) {
+    return makeCompleteFuture(ArrayIterator.makeIterable(futures));
   }
   
   /**
@@ -476,6 +675,26 @@ public class FutureUtils extends InternalFutureUtils {
    * @return ListenableFuture which will be done once all futures provided are done
    */
   public static ListenableFuture<?> 
+      makeFailurePropagatingCompleteFuture(ListenableFuture<?> ... futures) {
+    return makeFailurePropagatingCompleteFuture(ArrayIterator.makeIterable(futures), null);
+  }
+  
+  /**
+   * Similar to {@link #makeCompleteFuture(Iterable)} in that the returned future wont complete 
+   * until all the provided futures complete.  However this implementation will check if any 
+   * futures failed or were canceled once all have completed.  If any did not complete normally 
+   * then the returned futures state will match the state of one of the futures that did not 
+   * normally (randomly chosen).
+   * <p>
+   * Since the returned future wont complete until all futures complete, you may want to consider 
+   * using {@link #cancelIncompleteFuturesIfAnyFail(boolean, Iterable, boolean)} in addition to 
+   * this so that the future will resolve as soon as any failures occur. 
+   * 
+   * @since 5.0
+   * @param futures Collection of futures that must finish before returned future is satisfied
+   * @return ListenableFuture which will be done once all futures provided are done
+   */
+  public static ListenableFuture<?> 
       makeFailurePropagatingCompleteFuture(Iterable<? extends ListenableFuture<?>> futures) {
     return makeFailurePropagatingCompleteFuture(futures, null);
   }
@@ -497,6 +716,7 @@ public class FutureUtils extends InternalFutureUtils {
    * @param result Result to provide returned future once all futures complete
    * @return ListenableFuture which will be done once all futures provided are done
    */
+  @SuppressWarnings("unchecked")
   public static <T> ListenableFuture<T> 
       makeFailurePropagatingCompleteFuture(Iterable<? extends ListenableFuture<?>> futures, 
                                            final T result) {
@@ -515,13 +735,8 @@ public class FutureUtils extends InternalFutureUtils {
         if (failedFutures.isEmpty()) {
           return immediateResultFuture(result);
         } else {
-          // propagate error
-          ListenableFuture<?> f = failedFutures.get(0);
-          if (f.isCancelled()) {
-            return new ImmediateCanceledListenableFuture<>(null);
-          } else {
-            f.get();  // will throw ExecutionException to be handled below
-          }
+          // propagate first error
+          return (ListenableFuture<T>) failedFutures.get(0);
         }
       } catch (ExecutionException e) {
         return immediateFailureFuture(e.getCause());
@@ -541,12 +756,10 @@ public class FutureUtils extends InternalFutureUtils {
           // propagate error
           ListenableFuture<?> f = failedFutures.get(0);
           if (f.isCancelled()) {
-            resultFuture.cancelRegardlessOfDelegateFutureState(false);
+            resultFuture.cancel(false);
           } else {
             try {
-              f.get();
-            } catch (ExecutionException e) {
-              resultFuture.setFailure(e.getCause());
+              resultFuture.setFailure(f.getFailure());
             } catch (InterruptedException e) {  // should not be possible
               throw new RuntimeException(e);
             }
@@ -705,21 +918,25 @@ public class FutureUtils extends InternalFutureUtils {
             continue;
           }
           try {
-            results.add(f.get());
-          } catch (ExecutionException e) {
-            if (! ignoreFailedFutures) {
-              result.setFailure(e.getCause());
-              return;
+            Throwable failure = f.getFailure();
+            if (failure != null) {
+              if (! ignoreFailedFutures) {
+                result.setFailure(failure);
+                return;
+              } else {
+                continue;
+              }
             }
+            results.add(f.get());
           } catch (Exception e) {
-            // should not be possible, future is done, cancel checked first, and ExecutionException caught
-            result.setFailure(new Exception(e));
+            // should not be possible, future is done, cancel checked first, and failure also checked
+            result.setFailure(e);
             return;
           }
         }
         if (needToCancel) {
-          if (! result.cancel(false)) {
-            throw new IllegalStateException();
+          if (! result.cancel(true)) {
+            result.setFailure(new IllegalStateException("Failed to cancel after dependent future was canceled"));
           }
         } else {
           result.setResult(results);
@@ -842,82 +1059,6 @@ public class FutureUtils extends InternalFutureUtils {
    */
   public static <T> ListenableFuture<T> immediateFailureFuture(Throwable failure) {
     return new ImmediateFailureListenableFuture<>(failure);
-  }
-
-  /**
-   * Will continue to schedule the provided task as long as the task is returning a {@code null} 
-   * result.  This can be a good way to implement retry logic where a result ultimately needs to be 
-   * communicated through a future.  
-   * <p>
-   * The returned future will only complete with a result once the provided task returns a 
-   * non-null result.  Canceling the returned future will prevent future executions from being 
-   * attempted.  Canceling with an interrupt will transmit the interrupt to the running task if it 
-   * is currently running.  
-   * <p>
-   * The first execution will either be immediately executed in thread or submitted for immediate 
-   * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
-   * this execution completes, if the result is {@code null} then the task will be rescheduled for 
-   * execution.  If non-null then the result will be able to be retrieved from the returned 
-   * {@link ListenableFuture}.  
-   * <p>
-   * If you want to ensure this does not reschedule forever consider using 
-   * {@link #scheduleWhileTaskResultNull(SubmitterScheduler, long, boolean, Callable, long)}.
-   * 
-   * @deprecated Please use {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate)}
-   * 
-   * @param <T> The result object type returned by the task and provided by the future
-   * @param scheduler Scheduler to schedule out task executions
-   * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
-   * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
-   * @param task Task which will provide result, or {@code null} to reschedule itself again
-   * @return Future that will resolve with non-null result from task
-   */
-  @Deprecated
-  public static <T> ListenableFuture<T> scheduleWhileTaskResultNull(SubmitterScheduler scheduler, 
-                                                                    long scheduleDelayMillis, 
-                                                                    boolean firstRunAsync, 
-                                                                    Callable<? extends T> task) {
-    return scheduleWhileTaskResultNull(scheduler, scheduleDelayMillis, firstRunAsync, task, -1);
-  }
-
-  /**
-   * Will continue to schedule the provided task as long as the task is returning a {@code null} 
-   * result.  This can be a good way to implement retry logic where a result ultimately needs to be 
-   * communicated through a future.  
-   * <p>
-   * The returned future will only complete with a result once the provided task returns a non-null 
-   * result, or until the provided timeout is reached.  If the timeout is reached then the task 
-   * wont be rescheduled.  Instead the future will be resolved with a {@code null} result.  Even if 
-   * only 1 millisecond before timeout, the entire {@code rescheduleDelayMillis} will be provided 
-   * for the next attempt's scheduled delay.  Canceling the returned future will prevent future 
-   * executions from being attempted.  Canceling with an interrupt will transmit the interrupt to 
-   * the running task if it is currently running.  
-   * <p>
-   * The first execution will either be immediately executed in thread or submitted for immediate 
-   * execution on the provided scheduler (depending on {@code firstRunAsync} parameter).  Once 
-   * this execution completes, if the result is {@code null} then the task will be rescheduled for 
-   * execution.  If non-null then the result will be able to be retrieved from the returned 
-   * {@link ListenableFuture}.
-   * 
-   * @deprecated Please use with a simple null checking Predicate
-   *               {@link #scheduleWhile(SubmitterScheduler, long, boolean, Callable, Predicate, long, boolean)}
-   * 
-   * @param <T> The result object type returned by the task and provided by the future
-   * @param scheduler Scheduler to schedule out task executions
-   * @param scheduleDelayMillis Delay in milliseconds to schedule out future attempts
-   * @param firstRunAsync {@code False} to run first try on invoking thread, {@code true} to submit on scheduler
-   * @param task Task which will provide result, or {@code null} to reschedule itself again
-   * @param timeoutMillis Timeout in milliseconds task wont be rescheduled and instead just finish with {@code null}
-   * @return Future that will resolve with non-null result from task
-   */
-  @Deprecated
-  public static <T> ListenableFuture<T> scheduleWhileTaskResultNull(SubmitterScheduler scheduler, 
-                                                                    long scheduleDelayMillis, 
-                                                                    boolean firstRunAsync, 
-                                                                    Callable<? extends T> task, 
-                                                                    long timeoutMillis) {
-    return scheduleWhile(scheduler, scheduleDelayMillis, firstRunAsync, task, 
-                         (r) -> r == null, timeoutMillis, true);
   }
 
   /**
@@ -1341,13 +1482,12 @@ public class FutureUtils extends InternalFutureUtils {
             }
             ListenableFuture<? extends T> lf = asyncTask.call();
             if (lf.isDone()) {  // prevent StackOverflow when already done futures are returned
-              try {
+              if (lf.isCompletedExceptionally()) {
+                resultFuture.setFailure(lf.getFailure());
+                return;
+              } else {
                 result = lf.get();
                 continue;
-              } catch (ExecutionException e) {
-                // uncaught exception already handled, don't handle twice
-                resultFuture.setFailure(e.getCause());
-                return;
               }
             } else {
               resultFuture.updateDelegateFuture(lf);
@@ -1380,18 +1520,16 @@ public class FutureUtils extends InternalFutureUtils {
    * @param doneTest Test to see if the initial result is valid
    * @return A future that is already complete with the existing result, otherwise {@code null}
    */
+  @SuppressWarnings("unchecked")
   private static <T> ListenableFuture<T> shortcutAsyncWhile(ListenableFuture<? extends T> startingFuture, 
                                                             Predicate<? super T> doneTest) {
     if (startingFuture.isDone()) {
-      if (startingFuture.isCancelled()) {
-        return new ImmediateCanceledListenableFuture<>(null);
-      }
       try {
-        if (! doneTest.test(startingFuture.get())) {
+        if (startingFuture.isCompletedExceptionally()) {
+          return (ListenableFuture<T>) startingFuture;
+        } else if (! doneTest.test(startingFuture.get())) {
           return immediateResultFuture(startingFuture.get());
         }
-      } catch (ExecutionException e) {
-        return immediateFailureFuture(e.getCause());
       } catch (Throwable t) {
         ExceptionUtils.handleException(t);
         return immediateFailureFuture(t);

@@ -2,23 +2,29 @@ package org.threadly.concurrent;
 
 import static org.junit.Assert.*;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
-import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.SettableListenableFuture;
+import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestCondition;
+import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestUtils;
 import org.threadly.test.concurrent.TestableScheduler;
+import org.threadly.util.StringUtils;
 
 @SuppressWarnings("javadoc")
 public class PollerTest extends ThreadlyTester {
@@ -59,7 +65,7 @@ public class PollerTest extends ThreadlyTester {
 
   @Test
   public void timeoutTest() {
-    poller = new Poller(new SingleThreadScheduler(), POLL_INTERVAL, 10);
+    poller = new Poller(CentralThreadlyPool.computationPool(), POLL_INTERVAL, 10);
     ListenableFuture<?> f = poller.watch(() -> false);
     TestUtils.sleep(10);
 
@@ -178,6 +184,130 @@ public class PollerTest extends ThreadlyTester {
     
     assertTrue(lfResult.isDone());
     assertTrue(lfResult.isCancelled());
+  }
+  
+  @Test
+  public void consumeQueueTest() throws InterruptedException, TimeoutException {
+    poller = new Poller(CentralThreadlyPool.computationPool(), 10);
+    Queue<String> itemQueue = new LinkedList<>();
+    for (int i = 0; i < TEST_QTY; i++) {
+      itemQueue.add(StringUtils.makeRandomString(5));
+    }
+    Iterator<String> verificationIt = new LinkedList<>(itemQueue).iterator();
+    AsyncVerifier av = new AsyncVerifier();
+    
+    ListenableFuture<?> lf = poller.consumeQueue(itemQueue, (s) -> {
+      av.assertEquals(verificationIt.next(), s);
+      av.signalComplete();
+    });
+
+    av.waitForTest(1_000, TEST_QTY);
+    assertFalse(lf.isDone());
+    assertTrue(itemQueue.isEmpty());
+    assertTrue(lf.cancel(true));
+  }
+  
+  @Test
+  public void consumeLargeQueueTest() throws InterruptedException, TimeoutException {
+    int count = 2_000_000;
+    poller = new Poller(CentralThreadlyPool.computationPool(), 10);
+    Queue<String> itemQueue = new LinkedList<>();
+    for (int i = 0; i < count; i++) {
+      itemQueue.add(StringUtils.makeRandomString(5));
+    }
+    AsyncVerifier av = new AsyncVerifier();
+    
+    ListenableFuture<?> lf = poller.consumeQueue(itemQueue, (s) -> {
+      av.signalComplete();
+    });
+
+    av.waitForTest(10_000, count);
+    assertFalse(lf.isDone());
+    assertTrue(itemQueue.isEmpty());
+    assertTrue(lf.cancel(true));
+  }
+  
+  @Test
+  public void consumeQueueStopTest() throws InterruptedException, TimeoutException {
+    poller = new Poller(CentralThreadlyPool.computationPool(), 10);
+    Queue<String> itemQueue = new LinkedList<>();
+    AsyncVerifier av = new AsyncVerifier();
+    
+    ListenableFuture<?> lf = poller.consumeQueue(itemQueue, (s) -> {
+      av.signalComplete();
+    });
+    
+    for (int i = 1; i <= TEST_QTY; i++) {
+      itemQueue.add(StringUtils.makeRandomString(4));
+      av.waitForTest(200, i);
+      assertTrue(itemQueue.isEmpty());
+    }
+    
+    assertTrue(lf.cancel(true));
+
+    for (int i = 1; i <= TEST_QTY; i++) {
+      itemQueue.add(StringUtils.makeRandomString(4));
+    }
+    TestUtils.sleep(100);
+    
+    assertEquals(TEST_QTY, itemQueue.size()); // nothing should have been consumed
+  }
+  
+  @Test
+  public void consumeQueueHandleErrorTest() throws InterruptedException, TimeoutException {
+    poller = new Poller(CentralThreadlyPool.computationPool(), 10);
+    RuntimeException error = new RuntimeException();
+    Queue<String> itemQueue = new LinkedList<>();
+    String first = null;
+    for (int i = 0; i < TEST_QTY; i++) {
+      String s = StringUtils.makeRandomString(5);
+      if (first == null) {
+        first = s;
+      }
+      itemQueue.add(s);
+    }
+    AsyncVerifier av = new AsyncVerifier();
+    TestRunnable errorRun = new TestRunnable();
+    
+    final String fFirst = first;
+    ListenableFuture<?> lf = poller.consumeQueue(itemQueue, (s) -> {
+      av.signalComplete();
+      if (s == fFirst) {
+        throw error;
+      }
+    }, (e) -> errorRun.run());
+
+    av.waitForTest(1_000, TEST_QTY);
+    assertEquals(1, errorRun.getRunCount());
+    
+    assertFalse(lf.isDone());
+    assertTrue(lf.cancel(true));
+  }
+  
+  @Test
+  public void consumeQueueUnhandleErrorTest() throws InterruptedException, TimeoutException {
+    poller = new Poller(CentralThreadlyPool.computationPool(), 10);
+    RuntimeException error = new RuntimeException();
+    Queue<String> itemQueue = new LinkedList<>();
+    String last = null;
+    for (int i = 0; i < TEST_QTY; i++) {
+      last = StringUtils.makeRandomString(5);
+      itemQueue.add(last);
+    }
+    
+    final String fLast = last;
+    ListenableFuture<?> lf = poller.consumeQueue(itemQueue, (s) -> {
+      if (s == fLast) {
+        throw error;
+      }
+    }, null);
+    
+    try {
+      lf.get(1_000, TimeUnit.MILLISECONDS);
+      fail("Exception should have thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() == error);
+    }
   }
   
   private static abstract class AlreadyDoneFuture implements Future<Object> {

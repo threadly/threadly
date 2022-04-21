@@ -4,8 +4,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import org.threadly.util.SuppressedStackRuntimeException;
-
 /**
  * Adapter from java's {@link Future} to threadly's {@link ListenableFuture}.  This transfers the 
  * state (ie result, failure, or canceled) from the source future.  In order for this translation 
@@ -31,7 +29,7 @@ public class ListenableFutureAdapterTask<T> extends ListenableFutureTask<T> {
    * @param f Future to get result and source final state from
    */
   public ListenableFutureAdapterTask(final Future<? extends T> f) {
-    super(false, new Callable<T>() {
+    super(new Callable<T>() {
       @Override
       public T call() throws Exception {
         try {
@@ -41,7 +39,7 @@ public class ListenableFutureAdapterTask<T> extends ListenableFutureTask<T> {
           if (cause instanceof Exception) {
             throw (Exception)cause;
           } else {
-            throw new SuppressedStackRuntimeException(cause);
+            throw e;
           }
         }
       }

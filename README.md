@@ -1,4 +1,4 @@
-Threadly [![Build status](https://badge.buildkite.com/7f78724dd03f9e47cc655d0b645ed39f7d0558e4f1b4bd7e91.svg)](https://buildkite.com/threadly/nightly-threadly)
+Threadly [![Build status](https://badge.buildkite.com/a6b3c844ce059f96c577ec485ab9fb36925790deec8e26dcd9.svg?branch=master)](https://buildkite.com/threadly/threadly)
 ========
 
 A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of concurrent development and testing needs. This is designed to be a complement to `java.util.concurrent` and uses `java.util.concurrent` to help assist in it's implementations where it makes sense.
@@ -9,7 +9,7 @@ Include the threadly library into your project from maven central:
 <dependency>
 	<groupId>org.threadly</groupId>
 	<artifactId>threadly</artifactId>
-	<version>5.36</version>
+	<version>7.0</version>
 </dependency>
 ```
 
@@ -39,7 +39,7 @@ The other large difference compared to `ScheduledThreadPoolExecutor` is that the
 
 *    `UnfairExecutor` - A VERY high performance executor implementation.  This executor has few features, and relaxed garuntees (particularly around execution order), in order to gain the highest task throughput possible.  Since this pool works best for tasks with similar computational complexity it can be an excellent backing pool for handling client requests (ie servlets).
 
-*    `ExecutorLimiter`, `SimpleSchedulerLimiter`, `SchedulerServiceLimiter `- These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
+*    `ExecutorLimiter`, `OrderedExecutorLimiter`, `SimpleSchedulerLimiter`, `SchedulerServiceLimiter `- These are designed so you can control the amount of concurrency in different parts of code, while still taking maximum benefit of having one large thread pool.
 
 The design is such so that you create one large pool, and then wrap it in one of these two wrappers.  You then pass the wrapper to your different parts of code.  It relies on the large pool in order to actually get a thread, but this prevents any one section of code from completely dominating the thread pool.
 
@@ -59,10 +59,4 @@ The design is such so that you create one large pool, and then wrap it in one of
 
 -- Unit Test Tools --
 
-*    `AsyncVerifier` - Used to verify operations which occurred asynchronously.  The AsyncVerifier allows you to assert failures/successes in other threads, and allow the main test thread to throw exceptions if any failures occur.  Thus blocking the main test thread until the sub-threads have completed.
-
-*    `TestCondition` - often times in doing unit test for asynchronous operations you have to wait for a condition to be come true. This class gives a way to easily wait for those conditions to be true, or throw an exception if they do not happen after a given timeout. The implementation of TestRunnable gives a good example of how this can be used.
-
-*    `TestRunnable` - a runnable structure that has common operations already implemented. It gives two functions handleRunStart and handleRunFinish to allow people to optionally override to provide any test specific operation which is necessary. You can see many examples in our own unit test code of how we are using this.
-
-*    `TestableScheduler` - this is very similar to `NoThreadScheduler`, except it allows you to supply the time, thus allowing things to happen faster than real time. If you have an implementation with a recurring task and you want to unit test what happens when it runs the 5th time, while keeping the unit test fast, you can supply a time faster than real time to cause these executions.
+Starting in 6.0 unit test tools are provided by the threadly-test artifact: https://github.com/threadly/threadly-test

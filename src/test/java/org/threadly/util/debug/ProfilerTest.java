@@ -8,12 +8,16 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,14 +38,16 @@ import org.threadly.util.ExceptionHandler;
 
 @SuppressWarnings("javadoc")
 public class ProfilerTest extends ThreadlyTester {
-  private static final int POLL_INTERVAL = 1;
+  protected static final int POLL_INTERVAL = 1;
   private static final int MIN_RESPONSE_LENGTH = 10;
   
   protected Profiler profiler;
+  protected Supplier<String> startFutureResultSupplier;
   
   @Before
   public void setup() {
-    profiler = new Profiler(POLL_INTERVAL);
+    profiler = new Profiler(POLL_INTERVAL, (p) -> startFutureResultSupplier.get());
+    startFutureResultSupplier = profiler::dump;
   }
   
   @After
@@ -210,6 +216,13 @@ public class ProfilerTest extends ThreadlyTester {
       ps.shutdownNow();
     }
   }
+  
+  @Test
+  public void startFutureResultSupplierOverrideTest() throws InterruptedException, ExecutionException {
+    startFutureResultSupplier = () -> null;
+    ListenableFuture<String> lf = profiler.start(SameThreadSubmitterExecutor.instance(), 10);
+    assertNull(lf.get());
+  }
 
   @Test
   public void stopTwiceTest() {
@@ -310,7 +323,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
     
-    assertTrue(profiler.dump(false).startsWith("Combined profile for all threads"));
+    assertTrue(profiler.dump(false, 1).startsWith("Combined profile for all threads"));
   }
   
   protected static void verifyDumpStr(String resultStr) {
@@ -321,7 +334,7 @@ public class ProfilerTest extends ThreadlyTester {
   }
   
   private void verifyDumpContains(String str) {
-    new TestCondition(() -> profiler.dump(false), (s) -> s.contains(str)).blockTillTrue();
+    new TestCondition(() -> profiler.dump(false, 1), (s) -> s.contains(str)).blockTillTrue();
   }
   
   @Test
@@ -332,7 +345,7 @@ public class ProfilerTest extends ThreadlyTester {
     profiler.start();
     blockForProfilerSample();
     
-    new TestCondition(() -> profiler.dump(false), 
+    new TestCondition(() -> profiler.dump(false, 1), 
                       (s) -> s.contains("PriorityScheduler idle thread (stack 1)") &&
                              s.contains("PriorityScheduler idle thread (stack 2)"))
         .blockTillTrue();
@@ -430,5 +443,39 @@ public class ProfilerTest extends ThreadlyTester {
     blockForProfilerSample();
 
     verifyDumpContains("ScheduledThreadPoolExecutor idle thread");
+  }
+  
+  @Test
+  public void idleForkJoinPoolTest() {
+    ForkJoinPool fjp = new ForkJoinPool(1, (pool) -> {
+      ForkJoinWorkerThread t = 
+          new ForkJoinWorkerThread(pool) { /* nothing added, need protected visibility */ };
+      t.setDaemon(true);
+      return t;
+    }, null, false);
+    
+    profilingExecutor((r) -> fjp.invoke(ForkJoinTask.adapt(r)));
+    fjp.invoke(ForkJoinTask.adapt(DoNothingRunnable.instance()));
+    profiler.start();
+    blockForProfilerSample();
+
+    verifyDumpContains("ForkJoinPool idle thread");
+  }
+  
+  @Test
+  public void idleAsyncForkJoinPoolTest() {
+    ForkJoinPool fjp = new ForkJoinPool(1, (pool) -> {
+      ForkJoinWorkerThread t = 
+          new ForkJoinWorkerThread(pool) { /* nothing added, need protected visibility */ };
+      t.setDaemon(true);
+      return t;
+    }, null, true);
+
+    profilingExecutor((r) -> fjp.invoke(ForkJoinTask.adapt(r)));
+    fjp.invoke(ForkJoinTask.adapt(DoNothingRunnable.instance()));
+    profiler.start();
+    blockForProfilerSample();
+
+    verifyDumpContains("ForkJoinPool idle thread");
   }
 }

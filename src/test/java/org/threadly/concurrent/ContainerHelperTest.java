@@ -86,11 +86,9 @@ public class ContainerHelperTest extends ThreadlyTester {
     }
   }
   
-  private static class TestRunnableContainer extends DoNothingRunnable 
-                                             implements RunnableContainer {
+  private static class TestRunnableContainer implements RunnableContainer, Runnable {
     private final Runnable r;
     
-    @SuppressWarnings("deprecation")
     private TestRunnableContainer(Runnable r) {
       this.r = r;
     }
@@ -99,14 +97,17 @@ public class ContainerHelperTest extends ThreadlyTester {
     public Runnable getContainedRunnable() {
       return r;
     }
+
+    @Override
+    public void run() {
+      // ignored
+    }
   }
   
   @SuppressWarnings("rawtypes")
-  private static class TestCallableContainer extends DoNothingRunnable 
-                                             implements CallableContainer, Runnable {
+  private static class TestCallableContainer implements CallableContainer, Runnable {
     private final Callable<?> c;
 
-    @SuppressWarnings("deprecation")
     private TestCallableContainer(Callable<?> c) {
       this.c = c;
     }
@@ -114,6 +115,11 @@ public class ContainerHelperTest extends ThreadlyTester {
     @Override
     public Callable<?> getContainedCallable() {
       return c;
+    }
+
+    @Override
+    public void run() {
+      // ignored
     }
   }
 }

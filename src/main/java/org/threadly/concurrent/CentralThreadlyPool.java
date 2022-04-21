@@ -26,7 +26,7 @@ import org.threadly.util.StringUtils;
  * Most users will find themselves sticking to the simple pools this provides:
  * <ul>
  * <li>{@link #computationPool()} for doing CPU bound computational tasks
- * <li>{@link #lowPriorityPool(boolean)} for doing low priority maintenance tasks
+ * <li>{@link #lowPriorityPool()} for doing low priority maintenance tasks
  * <li>{@link #singleThreadPool()} as a way to gain access to an efficient priority respected single thread pool
  * <li>{@link #threadPool(int)} and {@link #threadPool(TaskPriority, int)} to have a multi-threaded pool
  * <li>{@link #isolatedTaskPool()} For single / isolated tasks against the central pool
@@ -63,9 +63,9 @@ public class CentralThreadlyPool {
     genericThreadCount = 1; // must have at least one
     MASTER_SCHEDULER = // start with computation + 1 for interior management tasks and + 1 for shared use
         new PriorityScheduler(cpuCount + genericThreadCount + 1, 
-                              TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, 
+                              TaskPriority.High, LOW_PRIORITY_MAX_WAIT_IN_MS, false, 
                               new ConfigurableThreadFactory("CentralThreadlyPool-", false, 
-                                                            true, Thread.NORM_PRIORITY, null, null));
+                                                            true, Thread.NORM_PRIORITY, null, null, null));
     LOW_PRIORITY_MASTER_SCHEDULER = 
         new DefaultPriorityWrapper(MASTER_SCHEDULER, TaskPriority.Low);
     STARVABLE_PRIORITY_MASTER_SCHEDULER = 
@@ -183,44 +183,6 @@ public class CentralThreadlyPool {
       return LOW_PRIORITY_POOL;
     } else {
       return new ThreadRenamingSchedulerService(LOW_PRIORITY_POOL, threadName, false);
-    }
-  }
-  
-  /**
-   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
-   * delayed.  If not single threaded this pool will execute only on any general processing threads 
-   * which are available.  By default there is only one, but it can be increased by invoking 
-   * {@link #increaseGenericThreads(int)}.
-   * 
-   * @deprecated use {@link #lowPrioritySingleThreadPool()} or {@link #lowPriorityPool()}
-   * 
-   * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
-   * @return Pool for running or scheduling out low priority tasks
-   */
-  @Deprecated
-  public static SchedulerService lowPriorityPool(boolean singleThreaded) {
-    return lowPriorityPool(singleThreaded, null);
-  }
-  
-  /**
-   * Low priority pool for scheduling cleanup or otherwise tasks which could be significantly 
-   * delayed.  If not single threaded this pool will execute only on any general processing threads 
-   * which are available.  By default there is only one, but it can be increased by invoking 
-   * {@link #increaseGenericThreads(int)}.
-   * 
-   * @deprecated use {@link #lowPrioritySingleThreadPool(String)} or {@link #lowPriorityPool(String)}
-   * 
-   * @param singleThreaded {@code true} indicates that being blocked by other low priority tasks is not a concern
-   * @param threadName Name to prefix to thread while tasks on this pool execute, or {@code null}
-   * @return Pool for running or scheduling out low priority tasks
-   */
-  @Deprecated
-  public static SchedulerService lowPriorityPool(boolean singleThreaded, String threadName) {
-    SchedulerService scheduler = singleThreaded ? SINGLE_THREADED_LOW_PRIORITY_POOL : LOW_PRIORITY_POOL;
-    if (StringUtils.isNullOrEmpty(threadName)) {
-      return scheduler;
-    } else {
-      return new ThreadRenamingSchedulerService(scheduler, threadName, false);
     }
   }
 
@@ -540,8 +502,10 @@ public class CentralThreadlyPool {
       result = MASTER_SCHEDULER;
     } else if (defaultPriority ==  TaskPriority.Low) {
       result = LOW_PRIORITY_MASTER_SCHEDULER;
-    } else {
+    } else if (defaultPriority == TaskPriority.Starvable) {
       result = STARVABLE_PRIORITY_MASTER_SCHEDULER;
+    } else {
+      throw new IllegalArgumentException("Unknown TaskPriority: " + defaultPriority);
     }
     if (StringUtils.isNullOrEmpty(threadName)) {
       return result;
@@ -776,13 +740,13 @@ public class CentralThreadlyPool {
     }
 
     @Override
-    protected boolean canSubmitTaskToPool() {
+    protected boolean taskCapacity() {
       int allowedConcurrency = Math.min(maxThreads, guaranteedThreads + genericThreadCount);
       if (allowedConcurrency != getMaxConcurrency()) {
         setMaxConcurrency(allowedConcurrency);
       }
       
-      return super.canSubmitTaskToPool();
+      return super.taskCapacity();
     }
   }
   
@@ -795,7 +759,7 @@ public class CentralThreadlyPool {
    * need to have a shutdown action on returned pools.  In addition a delay in reducing a pool size 
    * down is desirable to reduce potential thread churn of the central pool.
    */
-  protected static class PoolResizer {
+  protected static final class PoolResizer {
     private final int amount;
     
     public PoolResizer(int amount) {
@@ -815,10 +779,10 @@ public class CentralThreadlyPool {
    * primary job is sending updates to that scheduler so that the applications needs are met, but 
    * churn is minimized.
    */
-  protected static class PoolResizeUpdater extends ReschedulingOperation {
+  protected static final class PoolResizeUpdater extends ReschedulingOperation {
     protected static final int POOL_SIZE_UPDATE_DELAY = 120_000; // delayed pool size changes reduce churn
     
-    protected LongAdder poolSizeChange;
+    protected final LongAdder poolSizeChange;
 
     protected PoolResizeUpdater(SubmitterScheduler scheduler) {
       super(scheduler, POOL_SIZE_UPDATE_DELAY);

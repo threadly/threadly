@@ -5,7 +5,6 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,7 +18,7 @@ import org.threadly.concurrent.TestCallable;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class TestableSchedulerTest extends ThreadlyTester {
@@ -69,7 +68,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void advanceWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -82,7 +81,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void advanceHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
@@ -99,7 +98,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void tickWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -112,7 +111,7 @@ public class TestableSchedulerTest extends ThreadlyTester {
   
   @Test
   public void tickHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
@@ -290,22 +289,6 @@ public class TestableSchedulerTest extends ThreadlyTester {
   }
   
   @Test
-  public void submitScheduledRunnableFail() {
-    try {
-      scheduler.submitScheduled((Runnable)null, 10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      scheduler.submitScheduled(new TestRunnable(), -10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
   public void submitScheduledCallableTest() {
     long scheduleDelay = 1000 * 10;
     
@@ -327,22 +310,6 @@ public class TestableSchedulerTest extends ThreadlyTester {
     assertTrue(scheduleRun.isDone());  // should have run
     
     assertEquals(0, scheduler.advance(scheduleDelay)); // should not execute anything
-  }
-  
-  @Test
-  public void submitScheduledCallableFail() {
-    try {
-      scheduler.submitScheduled((Callable<?>)null, 10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      scheduler.submitScheduled(new TestCallable(), -10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
   }
   
   @Test
@@ -386,52 +353,8 @@ public class TestableSchedulerTest extends ThreadlyTester {
   }
   
   @Test
-  public void scheduleWithFixedDelayFail() {
-    try {
-      scheduler.scheduleWithFixedDelay(null, 10, 10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), -10, 10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      scheduler.scheduleWithFixedDelay(new TestRunnable(), 10, -10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-  
-  @Test
   public void scheduleAtFixedRateTest() {
     scheduleRecurringTest(false);
-  }
-  
-  @Test
-  public void scheduleAtFixedRateFail() {
-    try {
-      scheduler.scheduleAtFixedRate(null, 10, 10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      scheduler.scheduleAtFixedRate(new TestRunnable(), -10, 10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-    try {
-      scheduler.scheduleAtFixedRate(new TestRunnable(), 10, -10);
-      fail("Exception should have thrown");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
   }
   
   @Test
@@ -518,12 +441,6 @@ public class TestableSchedulerTest extends ThreadlyTester {
     assertEquals(0, scheduler.tick());
     
     assertEquals(1, tr.getRunCount());
-  }
-
-  @Test (expected = IllegalArgumentException.class)
-  public void tickFail() {
-    scheduler.tick(scheduler.getLastTickTime() - 1);
-    fail("Exception should have been thrown");
   }
   
   @Test

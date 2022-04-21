@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.threadly.ThreadlyTester;
-import org.threadly.concurrent.SameThreadSubmitterExecutor;
+import org.threadly.concurrent.TestSameThreadSubmitterExecutor;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -27,7 +27,7 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     assertTrue(tr.ranOnce());
     
     tr = new TestRunnable();
-    testFuture.listener(tr, new SameThreadSubmitterExecutor());
+    testFuture.listener(tr, TestSameThreadSubmitterExecutor.instance());
     assertTrue(tr.ranOnce());
   }
   
@@ -49,7 +49,7 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     assertTrue(tfc.getLastResult() == expectedResult);
     
     tfc = new TestFutureCallback();
-    testFuture.callback(tfc, new SameThreadSubmitterExecutor());
+    testFuture.callback(tfc, TestSameThreadSubmitterExecutor.instance());
     assertTrue(tfc.getLastResult() == expectedResult);
     
     tfc = new TestFutureCallback();
@@ -57,7 +57,7 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     assertTrue(tfc.getLastResult() == expectedResult);
     
     tfc = new TestFutureCallback();
-    testFuture.resultCallback(tfc::handleResult, new SameThreadSubmitterExecutor());
+    testFuture.resultCallback(tfc::handleResult, TestSameThreadSubmitterExecutor.instance());
     assertTrue(tfc.getLastResult() == expectedResult);
   }
   
@@ -93,7 +93,7 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     assertTrue(tfc.getLastFailure() == expectedFailure);
     
     tfc = new TestFutureCallback();
-    testFuture.callback(tfc, new SameThreadSubmitterExecutor());
+    testFuture.callback(tfc, TestSameThreadSubmitterExecutor.instance());
     assertTrue(tfc.getLastFailure() == expectedFailure);
     
     tfc = new TestFutureCallback();
@@ -101,7 +101,7 @@ public class ImmediateListenableFutureTest extends ThreadlyTester {
     assertTrue(tfc.getLastFailure() == expectedFailure);
     
     tfc = new TestFutureCallback();
-    testFuture.failureCallback(tfc::handleFailure, new SameThreadSubmitterExecutor());
+    testFuture.failureCallback(tfc::handleFailure, TestSameThreadSubmitterExecutor.instance());
     assertTrue(tfc.getLastFailure() == expectedFailure);
   }
   

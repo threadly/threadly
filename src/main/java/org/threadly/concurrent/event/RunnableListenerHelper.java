@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
+
 import org.threadly.concurrent.ContainerHelper;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.Pair;
@@ -23,9 +24,9 @@ import org.threadly.util.Pair;
 public class RunnableListenerHelper {
   protected final Object listenersLock;
   protected final boolean callOnce;
-  protected volatile boolean done;
-  protected List<Runnable> inThreadListeners;
-  protected List<Pair<Runnable, Executor>> executorListeners;
+  protected volatile boolean done;  // default false
+  protected List<Runnable> inThreadListeners; // default null
+  protected List<Pair<Runnable, Executor>> executorListeners; // default null
   
   /**
    * Constructs a new {@link RunnableListenerHelper}.  This can call listeners only once, or every 
@@ -36,9 +37,6 @@ public class RunnableListenerHelper {
   public RunnableListenerHelper(boolean callListenersOnce) {
     this.listenersLock = new Object();
     this.callOnce = callListenersOnce;
-    this.done = false;
-    this.inThreadListeners = null;
-    this.executorListeners = null;
   }
   
   /**
@@ -76,6 +74,8 @@ public class RunnableListenerHelper {
    * subsequent calls. 
    */
   public void callListeners() {
+    // CODE BELOW MUST MATCH AsyncCallRunnableListenerHelper
+    // DUPLICATED TO MINIMIZE STACK SIZE
     synchronized (listenersLock) {
       if (callOnce) {
         if (done) {
@@ -84,46 +84,34 @@ public class RunnableListenerHelper {
           done = true;
         }
       }
+
+      if (executorListeners != null) {
+        List<Pair<Runnable, Executor>> executorListeners = this.executorListeners;
+        // only list types will be able to efficiently retrieve by index, avoid iterator creation
+        for (int i = 0; i < executorListeners.size(); i++) {
+          try {
+            Pair<Runnable, Executor> listener = executorListeners.get(i);
+            listener.getRight().execute(listener.getLeft());
+          } catch (Throwable t) {
+            ExceptionUtils.handleException(t);
+          }
+        }
+      }
+      if (inThreadListeners != null) {
+        List<Runnable> inThreadListeners = this.inThreadListeners;
+        for (int i = 0; i < inThreadListeners.size(); i++) {
+          try {
+            inThreadListeners.get(i).run();
+          } catch (Throwable t) {
+            ExceptionUtils.handleException(t);
+          }
+        }
+      }
       
-      doCallListeners();
-    }
-  }
-  
-  /**
-   * {@code listenersLock} MUST BE SYNCHRONIZED BEFORE INVOKING THIS.
-   * <p>
-   * This calls the listeners without any safety checks as to weather it is safe to do so or not.  
-   * It is expected that those checks occurred prior to calling this function (either in a 
-   * different thread, or at some point earlier to avoid breaking logic around construction with 
-   * call listeners once design).
-   */
-  protected void doCallListeners() {
-    if (executorListeners != null) {
-      List<Pair<Runnable, Executor>> executorListeners = this.executorListeners;
-      // only list types will be able to efficiently retrieve by index, avoid iterator creation
-      for (int i = 0; i < executorListeners.size(); i++) {
-        try {
-          Pair<Runnable, Executor> listener = executorListeners.get(i);
-          listener.getRight().execute(listener.getLeft());
-        } catch (Throwable t) {
-          ExceptionUtils.handleException(t);
-        }
+      if (callOnce) {
+        executorListeners = null;
+        inThreadListeners = null;
       }
-    }
-    if (inThreadListeners != null) {
-      List<Runnable> inThreadListeners = this.inThreadListeners;
-      for (int i = 0; i < inThreadListeners.size(); i++) {
-        try {
-          inThreadListeners.get(i).run();
-        } catch (Throwable t) {
-          ExceptionUtils.handleException(t);
-        }
-      }
-    }
-    
-    if (callOnce) {
-      executorListeners = null;
-      inThreadListeners = null;
     }
   }
 
@@ -186,23 +174,7 @@ public class RunnableListenerHelper {
       synchronized (listenersLock) {
         // done should only be set to true if we are only calling listeners once
         if (! (runListener = done)) {
-          if (queueExecutor != null) {
-            if (addingFromCallingThread && executorListeners != null) {
-              // copy to prevent a ConcurrentModificationException
-              executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, queueExecutor));
-            } else {
-              if (executorListeners == null) {
-                executorListeners = Collections.singletonList(new Pair<>(listener, queueExecutor));
-              } else if (executorListeners.size() == 1) {
-                Pair<Runnable, Executor> firstP = executorListeners.get(0);
-                executorListeners = new ArrayList<>(4);
-                executorListeners.add(firstP);
-                executorListeners.add(new Pair<>(listener, queueExecutor));
-              } else {
-                executorListeners.add(new Pair<>(listener, queueExecutor));
-              }
-            }
-          } else {
+          if (queueExecutor == null) {
             if (addingFromCallingThread && inThreadListeners != null) {
               // copy to prevent a ConcurrentModificationException
               inThreadListeners = copyAndAdd(inThreadListeners, listener);
@@ -216,6 +188,22 @@ public class RunnableListenerHelper {
                 inThreadListeners.add(listener);
               } else {
                 inThreadListeners.add(listener);
+              }
+            }
+          } else {
+            if (addingFromCallingThread && executorListeners != null) {
+              // copy to prevent a ConcurrentModificationException
+              executorListeners = copyAndAdd(executorListeners, new Pair<>(listener, queueExecutor));
+            } else {
+              if (executorListeners == null) {
+                executorListeners = Collections.singletonList(new Pair<>(listener, queueExecutor));
+              } else if (executorListeners.size() == 1) {
+                Pair<Runnable, Executor> firstP = executorListeners.get(0);
+                executorListeners = new ArrayList<>(4);
+                executorListeners.add(firstP);
+                executorListeners.add(new Pair<>(listener, queueExecutor));
+              } else {
+                executorListeners.add(new Pair<>(listener, queueExecutor));
               }
             }
           }

@@ -91,55 +91,6 @@ public class KeyedExecutorLimiter extends AbstractKeyedLimiter<ExecutorLimiter> 
                               boolean limitFutureListenersExecution) {
     super(executor, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution);
   }
-
-  /**
-   * Construct a new {@link KeyedExecutorLimiter} providing the backing executor, the maximum 
-   * concurrency per unique key, and how keyed limiter threads should be named.
-   * 
-   * @deprecated Please use {@link #KeyedExecutorLimiter(Executor, int, String, boolean, boolean)}
-   * 
-   * @param executor Executor to execute tasks on to
-   * @param maxConcurrency Maximum concurrency allowed per task key
-   * @param subPoolName Name prefix for sub pools, {@code null} to not change thread names
-   * @param addKeyToThreadName If {@code true} the key's .toString() will be added in the thread name
-   * @param expectedParallism IGNORED AND DEPRECATED
-   */
-  @Deprecated
-  public KeyedExecutorLimiter(Executor executor, int maxConcurrency, 
-                              String subPoolName, boolean addKeyToThreadName, 
-                              @SuppressWarnings("unused") int expectedParallism) {
-    this(executor, maxConcurrency, subPoolName, addKeyToThreadName, 
-         ExecutorLimiter.DEFAULT_LIMIT_FUTURE_LISTENER_EXECUTION);
-  }
-
-  /**
-   * Construct a new {@link KeyedExecutorLimiter} providing the backing executor, the maximum 
-   * concurrency per unique key, and how keyed limiter threads should be named.
-   * <p>
-   * This constructor allows you to specify if listeners / 
-   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
-   * {@link ListenableFuture#map(java.util.function.Function)} or 
-   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
-   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
-   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
-   * (without an executor) complete.
-   * 
-   * @deprecated Please use {@link #KeyedExecutorLimiter(Executor, int, String, boolean, boolean)}
-   * 
-   * @param executor Executor to execute tasks on to
-   * @param maxConcurrency Maximum concurrency allowed per task key
-   * @param subPoolName Name prefix for sub pools, {@code null} to not change thread names
-   * @param addKeyToThreadName If {@code true} the key's .toString() will be added in the thread name
-   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
-   * @param expectedParallism IGNORED AND DEPRECATED
-   */
-  @Deprecated
-  public KeyedExecutorLimiter(Executor executor, int maxConcurrency, 
-                              String subPoolName, boolean addKeyToThreadName,
-                              boolean limitFutureListenersExecution, 
-                              @SuppressWarnings("unused") int expectedParallism) {
-    this(executor, maxConcurrency, subPoolName, addKeyToThreadName, limitFutureListenersExecution);
-  }
   
   @Override
   protected ExecutorLimiter makeLimiter(String limiterThreadName) {

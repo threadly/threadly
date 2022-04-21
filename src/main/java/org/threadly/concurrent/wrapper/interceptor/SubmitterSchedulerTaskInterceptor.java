@@ -2,6 +2,7 @@ package org.threadly.concurrent.wrapper.interceptor;
 
 import java.util.concurrent.Callable;
 import java.util.function.BiFunction;
+
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.future.ListenableFutureTask;
@@ -104,7 +105,7 @@ public class SubmitterSchedulerTaskInterceptor extends ExecutorTaskInterceptor
   public <T> ListenableFuture<T> submitScheduled(Callable<T> task, long delayInMs) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, this);
 
     parentScheduler.schedule(wrapTask(lft, false), delayInMs);
     

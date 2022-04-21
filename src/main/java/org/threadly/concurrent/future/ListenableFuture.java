@@ -1,9 +1,12 @@
 package org.threadly.concurrent.future;
 
-import java.util.concurrent.CancellationException;
+import static org.threadly.concurrent.future.InternalFutureUtils.invokeCompletedDirectly;
+
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -34,6 +37,14 @@ public interface ListenableFuture<T> extends Future<T> {
      */
     None, 
     /**
+     * If the future has already completed, this optimization will ignore the executor passed in 
+     * and will instead invoke the listener / callback on the invoking thread trying to add the 
+     * listener.  This is similar to {@link #SingleThreadIfExecutorMatchOrDone} except that it will 
+     * still execute out on the executor if they match (which facilitates cases where  concurrency 
+     * of multiple threads on the same pool is desired).
+     */
+    InvokingThreadIfDone,
+    /**
      * This will optimize away the executor if the executor provided is the same one that the task 
      * WILL complete on.  If the task is already completed then it is assumed that execution can 
      * NOT occur on the calling thread.  If the calling thread can allow execution please see 
@@ -49,6 +60,40 @@ public interface ListenableFuture<T> extends Future<T> {
      */
     SingleThreadIfExecutorMatchOrDone
   }
+  
+  /**
+   * Returns {@code true} if the future is both done and has completed with an error or was 
+   * canceled.  If this returns {@code true} the {@link Throwable} responsible for the error can 
+   * be retrieved using {@link #getFailure()};
+   * 
+   * @return {@code true} if this ListenableFuture completed by a thrown Exception or was canceled
+   */
+  public boolean isCompletedExceptionally();
+  
+  /**
+   * Similar to {@link #get()} except instead of providing a result, this will provide a thrown 
+   * exception if {@link #isCompletedExceptionally()} returns {@code true}.  If the future has not 
+   * completed yet this function will block until completion.  If the future completed normally, 
+   * this will return {@code null}.
+   * 
+   * @return Throwable thrown in computing the future or {@code null} if completed normally
+   * @throws InterruptedException If the current thread was interrupted while blocking
+   */
+  public Throwable getFailure() throws InterruptedException;
+  
+  /**
+   * Similar to {@link #get(long, TimeUnit)} except instead of providing a result, this will 
+   * provide a thrown exception if {@link #isCompletedExceptionally()} returns {@code true}.  If 
+   * the future has not completed yet this function will block until completion.  If the future 
+   * completed normally, this will return {@code null}.
+   * 
+   * @param timeout The maximum time to wait
+   * @param unit The time unit of the timeout argument
+   * @return Throwable thrown in computing the future or {@code null} if completed normally
+   * @throws InterruptedException If the current thread was interrupted while blocking
+   * @throws TimeoutException If the timeout was reached before the future completed
+   */
+  public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException, TimeoutException;
   
   /**
    * Transform this future's result into another result by applying the provided mapper function.  
@@ -86,7 +131,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper) {
-    return InternalFutureUtils.transform(this, null, mapper, true, null, null);
+    return InternalFutureUtils.transform(this, mapper, true, null, null);
   }
   
   /**
@@ -118,7 +163,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor) {
-    return InternalFutureUtils.transform(this, null, mapper, true, executor, null);
+    return InternalFutureUtils.transform(this, mapper, true, executor, null);
   }
   
   /**
@@ -160,7 +205,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> map(Function<? super T, ? extends R> mapper, Executor executor, 
                                       ListenerOptimizationStrategy optimizeExecution) {
-    return InternalFutureUtils.transform(this, null, mapper, true, executor, optimizeExecution);
+    return InternalFutureUtils.transform(this, mapper, true, executor, optimizeExecution);
   }
   
   /**
@@ -214,7 +259,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper) {
-    return InternalFutureUtils.transform(this, null, mapper, false, null, null);
+    return InternalFutureUtils.transform(this, mapper, false, null, null);
   }
   
   /**
@@ -245,7 +290,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, 
                                            Executor executor) {
-    return InternalFutureUtils.transform(this, null, mapper, false, executor, null);
+    return InternalFutureUtils.transform(this, mapper, false, executor, null);
   }
   
   /**
@@ -281,7 +326,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> throwMap(Function<? super T, ? extends R> mapper, Executor executor, 
                                            ListenerOptimizationStrategy optimizeExecution) {
-    return InternalFutureUtils.transform(this, null, mapper, false, executor, optimizeExecution);
+    return InternalFutureUtils.transform(this, mapper, false, executor, optimizeExecution);
   }
   
   /**
@@ -301,7 +346,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} that will complete when both this and the provided future does
    */
   default <R> ListenableFuture<R> flatMap(ListenableFuture<R> future) {
-    return InternalFutureUtils.flatTransform(this, null, (ignored) -> future, null, null);
+    return InternalFutureUtils.flatTransform(this, (ignored) -> future, null, null);
   }
   
   /**
@@ -331,7 +376,7 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return A new {@link ListenableFuture} with the specified result type
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper) {
-    return InternalFutureUtils.flatTransform(this, null, mapper, null, null);
+    return InternalFutureUtils.flatTransform(this, mapper, null, null);
   }
 
   /**
@@ -358,7 +403,7 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor) {
-    return InternalFutureUtils.flatTransform(this, null, mapper, executor, null);
+    return InternalFutureUtils.flatTransform(this, mapper, executor, null);
   }
 
   /**
@@ -395,7 +440,7 @@ public interface ListenableFuture<T> extends Future<T> {
   default <R> ListenableFuture<R> flatMap(Function<? super T, ListenableFuture<R>> mapper, 
                                           Executor executor, 
                                           ListenerOptimizationStrategy optimizeExecution) {
-    return InternalFutureUtils.flatTransform(this, null, mapper, executor, optimizeExecution);
+    return InternalFutureUtils.flatTransform(this, mapper, executor, optimizeExecution);
   }
   
   /**
@@ -544,136 +589,6 @@ public interface ListenableFuture<T> extends Future<T> {
    * the adding thread if the future is already complete.  If the runnable has high complexity, 
    * consider using {@link #listener(Runnable, Executor)}.
    * 
-   * @deprecated Please use {@link #listener(Runnable)}
-   * 
-   * @param listener the listener to run when the computation is complete
-   */
-  @Deprecated
-  default void addListener(Runnable listener) {
-    listener(listener, null, null);
-  }
-  
-  /**
-   * Add a listener to be called once the future has completed.  If the future has already 
-   * finished, this will be called immediately.
-   * <p>
-   * If the provided {@link Executor} is null, the listener will execute on the thread which 
-   * computed the original future (once it is done).  If the future has already completed, the 
-   * listener will execute immediately on the thread which is adding the listener.
-   * 
-   * @deprecated Please use {@link #listener(Runnable, Executor)}
-   * 
-   * @param listener the listener to run when the computation is complete
-   * @param executor {@link Executor} the listener should be ran on, or {@code null}
-   */
-  @Deprecated
-  default void addListener(Runnable listener, Executor executor) {
-    listener(listener, executor, null);
-  }
-  
-  /**
-   * Add a listener to be called once the future has completed.  If the future has already 
-   * finished, this will be called immediately.
-   * <p>
-   * If the provided {@link Executor} is null, the listener will execute on the thread which 
-   * computed the original future (once it is done).  If the future has already completed, the 
-   * listener will execute immediately on the thread which is adding the listener.
-   * <p>
-   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
-   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
-   * it will prevent other listeners from potentially being invoked until it completes.  However 
-   * if the listener is small / fast, this can provide significant performance gains.  It should 
-   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
-   * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
-   * details of what optimizations are available.
-   * 
-   * @deprecated Please use {@link #listener(Runnable, Executor, ListenerOptimizationStrategy)}
-   * 
-   * @since 5.10
-   * @param listener the listener to run when the computation is complete
-   * @param executor {@link Executor} the listener should be ran on, or {@code null}
-   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
-   */
-  @Deprecated
-  default void addListener(Runnable listener, Executor executor, 
-                           ListenerOptimizationStrategy optimizeExecution) {
-    listener(listener, executor, optimizeExecution);
-  }
-  
-  /**
-   * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
-   * already finished, this will be called immediately.
-   * <p>
-   * The callback from this call will execute on the same thread the result was produced on, or on 
-   * the adding thread if the future is already complete.  If the callback has high complexity, 
-   * consider passing an executor in for it to be called on.
-   * 
-   * @deprecated Please use {@link #callback(FutureCallback)}
-   * 
-   * @since 1.2.0
-   * @param callback to be invoked when the computation is complete
-   */
-  @Deprecated
-  default void addCallback(FutureCallback<? super T> callback) {
-    callback(callback, null, null);
-  }
-  
-  /**
-   * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
-   * already finished, this will be called immediately.
-   * <p>
-   * If the provided {@link Executor} is null, the callback will execute on the thread which 
-   * computed the original future (once it is done).  If the future has already completed, the 
-   * callback will execute immediately on the thread which is adding the callback.
-   * 
-   * @deprecated Please use {@link #callback(FutureCallback, Executor)}
-   * 
-   * @since 1.2.0
-   * @param callback to be invoked when the computation is complete
-   * @param executor {@link Executor} the callback should be ran on, or {@code null}
-   */
-  @Deprecated
-  default void addCallback(FutureCallback<? super T> callback, Executor executor) {
-    callback(callback, executor, null);
-  }
-  
-  /**
-   * Add a {@link FutureCallback} to be called once the future has completed.  If the future has 
-   * already finished, this will be called immediately.
-   * <p>
-   * If the provided {@link Executor} is null, the callback will execute on the thread which 
-   * computed the original future (once it is done).  If the future has already completed, the 
-   * callback will execute immediately on the thread which is adding the callback.
-   * <p>
-   * Caution should be used when choosing to optimize the listener execution.  If the listener is 
-   * complex, or wanting to be run concurrent, this optimization could prevent that.  In addition 
-   * it will prevent other listeners from potentially being invoked until it completes.  However 
-   * if the listener is small / fast, this can provide significant performance gains.  It should 
-   * also be known that not all {@link ListenableFuture} implementations may be able to do such an 
-   * optimization.  Please see {@link ListenerOptimizationStrategy} javadocs for more specific 
-   * details of what optimizations are available.
-   * 
-   * @deprecated Please use {@link #callback(FutureCallback, Executor, ListenerOptimizationStrategy)}
-   * 
-   * @since 5.10
-   * @param callback to be invoked when the computation is complete
-   * @param executor {@link Executor} the callback should be ran on, or {@code null}
-   * @param optimizeExecution {@code true} to avoid listener queuing for execution if already on the desired pool
-   */
-  @Deprecated
-  default void addCallback(FutureCallback<? super T> callback, Executor executor, 
-                           ListenerOptimizationStrategy optimizeExecution) {
-    callback(callback, executor, optimizeExecution);
-  }
-  
-  /**
-   * Add a listener to be called once the future has completed.  If the future has already 
-   * finished, this will be called immediately.
-   * <p>
-   * The listener from this call will execute on the same thread the result was produced on, or on 
-   * the adding thread if the future is already complete.  If the runnable has high complexity, 
-   * consider using {@link #listener(Runnable, Executor)}.
-   * 
    * @since 5.34
    * @param listener the listener to run when the computation is complete
    * @return Exactly {@code this} instance to add more listeners or other functional operations
@@ -794,27 +709,27 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                        ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        isDone()) {
-      // no need to construct anything, just invoke directly
+    if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       try {
-        callback.handleResult(get());
-      } catch (ExecutionException e) {
-        callback.handleFailure(e.getCause());
-      } catch (CancellationException e) {
-        callback.handleFailure(e);
-      } catch (InterruptedException e) { // should not be possible
+        Throwable failure = getFailure();
+        if (failure != null) {
+          callback.handleFailure(failure);
+        } else {
+          callback.handleResult(get());
+        }
+      } catch (Exception e) {
         callback.handleFailure(e);
       }
     } else {
       listener(() -> {
         try {
-          callback.handleResult(get());
-        } catch (ExecutionException e) {
-          callback.handleFailure(e.getCause());
-        } catch (CancellationException e) {
-          callback.handleFailure(e);
-        } catch (InterruptedException e) { // should not be possible
+          Throwable failure = getFailure();
+          if (failure != null) {
+            callback.handleFailure(failure);
+          } else {
+            callback.handleResult(get());
+          }
+        } catch (Exception e) {
           callback.handleFailure(e);
         }
       }, executor, optimizeExecution);
@@ -883,26 +798,20 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
                                              ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        isDone()) {
-      if (! isCancelled()) {
-        // no need to construct anything, just invoke directly
+    if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
+      if (! isCompletedExceptionally()) {
         try {
           callback.accept(get());
-        } catch (ExecutionException e) {
-          // ignored
-        } catch (InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) {
           // should not be possible
         }
       }
-    } else {
+    } else if (! isCompletedExceptionally()) {
       listener(() -> {
-        if (! isCancelled()) {
+        if (! isCompletedExceptionally()) {
           try {
             callback.accept(get());
-          } catch (ExecutionException e) {
-            // ignored
-          } catch (InterruptedException e) {
+          } catch (ExecutionException | InterruptedException e) {
             // should not be possible
           }
         }
@@ -975,27 +884,21 @@ public interface ListenableFuture<T> extends Future<T> {
    */
   default ListenableFuture<T> failureCallback(Consumer<Throwable> callback, Executor executor, 
                                               ListenerOptimizationStrategy optimizeExecution) {
-    if ((executor == null | optimizeExecution == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) && 
-        isDone()) {
-      // no need to construct anything, just invoke directly
+    if (invokeCompletedDirectly(executor, optimizeExecution) && isDone()) {
       try {
-        get();  // ignore result if provided
-      } catch (ExecutionException e) {
-        callback.accept(e.getCause());
-      } catch (CancellationException e) {
-        callback.accept(e);
-      } catch (InterruptedException e) { // should not be possible
+        if (isCompletedExceptionally()) {
+          callback.accept(getFailure());
+        }
+      } catch (Exception e) {
         callback.accept(e);
       }
     } else {
       listener(() -> {
         try {
-          get();  // ignore result if provided
-        } catch (ExecutionException e) {
-          callback.accept(e.getCause());
-        } catch (CancellationException e) {
-          callback.accept(e);
-        } catch (InterruptedException e) { // should not be possible
+          if (isCompletedExceptionally()) {
+            callback.accept(getFailure());
+          }
+        } catch (Exception e) {
           callback.accept(e);
         }
       }, executor, optimizeExecution);

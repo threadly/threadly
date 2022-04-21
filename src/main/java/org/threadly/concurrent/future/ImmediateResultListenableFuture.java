@@ -1,5 +1,7 @@
 package org.threadly.concurrent.future;
 
+import static org.threadly.concurrent.future.InternalFutureUtils.invokeCompletedDirectly;
+
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -23,7 +25,7 @@ import java.util.function.Function;
  * @since 1.3.0
  * @param <T> The result object type returned by this future
  */
-public class ImmediateResultListenableFuture<T> extends AbstractImmediateListenableFuture<T> {
+public class ImmediateResultListenableFuture<T> extends AbstractCompletedListenableFuture<T> {
   /**
    * Static instance of {@link ImmediateResultListenableFuture} which provides a {@code null} 
    * result.  Since this is a common case this can avoid GC overhead.  If you want to get this in 
@@ -141,6 +143,11 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   public ImmediateResultListenableFuture(T result) {
     this.result = result;
   }
+
+  @Override
+  public boolean isCompletedExceptionally() {
+    return false;
+  }
   
   @Override
   public <TT extends Throwable> ListenableFuture<T> mapFailure(Class<TT> throwableType, 
@@ -187,8 +194,7 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   @Override
   public ListenableFuture<T> callback(FutureCallback<? super T> callback, Executor executor, 
                                       ListenerOptimizationStrategy optimize) {
-    if (executor == null | 
-        optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+    if (invokeCompletedDirectly(executor, optimize)) {
       callback.handleResult(result);
     } else {
       executor.execute(() -> callback.handleResult(result));
@@ -200,8 +206,7 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   @Override
   public ListenableFuture<T> resultCallback(Consumer<? super T> callback, Executor executor, 
                                             ListenerOptimizationStrategy optimize) {
-    if (executor == null | 
-        optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone) {
+    if (invokeCompletedDirectly(executor, optimize)) {
       callback.accept(result);
     } else {
       executor.execute(() -> callback.accept(result));
@@ -225,5 +230,15 @@ public class ImmediateResultListenableFuture<T> extends AbstractImmediateListena
   @Override
   public T get(long timeout, TimeUnit unit) {
     return result;
+  }
+
+  @Override
+  public Throwable getFailure() {
+    return null;
+  }
+
+  @Override
+  public Throwable getFailure(long timeout, TimeUnit unit) {
+    return null;
   }
 }

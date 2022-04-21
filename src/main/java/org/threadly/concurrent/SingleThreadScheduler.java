@@ -60,7 +60,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
                                long maxWaitForLowPriorityInMs, boolean daemonThread) {
     this(defaultPriority, maxWaitForLowPriorityInMs, 
          new ConfigurableThreadFactory(SingleThreadScheduler.class.getSimpleName() + "-",
-                                       true, daemonThread, Thread.NORM_PRIORITY, null, null));
+                                       true, daemonThread, Thread.NORM_PRIORITY, null, null, null));
   }
   
   /**
@@ -213,10 +213,10 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
   public void prestartExecutionThread(boolean blockTillStarted) {
     if (sManager.startIfNotRunning()) {
       sManager.scheduler.execute(DoNothingRunnable.instance());
-      if (blockTillStarted) {
-        while (! sManager.execThread.isAlive() && sManager.state.get() < 1) {
-          Thread.yield();
-        }
+    }
+    if (blockTillStarted) {
+      while (! sManager.execThread.isAlive() && sManager.state.get() < 1) {
+        Thread.yield();
       }
     }
   }
@@ -299,7 +299,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
      * @return {@code true} if scheduler was started.
      */
     public boolean startIfNotRunning() {
-      if (state.get() == -1 && state.compareAndSet(-1, 0)) {
+      if (state.getPlain() == -1 && state.compareAndSet(-1, 0)) {
         execThread.start();
         
         return true;
@@ -321,7 +321,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
     public List<Runnable> stop(boolean stopImmediately) {
       int stateVal = state.get();
       while (stateVal < 1) {
-        if (state.compareAndSet(stateVal, 1)) {
+        if (state.weakCompareAndSetVolatile(stateVal, 1)) {
           // we finish the shutdown immediately if requested, or if it was never started
           if (stopImmediately || stateVal == -1) {
             return finishShutdown();

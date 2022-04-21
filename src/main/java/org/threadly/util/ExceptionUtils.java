@@ -5,6 +5,9 @@ import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 
+import org.threadly.concurrent.CentralThreadlyPool;
+import org.threadly.concurrent.SchedulerService;
+
 /**
  * Utilities for doing basic operations with exceptions.
  * 
@@ -17,10 +20,53 @@ public class ExceptionUtils {
   protected static final ThreadLocal<ExceptionHandler> THREAD_LOCAL_EXCEPTION_HANDLER;
   protected static final InheritableThreadLocal<ExceptionHandler> INHERITED_EXCEPTION_HANDLER;
   protected static volatile ExceptionHandler defaultExceptionHandler = null;
+  private static final int DEFAULT_OVERFLOW_CHECK_MILLIS = 10_000;
+  private static final SchedulerService EXCEPTION_SCHEDULER = 
+      CentralThreadlyPool.isolatedTaskPool(); // low overhead due to rare task submission
+  private static final Runnable STACK_OVERFLOW_TASK;
+  private static volatile Error handledError = null;
+  private static volatile Throwable handledErrorCause = null;
   
   static {
     THREAD_LOCAL_EXCEPTION_HANDLER = new ThreadLocal<>();
     INHERITED_EXCEPTION_HANDLER = new InheritableThreadLocal<>();
+    STACK_OVERFLOW_TASK = () -> {
+      if (handledError != null) {
+        Error toReportError = handledError;
+        
+        StackSuppressedRuntimeException stackOverflow = 
+            new StackSuppressedRuntimeException("Swallowed " + toReportError.getClass().getSimpleName() + 
+                                                  " (others may have been missed)", 
+                                                handledErrorCause);
+        stackOverflow.setStackTrace(toReportError.getStackTrace());
+        
+        handledErrorCause = null;
+        handledError = null;
+        
+        handleException(stackOverflow);
+      }
+    };
+    changeStackOverflowCheckFrequency(DEFAULT_OVERFLOW_CHECK_MILLIS);
+  }
+  
+  /**
+   * Update how often the check for StackOverflowErrors being produced in 
+   * {@link #handleException(Throwable)}.  It is important that {@link #handleException(Throwable)} 
+   * never throws an exception, however due to the nature of {@link StackOverflowError} there may 
+   * be issues in properly reporting the issue.  Instead they will be stored internally with a 
+   * best effort reporting to indicate that they have been occurring (but only one instance per 
+   * frequency will be reported).  By default they are checked every 10 seconds to see if any were 
+   * thrown.  If there was any {@link StackOverflowError} they will be provided back to 
+   * {@link #handleException(Throwable)} on an async thread (as to provide a fresh / shortened 
+   * stack).
+   * 
+   * @param frequencyMillis Milliseconds between checks for overflow, or negative to disable checks
+   */
+  public static synchronized void changeStackOverflowCheckFrequency(int frequencyMillis) {
+    EXCEPTION_SCHEDULER.remove(STACK_OVERFLOW_TASK);
+    if (frequencyMillis > 0) {
+      EXCEPTION_SCHEDULER.scheduleAtFixedRate(STACK_OVERFLOW_TASK, frequencyMillis, frequencyMillis);
+    }
   }
   
   /**
@@ -91,24 +137,6 @@ public class ExceptionUtils {
   }
   
   /**
-   * Invokes {@link Runnable#run()} on the provided runnable on this thread, ensuring that no 
-   * throwables are thrown out of this invocation.  If any throwable's are thrown, they will be 
-   * provided to {@link #handleException(Throwable)}.
-   * 
-   * @deprecated Please use {@code SameThreadSubmitterExecutor.instance().execute(r)} as an alternative
-   * 
-   * @param r Runnable to invoke, can not be null
-   */
-  @Deprecated
-  public static void runRunnable(Runnable r) {
-    try {
-      r.run();
-    } catch (Throwable t) {
-      handleException(t);
-    }
-  }
-  
-  /**
    * This call handles an uncaught throwable.  If a default uncaught exception handler is set, 
    * then that will be called to handle the uncaught exception.  If none is set, then the 
    * exception will be printed out to standard error.
@@ -129,12 +157,18 @@ public class ExceptionUtils {
         UncaughtExceptionHandler ueHandler = currentThread.getUncaughtExceptionHandler();
         ueHandler.uncaughtException(currentThread, t);
       }
+    } catch (StackOverflowError soe) {
+      handledErrorCause = t; // must be set first
+      handledError = soe;
     } catch (Throwable handlerThrown) {
       try {
         System.err.println("Error handling exception: ");
         t.printStackTrace();
         System.err.println("Error thrown when handling exception: ");
         handlerThrown.printStackTrace();
+      } catch (Error soe) {
+        handledErrorCause = t; // must be set first
+        handledError = soe;
       } catch (Throwable ignored) {
         // sigh...I give up
       }
@@ -511,7 +545,7 @@ public class ExceptionUtils {
    * 
    * @since 4.8.0
    */
-  public static class TransformedSuppressedStackException extends SuppressedStackRuntimeException {
+  public static class TransformedSuppressedStackException extends StackSuppressedRuntimeException {
     private static final long serialVersionUID = 6501962264714125183L;
 
     /**

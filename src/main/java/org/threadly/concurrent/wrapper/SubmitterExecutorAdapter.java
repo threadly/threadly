@@ -3,6 +3,7 @@ package org.threadly.concurrent.wrapper;
 import java.util.concurrent.Executor;
 
 import org.threadly.concurrent.AbstractSubmitterExecutor;
+import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.util.ArgumentVerifier;
 
 /**
@@ -16,6 +17,21 @@ import org.threadly.util.ArgumentVerifier;
  * @since 4.8.0 (since 1.0.0 as org.threadly.concurrent.ExecutorWrapper)
  */
 public class SubmitterExecutorAdapter extends AbstractSubmitterExecutor {
+  /**
+   * Ensures the provided {@link Executor} is of type {@link SubmitterExecutor}, adapting it with 
+   * this class if necessary to provide the interface.
+   * 
+   * @param executor Executor to test type or wrap if necessary
+   * @return An implementation of {@link SubmitterExecutor}
+   */
+  public static SubmitterExecutor adaptExecutor(Executor executor) {
+    if (executor instanceof SubmitterExecutor) {
+      return (SubmitterExecutor) executor;
+    } else {
+      return new SubmitterExecutorAdapter(executor);
+    }
+  }
+  
   protected final Executor executor;
   
   /**

@@ -28,6 +28,9 @@ import org.threadly.util.ArgumentVerifier;
  * <p>
  * If limiting to a single thread, please see {@link SingleThreadSchedulerSubPool} as a possible 
  * alternative.
+ * <p>
+ * If you wish to have the tasks execute in an order other than FIFO please see 
+ * {@link OrderedExecutorLimiter}.
  * 
  * @since 4.6.0 (since 1.0.0 at org.threadly.concurrent.limiter)
  */
@@ -67,11 +70,33 @@ public class ExecutorLimiter implements SubmitterExecutor {
    */
   public ExecutorLimiter(Executor executor, int maxConcurrency, 
                          boolean limitFutureListenersExecution) {
+    this(executor, maxConcurrency, limitFutureListenersExecution, null);
+  }
+  
+  /**
+   * Construct a new execution limiter that implements the {@link Executor} interface.
+   * <p>
+   * This constructor allows you to specify if listeners / 
+   * {@link org.threadly.concurrent.future.FutureCallback}'s / functions in 
+   * {@link ListenableFuture#map(java.util.function.Function)} or 
+   * {@link ListenableFuture#flatMap(java.util.function.Function)} should be counted towards the 
+   * concurrency limit.  Specifying {@code false} will release the limit as soon as the original 
+   * task completes.  Specifying {@code true} will continue to enforce the limit until all listeners 
+   * (without an executor) complete.
+   * 
+   * @param executor {@link Executor} to submit task executions to.
+   * @param maxConcurrency maximum quantity of tasks to run in parallel
+   * @param limitFutureListenersExecution {@code true} to include listener / mapped functions towards execution limit
+   * @param waitingTasks queue used for tasks waiting for execution
+   */
+  protected ExecutorLimiter(Executor executor, int maxConcurrency, 
+                            boolean limitFutureListenersExecution, 
+                            Queue<RunnableRunnableContainer> waitingTasks) {
     ArgumentVerifier.assertNotNull(executor, "executor");
     ArgumentVerifier.assertGreaterThanZero(maxConcurrency, "maxConcurrency");
 
     this.executor = executor;
-    this.waitingTasks = new ConcurrentLinkedQueue<>();
+    this.waitingTasks = waitingTasks == null ? new ConcurrentLinkedQueue<>() : waitingTasks;
     this.limitFutureListenersExecution = limitFutureListenersExecution;
     this.currentlyRunning = new AtomicInteger(0);
     this.maxConcurrency = maxConcurrency;
@@ -93,11 +118,15 @@ public class ExecutorLimiter implements SubmitterExecutor {
   public <T> ListenableFuture<T> submit(Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, this);
+    ListenableFutureTask<T> lft = makeListenableFutureTask(task);
     
     executeOrQueue(lft, lft);
     
     return lft;
+  }
+  
+  protected <T> ListenableFutureTask<T> makeListenableFutureTask(Callable<T> task) {
+    return new ListenableFutureTask<>(task, this);
   }
   
   /**
@@ -110,7 +139,7 @@ public class ExecutorLimiter implements SubmitterExecutor {
   }
   
   /**
-   * Updates the concurrency limit for this wrapper.  If reducing the the limit, there will be no 
+   * Updates the concurrency limit for this limiter.  If reducing the the limit, there will be no 
    * attempt or impact on tasks already limiting.  Instead new tasks just wont be submitted to the 
    * parent pool until existing tasks complete and go below the new limit.
    * 
@@ -128,8 +157,8 @@ public class ExecutorLimiter implements SubmitterExecutor {
   }
   
   /**
-   * Returns how many tasks are currently being "limited" and thus are in queue to run from this 
-   * limiter.
+   * Query how many tasks are being withheld from the parent scheduler.  Returning the size of the 
+   * queued tasks waiting for submission to the pool.
    * 
    * @return Quantity of tasks queued in this limiter
    */
@@ -140,16 +169,20 @@ public class ExecutorLimiter implements SubmitterExecutor {
   /**
    * Thread safe verification that the pool has space remaining to accept additional tasks.
    * <p>
-   * If this returns {@code true} {@code currentlyRunning} has been incremented and it expects the 
+   * If this returns {@code true} {@code #currentlyRunning} has been incremented and it expects the 
    * task to run will invoke {@link #handleTaskFinished()} when completed.
+   * <p>
+   * If you are looking to dynamically adjust the pool size this can be a good function to override.
+   * It is invoked before a task is queued, making it an easy choice to increase the capacity 
+   * before returning the {@code super} result.
    * 
    * @return {@code true} if the task can be submitted to the pool
    */
-  protected boolean canSubmitTaskToPool() {
+  protected boolean taskCapacity() {
     while (true) {  // loop till we have a result
       int currentValue = currentlyRunning.get();
       if (currentValue < maxConcurrency) {
-        if (currentlyRunning.compareAndSet(currentValue, currentValue + 1)) {
+        if (currentlyRunning.weakCompareAndSetVolatile(currentValue, currentValue + 1)) {
           return true;
         } // else retry in while loop
       } else {
@@ -170,7 +203,7 @@ public class ExecutorLimiter implements SubmitterExecutor {
      * parallel and possibly emptying after .isEmpty() check but before .poll()
      */
     synchronized (this) {
-      while (! waitingTasks.isEmpty() && canSubmitTaskToPool()) {
+      while (! waitingTasks.isEmpty() && taskCapacity()) {
         // by entering loop we can now execute task
         executor.execute(waitingTasks.poll());
       }
@@ -179,19 +212,34 @@ public class ExecutorLimiter implements SubmitterExecutor {
   
   /**
    * Check that not only are we able to submit tasks to the pool, but there are no tasks currently 
-   * waiting to already be submitted.  If only {@link #canSubmitTaskToPool()} is checked, tasks 
+   * waiting to already be submitted.  If only {@link #taskCapacity()} is checked, tasks 
    * may be able to cut in line with tasks that are already queued in the waiting queue.
+   * <p>
+   * If you are looking for a point to override at which to dynamically adjust the pool size, look 
+   * at {@link #taskCapacity()} as a better option.
    * 
    * @return true if the task can be submitted to the pool 
    */
   protected boolean canRunTask() {
-    return waitingTasks.isEmpty() && canSubmitTaskToPool();
+    return waitingTasks.isEmpty() && taskCapacity();
   }
   
   /**
    * Called to indicate that hold for the task execution should be released. 
    */
   private void releaseExecutionLimit() {
+    if (! waitingTasks.isEmpty()) {
+      Runnable nextTask;
+      synchronized (this) {
+        nextTask = waitingTasks.poll();
+      }
+      if (nextTask != null) {
+        executor.execute(nextTask);
+        return; // was able to shortcut next execution
+      }
+    }
+    
+    // if not returned above, release running count and do a final queue check
     currentlyRunning.decrementAndGet();
     
     consumeAvailable(); // allow any waiting tasks to run

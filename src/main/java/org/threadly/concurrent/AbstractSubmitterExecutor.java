@@ -44,7 +44,7 @@ public abstract class AbstractSubmitterExecutor implements SubmitterExecutor {
   public <T> ListenableFuture<T> submit(Callable<T> task) {
     ArgumentVerifier.assertNotNull(task, "task");
     
-    ListenableFutureTask<T> lft = new ListenableFutureTask<>(false, task, this);
+    ListenableFutureTask<T> lft = new ListenableFutureTask<>(task, this);
     
     doExecute(lft);
     

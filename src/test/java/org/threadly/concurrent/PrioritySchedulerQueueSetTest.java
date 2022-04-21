@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
+import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSet;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueSetListener;
@@ -35,8 +36,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   
   @Test
   public void addExecuteTest() {
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                             Clock.lastKnownForwardProgressingMillis());
     
     queueSet.addExecute(task);
     
@@ -46,8 +47,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   
   @Test
   public void addScheduledTest() {
-    TaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                              Clock.lastKnownForwardProgressingMillis() + 10);
+    TaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                      Clock.lastKnownForwardProgressingMillis() + 10);
     
     queueSet.addScheduled(task);
     
@@ -59,8 +60,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   public void addScheduledOrderTest() {
     List<TaskWrapper> orderedList = new ArrayList<>(TEST_QTY);
     for (int i = 0; i < TEST_QTY; i++) {
-      orderedList.add(new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                             Clock.accurateForwardProgressingMillis() + i));
+      orderedList.add(new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                     Clock.accurateForwardProgressingMillis() + i));
     }
     List<TaskWrapper> randomList = new ArrayList<>(orderedList);
     Collections.shuffle(randomList);
@@ -80,8 +81,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   @Test
   public void removeCallableTest() {
     TestCallable callable = new TestCallable();
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(new ListenableFutureTask<>(false, callable), 
-                                                     null, Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(new ListenableFutureTask<>(callable), 
+                                                             null, Clock.lastKnownForwardProgressingMillis());
     
     assertFalse(queueSet.remove(callable));
     
@@ -99,8 +100,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   @Test
   public void removeRunnableTest() {
     TestRunnable runnable = new TestRunnable();
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(runnable, null, 
-                                                     Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(runnable, null, 
+                                                             Clock.lastKnownForwardProgressingMillis());
     
     assertFalse(queueSet.remove(runnable));
     
@@ -119,8 +120,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   public void queueSizeTest() {
     assertEquals(0, queueSet.queueSize());
     
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                             Clock.lastKnownForwardProgressingMillis());
     
     queueSet.executeQueue.add(task);
     queueSet.scheduleQueue.addFirst(task);
@@ -132,8 +133,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   public void drainQueueIntoTest() {
     List<TaskWrapper> depositList = new ArrayList<>(2);
     
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                             Clock.lastKnownForwardProgressingMillis());
     
     queueSet.executeQueue.add(task);
     
@@ -157,8 +158,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   
   @Test
   public void getNextTaskExecuteOnlyTest() {
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.accurateForwardProgressingMillis() + DELAY_TIME);
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                             Clock.accurateForwardProgressingMillis() + DELAY_TIME);
     queueSet.executeQueue.add(task);
     
     assertTrue(queueSet.getNextTask() == task);
@@ -166,8 +167,8 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   
   @Test
   public void getNextTaskScheduleOnlyTest() {
-    OneTimeTaskWrapper task = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                     Clock.accurateForwardProgressingMillis() + DELAY_TIME);
+    OneTimeTaskWrapper task = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                             Clock.accurateForwardProgressingMillis() + DELAY_TIME);
     queueSet.scheduleQueue.add(task);
     
     assertTrue(queueSet.getNextTask() == task);
@@ -175,10 +176,10 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   
   @Test
   public void getNextTaskExecuteFirstTest() {
-    OneTimeTaskWrapper executeTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                            Clock.accurateForwardProgressingMillis());
-    OneTimeTaskWrapper scheduleTask = new OneTimeTaskWrapper(new TestRunnable(), null, 
-                                                             Clock.accurateForwardProgressingMillis() + DELAY_TIME);
+    OneTimeTaskWrapper executeTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                                    Clock.accurateForwardProgressingMillis());
+    OneTimeTaskWrapper scheduleTask = new AccurateOneTimeTaskWrapper(new TestRunnable(), null, 
+                                                                     Clock.accurateForwardProgressingMillis() + DELAY_TIME);
     queueSet.executeQueue.add(executeTask);
     queueSet.scheduleQueue.add(scheduleTask);
     
@@ -187,10 +188,10 @@ public class PrioritySchedulerQueueSetTest extends ThreadlyTester {
   
   @Test
   public void getNextTaskScheduleFirstTest() {
-    OneTimeTaskWrapper executeTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                            Clock.accurateForwardProgressingMillis() + DELAY_TIME);
-    OneTimeTaskWrapper scheduleTask = new OneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
-                                                             Clock.lastKnownForwardProgressingMillis());
+    OneTimeTaskWrapper executeTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                                    Clock.accurateForwardProgressingMillis() + DELAY_TIME);
+    OneTimeTaskWrapper scheduleTask = new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), null, 
+                                                                     Clock.lastKnownForwardProgressingMillis());
     queueSet.executeQueue.add(executeTask);
     queueSet.scheduleQueue.add(scheduleTask);
     

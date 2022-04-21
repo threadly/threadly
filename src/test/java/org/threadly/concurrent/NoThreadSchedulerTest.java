@@ -15,13 +15,13 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.threadly.ThreadlyTester;
-import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
+import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.util.Clock;
 import org.threadly.util.ExceptionHandler;
-import org.threadly.util.SuppressedStackRuntimeException;
+import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerTest extends ThreadlyTester {
@@ -62,7 +62,7 @@ public class NoThreadSchedulerTest extends ThreadlyTester {
   
   @Test
   public void tickWithoutHandlerThrowsRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
     try {
@@ -75,7 +75,7 @@ public class NoThreadSchedulerTest extends ThreadlyTester {
   
   @Test
   public void tickHandlesRuntimeExceptionTest() {
-    RuntimeException failure = new SuppressedStackRuntimeException();
+    RuntimeException failure = new StackSuppressedRuntimeException();
     final AtomicReference<Throwable> handledException = new AtomicReference<>(null);
     scheduler.execute(new TestRuntimeFailureRunnable(failure));
     
@@ -562,9 +562,9 @@ public class NoThreadSchedulerTest extends ThreadlyTester {
     assertFalse(scheduler.hasTaskReadyToRun());
     
     scheduler.queueManager.highPriorityQueueSet
-             .addScheduled(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                  scheduler.queueManager.highPriorityQueueSet.scheduleQueue, 
-                                                  Clock.lastKnownForwardProgressingMillis()));
+             .addScheduled(new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                          scheduler.queueManager.highPriorityQueueSet.scheduleQueue, 
+                                                          Clock.lastKnownForwardProgressingMillis()));
     
     // now should be true with scheduled task which is ready to run
     assertTrue(scheduler.hasTaskReadyToRun());
@@ -608,9 +608,9 @@ public class NoThreadSchedulerTest extends ThreadlyTester {
     assertTrue(scheduler.getDelayTillNextTask() > 0);
     
     scheduler.queueManager.highPriorityQueueSet
-             .addScheduled(new OneTimeTaskWrapper(DoNothingRunnable.instance(), 
-                                                  scheduler.queueManager.highPriorityQueueSet.scheduleQueue, 
-                                                  Clock.lastKnownForwardProgressingMillis()));
+             .addScheduled(new AccurateOneTimeTaskWrapper(DoNothingRunnable.instance(), 
+                                                          scheduler.queueManager.highPriorityQueueSet.scheduleQueue, 
+                                                          Clock.lastKnownForwardProgressingMillis()));
     
     // now should be true with scheduled task which is ready to run
     assertTrue(scheduler.getDelayTillNextTask() <= 0);

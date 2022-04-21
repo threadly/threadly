@@ -2,6 +2,7 @@ package org.threadly.concurrent;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 
@@ -14,6 +15,9 @@ import org.threadly.concurrent.collections.ConcurrentArrayList;
  * @author jent - Mike Jensen
  */
 public class StrictPriorityScheduler extends PriorityScheduler {
+  private final boolean logicOverride = // randomly turn the logic off so we still test the super implementation
+      ThreadLocalRandom.current().nextBoolean();
+  
   /**
    * Constructs a new thread pool, though no threads will be started till it accepts it's first 
    * request.  This constructs a default priority of high (which makes sense for most use cases).  
@@ -69,9 +73,9 @@ public class StrictPriorityScheduler extends PriorityScheduler {
   public StrictPriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs, 
                                  boolean useDaemonThreads) {
-    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, 
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, 
          new ConfigurableThreadFactory(PriorityScheduler.class.getSimpleName() + "-", 
-                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null));
+                                       true, useDaemonThreads, Thread.NORM_PRIORITY, null, null, null));
   }
 
   /**
@@ -88,7 +92,27 @@ public class StrictPriorityScheduler extends PriorityScheduler {
    */
   public StrictPriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                                  long maxWaitForLowPriorityInMs, ThreadFactory threadFactory) {
-    super(new WorkerPool(threadFactory, poolSize), defaultPriority, maxWaitForLowPriorityInMs);
+    this(poolSize, defaultPriority, maxWaitForLowPriorityInMs, DEFAULT_STARVABLE_STARTS_THREADS, threadFactory);
+  }
+
+  /**
+   * Constructs a new thread pool, though no threads will be started till it accepts it's first 
+   * request.  This provides the extra parameters to tune what tasks submitted without a priority 
+   * will be scheduled as.  As well as the maximum wait for low priority tasks.  The longer low 
+   * priority tasks wait for a worker, the less chance they will have to create a thread.  But it 
+   * also makes low priority tasks execution time less predictable.
+   * 
+   * @param poolSize Thread pool size that should be maintained
+   * @param defaultPriority priority to give tasks which do not specify it
+   * @param maxWaitForLowPriorityInMs time low priority tasks wait for a worker
+   * @param stavableStartsThreads {@code true} to have TaskPriority.Starvable tasks start new threads
+   * @param threadFactory thread factory for producing new threads within executor
+   */
+  public StrictPriorityScheduler(int poolSize, TaskPriority defaultPriority, 
+                                 long maxWaitForLowPriorityInMs, 
+                                 boolean stavableStartsThreads, ThreadFactory threadFactory) {
+    super(new WorkerPool(threadFactory, poolSize, stavableStartsThreads), 
+          defaultPriority, maxWaitForLowPriorityInMs);
   }
   
   private static void verifyOneTimeTaskQueueSet(QueueSet queueSet, OneTimeTaskWrapper task) {
@@ -106,14 +130,14 @@ public class StrictPriorityScheduler extends PriorityScheduler {
   }
   
   @Override
-  protected void addToExecuteQueue(QueueSet queueSet, OneTimeTaskWrapper task) {
+  protected void queueExecute(QueueSet queueSet, OneTimeTaskWrapper task) {
     verifyOneTimeTaskQueueSet(queueSet, task);
     
-    super.addToExecuteQueue(queueSet, task);
+    super.queueExecute(queueSet, task);
   }
   
   @Override
-  protected void addToScheduleQueue(QueueSet queueSet, TaskWrapper task) {
+  protected void queueScheduled(QueueSet queueSet, TaskWrapper task) {
     if (task instanceof OneTimeTaskWrapper) {
       verifyOneTimeTaskQueueSet(queueSet, (OneTimeTaskWrapper)task);
     } else if (task instanceof RecurringTaskWrapper) {
@@ -121,25 +145,51 @@ public class StrictPriorityScheduler extends PriorityScheduler {
       if (queueSet != recurringTask.queueSet) {
         throw new IllegalStateException("QueueSet mismatch");
       }
-      if (task instanceof RecurringDelayTaskWrapper) {
-        task = new StrictRecurringDelayTaskWrapper(task.task, recurringTask.queueSet, 
-                                                   recurringTask.nextRunTime, 
-                                                   ((RecurringDelayTaskWrapper)recurringTask).recurringDelay);
-      } else {
-        task = new StrictRecurringRateTaskWrapper(task.task, recurringTask.queueSet, 
-                                                  recurringTask.nextRunTime, 
-                                                  ((RecurringRateTaskWrapper)recurringTask).period);
+      if (logicOverride) {
+        if (task instanceof AccurateRecurringDelayTaskWrapper) {
+          task = new AccurateStrictRecurringDelayTaskWrapper(task.task, 
+                                                             recurringTask.queueSet, recurringTask.nextRunTime, 
+                                                             ((AccurateRecurringDelayTaskWrapper)recurringTask).recurringDelay);
+        } else if (task instanceof GuessRecurringDelayTaskWrapper) {
+          task = new GuessStrictRecurringDelayTaskWrapper(task.task, 
+                                                          recurringTask.queueSet, recurringTask.nextRunTime, 
+                                                          ((GuessRecurringDelayTaskWrapper)recurringTask).recurringDelay);
+        } else if (task instanceof AccurateRecurringRateTaskWrapper) {
+          task = new AccurateStrictRecurringRateTaskWrapper(task.task, 
+                                                            recurringTask.queueSet, recurringTask.nextRunTime, 
+                                                            ((AccurateRecurringRateTaskWrapper)recurringTask).period);
+        } else {
+          task = new GuessStrictRecurringRateTaskWrapper(task.task, 
+                                                         recurringTask.queueSet, recurringTask.nextRunTime, 
+                                                         ((GuessRecurringRateTaskWrapper)recurringTask).period);
+        }
       }
     } else {
-      throw new UnsupportedOperationException("Unhandled task type");
+      throw new UnsupportedOperationException("Unhandled task type: " + task.getClass());
     }
     
-    super.addToScheduleQueue(queueSet, task);
+    super.queueScheduled(queueSet, task);
+  }
+  
+
+  protected static void verifyScheduleQueue(RecurringTaskWrapper wrapper) {
+    int index = wrapper.queueSet.scheduleQueue.lastIndexOf(wrapper);
+    if (index != wrapper.queueSet.scheduleQueue.size() - 1) {
+      for (int i = index + 1; i < wrapper.queueSet.scheduleQueue.size(); i++) {
+        if (wrapper.queueSet.scheduleQueue.get(i).getRunTime() != Long.MAX_VALUE) {
+          IllegalStateException e = 
+              new IllegalStateException("Invalid queue state: " + wrapper.queueSet.scheduleQueue);
+          e.printStackTrace();
+          throw e;
+        }
+      }
+    }
   }
 
-  protected static class StrictRecurringDelayTaskWrapper extends RecurringDelayTaskWrapper {
-    protected StrictRecurringDelayTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime,
-                                              long recurringDelay) {
+  protected static class AccurateStrictRecurringDelayTaskWrapper extends AccurateRecurringDelayTaskWrapper {
+    protected AccurateStrictRecurringDelayTaskWrapper(Runnable task,  
+                                                      QueueSet queueSet, long firstRunTime,
+                                                      long recurringDelay) {
       super(task, queueSet, firstRunTime, recurringDelay);
     }
 
@@ -147,17 +197,7 @@ public class StrictPriorityScheduler extends PriorityScheduler {
     public boolean canExecute(short executeReference) {
       synchronized (queueSet.scheduleQueue.getModificationLock()) {
         if (super.canExecute(executeReference)) {
-          int index = queueSet.scheduleQueue.lastIndexOf(this);
-          if (index != queueSet.scheduleQueue.size() - 1) {
-            for (int i = index + 1; i < queueSet.scheduleQueue.size(); i++) {
-              if (queueSet.scheduleQueue.get(i).getRunTime() != Long.MAX_VALUE) {
-                IllegalStateException e = 
-                    new IllegalStateException("Invalid queue state: " + queueSet.scheduleQueue);
-                e.printStackTrace();
-                throw e;
-              }
-            }
-          }
+          verifyScheduleQueue(this);
           return true;
         } else {
           return false;
@@ -166,9 +206,30 @@ public class StrictPriorityScheduler extends PriorityScheduler {
     }
   }
 
-  protected static class StrictRecurringRateTaskWrapper extends RecurringRateTaskWrapper {
-    protected StrictRecurringRateTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime,
-                                             long period) {
+  protected static class GuessStrictRecurringDelayTaskWrapper extends GuessRecurringDelayTaskWrapper {
+    protected GuessStrictRecurringDelayTaskWrapper(Runnable task,  
+                                                   QueueSet queueSet, long firstRunTime,
+                                                   long recurringDelay) {
+      super(task, queueSet, firstRunTime, recurringDelay);
+    }
+
+    @Override
+    public boolean canExecute(short executeReference) {
+      synchronized (queueSet.scheduleQueue.getModificationLock()) {
+        if (super.canExecute(executeReference)) {
+          verifyScheduleQueue(this);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+  }
+
+  protected static class AccurateStrictRecurringRateTaskWrapper extends AccurateRecurringRateTaskWrapper {
+    protected AccurateStrictRecurringRateTaskWrapper(Runnable task,  
+                                                     QueueSet queueSet, long firstRunTime,
+                                                     long period) {
       super(task, queueSet, firstRunTime, period);
     }
 
@@ -176,17 +237,27 @@ public class StrictPriorityScheduler extends PriorityScheduler {
     public boolean canExecute(short executeReference) {
       synchronized (queueSet.scheduleQueue.getModificationLock()) {
         if (super.canExecute(executeReference)) {
-          int index = queueSet.scheduleQueue.lastIndexOf(this);
-          if (index != queueSet.scheduleQueue.size() - 1) {
-            for (int i = index + 1; i < queueSet.scheduleQueue.size(); i++) {
-              if (queueSet.scheduleQueue.get(i).getRunTime() != Long.MAX_VALUE) {
-                IllegalStateException e = 
-                    new IllegalStateException("Invalid queue state: " + queueSet.scheduleQueue);
-                e.printStackTrace();
-                throw e;
-              }
-            }
-          }
+          verifyScheduleQueue(this);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+  }
+
+  protected static class GuessStrictRecurringRateTaskWrapper extends GuessRecurringRateTaskWrapper {
+    protected GuessStrictRecurringRateTaskWrapper(Runnable task,  
+                                                  QueueSet queueSet, long firstRunTime,
+                                                  long period) {
+      super(task, queueSet, firstRunTime, period);
+    }
+
+    @Override
+    public boolean canExecute(short executeReference) {
+      synchronized (queueSet.scheduleQueue.getModificationLock()) {
+        if (super.canExecute(executeReference)) {
+          verifyScheduleQueue(this);
           return true;
         } else {
           return false;

@@ -49,25 +49,21 @@ plugins.withType(JavaPlugin) {
 }
 
 test {
-  maxParallelForks = Math.min(8, Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2)))
+  maxParallelForks = Math.min(8, Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 4)))
   jacoco {
     excludes = ['**/package-info**','**/*Test']
     destinationFile = file("$buildDir/reports/jacoco/test.exec")
   }
 }
 
-build.dependsOn jacocoTestReport
+test.dependsOn("jar")
 
 jacocoTestReport {
-  doFirst {
-    classDirectories = fileTree(dir: 'build/classes/java/main', include: 'org/threadly/**')
-    sourceDirectories = fileTree(dir: 'src/main/java', include: 'org/threadly/**')
-  }
   reports {
-    csv.enabled = false
-    xml.enabled = true
+    csv.required = false
+    xml.required = true
     xml.destination = file("$buildDir/reports/jacoco/jacoco.xml")
-    html.enabled = true
+    html.required = true
     html.destination = file("$buildDir/reports/jacoco/html")
   }
   doLast {
@@ -77,6 +73,8 @@ jacocoTestReport {
     println "html - $buildDir/reports/jacoco/html/index.html"
   }
 }
+
+test.finalizedBy("jacocoTestReport")
 
 jacocoTestCoverageVerification {
   violationRules {
@@ -106,7 +104,8 @@ jacocoTestCoverageVerification {
     }
   }
 }
-check.dependsOn jacocoTestCoverageVerification
+
+jacocoTestReport.finalizedBy("jacocoTestCoverageVerification")
 
 
 publishing {

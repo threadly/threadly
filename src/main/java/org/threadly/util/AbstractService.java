@@ -22,7 +22,7 @@ public abstract class AbstractService implements Service {
   
   @Override
   public boolean startIfNotStarted() {
-    if (state.get() == 0 && state.compareAndSet(0, 1)) {
+    if (state.getPlain() == 0 && state.compareAndSet(0, 1)) {
       startupService();
       
       return true;
@@ -47,7 +47,7 @@ public abstract class AbstractService implements Service {
   
   @Override
   public boolean stopIfRunning() {
-    if (state.get() == 1 && state.compareAndSet(1, 2)) {
+    if (state.getPlain() == 1 && state.compareAndSet(1, 2)) {
       shutdownService();
       
       return true;
@@ -75,7 +75,6 @@ public abstract class AbstractService implements Service {
   
   @Override
   protected void finalize() throws Throwable {
-    super.finalize();
     if (isRunning()) {
       ExceptionUtils.handleException(new IllegalStateException(getClass() + " was not stopped before GC"));
     }

@@ -4,6 +4,7 @@ import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPT
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2;
+import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_FORK_JOIN_POOL;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2;
 import static org.threadly.util.debug.CommonStacktraces.IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1;
@@ -34,6 +35,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -79,6 +81,7 @@ public class Profiler {
   protected final Object startStopLock;
   protected final ProfileStorage pStore;
   protected final List<WeakReference<SettableListenableFuture<String>>> stopFutures; // guarded by startStopLock
+  private final Function<? super Profiler, String> startFutureResultSupplier;
   
   /**
    * Constructs a new profiler instance.  The only way to get results from this instance is to 
@@ -87,7 +90,7 @@ public class Profiler {
    * This uses a default poll interval of 100 milliseconds.
    */
   public Profiler() {
-    this(DEFAULT_POLL_INTERVAL_IN_MILLIS);
+    this(DEFAULT_POLL_INTERVAL_IN_MILLIS, null);
   }
   
   /**
@@ -97,20 +100,42 @@ public class Profiler {
    * @param pollIntervalInMs frequency to check running threads
    */
   public Profiler(int pollIntervalInMs) {
-    this(new ProfileStorage(pollIntervalInMs));
+    this(pollIntervalInMs, null);
+  }
+  
+  /**
+   * Constructs a new profiler instance.  The only way to get results from this instance is to 
+   * call {@link #dump()} with a provided output stream to get the results to.
+   * <p>
+   * This constructor allows you to change the behavior of the {@link ListenableFuture} result when 
+   * {@link #start(long)} or {@link #start(Executor, long)} is used.  Generally this will provide 
+   * the complete result of {@link #dump()}.  This can be replaced with calling 
+   * {@link #dump(OutputStream, boolean, int)} with parameters to reduce the output, or even 
+   * {@code null} so long as the consumers of the future can handle a null result.
+   * 
+   * @param pollIntervalInMs frequency to check running threads
+   * @param startFutureResultSupplier Supplier to be used for providing future results
+   */
+  public Profiler(int pollIntervalInMs, Function<? super Profiler, String> startFutureResultSupplier) {
+    this(new ProfileStorage(pollIntervalInMs), startFutureResultSupplier);
   }
   
   /**
    * This constructor allows extending classes to provide their own implementation of the 
    * {@link ProfileStorage}.  Ultimately all constructors will default to this one.
    * 
-   * @param outputFile file to dump results to on stop (or {@code null} to not dump on stop)
    * @param pStore Storage to be used for holding profile results and getting the Iterator for threads
+   * @param startFutureResultSupplier Supplier to be used for providing future results
    */
-  protected Profiler(ProfileStorage pStore) {
+  protected Profiler(ProfileStorage pStore, Function<? super Profiler, String> startFutureResultSupplier) {
     this.startStopLock = new Object();
     this.pStore = pStore;
     this.stopFutures = new ArrayList<>(2);
+    if (startFutureResultSupplier == null) {
+      this.startFutureResultSupplier = Profiler::dump;
+    } else {
+      this.startFutureResultSupplier = startFutureResultSupplier;
+    }
   }
   
   /**
@@ -345,13 +370,15 @@ public class Profiler {
         pStore.collectorThread.set(null);
         
         if (! stopFutures.isEmpty()) {
+          boolean needToGenerateResult = true;
           String result = null;
           Iterator<WeakReference<SettableListenableFuture<String>>> it = stopFutures.iterator();
           while (it.hasNext()) {
             SettableListenableFuture<String> slf = it.next().get();
             if (slf != null) {
-              if (result == null) {
-                result = dump();
+              if (needToGenerateResult) {
+                needToGenerateResult = false;
+                result = startFutureResultSupplier.apply(this);
               }
               slf.setResult(result);
             }
@@ -368,7 +395,7 @@ public class Profiler {
    * @return The dumped results as a single String
    */
   public String dump() {
-    return dump(true);
+    return dump(true, 1);
   }
   
   /**
@@ -376,10 +403,11 @@ public class Profiler {
    * 
    * @return The dumped results as a single String
    * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
-  public String dump(boolean dumpIndividualThreads) {
+  public String dump(boolean dumpIndividualThreads, int minimumStackWitnessCount) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    dump(new BufferedOutputStream(baos), dumpIndividualThreads);
+    dump(new BufferedOutputStream(baos), dumpIndividualThreads, minimumStackWitnessCount);
     
     return baos.toString();
   }
@@ -390,7 +418,7 @@ public class Profiler {
    * @param out OutputStream to write results to
    */
   public void dump(OutputStream out) {
-    dump(out, true);
+    dump(out, true, 1);
   }
   
   /**
@@ -398,9 +426,10 @@ public class Profiler {
    * 
    * @param out OutputStream to write results to
    * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
-  public void dump(OutputStream out, boolean dumpIndividualThreads) {
-    dump(new PrintStream(out, false), dumpIndividualThreads);
+  public void dump(OutputStream out, boolean dumpIndividualThreads, int minimumStackWitnessCount) {
+    dump(new PrintStream(out, false), dumpIndividualThreads, minimumStackWitnessCount);
   }
   
   /**
@@ -409,16 +438,17 @@ public class Profiler {
    * @param ps PrintStream to write results to
    */
   public void dump(PrintStream ps) {
-    dump(ps, true);
+    dump(ps, true, 1);
   }
   
   /**
    * Output all the currently collected statistics to the provided output stream.
    * 
    * @param ps PrintStream to write results to
-   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual threads is also dumped
+   * @param dumpIndividualThreads If {@code true} then a report of stacks seen for individual mthreads is also dumped
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
-  public void dump(PrintStream ps, boolean dumpIndividualThreads) {
+  public void dump(PrintStream ps, boolean dumpIndividualThreads, int minimumStackWitnessCount) {
     pStore.dumpingThread = Thread.currentThread();
     try {
       Map<Trace, Integer> globalTraces = new HashMap<>();
@@ -433,7 +463,7 @@ public class Profiler {
         if (dumpIndividualThreads) {
           ps.println("Profile for thread: " + 
                         entry.getRight().threadNames() + ';' + entry.getLeft().threadId);
-          dumpTraces(entry.getRight().traceSet(), null, ps);
+          dumpTraces(entry.getRight().traceSet(), null, ps, minimumStackWitnessCount);
         }
         
         // add in this threads trace data to the global trace map
@@ -452,7 +482,7 @@ public class Profiler {
       // log out global data
       if (globalTraces.size() > 1 || ! dumpIndividualThreads) {
         ps.println("Combined profile for all threads....");
-        dumpTraces(globalTraces.keySet(), globalTraces, ps);
+        dumpTraces(globalTraces.keySet(), globalTraces, ps, minimumStackWitnessCount);
       }
       
       ps.flush();
@@ -467,10 +497,12 @@ public class Profiler {
    * @param traces Set to examine traces to dump statistics about
    * @param globalCount {@code true} to examine the global counts of the traces
    * @param out Output to dump results to
+   * @param minimumStackWitnessCount Minimum times profiler must have seen the stack to include in the dump
    */
   private static void dumpTraces(Set<Trace> traces, 
-                                 final Map<Trace, Integer> globalCounts, PrintStream out) {
-    Map<Function, Function> methods = new HashMap<>();
+                                 final Map<Trace, Integer> globalCounts, PrintStream out, 
+                                 int minimumStackWitnessCount) {
+    Map<WitnessedFunction, WitnessedFunction> methods = new HashMap<>();
     Trace[] traceArray = traces.toArray(new Trace[traces.size()]);
     int total = 0;
     int nativeCount = 0;
@@ -491,8 +523,8 @@ public class Profiler {
       }
       
       for (int i = 0; i < t.elements.length; ++i) {
-        Function n = new Function(t.elements[i].getClassName(), t.elements[i].getMethodName());
-        Function f = methods.get(n);
+        WitnessedFunction n = new WitnessedFunction(t.elements[i].getClassName(), t.elements[i].getMethodName());
+        WitnessedFunction f = methods.get(n);
         if (f == null) {
           methods.put(n, n);
           f = n;
@@ -505,7 +537,7 @@ public class Profiler {
       }
     }
     
-    Function[] methodArray = methods.keySet().toArray(new Function[methods.size()]);
+    WitnessedFunction[] methodArray = methods.keySet().toArray(new WitnessedFunction[methods.size()]);
     
     out.println(" total count: " + StringUtils.padStart(Integer.toString(total), 
                                                         NUMBER_TARGET_LINE_LENGTH, ' '));
@@ -550,6 +582,9 @@ public class Profiler {
       } else {
         count = t.getThreadCount();
       }
+      if (count < minimumStackWitnessCount) {
+        break;
+      }
       out.println(count + " time(s):");
 
       if (IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.equals(t)) {
@@ -578,6 +613,8 @@ public class Profiler {
         out.println("\tScheduledThreadPoolExecutor idle thread (stack 1)\n");
       } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.equals(t)) {
         out.println("\tScheduledThreadPoolExecutor idle thread (stack 2)\n");
+      } else if (IDLE_THREAD_TRACE_FORK_JOIN_POOL.equals(t)) {
+        out.println("\tForkJoinPool idle thread\n");
       } else {
         out.println(ExceptionUtils.stackToString(t.elements));
       }
@@ -590,7 +627,7 @@ public class Profiler {
    * @param f Function to format for
    * @param out PrintStream to print out to
    */
-  private static void dumpFunction(Function f, PrintStream out) {
+  private static void dumpFunction(WitnessedFunction f, PrintStream out) {
     out.print(StringUtils.padStart(Integer.toString(f.getCount()), 
                                    NUMBER_TARGET_LINE_LENGTH, ' '));
     out.print(StringUtils.padStart(Integer.toString(f.getStackTopCount()), 
@@ -776,14 +813,13 @@ public class Profiler {
    * 
    * @since 5.25
    */
-  protected static class ExecutorRunnerTask implements Runnable {
+  protected static final class ExecutorRunnerTask implements Runnable {
     private final ProfileStorage pStore;
     private final SettableListenableFuture<?> runningThreadFuture;
     private final ProfilerRunner pr;
     
     public ExecutorRunnerTask(ProfileStorage pStore, 
-                              SettableListenableFuture<?> runningThreadFuture, 
-                              ProfilerRunner pr) {
+                              SettableListenableFuture<?> runningThreadFuture, ProfilerRunner pr) {
       this.pStore = pStore;
       this.runningThreadFuture = runningThreadFuture;
       this.pr = pr;
@@ -816,7 +852,6 @@ public class Profiler {
         currentThread.setName(originalName);
       }
     }
-    
   }
   
   /**
@@ -824,7 +859,7 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class ProfilerRunner implements Runnable {
+  protected static final class ProfilerRunner implements Runnable {
     private final ProfileStorage pStore;
     
     protected ProfilerRunner(ProfileStorage pStore) {
@@ -883,7 +918,7 @@ public class Profiler {
    * 
    * @since 5.25
    */
-  protected static class ThreadSamples {
+  protected static final class ThreadSamples {
     private final Map<Trace, Trace> traces = new ConcurrentHashMap<>(DEFAULT_MAP_INITIAL_SIZE);
     private final Set<String> threadNames = ConcurrentHashMap.newKeySet(1);
     private volatile String cachedThreadNames = null;
@@ -922,6 +957,8 @@ public class Profiler {
           trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1.elements);
         } else if (IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.equals(trace)) {
           trace = new Trace(IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2.elements);
+        } else if (IDLE_THREAD_TRACE_FORK_JOIN_POOL.equals(trace)) {
+          trace = new Trace(IDLE_THREAD_TRACE_FORK_JOIN_POOL.elements);
         }
         
         traces.put(trace, trace);
@@ -958,7 +995,7 @@ public class Profiler {
    * 
    * @since 4.9.0
    */
-  protected static class ThreadIdentifier {
+  protected static final class ThreadIdentifier {
     private final long threadId;
     private final int hashCode;
     
@@ -1005,7 +1042,7 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class Trace extends ComparableTrace {
+  protected static final class Trace extends ComparableTrace {
     /* threadSeenCount is how many times this trace has been seen in a specific thread.  It should 
      * only be incremented by a single thread, but can be read from any thread.
      */
@@ -1039,14 +1076,14 @@ public class Profiler {
    * 
    * @since 1.0.0
    */
-  protected static class Function {
+  protected static final class WitnessedFunction {
     protected final String className;
     protected final String function;
     protected final int hashCode;
     private int count;
     private int childCount;
     
-    public Function(String className, String funtion) {
+    public WitnessedFunction(String className, String funtion) {
       this.className = className;
       this.function = funtion;
       this.hashCode = className.hashCode() ^ function.hashCode();
@@ -1096,10 +1133,9 @@ public class Profiler {
         return true;
       } else {
         try {
-          Function m = (Function) o;
+          WitnessedFunction m = (WitnessedFunction) o;
           return m.hashCode == hashCode && 
-                   m.className.equals(className) && 
-                   m.function.equals(function);
+                   m.className.equals(className) && m.function.equals(function);
         } catch (ClassCastException e) {
           return false;
         }

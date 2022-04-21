@@ -8,14 +8,16 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.Ignore;
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
-import org.threadly.concurrent.AbstractPriorityScheduler.OneTimeTaskWrapper;
+import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestRunnable;
+import org.threadly.test.concurrent.TestUtils;
 import org.threadly.util.Clock;
 
 @SuppressWarnings("javadoc")
@@ -38,13 +40,13 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   @SuppressWarnings("unused")
   public void constructorFail() {
     try {
-      new PriorityScheduler(0, TaskPriority.High, 1, null);
+      new PriorityScheduler(0, true);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
     }
     try {
-      new PriorityScheduler(1, TaskPriority.High, -1, null);
+      new PriorityScheduler(1, TaskPriority.High, -1);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected
@@ -53,7 +55,7 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   
   @Test
   public void constructorNullFactoryTest() {
-    PriorityScheduler ps = new PriorityScheduler(1, TaskPriority.High, 1, null);
+    PriorityScheduler ps = new PriorityScheduler(1, TaskPriority.High, 1, true, null);
     // should be set with default
     assertNotNull(ps.workerPool.threadFactory);
   }
@@ -126,6 +128,36 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
       while (it.hasNext()) {
         it.next().blockTillStarted(); // will throw exception if not ran
       }
+    } finally {
+      btr.unblock();
+      factory.shutdown();
+    }
+  }
+  
+  @Test
+  @Ignore // TODO - test seems flakey still, unknown why
+  public void taskPriorityThreadStartTest() {
+    PrioritySchedulerServiceFactory factory = getPrioritySchedulerFactory();
+    PriorityScheduler scheduler = factory.makePriorityScheduler(2);  // use default of starvable does not start
+    BlockingTestRunnable btr = new BlockingTestRunnable();
+    try {
+      // make sure the threads are exactly 2 and idle
+      scheduler.prestartAllThreads();
+      scheduler.setPoolSize(10);
+      
+      scheduler.execute(btr);
+      // make sure only one thread wakes up before we submit a second task
+      new TestCondition(() -> scheduler.workerPool.idleWorker.get() != null).blockTillTrue();
+      scheduler.execute(btr);  // executed twice since effect is only after the second thread
+      new TestCondition(() -> scheduler.workerPool.idleWorker.get() != null).blockTillTrue();
+      
+      TestRunnable tr = new TestRunnable();
+      scheduler.execute(tr, TaskPriority.Starvable);
+      
+      // should not execute even after delay
+      TestUtils.sleep(DELAY_TIME);
+      
+      assertEquals(0, tr.getRunCount());
     } finally {
       btr.unblock();
       factory.shutdown();
@@ -454,19 +486,19 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
     
     PriorityScheduler scheduler = factory.makePriorityScheduler(1);
     try {
-      scheduler.addToScheduleQueue(scheduler.taskQueueManager.highPriorityQueueSet, 
-                                   new OneTimeTaskWrapper(new TestRunnable(), null, 
-                                                          Clock.lastKnownForwardProgressingMillis() + taskDelay));
+      scheduler.queueScheduled(scheduler.queueManager.highPriorityQueueSet, 
+                                   new AccurateOneTimeTaskWrapper(new TestRunnable(), null, 
+                                                                  Clock.lastKnownForwardProgressingMillis() + taskDelay));
 
-      assertEquals(1, scheduler.taskQueueManager.highPriorityQueueSet.scheduleQueue.size());
-      assertEquals(0, scheduler.taskQueueManager.lowPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.queueManager.highPriorityQueueSet.scheduleQueue.size());
+      assertEquals(0, scheduler.queueManager.lowPriorityQueueSet.scheduleQueue.size());
       
-      scheduler.addToScheduleQueue(scheduler.taskQueueManager.lowPriorityQueueSet, 
-                                   new OneTimeTaskWrapper(new TestRunnable(), null, 
-                                                          Clock.lastKnownForwardProgressingMillis() + taskDelay));
+      scheduler.queueScheduled(scheduler.queueManager.lowPriorityQueueSet, 
+                                   new AccurateOneTimeTaskWrapper(new TestRunnable(), null, 
+                                                                  Clock.lastKnownForwardProgressingMillis() + taskDelay));
 
-      assertEquals(1, scheduler.taskQueueManager.highPriorityQueueSet.scheduleQueue.size());
-      assertEquals(1, scheduler.taskQueueManager.lowPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.queueManager.highPriorityQueueSet.scheduleQueue.size());
+      assertEquals(1, scheduler.queueManager.lowPriorityQueueSet.scheduleQueue.size());
     } finally {
       factory.shutdown();
     }
@@ -506,6 +538,10 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
     public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority, 
                                                    long maxWaitForLowPriority);
     
+    public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority, 
+                                                   long maxWaitForLowPriority, 
+                                                   boolean stavableStartsThreads);
+    
     public PriorityScheduler makePriorityScheduler(int poolSize);
   }
   
@@ -543,6 +579,17 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
                                                    long maxWaitForLowPriority) {
       PriorityScheduler result = new StrictPriorityScheduler(poolSize, defaultPriority, 
                                                              maxWaitForLowPriority);
+      executors.add(result);
+      
+      return result;
+    }
+
+    @Override
+    public PriorityScheduler makePriorityScheduler(int poolSize, TaskPriority defaultPriority,
+                                                   long maxWaitForLowPriority, 
+                                                   boolean stavableStartsThreads) {
+      PriorityScheduler result = new StrictPriorityScheduler(poolSize, defaultPriority, 
+                                                             maxWaitForLowPriority, stavableStartsThreads);
       executors.add(result);
       
       return result;

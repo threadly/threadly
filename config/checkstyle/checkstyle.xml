@@ -18,7 +18,6 @@
     <module name="JavadocMethod">
       <property name="scope" value="public"/>
       <property name="excludeScope" value="private"/>
-      <property name="suppressLoadErrors" value="true"/>
     </module>
     <module name="JavadocStyle"/>
     <module name="JavadocType"/>
@@ -41,18 +40,17 @@
     <module name="LocalVariableName"/>
     <module name="TypeName"/>
     <module name="AvoidStarImport"/>
-    <module name="ImportOrder">
-      <property name="option" value="above"/>
-      <property name="separated" value="true"/>
+    <module name="CustomImportOrder">
+      <property name="customImportOrderRules"
+                value="STATIC###STANDARD_JAVA_PACKAGE###SPECIAL_IMPORTS"/>
+      <property name="specialImportsRegExp" value="^org\.threadly\."/>
+      <property name="sortImportsInGroupAlphabetically" value="true"/>
+      <property name="separateLineBetweenGroups" value="true"/>
     </module>
     <module name="RedundantImport"/>
     <module name="UnusedImports"/>
     <module name="AnonInnerLength">
       <property name="max" value="50"/>
-    </module>
-    <module name="LineLength">
-      <property name="max" value="120"/>
-      <property name="tabWidth" value="2"/>
     </module>
     <module name="MethodLength"/>
     <module name="ParameterNumber">
@@ -71,7 +69,7 @@
     <module name="EqualsHashCode"/>
     <module name="IllegalThrows">
       <property name="illegalClassNames" value="java.lang.Throwable, java.lang.Error, java.lang.RuntimeException,java.lang.Exception"/>
-      <property name="ignoredMethodNames" value="finalize, call, acceptConsumedItem"/>
+      <property name="ignoredMethodNames" value="finalize, call, acceptConsumedItem, accept"/>
     </module>
     <module name="MagicNumber">
       <property name="ignoreNumbers" value="-2, -1, 0, 1, 2, 4, 10, 100, 1000"/>
@@ -90,6 +88,10 @@
       <metadata name="net.sf.eclipsecs.core.lastEnabledSeverity" value="inherit"/>
     </module>
     <module name="ModifierOrder"/>
+  </module>
+  <module name="LineLength">
+    <property name="max" value="120"/>
+    <property name="tabWidth" value="2"/>
   </module>
   <module name="JavadocPackage"/>
   <module name="FileLength"/>

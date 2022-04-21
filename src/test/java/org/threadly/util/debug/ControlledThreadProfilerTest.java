@@ -21,7 +21,6 @@ import org.threadly.util.debug.Profiler.ThreadSample;
 
 @SuppressWarnings("javadoc")
 public class ControlledThreadProfilerTest extends ProfilerTest {
-  private static final int POLL_INTERVAL = 1;
   private static final int WAIT_TIME_FOR_COLLECTION = 50;
   
   private ControlledThreadProfiler ctProfiler;
@@ -29,8 +28,9 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   @Before
   @Override
   public void setup() {
-    ctProfiler = new ControlledThreadProfiler(POLL_INTERVAL);
+    ctProfiler = new ControlledThreadProfiler(POLL_INTERVAL, (p) -> startFutureResultSupplier.get());
     profiler = ctProfiler;
+    startFutureResultSupplier = profiler::dump;
   }
   
   @Override

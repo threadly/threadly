@@ -214,7 +214,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
           } else if (currentThread.isInterrupted()) {
             throw new InterruptedException();
           }
-          TaskWrapper nextTask = queueManager.getNextTask();
+          TaskWrapper nextTask = queueManager.getNextTask(true);
           if (nextTask == null) {
               LockSupport.park();
           } else {
@@ -249,10 +249,12 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
     QueueSet queueSet = queueManager.getQueueSet(priority);
     OneTimeTaskWrapper result;
     if (delayInMillis == 0) {
-      queueSet.addExecute((result = new NoThreadOneTimeTaskWrapper(task, queueSet.executeQueue, 
+      queueSet.addExecute((result = new NoThreadOneTimeTaskWrapper(task, 
+                                                                   queueSet.executeQueue, 
                                                                    nowInMillis(false))));
     } else {
-      queueSet.addScheduled((result = new NoThreadOneTimeTaskWrapper(task, queueSet.scheduleQueue, 
+      queueSet.addScheduled((result = new NoThreadOneTimeTaskWrapper(task,  
+                                                                     queueSet.scheduleQueue, 
                                                                      nowInMillis(true) + delayInMillis)));
     }
     return result;
@@ -314,7 +316,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return next ready task, or {@code null} if there are none
    */
   protected TaskWrapper getNextReadyTask() {
-    TaskWrapper tw = queueManager.getNextTask();
+    TaskWrapper tw = queueManager.getNextTask(true);
     if (tw == null || tw.getScheduleDelay() > 0) {
       return null;
     } else {
@@ -375,7 +377,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @return Milliseconds till the next task is ready to run
    */
   public long getDelayTillNextTask() {
-    TaskWrapper tw = queueManager.getNextTask();
+    TaskWrapper tw = queueManager.getNextTask(true);
     if (tw != null) {
       return tw.getRunTime() - nowInMillis(true);
     } else {
@@ -407,7 +409,7 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @since 1.0.0
    */
   protected class NoThreadOneTimeTaskWrapper extends OneTimeTaskWrapper {
-    protected NoThreadOneTimeTaskWrapper(Runnable task, 
+    protected NoThreadOneTimeTaskWrapper(Runnable task,  
                                          Queue<? extends TaskWrapper> taskQueue, long runTime) {
       super(task, taskQueue, runTime);
     }
@@ -436,7 +438,8 @@ public class NoThreadScheduler extends AbstractPriorityScheduler {
    * @since 4.3.0
    */
   protected abstract class NoThreadRecurringTaskWrapper extends RecurringTaskWrapper {
-    protected NoThreadRecurringTaskWrapper(Runnable task, QueueSet queueSet, long firstRunTime) {
+    protected NoThreadRecurringTaskWrapper(Runnable task,  
+                                           QueueSet queueSet, long firstRunTime) {
       super(task, queueSet, firstRunTime);
     }
     

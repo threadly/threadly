@@ -118,8 +118,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
   @Override
   public <T> T invokeAny(Collection<? extends Callable<T>> tasks, 
                          long timeout, TimeUnit unit) throws InterruptedException,
-                                                             ExecutionException, 
-                                                             TimeoutException {
+                                                             ExecutionException, TimeoutException {
     if (tasks.size() < 1) {
       throw new IllegalArgumentException("Empty task list provided");
     }
@@ -267,7 +266,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @since 5.22 (since 1.0.0 under org.threadly.concurrent.future package)
    * @param <T> The result object type returned by this future
    */
-  protected static class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
+  protected static final class ScheduledFutureDelegate<T> implements ListenableScheduledFuture<T> {
     protected final ListenableFuture<? extends T> futureImp;
     protected final Delayed delayed;
     
@@ -309,6 +308,11 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     }
 
     @Override
+    public boolean isCompletedExceptionally() {
+      return futureImp.isCompletedExceptionally();
+    }
+
+    @Override
     public T get() throws InterruptedException, ExecutionException {
       return futureImp.get();
     }
@@ -317,6 +321,17 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
     public T get(long timeout, TimeUnit unit) throws InterruptedException, 
                                                      ExecutionException, TimeoutException {
       return futureImp.get(timeout, unit);
+    }
+
+    @Override
+    public Throwable getFailure() throws InterruptedException {
+      return futureImp.getFailure();
+    }
+
+    @Override
+    public Throwable getFailure(long timeout, TimeUnit unit) throws InterruptedException,
+                                                                    TimeoutException {
+      return futureImp.getFailure(timeout, unit);
     }
 
     @Override
@@ -366,7 +381,7 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * 
    * @since 2.1.0
    */
-  protected static class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
+  protected static final class ThrowableHandlingRecurringRunnable implements RunnableContainer, Runnable {
     private final SchedulerService scheduler;
     private final Runnable task;
     
@@ -403,15 +418,27 @@ abstract class AbstractExecutorServiceWrapper implements ScheduledExecutorServic
    * @since 4.4.3
    * @param <T> The result object type returned by this future
    */
-  protected static class CancelRemovingListenableFutureTask<T> extends ListenableFutureTask<T> {
+  protected static final class CancelRemovingListenableFutureTask<T> extends ListenableFutureTask<T> {
     private final SchedulerService scheduler;
+    private final boolean recurring;
 
     public CancelRemovingListenableFutureTask(SchedulerService scheduler, 
                                               boolean recurring, Runnable task, 
                                               Executor executingExecutor) {
-      super(recurring, task, null, executingExecutor);
+      super(task, null, executingExecutor);
       
       this.scheduler = scheduler;
+      this.recurring = recurring;
+    }
+    
+    @Override
+    protected boolean completeWithResult(T result) {
+      if (recurring) {
+        // don't set the result so execution can re-occur
+        return false;
+      } else {
+        return super.completeWithResult(result);
+      }
     }
     
     @Override

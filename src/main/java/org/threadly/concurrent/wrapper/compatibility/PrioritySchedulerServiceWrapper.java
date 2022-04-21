@@ -85,7 +85,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
 
   @Override
   protected ListenableScheduledFuture<?> schedule(Runnable task, long delayInMillis) {
-    ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<>(false, task, null, pScheduler);
+    ListenableRunnableFuture<Void> taskFuture = new ListenableFutureTask<>(task, null, pScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, 
                                                                  taskPriority, delayInMillis);
     
@@ -94,7 +94,7 @@ public class PrioritySchedulerServiceWrapper extends AbstractExecutorServiceWrap
 
   @Override
   protected <V> ListenableScheduledFuture<V> schedule(Callable<V> callable, long delayInMillis) {
-    ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<>(false, callable, pScheduler);
+    ListenableRunnableFuture<V> taskFuture = new ListenableFutureTask<>(callable, pScheduler);
     Delayed d = ThreadlyInternalAccessor.doScheduleAndGetDelayed(pScheduler, taskFuture, 
                                                                  taskPriority, delayInMillis);
     

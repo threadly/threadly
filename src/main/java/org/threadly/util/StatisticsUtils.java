@@ -36,6 +36,60 @@ public class StatisticsUtils {
   }
   
   /**
+   * Examine list of numbers to find the instance which has the highest value.  Because of the need 
+   * to use the {@code compareTo}, the provided list must be generic to the specific type of 
+   * {@link Number} contained, and not the generic {@link Number} itself.
+   * 
+   * @param <T> The type of number contained within the list
+   * @param list List to examine for high value
+   * @return The instance which contains the highest value using the {@link Comparable#compareTo(Object)}
+   * @throws IllegalArgumentException if the list is empty
+   */
+  public static <T extends Number & Comparable<T>> T getMax(Collection<T> list) {
+    if (list == null || list.isEmpty()) {
+      throw new IllegalArgumentException("Empty list");
+    }
+    
+    Iterator<T> it = list.iterator();
+    T result = it.next();
+    while (it.hasNext()) {
+      T next = it.next();
+      if (result.compareTo(next) < 0) {
+        result = next;
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Examine list of numbers to find the instance which has the lowest value.  Because of the need 
+   * to use the {@code compareTo}, the provided list must be generic to the specific type of 
+   * {@link Number} contained, and not the generic {@link Number} itself.
+   * 
+   * @param <T> The type of number contained within the list
+   * @param list List to examine for high value
+   * @return The instance which contains the highest value using the {@link Comparable#compareTo(Object)}
+   * @throws IllegalArgumentException if the list is empty
+   */
+  public static <T extends Number & Comparable<T>> T  getMin(Collection<T> list) {
+    if (list == null || list.isEmpty()) {
+      throw new IllegalArgumentException("Empty list");
+    }
+    
+    Iterator<T> it = list.iterator();
+    T result = it.next();
+    while (it.hasNext()) {
+      T next = it.next();
+      if (result.compareTo(next) > 0) {
+        result = next;
+      }
+    }
+    
+    return result;
+  }
+  
+  /**
    * Gets percentile values from a collection of numeric values.  This function is NOT dependent 
    * on the collection already being sorted.  This function accepts any decimal percentile between 
    * zero and one hundred, but requests for 99.9 and 99.99 may return the same result if the sample 

@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,14 +15,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.threadly.BlockingTestRunnable;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
+import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.concurrent.SubmitterExecutor;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.AsyncVerifier;
+import org.threadly.test.concurrent.BlockingTestRunnable;
 import org.threadly.test.concurrent.TestRunnable;
 
 @SuppressWarnings("javadoc")
@@ -68,7 +68,7 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
       // expected
     }
     try {
-      new ExecutorLimiter(Executors.newSingleThreadExecutor(), 0);
+      new ExecutorLimiter(SameThreadSubmitterExecutor.instance(), 0);
       fail("Exception should have thrown");
     } catch (IllegalArgumentException e) {
       // expected

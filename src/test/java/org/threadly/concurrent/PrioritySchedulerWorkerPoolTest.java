@@ -18,7 +18,7 @@ public class PrioritySchedulerWorkerPoolTest extends ThreadlyTester {
   
   @Before
   public void setup() {
-    workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1);
+    workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1, true);
     qm = new QueueManager(workerPool, 1000);
     
     workerPool.start(qm);
@@ -95,8 +95,9 @@ public class PrioritySchedulerWorkerPoolTest extends ThreadlyTester {
   
   @Test
   public void workerIdleTest() {
+    workerPool.currentPoolSize.incrementAndGet();
     final Worker w = new Worker(workerPool, workerPool.threadFactory);
-    w.start();
+    w.startWorker();
 
     // wait for worker to become idle
     new TestCondition(() -> workerPool.idleWorker.get(), (o) -> o == w).blockTillTrue();

@@ -1,10 +1,14 @@
 package org.threadly.util.debug;
 
+import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.concurrent.Executor;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.util.ArgumentVerifier;
 import org.threadly.util.ExceptionUtils;
 
@@ -30,7 +34,7 @@ public class FilteredStackProfiler extends Profiler {
    *                  {@link StackTraceElement} matches this regular expression will be counted.
    */
   public FilteredStackProfiler(String pattern) {
-    this(regexPredicate(pattern));
+    this(DEFAULT_POLL_INTERVAL_IN_MILLIS, regexPredicate(pattern));
   }
 
   /**
@@ -52,7 +56,7 @@ public class FilteredStackProfiler extends Profiler {
    *                  {@link StackTraceElement} matches this regular expression will be counted.
    */
   public FilteredStackProfiler(int pollIntervalInMs, String pattern) {
-    this(pollIntervalInMs, regexPredicate(pattern));
+    this(pollIntervalInMs, null, regexPredicate(pattern));
   }
 
   /**
@@ -63,7 +67,48 @@ public class FilteredStackProfiler extends Profiler {
    * @param filter Only stack traces where the predicate returns {@code true} will be included
    */
   public FilteredStackProfiler(int pollIntervalInMs, Predicate<StackTraceElement[]> filter) {
-    super(new FilteredStackProfileStorage(pollIntervalInMs, filter));
+    this(pollIntervalInMs, null, filter);
+  }
+
+  /**
+   * Constructs a new profiler instance.  The only way to get results from this instance is to
+   * call {@code #dump()} with a provided output stream to get the results to.
+   * <p>
+   * This constructor allows you to change the behavior of the {@link ListenableFuture} result when 
+   * {@link #start(long)} or {@link #start(Executor, long)} is used.  Generally this will provide 
+   * the complete result of {@link #dump()}.  This can be replaced with calling 
+   * {@link #dump(OutputStream, boolean, int)} with parameters to reduce the output, or even 
+   * {@code null} so long as the consumers of the future can handle a null result.
+   *
+   * @param pollIntervalInMs frequency to check running threads
+   * @param startFutureResultSupplier Supplier to be used for providing future results
+   * @param pattern Only stack traces where the string representation of a
+   *                  {@link StackTraceElement} matches this regular expression will be counted.
+   */
+  public FilteredStackProfiler(int pollIntervalInMs, 
+                               Function<? super Profiler, String> startFutureResultSupplier, 
+                               String pattern) {
+    this(pollIntervalInMs, startFutureResultSupplier, regexPredicate(pattern));
+  }
+
+  /**
+   * Constructs a new profiler instance.  The only way to get results from this instance is to
+   * call {@code #dump()} with a provided output stream to get the results to.
+   * <p>
+   * This constructor allows you to change the behavior of the {@link ListenableFuture} result when 
+   * {@link #start(long)} or {@link #start(Executor, long)} is used.  Generally this will provide 
+   * the complete result of {@link #dump()}.  This can be replaced with calling 
+   * {@link #dump(OutputStream, boolean, int)} with parameters to reduce the output, or even 
+   * {@code null} so long as the consumers of the future can handle a null result.
+   *
+   * @param pollIntervalInMs frequency to check running threads
+   * @param startFutureResultSupplier Supplier to be used for providing future results
+   * @param filter Only stack traces where the predicate returns {@code true} will be included
+   */
+  public FilteredStackProfiler(int pollIntervalInMs, 
+                               Function<? super Profiler, String> startFutureResultSupplier, 
+                               Predicate<StackTraceElement[]> filter) {
+    super(new FilteredStackProfileStorage(pollIntervalInMs, filter), startFutureResultSupplier);
 
     this.filteredThreadStore = (FilteredStackProfileStorage)super.pStore;
   }

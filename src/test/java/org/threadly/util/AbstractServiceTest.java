@@ -107,14 +107,14 @@ public class AbstractServiceTest extends ThreadlyTester {
     @Override
     protected void startupService() {
       if (! startCalled.compareAndSet(false, true)) {
-        throw new SuppressedStackRuntimeException();
+        throw new StackSuppressedRuntimeException();
       }
     }
 
     @Override
     protected void shutdownService() {
       if (! stopCalled.compareAndSet(false, true)) {
-        throw new SuppressedStackRuntimeException();
+        throw new StackSuppressedRuntimeException();
       }
     }
   }
