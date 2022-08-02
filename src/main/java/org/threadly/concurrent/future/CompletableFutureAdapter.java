@@ -53,7 +53,6 @@ public class CompletableFutureAdapter {
     }
     
     return new AdaptedListenableFuture<T>(cf);
-    
   }
   
   /**
