@@ -3,6 +3,7 @@ package org.threadly.concurrent.future;
 import static org.junit.Assert.*;
 
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -1299,6 +1300,58 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     } catch (ExecutionException e) {
       assertTrue(failure == e.getCause());
     }
+  }
+  
+  @Test
+  public void asNullTest() {
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
+    
+    assertNull(lf.as(__ -> null));
+  }
+  
+  @Test
+  public void asCompletableFutureWithResultTest() throws InterruptedException, ExecutionException {
+    String str = StringUtils.makeRandomString(5);
+    ListenableFuture<String> lf = makeListenableFutureFactory().makeWithResult(str);
+    
+    CompletableFuture<String> cf = lf.as(CompletableFutureAdapter::toCompletable);
+    
+    assertNotNull(cf);
+    assertTrue(str == cf.get());
+  }
+  
+  @Test
+  public void asCompletableFutureWithFailureTest() throws InterruptedException {
+    Exception e = new StackSuppressedRuntimeException();
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithFailure(e);
+    
+    CompletableFuture<Object> cf = lf.as(CompletableFutureAdapter::toCompletable);
+    
+    assertNotNull(cf);
+    try {
+      cf.get();
+      fail("Exception should have thrown");
+    } catch (ExecutionException ee) {
+      assertTrue(ee.getCause() == e);
+    }
+  }
+  
+  @Test
+  public void asSelfTest() {
+    ListenableFuture<Integer> lf = makeListenableFutureFactory().makeWithResult(1);
+    
+    ListenableFuture<? extends Number> nlf = lf.as(f -> f);
+    
+    assertNotNull(nlf);
+    assertTrue(nlf == lf);
+  }
+  
+  @Test (expected = NullPointerException.class)
+  public void asNullFunctionFailure() {
+    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
+    
+    lf.as(null);
+    fail("Exception should have thrown");
   }
   
   protected interface ListenableFutureFactory {

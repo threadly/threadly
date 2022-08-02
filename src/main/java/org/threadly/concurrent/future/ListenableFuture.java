@@ -920,4 +920,19 @@ public interface ListenableFuture<T> extends Future<T> {
    * @return The stack trace currently executing the future, or {@code null} if unavailable
    */
   public StackTraceElement[] getRunningStackTrace();
+  
+  /**
+   * Used to convert the {@link ListenableFuture} to another form.  Unlike other mapping functions 
+   * which are designed to change the generic type, this is designed to convert out of a 
+   * {@link ListenableFuture} and to a completely different form.  The most common usage likely 
+   * would be to use {@link CompletableFutureAdapter#toCompletable(ListenableFuture)} to convert 
+   * to a {@link java.util.concurrent.CompletableFuture}.
+   * 
+   * @param <TT> The type of returned object
+   * @param conversionFunction Function used to convert this instance to the type
+   * @return The result provided from the {@code conversionFunction}
+   */
+  default <TT> TT as(Function<? super ListenableFuture<T>, ? extends TT> conversionFunction) {
+    return conversionFunction.apply(this);
+  }
 }
