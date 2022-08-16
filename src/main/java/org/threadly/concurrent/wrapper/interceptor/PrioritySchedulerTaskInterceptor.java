@@ -34,7 +34,7 @@ public class PrioritySchedulerTaskInterceptor extends SchedulerServiceTaskInterc
    * {@link #wrapTask(Runnable, boolean)} for more details about ways a task can be modified or 
    * wrapped.
    * 
-   * @param parentExecutor An instance of {@link Executor} to wrap
+   * @param parentScheduler An instance of {@link PrioritySchedulerService} to wrap
    */
   protected PrioritySchedulerTaskInterceptor(PrioritySchedulerService parentScheduler) {
     this(parentScheduler, 

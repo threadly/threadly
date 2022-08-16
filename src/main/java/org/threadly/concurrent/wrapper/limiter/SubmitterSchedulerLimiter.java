@@ -90,6 +90,7 @@ public class SubmitterSchedulerLimiter extends ExecutorLimiter implements Submit
    * checks are done at this point, so only provide non-null inputs.
    * 
    * @param task Task for execution
+   * @param future If a future was constructed, provide it here to enable a limit release optimization
    * @param delayInMs delay in milliseconds, greater than or equal to zero
    */
   protected void doSchedule(Runnable task, ListenableFuture<?> future, long delayInMs) {

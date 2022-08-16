@@ -29,7 +29,7 @@ public class SchedulerServiceTaskInterceptor extends SubmitterSchedulerTaskInter
    * {@link SchedulerService}.  Please see the javadocs of {@link #wrapTask(Runnable, boolean)} 
    * for more details about ways a task can be modified or wrapped.
    * 
-   * @param parentExecutor An instance of {@link Executor} to wrap
+   * @param parentScheduler An instance of {@link SchedulerService} to wrap
    */
   protected SchedulerServiceTaskInterceptor(SchedulerService parentScheduler) {
     this(parentScheduler, 

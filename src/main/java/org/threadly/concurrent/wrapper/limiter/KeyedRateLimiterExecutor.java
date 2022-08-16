@@ -374,10 +374,11 @@ public class KeyedRateLimiterExecutor {
    * 
    * @param <T> Type of result from provided function
    * @param taskKey object key where {@code equals()} will be used to determine execution thread
+   * @param submitFunc Function used to submit task to provided limiter
    * @return A {@link RateLimiterExecutor} that is shared by the key
    */
   @SuppressWarnings("unchecked")
-  protected <T> T limiterForKey(Object taskKey, Function<RateLimiterExecutor, ? extends T> c) {
+  protected <T> T limiterForKey(Object taskKey, Function<RateLimiterExecutor, ? extends T> submitFunc) {
     ArgumentVerifier.assertNotNull(taskKey, "taskKey");
     
     Object[] capture = new Object[1];
@@ -408,7 +409,7 @@ public class KeyedRateLimiterExecutor {
       //                This would just ensure the timestamp is updated when looking to remove, but 
       //                If the action took X milliseconds after the update, then it may still be removed.
       //                Highly unlikely, but I prefer impossibility if we can
-      capture[0] = c.apply(v);
+      capture[0] = submitFunc.apply(v);
       return v;
     });
     return (T)capture[0];

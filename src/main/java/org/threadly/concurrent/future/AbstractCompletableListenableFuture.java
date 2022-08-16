@@ -143,7 +143,7 @@ abstract class AbstractCompletableListenableFuture<T> extends AbstractCancellati
    * {@code null}, a new {@link Exception} will be created so that something is always provided in 
    * the {@link ExecutionException} on calls to {@link #get()}.
    *
-   * @param failure Throwable that caused failure during computation and should be reported by the future
+   * @param t Throwable that caused failure during computation and should be reported by the future
    * @return {@code true} if the future was completed with the failure, {@code false} if already completed 
    */
   protected boolean completeWithFailure(Throwable t) {

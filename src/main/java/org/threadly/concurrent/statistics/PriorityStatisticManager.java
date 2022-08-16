@@ -148,7 +148,7 @@ class PriorityStatisticManager {
    * <p>
    * Should have the list synchronized/locked before calling.
    * 
-   * @param list Collection to check size of and ensure is under max size
+   * @param window Collection to check size of and ensure is under max size
    */
   @SuppressWarnings("rawtypes")
   protected void trimWindow(Deque window) {

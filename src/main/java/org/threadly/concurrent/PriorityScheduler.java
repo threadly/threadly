@@ -385,7 +385,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * <p>
    * If this is a scheduled or recurring task use {@link #addToScheduleQueue(TaskWrapper)}.
    * 
-   * @param task {@link TaskWrapper} to queue for the scheduler
+   * @param queueSet the {@link QueueSet} the task needs to be executed on
+   * @param task {@link TaskWrapper} to queue
    */
   protected void queueExecute(QueueSet queueSet, OneTimeTaskWrapper task) {
     if (workerPool.isShutdownStarted()) {
@@ -401,7 +402,8 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
    * <p>
    * If this is just a single execution with no delay use {@link #addToExecuteQueue(OneTimeTaskWrapper)}.
    * 
-   * @param task {@link TaskWrapper} to queue for the scheduler
+   * @param queueSet the {@link QueueSet} the task needs to be scheduled on
+   * @param task {@link TaskWrapper} to queue
    */
   protected void queueScheduled(QueueSet queueSet, TaskWrapper task) {
     if (workerPool.isShutdownStarted()) {

@@ -531,7 +531,6 @@ public class ExceptionUtils {
     /**
      * Constructs a new TransformedException.
      * 
-     * @param message message for exception
      * @param t throwable cause
      */
     protected TransformedException(Throwable t) {
@@ -551,8 +550,7 @@ public class ExceptionUtils {
     /**
      * Constructs a new TransformedSuppressedStackException.
      * 
-     * @param message message for exception
-     * @param t throwable cause
+     * @param t Throwable cause
      */
     protected TransformedSuppressedStackException(Throwable t) {
       super(t == null ? null : t.getMessage(), t);

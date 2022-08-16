@@ -584,6 +584,9 @@ class InternalFutureUtils {
     /**
      * Adds item to the result list.  This list may be lazily constructed and thus why you must add 
      * through this function rather than directly on to the list.
+     * 
+     * @param f Future with result to set
+     * @param index Position at which the future should be stored
      */
     protected void addResult(ListenableFuture<? extends T> f, int index) {
       synchronized (this) {

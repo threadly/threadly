@@ -92,7 +92,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
    * implementations of {@link SchedulerManager} need to be provided.
    * 
    * @param defaultPriority Default priority for tasks which are submitted without any specified priority
-   * @param SchedulerManager Scheduler manager to run against
+   * @param schedulerManager Scheduler manager to run against
    */
   protected SingleThreadScheduler(TaskPriority defaultPriority, SchedulerManager schedulerManager) {
     super(defaultPriority);

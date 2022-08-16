@@ -238,7 +238,7 @@ public class KeyDistributedExecutor {
    * 
    * @param threadKey object key where {@code equals()} will be used to determine execution thread
    * @param task Task to be added to worker
-   * @param Executor to run worker on (if it needs to be started)
+   * @param executor to run worker on (if it needs to be started)
    */
   protected void addTask(Object threadKey, Runnable task, Executor executor) {
     boolean[] startCapture = new boolean[1];
