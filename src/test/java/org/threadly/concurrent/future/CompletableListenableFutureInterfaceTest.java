@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -396,6 +397,38 @@ public abstract class CompletableListenableFutureInterfaceTest extends Listenabl
   }
   
   @Test
+  public void cancelCompletableRunsListenerOnExceptedThreadTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    AbstractCompletableListenableFuture<String> slf = 
+        makeCompletableListenableFutureFactory().makeNewCompletable();
+    TestRunnable tr = new TestRunnable();
+    slf.listener(tr, scheduler);
+    
+    slf.cancel(false);
+    
+    assertTrue(slf.isCancelled());
+    assertFalse(tr.ranOnce());
+    assertEquals(1, scheduler.tick());
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
+  public void cancelCompletableRunsListenerOnExceptedThreadOptimizedTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    AbstractCompletableListenableFuture<String> slf = 
+        makeCompletableListenableFutureFactory().makeNewCompletable(scheduler);
+    TestRunnable tr = new TestRunnable();
+    slf.listener(tr, scheduler, ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+    
+    slf.cancel(false);
+    
+    assertTrue(slf.isCancelled());
+    assertFalse(tr.ranOnce());
+    assertEquals(1, scheduler.tick());
+    assertTrue(tr.ranOnce());
+  }
+  
+  @Test
   public void completeWithResultIsDoneTest() {
     AbstractCompletableListenableFuture<String> slf = 
         makeCompletableListenableFutureFactory().makeNewCompletable();
@@ -586,10 +619,23 @@ public abstract class CompletableListenableFutureInterfaceTest extends Listenabl
   }
   
   @Test
+  public void optimizeListenerNotDoneTest() {
+    TestableScheduler scheduler = new TestableScheduler();
+    AbstractCompletableListenableFuture<Void> slf = 
+        makeCompletableListenableFutureFactory().makeNewCompletable(scheduler);
+    
+    slf.listener(DoNothingRunnable.instance(), scheduler, ListenerOptimizationStrategy.SingleThreadIfExecutorMatch);
+    
+    slf.completeWithResult(null);  // we lied what thread it completes on
+    
+    assertEquals(0, scheduler.tick());  // one task for listener, despite scheduler match
+  }
+  
+  @Test
   public void dontOptimizeListenerNotDoneTest() {
     TestableScheduler scheduler = new TestableScheduler();
     AbstractCompletableListenableFuture<Void> slf = 
-        makeCompletableListenableFutureFactory().makeNewCompletable();
+        makeCompletableListenableFutureFactory().makeNewCompletable(scheduler);
     
     slf.listener(DoNothingRunnable.instance(), scheduler, ListenerOptimizationStrategy.InvokingThreadIfDone);
     
@@ -669,6 +715,7 @@ public abstract class CompletableListenableFutureInterfaceTest extends Listenabl
 
   protected interface CompletableListenableFutureFactory extends ListenableFutureFactory {
     public <T> AbstractCompletableListenableFuture<T> makeNewCompletable();
+    public <T> AbstractCompletableListenableFuture<T> makeNewCompletable(Executor executor);
     public AbstractCompletableListenableFuture<?> makeCanceledCompletable();
     public AbstractCompletableListenableFuture<Object> makeWithFailureCompletable(Exception e);
     public <T> AbstractCompletableListenableFuture<T> makeWithResultCompletable(T result);
