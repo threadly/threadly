@@ -16,8 +16,7 @@
     <module name="MissingOverride"/>
     <module name="PackageAnnotation"/>
     <module name="JavadocMethod">
-      <property name="scope" value="public"/>
-      <property name="excludeScope" value="private"/>
+      <property name="accessModifiers" value="package, protected, public"/>
     </module>
     <module name="JavadocStyle"/>
     <module name="JavadocType"/>
