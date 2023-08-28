@@ -1,4 +1,4 @@
-Threadly [![Build status](https://badge.buildkite.com/a6b3c844ce059f96c577ec485ab9fb36925790deec8e26dcd9.svg?branch=master)](https://buildkite.com/threadly/threadly)
+Threadly
 ========
 
 A library of java tools to assist with development of concurrent java applications. It includes a collection of tools to help with a wide range of concurrent development and testing needs. This is designed to be a complement to `java.util.concurrent` and uses `java.util.concurrent` to help assist in it's implementations where it makes sense.
@@ -18,6 +18,12 @@ For information about compiling, importing into eclipse, or contributing to the 
 For a complete list of features in threadly please view the features page on the wiki:
 
 https://github.com/threadly/threadly/wiki/Threadly-Features
+
+## Current Project Status
+
+Launched in May 2013, Threadly is a mature library employed in a range of production environments. Over the last decade, it has evolved in tandem with advancements in Java concurrency. With Java's recent introduction of Virtual Threads, some of the pooling concerns that Threadly initially addressed have become less critical. However, Threadly still offers unique benefits depending on specific use cases. While the rate of significant updates has slowed in the past year, the emphasis has shifted to ensuring stability and maturity. The project continues to be actively maintained.
+
+## Library Tool Highlights
 
 -- General Concurrency Tools --
 
