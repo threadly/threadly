@@ -330,6 +330,7 @@ public class UnfairExecutor extends AbstractSubmitterExecutor {
     return true;
   }
   
+  @SuppressWarnings("removal")
   @Override
   protected void finalize() throws Throwable {
     shutdown();

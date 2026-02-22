@@ -243,6 +243,7 @@ public class SingleThreadScheduler extends AbstractPriorityScheduler {
     getRunningScheduler().scheduleAtFixedRate(task, initialDelay, period, priority);
   }
   
+  @SuppressWarnings("removal")
   @Override
   protected void finalize() {
     // if being GC'ed, stop thread so that it also can be GC'ed

@@ -10,6 +10,10 @@ import java.util.function.Function;
  * @since 5.0
  */
 public class SortUtils {
+  private SortUtils() {
+    // utility class
+  }
+
   protected static final short MAX_STEPS_TILL_B_SEARCH_SWITCH = 5;
   
   /**

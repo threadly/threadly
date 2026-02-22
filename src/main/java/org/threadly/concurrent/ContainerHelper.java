@@ -14,8 +14,12 @@ import java.util.concurrent.Callable;
  * @since 1.0.0
  */
 public final class ContainerHelper {
+  private ContainerHelper() {
+    // utility class
+  }
+
   /**
-   * Attempts to remove the provided runnable from the source collection.  This uses the 
+   * Attempts to remove the provided runnable from the source collection.  This uses the
    * {@link Collection#remove(Object)} function to remove the container if it is found.
    * 
    * @since 2.0.0

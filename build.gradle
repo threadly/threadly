@@ -1,16 +1,62 @@
-apply from: 'build.shared'
-apply plugin: 'checkstyle'
-apply plugin: 'jacoco'
+plugins {
+  id 'java'
+  id 'checkstyle'
+  id 'jacoco'
+  id 'maven-publish'
+  id 'signing'
+}
 
-plugins.withType(JavaPlugin) {
-  checkstyle.sourceSets = [sourceSets.main]
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  testImplementation (
+    "junit:junit:4.13.2",
+    "org.threadly:threadly-test:1.0"
+  )
+}
+
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(25)
+  }
+  withSourcesJar()
+  withJavadocJar()
+}
+
+checkstyle.sourceSets = [sourceSets.main]
+
+compileJava {
+  options.compilerArgs << "-Xlint:all" << "-Xlint:-deprecation" << "-Xlint:-this-escape" << "-Werror"
+}
+
+compileTestJava {
+  options.compilerArgs << "-Xlint:all"
 }
 
 test {
-  maxParallelForks = Math.min(8, Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 4)))
+  def testMode = findProperty('testMode')
+  if (testMode == 'slow') {
+    maxParallelForks = 1
+    systemProperty 'systemSpeed', 'slow'
+  } else if (testMode == 'stress') {
+    systemProperty 'systemSpeed', 'slow'
+    systemProperty 'testProfile', 'stress'
+    maxParallelForks = Math.min(8, Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2)))
+  } else {
+    maxParallelForks = Math.min(8, Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 4)))
+  }
+
+  reports {
+    junitXml.outputLocation = layout.buildDirectory.dir("reports/tests/xml")
+    html.outputLocation = layout.buildDirectory.dir("reports/tests/html")
+  }
+  binaryResultsDirectory = layout.buildDirectory.dir("reports/tests/bin")
+
   jacoco {
-    excludes = ['**/package-info**','**/*Test']
-    destinationFile = file("$buildDir/reports/jacoco/test.exec")
+    excludes = ['**/package-info**', '**/*Test']
+    destinationFile = layout.buildDirectory.file("reports/jacoco/test.exec").get().asFile
   }
 }
 
@@ -20,15 +66,15 @@ jacocoTestReport {
   reports {
     csv.required = false
     xml.required = true
-    xml.destination = file("$buildDir/reports/jacoco/jacoco.xml")
+    xml.outputLocation = layout.buildDirectory.file("reports/jacoco/jacoco.xml")
     html.required = true
-    html.destination = file("$buildDir/reports/jacoco/html")
+    html.outputLocation = layout.buildDirectory.dir("reports/jacoco/html")
   }
   doLast {
     println "Test results available at:"
-    println "html - $buildDir/reports/tests/html/index.html"
+    println "html - ${layout.buildDirectory.dir("reports/tests/html").get().asFile}/index.html"
     println "Test coverage reports available at:"
-    println "html - $buildDir/reports/jacoco/html/index.html"
+    println "html - ${layout.buildDirectory.dir("reports/jacoco/html").get().asFile}/index.html"
   }
 }
 
@@ -64,3 +110,82 @@ jacocoTestCoverageVerification {
 }
 
 jacocoTestReport.finalizedBy("jacocoTestCoverageVerification")
+
+jar {
+  manifest {
+    attributes (
+      'Implementation-Title': 'Threadly',
+      'Implementation-Version': archiveVersion
+    )
+  }
+}
+
+javadoc {
+  source = sourceSets.main.allJava
+  excludes = ['**/ThreadlyInternalAccessor**', '**/ArgumentVerifier**']
+  options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PUBLIC
+}
+
+task copyLibs(type: Copy) {
+  into layout.buildDirectory.dir("dependencies")
+  from configurations.testRuntimeClasspath
+}
+
+build.finalizedBy("copyLibs")
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'Threadly'
+        description = 'A library of tools to assist with safe concurrent java development.'
+        url = 'http://threadly.org/'
+
+        scm {
+          url = 'scm:git@github.com:threadly/threadly.git'
+          connection = 'scm:git@github.com:threadly/threadly.git'
+          developerConnection = 'scm:git@github.com:threadly/threadly.git'
+        }
+
+        issueManagement {
+          system = 'GitHub'
+          url = 'https://github.com/threadly/threadly/issues'
+        }
+
+        licenses {
+          license {
+            name = 'Mozilla Public License Version 2.0'
+            url = 'https://www.mozilla.org/MPL/2.0/'
+            distribution = 'repo'
+          }
+        }
+
+        developers {
+          developer {
+            id = 'jent'
+            name = 'Mike Jensen'
+            email = 'jent@threadly.org'
+          }
+        }
+      }
+
+      from components.java
+    }
+  }
+  repositories {
+    maven {
+      def releasesRepoUrl =  "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+      def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+      url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+      credentials {
+        username = findProperty('sonatypeUsername') ?: ''
+        password = findProperty('sonatypePassword') ?: ''
+      }
+    }
+  }
+}
+
+signing {
+  sign publishing.publications.mavenJava
+  required = { !version.endsWith('SNAPSHOT') }
+}

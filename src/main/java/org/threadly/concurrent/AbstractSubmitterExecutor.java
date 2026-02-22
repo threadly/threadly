@@ -21,7 +21,14 @@ import org.threadly.util.ArgumentVerifier;
  */
 public abstract class AbstractSubmitterExecutor implements SubmitterExecutor {
   /**
-   * Should execute the provided task, or provide the task to a given executor.  All error 
+   * Constructs a new {@link AbstractSubmitterExecutor}.
+   */
+  protected AbstractSubmitterExecutor() {
+    // default constructor
+  }
+
+  /**
+   * Should execute the provided task, or provide the task to a given executor.  All error
    * checking has completed by this point.
    * 
    * @param task Runnable ready to be ran

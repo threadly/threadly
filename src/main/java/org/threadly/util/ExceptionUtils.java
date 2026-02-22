@@ -14,6 +14,10 @@ import org.threadly.concurrent.SchedulerService;
  * @since 1.0.0
  */
 public class ExceptionUtils {
+  private ExceptionUtils() {
+    // utility class
+  }
+
   protected static final short INITIAL_BUFFER_PAD_AMOUNT_PER_TRACE_LINE = 16;
   protected static final short INITIAL_BUFFER_PAD_AMOUNT_FOR_STACK = 64;
   protected static final short CAUSE_CYCLE_DEPTH_TRIGGER = 20;

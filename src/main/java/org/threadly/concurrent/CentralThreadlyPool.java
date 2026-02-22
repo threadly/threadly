@@ -47,6 +47,10 @@ import org.threadly.util.StringUtils;
  * @since 5.7
  */
 public class CentralThreadlyPool {
+  private CentralThreadlyPool() {
+    // utility class
+  }
+
   protected static final int LOW_PRIORITY_MAX_WAIT_IN_MS = 1000;
   protected static final PoolResizeUpdater POOL_SIZE_UPDATER;
   protected static final PriorityScheduler MASTER_SCHEDULER;
@@ -768,6 +772,7 @@ public class CentralThreadlyPool {
       POOL_SIZE_UPDATER.adjustPoolSize(amount);
     }
     
+    @SuppressWarnings("removal")
     @Override
     protected void finalize() {
       POOL_SIZE_UPDATER.adjustPoolSize(-amount);

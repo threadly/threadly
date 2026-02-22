@@ -15,6 +15,10 @@ import java.util.Map;
  * @since 4.5.0
  */
 public class StatisticsUtils {
+  private StatisticsUtils() {
+    // utility class
+  }
+
   /**
    * Calculates the average from a collection of numeric values.
    * 

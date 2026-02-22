@@ -19,9 +19,13 @@ import java.util.concurrent.locks.LockSupport;
  * @since 1.0.0
  */
 public class Clock {
+  private Clock() {
+    // utility class
+  }
+
   /**
    * Simple conversion of how many nanoseconds exist within a single millisecond.
-   * 
+   *
    * @since 3.1.0
    */
   public static final int NANOS_IN_MILLISECOND = 1_000_000;

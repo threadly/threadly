@@ -413,6 +413,7 @@ public class PriorityScheduler extends AbstractPriorityScheduler {
     queueSet.addScheduled(task);
   }
   
+  @SuppressWarnings("removal")
   @Override
   protected void finalize() {
     // shutdown the thread pool so we don't leak threads if garbage collected

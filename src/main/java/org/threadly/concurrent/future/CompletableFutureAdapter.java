@@ -15,9 +15,13 @@ import java.util.concurrent.TimeoutException;
  * @since 5.43
  */
 public class CompletableFutureAdapter {
+  private CompletableFutureAdapter() {
+    // utility class
+  }
+
   /**
    * Convert from a {@link ListenableFuture} to {@link CompletableFuture}.
-   * 
+   *
    * @param <T> Type of result provided by the future
    * @param lf The future to adapt into a {@link CompletableFuture}
    * @return A CompletableFuture instance which's state will be connected to the provided future

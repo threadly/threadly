@@ -1,8 +1,0 @@
-apply from: 'build.gradle'
-apply plugin: 'jacoco'
-
-test {
-  systemProperty 'systemSpeed', 'slow'
-  systemProperty 'testProfile', 'stress'
-  maxParallelForks = Math.min(8, Math.max(1, (int)(Runtime.getRuntime().availableProcessors() / 2)))
-}

@@ -11,8 +11,15 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 2.6.0
  */
 public abstract class AbstractService implements Service {
+  /**
+   * Constructs a new service in a stopped state, ready to be started.
+   */
+  protected AbstractService() {
+    // default constructor
+  }
+
   private AtomicInteger state = new AtomicInteger(0); // 0 = new, 1 = started, 2 = stopped
-  
+
   @Override
   public void start() throws IllegalStateException {
     if (! startIfNotStarted()) {
@@ -73,6 +80,7 @@ public abstract class AbstractService implements Service {
     return state.get() == 2;
   }
   
+  @SuppressWarnings("removal")
   @Override
   protected void finalize() throws Throwable {
     if (isRunning()) {

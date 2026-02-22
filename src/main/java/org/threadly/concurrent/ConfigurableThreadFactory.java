@@ -49,6 +49,13 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * @since 5.39
    */
   public static class ConfigurableThreadFactoryBuilder {
+    /**
+     * Constructs a new builder with default settings.
+     */
+    public ConfigurableThreadFactoryBuilder() {
+      // default constructor
+    }
+
     protected String threadNamePrefix = null;
     protected boolean appendPoolIdToPrefix = true; 
     protected boolean useDaemonThreads = DEFAULT_NEW_THREADS_DAEMON;
@@ -265,6 +272,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
    * @param defaultThreadlyExceptionHandler {@link ExceptionHandler} to provide to newly created threads
    * @param notifyThreadCreation Consumer to be provided whenever a new thread is about to be returned or {@code null}
    */
+  @SuppressWarnings("deprecation")
   public ConfigurableThreadFactory(String threadNamePrefix, boolean appendPoolIdToPrefix, 
                                    boolean useDaemonThreads, int threadPriority, 
                                    UncaughtExceptionHandler uncaughtExceptionHandler, 
@@ -282,12 +290,7 @@ public class ConfigurableThreadFactory implements ThreadFactory {
       threadNamePrefix += NEXT_POOL_NUMBER.getAndIncrement() + "-thread-";
     }
     
-    SecurityManager s = System.getSecurityManager();
-    if (s != null) {
-      this.group = s.getThreadGroup();
-    } else {
-      this.group = Thread.currentThread().getThreadGroup();
-    }
+    this.group = Thread.currentThread().getThreadGroup();
     this.threadNamePrefix = threadNamePrefix;
     this.useDaemonThreads = useDaemonThreads;
     this.threadPriority = threadPriority;

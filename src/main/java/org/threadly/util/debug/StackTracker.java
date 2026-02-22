@@ -16,6 +16,13 @@ import org.threadly.util.Pair;
  * concept.  Instead it is focused on the stack traces only and can be accessed concurrently.
  */
 public class StackTracker {
+  /**
+   * Constructs a new {@link StackTracker} ready to record stack traces.
+   */
+  public StackTracker() {
+    // default constructor
+  }
+
   private static final Function<Object, LongAdder> ADDER_FACTORY = (ignored) -> new LongAdder();
   
   private final Map<ComparableTrace, LongAdder> traces = new ConcurrentHashMap<>();

@@ -106,9 +106,9 @@ class CommonStacktraces {
       
       Thread stsThread = getParkedThread(stsSchedulerThread, null);
       
-      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1 = new ComparableTrace(psFirstThread.getStackTrace());
-      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2 = new ComparableTrace(psSecondThread.getStackTrace());
-      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1 = new ComparableTrace(stsThread.getStackTrace());
+      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1 = new ComparableTrace(getConsistentStackTrace(psFirstThread));
+      IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2 = new ComparableTrace(getConsistentStackTrace(psSecondThread));
+      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1 = new ComparableTrace(getConsistentStackTrace(stsThread));
       
       sts.schedule(DoNothingRunnable.instance(), TimeUnit.HOURS.toMillis(1));
       sts.submit(DoNothingRunnable.instance()).get(); // make sure we execute so the next park is our ideal state
@@ -125,11 +125,11 @@ class CommonStacktraces {
       Thread stpeThread = getParkedThread(scheduledThreadPoolExecutorThread, null);
       Thread fjpThread = getParkedThread(forkJoinPoolThread, null);
 
-      IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE = new ComparableTrace(sqThread.getStackTrace());
-      IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE = new ComparableTrace(aqThread.getStackTrace());
-      IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE = new ComparableTrace(lqThread.getStackTrace());
-      IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1 = new ComparableTrace(stpeThread.getStackTrace());
-      IDLE_THREAD_TRACE_FORK_JOIN_POOL = new ComparableTrace(fjpThread.getStackTrace());
+      IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_SYNCHRONOUS_QUEUE = new ComparableTrace(getConsistentStackTrace(sqThread));
+      IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_ARRAY_QUEUE = new ComparableTrace(getConsistentStackTrace(aqThread));
+      IDLE_THREAD_TRACE_THREAD_POOL_EXECUTOR_LINKED_QUEUE = new ComparableTrace(getConsistentStackTrace(lqThread));
+      IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR1 = new ComparableTrace(getConsistentStackTrace(stpeThread));
+      IDLE_THREAD_TRACE_FORK_JOIN_POOL = new ComparableTrace(getConsistentStackTrace(fjpThread));
       
       stpe.schedule(DoNothingRunnable.instance(), 1, TimeUnit.HOURS);
       stpe.submit(DoNothingRunnable.instance()).get(); // make sure we execute so the next park is our ideal state
@@ -137,8 +137,8 @@ class CommonStacktraces {
       waitForParkedStack(stsThread);
       waitForParkedStack(stpeThread);
       
-      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stsThread.getStackTrace());
-      IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2 = new ComparableTrace(stpeThread.getStackTrace());
+      IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(getConsistentStackTrace(stsThread));
+      IDLE_THREAD_TRACE_SCHEDULED_THREAD_POOL_EXECUTOR2 = new ComparableTrace(getConsistentStackTrace(stpeThread));
       
       AtomicReference<StackTraceElement> insertElement = new AtomicReference<>();
       Thread t = new ConfigurableThreadFactory(ExceptionHandler.PRINT_STACKTRACE_HANDLER)
@@ -152,29 +152,19 @@ class CommonStacktraces {
       t.start();
       t.join();
       
-      StackTraceElement[] stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.elements, 
-                                                     IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.elements.length + 1);
-      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
-      stackTrace[stackTrace.length - 2] = insertElement.get();
-      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1 = new ComparableTrace(stackTrace);
-      
-      stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.elements, 
-                                 IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.elements.length + 1);
-      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
-      stackTrace[stackTrace.length - 2] = insertElement.get();
-      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2 = new ComparableTrace(stackTrace);
-      
-      stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements, 
-                                 IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements.length + 1);
-      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
-      stackTrace[stackTrace.length - 2] = insertElement.get();
-      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1 = new ComparableTrace(stackTrace);
-      
-      stackTrace = Arrays.copyOf(IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements, 
-                                 IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements.length + 1);
-      stackTrace[stackTrace.length - 1] = stackTrace[stackTrace.length - 2];
-      stackTrace[stackTrace.length - 2] = insertElement.get();
-      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2 = new ComparableTrace(stackTrace);
+      StackTraceElement ehElement = insertElement.get();
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE1 =
+          new ComparableTrace(insertBeforeThreadFrames(
+              IDLE_THREAD_TRACE_PRIORITY_SCHEDULE1.elements, ehElement));
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_PRIORITY_SCHEDULE2 =
+          new ComparableTrace(insertBeforeThreadFrames(
+              IDLE_THREAD_TRACE_PRIORITY_SCHEDULE2.elements, ehElement));
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER1 =
+          new ComparableTrace(insertBeforeThreadFrames(
+              IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER1.elements, ehElement));
+      IDLE_THREAD_TRACE_EXCEPTION_HANDLER_SINGLE_THREAD_SCHEDULER2 =
+          new ComparableTrace(insertBeforeThreadFrames(
+              IDLE_THREAD_TRACE_SINGLE_THREAD_SCHEDULER2.elements, ehElement));
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new RuntimeException(e);
@@ -232,6 +222,24 @@ class CommonStacktraces {
   
   private static boolean isParkedStack(StackTraceElement[] stackTrace) {
     return stackTrace.length > 1 && stackTrace[0].getMethodName().equals("park");
+  }
+
+  private static StackTraceElement[] insertBeforeThreadFrames(StackTraceElement[] base,
+                                                               StackTraceElement element) {
+    StackTraceElement[] result = Arrays.copyOf(base, base.length + 1);
+    int insertIdx = base.length;
+    while (insertIdx > 0 && "java.lang.Thread".equals(base[insertIdx - 1].getClassName())) {
+      insertIdx--;
+    }
+    System.arraycopy(base, insertIdx, result, insertIdx + 1, base.length - insertIdx);
+    result[insertIdx] = element;
+    return result;
+  }
+
+  private static StackTraceElement[] getConsistentStackTrace(Thread t) {
+    // Must use getAllStackTraces to match the format the Profiler sees at runtime
+    StackTraceElement[] result = Thread.getAllStackTraces().get(t);
+    return result != null ? result : t.getStackTrace();
   }
   
   /**

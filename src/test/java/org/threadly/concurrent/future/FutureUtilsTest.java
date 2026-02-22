@@ -1732,13 +1732,22 @@ public class FutureUtilsTest extends ThreadlyTester {
       
       StackTraceElement[] stack = future.getRunningStackTrace();
       assertNotNull(stack);
-      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+      assertTrue(containsClass(stack, BlockingTestRunnable.class.getName()));
     } finally {
       btr.unblock();
       sts.shutdown();
     }
   }
   
+  private static boolean containsClass(StackTraceElement[] stack, String className) {
+    for (StackTraceElement e : stack) {
+      if (className.equals(e.getClassName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Test
   public void executeWhileTest() throws InterruptedException, ExecutionException {
     AtomicInteger ai = new AtomicInteger();

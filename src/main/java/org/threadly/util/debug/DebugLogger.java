@@ -23,6 +23,10 @@ import org.threadly.util.Clock;
  * @since 1.0.0
  */
 public class DebugLogger {
+  private DebugLogger() {
+    // utility class
+  }
+
   protected static final boolean LOG_TIME_DEFAULT = false;
   protected static final String TIME_DELIM = " - ";
   protected static volatile ConcurrentSkipListMap<Long, String> logMap = new ConcurrentSkipListMap<>();

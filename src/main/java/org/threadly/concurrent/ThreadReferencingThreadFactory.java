@@ -41,6 +41,13 @@ public class ThreadReferencingThreadFactory extends ConfigurableThreadFactory {
    * @since 5.39
    */
   public static class ThreadReferencingThreadFactoryBuilder extends ConfigurableThreadFactoryBuilder {
+    /**
+     * Constructs a new builder with default settings.
+     */
+    public ThreadReferencingThreadFactoryBuilder() {
+      // default constructor
+    }
+
     @Override
     public ThreadReferencingThreadFactoryBuilder threadNamePrefix(String threadNamePrefix) {
       this.threadNamePrefix = threadNamePrefix;

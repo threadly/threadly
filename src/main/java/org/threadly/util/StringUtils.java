@@ -10,6 +10,10 @@ import java.util.function.Predicate;
  * @since 2.1.0
  */
 public class StringUtils {
+  private StringUtils() {
+    // utility class
+  }
+
   protected static final String RAND_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
   
   /**

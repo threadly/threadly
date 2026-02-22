@@ -638,6 +638,7 @@ public class Profiler {
     out.println(f.function);
   }
   
+  @SuppressWarnings("removal")
   @Override
   protected void finalize() {
     // stop collection thread if running so that stored data can be GC'ed
@@ -1005,7 +1006,7 @@ public class Profiler {
      * @param t Thread to be referenced
      */
     public ThreadIdentifier(Thread t) {
-      this.threadId = t.getId();
+      this.threadId = t.threadId();
       this.hashCode = t.hashCode();
     }
     

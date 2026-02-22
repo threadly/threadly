@@ -14,6 +14,10 @@ import org.threadly.util.ExceptionUtils;
  */
 @SuppressWarnings("unchecked")
 public class InvocationTee {
+  private InvocationTee() {
+    // utility class
+  }
+
   /**
    * This creates a tee proxy for a given class with a set of instances of said interface.  Any 
    * invocation to the returned instance (proxy), will be multiple to all provided instances.  If 

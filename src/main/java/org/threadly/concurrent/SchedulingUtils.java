@@ -16,6 +16,10 @@ import org.threadly.util.Clock;
  * @since 3.5.0
  */
 public class SchedulingUtils {
+  private SchedulingUtils() {
+    // utility class
+  }
+
   protected static volatile int cachedHourShift = Integer.MIN_VALUE;
   
   /**
@@ -148,9 +152,9 @@ public class SchedulingUtils {
 
     hour -= cachedHourShift;
     if (hour > TimeUnit.DAYS.toHours(1) - 1) {
-      hour %= TimeUnit.DAYS.toHours(1);
+      hour %= (int) TimeUnit.DAYS.toHours(1);
     } else if (hour < 0) {
-      hour += TimeUnit.DAYS.toHours(1);
+      hour += (int) TimeUnit.DAYS.toHours(1);
     }
     
     return hour;

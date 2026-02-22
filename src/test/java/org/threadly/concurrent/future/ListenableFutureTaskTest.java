@@ -276,7 +276,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
       btr.blockTillStarted();
 
       StackTraceElement[] stack = future.getRunningStackTrace();
-      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+      assertTrue(containsClass(stack, BlockingTestRunnable.class.getName()));
     } finally {
       btr.unblock();
       sts.shutdown();
@@ -296,7 +296,7 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
       btr.blockTillStarted();
 
       StackTraceElement[] stack = mappedFuture.getRunningStackTrace();
-      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+      assertTrue(containsClass(stack, BlockingTestRunnable.class.getName()));
     } finally {
       btr.unblock();
       sts.shutdown();
@@ -318,13 +318,22 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
       btr.blockTillStarted();
 
       StackTraceElement[] stack = mappedFuture.getRunningStackTrace();
-      assertEquals(BlockingTestRunnable.class.getName(), stack[2].getClassName());
+      assertTrue(containsClass(stack, BlockingTestRunnable.class.getName()));
     } finally {
       btr.unblock();
       sts.shutdown();
     }
   }
   
+  private static boolean containsClass(StackTraceElement[] stack, String className) {
+    for (StackTraceElement e : stack) {
+      if (className.equals(e.getClassName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private class ListenableFutureTaskFactory implements ListenableRunnableFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {

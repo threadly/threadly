@@ -733,6 +733,27 @@ public class ConcurrentArrayList<T> implements List<T>, Deque<T>, RandomAccess {
   }
 
   /**
+   * Returns a new {@link ConcurrentArrayList} with elements in reversed order.  Similar to
+   * {@link #subList(int, int)}, the returned list is independent from this list and modifications
+   * to either list will not be reflected in the other.
+   *
+   * @return a new list with the elements in reverse order
+   */
+  @Override
+  public ConcurrentArrayList<T> reversed() {
+    DataSet<T> set = currentData;
+    int size = set.size;
+    Object[] reversedArray = new Object[size + set.frontPadding + set.rearPadding];
+    for (int i = 0; i < size; i++) {
+      reversedArray[set.frontPadding + i] = set.get(size - 1 - i);
+    }
+    DataSet<T> reversedSet = new DataSet<>(reversedArray,
+                                            set.frontPadding, set.frontPadding + size,
+                                            set.frontPadding, set.rearPadding);
+    return new ConcurrentArrayList<>(reversedSet, null);
+  }
+
+  /**
    * This returns a sub list from the current list.  The initial call is very cheap because it 
    * uses the current data backing to produce (no copying necessary).
    * <p>

@@ -20,6 +20,13 @@ import org.threadly.util.ArgumentVerifier;
  */
 public abstract class AbstractSubmitterScheduler extends AbstractSubmitterExecutor
                                                  implements SubmitterScheduler {
+  /**
+   * Constructs a new {@link AbstractSubmitterScheduler}.
+   */
+  protected AbstractSubmitterScheduler() {
+    // default constructor
+  }
+
   @Override
   protected void doExecute(Runnable task) {
     doSchedule(task, 0);
