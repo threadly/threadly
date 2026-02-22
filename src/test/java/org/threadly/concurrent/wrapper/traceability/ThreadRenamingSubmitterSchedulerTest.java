@@ -2,7 +2,7 @@ package org.threadly.concurrent.wrapper.traceability;
 
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.util.StringUtils;
 import org.threadly.concurrent.SubmitterScheduler;

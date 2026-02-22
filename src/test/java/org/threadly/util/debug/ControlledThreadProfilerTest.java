@@ -1,6 +1,6 @@
 package org.threadly.util.debug;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -11,8 +11,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
@@ -25,7 +25,7 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   
   private ControlledThreadProfiler ctProfiler;
   
-  @Before
+  @BeforeEach
   @Override
   public void setup() {
     ctProfiler = new ControlledThreadProfiler(POLL_INTERVAL, (p) -> startFutureResultSupplier.get());
@@ -95,9 +95,11 @@ public class ControlledThreadProfilerTest extends ProfilerTest {
   
   @Override
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new ControlledThreadProfiler(-1);
+      assertThrows(IllegalArgumentException.class, () -> {
+      new ControlledThreadProfiler(-1);
+      });
   }
   
   @Test

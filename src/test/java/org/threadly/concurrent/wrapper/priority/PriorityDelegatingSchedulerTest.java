@@ -1,6 +1,6 @@
 package org.threadly.concurrent.wrapper.priority;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SchedulerService;
@@ -8,7 +8,7 @@ import org.threadly.concurrent.SchedulerServiceInterfaceTest;
 import org.threadly.concurrent.TaskPriority;
 import org.threadly.test.concurrent.TestableScheduler;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 
 @SuppressWarnings("javadoc")

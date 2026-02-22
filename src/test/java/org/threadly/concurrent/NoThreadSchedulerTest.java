@@ -1,6 +1,6 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,9 +11,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -27,12 +27,12 @@ import org.threadly.util.StackSuppressedRuntimeException;
 public class NoThreadSchedulerTest extends ThreadlyTester {
   protected NoThreadScheduler scheduler;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new NoThreadScheduler();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler = null;
   }

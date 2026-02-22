@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper.compatibility;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
@@ -19,10 +19,11 @@ public class PrioritySchedulerServiceWrapperTest extends ScheduledExecutorServic
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new PrioritySchedulerServiceWrapper(null);
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      new PrioritySchedulerServiceWrapper(null);
+      });
   }
   
   @Test

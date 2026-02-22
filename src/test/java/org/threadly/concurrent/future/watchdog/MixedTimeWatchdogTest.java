@@ -1,10 +1,10 @@
 package org.threadly.concurrent.future.watchdog;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -20,13 +20,13 @@ public class MixedTimeWatchdogTest extends ThreadlyTester {
   private TestableScheduler scheduler;
   private MixedTimeWatchdog watchdog;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new TestableScheduler();
     watchdog = new MixedTimeWatchdog(scheduler, true, 1);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler = null;
     watchdog = null;

@@ -1,6 +1,6 @@
 package org.threadly.concurrent.future;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.future.ListenableFuture.ListenerOptimizationStrategy;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -221,55 +221,60 @@ public abstract class CompletableListenableFutureInterfaceTest extends Listenabl
     assertEquals("Result cleared, future get's not possible", t.getMessage());
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void clearResultFail() {
-    AbstractCompletableListenableFuture<Void> slf = 
-        makeCompletableListenableFutureFactory().makeNewCompletable();
+      assertThrows(IllegalStateException.class, () -> {
+      AbstractCompletableListenableFuture<Void> slf = 
+          makeCompletableListenableFutureFactory().makeNewCompletable();
     
-    slf.clearResult();
-    fail("Should have thrown exception");
+      slf.clearResult();
+      });
   }
   
-  @Test (expected = IllegalStateException.class)
-  public void clearResultGetFail() throws InterruptedException, ExecutionException {
-    AbstractCompletableListenableFuture<Void> slf = 
-        makeCompletableListenableFutureFactory().makeWithResultCompletable(null);
+  @Test
+  public void clearResultGetFail(){
+      assertThrows(IllegalStateException.class, () -> {
+      AbstractCompletableListenableFuture<Void> slf = 
+          makeCompletableListenableFutureFactory().makeWithResultCompletable(null);
     
-    slf.clearResult();
-    slf.get();
-    fail("Should have thrown exception");
+      slf.clearResult();
+      slf.get();
+      });
   }
   
-  @Test (expected = IllegalStateException.class)
-  public void clearFailureGetFail() throws InterruptedException, ExecutionException {
-    AbstractCompletableListenableFuture<?> slf = 
-        makeCompletableListenableFutureFactory()
-            .makeWithFailureCompletable(new StackSuppressedRuntimeException());
+  @Test
+  public void clearFailureGetFail(){
+      assertThrows(IllegalStateException.class, () -> {
+      AbstractCompletableListenableFuture<?> slf = 
+          makeCompletableListenableFutureFactory()
+              .makeWithFailureCompletable(new StackSuppressedRuntimeException());
     
-    slf.clearResult();
-    slf.get();
-    fail("Should have thrown exception");
+      slf.clearResult();
+      slf.get();
+      });
   }
   
-  @Test (expected = IllegalStateException.class)
-  public void clearResultGetTimeoutFail() throws InterruptedException, ExecutionException, TimeoutException {
-    AbstractCompletableListenableFuture<Void> slf = 
-        makeCompletableListenableFutureFactory().makeWithResultCompletable(null);
+  @Test
+  public void clearResultGetTimeoutFail(){
+      assertThrows(IllegalStateException.class, () -> {
+      AbstractCompletableListenableFuture<Void> slf = 
+          makeCompletableListenableFutureFactory().makeWithResultCompletable(null);
     
-    slf.clearResult();
-    slf.get(10, TimeUnit.MILLISECONDS);
-    fail("Should have thrown exception");
+      slf.clearResult();
+      slf.get(10, TimeUnit.MILLISECONDS);
+      });
   }
   
-  @Test (expected = IllegalStateException.class)
-  public void clearFailureGetTimeoutFail() throws InterruptedException, ExecutionException, TimeoutException {
-    AbstractCompletableListenableFuture<?> slf = 
-        makeCompletableListenableFutureFactory()
-            .makeWithFailureCompletable(new StackSuppressedRuntimeException());
+  @Test
+  public void clearFailureGetTimeoutFail(){
+      assertThrows(IllegalStateException.class, () -> {
+      AbstractCompletableListenableFuture<?> slf = 
+          makeCompletableListenableFutureFactory()
+              .makeWithFailureCompletable(new StackSuppressedRuntimeException());
     
-    slf.clearResult();
-    slf.get(10, TimeUnit.MILLISECONDS);
-    fail("Should have thrown exception");
+      slf.clearResult();
+      slf.get(10, TimeUnit.MILLISECONDS);
+      });
   }
   
   @Test
@@ -414,14 +419,14 @@ public abstract class CompletableListenableFutureInterfaceTest extends Listenabl
     assertTrue(slf.isDone());
   }
 
-  @Test (expected = TimeoutException.class)
-  public void getTimeoutImmediateFail() throws InterruptedException, 
-                                               ExecutionException, TimeoutException {
-    AbstractCompletableListenableFuture<String> slf = 
-        makeCompletableListenableFutureFactory().makeNewCompletable();
+  @Test
+  public void getTimeoutImmediateFail(){
+      assertThrows(TimeoutException.class, () -> {
+      AbstractCompletableListenableFuture<String> slf = 
+          makeCompletableListenableFutureFactory().makeNewCompletable();
     
-    slf.get(0, TimeUnit.MILLISECONDS);
-    fail("Exception should have thrown");
+      slf.get(0, TimeUnit.MILLISECONDS);
+      });
   }
 
   @Test
@@ -442,13 +447,14 @@ public abstract class CompletableListenableFutureInterfaceTest extends Listenabl
     assertTrue(endTime - startTime >= DELAY_TIME);
   }
 
-  @Test (expected = TimeoutException.class)
-  public void getFailureTimeoutImmediateFail() throws InterruptedException, TimeoutException {
-    AbstractCompletableListenableFuture<String> slf = 
-        makeCompletableListenableFutureFactory().makeNewCompletable();
+  @Test
+  public void getFailureTimeoutImmediateFail(){
+      assertThrows(TimeoutException.class, () -> {
+      AbstractCompletableListenableFuture<String> slf = 
+          makeCompletableListenableFutureFactory().makeNewCompletable();
     
-    slf.getFailure(0, TimeUnit.MILLISECONDS);
-    fail("Exception should have thrown");
+      slf.getFailure(0, TimeUnit.MILLISECONDS);
+      });
   }
 
   @Test
@@ -468,13 +474,14 @@ public abstract class CompletableListenableFutureInterfaceTest extends Listenabl
     assertTrue(endTime - startTime >= DELAY_TIME);
   }
   
-  @Test (expected = ExecutionException.class)
-  public void getNullExceptionTest() throws InterruptedException, 
-                                            ExecutionException {
-    AbstractCompletableListenableFuture<?> slf = 
-        makeCompletableListenableFutureFactory().makeWithFailureCompletable(null);
+  @Test
+  public void getNullExceptionTest(){
+      assertThrows(ExecutionException.class, () -> {
+      AbstractCompletableListenableFuture<?> slf = 
+          makeCompletableListenableFutureFactory().makeWithFailureCompletable(null);
     
-    slf.get();
+      slf.get();
+      });
   }
   
   @Test

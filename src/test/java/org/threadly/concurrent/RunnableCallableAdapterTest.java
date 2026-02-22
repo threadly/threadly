@@ -1,8 +1,8 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 
@@ -19,16 +19,18 @@ public class RunnableCallableAdapterTest extends ThreadlyTester {
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new RunnableCallableAdapter<>(null, null);
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      new RunnableCallableAdapter<>(null, null);
+      });
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void adaptFail() {
-    RunnableCallableAdapter.adapt(null, null);
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      RunnableCallableAdapter.adapt(null, null);
+      });
   }
   
   @Test

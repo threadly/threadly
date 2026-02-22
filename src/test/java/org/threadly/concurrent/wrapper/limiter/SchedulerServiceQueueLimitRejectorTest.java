@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.RejectedExecutionException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SchedulerService;
@@ -26,9 +26,11 @@ public class SchedulerServiceQueueLimitRejectorTest extends SchedulerServiceInte
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new SchedulerServiceQueueLimitRejector(null, TEST_QTY);
+      assertThrows(IllegalArgumentException.class, () -> {
+      new SchedulerServiceQueueLimitRejector(null, TEST_QTY);
+      });
   }
   
   @Test

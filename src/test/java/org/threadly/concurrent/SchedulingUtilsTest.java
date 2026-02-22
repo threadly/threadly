@@ -1,10 +1,10 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.util.Clock;
 

@@ -1,13 +1,13 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
 import org.threadly.test.concurrent.BlockingTestRunnable;
@@ -28,9 +28,11 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new SingleThreadScheduler(null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      new SingleThreadScheduler(null);
+      });
   }
   
   @Test
@@ -212,20 +214,24 @@ public class SingleThreadSchedulerTest extends AbstractPrioritySchedulerTest {
     assertTrue(Clock.accurateForwardProgressingMillis() - start >= (DELAY_TIME - ALLOWED_VARIANCE));
   }
   
-  @Test (expected = RejectedExecutionException.class)
+  @Test
   public void shutdownExecutionFail() {
-    SingleThreadScheduler sts = new SingleThreadScheduler();
-    sts.shutdown();
+      assertThrows(RejectedExecutionException.class, () -> {
+      SingleThreadScheduler sts = new SingleThreadScheduler();
+      sts.shutdown();
     
-    sts.execute(DoNothingRunnable.instance());
+      sts.execute(DoNothingRunnable.instance());
+      });
   }
   
-  @Test (expected = RejectedExecutionException.class)
+  @Test
   public void shutdownNowExecutionFail() {
-    SingleThreadScheduler sts = new SingleThreadScheduler();
-    sts.shutdownNow();
+      assertThrows(RejectedExecutionException.class, () -> {
+      SingleThreadScheduler sts = new SingleThreadScheduler();
+      sts.shutdownNow();
     
-    sts.execute(DoNothingRunnable.instance());
+      sts.execute(DoNothingRunnable.instance());
+      });
   }
 
   private class SingleThreadSchedulerFactory implements AbstractPrioritySchedulerFactory {

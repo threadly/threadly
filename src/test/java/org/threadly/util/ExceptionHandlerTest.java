@@ -1,14 +1,14 @@
 package org.threadly.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
@@ -17,7 +17,7 @@ public class ExceptionHandlerTest extends ThreadlyTester {
   
   private StringBuilder stdErrBuilder; 
   
-  @Before
+  @BeforeEach
   @SuppressWarnings("resource")
   public void setup() {
     stdErrBuilder = new StringBuilder();
@@ -29,7 +29,7 @@ public class ExceptionHandlerTest extends ThreadlyTester {
     }));
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     System.setErr(ORIG_STD_ERR);
     stdErrBuilder = null;

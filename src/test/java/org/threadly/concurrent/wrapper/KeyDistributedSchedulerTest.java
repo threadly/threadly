@@ -1,16 +1,16 @@
 package org.threadly.concurrent.wrapper;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
@@ -28,7 +28,7 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
   private static final int PARALLEL_LEVEL = Runtime.getRuntime().availableProcessors();
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY;
   
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     setIgnoreExceptionHandler();
   }
@@ -36,13 +36,13 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
   private PriorityScheduler scheduler;
   private KeyDistributedScheduler distributor;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new StrictPriorityScheduler(PARALLEL_LEVEL * 2);
     distributor = new KeyDistributedScheduler(scheduler, Integer.MAX_VALUE, false);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler.shutdownNow();
     scheduler = null;
@@ -95,9 +95,11 @@ public class KeyDistributedSchedulerTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void getSchedulerForKeyFail() {
-    distributor.getSchedulerForKey(null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      distributor.getSchedulerForKey(null);
+      });
   }
   
   @Test

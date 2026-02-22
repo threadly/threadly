@@ -1,15 +1,15 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
@@ -26,13 +26,13 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
   private RateLimiterExecutor limiter;
   private TestableScheduler scheduler;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new TestableScheduler();
     limiter = new RateLimiterExecutor(scheduler, 1);
   }
   
-  @After
+  @AfterEach
   public void cleanupDown() {
     scheduler = null;
     limiter = null;
@@ -184,11 +184,13 @@ public class RateLimiterExecutorTest extends SubmitterExecutorInterfaceTest {
     }
   }
   
-  @Test (expected = RejectedExecutionException.class)
+  @Test
   public void rejectDueToScheduleDelay() {
-    limiter = new RateLimiterExecutor(scheduler, 1, 1000);
-    limiter.execute(2000, DoNothingRunnable.instance());
-    limiter.execute(DoNothingRunnable.instance());
+      assertThrows(RejectedExecutionException.class, () -> {
+      limiter = new RateLimiterExecutor(scheduler, 1, 1000);
+      limiter.execute(2000, DoNothingRunnable.instance());
+      limiter.execute(DoNothingRunnable.instance());
+      });
   }
   
   private static class RateLimiterFactory implements SubmitterExecutorFactory {

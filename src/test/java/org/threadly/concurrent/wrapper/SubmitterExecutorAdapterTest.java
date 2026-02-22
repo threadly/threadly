@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.Executor;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.PrioritySchedulerTest.PrioritySchedulerFactory;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest;
 import org.threadly.test.concurrent.TestRunnable;
@@ -17,10 +17,11 @@ public class SubmitterExecutorAdapterTest extends SubmitterExecutorInterfaceTest
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new SubmitterExecutorAdapter(null);
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      new SubmitterExecutorAdapter(null);
+      });
   }
   
   @Test

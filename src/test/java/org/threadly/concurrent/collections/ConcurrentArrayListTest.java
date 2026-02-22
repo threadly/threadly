@@ -1,6 +1,6 @@
 package org.threadly.concurrent.collections;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.collections.ConcurrentArrayList.DataSet;
 import org.threadly.util.StringUtils;
@@ -21,21 +21,22 @@ import org.threadly.util.StringUtils;
 public class ConcurrentArrayListTest extends ThreadlyTester {
   private ConcurrentArrayList<String> testList;
   
-  @Before
+  @BeforeEach
   public void setup() {
     testList = new ConcurrentArrayList<>();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     testList = null;
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new ConcurrentArrayList<>(null, new Object());
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      new ConcurrentArrayList<>(null, new Object());
+      });
   }
   
   @Test
@@ -68,9 +69,11 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     assertEquals(1, testList.getFrontPadding());
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void setFrontPaddingFail() {
-    testList.setFrontPadding(-1);
+      assertThrows(IllegalArgumentException.class, () -> {
+      testList.setFrontPadding(-1);
+      });
   }
   
   @Test
@@ -86,9 +89,11 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     assertEquals(1, testList.getRearPadding());
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void setRearPaddingFail() {
-    testList.setRearPadding(-1);
+      assertThrows(IllegalArgumentException.class, () -> {
+      testList.setRearPadding(-1);
+      });
   }
   
   @Test
@@ -127,9 +132,11 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     ListTests.getTest(testList);
   }
   
-  @Test (expected = IndexOutOfBoundsException.class)
+  @Test
   public void getInvalidIndexTest() {
-    testList.get(1);
+      assertThrows(IndexOutOfBoundsException.class, () -> {
+      testList.get(1);
+      });
   }
   
   @Test
@@ -213,14 +220,18 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = NoSuchElementException.class)
+  @Test
   public void getFirstFail() {
-    testList.getFirst();
+      assertThrows(NoSuchElementException.class, () -> {
+      testList.getFirst();
+      });
   }
   
-  @Test (expected = NoSuchElementException.class)
+  @Test
   public void getLastFail() {
-    testList.getLast();
+      assertThrows(NoSuchElementException.class, () -> {
+      testList.getLast();
+      });
   }
   
   @Test
@@ -389,9 +400,11 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = NoSuchElementException.class)
+  @Test
   public void removeFirstFail() {
-    testList.removeFirst();
+      assertThrows(NoSuchElementException.class, () -> {
+      testList.removeFirst();
+      });
   }
   
   @Test
@@ -414,9 +427,11 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = NoSuchElementException.class)
+  @Test
   public void removeLastFail() {
-    testList.removeLast();
+      assertThrows(NoSuchElementException.class, () -> {
+      testList.removeLast();
+      });
   }
   
   @Test
@@ -482,11 +497,11 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     assertEquals(foo, testList.element());
   }
   
-  @Test (expected = NoSuchElementException.class)
+  @Test
   public void elementFail() {
-    testList.element();
-    
-    fail("Exception should have been thrown");
+      assertThrows(NoSuchElementException.class, () -> {
+      testList.element();
+      });
   }
   
   @Test
@@ -587,15 +602,16 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = NoSuchElementException.class)
+  @Test
   public void repositionObjectNotFoundFail() {
-    for (int i = 0; i < TEST_QTY; i++) {
-      String str = Integer.toString(i);
-      testList.add(str);
-    }
+      assertThrows(NoSuchElementException.class, () -> {
+      for (int i = 0; i < TEST_QTY; i++) {
+        String str = Integer.toString(i);
+        testList.add(str);
+      }
     
-    testList.reposition("foo", 0);
-    fail("Exception should have been thrown");
+      testList.reposition("foo", 0);
+      });
   }
   
   @Test
@@ -739,13 +755,17 @@ public class ConcurrentArrayListTest extends ThreadlyTester {
     assertEquals(0, ds.size);
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void makeEmptyDataSetFrontFail() {
-    ConcurrentArrayList.makeEmptyDataSet(-1, 0);
+      assertThrows(IllegalArgumentException.class, () -> {
+      ConcurrentArrayList.makeEmptyDataSet(-1, 0);
+      });
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void makeEmptyDataSetRearFail() {
-    ConcurrentArrayList.makeEmptyDataSet(0, -1);
+      assertThrows(IllegalArgumentException.class, () -> {
+      ConcurrentArrayList.makeEmptyDataSet(0, -1);
+      });
   }
 }

@@ -1,12 +1,12 @@
 package org.threadly.concurrent.wrapper.compatibility;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestDelayed;
@@ -107,32 +107,34 @@ public class ScheduledFutureDelegateTest extends ThreadlyTester {
     assertTrue(future.get(10, TimeUnit.MILLISECONDS) == testItem.get(10, TimeUnit.MILLISECONDS));
   }
 
-  @Test (expected = ExecutionException.class)
-  public void getExecutionExceptionTest() throws InterruptedException, ExecutionException {
-    TestFutureImp future = new TestFutureImp(false) {
-      @Override
-      public Object get() throws ExecutionException {
-        throw new ExecutionException(new StackSuppressedRuntimeException());
-      }
-    };
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
+  @Test
+  public void getExecutionExceptionTest(){
+      assertThrows(ExecutionException.class, () -> {
+      TestFutureImp future = new TestFutureImp(false) {
+        @Override
+        public Object get() throws ExecutionException {
+          throw new ExecutionException(new StackSuppressedRuntimeException());
+        }
+      };
+      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
-    testItem.get();
-    fail("Exception should have thrown");
+      testItem.get();
+      });
   }
 
-  @Test (expected = TimeoutException.class)
-  public void getTimeoutExceptionTest() throws InterruptedException, ExecutionException, TimeoutException {
-    TestFutureImp future = new TestFutureImp(false) {
-      @Override
-      public Object get(long timeout, TimeUnit unit) throws TimeoutException {
-        throw new TimeoutException();
-      }
-    };
-    ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
+  @Test
+  public void getTimeoutExceptionTest(){
+      assertThrows(TimeoutException.class, () -> {
+      TestFutureImp future = new TestFutureImp(false) {
+        @Override
+        public Object get(long timeout, TimeUnit unit) throws TimeoutException {
+          throw new TimeoutException();
+        }
+      };
+      ScheduledFutureDelegate<?> testItem = new ScheduledFutureDelegate<>(future, null);
     
-    testItem.get(DELAY_TIME, TimeUnit.MILLISECONDS);
-    fail("Exception should have thrown");
+      testItem.get(DELAY_TIME, TimeUnit.MILLISECONDS);
+      });
   }
 
   @Test

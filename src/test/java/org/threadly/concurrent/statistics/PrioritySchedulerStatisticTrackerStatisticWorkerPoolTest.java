@@ -1,6 +1,6 @@
 package org.threadly.concurrent.statistics;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.PrioritySchedulerWorkerPoolTest;
@@ -11,7 +11,7 @@ public class PrioritySchedulerStatisticTrackerStatisticWorkerPoolTest extends Pr
   // needed because of visibility issues with protected inner class
   private StatisticWorkerPool localWorkerPool;
   
-  @Before
+  @BeforeEach
   @Override
   public void setup() {
     workerPool = localWorkerPool = new StatisticWorkerPool(new ConfigurableThreadFactory(), 1, 

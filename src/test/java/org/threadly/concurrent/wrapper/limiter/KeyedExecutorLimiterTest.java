@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.UnfairExecutor;
 
@@ -12,12 +12,12 @@ import org.threadly.concurrent.UnfairExecutor;
 public class KeyedExecutorLimiterTest extends AbstractKeyedLimiterTest {
   protected UnfairExecutor executor;
   
-  @Before
+  @BeforeEach
   public void setup() {
     executor = new UnfairExecutor(13);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     executor.shutdownNow();
     executor = null;

@@ -1,13 +1,13 @@
 package org.threadly.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.Writer;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
@@ -15,13 +15,13 @@ public class StringBufferWriterTest extends ThreadlyTester {
   private StringBuffer sb;
   private StringBufferWriter sbw;
   
-  @Before
+  @BeforeEach
   public void setup() {
     sb = new StringBuffer();
     sbw = new StringBufferWriter(sb);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     sb = null;
     sbw.close();
@@ -29,9 +29,11 @@ public class StringBufferWriterTest extends ThreadlyTester {
   }
   
   @SuppressWarnings({ "resource", "unused" })
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new StringBufferWriter(null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      new StringBufferWriter(null);
+      });
   }
   
   @SuppressWarnings("resource")

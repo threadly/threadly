@@ -1,6 +1,6 @@
 package org.threadly.concurrent.future;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

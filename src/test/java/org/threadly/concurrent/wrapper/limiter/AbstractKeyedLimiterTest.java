@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.test.concurrent.BlockingTestRunnable;
@@ -67,9 +67,11 @@ public abstract class AbstractKeyedLimiterTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void getUnsubmittedTaskCountNullFail() {
-    makeLimiter(1).getUnsubmittedTaskCount(null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      makeLimiter(1).getUnsubmittedTaskCount(null);
+      });
   }
   
   @Test

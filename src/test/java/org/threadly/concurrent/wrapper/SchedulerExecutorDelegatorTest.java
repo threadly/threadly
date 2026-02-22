@@ -1,10 +1,10 @@
 package org.threadly.concurrent.wrapper;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.SubmitterSchedulerInterfaceTest;
@@ -17,14 +17,14 @@ public class SchedulerExecutorDelegatorTest extends SubmitterSchedulerInterfaceT
   private TestableScheduler scheduler;
   private SchedulerExecutorDelegator delegator;
   
-  @Before
+  @BeforeEach
   public void setup() {
     executor = new TestableScheduler();
     scheduler = new TestableScheduler();
     delegator = new SchedulerExecutorDelegator(executor, scheduler);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     executor = null;
     scheduler = null;

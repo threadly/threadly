@@ -1,14 +1,14 @@
 package org.threadly.concurrent.wrapper.interceptor;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PrioritySchedulerService;
 import org.threadly.concurrent.TaskPriority;
@@ -21,7 +21,7 @@ import org.threadly.test.concurrent.TestableScheduler;
 @SuppressWarnings("javadoc")
 public class PrioritySchedulerTaskInterceptorTest extends SchedulerServiceTaskInterceptorTest {
   protected PrioritySchedulerTaskInterceptor priorityInterceptor;
-  @Before
+  @BeforeEach
   @Override
   public void setup() {
     scheduler = new TestableScheduler();
@@ -37,7 +37,7 @@ public class PrioritySchedulerTaskInterceptorTest extends SchedulerServiceTaskIn
     tr = new TestRunnable();
   }
   
-  @After
+  @AfterEach
   @Override
   public void cleanup() {
     priorityInterceptor = null;
@@ -153,17 +153,21 @@ public class PrioritySchedulerTaskInterceptorTest extends SchedulerServiceTaskIn
   }
   
   @Override
-  @Test (expected = RuntimeException.class)
+  @Test
   public void defaultConstructorFail() {
-    PrioritySchedulerTaskInterceptor psti = new PrioritySchedulerTaskInterceptor(scheduler);
-    psti.schedule(DoNothingRunnable.instance(), 10, TaskPriority.Low);
+      assertThrows(RuntimeException.class, () -> {
+      PrioritySchedulerTaskInterceptor psti = new PrioritySchedulerTaskInterceptor(scheduler);
+      psti.schedule(DoNothingRunnable.instance(), 10, TaskPriority.Low);
+      });
   }
 
   @Override
-  @Test (expected = RuntimeException.class)
+  @Test
   public void nullConstructorFail() {
-    @SuppressWarnings("unused")
-    PrioritySchedulerTaskInterceptor psti = new PrioritySchedulerTaskInterceptor(scheduler, null);
+      assertThrows(RuntimeException.class, () -> {
+      @SuppressWarnings("unused")
+      PrioritySchedulerTaskInterceptor psti = new PrioritySchedulerTaskInterceptor(scheduler, null);
+      });
   }
 
   private static class TestPrioritySchedulerInterceptor extends PrioritySchedulerTaskInterceptor 

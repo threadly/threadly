@@ -1,15 +1,15 @@
 package org.threadly.concurrent.future;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -22,12 +22,12 @@ import org.threadly.util.StringUtils;
 public class SettableListenableFutureTest extends CompletableListenableFutureInterfaceTest {
   protected SettableListenableFuture<String> slf;
   
-  @Before
+  @BeforeEach
   public void setup() {
     slf = new SettableListenableFuture<>();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     slf = null;
   }
@@ -37,11 +37,12 @@ public class SettableListenableFutureTest extends CompletableListenableFutureInt
     return new SettableListenableFutureFactory();
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void setResultResultFail() {
-    slf.setResult(null);
-    slf.setResult(null);
-    fail("Should have thrown exception");
+      assertThrows(IllegalStateException.class, () -> {
+      slf.setResult(null);
+      slf.setResult(null);
+      });
   }
   
   @Test
@@ -51,11 +52,12 @@ public class SettableListenableFutureTest extends CompletableListenableFutureInt
     assertFalse(slf.setResult(null));
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void setFailureResultFail() {
-    slf.setFailure(new StackSuppressedRuntimeException());
-    slf.setResult(null);
-    fail("Should have thrown exception");
+      assertThrows(IllegalStateException.class, () -> {
+      slf.setFailure(new StackSuppressedRuntimeException());
+      slf.setResult(null);
+      });
   }
   
   @Test
@@ -65,11 +67,12 @@ public class SettableListenableFutureTest extends CompletableListenableFutureInt
     assertFalse(slf.setResult(null));
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void setResultFailureFail() {
-    slf.setResult(null);
-    slf.setFailure(null);
-    fail("Should have thrown exception");
+      assertThrows(IllegalStateException.class, () -> {
+      slf.setResult(null);
+      slf.setFailure(null);
+      });
   }
   
   @Test
@@ -79,11 +82,12 @@ public class SettableListenableFutureTest extends CompletableListenableFutureInt
     assertFalse(slf.setFailure(null));
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void setFailureFailureFail() {
-    slf.setFailure(new StackSuppressedRuntimeException());
-    slf.setFailure(null);
-    fail("Should have thrown exception");
+      assertThrows(IllegalStateException.class, () -> {
+      slf.setFailure(new StackSuppressedRuntimeException());
+      slf.setFailure(null);
+      });
   }
   
   @Test
@@ -93,11 +97,12 @@ public class SettableListenableFutureTest extends CompletableListenableFutureInt
     assertFalse(slf.setFailure(null));
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void cancelSetResultFail() {
-    slf.cancel(false);
-    slf.setResult(null);
-    fail("Should have thrown exception");
+      assertThrows(IllegalStateException.class, () -> {
+      slf.cancel(false);
+      slf.setResult(null);
+      });
   }
   
   @Test
@@ -107,11 +112,12 @@ public class SettableListenableFutureTest extends CompletableListenableFutureInt
     assertFalse(slf.setResult(null));
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void cancelSetFailureFail() {
-    slf.cancel(false);
-    slf.setFailure(null);
-    fail("Should have thrown exception");
+      assertThrows(IllegalStateException.class, () -> {
+      slf.cancel(false);
+      slf.setFailure(null);
+      });
   }
   
   @Test
@@ -145,26 +151,29 @@ public class SettableListenableFutureTest extends CompletableListenableFutureInt
   }
   
   @Override
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void clearResultFail() {
-    slf.clearResult();
-    fail("Should have thrown exception");
+      assertThrows(IllegalStateException.class, () -> {
+      slf.clearResult();
+      });
   }
   
-  @Test (expected = IllegalStateException.class)
-  public void getAfterClearResultFail() throws InterruptedException, ExecutionException {
-    slf.setResult(null);
-    slf.clearResult();
-    slf.get();
-    fail("Should have thrown exception");
+  @Test
+  public void getAfterClearResultFail(){
+      assertThrows(IllegalStateException.class, () -> {
+      slf.setResult(null);
+      slf.clearResult();
+      slf.get();
+      });
   }
   
-  @Test (expected = IllegalStateException.class)
-  public void getAfterClearFailureResultFail() throws InterruptedException, ExecutionException {
-    slf.setFailure(new StackSuppressedRuntimeException());
-    slf.clearResult();
-    slf.get();
-    fail("Should have thrown exception");
+  @Test
+  public void getAfterClearFailureResultFail(){
+      assertThrows(IllegalStateException.class, () -> {
+      slf.setFailure(new StackSuppressedRuntimeException());
+      slf.clearResult();
+      slf.get();
+      });
   }
   
   @Test

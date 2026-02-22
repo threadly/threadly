@@ -1,13 +1,13 @@
 package org.threadly.concurrent.statistics;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.AbstractPriorityScheduler;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.PriorityScheduler;
@@ -49,10 +49,11 @@ public class SingleThreadSchedulerStatisticTrackerTest extends SingleThreadSched
   
   @Override
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new SingleThreadSchedulerStatisticTracker(TaskPriority.High, -1, null);
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      new SingleThreadSchedulerStatisticTracker(TaskPriority.High, -1, null);
+      });
   }
   
   // tests for statistics tracking

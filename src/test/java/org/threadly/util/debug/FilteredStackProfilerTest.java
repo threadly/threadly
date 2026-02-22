@@ -1,17 +1,17 @@
 package org.threadly.util.debug;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.threadly.util.debug.Profiler.ThreadSample;
 
 @SuppressWarnings("javadoc")
 public class FilteredStackProfilerTest extends ProfilerTest {
-  @Before
+  @BeforeEach
   @Override
   public void setup() {
     profiler = new FilteredStackProfiler(POLL_INTERVAL, (p) -> startFutureResultSupplier.get(), ".");
@@ -99,8 +99,10 @@ public class FilteredStackProfilerTest extends ProfilerTest {
 
   @Override
   @SuppressWarnings("unused")
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new FilteredStackProfiler(-1, ".");
+      assertThrows(IllegalArgumentException.class, () -> {
+      new FilteredStackProfiler(-1, ".");
+      });
   }
 }

@@ -1,10 +1,10 @@
 package org.threadly.test.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestCondition.ConditionTimeoutException;
 import org.threadly.util.Clock;
@@ -13,12 +13,12 @@ import org.threadly.util.Clock;
 public class TestRunnableTest extends ThreadlyTester {
   private TestRunnable instance;
   
-  @Before
+  @BeforeEach
   public void setup() {
     instance = new TestRunnable();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     instance = null;
   }
@@ -80,11 +80,11 @@ public class TestRunnableTest extends ThreadlyTester {
     assertTrue(endTime - startTime >= (DELAY_TIME - ALLOWED_VARIANCE));
   }
   
-  @Test (expected = ConditionTimeoutException.class)
+  @Test
   public void blockTillRunTestFail() {
-    instance.blockTillFinished(DELAY_TIME);
-    
-    fail("Exception should have thrown");
+      assertThrows(ConditionTimeoutException.class, () -> {
+      instance.blockTillFinished(DELAY_TIME);
+      });
   }
   
   @Test

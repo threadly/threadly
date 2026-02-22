@@ -1,24 +1,24 @@
 package org.threadly.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
 public class AbstractServiceTest extends ThreadlyTester {
   private TestService service;
   
-  @Before
+  @BeforeEach
   public void setup() {
     service = new TestService();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     service.stopIfRunning();  // prevent GC warning
     service = null;
@@ -43,10 +43,12 @@ public class AbstractServiceTest extends ThreadlyTester {
     assertTrue(service.hasStopped());
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void startFail() {
-    service.start();
-    service.start();
+      assertThrows(IllegalStateException.class, () -> {
+      service.start();
+      service.start();
+      });
   }
   
   @Test
@@ -73,17 +75,21 @@ public class AbstractServiceTest extends ThreadlyTester {
     assertFalse(service.isRunning());
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void stopNotStartedFail() {
-    service.stop();
+      assertThrows(IllegalStateException.class, () -> {
+      service.stop();
+      });
   }
   
-  @Test (expected = IllegalStateException.class)
+  @Test
   public void stopTwiceFail() {
-    service.start();
+      assertThrows(IllegalStateException.class, () -> {
+      service.start();
     
-    service.stop();
-    service.stop();
+      service.stop();
+      service.stop();
+      });
   }
   
   @Test

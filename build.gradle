@@ -12,9 +12,10 @@ repositories {
 
 dependencies {
   testImplementation (
-    "junit:junit:4.13.2",
+    "org.junit.jupiter:junit-jupiter:6.0.3",
     "org.threadly:threadly-test:1.0"
   )
+  testRuntimeOnly "org.junit.platform:junit-platform-launcher:6.0.3"
 }
 
 java {
@@ -36,6 +37,7 @@ compileTestJava {
 }
 
 test {
+  useJUnitPlatform()
   def testMode = findProperty('testMode')
   if (testMode == 'slow') {
     maxParallelForks = 1

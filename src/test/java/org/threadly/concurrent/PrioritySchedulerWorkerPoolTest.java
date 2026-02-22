@@ -1,10 +1,10 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.AbstractPriorityScheduler.QueueManager;
 import org.threadly.concurrent.PriorityScheduler.Worker;
@@ -16,7 +16,7 @@ public class PrioritySchedulerWorkerPoolTest extends ThreadlyTester {
   protected QueueManager qm;
   protected WorkerPool workerPool;
   
-  @Before
+  @BeforeEach
   public void setup() {
     workerPool = new WorkerPool(new ConfigurableThreadFactory(), 1, true);
     qm = new QueueManager(workerPool, 1000);
@@ -24,7 +24,7 @@ public class PrioritySchedulerWorkerPoolTest extends ThreadlyTester {
     workerPool.start(qm);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     workerPool.startShutdown();
     workerPool.finishShutdown();
@@ -74,10 +74,11 @@ public class PrioritySchedulerWorkerPoolTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void setPoolSizeFail() {
-    workerPool.setPoolSize(-1); // should throw exception for negative value
-    fail("Exception should have been thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      workerPool.setPoolSize(-1); // should throw exception for negative value
+      });
   }
   
   @Test

@@ -1,6 +1,6 @@
 package org.threadly.concurrent.wrapper;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,10 +13,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
@@ -39,7 +39,7 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   private static final int PARALLEL_LEVEL = TEST_QTY;
   private static final int RUNNABLE_COUNT_PER_LEVEL = TEST_QTY * 2;
   
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     setIgnoreExceptionHandler();
   }
@@ -47,13 +47,13 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
   protected UnfairExecutor executor;
   protected KeyDistributedExecutor distributor;
   
-  @Before
+  @BeforeEach
   public void setup() {
     executor = new UnfairExecutor((PARALLEL_LEVEL * 2) + 1);
     distributor = new KeyDistributedExecutor(executor, Integer.MAX_VALUE, false);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     executor.shutdownNow();
     executor = null;
@@ -138,9 +138,11 @@ public class KeyDistributedExecutorTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void getExecutorForKeyFail() {
-    distributor.getExecutorForKey(null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      distributor.getExecutorForKey(null);
+      });
   }
   
   @Test

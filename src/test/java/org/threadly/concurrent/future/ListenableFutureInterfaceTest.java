@@ -1,6 +1,6 @@
 package org.threadly.concurrent.future;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -12,8 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.CentralThreadlyPool;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -34,7 +34,7 @@ import org.threadly.util.TestExceptionHandler;
 public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
   protected abstract ListenableFutureFactory makeListenableFutureFactory();
   
-  @After
+  @AfterEach
   public void cleanup() {
     ExceptionUtils.setThreadExceptionHandler(null);
   }
@@ -1346,12 +1346,13 @@ public abstract class ListenableFutureInterfaceTest extends ThreadlyTester {
     assertTrue(nlf == lf);
   }
   
-  @Test (expected = NullPointerException.class)
+  @Test
   public void asNullFunctionFailure() {
-    ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
+      assertThrows(NullPointerException.class, () -> {
+      ListenableFuture<Object> lf = makeListenableFutureFactory().makeWithResult(null);
     
-    lf.as(null);
-    fail("Exception should have thrown");
+      lf.as(null);
+      });
   }
   
   protected interface ListenableFutureFactory {

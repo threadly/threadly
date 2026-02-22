@@ -1,6 +1,6 @@
 package org.threadly.concurrent.wrapper.compatibility;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,8 +16,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestCallable;
@@ -33,7 +33,7 @@ import org.threadly.util.StackSuppressedRuntimeException;
 public abstract class ScheduledExecutorServiceTest extends ThreadlyTester {
   private static final int THREAD_COUNT = 1000;
   
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     setIgnoreExceptionHandler();
   }
@@ -147,30 +147,34 @@ public abstract class ScheduledExecutorServiceTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = TimeoutException.class)
-  public void futureGetTimeoutFail() throws InterruptedException, ExecutionException, TimeoutException {
-    ScheduledExecutorService scheduler = makeScheduler(1);
-    try {
-      TestCallable tc = new TestCallable(100);
-      Future<Object> f = scheduler.submit(tc);
-      f.get(1, TimeUnit.MILLISECONDS);
-      fail("Exception should have been thrown");
-    } finally {
-      scheduler.shutdownNow();
-    }
+  @Test
+  public void futureGetTimeoutFail(){
+      assertThrows(TimeoutException.class, () -> {
+      ScheduledExecutorService scheduler = makeScheduler(1);
+      try {
+        TestCallable tc = new TestCallable(100);
+        Future<Object> f = scheduler.submit(tc);
+        f.get(1, TimeUnit.MILLISECONDS);
+        fail("Exception should have been thrown");
+      } finally {
+        scheduler.shutdownNow();
+      }
+      });
   }
   
-  @Test (expected = ExecutionException.class)
-  public void futureGetExecutionFail() throws InterruptedException, ExecutionException {
-    ScheduledExecutorService scheduler = makeScheduler(1);
-    try {
-      Future<?> f = scheduler.submit(new TestRuntimeFailureRunnable());
+  @Test
+  public void futureGetExecutionFail(){
+      assertThrows(ExecutionException.class, () -> {
+      ScheduledExecutorService scheduler = makeScheduler(1);
+      try {
+        Future<?> f = scheduler.submit(new TestRuntimeFailureRunnable());
       
-      f.get();
-      fail("Exception should have been thrown");
-    } finally {
-      scheduler.shutdownNow();
-    }
+        f.get();
+        fail("Exception should have been thrown");
+      } finally {
+        scheduler.shutdownNow();
+      }
+      });
   }
   
   @Test
@@ -215,24 +219,28 @@ public abstract class ScheduledExecutorServiceTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = NullPointerException.class)
+  @Test
   public void scheduleRunnableFail() {
-    ScheduledExecutorService scheduler = makeScheduler(1);
-    try {
-      scheduler.schedule((Runnable)null, 10, TimeUnit.MILLISECONDS);
-    } finally {
-      scheduler.shutdownNow();
-    }
+      assertThrows(NullPointerException.class, () -> {
+      ScheduledExecutorService scheduler = makeScheduler(1);
+      try {
+        scheduler.schedule((Runnable)null, 10, TimeUnit.MILLISECONDS);
+      } finally {
+        scheduler.shutdownNow();
+      }
+      });
   }
   
-  @Test (expected = NullPointerException.class)
+  @Test
   public void scheduleCallableFail() {
-    ScheduledExecutorService scheduler = makeScheduler(1);
-    try {
-      scheduler.schedule((Callable<?>)null, 10, TimeUnit.MILLISECONDS);
-    } finally {
-      scheduler.shutdownNow();
-    }
+      assertThrows(NullPointerException.class, () -> {
+      ScheduledExecutorService scheduler = makeScheduler(1);
+      try {
+        scheduler.schedule((Callable<?>)null, 10, TimeUnit.MILLISECONDS);
+      } finally {
+        scheduler.shutdownNow();
+      }
+      });
   }
   
   @Test
@@ -537,17 +545,19 @@ public abstract class ScheduledExecutorServiceTest extends ThreadlyTester {
     }
   }
 
-  @Test (expected = NullPointerException.class)
-  public void invokeAllFail() throws InterruptedException {
-    ScheduledExecutorService scheduler = makeScheduler(1);
-    try {
-      List<TestCallable> toInvoke = new ArrayList<>(2);
-      toInvoke.add(new TestCallable(0));
-      toInvoke.add(null);
-      scheduler.invokeAll(toInvoke);
-    } finally {
-      scheduler.shutdownNow();
-    }
+  @Test
+  public void invokeAllFail(){
+      assertThrows(NullPointerException.class, () -> {
+      ScheduledExecutorService scheduler = makeScheduler(1);
+      try {
+        List<TestCallable> toInvoke = new ArrayList<>(2);
+        toInvoke.add(new TestCallable(0));
+        toInvoke.add(null);
+        scheduler.invokeAll(toInvoke);
+      } finally {
+        scheduler.shutdownNow();
+      }
+      });
   }
 
   @Test
@@ -576,22 +586,24 @@ public abstract class ScheduledExecutorServiceTest extends ThreadlyTester {
     }
   }
 
-  @Test (expected = TimeoutException.class)
-  public void invokeAnyTimeoutTest() throws InterruptedException, ExecutionException, TimeoutException {
-    ScheduledExecutorService scheduler = makeScheduler(1);
-    try {
-      int runTime = 1000 * 10;
-      int timeoutTime = 5;
+  @Test
+  public void invokeAnyTimeoutTest(){
+      assertThrows(TimeoutException.class, () -> {
+      ScheduledExecutorService scheduler = makeScheduler(1);
+      try {
+        int runTime = 1000 * 10;
+        int timeoutTime = 5;
       
-      List<TestCallable> toInvoke = new ArrayList<>(1);
+        List<TestCallable> toInvoke = new ArrayList<>(1);
   
-      toInvoke.add(new TestCallable(runTime));
+        toInvoke.add(new TestCallable(runTime));
       
-      scheduler.invokeAny(toInvoke, timeoutTime, TimeUnit.MILLISECONDS);
-      fail("Exception should have thrown");
-    } finally {
-      scheduler.shutdownNow();
-    }
+        scheduler.invokeAny(toInvoke, timeoutTime, TimeUnit.MILLISECONDS);
+        fail("Exception should have thrown");
+      } finally {
+        scheduler.shutdownNow();
+      }
+      });
   }
   
   @Test
@@ -615,25 +627,27 @@ public abstract class ScheduledExecutorServiceTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = ExecutionException.class)
-  public void invokeAnyAllTasksExceptionTest() throws InterruptedException, ExecutionException {
-    ScheduledExecutorService scheduler = makeScheduler(1);
-    try {
-      Callable<Object> failureCallable = new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          throw new Exception();
-        }
-      };
-      List<Callable<Object>> toInvoke = new ArrayList<>(2);
-      toInvoke.add(failureCallable);
-      toInvoke.add(failureCallable);
+  @Test
+  public void invokeAnyAllTasksExceptionTest(){
+      assertThrows(ExecutionException.class, () -> {
+      ScheduledExecutorService scheduler = makeScheduler(1);
+      try {
+        Callable<Object> failureCallable = new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            throw new Exception();
+          }
+        };
+        List<Callable<Object>> toInvoke = new ArrayList<>(2);
+        toInvoke.add(failureCallable);
+        toInvoke.add(failureCallable);
       
-      scheduler.invokeAny(toInvoke);
-      fail("Execution exception should have thrown");
-    } finally {
-      scheduler.shutdownNow();
-    }
+        scheduler.invokeAny(toInvoke);
+        fail("Execution exception should have thrown");
+      } finally {
+        scheduler.shutdownNow();
+      }
+      });
   }
 
   @Test

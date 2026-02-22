@@ -1,12 +1,12 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.ConfigurableThreadFactory.ConfigurableThreadFactoryBuilder;
 import org.threadly.util.ExceptionHandler;
 

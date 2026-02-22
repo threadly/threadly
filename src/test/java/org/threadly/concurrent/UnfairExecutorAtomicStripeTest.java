@@ -1,6 +1,6 @@
 package org.threadly.concurrent;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.UnfairExecutor.AtomicStripeGenerator;
 import org.threadly.concurrent.UnfairExecutorTest.UnfairExecutorFactory;
 

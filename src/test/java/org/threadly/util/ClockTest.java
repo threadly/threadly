@@ -1,22 +1,22 @@
 package org.threadly.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestCondition;
 import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class ClockTest extends ThreadlyTester {
-  @AfterClass
+  @AfterAll
   public static void cleanupClass() {
     Clock.startClockUpdateThread();
   }
   
-  @Before
+  @BeforeEach
   public void setup() {
     Clock.stopClockUpdateThread();
   }

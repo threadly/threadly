@@ -1,6 +1,6 @@
 package org.threadly.concurrent.processing;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
@@ -8,9 +8,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -20,13 +20,13 @@ import org.threadly.test.concurrent.AsyncVerifier;
 public class FlowControlledProcessorTest {
   private PriorityScheduler scheduler;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new PriorityScheduler(Runtime.getRuntime().availableProcessors());
     scheduler.prestartAllThreads();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler.shutdownNow();
   }

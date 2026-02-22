@@ -1,8 +1,8 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SingleThreadScheduler.SchedulerManager;
 
@@ -19,14 +19,16 @@ public class SingleThreadSchedulerSchedulerManagerTest extends ThreadlyTester {
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalThreadStateException.class)
+  @Test
   public void constructorFail() {
-    StartingThreadFactory threadFactory = new StartingThreadFactory();
-    try {
-      new SchedulerManager(AbstractPriorityScheduler.DEFAULT_PRIORITY, 
-                           AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, threadFactory);
-    } finally {
-      threadFactory.killThreads();
-    }
+      assertThrows(IllegalThreadStateException.class, () -> {
+      StartingThreadFactory threadFactory = new StartingThreadFactory();
+      try {
+        new SchedulerManager(AbstractPriorityScheduler.DEFAULT_PRIORITY, 
+                             AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS, threadFactory);
+      } finally {
+        threadFactory.killThreads();
+      }
+      });
   }
 }

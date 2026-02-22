@@ -1,10 +1,10 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.AbstractPriorityScheduler.ImmediateTaskWrapper;
@@ -22,7 +22,7 @@ import org.threadly.util.Clock;
 public class PrioritySchedulerQueueManagerTest extends ThreadlyTester {
   private QueueManager queueManager;
   
-  @Before
+  @BeforeEach
   public void setup() {
     queueManager = new QueueManager(new QueueSetListener() {
       @Override
@@ -32,7 +32,7 @@ public class PrioritySchedulerQueueManagerTest extends ThreadlyTester {
     }, AbstractPriorityScheduler.DEFAULT_LOW_PRIORITY_MAX_WAIT_IN_MS);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     queueManager = null;
   }

@@ -1,15 +1,15 @@
 package org.threadly.concurrent.wrapper.interceptor;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.TestCallable;
@@ -25,7 +25,7 @@ public class ExecutorTaskInterceptorTest extends ThreadlyTester {
   protected TestInterceptor testInterceptor;
   protected TestRunnable tr;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new TestableScheduler();
     executorInterceptor = new TestExecutorInterceptor(scheduler);
@@ -33,7 +33,7 @@ public class ExecutorTaskInterceptorTest extends ThreadlyTester {
     tr = new TestRunnable();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler = null;
     executorInterceptor = null;
@@ -102,16 +102,20 @@ public class ExecutorTaskInterceptorTest extends ThreadlyTester {
     assertFalse(f.isDone());
   }
   
-  @Test (expected = RuntimeException.class)
+  @Test
   public void defaultConstructorFail() {
-    ExecutorTaskInterceptor eti = new ExecutorTaskInterceptor(scheduler);
-    eti.execute(DoNothingRunnable.instance());
+      assertThrows(RuntimeException.class, () -> {
+      ExecutorTaskInterceptor eti = new ExecutorTaskInterceptor(scheduler);
+      eti.execute(DoNothingRunnable.instance());
+      });
   }
 
-  @Test (expected = RuntimeException.class)
+  @Test
   public void nullConstructorFail() {
-    @SuppressWarnings("unused")
-    ExecutorTaskInterceptor eti = new ExecutorTaskInterceptor(scheduler, null);
+      assertThrows(RuntimeException.class, () -> {
+      @SuppressWarnings("unused")
+      ExecutorTaskInterceptor eti = new ExecutorTaskInterceptor(scheduler, null);
+      });
   }
   
   protected interface TestInterceptor {

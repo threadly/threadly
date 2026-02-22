@@ -1,9 +1,9 @@
 package org.threadly.concurrent.event;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestRuntimeFailureRunnable;
@@ -12,14 +12,16 @@ import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class InvocationTeeTest extends ThreadlyTester {
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     setIgnoreExceptionHandler();
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void teeCreateFail() {
-    InvocationTee.tee(null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      InvocationTee.tee(null);
+      });
   }
   
   @Test
@@ -51,9 +53,11 @@ public class InvocationTeeTest extends ThreadlyTester {
     assertTrue(tr.ranOnce());
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void teeWithExceptionThrowingCreateFail() {
-    InvocationTee.teeWithExceptionThrowing(null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      InvocationTee.teeWithExceptionThrowing(null);
+      });
   }
   
   @Test

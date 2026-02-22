@@ -1,10 +1,12 @@
 package org.threadly.concurrent.wrapper.interceptor;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SchedulerService;
 import org.threadly.test.concurrent.TestRunnable;
@@ -12,7 +14,7 @@ import org.threadly.test.concurrent.TestableScheduler;
 
 @SuppressWarnings("javadoc")
 public class SchedulerServiceTaskInterceptorTest extends SubmitterSchedulerTaskInterceptorTest {
-  @Before
+  @BeforeEach
   @Override
   public void setup() {
     scheduler = new TestableScheduler();
@@ -29,17 +31,21 @@ public class SchedulerServiceTaskInterceptorTest extends SubmitterSchedulerTaskI
   }
   
   @Override
-  @Test (expected = RuntimeException.class)
+  @Test
   public void defaultConstructorFail() {
-    SchedulerServiceTaskInterceptor ssti = new SchedulerServiceTaskInterceptor(scheduler);
-    ssti.schedule(DoNothingRunnable.instance(), 10);
+      assertThrows(RuntimeException.class, () -> {
+      SchedulerServiceTaskInterceptor ssti = new SchedulerServiceTaskInterceptor(scheduler);
+      ssti.schedule(DoNothingRunnable.instance(), 10);
+      });
   }
 
   @Override
-  @Test (expected = RuntimeException.class)
+  @Test
   public void nullConstructorFail() {
-    @SuppressWarnings("unused")
-    SchedulerServiceTaskInterceptor ssti = new SchedulerServiceTaskInterceptor(scheduler, null);
+      assertThrows(RuntimeException.class, () -> {
+      @SuppressWarnings("unused")
+      SchedulerServiceTaskInterceptor ssti = new SchedulerServiceTaskInterceptor(scheduler, null);
+      });
   }
 
   private static class TestSchedulerServiceInterceptor extends SchedulerServiceTaskInterceptor 

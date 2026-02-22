@@ -1,13 +1,13 @@
 package org.threadly.concurrent.event;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.Executor;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
@@ -18,7 +18,7 @@ import org.threadly.util.StackSuppressedRuntimeException;
 
 @SuppressWarnings("javadoc")
 public class RunnableListenerHelperTest extends ThreadlyTester {
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     setIgnoreExceptionHandler();
   }
@@ -26,13 +26,13 @@ public class RunnableListenerHelperTest extends ThreadlyTester {
   protected RunnableListenerHelper onceHelper;
   protected RunnableListenerHelper repeatedHelper;
   
-  @Before
+  @BeforeEach
   public void setup() {
     onceHelper = new RunnableListenerHelper(true);
     repeatedHelper = new RunnableListenerHelper(false);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     onceHelper = null;
     repeatedHelper = null;
@@ -119,17 +119,18 @@ public class RunnableListenerHelperTest extends ThreadlyTester {
     assertTrue(tr.ranOnce());
   }
   
-  @Test (expected = RuntimeException.class)
+  @Test
   public void runListenerThrowExecptionTest() {
-    onceHelper.callListeners();
-    TestRunnable tr = new TestRunnable() {
-      @Override
-      public void handleRunFinish() {
-        throw new StackSuppressedRuntimeException();
-      }
-    };
-    onceHelper.addListener(tr);
-    fail("Execption should have thrown");
+      assertThrows(RuntimeException.class, () -> {
+      onceHelper.callListeners();
+      TestRunnable tr = new TestRunnable() {
+        @Override
+        public void handleRunFinish() {
+          throw new StackSuppressedRuntimeException();
+        }
+      };
+      onceHelper.addListener(tr);
+      });
   }
   
   @Test
@@ -207,11 +208,13 @@ public class RunnableListenerHelperTest extends ThreadlyTester {
     assertTrue(listener.ranOnce());
   }
   
-  @Test (expected = RuntimeException.class)
+  @Test
   public void callListenersFail() {
-    onceHelper.callListeners();
-    // should fail on subsequent calls
-    onceHelper.callListeners();
+      assertThrows(RuntimeException.class, () -> {
+      onceHelper.callListeners();
+      // should fail on subsequent calls
+      onceHelper.callListeners();
+      });
   }
   
   @Test

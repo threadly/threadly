@@ -1,6 +1,6 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -33,13 +33,13 @@ public class PollerTest extends ThreadlyTester {
   private TestableScheduler scheduler;
   private Poller poller;
 
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new TestableScheduler();
     poller = new Poller(scheduler, POLL_INTERVAL);
   }
 
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler = null;
     poller = null;

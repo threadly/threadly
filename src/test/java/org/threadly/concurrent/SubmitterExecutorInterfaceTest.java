@@ -1,6 +1,6 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,8 +11,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.test.concurrent.AsyncVerifier;
@@ -23,7 +23,7 @@ import org.threadly.util.StackSuppressedRuntimeException;
 public abstract class SubmitterExecutorInterfaceTest extends ThreadlyTester {
   protected abstract SubmitterExecutorFactory getSubmitterExecutorFactory();
   
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     setIgnoreExceptionHandler();
   }
@@ -135,17 +135,19 @@ public abstract class SubmitterExecutorInterfaceTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void executeFail() {
-    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
-    try {
-      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
+      assertThrows(IllegalArgumentException.class, () -> {
+      SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
+      try {
+        SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
-      executor.execute(null);
-      fail("Execption should have thrown");
-    } finally {
-      factory.shutdown();
-    }
+        executor.execute(null);
+        fail("Execption should have thrown");
+      } finally {
+        factory.shutdown();
+      }
+      });
   }
   
   @Test
@@ -362,43 +364,49 @@ public abstract class SubmitterExecutorInterfaceTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void submitRunnableFail() {
-    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
-    try {
-      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
+      assertThrows(IllegalArgumentException.class, () -> {
+      SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
+      try {
+        SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
-      executor.submit((Runnable)null);
-      fail("Execption should have thrown");
-    } finally {
-      factory.shutdown();
-    }
+        executor.submit((Runnable)null);
+        fail("Execption should have thrown");
+      } finally {
+        factory.shutdown();
+      }
+      });
   }
 
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void submitRunnableWithResultFail() {
-    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
-    try {
-      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
+      assertThrows(IllegalArgumentException.class, () -> {
+      SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
+      try {
+        SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
-      executor.submit((Runnable)null, new Object());
-      fail("Execption should have thrown");
-    } finally {
-      factory.shutdown();
-    }
+        executor.submit((Runnable)null, new Object());
+        fail("Execption should have thrown");
+      } finally {
+        factory.shutdown();
+      }
+      });
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void submitCallableFail() {
-    SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
-    try {
-      SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
+      assertThrows(IllegalArgumentException.class, () -> {
+      SubmitterExecutorFactory factory = getSubmitterExecutorFactory();
+      try {
+        SubmitterExecutor executor = factory.makeSubmitterExecutor(1, false);
       
-      executor.submit((Callable<Void>)null);
-      fail("Execption should have thrown");
-    } finally {
-      factory.shutdown();
-    }
+        executor.submit((Callable<Void>)null);
+        fail("Execption should have thrown");
+      } finally {
+        factory.shutdown();
+      }
+      });
   }
   
   public interface SubmitterExecutorFactory {

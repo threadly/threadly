@@ -1,22 +1,22 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.PriorityScheduler;
 
 @SuppressWarnings("javadoc")
 public class KeyedSubmitterSchedulerLimiterTest extends AbstractKeyedLimiterTest {
   protected PriorityScheduler scheduler;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new PriorityScheduler(10);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler.shutdownNow();
     scheduler = null;

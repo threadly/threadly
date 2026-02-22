@@ -1,13 +1,13 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SubmitterExecutorInterfaceTest.SubmitterExecutorFactory;
 import org.threadly.concurrent.UnfairExecutor.TaskStripeGenerator;
@@ -144,20 +144,24 @@ public class UnfairExecutorTest extends ThreadlyTester {
     assertTrue(Clock.accurateForwardProgressingMillis() - start >= (DELAY_TIME - ALLOWED_VARIANCE));
   }
   
-  @Test (expected = RejectedExecutionException.class)
+  @Test
   public void shutdownExecutionFail() {
-    UnfairExecutor ue = new UnfairExecutor(1);
-    ue.shutdown();
+      assertThrows(RejectedExecutionException.class, () -> {
+      UnfairExecutor ue = new UnfairExecutor(1);
+      ue.shutdown();
     
-    ue.execute(DoNothingRunnable.instance());
+      ue.execute(DoNothingRunnable.instance());
+      });
   }
   
-  @Test (expected = RejectedExecutionException.class)
+  @Test
   public void shutdownNowExecutionFail() {
-    UnfairExecutor ue = new UnfairExecutor(1);
-    ue.shutdownNow();
+      assertThrows(RejectedExecutionException.class, () -> {
+      UnfairExecutor ue = new UnfairExecutor(1);
+      ue.shutdownNow();
     
-    ue.execute(DoNothingRunnable.instance());
+      ue.execute(DoNothingRunnable.instance());
+      });
   }
 
   protected static class UnfairExecutorFactory implements SubmitterExecutorFactory {

@@ -1,14 +1,14 @@
 package org.threadly.concurrent.future.watchdog;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.NoThreadScheduler;
 import org.threadly.concurrent.future.FutureUtils;
 import org.threadly.concurrent.future.ListenableFuture;
@@ -20,14 +20,14 @@ public class PollingWatchdogTest {
   private PollingWatchdog watchdog;
   private AtomicBoolean cancelFuture;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new NoThreadScheduler();
     watchdog = new PollingWatchdog(scheduler, 1, true);
     cancelFuture = new AtomicBoolean(false);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler = null;
     watchdog = null;

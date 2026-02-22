@@ -1,6 +1,6 @@
 package org.threadly.util.debug;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Iterator;
@@ -19,9 +19,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.DoNothingRunnable;
@@ -44,13 +44,13 @@ public class ProfilerTest extends ThreadlyTester {
   protected Profiler profiler;
   protected Supplier<String> startFutureResultSupplier;
   
-  @Before
+  @BeforeEach
   public void setup() {
     profiler = new Profiler(POLL_INTERVAL, (p) -> startFutureResultSupplier.get());
     startFutureResultSupplier = profiler::dump;
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     profiler.stop();
     profiler = null;
@@ -96,31 +96,36 @@ public class ProfilerTest extends ThreadlyTester {
     assertNotNull(it.next());
   }
   
-  @Test (expected = NoSuchElementException.class)
+  @Test
   public void profileThreadsIteratorNextFail() {
-    Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
+      assertThrows(NoSuchElementException.class, () -> {
+      Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
     
-    while (it.hasNext()) {
-      assertNotNull(it.next());
-    }
+      while (it.hasNext()) {
+        assertNotNull(it.next());
+      }
     
-    it.next();
-    fail("Exception should have thrown");
+      it.next();
+      });
   }
   
-  @Test (expected = UnsupportedOperationException.class)
+  @Test
   public void profileThreadsIteratorRemoveFail() {
-    Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
-    it.next();
+      assertThrows(UnsupportedOperationException.class, () -> {
+      Iterator<?> it = profiler.pStore.getProfileThreadsIterator();
+      it.next();
     
-    // not currently supported
-    it.remove();
+      // not currently supported
+      it.remove();
+      });
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new Profiler(-1);
+      assertThrows(IllegalArgumentException.class, () -> {
+      new Profiler(-1);
+      });
   }
   
   @Test
@@ -242,9 +247,11 @@ public class ProfilerTest extends ThreadlyTester {
     assertEquals(TEST_VAL, profiler.getPollInterval());
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void setProfileIntervalFail() {
-    profiler.setPollInterval(-1);
+      assertThrows(IllegalArgumentException.class, () -> {
+      profiler.setPollInterval(-1);
+      });
   }
   
   @Test

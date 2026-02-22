@@ -1,6 +1,6 @@
 package org.threadly.concurrent.future;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
@@ -103,20 +103,22 @@ public class FutureUtilsTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = TimeoutException.class)
-  public void blockTillAllCompleteWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
+  @Test
+  public void blockTillAllCompleteWithTimeoutTimeoutTest(){
+      assertThrows(TimeoutException.class, () -> {
+      List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
     
-    FutureUtils.blockTillAllComplete(futures, 100);
-    fail("Exception should have thrown");
+      FutureUtils.blockTillAllComplete(futures, 100);
+      });
   }
   
-  @Test (expected = TimeoutException.class)
-  public void blockTillAllCompleteWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
+  @Test
+  public void blockTillAllCompleteWithTimeoutZeroTimeoutTest(){
+      assertThrows(TimeoutException.class, () -> {
+      List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
     
-    FutureUtils.blockTillAllComplete(futures, 0);
-    fail("Exception should have thrown");
+      FutureUtils.blockTillAllComplete(futures, 0);
+      });
   }
   
   @Test
@@ -203,22 +205,22 @@ public class FutureUtilsTest extends ThreadlyTester {
     }
   }
   
-  @Test (expected = TimeoutException.class)
-  public void blockTillAllCompleteOrFirstErrorWithTimeoutTimeoutTest() throws InterruptedException, 
-                                                                              TimeoutException, ExecutionException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
+  @Test
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutTimeoutTest(){
+      assertThrows(TimeoutException.class, () -> {
+      List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
     
-    FutureUtils.blockTillAllCompleteOrFirstError(futures, 100);
-    fail("Exception should have thrown");
+      FutureUtils.blockTillAllCompleteOrFirstError(futures, 100);
+      });
   }
   
-  @Test (expected = TimeoutException.class)
-  public void blockTillAllCompleteOrFirstErrorWithTimeoutZeroTimeoutTest() throws InterruptedException, 
-                                                                                  TimeoutException, ExecutionException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
+  @Test
+  public void blockTillAllCompleteOrFirstErrorWithTimeoutZeroTimeoutTest(){
+      assertThrows(TimeoutException.class, () -> {
+      List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
     
-    FutureUtils.blockTillAllCompleteOrFirstError(futures, 0);
-    fail("Exception should have thrown");
+      FutureUtils.blockTillAllCompleteOrFirstError(futures, 0);
+      });
   }
   
   @Test
@@ -241,20 +243,22 @@ public class FutureUtilsTest extends ThreadlyTester {
     assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 100));
   }
   
-  @Test (expected = TimeoutException.class)
-  public void countFuturesWithResultWithTimeoutTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
+  @Test
+  public void countFuturesWithResultWithTimeoutTimeoutTest(){
+      assertThrows(TimeoutException.class, () -> {
+      List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
     
-    assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 100));
-    fail("Exception should have thrown");
+      assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 100));
+      });
   }
   
-  @Test (expected = TimeoutException.class)
-  public void countFuturesWithResultWithTimeoutZeroTimeoutTest() throws InterruptedException, TimeoutException {
-    List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
+  @Test
+  public void countFuturesWithResultWithTimeoutZeroTimeoutTest(){
+      assertThrows(TimeoutException.class, () -> {
+      List<? extends ListenableFuture<?>> futures = Collections.singletonList(new SettableListenableFuture<>());
     
-    assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 0));
-    fail("Exception should have thrown");
+      assertEquals(TEST_QTY, FutureUtils.countFuturesWithResult(futures, false, 0));
+      });
   }
   
   private static void verifyCompleteFuture(final ListenableFuture<?> f, 
@@ -1102,15 +1106,16 @@ public class FutureUtilsTest extends ThreadlyTester {
     assertEquals(TEST_QTY - 1, resultFuture.get().size());
   }
   
-  @Test (expected = ExecutionException.class)
-  public void makeResultListFutureWithFailureTest() throws InterruptedException, ExecutionException {
-    List<ListenableFuture<? extends String>> futures = makeFutures(TEST_QTY, TEST_QTY / 2);
+  @Test
+  public void makeResultListFutureWithFailureTest(){
+      assertThrows(ExecutionException.class, () -> {
+      List<ListenableFuture<? extends String>> futures = makeFutures(TEST_QTY, TEST_QTY / 2);
     
-    ListenableFuture<List<String>> resultFuture = FutureUtils.makeResultListFuture(futures, false);
+      ListenableFuture<List<String>> resultFuture = FutureUtils.makeResultListFuture(futures, false);
     
-    assertTrue(resultFuture.isDone());
-    resultFuture.get();
-    fail("Exception should have thrown");
+      assertTrue(resultFuture.isDone());
+      resultFuture.get();
+      });
   }
   
   @Test

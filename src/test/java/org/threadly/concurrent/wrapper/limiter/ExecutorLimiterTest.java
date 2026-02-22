@@ -1,6 +1,6 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,10 +11,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
@@ -31,19 +31,19 @@ public class ExecutorLimiterTest extends SubmitterExecutorInterfaceTest {
   protected static final int PARALLEL_COUNT = TEST_QTY / 2;
   protected static final int THREAD_COUNT = PARALLEL_COUNT * 2;
   
-  @BeforeClass
+  @BeforeAll
   public static void setupClass() {
     SubmitterExecutorInterfaceTest.setupClass();
   }
   
   protected PriorityScheduler scheduler;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new StrictPriorityScheduler(THREAD_COUNT);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler.shutdownNow();
     scheduler = null;

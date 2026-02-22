@@ -1,14 +1,14 @@
 package org.threadly.concurrent.wrapper.statistics;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
@@ -21,12 +21,12 @@ import org.threadly.test.concurrent.TestableScheduler;
 public class ExecutorStatisticWrapperTest extends SubmitterExecutorInterfaceTest {
   private ExecutorStatisticWrapper statWrapper;
   
-  @Before
+  @BeforeEach
   public void setup() {
     statWrapper = new ExecutorStatisticWrapper(SameThreadSubmitterExecutor.instance(), true);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     statWrapper = null;
   }

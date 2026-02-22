@@ -1,14 +1,14 @@
 package org.threadly.concurrent.wrapper.limiter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
 import org.threadly.concurrent.StrictPriorityScheduler;
@@ -28,7 +28,7 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
   private TestableScheduler scheduler;
   private KeyedRateLimiterExecutor limiter;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new TestableScheduler();
     limiter = new KeyedRateLimiterExecutor(scheduler, 1, 600_000);
@@ -219,11 +219,13 @@ public class KeyedRateLimiterExecutorTest extends SubmitterExecutorInterfaceTest
     }
   }
   
-  @Test (expected = RejectedExecutionException.class)
+  @Test
   public void rejectDueToScheduleDelay() {
-    limiter = new KeyedRateLimiterExecutor(scheduler, 1, 1000);
-    limiter.execute(2000, "foo", DoNothingRunnable.instance());
-    limiter.execute("foo", DoNothingRunnable.instance());
+      assertThrows(RejectedExecutionException.class, () -> {
+      limiter = new KeyedRateLimiterExecutor(scheduler, 1, 1000);
+      limiter.execute(2000, "foo", DoNothingRunnable.instance());
+      limiter.execute("foo", DoNothingRunnable.instance());
+      });
   }
   
   private static class KeyedRateLimiterFactory implements SubmitterExecutorFactory {

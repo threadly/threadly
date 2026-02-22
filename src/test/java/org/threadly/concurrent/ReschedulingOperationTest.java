@@ -1,12 +1,12 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.Executor;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.TestRunnable;
 import org.threadly.test.concurrent.TestableScheduler;
@@ -17,12 +17,12 @@ public class ReschedulingOperationTest extends ThreadlyTester {
   
   private TestableScheduler scheduler;
   
-  @Before
+  @BeforeEach
   public void setup() {
     scheduler = new TestableScheduler();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     scheduler = null;
   }
@@ -121,11 +121,13 @@ public class ReschedulingOperationTest extends ThreadlyTester {
     assertEquals(1, testOp.tr.getRunCount());
   }
 
-  @Test (expected = UnsupportedOperationException.class)
+  @Test
   public void changeScheduleDelayFail() {
-    TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, false);
+      assertThrows(UnsupportedOperationException.class, () -> {
+      TestReschedulingOperation testOp = new TestReschedulingOperation(scheduler, false);
     
-    testOp.setScheduleDelay(10);
+      testOp.setScheduleDelay(10);
+      });
   }
   
   @Test

@@ -1,6 +1,6 @@
 package org.threadly.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,9 +9,9 @@ import java.util.Collections;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.util.ExceptionUtils.TransformedException;
@@ -19,8 +19,8 @@ import org.threadly.util.ExceptionUtils.TransformedSuppressedStackException;
 
 @SuppressWarnings("javadoc")
 public class ExceptionUtilsTest extends ThreadlyTester {
-  @Before
-  @After
+  @BeforeEach
+  @AfterEach
   public void cleanup() {
     ExceptionUtils.setDefaultExceptionHandler(null);
     ExceptionUtils.setInheritableExceptionHandler(null);
@@ -320,10 +320,11 @@ public class ExceptionUtilsTest extends ThreadlyTester {
     stackOverflow();
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void getRootCauseFail() {
-    ExceptionUtils.getRootCause(null);
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      ExceptionUtils.getRootCause(null);
+      });
   }
   
   @Test
@@ -712,9 +713,11 @@ public class ExceptionUtilsTest extends ThreadlyTester {
     assertEquals(0, sb.length());
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void writeStackToBuilderFail() {
-    ExceptionUtils.writeStackTo(new Exception(), (StringBuilder)null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      ExceptionUtils.writeStackTo(new Exception(), (StringBuilder)null);
+      });
   }
   
   @Test
@@ -739,9 +742,11 @@ public class ExceptionUtilsTest extends ThreadlyTester {
     assertEquals(0, sb.length());
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void writeStackToBufferFail() {
-    ExceptionUtils.writeStackTo(new Exception(), (StringBuffer)null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      ExceptionUtils.writeStackTo(new Exception(), (StringBuffer)null);
+      });
   }
   
   @Test
@@ -783,8 +788,10 @@ public class ExceptionUtilsTest extends ThreadlyTester {
     assertEquals(0, sb.length());
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void writeArrayStackFail() {
-    ExceptionUtils.writeStackTo(new Exception().getStackTrace(), null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      ExceptionUtils.writeStackTo(new Exception().getStackTrace(), null);
+      });
   }
 }

@@ -1,13 +1,13 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.test.concurrent.AsyncVerifier;
 import org.threadly.test.concurrent.BlockingTestRunnable;
@@ -93,9 +93,11 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
     av.waitForTest();
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void rangedThreadPoolNullPriorityFail() {
-    CentralThreadlyPool.rangedThreadPool((TaskPriority)null, 0, 2, null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      CentralThreadlyPool.rangedThreadPool((TaskPriority)null, 0, 2, null);
+      });
   }
   
   @Test
@@ -190,9 +192,11 @@ public class CentralThreadlyPoolTest extends ThreadlyTester {
     av.waitForTest();
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void threadPoolNullPriorityFail() {
-    CentralThreadlyPool.threadPool((TaskPriority)null, 2, null);
+      assertThrows(IllegalArgumentException.class, () -> {
+      CentralThreadlyPool.threadPool((TaskPriority)null, 2, null);
+      });
   }
   
   @Test

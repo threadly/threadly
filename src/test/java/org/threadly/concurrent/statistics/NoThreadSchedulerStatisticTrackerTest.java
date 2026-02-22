@@ -1,12 +1,12 @@
 package org.threadly.concurrent.statistics;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Iterator;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.NoThreadSchedulerTest;
 import org.threadly.concurrent.TaskPriority;
@@ -15,7 +15,7 @@ import org.threadly.test.concurrent.TestUtils;
 
 @SuppressWarnings("javadoc")
 public class NoThreadSchedulerStatisticTrackerTest extends NoThreadSchedulerTest {
-  @Before
+  @BeforeEach
   @Override
   public void setup() {
     scheduler = new NoThreadSchedulerStatisticTracker();

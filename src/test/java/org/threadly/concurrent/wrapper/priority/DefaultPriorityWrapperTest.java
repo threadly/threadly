@@ -1,12 +1,12 @@
 package org.threadly.concurrent.wrapper.priority;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.Callable;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.PriorityScheduler;
@@ -21,12 +21,12 @@ import org.threadly.concurrent.future.ListenableFuture;
 public class DefaultPriorityWrapperTest extends ThreadlyTester {
   private PriorityScheduler scheduler;
   
-  @Before
+  @BeforeEach
   public void setupClass() {
     scheduler = new StrictPriorityScheduler(2);
   }
   
-  @After
+  @AfterEach
   public void cleanupClass() {
     scheduler.shutdown();
     scheduler = null;

@@ -1,13 +1,13 @@
 package org.threadly.concurrent.event;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.SameThreadSubmitterExecutor;
 import org.threadly.concurrent.TestSameThreadSubmitterExecutor;
@@ -345,11 +345,13 @@ public class ListenerHelperTest extends ThreadlyTester {
     assertEquals(testStr, ti.lastString);
   }
   
-  @Test (expected = RuntimeException.class)
+  @Test
   public void callFail() {
-    @SuppressWarnings("rawtypes")
-    ListenerHelper<List> ch = makeListenerHelper(List.class);
-    ch.call().get(0);
+      assertThrows(RuntimeException.class, () -> {
+      @SuppressWarnings("rawtypes")
+      ListenerHelper<List> ch = makeListenerHelper(List.class);
+      ch.call().get(0);
+      });
   }
   
   protected interface TestInterface {

@@ -1,11 +1,11 @@
 package org.threadly.concurrent.wrapper.compatibility;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SingleThreadScheduler;
 import org.threadly.test.concurrent.TestRunnable;
@@ -19,10 +19,11 @@ public class SingleThreadSchedulerServiceWrapperTest extends ScheduledExecutorSe
   }
   
   @SuppressWarnings("unused")
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void constructorFail() {
-    new SingleThreadSchedulerServiceWrapper(null);
-    fail("Exception should have thrown");
+      assertThrows(IllegalArgumentException.class, () -> {
+      new SingleThreadSchedulerServiceWrapper(null);
+      });
   }
 
   @Test

@@ -1,6 +1,6 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.AbstractPriorityScheduler.AccurateOneTimeTaskWrapper;
 import org.threadly.concurrent.future.ListenableFuture;
 import org.threadly.concurrent.wrapper.priority.DefaultPriorityWrapper;
@@ -135,7 +135,7 @@ public class PrioritySchedulerTest extends AbstractPrioritySchedulerTest {
   }
   
   @Test
-  @Ignore // TODO - test seems flakey still, unknown why
+  @Disabled // TODO - test seems flakey still, unknown why
   public void taskPriorityThreadStartTest() {
     PrioritySchedulerServiceFactory factory = getPrioritySchedulerFactory();
     PriorityScheduler scheduler = factory.makePriorityScheduler(2);  // use default of starvable does not start

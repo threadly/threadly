@@ -1,15 +1,15 @@
 package org.threadly.concurrent.processing;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.SynchronousQueue;
 import java.util.function.Consumer;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.concurrent.ConfigurableThreadFactory;
 import org.threadly.concurrent.StartingThreadFactory;
@@ -22,7 +22,7 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
    private TestAcceptor acceptor;
    private BlockingQueueConsumer<Object> queueConsumer;
    
-  @Before
+  @BeforeEach
   public void setup() {
     queue = new SynchronousQueue<>();
     acceptor = new TestAcceptor();
@@ -30,7 +30,7 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
                                                           acceptor, null);
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     queueConsumer.stopIfRunning();
     queue = null;
@@ -77,15 +77,17 @@ public class BlockingQueueConsumerTest extends ThreadlyTester {
     assertTrue(queueConsumer.isRunning());
   }
   
-  @Test (expected = IllegalThreadStateException.class)
+  @Test
   public void startFail() {
-    StartingThreadFactory threadFactory = new StartingThreadFactory();
-    try {
-      queueConsumer = BlockingQueueConsumer.makeForHandlers(threadFactory, queue, acceptor, null);
-      queueConsumer.start();
-    } finally {
-      threadFactory.killThreads();
-    }
+      assertThrows(IllegalThreadStateException.class, () -> {
+      StartingThreadFactory threadFactory = new StartingThreadFactory();
+      try {
+        queueConsumer = BlockingQueueConsumer.makeForHandlers(threadFactory, queue, acceptor, null);
+        queueConsumer.start();
+      } finally {
+        threadFactory.killThreads();
+      }
+      });
   }
   
   @Test

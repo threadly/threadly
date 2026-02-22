@@ -1,31 +1,31 @@
 package org.threadly.concurrent;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.ExecutionException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.future.ListenableFuture;
 
 @SuppressWarnings("javadoc")
 public class SameThreadSubmitterExecutorTest extends SubmitterExecutorInterfaceTest {
   private SameThreadSubmitterExecutor executor;
   
-  @BeforeClass
+  @BeforeAll
   public static void classSetup() {
     setIgnoreExceptionHandler();
   }
   
-  @Before
+  @BeforeEach
   @SuppressWarnings("deprecation")
   public void setup() {
     executor = new SameThreadSubmitterExecutor();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     executor = null;
   }

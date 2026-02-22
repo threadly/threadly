@@ -1,10 +1,10 @@
 package org.threadly.util.debug;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 import org.threadly.util.debug.Profiler.ThreadIterator;
 
@@ -12,12 +12,12 @@ import org.threadly.util.debug.Profiler.ThreadIterator;
 public class ProfilerThreadIteratorTest extends ThreadlyTester {
   private ThreadIterator ti;
   
-  @Before
+  @BeforeEach
   public void setup() {
     ti = new ThreadIterator();
   }
   
-  @After
+  @AfterEach
   public void cleanup() {
     ti = null;
   }
@@ -28,8 +28,10 @@ public class ProfilerThreadIteratorTest extends ThreadlyTester {
     assertTrue(ti.it.hasNext());
   }
   
-  @Test (expected = UnsupportedOperationException.class)
+  @Test
   public void removeFail() {
-    ti.remove();
+      assertThrows(UnsupportedOperationException.class, () -> {
+      ti.remove();
+      });
   }
 }

@@ -1,12 +1,12 @@
 package org.threadly.util;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.threadly.ThreadlyTester;
 
 @SuppressWarnings("javadoc")
@@ -37,9 +37,11 @@ public class StatisticsUtilsTest extends ThreadlyTester {
     assertEquals(2., StatisticsUtils.getMax(Arrays.asList(new Double[]{ -3., 1., 2. })), 0);
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void maxFail() {
-    StatisticsUtils.getMax(Collections.<Long>emptyList());
+      assertThrows(IllegalArgumentException.class, () -> {
+      StatisticsUtils.getMax(Collections.<Long>emptyList());
+      });
   }
   
   @Test
@@ -57,9 +59,11 @@ public class StatisticsUtilsTest extends ThreadlyTester {
     assertEquals(-3.1, StatisticsUtils.getMin(Arrays.asList(new Double[]{ -3., 1., 2., -3.1 })), 0);
   }
   
-  @Test (expected = IllegalArgumentException.class)
+  @Test
   public void minFail() {
-    StatisticsUtils.getMin(Collections.<Long>emptyList());
+      assertThrows(IllegalArgumentException.class, () -> {
+      StatisticsUtils.getMin(Collections.<Long>emptyList());
+      });
   }
   
   @Test

@@ -1,14 +1,14 @@
 package org.threadly.concurrent.wrapper.interceptor;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.threadly.concurrent.DoNothingRunnable;
 import org.threadly.concurrent.SubmitterScheduler;
 import org.threadly.concurrent.TestCallable;
@@ -23,7 +23,7 @@ public class SubmitterSchedulerTaskInterceptorTest extends ExecutorTaskIntercept
   protected SubmitterSchedulerTaskInterceptor submitSchedulerTaskInterceptorLamba;
   protected List<Runnable> interceptedTasks;
   
-  @Before
+  @BeforeEach
   @Override
   public void setup() {
     scheduler = new TestableScheduler();
@@ -39,7 +39,7 @@ public class SubmitterSchedulerTaskInterceptorTest extends ExecutorTaskIntercept
     tr = new TestRunnable();
   }
   
-  @After
+  @AfterEach
   @Override
   public void cleanup() {
     submitterSchedulerInterceptor = null;
@@ -121,17 +121,21 @@ public class SubmitterSchedulerTaskInterceptorTest extends ExecutorTaskIntercept
   }
   
   @Override
-  @Test (expected = RuntimeException.class)
+  @Test
   public void defaultConstructorFail() {
-    SubmitterSchedulerTaskInterceptor ssti = new SubmitterSchedulerTaskInterceptor(scheduler);
-    ssti.schedule(DoNothingRunnable.instance(), 10);
+      assertThrows(RuntimeException.class, () -> {
+      SubmitterSchedulerTaskInterceptor ssti = new SubmitterSchedulerTaskInterceptor(scheduler);
+      ssti.schedule(DoNothingRunnable.instance(), 10);
+      });
   }
 
   @Override
-  @Test (expected = RuntimeException.class)
+  @Test
   public void nullConstructorFail() {
-    @SuppressWarnings("unused")
-    SubmitterSchedulerTaskInterceptor ssti = new SubmitterSchedulerTaskInterceptor(scheduler, null);
+      assertThrows(RuntimeException.class, () -> {
+      @SuppressWarnings("unused")
+      SubmitterSchedulerTaskInterceptor ssti = new SubmitterSchedulerTaskInterceptor(scheduler, null);
+      });
   }
 
   private static class TestSubmitterSchedulerInterceptor extends SubmitterSchedulerTaskInterceptor 

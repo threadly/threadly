@@ -2,7 +2,6 @@ package org.threadly;
 
 import java.lang.Thread.UncaughtExceptionHandler;
 
-import org.junit.Rule;
 import org.threadly.util.ExceptionHandler;
 import org.threadly.util.ExceptionUtils;
 import org.threadly.util.StringUtils;
@@ -130,9 +129,6 @@ public abstract class ThreadlyTester {
     ExceptionUtils.setInheritableExceptionHandler(null);
     ExceptionUtils.setDefaultExceptionHandler(ieh);
   }
-  
-  @Rule
-  public RepeatRule repeatRule = new RepeatRule();
   
   private static class IgnoreExceptionHandler implements UncaughtExceptionHandler, 
                                                          ExceptionHandler {
