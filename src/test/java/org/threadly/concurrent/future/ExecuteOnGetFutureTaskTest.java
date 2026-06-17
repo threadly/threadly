@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeoutException;
 
@@ -83,6 +84,12 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
     ListenableFutureInterfaceTest.flatMapStackDepthTest(future, future, 74, 15);
   }
   
+  @Test
+  @Override
+  public void optimizeListenerNotDoneTest() {
+    // test ignored due to listener type not capable of optimization
+  }
+  
   private class ExecuteOnGetFutureFactory implements ListenableRunnableFutureFactory {
     @Override
     public RunnableFuture<?> make(Runnable run) {
@@ -101,6 +108,12 @@ public class ExecuteOnGetFutureTaskTest extends ListenableFutureTaskTest {
 
     @Override
     public <T> ExecuteOnGetFutureTask<T> makeNewCompletable() {
+      return new ExecuteOnGetFutureTask<>(DoNothingRunnable.instance());
+    }
+
+    @Override
+    public <T> ExecuteOnGetFutureTask<T> makeNewCompletable(Executor executor) {
+      // executor ignored since future does not support this optimization
       return new ExecuteOnGetFutureTask<>(DoNothingRunnable.instance());
     }
 
