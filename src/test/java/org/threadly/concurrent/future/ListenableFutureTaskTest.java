@@ -356,6 +356,11 @@ public class ListenableFutureTaskTest extends ListenableRunnableFutureInterfaceT
     }
 
     @Override
+    public <T> ListenableFutureTask<T> makeNewCompletable(Executor executor) {
+      return new ListenableFutureTask<>(DoNothingRunnable.instance(), null, executor);
+    }
+
+    @Override
     public ListenableFutureTask<?> makeCanceledCompletable() {
       ListenableFutureTask<?> lft = new ListenableFutureTask<>(DoNothingRunnable.instance());
       lft.cancel(false);
