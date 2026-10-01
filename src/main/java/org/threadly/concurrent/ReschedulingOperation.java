@@ -25,10 +25,13 @@ import org.threadly.util.ArgumentVerifier;
  * @since 4.9.0
  */
 public abstract class ReschedulingOperation {
+  private static final int IMMEDIATE_RERUN = 3;
+
   protected final Executor executor;  // never null
   private final SubmitterScheduler scheduler; // may be null
   private final int maxOperationLoops;
   // -1 = not scheduled, 0 = scheduled, 1 = running, 2 = updated while running
+  // 3 = immediate rerun requested while running
   private final AtomicInteger taskState;
   private final CheckRunner runner;
   private volatile long scheduleDelay;
@@ -123,15 +126,15 @@ public abstract class ReschedulingOperation {
     }
   }
   
-  private boolean firstSignal() {
+  private boolean firstSignal(boolean immediate) {
     while (true) {
       int casState = taskState.get();
       if (casState == -1) {
         if (taskState.weakCompareAndSetVolatile(-1, 0)) {
           return true;
         }
-      } else if (casState == 1) {
-        if (taskState.weakCompareAndSetVolatile(1, 2)) {
+      } else if (casState == 1 || (immediate && casState == 2)) {
+        if (taskState.weakCompareAndSetVolatile(casState, immediate ? IMMEDIATE_RERUN : 2)) {
           return false;
         }
       } else {
@@ -148,7 +151,7 @@ public abstract class ReschedulingOperation {
    * @param runOnCallingThreadIfPossible {@code true} to run the task on the invoking thread if possible
    */
   public void signalToRunImmediately(boolean runOnCallingThreadIfPossible) {
-    if (firstSignal()) {
+    if (firstSignal(true)) {
       if (runOnCallingThreadIfPossible) {
         runner.run();
       } else {
@@ -167,7 +170,7 @@ public abstract class ReschedulingOperation {
    * {@link #signalToRunImmediately(boolean)}.
    */
   public void signalToRun() {
-    if (firstSignal()) {
+    if (firstSignal(false)) {
       if (scheduler != null) {
         scheduler.schedule(runner, scheduleDelay);
       } else {
@@ -203,23 +206,28 @@ public abstract class ReschedulingOperation {
           ReschedulingOperation.this.run();
         } finally {
           casLoop: while (true) {
-            if (taskState.get() == 1) {
+            int casState = taskState.get();
+            if (casState == 1) {
               if (taskState.weakCompareAndSetVolatile(1, -1)) {
                 // set back to idle state, we are done
                 break runLoop;
               }
-            } else if (taskState.get() == 2) { // will be set back to 1 when this loops or re-executes
-              if (scheduleDelay == 0) {
-                if (++loopCount < maxOperationLoops) {
-                  // break casLoop so we can loop again in the runLoop
-                  break casLoop;
+            } else if (casState == 2 || casState == IMMEDIATE_RERUN) {
+              // An immediate signal can upgrade a delayed rerun until this CAS succeeds.
+              if (taskState.weakCompareAndSetVolatile(casState, 0)) {
+                long delay = casState == IMMEDIATE_RERUN ? 0 : scheduleDelay;
+                if (delay == 0) {
+                  if (++loopCount < maxOperationLoops) {
+                    // break casLoop so we can loop again in the runLoop
+                    break casLoop;
+                  } else {
+                    executor.execute(this);
+                  }
                 } else {
-                  executor.execute(this);
+                  scheduler.schedule(this, delay);
                 }
-              } else {
-                scheduler.schedule(this, scheduleDelay);
+                break runLoop;
               }
-              break runLoop;
             }
           }
         }

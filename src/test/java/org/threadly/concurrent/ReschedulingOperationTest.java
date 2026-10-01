@@ -159,6 +159,56 @@ public class ReschedulingOperationTest extends ThreadlyTester {
     assertEquals(1, testOp.tr.getRunCount());
     assertEquals(0, scheduler.advance(SCHEDULE_DELAY)); // should have run in-thread not on scheduler
   }
+
+  @Test
+  public void signalToRunImmediatelyWhileRunningTest() {
+    assertImmediateRerun(false, false);
+  }
+
+  @Test
+  public void signalToRunImmediatelyAfterOrdinarySignalWhileRunningTest() {
+    assertImmediateRerun(true, false);
+  }
+
+  @Test
+  public void ordinarySignalAfterImmediateSignalWhileRunningTest() {
+    assertImmediateRerun(false, true);
+  }
+
+  private void assertImmediateRerun(boolean ordinarySignalFirst, boolean ordinarySignalLast) {
+    for (boolean runOnCallingThreadIfPossible : new boolean[] {false, true}) {
+      TestReschedulingOperation testOp =
+          new TestReschedulingOperation(scheduler, SCHEDULE_DELAY, false) {
+            @Override
+            protected void run() {
+              super.run();
+              if (tr.getRunCount() == 1) {
+                if (ordinarySignalFirst) {
+                  signalToRun();
+                }
+                signalToRunImmediately(runOnCallingThreadIfPossible);
+                if (ordinarySignalLast) {
+                  signalToRun();
+                }
+                assertEquals(1, tr.getRunCount());
+              }
+            }
+          };
+
+      testOp.signalToRun();
+
+      assertEquals(2, scheduler.advance(SCHEDULE_DELAY));
+      assertEquals(2, testOp.tr.getRunCount());
+      assertFalse(testOp.isActive());
+      assertEquals(0, scheduler.advance(SCHEDULE_DELAY));
+      assertEquals(0, scheduler.getQueuedTaskCount());
+
+      testOp.signalToRun();
+      assertEquals(0, scheduler.tick());
+      assertEquals(1, scheduler.advance(SCHEDULE_DELAY));
+      assertEquals(3, testOp.tr.getRunCount());
+    }
+  }
   
   private static class TestReschedulingOperation extends ReschedulingOperation {
     public final TestRunnable tr = new TestRunnable();
