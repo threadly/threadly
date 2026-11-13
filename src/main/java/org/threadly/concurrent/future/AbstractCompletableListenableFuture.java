@@ -101,6 +101,7 @@ abstract class AbstractCompletableListenableFuture<T> extends AbstractCancellati
   protected volatile Thread execThread;
   protected volatile int state;
   private volatile ParkedThread parkedChain;
+  private volatile boolean listenerOptimized; // set if queued listener was optimized
   private Executor executingExecutor;
   // result and failure protected by state reads and writes
   private T result;
@@ -238,13 +239,31 @@ abstract class AbstractCompletableListenableFuture<T> extends AbstractCancellati
         }
       }
     } finally {
+      // Check reference before cleared in completeState
+      Executor cancelExecutor = listenerOptimized ? executingExecutor : null;
       completeState();
 
-      // TODO - what about the invoking thread? https://github.com/threadly/threadly/issues/274
-      // callListeners invoked here instead of completeState() to reduce stack depth
-      listenerHelper.callListeners();
+      if (cancelExecutor == null) {
+        listenerHelper.callListeners();
+      } else {
+        // Make sure even cancel actions happen on the expected pool
+        // otherwise listeners with optimization may hit unexpected conditions
+        // See https://github.com/threadly/threadly/issues/274
+        cancelExecutor.execute(listenerHelper::callListeners);
+      }
     }
     return true;
+  }
+  
+  private Executor setListenerExecutorOptimizedAndReturnNull() {
+    // The overhead of storing this state on every future is unfortunate.
+    // The overhead of setting it every time a listener is added with a matching optimization 
+    // strategy is also unfortunate.
+    // But the alternative is to be conservative in cancel operations and make sure that listener 
+    // execution always happens on the set executor.  Because this can delay listener executions 
+    // it seems better to accept this tradeoff considering optimization usage is assumed to be rare. 
+    listenerOptimized = true;
+    return null;
   }
 
   @Override
@@ -254,7 +273,7 @@ abstract class AbstractCompletableListenableFuture<T> extends AbstractCancellati
                                executor == executingExecutor && 
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
-                                 null : executor, 
+                                 setListenerExecutorOptimizedAndReturnNull() : executor, 
                                optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
@@ -490,7 +509,7 @@ abstract class AbstractCompletableListenableFuture<T> extends AbstractCancellati
                                executor == executingExecutor && 
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
-                                 null : executor, 
+                                 setListenerExecutorOptimizedAndReturnNull() : executor, 
                                optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
@@ -518,7 +537,7 @@ abstract class AbstractCompletableListenableFuture<T> extends AbstractCancellati
                                executor == executingExecutor && 
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
-                                 null : executor, 
+                                 setListenerExecutorOptimizedAndReturnNull() : executor, 
                                optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
@@ -563,7 +582,7 @@ abstract class AbstractCompletableListenableFuture<T> extends AbstractCancellati
                                executor == executingExecutor && 
                                    (optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone | 
                                     optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatch) ? 
-                                 null : executor, 
+                                 setListenerExecutorOptimizedAndReturnNull() : executor, 
                                optimize == ListenerOptimizationStrategy.InvokingThreadIfDone | 
                                optimize == ListenerOptimizationStrategy.SingleThreadIfExecutorMatchOrDone ? 
                                  null : executor);
